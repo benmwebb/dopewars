@@ -87,6 +87,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          g_set_print_handler(Win32PrintFunc);
          newterm(NULL,NULL,NULL);
          ServerLoop();
+      } else if (AIPlayer) {
+         AIPlayerLoop();
       } else if (WantedClient==CLIENT_CURSES) {
          AllocConsole();
          SetConsoleTitle(_("dopewars"));

@@ -1690,6 +1690,8 @@ int main(int argc,char *argv[]) {
       StartNetworking();
       if (Server) {
          ServerLoop();
+      } else if (AIPlayer) {
+         AIPlayerLoop();
       } else switch(WantedClient) {
          case CLIENT_AUTO:
             if (!GtkLoop(&argc,&argv,TRUE)) CursesLoop();
