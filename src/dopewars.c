@@ -77,6 +77,7 @@ gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
 unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue;
 gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
+gchar *ServerMOTD = NULL;
 gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
 gboolean WantConvert, WantAdmin;
 
@@ -225,6 +226,9 @@ struct GLOBALS Globals[] = {
    N_("Name of the high score file"), NULL, NULL, 0, "", NULL, NULL, FALSE},
   {NULL, NULL, NULL, &ServerName, NULL, "Server",
    N_("Name of the server to connect to"), NULL, NULL, 0, "", NULL,
+   NULL, FALSE},
+  {NULL, NULL, NULL, &ServerMOTD, NULL, "ServerMOTD",
+   N_("Server's welcome message of the day"), NULL, NULL, 0, "", NULL,
    NULL, FALSE},
 #ifdef NETWORKING
   {NULL, &UseSocks, NULL, NULL, NULL, "Socks.Active",
@@ -2400,8 +2404,10 @@ void SetupParameters(void)
   /* Set hard-coded default values */
   g_free(HiScoreFile);
   g_free(ServerName);
+  g_free(ServerMOTD);
   HiScoreFile = g_strdup_printf("%s/dopewars.sco", DATADIR);
   ServerName = g_strdup("localhost");
+  ServerMOTD = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
 

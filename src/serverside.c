@@ -399,6 +399,9 @@ void HandleServerMessage(gchar *buf, Player *Play)
             SendPlayerDetails(pt, Play, C_LIST);
           }
         }
+        if (ServerMOTD && ServerMOTD[0]) {
+          SendPrintMessage(NULL, C_MOTD, Play, ServerMOTD);
+        }
         SendServerMessage(NULL, C_NONE, C_ENDLIST, Play, NULL);
         RegisterWithMetaServer(TRUE, FALSE, TRUE);
         Play->ConnectTimeout = 0;
