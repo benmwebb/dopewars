@@ -1,0 +1,57 @@
+<html>
+<head>
+<title>Interactive server commands</title>
+</head>
+
+<body>
+<h1>Interactive server commands</h1>
+
+Available commands are listed below. Please note also that any valid
+line from a <a href="configfile.html">configuration file</a> can
+be entered at the interactive server's prompt. Note, however, that game
+options cannot be changed while players are connected. In addition, the
+current value of any option from the configuration files can be displayed
+by typing the name of the variable by itself. For example, entering 
+<i>MetaServer.Comment</i> at the prompt will display the comment that the
+server sends to the <a href="metaserver.html">metaserver</a>.
+
+<dl>
+<dt><b>help</b>
+<dd>Displays a help screen, listing valid server commands and the variables
+which can be set in <a href="configfile.html">configuration files</a>.
+
+<dt><b>list</b>
+<dd>Lists the given names of all the players currently logged on to the
+server.
+
+<dt><b>push <i>Bert</i></b>
+<dd>Politely asks the player with the given name <i>Bert</i> to leave the
+server - i.e. sends a message to the client, which should then finish off
+and break the connection at the far end.
+
+<dt><b>kill <i>Bert</i></b>
+<dd>Abruptly breaks the connection to the player with given name <i>Bert</i>.
+This is necessary if, for example, the client refuses to acknowledge a
+"push" message.
+
+<dt><b>msg:<i>Hi all!</i></b>
+<dd>Broadcasts the message <i>Hi all!</i> to all players currently connected
+to this server.
+
+<dt><b>quit</b>
+<dd>Politely quit, by asking all clients to leave, and then terminating once
+they have done so. An "impolite" quit, which is necessary if the clients fail
+to respond to this message, is performed on receipt of a SIGINT or SIGTERM
+signal (i.e. pressing Ctrl-C or killing the process with the "kill" command).
+</dl>
+
+<hr>
+<ul>
+<li><a href="index.html">Main index</a>
+<ul>
+<li><a href="server.html">Setting up and running a dopewars server</a>
+</ul>
+</ul>
+Last update: <b>28-9-99</b>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<html>
+<head>
+<title>Setting up and running a dopewars server</title>
+</head>
+
+<body>
+<h1>Setting up and running a dopewars server</h1>
+
+Multiplayer games of dopewars require a running dopewars server; this mediates
+the interactions between each player (each player runs a
+<a href="clientplay.html">client</a> which connects to this server). The server
+runs the game, generating drug prices and the like, and instructs the clients
+accordingly. The server can be run on any machine that can be reached over
+the network by clients (so you don't have to run it on the same machine that
+you run your client on, for example, unless your firewall blocks the dopewars
+port).<p>
+
+Single player games do not require a server (although you can still connect
+to one if you like) as a "virtual server" is run by the dopewars client.<p>
+
+The dopewars server can be heavily customised by means of the
+<a href="configfile.html">configuration files</a>. For example, you can
+change the names of all the game locations so that the game is set in your
+home city rather than New York. Any players that then connect to your
+customised server will play this customised game.<p>
+
+<ul>
+<li><a href="#interactive">Running an interactive server</a>
+<li><a href="#noninteractive">Non-interactive servers</a>
+<li><a href="#metaserver">Private and public: the dopewars metaserver</a>
+</ul>
+
+<a name="interactive"><h2>Running an interactive server</h2></a>
+
+All the code for the dopewars server is included in the same binary as the
+standard client. To run the binary in server mode, specify the <b>-s</b> or
+<b>-S</b> <a href="commandline.html">command line option</a>. By default,
+this runs the server in "interactive" mode; that is to say that the server
+functions as normal, but in addition responds to typed commands from you.
+Click <a href="servercommands.html">here</a> for a list of the valid commands
+in interactive mode.<p>
+
+<a name="noninteractive"><h2>Non-interactive servers</h2></a>
+
+Usually, however, you will not need to use server commands (most can be
+specified in the <a href="configfile.html">configuration files</a> anyway)
+and so will want a non-interactive server. This will sit in the background
+and quietly deal with dopewars games without disturbing you, the user. To
+"persuade" the server to be non-interactive, you must redirect standard
+input and output, and use your shell's job control to put it in the background,
+with a command similar to the following:-<br>
+<b>dopewars -s < /dev/null >> /var/log/dopewars.log &</b><br>
+(this writes server output to the logfile <i>/var/log/dopewars.log</i>.
+Alternatively you can redirect this output to <i>/dev/null</i>.)<p>
+
+<a name="metaserver"><h2>Private and public: the dopewars metaserver</h2></a>
+
+By default, a server reports its status to the dopewars
+<a href="metaserver.html">metaserver</a>. It does this on startup and
+shutdown, and whenever players join or leave the game. In addition, you
+can force a report (under Unix systems) by sending the dopewars server
+process a SIGUSR1 signal. The server will "remind" the metaserver that it
+exists by ensuring that a report is sent at least once every 20 minutes or so,
+regardless. A "status report" comprises contact details for the server,
+a count of the number of active players, and current high scores.<p>
+
+The metaserver also has a web interface, which is used by dopewars clients to
+obtain the list of servers, and can also be viewed with a web browser
+<a href="http://bellatrix.pcl.ox.ac.uk/~ben/cgi-bin/serverlist.pl">here</a>.<p>
+
+Whether your server connects to the metaserver can be configured with the
+<a href="configfile.html#MetaServerActive">MetaServer.Active</a> configuration
+file setting, or the <b>-s</b> and <b>-S</b> <a href="commandline.html">
+command line options</a>.<p>
+
+N.B. Your machine may have trouble connecting with
+the metaserver in some circumstances, most notably if you are using an
+enforced proxy server or your DNS does not correctly resolve your IP address
+to your domain name. In such cases, you may be unable to connect to the
+metaserver, or it may register your server with an incorrect name. For
+information on getting round these difficulties, see the
+<a href="metaserver.html">metaserver</a> page.
+
+<hr>
+<ul>
+<li><a href="index.html">Main index</a>
+</ul>
+Last update: <b>09-07-2000</b>
+</body>
+</html>

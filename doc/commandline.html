@@ -1,0 +1,123 @@
+<html>
+<head>
+<title>dopewars command line options</title>
+</head>
+
+<body>
+<h1>dopewars command line options</h1>
+
+Once you have <a href="installation.html">installed</a> dopewars, you should
+be able to run the binary just by typing<br>
+<b>dopewars</b><br>
+(unless you have installed the binary in a directory which is not in your
+path, in which case precede it with the path). Run without any options,
+the dopewars binary runs as a dopewars client.<p>
+
+Command line options can be used to configure common aspects of dopewars.
+More exhaustive configuration is possible by editing the dopewars
+<a href="configfile.html">configuration files</a>; note, however, that
+command line options can be used to override some of these settings (also see
+the <b>-g</b> option below).<p>
+
+For a brief description of
+the command line options, specify the option <b>-h</b> with the command<br>
+<b>dopewars -h</b><br>
+A list of the other command line options is presented below.
+<dl>
+<dt><b>-b</b>
+<dd>"Black and white". This tells the dopewars client (if that is what
+you're running) not to use coloured text (by default, colour is used if the
+terminal and curses support it).
+
+<a name="singleplayer"><dt><b>-n</b></a>
+<dd>If running the client, run in single-player mode. Don't try to connect
+to any available dopewars servers.
+
+<a name="antique"><dt><b>-a</b></a>
+<dd>Puts the client into "antique" mode; dopewars is derived from the
+earlier game for MS-DOS of the same name, which in turn was based on
+"Drug Wars" by John E. Dell. "Antique" mode aims to follow the behaviour
+of the MS-DOS dopewars closely, and consequently this entails single-player
+mode also.
+
+<a name="hiscore"><dt><b>-f <i>file</i></b></a>
+<dd>Specifies the path and name of the file used to store the dopewars
+high scores in; this can alternatively be specified in the configuration file
+with the <a href="configfile.html#HiScoreFile">HiScoreFile=<i>file</i></a>
+option.
+
+<a name="server"><dt><b>-o <i>addr</i></b></a>
+<dd>Gives the name of the machine running a dopewars server, in human
+readable (e.g. "nowhere.com") or dotted quad (e.g. 127.0.0.1) form. When the
+client is started, if not in single-player mode, it automatically attempts to
+connect to this server for a multiplayer game. This can also be specified with
+the <a href="configfile.html#Server">Server=<i>addr</i></a> configuration file
+option.
+
+<a name="port"><dt><b>-p <i>port</i></b></a>
+<dd>Specifies the numeric port number which the server uses. This is usually
+7902, but some servers may use other port numbers to avoid conflicts with
+other services running on the machine. If you are running the dopewars client,
+it will search for a server on this port; if you are running the server, it
+will bind to this port and wait for connections from clients (the clients
+must also be instructed to use this port, of course). This is equivalent to
+setting the port number with the <a href="configfile.html#Port">Port=<i>port</i></a>
+configuration file option.
+
+<dt><b>-s</b>
+<dd>Runs the <a href="server.html">dopewars server</a>. This mediates
+multiplayer games of dopewars, and keeps track of high scores. Any player
+wishing to join the game hosted
+by this server must connect to your machine using the dopewars client and the
+port number which you have chosen, and can then interact with other players
+who have done the same thing. By default, a dopewars server will report its
+status to the <a href="metaserver.html">metaserver</a>, unless it is set
+otherwise in the <a href="configfile.html#MetaServerActive">configuration
+file</a>.
+
+<a name="privateserver"><dt><b>-S</b></a>
+<dd>Also runs a dopewars server, but in this case <b>does not</b> report its
+status to the metaserver. This does not stop clients from connecting to your
+server, of course (unless it is behind a firewall, or the
+<a href="configfile.html#MaxClients">maximum number of clients</a> is exceeded),
+but it makes it harder to find. The connection to the
+<a href="metaserver.html">metaserver</a> can also be disabled by adding
+<a href="configfile.html#MetaServerActive">MetaServer.Active=0</a> to the
+configuration files.
+
+<dt><b>-g <i>file</i></b>
+<dd>Instructs dopewars to read setup information from the
+<a href="configfile.html">configuration file</a> named by <b><i>file</i></b>.
+This file is read immediately - i.e. at the point at which the -g option is
+encountered - and so these settings will override any set in the default
+configuration files or by previous command line options. Command line options
+occurring <b>after</b> the -g option, or for that matter further -g options,
+that change these same settings, will then override them.
+
+<dt><b>-r <i>file</i></b>
+<dd>Maintains a pid file with the specified name while the server is running.
+The file is a one-line text file, containing the process ID of the dopewars
+server process, and is deleted when the server quits.
+
+<a name="computer"><dt><b>-c</b></a>
+<dd>Runs a computerised player. This will connect to the specifed dopewars
+server and join in the multiplayer game going on there. When the player
+finishes the game (or is eliminated by the other players or the server) the
+program finishes.
+
+<dt><b>-h</b>
+<dd>Displays a brief description of the available command line options, and
+contact details.
+
+<dt><b>-v</b>
+<dd>Displays the current dopewars version number, and then exits.
+
+</dl>
+
+<hr>
+<ul>
+<li><a href="index.html">Main index</a>
+</ul>
+Last update: <b>06-05-2000</b>
+</body>
+</html>

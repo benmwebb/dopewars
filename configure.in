@@ -1,0 +1,176 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/dopewars.c)
+
+dnl Initialise automake
+AM_INIT_AUTOMAKE(dopewars,1.4.8-devel)
+
+dnl Write configuration defines into config.h
+AM_CONFIG_HEADER(config.h)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+
+dnl Do i18n stuff
+ALL_LINGUAS="de"
+AM_GNU_GETTEXT
+if test "$gt_cv_func_gettext_libintl" = "yes"; then
+    LIBS="-lintl  $LIBS"
+fi
+
+localedir=${datadir}/locale
+AC_SUBST(localedir)
+dnl AC_LINK_FILES($nls_cv_header_libgt, $nls_cv_header_intl)
+
+dnl Process client options
+AC_ARG_ENABLE(gtk-client,
+[  --enable-gtk-client     include GTK+ client on Unix systems],
+[ GTK_CLIENT="$enableval" ],[ GTK_CLIENT="yes" ])
+
+AC_ARG_ENABLE(curses-client,
+[  --enable-curses-client  include curses client],
+[ CURSES_CLIENT="$enableval" ],[ CURSES_CLIENT="yes" ])
+
+AC_ARG_ENABLE(win32-client,
+[  --enable-win32-client   include graphical Win32 client on Windows systems],
+[ WIN32_CLIENT="$enableval" ],[ WIN32_CLIENT="yes" ])
+
+WIN_RC=""
+WIN_RES=""
+WIN_MAKE_RES="/dev/null"
+
+dnl Test for Cygwin environment
+AC_CYGWIN
+dnl Let the user override this with the --enable-nativewin32 option
+AC_ARG_ENABLE(nativewin32,
+[  --enable-nativewin32    build a native Win32 binary under Cygwin],
+[ CYGWIN="$enableval" ])
+
+if test "$CYGWIN" = "yes" ; then
+   AC_MSG_RESULT("Configuring for native Win32 binary under Cygwin")
+   AC_DEFINE(CYGWIN)
+   CFLAGS="$CFLAGS -mwindows -fnative-struct -mno-cygwin"
+   LIBS="$LIBS -lwsock32 -lcomctl32"
+   if test "$WIN32_CLIENT" = "yes" ; then
+      WIN_RC="dopewars.rc"
+      WIN_RES="dopewars.res"
+      WIN_MAKE_RES="$srcdir/cygwin.am"
+      AC_DEFINE(WIN32_CLIENT)
+   fi
+   GTK_CLIENT="no"
+
+   dnl Glib stuff
+   LDFLAGS="$LDFLAGS -lglib-1.3"
+else
+   AC_MSG_RESULT("Configuring for Unix binary")
+   dnl On true Unix systems, test for valid curses-like libraries
+   if test "$CURSES_CLIENT" = "yes" ; then
+      AC_CHECK_LIB(ncurses,initscr)
+      if test "$ac_cv_lib_ncurses_initscr" = "no" ; then
+         AC_CHECK_LIB(curses,initscr)
+         if test "$ac_cv_lib_curses_initscr" = "no" ; then
+            AC_CHECK_LIB(cur_colr,initscr)
+            if test "$ac_cv_lib_cur_colr_initscr" = "no" ; then
+               AC_MSG_WARN(Cannot find any curses-type library)
+               CURSES_CLIENT="no"
+            fi
+         fi
+      fi
+   fi
+
+   if test "$GTK_CLIENT" = "yes" ; then
+      dnl Tests for GTK
+      AM_PATH_GTK(1.2.0,gtk_found="yes",gtk_found="no")
+      if test "$gtk_found" = "no" ; then
+         AC_MSG_WARN(Cannot find GTK+)
+         GTK_CLIENT="no"
+      fi
+   fi
+
+   WIN32_CLIENT="no"
+
+   if test "$GTK_CLIENT" = "yes" ; then
+      AC_DEFINE(GTK_CLIENT)
+   fi
+
+   dnl Glib stuff
+   CFLAGS="$CFLAGS `glib-config --cflags`"
+   LDFLAGS="$LDFLAGS `glib-config --libs`"
+fi
+
+if test "$CURSES_CLIENT" = "yes" ; then
+   AC_DEFINE(CURSES_CLIENT)
+fi
+
+if test "$CURSES_CLIENT" = "no" -a "$GTK_CLIENT" = "no" -a "$WIN32_CLIENT" = "no" ; then
+   AC_MSG_WARN(No clients will be compiled - binary will be server/AI only!)
+fi
+
+AC_SUBST(WIN_RC)
+AC_SUBST(WIN_RES)
+AC_SUBST_FILE(WIN_MAKE_RES)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Can we use a long long datatype for price_t ?
+AC_CHECK_SIZEOF(long long)
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_FUNC_SETVBUF_REVERSED
+AC_FUNC_STRFTIME
+AC_CHECK_FUNCS(strdup strstr)
+
+dnl Enable networking by default under Win32, but on Unix systems
+dnl make it dependent on the availability of select and socket
+network="no"
+if test "$CYGWIN" = "yes" ; then
+   network="yes"
+else
+   dnl Check for socket and select even if networking gets manually
+   dnl disabled below, since select is used if available for
+   dnl millisecond sleeping
+   AC_CHECK_FUNCS(socket select)
+   if test "$ac_cv_func_select" = "yes" ; then
+      if test "$ac_cv_func_socket" = "yes" ; then
+         network="yes"
+      fi
+   fi
+fi
+
+dnl Let the user override this with the --enable-networking option
+AC_ARG_ENABLE(networking,
+[  --enable-networking     dopewars will use TCP/IP to connect to servers],
+[ network="$enableval" ])
+
+dnl Inform the user of the status of networking
+if test "$network" = "yes" ; then
+   AC_DEFINE(NETWORKING)
+   AC_MSG_RESULT(dopewars will use TCP/IP networking to connect to servers)
+else
+   AC_MSG_RESULT(Networking disabled; only single-player mode will be available)
+fi
+
+dnl Enable full warnings if using gcc
+if test -n "$GCC"; then
+   CFLAGS="$CFLAGS -Wall"
+fi
+
+dnl Pass the data directory to the compiler so the program knows
+dnl where the high score file is
+CFLAGS="$CFLAGS -DDATADIR=\\\"${datadir}\\\""
+
+AC_OUTPUT([
+Makefile
+src/Makefile
+doc/Makefile
+intl/Makefile
+po/Makefile.in],
+[sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile])

@@ -1,0 +1,361 @@
+1.4.9
+    - Internationalization (i18n) support
+    - Networking revamped - now uses nonblocking sockets to improve server
+      responsiveness and to remove deadlocks (previously, any client could
+      halt server by sending an unterminated message)
+    - Longer T>alk and P>age messages allowed in curses client
+    - Minor bug fixes to configure options
+    - Client-side code moved out of clientside.c and dopewars.c;
+      client-specific code now placed in <xxx>_client.c, while generic code is
+      in message.c
+    - GTK+ client added
+    - Native "pointy-clicky" Win32 graphical client added
+    - GLib dependency introduced; string and list handling is taken care of
+      now by GLib routines
+    - Configuration files now handled by GLib's GScanner; "string lists"
+      (of the format { "string1", "string2", "string3" } ) are now supported
+      for configuration of subway sayings, "stopped to" and overheard songs
+    - Timeouts bug fixed
+    - MaxClients bug fixed
+
+1.4.8   09-07-2000
+    - Several fixes to Win32 networking code
+    - IdleTimeout and ConnectTimeout variables added, to allow the server to
+      break connections that have been idle for too long, or take too long
+      to (dis)connect, respectively
+    - Servers now use UDP packets to communicate with metaserver, for 
+      a faster response to changing game conditions; the client, and older
+      versions of the server, still use the "old" CGI script interface;
+      MetaServer.Port variable split into .HttpPort and .UdpPort
+    - MetaServer.Password can now be used with a blank MetaServer.LocalName
+      (with the new metaserver interface only) in order to identify servers
+      whose IPs are dynamic (but are otherwise the "same" server); this password
+      must, again, be acquired from the metaserver maintainer
+    - Metaserver now records current & maximum numbers of players, high
+      scores, and last update time and uptime, for each server
+    - Servers now re-register with metaserver when players join or leave,
+      on receipt of a SIGUSR1 signal, and periodically
+    - Metaserver list in client now lists uptime, and current/maximum
+      numbers of players
+    - Pid file maintained while in server mode (-r command line switch)
+    - Names of the gun shop, pub, bank and loan shark can now be customised
+      (GunShopName, RoughPubName, BankName and LoanSharkName)
+    - When a player tries to run from a fight, running to the current location
+      now takes them back to the fighting screen
+
+1.4.7   14-01-2000
+    - Minor fixes to Win32 code
+    - dopewars now uses autoconf to (hopefully) build properly on odd sytems
+      such as HP-UX, and also to build "out of the box" under Cygwin (win32)
+    - long long datatype used for all prices on platforms that support it
+    - fixes to strtoprice and pricetostr code; replacement of code which
+      uses printf("%ld") for prices with pricetostr calls (with thanks to
+      Coolio)
+    - "Leave" option added to Bank
+    - Messages window is now only displayed for network games
+    - Binary can be compiled without TCP/IP networking support (e.g. for use
+      on standalone systems) by configuring with --disable-networking
+    - Minor modification to config. file handling to allow variables to be set
+      to null strings (use "Variable=")
+    - Option to allow the "local" server name to be specified when registering
+      with the metaserver - MetaServer.LocalName variable. Useful when the
+      metaserver refuses to resolve your IP address to your "preferred" domain
+      name or when connecting via. an enforced web proxy. Email the metaserver
+      maintainer, for an authentication password (MetaServer.Password) linked to
+      your chosen domain name, to use this option successfully.
+
+1.4.6   12-11-1999
+    - Bug fix for message window and "sew you up" prompt
+    - Bug fix for server hanging in LoseBitch function
+    - If player opts to play again, server selection method used last time
+      is used again
+    - Terminal resizing now handled properly
+    - Port to Win32 (Windows 95,98,NT) console mode
+
+1.4.5   21-10-1999
+    - Limited support now for terminals at sizes other than 80x24; but response
+      to a resize during the program run doesn't work properly yet...
+    - Minor improvements to AI players
+    - Corrected website address displayed by client on connecting to a
+      server of a different version
+    - If player opts to play again, defaults to the name they used last time
+    - Server now disconnects clients when their game ends (rather than
+      waiting for them to politely disconnect) - this gets around the problem
+      of particularly unresponsive clients getting killed and then sitting
+      around in an "undead" state, able to be repeatedly killed by other
+      players
+    - Armed players cannot now "stand and take it" (why would you want to
+      anyway?) in multiplayer fights
+    - Client now offers to obtain the list of available servers from the
+      metaserver, to select one to connect to
+    - "Special" values (MetaServer), (Prompt) and (Single) (including the
+      brackets) now accepted for the "Server" variable, which instruct the
+      client to list the servers, prompt the user for a server, or play
+      in single-player mode, rather than connecting immediately to a server
+    - "MetaServer.Port" variable added to facilitate connection to the
+      metaserver via. a proxy server (with thanks to Tony Brown)
+    - Signal handling cleaned up
+    - Buffer overflow problem with ExtractWord() fixed (hopefully) (with thanks
+      to Lamagra)
+    - Command line option -S for running a "private" server (do not contact
+      the metaserver)
+    - Prices for spies and tipoffs can be customised; this information is not
+      communicated properly between 1.4.5 and earlier versions, of course.
+      In such a case, the game will still work properly, although the client
+      may report erroneous spy and tipoff prices
+    - Fixed dodgy "pricetostr" function
+    - Bug fix for "Drop" command in single-player mode
+    - Command line option -g for specifying a supplementary configuration file
+    - FightTimeout variable fixed - it now actually does something...
+    - GunShop, LoanShark, RoughPub and Bank variables corrected so that they
+      take actual location numbers now - not (location-1). WARNING: this
+      breaks old configuration files!
+    - Full HTML documentation now provided
+    - Prices of bitches for hire can now be configured - Bitch.MinPrice and
+      Bitch.MaxPrice
+    - Removed description of non-existent "die" command in server
+    - Minor fixes in antique mode
+    - Fix of NumDrug and NumGun processing (now allows more than the default
+      number of drugs and guns) (with thanks to Matt Higgins)
+    - "ConfigVerbose" option added to display extra feedback during config
+      file processing (with thanks to Matt Higgins)
+
+1.4.4   16-09-1999
+    - Full compatibility with 1.4.3 servers and clients maintained
+      (although a warning is displayed to upgrade as soon as possible)
+    - dopewars client now properly redraws the screen when Ctrl-L is pressed
+    - Server output is now line-buffered by default for more sensible output
+      of log files
+    - L>ist bug in single player mode fixed
+    - Number of game turns can now be configured with the "NumTurns"
+      variable, or the game can be left to go on forever if it's set to zero
+    - The shortcuts "k" and "m" are now supported in any input of numbers
+      (e.g. money to put in the bank). So, for instance, typing 1.5m would
+      be short for typing 1500000  (m=million, k=thousand)
+    - Server now automatically contacts the dopewars metaserver (actually
+      a CGI script), at bellatrix.pcl.ox.ac.uk, whenever it is brought up or
+      down, to keep the list of servers on the dopewars webpage up to date.
+      Aspects of the server's communication with the metaserver can be
+      configured with the MetaServer.xxx variables
+    - Names of the two police officers which chase you (originally
+      Hardass and Bob) can now be configured with the variables
+      "Names.Officer" and "Names.ReserveOfficer" respectively
+      (provided by: Mike Meyer)
+    - Several uses of the  string constant "bitches" rather than
+      the variable "Names.Bitches" have been spotted, and corrected
+      (provided by: Mike Meyer)
+    - "Sanitized" variable - if nonzero, removes drug references
+      (random events, the cops, etc.) - obviously drug names need to also
+      be changed in the config. file to complement this. Turns dopewars into
+      a simple trading game
+      (provided by: Mike Meyer)
+    - Minor formatting cleanups to accommodate longer drug names on the
+      screen neatly
+      (provided by: Mike Meyer)
+
+1.4.3   23-06-1999
+    - Bug with random offer of weed/paraquat fixed
+    - L>ist command now offers list of logged-on players or high scores
+    - "Out of time" message to explain why the game stops suddenly after
+      31 days
+    - Bank is now a little more user-friendly
+    - Messages announcing players leaving or joining the game now appear in
+      the central "messages" window, rather than the main, bottom window
+    - Clients should now behave properly after the server crashes (or they
+      are pushed off the server) - i.e. they should revert to a single-player
+      mode game
+    - price_t type used for all prices
+    - Server interactive interface is now greatly improved, complete with
+      help screen
+    - SO_REUSEADDR set so that server can be restarted immediately if it crashes
+    - Facility to drop unwanted drugs, with the accompanying chance that you
+      are caught by Officer Hardass and shot at
+    - Fighting interface greatly improved:-
+      - All player-player fighting now occurs in a specialised window. Players
+        can switch between the standard "deal drugs" window and the fighting
+        window with the D and F keys
+      - Number of keystrokes required to shoot and acknowledge all the
+        relevant messages now greatly reduced
+      - Some indication is now given of the other player's status (number of
+        bitches and guns)
+      - Server now imposes timeouts on fights, so if an opponent does not
+        return fire within a set time, a repeat attack is allowed
+      - A bounty is paid out for killing an enemy bitch, and any guns/drugs
+        they're carrying are passed on to the victor (if he/she is able to
+        carry them)
+      - A dead player's cash is appropriated by the victor of a fight
+    - Handling of configuration files now greatly improved; the same options
+      that are set here can also be set within the server as long as no
+      players are connected. A large number of dopewars settings can be
+      changed and customised from here. Customised settings will be used
+      in single-player mode, and if dopewars is used as a server the settings
+      will be propagated to any clients (of version 1.4.3 or higher) that
+      connect. Not everything can be customised, but any remaining changes
+      should be server-side only (and thus require no alteration to the 
+      clients). Options include:-
+      - MaxClients option to limit the maximum number of players connected
+        to the server
+      - FightTimeout option to alter the length of the fight timeout
+      - StartCash and StartDebt to change the default starting cash and debt
+        of every player
+      - Probabilities and toughness of Officer Hardass and his deputies can
+        be "tweaked"
+      - Numbers and names of locations, drugs and guns can be altered
+      - The words used to denote "bitches", "guns" and "drugs" can be 
+        customised
+      - Drugs can now be sorted by name or by price, in forwards or reverse
+        order, with the DrugSortMethod option (can take values 1-4)
+
+1.4.2   16-05-1999
+    - AI player improvements
+    - Message structure changed to use less bandwidth and neater code
+    - Now easier to break out of buy/sell drug prompts etc. (by pressing an 
+      'invalid' key or ENTER)
+    - Cleanup of player list
+    - Cleanup after a player leaves the server; i.e. remove any references to
+      their spies or tipoffs with other players
+    - Added highlight of most recent score (for systems without working 
+      A_STANDOUT attribute)
+    - Fixed bug which caused all street-bought (i.e. not at Dan's gun shop)
+      guns to be Saturday Night Specials
+    - Prevented badly-behaved clients from continuing to jet to new locations
+      after their death 
+    - Added code to remove whitespace from name=value data read from 
+      configuration file, and defaulted from $HOME/.dopewars to /etc/dopewars
+    - Added "helpful" messages when guns cannot be bought or sold in gun shop
+    - Minor cleanups of player-player fighting messages
+
+1.4.1b  28-04-1999
+    - segfault bug in server fixed
+
+1.4.1a  28-04-1999
+    - Interim release before 1.4.2; a few bug fixes in antique mode
+
+1.4.1   27-04-1999
+    - Fix of bug where paying off your debt would actually _increase_ it!
+      Dunno how that one slipped through... I blame my beta testers... ;)
+
+1.4.0   27-04-1999
+    - Fixed bug with server; server now detects if standard input has
+      been closed properly (previously if its input was redirected from
+      /dev/null it would keep trying to read from it, using 100% CPU. Oops.)
+    - First release under GPL
+
+1.3.8   26-04-1999
+    - Message structure changed; separator changed from : to ^ and extra
+      field added to identify messages to AI players
+    - Shorthand routines added for "printmessage" and "question" messages;
+      SendPrintMessage and SendQuestion repectively
+    - Display of status of fight with Officer Hardass cleaned up
+    - All servers are now interactive; to run in background simply attach
+      standard input and output to /dev/null
+    - AI Player can now connect to server and perform simple actions
+    - Bank and Loan Shark display cleaned up
+    - Drug busts etc. now displayed all at once rather than singly
+    - High scores now maintained by server
+    - print_price replaced with FormatPrice
+    - LOGF macro now used for all server log messages
+    - Read in location of score files, server, port from ~/.dopewars
+    - Fixed bugs in player-player fighting code
+
+1.3.7   28-03-1999
+    - Proper support for tipoffs and spies
+    - Discovered spies cannot now be shot if you don't have a gun...
+    - Option added for computer players (non-functional however)
+
+1.3.6   14-03-1999
+    - BreakoffCombat routine added to terminate fights cleanly when one
+      player runs away from a fight (under 1.3.5 defending player would
+      just hang when this was done...)
+
+1.3.5   27-02-1999
+    - Basic support for meeting other players; E_MEETOTHER event added
+    - Simple player-player fights allowed with the use of E_WAITFIGHT,
+      E_DEFEND and E_ATTACK events 
+    - Two players with same name bug fixed
+    - "question" message extended; server now passes a list of allowed
+      responses in the first "word" of message data
+
+1.3.4   25-02-1999
+    - Client and virtual server now maintain completely separate lists of
+      players
+    - GunShop now works properly; user can actually see what's going on!
+
+1.3.3   23-02-1999
+    - Complete implementation of fighting with Officer Hardass
+    - E_DOCTOR event added to handle question "do you want a doctor to
+      sew you up?" after killing Hardass
+    - Clients now handle list and endlist messages properly to display
+      lists of current players on starting a game
+    - Minor bugfix to ensure game actually ends after the 31st
+    - Client now wipes price list on each jet to stop old prices
+      flashing up between messages from the server
+
+1.3.2   22-02-1999
+    - "subwayflash" message added
+    - OfferObject/RandomOffer split into separate event from OfficerHardass
+    - "smoke paraquat" also given separate event (E_WEED) and implemented
+    - Bank/LoanShark bugfixes
+    - Bugfix for drug price generation code
+    - Partial implementation of fighting with Officer Hardass
+
+1.3.1   21-02-1999
+    - Drugs can now be bought and sold
+    - RandomOffer and OfferObject routines added to handle server-based
+      random events ("a friend gives you..." etc.) and object offers ("do
+      you want to buy a..." etc.) although "smoke paraquat?" doesn't
+      work properly
+    - GunShop / LoanShark / Bank / Pub all handled by the server now
+    - Some networking bugfixes 
+
+1.3.0   20-02-1999
+    - Development series (moving decision-making from client to server to
+      improve multi-player games and cut down on cheating, in preparation
+      for an OpenSource release)
+    - Simple implementation of a "virtual server" to handle the server-side
+      stuff within a single-player game
+    - Splitting up of Dopewars into dopewars.c (init. code and utils)
+                                    message.c (message-handling code)
+                                    serverside.c (server-side code)
+                                    clientside.c (client-side code)
+    - Drug prices now generated by server, not client - so synchronisation
+      of turns (and drug prices) should be easy to implement in the future
+    - Minimal functionality - networking backbone only...
+
+1.2.0   13-02-1999
+    - Stable release; some bugs in fighting code cleaned up
+
+1.1.26  13-02-1999
+    - "PolicePresence" member is now read - when a fight is started, there
+      is a finite chance (varies from location to location) that the
+      perpetrator will get attacked by the police
+    - MinDrug and MaxDrug members added to Location struct - some locations
+      may have a smaller range of drugs on offer than others
+
+1.1.25  11-02-1999
+    - Added an "Inventory" struct to keep track of players' belongings
+      and anything dropped during a fight; winner of a fight now gets
+      whatever the other player dropped (guns and/or drugs)
+
+1.1.24  9-02-1999
+    - Put in code to "finish" fights properly when one player escapes
+    - Attacking player is now told whether they hit the other player or
+      not when in a fight
+
+1.1.23  3-02-1999
+    - "Jet" command replaced with "Run" when in a fight
+    - "PolicePresence" member added to Location struct
+    - GunShop bug fixed (guns were taking up no space) 
+
+1.1.22  30-01-1999
+    - Implemented very simple "shoot at another dealers" code; players, on
+      arriving at a location where another dealer already is, can choose
+      to attack (if they have any guns). The attacked player can then
+      choose to return fire or run for it...
+
+1.1.21  29-01-1999
+    - Added support for the "spy on another dealer" bitch errand
+
+1.1.20  29-01-1999
+    - Added support for the "tip off another dealer to the cops" bitch
+      errand

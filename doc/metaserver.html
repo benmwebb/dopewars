@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>The dopewars metaserver</title>
+</head>
+
+<body>
+<h1>The dopewars metaserver</h1>
+
+Every dopewars <a href="server.html">server</a> is different, due to their
+differing locations and configurations. Thus some centralised system for
+listing the currently available servers and displaying some sort of comment
+about the games running on them is necessary, to enable client players to
+pick the game that most suits them. This is the function of the dopewars
+<b>metaserver</b>.<p>
+
+<ul>
+<li><a href="#location">Metaserver location</a>
+<li><a href="#client">Using the metaserver from the client</a>
+<li><a href="#server">Using the metaserver from the server</a>
+<ul>
+<li><a href="#wrongip">But it's displaying the wrong IP address!</a>
+<li><a href="#dynamicip">But my server has a dynamic IP...</a>
+</ul>
+</ul>
+
+<a name="location"><h2>Metaserver location</h2></a>
+The metaserver has a CGI (web) interface for humans and dopewars clients to 
+read from, and a UDP interface for servers to report to. It lives at the
+same place as the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/">
+main dopewars page</a>; the CGI interface listens on TCP port 80, and the
+UDP interface on port 7802. These are the default settings which all
+dopewars servers and clients use for metaserver communication.<p>
+
+<a name="client"><h2>Using the metaserver from the client</h2></a>
+Players who want to use the metaserver to list the currently available
+servers should go to
+<a href="http://bellatrix.pcl.ox.ac.uk/~ben/cgi-bin/serverlist.pl">this
+link</a>, or just follow the "Servers" link from the main dopewars web page.
+It cannot be guaranteed that all the listed servers are functional - they
+may, for example, have been registered in error, or a server may have crashed
+since being added to the list - but the list is checked daily for service,
+and so there is at least a good chance that the servers listed there will
+be working.<p>
+
+The metaserver, being a collection of CGI scripts, should work happily on
+most machines which have web access. A problem occurs, however, if your
+connection to the Web is via. an enforced proxy server (i.e. traffic on
+port 80 from your machine is blocked by firewall). dopewars can be
+configured to connect via. a proxy server without too much difficulty; if
+your proxy server is at <i>proxy.com</i> on port <i>8080</i> then you should
+add the following lines to your dopewars <a href="configfile.html">
+configuration file</a>:-<br>
+<b>MetaServer.Name=proxy.com<br>
+MetaServer.Port=8080<br>
+MetaServer.Path=http://bellatrix.pcl.ox.ac.uk/~ben/cgi-bin/server.pl</b><p>
+
+<a name="server"><h2>Using the metaserver from the server</h2></a>
+People running servers who <b>do not</b> want their details listed by the
+metaserver should disable the metaserver comunication of the server with
+the <a href="configfile.html#MetaServerActive">MetaServer.Active=0</a>
+configuration file setting, or the <b>-S</b>
+<a href="commandline.html#privateserver">command line option</a>. Servers
+which <b>do</b> register their details can have their accompanying comment
+set with the <a href="configfile.html#MetaServerComment">
+MetaServer.Comment</a> configuration file setting.<p>
+
+Each dopewars server notifies the metaserver of its current status, and
+sends this data on startup and shutdown, and when players leave or join the
+game. See the <a href="server.html">server page</a> for more details.<p>
+
+<a name="wrongip"><h3>But it's displaying the wrong IP address!</h3></a>
+Once connected to the metaserver, you may find that it incorrectly
+displays the domain name of your server machine. This is usually because the
+metaserver cannot resolve your IP address to a domain name.<p>
+
+In this case, you will need to override the hostname that the metaserver
+guesses for your machine with one you choose yourself. This is done by
+specifying the hostname with the MetaServer.LocalName variable in your dopewars
+<a href="configfile.html">configuration file</a>. In order to prevent abuse
+of this facility, you must obtain a password from the metaserver maintainer to
+authenticate your chosen hostname.
+<a href="mailto:ben@bellatrix.pcl.ox.ac.uk">Email</a> the maintainer, giving
+the exact hostname you want to use (be aware that this is case-sensitive) and
+you will be given a password. Specify this password with the MetaServer.Password
+variable in the dopewars configuration file.<p>
+
+For example, if you wish your server to be known as <b>dope-serv.com</b> and
+you have emailed the maintainer, receiving the password <b>Dope-Auth</b>, then
+add the following to the dopewars configuration file:-<br>
+<b>MetaServer.LocalName=dope-serv.com<br>
+MetaServer.Password=Dope-Auth</b><p>
+
+Restart your dopewars server, or send it a SIGUSR1 signal, for the change to
+take effect. Bear in mind that if you make up a non-existent or invalid domain
+name, the metaserver will accept it, but the server will be removed from the
+metaserver's list when it is checked daily for service.<p>
+
+<a name="dynamicip"><h3>But my server has a dynamic IP...</h3></a>
+Finally, your server's IP may be resolved happily, but you may have a connection
+to the internet which assigns you a dynamic IP. Consider what happens if your
+connection is broken before the dopewars server exits; the metaserver will
+list the IP of the "old" server, and you will now have no way of removing that
+entry when your connection comes back up, as your IP will be different. In
+this case, you can <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">email</a> the
+metaserver maintainer, and specify a blank MetaServer.LocalName variable.
+You will again receive a MetaServer.Password variable (see 
+<a href="#wrongip">above</a>), which the metaserver
+will use to identify "your" server; now, when your internet connection is
+restored, the server registration with the "new" IP will automatically replace
+the "old" one.
+
+<hr>
+<ul>
+<li><a href="index.html">Main index</a>
+</ul>
+Last update: <b>09-07-2000</b>
+</body>
+</html>

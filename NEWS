@@ -1,0 +1,73 @@
+2nd July 2000
+     A mirror in the US is now available for dopewars downloads. Follow the US
+links (as opposed to the UK links) on the download page to download from this
+site.
+
+14th January 2000
+     dopewars 1.4.7 released. This now uses autoconf to build on a variety
+of "odd" Unices, and also "out of the box" under Cygwin (Win32). Servers for
+which the IP is incorrectly resolved by the metaserver can now set a
+preferred hostname with the "MetaServer.LocalName" variable.
+
+31st Decemeber 1999
+     The Polish version of dopewars has moved to http://dresswars.mtl.pl/
+
+12th November 1999 
+     dopewars 1.4.6 released. This fixes a few minor bugs with 1.4.5, and is now
+also available on the popular Windows platform. A Win32 binary can be downloaded
+from the download page,
+http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/download.html.
+
+8th November 1999 
+     A translation of the dopewars pages and dopewars client software into
+Polish is now available at http://naboo.mtl.pl/~dopewars/.
+
+21st October 1999 
+     dopewars 1.4.5 released. Client players can now be instructed to connect to
+the metaserver, to present a "nice" list of available servers for the user to
+select from; more configuration options; metaserver almost works with web
+proxies now.
+
+11th October 1999 
+     Snapshots of the latest in-development version of dopewars are now made
+available on a semi-regular basis at the main download page. HTML documentation
+is also now available.
+
+16th September 1999 
+     dopewars 1.4.4 released. This handles connection to the new metaserver
+automatically, so that the list of dopewars servers can be easily kept up to
+date. Other minor changes fix small bugs from earlier versions.
+
+15th September 1999 
+     Servers can now be registered by completing the form at 
+http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/serverform.html. The upcoming
+version 1.4.4 of dopewars will be able to handle the connection to the web and
+the completion of registration details automatically.
+
+23rd June 1999 
+     dopewars 1.4.3 released. This adds many new features (while hopefully not
+adding any new bugs) such as much better fight handling, and the ability to
+customise dopewars servers and clients.
+
+16th May 1999 
+     dopewars 1.4.2 released. This version fixes numerous minor bugs and makes
+many small improvements - most noticeable is the support for AI players in
+multiplayer games (dopewars -c).
+
+28th April 1999 
+     Interim release of dopewars 1.4.1b, which fixes a segfault problem with the
+server.
+
+28th April 1999 
+     Interim release of dopewars 1.4.1a, which corrects a few minor bugs in
+"antique" mode.
+
+27th April 1999 
+     dopewars 1.4.1 released. This fixes a bug with the loan shark, which was
+discovered by several people quick off the mark; dunno how that slipped past my
+team of beta testers here at Oxford - they're obviously too busy doing "real"
+work!
+
+27th April 1999 
+     First GPL release of dopewars (1.4.0) 
+

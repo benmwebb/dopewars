@@ -1,0 +1,25 @@
+- Fix GTK+ modal dialog behaviour (scrolling of messages, mouse grabbing)
+- Revamp player-player fighting
+- Display purchase price of drugs?
+- Increase cops' toughness - they should kill a bitch in 50-70% of encounters
+  (and damage should be cumulative)
+- Increase difficulty of escaping from another player - impose penalty on
+  running (lose drugs, free shot, destination revealed)
+- Alliances/cartels - several players share cash
+- Fix spying in server (currently you can spy on other players _before_ they
+  accept your bitch!)
+- Graphical mode server? (would avoid select() problems under Win32)
+- Revamp protocol - e.g. remove From/To names from messages - without breaking
+  backwards compatibility (tricky!)
+- Problems reported with display of large prices and health - must fix
+- Introduce minimum/maximum players options - AI players automatically
+  spawned/killed to "fill the gaps" when humans leave/enter
+- "Deal" option when meeting players?
+- Bribe/steal bitches when meeting players (difficulty inv. prop. to number of
+  bitches?)
+- Fix bug with players leaving the game during fights (first, must find it)
+- Metaserver keeps list of game types of each server
+Cannot reproduce... can you? (- Investigate deadlock during fighting if both
+                                players move to "deal")
+Cannot reproduce... can you? (- Investigate prompt for bitch on every turn
+                                after a spy is dispatched)

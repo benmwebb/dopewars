@@ -1,0 +1,2 @@
+dopewars.res : dopewars.rc
+	(echo "#include <windows.h>"; tr -d '\r' < dopewars.rc) | windres -O coff -o dopewars.res

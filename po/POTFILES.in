@@ -1,0 +1,10 @@
+# List of source files containing translatable strings
+
+src/dopewars.c
+src/dopeos.c
+src/curses_client.c
+src/gtk_client.c
+src/win32_client.c
+src/serverside.c
+src/message.c
+src/AIPlayer.c

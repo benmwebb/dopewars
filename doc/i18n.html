@@ -1,0 +1,101 @@
+<html>
+<head>
+<title>Internationalization</title>
+</head>
+
+<body>
+<h1>Internationalization</h1>
+
+dopewars uses the <a href="http://www.gnu.org/manual/gettext/">GNU gettext</a>
+utilities for internationalization (i18n) support. This allows the software
+to be translated into the local language at runtime - run dopewars in the UK
+and it'll talk to you in English, but run it in Germany and it'll talk to you
+in German. This relies on translators to translate the program's output into
+each language beforehand, of course, and so native language speakers to carry
+out this task are always needed!
+
+<h2>Running dopewars with i18n support</h2>
+i18n is only included in versions of dopewars later than 1.4.8. By default,
+"Native Language Support" is compiled in; binary installations should be
+already set up for i18n. When compiling dopewars from source code, the
+<tt>configure</tt> script should detect whether your system can support
+GNU gettext. If it can, but the gettext utilities themselves are not present,
+an included copy in the <tt>intl/</tt> subdirectory is used. To disable i18n,
+pass the <tt>--disable-nls</tt> option to the <tt>configure</tt> script.<p>
+
+When you run your installed copy of dopewars, it should detect your "locale"
+automatically and talk to you in your native language. If this does not happen,
+the following are some possible explanations:-
+<ul>
+<li>dopewars cannot find the locale-specific language file - by default, stored
+under /usr/local/share/locale/
+<li>Your language is not yet supported - why not add it yourself?
+<li>Your system does not have locale support
+<li>You haven't set an environment variable to specify your locale (usually
+this is done automatically). For example, if you're using the <tt>bash</tt>
+shell and want a German translation, the command "<tt>export LANG=de</tt>"
+should fix the problem.
+</ul>
+
+<h2>Adding a new translation</h2>
+Translation files are kept in the subdirectory <tt>po/</tt> of the dopewars
+source code distribution. They are named by
+<a href="http://userpage.chemie.fu-berlin.de/diverse/doc/ISO_639.html">
+2-letter language codes</a> followed by the <tt>.po</tt> extension - for
+example, the German translation is stored in the file <tt>po/de.po</tt>.
+They are simple text files, consisting of lists of the original English string
+(labelled by "msgid") followed by the translated string (labelled by
+"msgstr").<p>
+
+Adding a new translation is simply a matter of copying the reference file
+<tt>dopewars.pot</tt> to your language-specific <tt>.po</tt> file in the <tt>po/</tt> directory, and filling
+in the "msgstr" entries. Once this is done, edit the <tt>configure.in</tt>
+file in the top dopewars directory to add your language code to the
+<tt>ALL_LINGUAS</tt> variable. Then run <tt>autoconf</tt> to rebuild the
+<tt>configure</tt> script, before making and installing dopewars as usual. The
+new translation should now be available. Once this is complete, please
+<a href="mailto:ben@bellatrix.pcl.ox.ac.uk">send</a> the translation to be
+included in the next dopewars version.<p>
+
+Please note that some strings are <b>format strings</b> containing the %
+character. These are used in the program code for substituting numbers and
+other pieces of text into the string - these substitutions are are performed
+using variables which are specified in the <b>same order</b> as the %
+characters in the format string. For example, the following format string
+substitutes in a string (%s) and an integer number (%d):-<br>
+<tt>"String '%s' has %d characters"</tt><br>
+The string and number are specified in order in the code. This is problematic
+if your translation changes the order - for example, a valid German translation
+of the string would be<br>
+<tt>"%d Zeichen lang ist die Zeichenkette '%s'"</tt><br>
+Now the number and string are specified in the wrong order, and this will
+probably crash the program on running! To fix this, use the special notation<br>
+<tt>"%2$d Zeichen lang ist die Zeichenkette '%1$s'"</tt><br>
+(i.e. replace <b>%x</b> with <b>%n$x</b> where <b>n</b> is the index that the
+format specifier "should" have, starting from 1.)<p>
+
+<h2>Updating a translation for a new dopewars version</h2>
+New versions of dopewars will often change what is printed to the user, and
+so may may require changes to the translation. To update an existing
+translation, "<tt>make</tt>" the new version of dopewars. This will create
+a <tt>dopewars.pot</tt> file listing the strings that need translating. Change
+into the <tt>po/</tt> subdirectory, and create a new translation file from
+your "old" translation file (we'll assume it's called <tt>de.po</tt>) and
+<tt>dopewars.pot</tt> with the <tt>msgmerge</tt> command:-<br>
+<tt>msgmerge -o newfile de.po dopewars.pot</tt><br>
+Examine this new file <tt>newfile</tt> for translations that need updating
+(a search for "fuzzy" should find most of them) and then overwrite your old
+translation with the new one:<br>
+<tt>mv newfile de.po</tt><br>
+Rebuild and reinstall dopewars, and the new translations should become
+available. Again, it is deeply appreciated if such updated files are
+contributed to the main dopewars distribution!<p>
+
+<hr><br>
+<ul>
+<li><a href="index.html">Main index</a>
+</ul>
+Last update: <b>09-09-2000</b>
+
+</body>
+</html>

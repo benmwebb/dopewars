@@ -1,0 +1,103 @@
+This is dopewars 1.4.8, a game simulating the life of a drug dealer in 
+New York. The aim of the game is to make lots and lots of money...
+unfortunately, you start the game with a hefty debt, accumulating interest,
+and the cops take a rather dim view of drug dealing...
+
+These are brief instructions; see the HTML documentation for full information.
+
+dopewars 1.4.8 servers should handle clients as old as version 1.4.3 with
+hardly any visible problems (the reverse is also true). However, it is
+recommended that both clients and servers are upgraded to 1.4.8!
+
+INSTALLATION
+
+Either...
+
+1. Get the relevant RPM from http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/
+   
+Or...
+
+2. Get the tarball dopewars-1.4.8.tar.gz from the same URL
+   Extract it via. tar -xvzf dopewars-1.4.8.tar.gz
+   Follow the instructions in the INSTALL file in the newly-created
+      dopewars-1.4.8 directory
+
+Once you're done, you can safely delete the RPM, tarball and dopewars
+directory. The dopewars binary is all you need!
+
+dopewars stores its high score files by default in /usr/share/dopewars.sco
+This will be created by make install or by RPM installation. A different high 
+score file can be selected with the -f switch.
+
+WIN32 INSTALLATION
+
+dopewars now compiles as a console application under Win32 (Windows 95,98,NT).
+Almost all functionality of the standard Unix binary is retained; for example,
+all of the same command line switches are supported, and configuration files
+are still looked for in $HOME/.dopewars (so set the environment variable HOME
+to something sensible if it is not set and you want to use this feature).
+
+The easiest way to install the Win32 version is to download the precompiled
+binary. The supplied configure script, however, should build the binary
+correctly under Cygwin (see the INSTALL file for details).
+
+USAGE
+
+dopewars has built-in client-server support for multi-player games. For a
+full list of options configurable on the command line, run dopewars with
+the -h switch.
+
+dopewars -a
+This is "antique" dopewars; it tries to keep to the original dopewars, based
+on the "Drug Wars" game by John E. Dell, as closely as possible.
+
+dopewars
+By default, dopewars supports multi-player games. On starting a game, the
+program will attempt to connect to a dopewars server so that players can send
+messages back and forth, and shoot each other if they really want to...
+
+dopewars -s
+Starts a dopewars server. By default this is an interactive server; if you
+want to put it in the background, then run it as 
+"dopewars -s < /dev/null > /dev/null &" or similar.
+
+dopewars -c
+Create and run a computer dopewars player. This will attempt to connect
+to a dopewars server, and if this succeeds, it will then participate in
+multi-player dopewars games. At the moment, it does next to nothing, however!
+
+CONFIGURATION
+
+Most of the dopewars defaults (for example, the location of the high score file,
+the port and server to connect to, the names of the drugs and guns, etc.) can be
+configured by adding suitable entries to the dopewars configuration file. The
+global file /etc/dopewars is read first, and can then be overridden by the local
+settings in ~/.dopewars. All of the settings here can also be set on the command
+line of an interactive dopewars server when no players are logged on. See the
+file "example-cfg" for an example configuration file, and for a brief
+explanation of each option, type "help" in an interactive server.
+
+PLAYING
+
+dopewars is supposed to be fairly self-explanatory. You should be able to 
+pick the basics up fairly quickly, but still be discovering subtleties for 
+_ages_ ;) If you're _really_ stuck, send me an email. I might even answer it!
+
+Clue: buy drugs when they're cheap, sell them when they're expensive. The Bronx
+and Ghetto are "special" locations. Anything more would spoil the fun. ;)
+
+BUGS
+
+Well, there are bound to be lots. Let me know if you find any, and I'll see
+if I can fix 'em... of course, a working patch would be even nicer! ;)
+
+LICENCE
+
+dopewars is released under the GNU General Public License; see the text file
+LICENCE for further information.
+
+SUPPORT
+
+dopewars is written and maintained by Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+Enquiries about dopewars may be sent to this address (keep them sensible 
+please ;) Bug fixes and reports, improvements and patches are also welcomed.
