@@ -34,6 +34,7 @@
 #else
 #include <sys/socket.h> /* For struct sockaddr etc. */
 #include <netinet/in.h> /* For struct sockaddr_in etc. */
+#include <sys/un.h>     /* For struct sockaddr_un */
 #include <arpa/inet.h>  /* For socklen_t */
 #endif /* CYGWIN */
 
@@ -880,11 +881,45 @@ void RemovePlayerFromServer(Player *Play) {
    FirstServer=RemovePlayer(Play,FirstServer);
 }
 
+#ifndef CYGWIN
+static void CloseLocalSocket(int localsock) {
+  if (localsock>=0) close(localsock);
+  unlink("/tmp/.dopewars/socket");
+  rmdir("/tmp/.dopewars");
+}
+
+static int SetupLocalSocket(void) {
+  int sock;
+  struct sockaddr_un addr;
+
+  CloseLocalSocket(-1);
+
+  sock = socket(PF_UNIX,SOCK_STREAM,0);
+  if (sock==-1) return -1;
+
+  SetBlocking(sock,FALSE);
+
+  mkdir("/tmp/.dopewars",S_IRUSR|S_IWUSR|S_IXUSR);
+
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path,"/tmp/.dopewars/socket",sizeof(addr.sun_path));
+  addr.sun_path[sizeof(addr.sun_path)-1]='\0';
+
+  bind(sock,(struct sockaddr *)&addr,sizeof(struct sockaddr_un));
+
+  chmod("/tmp/.dopewars/socket",S_IRUSR|S_IWUSR);
+
+  listen(sock,10);
+  
+  return sock;
+}
+#endif
+
 void ServerLoop() {
 /* Initialises server, processes network and interactive messages, and */
 /* finally cleans up the server on exit.                               */
    Player *tmp;
-   GSList *list,*nextlist;
+   GSList *list,*nextlist,*localconn=NULL;
    fd_set readfs,writefs,errorfs;
    int topsock;
 // gboolean InputClosed=FALSE;
@@ -893,10 +928,17 @@ void ServerLoop() {
    GString *LineBuf;
    gboolean EndOfLine,DoneOK;
    gchar *buf;
+#ifndef CYGWIN
+   int localsock;
+#endif
 
 // if (fork()>0) return;
 
    StartServer();
+
+#ifndef CYGWIN
+   localsock=SetupLocalSocket();
+#endif
 
    LineBuf=g_string_new("");
    while (1) {
@@ -907,6 +949,15 @@ void ServerLoop() {
       FD_SET(ListenSock,&readfs);
       FD_SET(ListenSock,&errorfs);
       topsock=ListenSock+1;
+#ifndef CYGWIN
+      FD_SET(localsock,&readfs);
+      topsock=MAX(topsock,localsock+1);
+      for (list=localconn;list;list=g_slist_next(list)) {
+        NetworkBuffer *netbuf;
+        netbuf = (NetworkBuffer *)list->data;
+        SetSelectForNetworkBuffer(netbuf,&readfs,&writefs,&errorfs,&topsock);
+      }
+#endif
       if (MetaConn) {
          SetSelectForNetworkBuffer(&MetaConn->NetBuf,&readfs,&writefs,
                                    &errorfs,&topsock);
@@ -957,6 +1008,42 @@ void ServerLoop() {
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
+#ifndef CYGWIN
+      if (FD_ISSET(localsock,&readfs)) {
+        int newlocal;
+        NetworkBuffer *netbuf;
+        newlocal = accept(localsock,NULL,NULL);
+        netbuf=g_new(NetworkBuffer,1);
+        InitNetworkBuffer(netbuf,'\n','\r',NULL);
+        BindNetworkBufferToSocket(netbuf,newlocal);
+        SetBlocking(newlocal,FALSE);
+        localconn = g_slist_append(localconn,netbuf);
+g_print("New connection on Unix socket\n");
+      }
+      list=localconn;
+      while (list) {
+        NetworkBuffer *netbuf;
+        nextlist=g_slist_next(list);
+        netbuf = (NetworkBuffer *)list->data;
+        if (netbuf) {
+          if (RespondToSelect(netbuf,&readfs,&writefs,&errorfs,&DoneOK)) {
+            while((buf=GetWaitingMessage(netbuf))!=NULL) {
+              g_print("Unix message received: %s\n",buf);
+              HandleServerCommand(buf);
+              g_free(buf);
+            }
+          }
+          if (!DoneOK) {
+g_print("Unix socket closed\n");
+            localconn = g_slist_remove(localconn,netbuf);
+            ShutdownNetworkBuffer(netbuf);
+            g_free(netbuf);
+          }
+          list=nextlist;
+        }
+      }
+      if (IsServerShutdown()) break;
+#endif
       if (MetaConn) {
          if (RespondToSelect(&MetaConn->NetBuf,&readfs,&writefs,
                              &errorfs,&DoneOK)) {
@@ -997,6 +1084,9 @@ void ServerLoop() {
       }
       if (list && IsServerShutdown()) break;
    }
+#ifndef CYGWIN
+   CloseLocalSocket(localsock);
+#endif
    StopServer();
    g_string_free(LineBuf,TRUE);
 }
