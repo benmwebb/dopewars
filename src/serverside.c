@@ -162,7 +162,8 @@ void RegisterWithMetaServer(char Up,char SendData) {
          for (i=0;i<NUMHISCORE;i++) {
             text=g_strdup_printf("multi\n%d\n%s^%s^%s^%c",
                     i,prstr=FormatPrice(MultiScore[i].Money),MultiScore[i].Time,
-                    MultiScore[i].Name,MultiScore[i].Dead ? '1':'0');
+                    MultiScore[i].Name ? MultiScore[i].Name : "",
+                    MultiScore[i].Dead ? '1':'0');
             g_free(prstr);
             if (!SendToMetaServer(Up,MetaSock,text,&MetaAddr)) {
                g_free(text);
