@@ -11,6 +11,7 @@ config.log
 config.status
 stamp-h
 stamp-h.in
+stamp-h1
 dopewars.sco
 libtool
 autom4te.cache
