@@ -414,6 +414,15 @@ static void list_row_select(GtkCList *clist, gint row, gint column,
                             GdkEvent *event, gchar *structname)
 {
   GSList *listpt;
+  GtkWidget *delbut, *upbut, *downbut;
+
+  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
+  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
+  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
+  g_assert(delbut && upbut && downbut);
+  gtk_widget_set_sensitive(delbut, TRUE);
+  gtk_widget_set_sensitive(upbut, row > 0);
+  gtk_widget_set_sensitive(downbut, row < clist->rows - 1);
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
@@ -436,6 +445,16 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
                               GdkEvent *event, gchar *structname)
 {
   GSList *listpt;
+  GtkWidget *delbut, *upbut, *downbut;
+
+  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
+  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
+  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
+  g_assert(delbut && upbut && downbut);
+  gtk_widget_set_sensitive(delbut, FALSE);
+  gtk_widget_set_sensitive(upbut, FALSE);
+  gtk_widget_set_sensitive(downbut, FALSE);
+
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
@@ -605,19 +624,25 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Delete"));
+  gtk_widget_set_sensitive(button, FALSE);
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
+  gtk_object_set_data(GTK_OBJECT(clist), "delete", button);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(list_delete), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Up"));
+  gtk_widget_set_sensitive(button, FALSE);
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
+  gtk_object_set_data(GTK_OBJECT(clist), "up", button);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(list_up), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Down"));
+  gtk_widget_set_sensitive(button, FALSE);
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
+  gtk_object_set_data(GTK_OBJECT(clist), "down", button);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(list_down), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
