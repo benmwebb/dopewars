@@ -1801,17 +1801,13 @@ void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
 }
 
 /* 
- * Read a configuration file given by "FileName"; GScanner under Win32
- * doesn't work properly with files, so we use a nasty workaround.
+ * Read a configuration file given by "FileName"
  */
 static gboolean ReadConfigFile(char *FileName, gchar **encoding)
 {
   FILE *fp;
   Converter *conv;
 
-#ifdef CYGWIN
-  char *buf;
-#endif
   GScanner *scanner;
 
   fp = fopen(FileName, "r");
@@ -1823,16 +1819,7 @@ static gboolean ReadConfigFile(char *FileName, gchar **encoding)
     scanner = g_scanner_new(&ScannerConfig);
     scanner->input_name = FileName;
     scanner->msg_handler = ScannerErrorHandler;
-#ifdef CYGWIN
-    read_string(fp, &buf);
-    if (!buf) {
-      fclose(fp);
-      return TRUE;
-    }
-    g_scanner_input_text(scanner, buf, strlen(buf));
-#else
     g_scanner_input_file(scanner, fileno(fp));
-#endif
     while (!g_scanner_eof(scanner)) {
       if (!ParseNextConfig(scanner, conv, encoding, FALSE)) {
         ConfigErrors++;
@@ -1844,9 +1831,6 @@ static gboolean ReadConfigFile(char *FileName, gchar **encoding)
     g_scanner_destroy(scanner);
     Conv_Free(conv);
     fclose(fp);
-#ifdef CYGWIN
-    g_free(buf);
-#endif
     return TRUE;
   } else {
     return FALSE;
