@@ -1,12 +1,12 @@
 Summary: Drug dealing game
 Name: dopewars
-Version: 1.4.8-devel
+Version: cvs
 Release: 1
 Distribution: Red Hat Linux
 Vendor: Ben Webb
 Copyright: GPL
 Group: Games
-Source0: dopewars-1.4.8-devel.tar.gz
+Source0: dopewars-cvs.tar.gz
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -24,7 +24,7 @@ switches (via dopewars -h) for further information.
 %prep
 %setup
 %build
-./configure --bindir=/usr/bin --datadir=/var/lib/games
+./configure --prefix=/usr
 make
 
 %install
@@ -32,9 +32,13 @@ make install-strip
 
 %files
 %doc ChangeLog LICENCE README
-%doc aiplayer.html clientplay.html configfile.html credits.html
-%doc developer.html example-cfg i18n.html index.html installation.html
-%doc metaserver.html server.html servercommands.html windows.html
+%doc doc/aiplayer.html doc/clientplay.html doc/configfile.html doc/credits.html
+%doc doc/developer.html doc/example-cfg doc/i18n.html doc/index.html
+%doc doc/installation.html doc/metaserver.html doc/server.html 
+%doc doc/servercommands.html doc/windows.html
 
 /usr/bin/dopewars
-/var/lib/games/dopewars.sco
+/usr/share/dopewars.sco
+/usr/share/locale/de/LC_MESSAGES/dopewars.mo
+/usr/share/locale/pl/LC_MESSAGES/dopewars.mo
+/usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
