@@ -291,13 +291,13 @@ e.g. "1^AbFred"<br />
 
 <dt><b>C_INIT</b> ('<tt>k</tt>')</dt>
 <dd>Tells the client about various global game settings<br />
-<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"^(prefix)"currency"</tt><br />
+<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"date"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"^(prefix)"currency"</tt><br />
 <tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br />
 <tt>numloc</tt> = the number of locations in the game<br />
 <tt>numgun</tt> = the number of guns in the game<br />
 <tt>numdrug</tt> = the number of drugs in the game<br />
 <tt>bitch</tt>, <tt>bitches</tt>, <tt>gun</tt>, <tt>guns</tt>, <tt>drug</tt>,
-<tt>drugs</tt>, <tt>month</tt>, <tt>year</tt>, <tt>loanshark</tt>,
+<tt>drugs</tt>, <tt>date</tt>, <tt>loanshark</tt>,
 <tt>bank</tt>, <tt>gunshop</tt>, <tt>pub</tt> = various names used in the
 game<br />
 <tt>ID</tt> = the ID that the client should use to refer to itself<br />
@@ -398,7 +398,8 @@ C_REQUESTJET or C_FIGHTACT message<p /></dd>
 
 <dt><a id="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
 <dd>Negotiates protocol extensions between client and server<br />
-<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)(donefight)</tt>
+<tt>data</tt> =
+<tt>(playerid)(drugvalue)(newfight)(tstring)(donefight)(utf8)(date)</tt>
 
 <p><a id="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather
 than player names to identify players in network messages ('0' otherwise). It is
@@ -431,7 +432,16 @@ the client is expected to send a C_DONE message to instruct the server to
 move on. (This is to allow the user to close the fight dialog before any
 new dialogs pop up.) Ability name in dopewars code: <b>A_DONEFIGHT</b></p>
 
-<p><b>N.B.</b> Only five abilities are listed here. Older servers or clients
+<p><a id="utf8"><tt>utf8</tt></a> = '1' if all strings are sent over the
+network in UTF-8 (Unicode) encoding, rather than an encoding specific to
+the locale of the server or client. Ability name in dopewars code:
+<b>A_UTF8</b></p>
+
+<p><a id="date"><tt>date</tt></a> = '1' if the C_INIT message sends/receives
+the Names.Date variable, rather than Names.Month and Names.Year as older
+versions used to. Ability name in dopewars code: <b>A_DATE</b></p>
+
+<p><b>N.B.</b> Only seven abilities are listed here. Older servers or clients
 may not only not support some of these abilities, they may not even know
 of their existence (conversely, newer versions may add new abilities). Thus
 all servers and clients, if passed an unexpectedly short abilities string,
@@ -439,7 +449,7 @@ should pad it out with zeroes. If passed a long string, it should be truncated.
 This will cause these extra (or unspecified) abilities to be unsupported.
 (The order of the abilities string should never change.)</p>
 
-e.g. "^^Ar10100" (N.B. the double ^ is a feature of the "old" protocol)</dd>
+e.g. "^^Ar1010000" (N.B. the double ^ is a feature of the "old" protocol)</dd>
 
 </dl>
 
@@ -556,13 +566,13 @@ no C_ABILITIES reply message will be sent, and the client should assume that
 after the C_ABILITIES message to be compliant with these abilities.</p>
 
 e.g.<br />
-- client sends "11101" (supports everything except
+- client sends "1110111" (supports everything except
 <a href="#tstring">A_TSTRING</a>)<br />
-- server responds with "10110" (supports everything except
+- server responds with "1011011" (supports everything except
 <a href="#drugvalue">A_DRUGVALUE</a> and
 <a href="#donefight">A_DONEFIGHT</a>)<br />
-- client should adopt the abilities "10100" (
-<a href="#playerid">A_PLAYERID</a> and <a href="#newfight">A_NEWFIGHT</a>)</dd>
+- client should adopt the abilities "1010011"
+(<a href="#playerid">A_PLAYERID</a> and <a href="#newfight">A_NEWFIGHT</a>)</dd>
 
 </dl>
 
@@ -575,7 +585,7 @@ e.g.<br />
 </li>
 </ul>
 <p>
-  Last update: <b>15-07-2002</b><br />
+  Last update: <b>02-09-2002</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>
