@@ -629,45 +629,22 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
    return TRUE;
 }
 
-HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
-                                   gchar *Proxy,unsigned ProxyPort,
-                                   gchar *Method,gchar *Query,
-                                   gchar *Headers,gchar *Body) {
-   HttpConnection *conn;
-   gchar *ConnectHost;
-   unsigned ConnectPort;
+static void SendHttpRequest(HttpConnection *conn) {
    GString *text;
-   g_assert(HostName && Method && Query);
 
-   conn=g_new0(HttpConnection,1);
-   InitNetworkBuffer(&conn->NetBuf,'\n','\r');
-   conn->HostName=g_strdup(HostName);
-   if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
-   conn->Method=g_strdup(Method);
-   conn->Query=g_strdup(Query);
-   if (Headers && Headers[0]) conn->Headers=g_strdup(Headers);
-   if (Body && Body[0]) conn->Body=g_strdup(Body);
-   conn->Port = Port;
-   conn->ProxyPort = ProxyPort;
-
-   if (conn->Proxy) {
-      ConnectHost=conn->Proxy; ConnectPort=conn->ProxyPort;
-   } else {
-      ConnectHost=conn->HostName; ConnectPort=conn->Port;
-   }
-      
-   if (!StartNetworkBufferConnect(&conn->NetBuf,ConnectHost,ConnectPort)) {
-      CloseHttpConnection(conn);
-      return NULL;
-   }
    conn->Tries++;
    conn->StatusCode=0;
    conn->Status=HS_CONNECTING;
 
    text=g_string_new("");
 
-   g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
-                    conn->Method,conn->HostName,conn->Port,conn->Query);
+   if (conn->Redirect) {
+      g_string_sprintf(text,"%s %s HTTP/1.0",conn->Method,conn->Redirect);
+      g_free(conn->Redirect); conn->Redirect=NULL;
+   } else {
+      g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
+                       conn->Method,conn->HostName,conn->Port,conn->Query);
+   }
    QueueMessageForSend(&conn->NetBuf,text->str);
 
    if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
@@ -681,6 +658,45 @@ HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
    if (conn->Body) QueueMessageForSend(&conn->NetBuf,conn->Body);
 
    g_string_free(text,TRUE);
+}
+
+static gboolean StartHttpConnect(HttpConnection *conn) {
+   gchar *ConnectHost;
+   unsigned ConnectPort;
+
+   if (conn->Proxy) {
+      ConnectHost=conn->Proxy; ConnectPort=conn->ProxyPort;
+   } else {
+      ConnectHost=conn->HostName; ConnectPort=conn->Port;
+   }
+      
+   if (!StartNetworkBufferConnect(&conn->NetBuf,ConnectHost,ConnectPort)) {
+      CloseHttpConnection(conn);
+      return FALSE;
+   }
+   return TRUE;
+}
+
+HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
+                                   gchar *Proxy,unsigned ProxyPort,
+                                   gchar *Method,gchar *Query,
+                                   gchar *Headers,gchar *Body) {
+   HttpConnection *conn;
+   g_assert(HostName && Method && Query);
+
+   conn=g_new0(HttpConnection,1);
+   InitNetworkBuffer(&conn->NetBuf,'\n','\r');
+   conn->HostName=g_strdup(HostName);
+   if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
+   conn->Method=g_strdup(Method);
+   conn->Query=g_strdup(Query);
+   if (Headers && Headers[0]) conn->Headers=g_strdup(Headers);
+   if (Body && Body[0]) conn->Body=g_strdup(Body);
+   conn->Port = Port;
+   conn->ProxyPort = ProxyPort;
+
+   if (!StartHttpConnect(conn)) return NULL;
+   SendHttpRequest(conn);
 
    return conn;
 }
@@ -707,6 +723,7 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn->Query);
    g_free(conn->Headers);
    g_free(conn->Body);
+   g_free(conn->Redirect);
    g_free(conn);
 }
 
@@ -726,6 +743,18 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          break;
       case HS_READHEADERS:
          if (msg[0]==0) conn->Status=HS_READSEPARATOR;
+         else {
+            split=g_strsplit(msg," ",1);
+            if (split[0] && split[1]) {
+               if (conn->StatusCode==302 && strcmp(split[0],"Location:")==0) {
+                  g_print("Redirect to %s\n",split[1]);
+                  g_free(conn->Redirect);
+                  conn->Redirect = g_strdup(split[1]);
+               }
+/*             g_print("Header %s (value %s) read\n",split[0],split[1]);*/
+            }
+            g_strfreev(split);
+         }
          break;
       case HS_READSEPARATOR:
          conn->Status=HS_READBODY;
@@ -734,6 +763,24 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          break;
    }
    return msg;
+}
+
+gboolean HandleHttpCompletion(HttpConnection *conn) {
+   NBCallBack CallBack;
+   gpointer CallBackData;
+   if (conn->Redirect) {
+      g_print("Following redirect\n");
+      CallBack=conn->NetBuf.CallBack;
+      CallBackData=conn->NetBuf.CallBackData;
+      ShutdownNetworkBuffer(&conn->NetBuf);
+      if (StartHttpConnect(conn)) {
+         SendHttpRequest(conn);
+         SetNetworkBufferCallBack(&conn->NetBuf,CallBack,CallBackData);
+         return FALSE;
+      }
+   }
+   CloseHttpConnection(conn);
+   return TRUE;
 }
 
 gboolean HandleWaitingMetaServerData(HttpConnection *conn) {

@@ -893,9 +893,9 @@ void ServerLoop() {
                g_free(buf);
             }
          }
-         if (!DoneOK) {
+         if (!DoneOK && HandleHttpCompletion(MetaConn)) {
             dopelog(4,"MetaServer: (closed)\n");
-            CloseHttpConnection(MetaConn); MetaConn=NULL;
+            MetaConn=NULL;
             if (IsServerShutdown()) break;
          }
       }
@@ -1010,9 +1010,9 @@ void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
          g_free(buf);
       }
    }
-   if (!DoneOK) {
+   if (!DoneOK && HandleHttpCompletion(MetaConn)) {
       dopelog(4,"MetaServer: (closed)\n");
-      CloseHttpConnection(MetaConn); MetaConn=NULL;
+      MetaConn=NULL;
       if (IsServerShutdown()) GuiQuitServer();
    }
 }

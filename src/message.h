@@ -87,6 +87,7 @@ typedef struct _HttpConnection {
    gchar *Query;          /* e.g. the path of the desired webpage */
    gchar *Headers;        /* if non-NULL, e.g. Content-Type */
    gchar *Body;           /* if non-NULL, data to send */
+   gchar *Redirect;       /* if non-NULL, a URL to redirect to */
    NetworkBuffer NetBuf;  /* The actual network connection itself */
    gint Tries;            /* Number of requests actually sent so far */
    gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
@@ -132,6 +133,7 @@ HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
 HttpConnection *OpenMetaHttpConnection(void);
 void CloseHttpConnection(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
+gboolean HandleHttpCompletion(HttpConnection *conn);
 gboolean HandleWaitingMetaServerData(HttpConnection *conn);
 void ClearServerList(void);
 #endif /* NETWORKING */
