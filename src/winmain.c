@@ -124,8 +124,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          HandleHelpTexts();
          WindowPrintEnd();
       } else {
+#ifdef NETWORKING
          StartNetworking();
+#endif
          if (Server) {
+#ifdef NETWORKING
 #ifdef GUI_SERVER
             win32_init(hInstance,hPrevInstance);
             GuiServerLoop();
@@ -138,7 +141,16 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
             g_set_print_handler(ServerPrintFunc);
             newterm(NULL,NULL,NULL);
             ServerLoop();
-#endif
+#endif /* GUI_SERVER */
+#else
+            WindowPrintStart();
+            g_set_print_handler(WindowPrintFunc);
+            g_print(_("This binary has been compiled without networking "
+                      "support, and thus cannot run\nin server mode. "
+                      "Recompile passing --enable-networking to the "
+                      "configure script.\n"));
+            WindowPrintEnd();
+#endif /* NETWORKING
          } else if (AIPlayer) {
             AllocConsole();
 
@@ -164,7 +176,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                     "use the curses client (if available) instead!\n"));
 #endif
          }
+#ifdef NETWORKING
          StopNetworking();
+#endif
       }
    } else {
       LogFileEnd();
