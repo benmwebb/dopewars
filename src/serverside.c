@@ -44,6 +44,10 @@
 #include <fcntl.h>
 #endif
 
+#ifdef GUI_SERVER
+#include "gtkport.h"
+#endif
+
 #ifndef SD_SEND
 #define SD_SEND 1
 #endif
@@ -488,11 +492,13 @@ void ServerHelp() {
       } else {
          g_string_assign(VarName,Globals[i].Name);
       }
-      g_print("%-26s %s\n",VarName->str,_(Globals[i].Help));
+      g_print("%-26s\t%s\n",VarName->str,_(Globals[i].Help));
       Lines++;
+#ifndef GUI_SERVER
       if (Lines%24==0) {
          g_print(_("--More--")); bgetch(); g_print("\n");
       }
+#endif
    }
    g_string_free(VarName,TRUE);
 #else
@@ -566,7 +572,9 @@ gboolean ReadServerKey(GString *LineBuf,gboolean *EndOfLine) {
 
 void StartServer() {
    struct sockaddr_in ServerAddr;
+#ifndef CYGWIN
    struct sigaction sact;
+#endif
 
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
@@ -686,7 +694,7 @@ gboolean HandleServerCommand(char *string) {
    return FALSE;
 }
 
-void HandleNewConnection() {
+Player *HandleNewConnection() {
    int cadsize;
    int ClientSock;
    struct sockaddr_in ClientAddr;
@@ -703,6 +711,7 @@ void HandleNewConnection() {
    if (ConnectTimeout) {
       tmp->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
    }
+   return tmp;
 }
 
 void StopServer() {
@@ -825,6 +834,171 @@ void ServerLoop() {
    StopServer();
    g_string_free(LineBuf,TRUE);
 }
+
+#ifdef GUI_SERVER
+static GtkWidget *TextOutput;
+static gint ListenTag=0;
+static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
+static void GuiSetTimeouts();
+static time_t NextTimeout=0;
+static guint TimeoutTag=-1;
+
+static gint GuiDoTimeouts(gpointer data) {
+/* Forget the TimeoutTag so that GuiSetTimeouts doesn't delete it - it'll be
+   deleted automatically anyway when we return FALSE */
+   TimeoutTag=-1;
+   NextTimeout=0;
+
+   FirstServer=HandleTimeouts(FirstServer);
+   GuiSetTimeouts();
+   return FALSE;
+}
+
+void GuiSetTimeouts() {
+   int MinTimeout;
+   time_t TimeNow;
+   TimeNow=time(NULL);
+   MinTimeout=GetMinimumTimeout(FirstServer);
+   if (TimeNow+MinTimeout < NextTimeout || NextTimeout<TimeNow) {
+      if (TimeoutTag!=-1) gtk_timeout_remove(TimeoutTag);
+      TimeoutTag = -1;
+      if (MinTimeout>0) {
+         TimeoutTag=gtk_timeout_add(MinTimeout*1000,GuiDoTimeouts,NULL);
+         NextTimeout=TimeNow+MinTimeout;
+      }
+   }
+}
+
+static void GuiServerPrintFunc(const gchar *string) {
+   gint EditPos;
+   
+   gtk_text_freeze(GTK_TEXT(TextOutput));
+   EditPos=gtk_text_get_length(GTK_TEXT(TextOutput));
+   gtk_editable_insert_text(GTK_EDITABLE(TextOutput),string,strlen(string),
+                            &EditPos);
+   gtk_text_thaw(GTK_TEXT(TextOutput));
+   gtk_editable_set_position(GTK_EDITABLE(TextOutput),EditPos);
+}
+
+static void GuiServerLogMessage(const gchar *log_domain,
+                                GLogLevelFlags log_level,const gchar *message,
+                                gpointer user_data) {
+   gchar *text;
+   text = g_strdup_printf("Message: %s\n",message);
+   GuiServerPrintFunc(text);
+   g_free(text);
+}
+
+static void GuiQuitServer() {
+   gtk_main_quit();
+   StopServer();
+}
+
+static void GuiDoCommand(GtkWidget *widget,gpointer data) {
+   gchar *text;
+   gboolean retval;
+   text=gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1);
+   gtk_editable_delete_text(GTK_EDITABLE(widget),0,-1);
+   retval=HandleServerCommand(text);
+   g_free(text);
+   if (retval) GuiQuitServer();
+}
+
+static void GuiHandleSocket(gpointer data,gint socket,
+                            GdkInputCondition condition) {
+   Player *Play;
+   Play = (Player *)data;
+
+   /* Sanity check - is the player still around? */
+   if (!g_slist_find(FirstServer,(gpointer)Play)) return;
+
+   if (condition&GDK_INPUT_WRITE) {
+      if (!WriteConnectionBufferToWire(Play)) {
+         if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
+      } else if (Play->WriteBuf.DataPresent==0) {
+         SetSocketWriteTest(Play,FALSE);
+      }
+   }
+   if (condition&GDK_INPUT_READ) {
+      if (!ReadConnectionBufferFromWire(Play)) {
+         if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
+      } else {
+         HandleServerPlayer(Play);
+         GuiSetTimeouts();  /* We may have set some new timeouts */
+      }
+   }
+}
+
+void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
+   if (Play->InputTag) gdk_input_remove(Play->InputTag);
+   Play->InputTag=gdk_input_add(Play->fd,
+                      GDK_INPUT_READ|(WriteTest ? GDK_INPUT_WRITE : 0),
+                      GuiHandleSocket,(gpointer)Play);
+}
+
+static void GuiNewConnect(gpointer data,gint socket,
+                          GdkInputCondition condition) {
+   Player *Play;
+   if (condition&GDK_INPUT_READ) {
+      Play=HandleNewConnection();
+      Play->InputTag=0;
+      SetSocketWriteTest(Play,TRUE);
+   }
+}
+
+static gboolean TriedPoliteShutdown=FALSE;
+
+static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
+   if (TriedPoliteShutdown) {
+      GuiQuitServer();
+   } else {
+      TriedPoliteShutdown=TRUE;
+      if (HandleServerCommand("quit")) GuiQuitServer();
+   }
+   return TRUE; /* Never allow automatic deletion - we handle it manually */
+}
+
+void GuiServerLoop() {
+   GtkWidget *window,*text,*hbox,*vbox,*entry,*label;
+   GtkAdjustment *adj;
+
+   window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
+   gtk_signal_connect(GTK_OBJECT(window),"delete_event",
+                      GTK_SIGNAL_FUNC(GuiRequestDelete),NULL);
+   gtk_window_set_default_size(GTK_WINDOW(window),500,250);
+   gtk_window_set_title(GTK_WINDOW(window),_("dopewars server"));
+   gtk_container_set_border_width(GTK_CONTAINER(window),7);
+
+   vbox=gtk_vbox_new(FALSE,7);
+   adj=(GtkAdjustment *)gtk_adjustment_new(0,0,100,1,10,10);
+   TextOutput=text=gtk_scrolled_text_new(NULL,adj,&hbox);
+   gtk_text_set_editable(GTK_TEXT(text),FALSE);
+   gtk_text_set_word_wrap(GTK_TEXT(text),TRUE);
+   gtk_box_pack_start(GTK_BOX(vbox),hbox,TRUE,TRUE,0);
+
+   hbox=gtk_hbox_new(FALSE,4);
+   label=gtk_label_new(_("Command:"));
+   gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+   entry=gtk_entry_new();
+   gtk_signal_connect(GTK_OBJECT(entry),"activate",
+                      GTK_SIGNAL_FUNC(GuiDoCommand),NULL);
+   gtk_box_pack_start(GTK_BOX(hbox),entry,TRUE,TRUE,0);
+   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
+
+   gtk_container_add(GTK_CONTAINER(window),vbox);
+   gtk_widget_show_all(window);
+
+   g_set_print_handler(GuiServerPrintFunc);
+   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                     GuiServerLogMessage,NULL);
+   StartServer();
+
+   SocketWriteTestPt = SetSocketWriteTest;
+   ListenTag=gdk_input_add(ListenSock,GDK_INPUT_READ,GuiNewConnect,NULL);
+   gtk_main();
+}
+#endif /* GUI_SERVER */
+
 #endif /* NETWORKING */
 
 void FinishGame(Player *Play,char *Message) {

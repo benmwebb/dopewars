@@ -295,6 +295,7 @@ struct PLAYER_T {
    Player *OnBehalfOf;
    ConnBuf ReadBuf,WriteBuf;
    Abilities Abil;
+   gint InputTag;
    GPtrArray *FightArray; /* If non-NULL, a list of players in a fight */
    Player *Attacking;     /* The player that this player is attacking */
    gint CopIndex;  /* if >0,  then this player is a cop, described

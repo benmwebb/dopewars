@@ -44,7 +44,7 @@ void ClientLeftServer(Player *Play);
 void StartServer();
 void StopServer();
 gboolean HandleServerCommand(char *string);
-void HandleNewConnection();
+Player *HandleNewConnection();
 void ServerLoop();
 void HandleServerPlayer(Player *Play);
 void HandleServerMessage(gchar *buf,Player *ReallyFrom);
@@ -77,5 +77,8 @@ void RunFromCombat(Player *Play,int ToLocation);
 gboolean CanPlayerFire(Player *Play);
 gboolean CanRunHere(Player *Play);
 Player *GetNextShooter(Player *Play);
+#ifdef GUI_SERVER
+void GuiServerLoop();
+#endif
 
 #endif

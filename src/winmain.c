@@ -119,6 +119,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
       } else {
          StartNetworking();
          if (Server) {
+#ifdef GUI_SERVER
+            win32_init(hInstance,hPrevInstance);
+            GuiServerLoop();
+#else
             AllocConsole();
             SetConsoleTitle(_("dopewars server"));
             g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
@@ -126,6 +130,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
             g_set_print_handler(ServerPrintFunc);
             newterm(NULL,NULL,NULL);
             ServerLoop();
+#endif
          } else if (AIPlayer) {
             AllocConsole();
             SetConsoleTitle(_("dopewars AI"));
