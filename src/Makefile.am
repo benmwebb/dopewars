@@ -1,3 +1,9 @@
+# Nasty hack; there seems to be no way of disabling libtool for the link
+# of the main executable...
+if NOPLUGINS
+LIBTOOL = ./fakelibtool.sh
+endif
+
 if GUI_CLIENT
 GUISUBDIR = gui_client
 endif
