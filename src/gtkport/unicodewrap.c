@@ -105,21 +105,9 @@ HWND myCreateWindow(LPCTSTR lpClassName, LPCTSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,
                     HMENU hMenu, HANDLE hInstance, LPVOID lpParam)
 {
-  HWND retval;
-
-  if (unicode_support) {
-    gunichar2 *classname, *winname;
-    classname = strtow32(lpClassName, -1);
-    winname = strtow32(lpWindowName, -1);
-    retval = CreateWindowW(classname, winname, dwStyle, x, y, nWidth,
-                           nHeight, hwndParent, hMenu, hInstance, lpParam);
-    g_free(classname);
-    g_free(winname);
-  } else {
-    retval = CreateWindowA(lpClassName, lpWindowName, dwStyle, x, y, nWidth,
-                           nHeight, hwndParent, hMenu, hInstance, lpParam);
-  }
-  return retval;
+  return myCreateWindowEx(0, lpClassName, lpWindowName, dwStyle, x, y,
+                          nWidth, nHeight, hwndParent, hMenu, hInstance,
+                          lpParam);
 }
 
 HWND myCreateWindowEx(DWORD dwExStyle, LPCTSTR lpClassName,
