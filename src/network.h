@@ -65,8 +65,7 @@ typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 
-typedef gboolean (*NBUserPasswd)(NetworkBuffer *NetBuf,
-                                 gchar **user,gchar **password);
+typedef void (*NBUserPasswd)(NetworkBuffer *NetBuf);
 
 /* Information about a SOCKS server */
 typedef struct _SocksServer {
@@ -114,12 +113,18 @@ struct _NetworkBuffer {
 
 /* Keeps track of the progress of an HTTP connection */
 typedef enum {
-   HS_CONNECTING, HS_READHEADERS, HS_READSEPARATOR, HS_READBODY
+   HS_CONNECTING,    /* Waiting for connect() to complete */
+   HS_READHEADERS,   /* Reading HTTP headers */
+   HS_READSEPARATOR, /* Reading the header/body separator line */
+   HS_READBODY,      /* Reading HTTP body */
+   HS_WAITCOMPLETE   /* Done reading, now waiting for authentication etc.
+                        before closing and/or retrying the connection */
 } HttpStatus;
 
 typedef struct _HttpConnection HttpConnection;
 
-typedef gboolean (*HCAuthFunc)(struct _HttpConnection *conn,gchar *realm);
+typedef void (*HCAuthFunc)(struct _HttpConnection *conn,
+                           gboolean proxyauth,gchar *realm);
 
 /* A structure used to keep track of an HTTP connection */
 struct _HttpConnection {
@@ -135,11 +140,12 @@ struct _HttpConnection {
    gchar *RedirQuery;     /* if non-NULL, the path to redirect to */
    unsigned RedirPort;    /* The port on the host to redirect to */
    HCAuthFunc authfunc;   /* Callback function for authentication */
-   gboolean proxyauth;    /* TRUE if the authentication is with a proxy */
-   gboolean authsupplied; /* TRUE if the request should be retried with auth */
-   gchar *realm;          /* The realm for basic HTTP authentication */
-   gchar *user;           /* The supplied username */
-   gchar *password;       /* The supplied password */
+   gboolean waitinput;    /* TRUE if we're waiting for auth etc.
+                             to be supplied */
+   gchar *user;           /* The supplied username for HTTP auth */
+   gchar *password;       /* The supplied password for HTTP auth */
+   gchar *proxyuser;      /* The supplied username for HTTP proxy auth */
+   gchar *proxypassword;  /* The supplied password for HTTP proxy auth */
    NetworkBuffer NetBuf;  /* The actual network connection itself */
    gint Tries;            /* Number of requests actually sent so far */
    gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
@@ -169,6 +175,8 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data);
 gint CountWaitingMessages(NetworkBuffer *NetBuf);
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
+gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
+                              gchar *password);
 
 gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             unsigned Port,gchar *Proxy,unsigned ProxyPort,
@@ -178,7 +186,8 @@ gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
 void CloseHttpConnection(HttpConnection *conn);
 gboolean IsHttpError(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
-void SetHttpAuthentication(HttpConnection *conn,gchar *user,gchar *password);
+gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
+                               gchar *user,gchar *password);
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc);
 gboolean HandleHttpCompletion(HttpConnection *conn);
 

@@ -95,7 +95,8 @@ static void NewGameDialog(void);
 static void StartGame(void);
 static void EndGame(void);
 static void UpdateMenus(void);
-static gboolean AuthDialog(HttpConnection *conn,gchar *realm);
+static void AuthDialog(HttpConnection *conn,
+                       gboolean proxyauth,gchar *realm);
 
 #ifdef NETWORKING
 static void GetClientMessage(gpointer data,gint socket,
@@ -2161,7 +2162,9 @@ static void CloseNewGameDia(GtkWidget *widget,
                             struct StartGameStruct *widgets) {
 #ifdef NETWORKING
 /* Terminate any existing connection attempts */
-   ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
+   if (ClientData.Play->NetBuf.status!=NBS_CONNECTED) {
+      ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
+   }
    if (widgets->MetaConn) {
       CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
@@ -3126,42 +3129,56 @@ void DisplaySpyReports(Player *Play) {
 static void OKAuthDialog(GtkWidget *widget,GtkWidget *window) {
    GtkWidget *userentry,*passwdentry;
    gchar *username,*password;
+   gpointer proxy;
    HttpConnection *conn;
-   gboolean *retval;
 
+   proxy = gtk_object_get_data(GTK_OBJECT(window),"proxy");
    userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
    passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
                                                   "password");
-   retval = (gboolean *)gtk_object_get_data(GTK_OBJECT(window),"retval");
    conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),"httpconn");
-   g_assert(userentry && passwdentry && retval && conn);
-
-   *retval = TRUE;
+   g_assert(userentry && passwdentry && conn);
 
    username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
    password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
 
-   SetHttpAuthentication(conn,username,password);
+   gtk_object_set_data(GTK_OBJECT(window),"authdone",GINT_TO_POINTER(TRUE));
+
+   if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password)) {
+      g_print("FIXME: Connect error on setauth\n");
+   }
    g_free(username); g_free(password);
 
    gtk_widget_destroy(window);
 }
 
 void DestroyAuthDialog(GtkWidget *widget,gpointer data) {
-   gtk_main_quit();
+   HttpConnection *conn;
+   gpointer authdone,proxy;
+
+   authdone = gtk_object_get_data(GTK_OBJECT(widget),"authdone");
+   conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(widget),"httpconn");
+   proxy = gtk_object_get_data(GTK_OBJECT(widget),"proxy");
+
+   if (authdone) {
+      g_print("Auth already done, thanks\n");
+   } else {
+      if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),NULL,NULL)) {
+         g_print("FIXME: Connect error on unsetauth\n");
+      }
+   }
 }
 
-gboolean AuthDialog(HttpConnection *conn,gchar *realm) {
+void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm) {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
-   gboolean retval=FALSE;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(window),"destroy",
                       GTK_SIGNAL_FUNC(DestroyAuthDialog),NULL);
-   gtk_object_set_data(GTK_OBJECT(window),"retval",(gpointer)&retval);
+   gtk_object_set_data(GTK_OBJECT(window),"proxy",GINT_TO_POINTER(proxy));
    gtk_object_set_data(GTK_OBJECT(window),"httpconn",(gpointer)conn);
 
-   if (conn->proxyauth) {
+   if (proxy) {
       gtk_window_set_title(GTK_WINDOW(window),
 /* Title of dialog for authenticating with a proxy server */
                            _("Proxy Authentication Required"));
@@ -3229,9 +3246,6 @@ gboolean AuthDialog(HttpConnection *conn,gchar *realm) {
 
    gtk_container_add(GTK_CONTAINER(window),vbox);
    gtk_widget_show_all(window);
-
-   gtk_main();
-   return retval;
 }
 
 #else

@@ -129,7 +129,9 @@ static void NetBufCallBack(NetworkBuffer *NetBuf) {
 }
 
 static void NetBufCallBackStop(NetworkBuffer *NetBuf) {
-   if (NetBuf && NetBuf->CallBack) (*NetBuf->CallBack)(NetBuf,FALSE,FALSE);
+   if (NetBuf && NetBuf->CallBack) {
+      (*NetBuf->CallBack)(NetBuf,FALSE,FALSE);
+   }
 }
 
 static void InitConnBuf(ConnBuf *buf) {
@@ -176,6 +178,8 @@ void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
 
 void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
                                     NBUserPasswd userpasswd) {
+/* Sets the function used to obtain a username and password for SOCKS5 */
+/* username/password authentication                                    */
    NetBuf->userpasswd=userpasswd;
 }
 
@@ -320,20 +324,28 @@ static void SocksAppendError(GString *str,LastError *error) {
 static ErrorType ETSocks = { SocksAppendError };
 
 static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
-   gchar *user,*password;
+   if (!NetBuf->userpasswd) {
+      SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
+      return FALSE;
+   } else {
+/* Request a username and password (the callback function should in turn
+   call SendSocks5UserPasswd when it's done) */
+      NetBuf->sockstat = NBSS_USERPASSWD;
+      (*NetBuf->userpasswd)(NetBuf);
+      return TRUE;
+   }
+}
+
+gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
+                              gchar *password) {
    gchar *addpt;
    guint addlen;
    ConnBuf *conn;
 
-   if (!NetBuf->userpasswd) {
-      SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
-      return FALSE;
-   }
-   if (!(*NetBuf->userpasswd)(NetBuf,&user,&password)) {
+   if (!user || !password) {
       SetError(&NetBuf->error,&ETSocks,SEC_USERCANCEL);
       return FALSE;
    }
-
    conn=&NetBuf->negbuf;
    addlen = 3 + strlen(user) + strlen(password);
    addpt = ExpandWriteBuffer(conn,addlen);
@@ -347,7 +359,6 @@ static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
    strcpy(&addpt[3+strlen(user)],password);
    g_free(user); g_free(password);
 
-   NetBuf->sockstat = NBSS_USERPASSWD;
    conn->DataPresent+=addlen;
 
 /* If the buffer was empty before, we may need to tell the owner to check
@@ -457,7 +468,10 @@ g_print("FIXME: SOCKS5 connect reply\n");
                else replylen+=data[4];   /* FQDN */
                data = GetWaitingData(NetBuf,replylen);
                if (data) {
-                  g_print("FIXME: SOCKS5 sucessful connect\n");
+                  g_print("FIXME: SOCKS5 successful connect\n");
+               if (addrtype==1) g_print("IPv4 address %d.%d.%d.%d\n",data[4],data[5],data[6],data[7]);
+               else if (addrtype==4) g_print("IPv6 address\n");
+               else g_print("FQDN\n");
                   NetBuf->status = NBS_CONNECTED;
                   g_free(data);
                   NetBufCallBack(NetBuf); /* status has changed */
@@ -896,7 +910,6 @@ static void SendHttpRequest(HttpConnection *conn) {
    conn->Tries++;
    conn->StatusCode=0;
    conn->Status=HS_CONNECTING;
-   conn->authsupplied=FALSE;
 
    text=g_string_new("");
 
@@ -908,9 +921,14 @@ static void SendHttpRequest(HttpConnection *conn) {
 
    if (conn->user && conn->password) {
       userpasswd = g_strdup_printf("%s:%s",conn->user,conn->password);
-      g_string_assign(text,conn->proxyauth ? "Proxy-Authenticate" :
-                                             "Authorization");
-      g_string_append(text,": Basic ");
+      g_string_assign(text,"Authorization: Basic ");
+      AddB64Enc(text,userpasswd);
+      g_free(userpasswd);
+      QueueMessageForSend(&conn->NetBuf,text->str);
+   }
+   if (conn->proxyuser && conn->proxypassword) {
+      userpasswd = g_strdup_printf("%s:%s",conn->proxyuser,conn->proxypassword);
+      g_string_assign(text,"Proxy-Authenticate: Basic ");
       AddB64Enc(text,userpasswd);
       g_free(userpasswd);
       QueueMessageForSend(&conn->NetBuf,text->str);
@@ -961,7 +979,6 @@ gboolean OpenHttpConnection(HttpConnection **connpt,gchar *HostName,
    if (Body && Body[0]) conn->Body=g_strdup(Body);
    conn->Port = Port;
    conn->ProxyPort = ProxyPort;
-   conn->user = conn->password = NULL;
    *connpt = conn;
 
    if (StartHttpConnect(conn)) {
@@ -982,9 +999,10 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn->Body);
    g_free(conn->RedirHost);
    g_free(conn->RedirQuery);
-   g_free(conn->realm);
    g_free(conn->user);
    g_free(conn->password);
+   g_free(conn->proxyuser);
+   g_free(conn->proxypassword);
    g_free(conn);
 }
 
@@ -992,12 +1010,25 @@ gboolean IsHttpError(HttpConnection *conn) {
    return IsError(&conn->NetBuf.error);
 }
 
-void SetHttpAuthentication(HttpConnection *conn,gchar *user,gchar *password) {
-   g_assert(conn && user && password);
-   g_free(conn->user);
-   g_free(conn->password);
-   conn->user = g_strdup(user);
-   conn->password = g_strdup(password);
+gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
+                               gchar *user,gchar *password) {
+   gchar **ptuser,**ptpassword;
+   g_assert(conn);
+   if (proxy) {
+      ptuser=&conn->proxyuser; ptpassword=&conn->proxypassword;
+   } else {
+      ptuser=&conn->user; ptpassword=&conn->password;
+   }
+   g_free(*ptuser); g_free(*ptpassword);
+   if (user && password) {
+      *ptuser = g_strdup(user);
+      *ptpassword = g_strdup(password);
+   } else {
+      *ptuser = *ptpassword = NULL;
+   }
+   conn->waitinput=FALSE;
+   if (conn->Status==HS_WAITCOMPLETE) return !HandleHttpCompletion(conn);
+   else return TRUE;
 }
 
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc) {
@@ -1062,15 +1093,19 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
-      conn->proxyauth=FALSE;
-      if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
+      if (conn->authfunc) {
+         conn->waitinput=TRUE;
+         (*conn->authfunc)(conn,FALSE,split[1]);
+      }
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
     } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
                conn->StatusCode==407) {
       g_print("FIXME: Proxy authentication %s required\n",split[1]);
-      conn->proxyauth=TRUE;
-      if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
+      if (conn->authfunc) {
+         conn->waitinput=TRUE;
+         (*conn->authfunc)(conn,TRUE,split[1]);
+      }
     }
   }
   g_strfreev(split);
@@ -1099,6 +1134,9 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          break;
       case HS_READBODY:   /* At present, we do nothing special with the body */
          break;
+      case HS_WAITCOMPLETE: /* Well, we shouldn't be here at all... */
+         g_free(msg); msg=NULL;
+         break;
    }
    return msg;
 }
@@ -1108,6 +1146,13 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    gpointer CallBackData;
    NBUserPasswd userpasswd;
    gboolean retry=FALSE;
+
+/* If we're still waiting for authentication etc., then signal that the
+   connection shouldn't be closed yet, and go into the "WAITCOMPLETE" state */
+   if (conn->waitinput) {
+      conn->Status = HS_WAITCOMPLETE;
+      return FALSE;
+   }
 
    if (conn->Tries>=5) {
       g_print("FIXME: Number of tries exceeded\n");
@@ -1123,8 +1168,12 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
       conn->RedirHost = conn->RedirQuery = NULL;
       retry = TRUE;
    }
-   if (conn->authsupplied && conn->user && conn->password) {
+   if (conn->StatusCode==401 && conn->user && conn->password) {
       g_print("Trying again with authentication\n");
+      retry = TRUE;
+   }
+   if (conn->StatusCode==407 && conn->proxyuser && conn->proxypassword) {
+      g_print("Trying again with proxy authentication\n");
       retry = TRUE;
    }
 

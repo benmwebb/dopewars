@@ -44,6 +44,8 @@
 
 #define WM_SOCKETDATA (WM_USER+100)
 
+static gint RecurseLevel=0;
+
 static const gchar *WC_GTKSEP    = "WC_GTKSEP";
 static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
 static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
@@ -922,9 +924,13 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          }
          break;
       case WM_SOCKETDATA:
+/* Ignore network messages if in recursive message loops, to avoid dodgy
+   race conditions */
+         if (RecurseLevel<=1) {
 /* Make any error available by the usual WSAGetLastError() mechanism */
-         WSASetLastError(WSAGETSELECTERROR(lParam));
-         DispatchSocketEvent((SOCKET)wParam,WSAGETSELECTEVENT(lParam));
+            WSASetLastError(WSAGETSELECTERROR(lParam));
+            DispatchSocketEvent((SOCKET)wParam,WSAGETSELECTEVENT(lParam));
+         }
          break;
       case WM_TIMER:
          DispatchTimeoutEvent((UINT)wParam);
@@ -963,6 +969,7 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
    WindowList=NULL;
+   RecurseLevel=0;
    if (!hPrevInstance) {
       wc.style		= CS_HREDRAW|CS_VREDRAW;
       wc.lpfnWndProc	= MainWndProc;
@@ -2896,6 +2903,8 @@ void gtk_main() {
    GtkWidget *widget;
    HACCEL hAccel;
 
+   RecurseLevel++;
+
    while (GetMessage(&msg,NULL,0,0)) {
       MsgDone=FALSE;
       for (list=WindowList;list && !MsgDone;list=g_slist_next(list)) {
@@ -2913,6 +2922,7 @@ void gtk_main() {
          DispatchMessage(&msg);
       }
    }
+   RecurseLevel--;
 }
 
 typedef struct _GtkSignal GtkSignal;
@@ -4416,8 +4426,14 @@ void gtk_progress_bar_realize(GtkWidget *widget) {
 
 gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
                    const gchar *Title,gint Options) {
-   return MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
-                     Text,Title,Options);
+   gint retval;
+
+   RecurseLevel++;
+   retval = MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
+                       Text,Title,Options);
+   RecurseLevel--;
+
+   return retval;
 }
 
 guint gtk_timeout_add(guint32 interval,GtkFunction function,gpointer data) {

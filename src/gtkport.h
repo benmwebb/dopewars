@@ -33,6 +33,8 @@
 #include <glib.h>
 #include <stdarg.h>
 
+#define MB_IMMRETURN 0
+
 typedef enum {
    GTK_WINDOW_TOPLEVEL, GTK_WINDOW_DIALOG, GTK_WINDOW_POPUP
 } GtkWindowType;
