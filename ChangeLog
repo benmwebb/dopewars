@@ -9,6 +9,7 @@ cvs
       dopewars to overwrite random files writeable by group "games" - use
       the -C option to convert old high score files to the new format
     - GNU long command line options now accepted on platforms with getopt_long
+    - Simple installer now in place for Win32 systems
 
 1.5.1   19-06-2001
     - Improved logging in server via. LogLevel and LogTimestamp variables

@@ -1,0 +1,7 @@
+This directory contains the code for a simple Windows install/uninstall
+package. The "makeinstall" program takes a list of files (in "filelist") to
+install, and produces a compressed copy of these files, which are placed
+into the resources of the "setup" program. This program installs the listed
+files to a target machine, and sets up the necessary registry keys for the
+"uninstall" program to then be able to remove those files again. The only
+file that should need to be distributed, therefore, is "setup.exe".

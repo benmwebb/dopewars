@@ -1,0 +1,9 @@
+#define BT_BACK     201
+#define BT_NEXT     202
+#define BT_CANCEL   203
+#define BT_FINISH   204
+#define BT_BROWSE   205
+#define ED_LICENCE  206
+#define ST_FILELIST 207
+#define ST_COMPLETE 208
+#define ST_EXIT     209

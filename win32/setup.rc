@@ -1,0 +1,6 @@
+#include <windows.h>
+
+0   INSTLIST  "manifest"
+1   INSTFILE  "installfiles.gz"
+
+#include "dialogs.rc"
