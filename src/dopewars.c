@@ -1374,8 +1374,10 @@ void RemoveListEntry(DopeList *List, int Index)
   if (!List || Index < 0 || Index >= List->Number)
     return;
 
-  g_memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
-            (List->Number - 1 - Index) * sizeof(DopeEntry));
+  if (Index < List->Number - 1) {
+    g_memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
+              (List->Number - 1 - Index) * sizeof(DopeEntry));
+  }
   List->Number--;
   List->Data = (DopeEntry *)g_realloc(List->Data, List->Number *
                                       sizeof(DopeEntry));
