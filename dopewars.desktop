@@ -4,6 +4,7 @@ Name[de]=Drogenkrieg
 Name[pl]=Wojny narkotykowe
 Comment=dopewars drug dealing game
 Comment[pl]=Gra polegajÄca na handlowaniu narkotykami
+Comment[fr]=Jeu de vente de drogue
 Exec=dopewars
 Icon=dopewars-weed.png
 Terminal=false
