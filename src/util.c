@@ -46,7 +46,7 @@
 #ifndef HAVE_GETOPT
 char *optarg;
 
-static int apos = 0;
+static int apos = 1; /* Skip argv[0], the executable name */
 
 int getopt(int argc, char *const argv[], const char *str)
 {
