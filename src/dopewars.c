@@ -789,6 +789,7 @@ char *DefaultSubwaySaying[] = {
   N_("I think hemorrhoid commercials are really neat!"),
   N_("We\'re winning the war for drugs!"),
   N_("A day without dope is like night"),
+  /* xgettext:no-c-format */
   N_("We only use 20% of our brains, so why not burn out the other 80%"),
   N_("I\'m soliciting contributions for Zombies for Christ"),
   N_("I\'d like to sell you an edible poodle"),
