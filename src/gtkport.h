@@ -99,7 +99,8 @@ typedef enum {
    GTK_SENSITIVE   = 1 << 10,
    GTK_CAN_FOCUS   = 1 << 11,
    GTK_HAS_FOCUS   = 1 << 12,
-   GTK_CAN_DEFAULT = 1 << 13
+   GTK_CAN_DEFAULT = 1 << 13,
+   GTK_IS_DEFAULT =  1 << 14
 } GtkWidgetFlags;
 
 #define GTK_VISIBLE 1
@@ -135,7 +136,8 @@ typedef struct _GtkHPaned GtkHPaned;
 typedef struct _GtkOptionMenu GtkOptionMenu;
 
 struct _GtkAccelGroup {
-   GSList *accel;
+   ACCEL *accel;    /* list of ACCEL structures */
+   gint numaccel;
 };
 
 struct _GtkSignalType {
@@ -209,6 +211,7 @@ struct _GtkMenuItem {
    GtkWidget widget;
    GtkMenu *submenu;
    gint ID;
+   gint accelind;
    gchar *text;
 };
 
@@ -320,6 +323,7 @@ struct _GtkItemFactory {
    GtkObject object;
    GSList *children;
    gchar *path;
+   GtkAccelGroup *accel_group;
    GtkWidget *top_widget;
 };
 
@@ -640,6 +644,7 @@ GtkWidget *gtk_vseparator_new();
 void gtk_object_set_data(GtkObject *object,const gchar *key,gpointer data);
 gpointer gtk_object_get_data(GtkObject *object,const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
+void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
 void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
                                          GtkTranslateFunc func,
                                          gpointer data,

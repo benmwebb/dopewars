@@ -219,6 +219,8 @@ static void gtk_window_set_initial_position(GtkWindow *window,
 static void gtk_progress_bar_size_request(GtkWidget *widget,
                                           GtkRequisition *requisition);
 static void gtk_progress_bar_realize(GtkWidget *widget);
+static gint gtk_accel_group_add(GtkAccelGroup *accel_group,ACCEL *newaccel);
+static void gtk_accel_group_set_id(GtkAccelGroup *accel_group,gint ind,gint ID);
 
 typedef struct _GdkInput GdkInput;
 
@@ -873,7 +875,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
             gtk_option_menu_update_selection(widget);
          } else if (lParam && HIWORD(wParam)==BN_CLICKED) {
             gtk_signal_emit(GTK_OBJECT(widget),"clicked");
-         } else if (HIWORD(wParam)==0) {
+         } else if (HIWORD(wParam)==0 || HIWORD(wParam)==1) {
             window=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
             widget=gtk_window_get_menu_ID(GTK_WINDOW(window),LOWORD(wParam));
             if (widget) gtk_signal_emit(GTK_OBJECT(widget),"activate");
@@ -1211,6 +1213,8 @@ void gtk_widget_create(GtkWidget *widget) {
 void gtk_widget_destroy(GtkWidget *widget) {
    if (!widget) return;
    gtk_widget_lose_focus(widget);
+   if (widget->hWnd) DestroyWindow(widget->hWnd);
+   widget->hWnd=NULL;
 // g_print("gtk_widget_destroy on widget %p\n",widget);
    gtk_signal_emit(GTK_OBJECT(widget),"destroy");
 // g_print("Freeing widget\n");
@@ -1778,10 +1782,12 @@ void gtk_window_destroy(GtkWidget *widget) {
 // g_print("gtk_window_destroy on widget %p\n",widget);
    WindowList=g_slist_remove(WindowList,(gpointer)window);
    gtk_container_destroy(widget);
-   g_free(GTK_WINDOW(widget)->title);
+   if (window->accel_group) gtk_accel_group_destroy(window->accel_group);
+   if (window->hAccel) DestroyAcceleratorTable(window->hAccel);
+   g_free(window->title);
    EnableParent(window);
-   if (widget->hWnd) DestroyWindow(widget->hWnd);
-   widget->hWnd=NULL;
+// if (widget->hWnd) DestroyWindow(widget->hWnd);
+// widget->hWnd=NULL;
 }
 
 void gtk_window_show(GtkWidget *widget) {
@@ -1987,6 +1993,11 @@ void gtk_window_realize(GtkWidget *widget) {
    gtk_set_default_font(widget->hWnd);
 /* g_print("Window window %p created\n",widget->hWnd);*/
    gtk_container_realize(widget);
+
+   if (win->accel_group && win->accel_group->numaccel) {
+     win->hAccel = CreateAcceleratorTable(win->accel_group->accel,
+                                          win->accel_group->numaccel);
+   }
 // if (win->focus && win->focus->hWnd) SetFocus(win->focus->hWnd);
 }
 
@@ -2023,7 +2034,9 @@ void gtk_button_realize(GtkWidget *widget) {
    GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    Parent=gtk_get_parent_hwnd(widget);
    widget->hWnd = CreateWindow("BUTTON",but->text,
-                            WS_CHILD|WS_TABSTOP|BS_PUSHBUTTON,
+                            WS_CHILD|WS_TABSTOP|
+                            (GTK_WIDGET_FLAGS(widget)&GTK_IS_DEFAULT ?
+                             BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
                             widget->allocation.x,widget->allocation.y,
                             widget->allocation.width,widget->allocation.height,
                             Parent,NULL,hInst,NULL);
@@ -2867,6 +2880,7 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button,gpointer data) {
    GtkRadioButton *radio;
    gboolean is_active = GTK_TOGGLE_BUTTON(radio_button)->toggled;
    hWnd=GTK_WIDGET(radio_button)->hWnd;
+g_print("radio_button_toggled\n");
    if (hWnd) {
       SendMessage(hWnd,BM_SETCHECK,is_active ? BST_CHECKED : BST_UNCHECKED,0);
    }
@@ -2900,22 +2914,26 @@ void gtk_main() {
    MSG msg;
    GSList *list;
    BOOL MsgDone;
-   GtkWidget *widget;
+   GtkWidget *widget,*window;
    HACCEL hAccel;
 
    RecurseLevel++;
 
    while (GetMessage(&msg,NULL,0,0)) {
       MsgDone=FALSE;
-      for (list=WindowList;list && !MsgDone;list=g_slist_next(list)) {
+      widget=GTK_WIDGET(GetWindowLong(msg.hwnd,GWL_USERDATA));
+      window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+      if (window) {
+        hAccel=GTK_WINDOW(window)->hAccel;
+        if (hAccel) {
+          MsgDone=TranslateAccelerator(window->hWnd,hAccel,&msg);
+        }
+      }
+      if (!MsgDone) for (list=WindowList;list && !MsgDone;
+                         list=g_slist_next(list)) {
          widget=GTK_WIDGET(list->data);
          if (widget && widget->hWnd &&
              (MsgDone=IsDialogMessage(widget->hWnd,&msg))==TRUE) break;
-      }
-      widget=GTK_WIDGET(GetWindowLong(msg.hwnd,GWL_USERDATA));
-      if (!MsgDone && widget && GTK_OBJECT(widget)->klass==&GtkWindowClass) {
-         hAccel=GTK_WINDOW(widget)->hAccel;
-         if (hAccel) MsgDone=TranslateAccelerator(widget->hWnd,hAccel,&msg);
       }
       if (!MsgDone) {
          TranslateMessage(&msg);
@@ -3144,6 +3162,7 @@ GtkItemFactory *gtk_item_factory_new(GtkType container_type,
    GtkItemFactory *new_fac;
    new_fac=(GtkItemFactory *)GtkNewObject(&GtkItemFactoryClass);
    new_fac->path=g_strdup(path);
+   new_fac->accel_group = accel_group;
    new_fac->top_widget=gtk_menu_bar_new();
    return new_fac;
 }
@@ -3166,14 +3185,14 @@ static gint PathCmp(const gchar *path1,const gchar *path2) {
 static void gtk_item_factory_parse_path(GtkItemFactory *ifactory,
                                         gchar *path,
                                         GtkItemFactoryChild **parent,
-                                        gchar **menu_title) {
+                                        GString *menu_title) {
    GSList *list;
    GtkItemFactoryChild *child;
-   gchar *root,*pt,*title;
+   gchar *root,*pt;
 
    pt=strrchr(path,'/');
    if (!pt) return;
-   title=g_strdup(pt+1);
+   g_string_assign(menu_title,pt+1);
    root=g_strdup(path);
    root[pt-path]='\0';
 
@@ -3182,22 +3201,60 @@ static void gtk_item_factory_parse_path(GtkItemFactory *ifactory,
       child=(GtkItemFactoryChild *)list->data;
       if (PathCmp(child->path,root)==1) { *parent=child; break; }
    }
-   *menu_title=title;
    g_free(root);
+}
+
+static gboolean gtk_item_factory_parse_accel(GtkItemFactory *ifactory,
+                                             gchar *accelerator,
+                                             GString *menu_title,ACCEL *accel) {
+  gchar *apt;
+
+  if (!accelerator) return FALSE;
+
+  apt=accelerator;
+  accel->fVirt=0;
+  accel->key=0;
+  accel->cmd=0;
+
+  g_string_append(menu_title,"\t");
+
+  if (strncmp(apt,"<control>",9)==0) {
+    accel->fVirt |= FCONTROL;
+    g_string_append(menu_title,"Ctrl+");
+    apt+=9;
+  }
+
+  if (strlen(apt)==1) {
+    g_string_append_c(menu_title,*apt);
+    accel->key = *apt;
+    accel->fVirt |= FVIRTKEY;
+  } else if (strcmp(apt,"F1")==0) {
+    g_string_append(menu_title,apt);
+    accel->fVirt |= FVIRTKEY;
+    accel->key = VK_F1;
+  }
+  return (accel->key!=0);
 }
 
 void gtk_item_factory_create_item(GtkItemFactory *ifactory,
                                   GtkItemFactoryEntry *entry,
                                   gpointer callback_data,guint callback_type) {
    GtkItemFactoryChild *new_child,*parent=NULL;
-   gchar *menu_title=NULL;
+   GString *menu_title;
    GtkWidget *menu_item,*menu;
+   ACCEL accel;
+   gboolean haveaccel;
 
    new_child=g_new0(GtkItemFactoryChild,1);
    new_child->path=g_strdup(entry->path);
 
-   gtk_item_factory_parse_path(ifactory,new_child->path,&parent,&menu_title);
-   menu_item=gtk_menu_item_new_with_label(menu_title);
+   menu_title = g_string_new("");
+
+   gtk_item_factory_parse_path(ifactory,new_child->path,&parent,menu_title);
+   haveaccel = gtk_item_factory_parse_accel(ifactory,entry->accelerator,
+                                            menu_title,&accel);
+
+   menu_item=gtk_menu_item_new_with_label(menu_title->str);
    new_child->widget=menu_item;
    if (entry->callback) {
       gtk_signal_connect(GTK_OBJECT(menu_item),"activate",
@@ -3215,7 +3272,12 @@ void gtk_item_factory_create_item(GtkItemFactory *ifactory,
       gtk_menu_bar_append(GTK_MENU_BAR(ifactory->top_widget),menu_item);
    }
 
-   g_free(menu_title);
+   if (haveaccel && ifactory->accel_group) {
+     GTK_MENU_ITEM(menu_item)->accelind=
+             gtk_accel_group_add(ifactory->accel_group,&accel);
+   }
+
+   g_string_free(menu_title,TRUE);
 
    ifactory->children=g_slist_append(ifactory->children,new_child);
 }
@@ -3304,6 +3366,7 @@ GtkWidget *gtk_menu_item_new_with_label(const gchar *label) {
    gint i;
 
    menu_item=GTK_MENU_ITEM(GtkNewObject(&GtkMenuItemClass));
+   menu_item->accelind=-1;
    menu_item->text=g_strdup(label);
    for (i=0;i<strlen(menu_item->text);i++) {
       if (menu_item->text[i]=='_') menu_item->text[i]='&';
@@ -3357,12 +3420,20 @@ void gtk_menu_bar_realize(GtkWidget *widget) {
 void gtk_menu_item_realize(GtkWidget *widget) {
    GtkMenuItem *menu_item=GTK_MENU_ITEM(widget);
    MENUITEMINFO mii;
-   GtkWidget *menu_bar;
+   GtkWidget *menu_bar,*window;
    HMENU parent_menu;
    gint pos;
 
    menu_bar=gtk_widget_get_ancestor(widget,GTK_TYPE_MENU_BAR);
    if (menu_bar) menu_item->ID=GTK_MENU_BAR(menu_bar)->LastID++;
+
+   if (menu_item->accelind>=0) {
+     window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+     if (window && GTK_WINDOW(window)->accel_group) {
+       gtk_accel_group_set_id(GTK_WINDOW(window)->accel_group,
+                              menu_item->accelind,menu_item->ID);
+     }
+   }
 
    if (menu_item->submenu) gtk_widget_realize(GTK_WIDGET(menu_item->submenu));
 
@@ -3783,7 +3854,26 @@ gpointer gtk_object_get_data(GtkObject *object,const gchar *key) {
 GtkAccelGroup *gtk_accel_group_new() {
    GtkAccelGroup *new_accel;
    new_accel=g_new0(GtkAccelGroup,1);
+   new_accel->accel = NULL;
+   new_accel->numaccel = 0;
    return new_accel;
+}
+
+gint gtk_accel_group_add(GtkAccelGroup *accel_group,ACCEL *newaccel) {
+  accel_group->numaccel++;
+  accel_group->accel = g_realloc(accel_group->accel,
+                                 accel_group->numaccel*sizeof(ACCEL));
+  memcpy(&accel_group->accel[accel_group->numaccel-1],newaccel,sizeof(ACCEL));
+  return (accel_group->numaccel-1);
+}
+
+void gtk_accel_group_set_id(GtkAccelGroup *accel_group,gint ind,gint ID) {
+  if (ind < accel_group->numaccel) accel_group->accel[ind].cmd = ID;
+}
+
+void gtk_accel_group_destroy(GtkAccelGroup *accel_group) {
+  g_free(accel_group->accel);
+  g_free(accel_group);
 }
 
 void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
@@ -3793,6 +3883,7 @@ void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
 }
 
 void gtk_widget_grab_default(GtkWidget *widget) {
+  GTK_WIDGET_SET_FLAGS(widget,GTK_IS_DEFAULT);
 }
 
 void gtk_widget_grab_focus(GtkWidget *widget) {
