@@ -94,8 +94,9 @@ l = @l@
 localedir = @localedir@
 
 SUBDIRS = intl src doc po
-
 DISTFILES = ABOUT-NLS
+DESKTOPDIR = ${DESTDIR}${datadir}/gnome/apps/Games
+DESKTOP = dopewars.desktop
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
@@ -385,6 +386,8 @@ install-data-local:
 	chown root:games ${DESTDIR}${datadir}/dopewars.sco || \
 	   chown root:wheel ${DESTDIR}${datadir}/dopewars.sco
 	chmod 0660 ${DESTDIR}${datadir}/dopewars.sco
+	${mkinstalldirs} ${DESKTOPDIR}
+	${INSTALL} -o root -g 0 -m 0644 ${DESKTOP} ${DESKTOPDIR}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
