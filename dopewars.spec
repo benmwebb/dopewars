@@ -53,6 +53,9 @@ make install DESTDIR=${RPM_BUILD_ROOT}
 %clean
 test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 
+%post
+%{_bindir}/dopewars -C %{_datadir}/dopewars.sco
+
 %files -f %{name}.lang
 %defattr(-,root,root)
 %doc ChangeLog LICENCE README doc/aiplayer.html doc/clientplay.html

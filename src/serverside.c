@@ -1922,9 +1922,7 @@ void ConvertHighScoreFile(const gchar *convertfile)
      * header */
     rewind(old);
     if (HighScoreReadHeader(old, NULL)) {
-      g_log(NULL, G_LOG_LEVEL_CRITICAL,
-            _("The high score file %s\n"
-              "is already in the new format! Aborting."), convertfile);
+      /* Do nothing, except close the open files */
       fclose(old);
       fclose(backup);
     } else {
@@ -1934,10 +1932,11 @@ void ConvertHighScoreFile(const gchar *convertfile)
       rewind(old);
       while (1) {
         ch = fgetc(old);
-        if (ch == EOF)
+        if (ch == EOF) {
           break;
-        else
+	} else {
           fputc(ch, backup);
+	}
       }
       fclose(backup);
 
