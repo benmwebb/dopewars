@@ -310,8 +310,14 @@ void SetReuse(SOCKET sock) {
    if (setsockopt(sock,SOL_SOCKET,
                   SO_REUSEADDR,(char *)(&tmp),sizeof(tmp))==-1) {
       perror("setsockopt"); exit(1);
+   }
 }
-}
+
+/* We don't do locking under Win32 right now */
+int ReadLock(FILE *fp) { return 0; }
+int WriteLock(FILE *fp) { return 0; }
+void ReleaseLock(FILE *fp) { }
+
 #endif /* NETWORKING */
 
 #else /* Code for Unix build */
@@ -322,6 +328,10 @@ void SetReuse(SOCKET sock) {
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 int Width,Depth;
@@ -354,6 +364,24 @@ void SetReuse(int sock) {
    }
 }
 #endif /* NETWORKING */
+
+static int DoLock(FILE *fp,int l_type) {
+   struct flock lk;
+
+   lk.l_type = l_type;
+   lk.l_whence = lk.l_start = lk.l_len = 0;
+   lk.l_pid = 0;
+
+   while(1) {
+      if (fcntl(fileno(fp),F_SETLKW,&lk)==0) return 0;
+      else if (errno!=EINTR) return 1;
+   }
+   return 1;
+}
+
+int ReadLock(FILE *fp) { return DoLock(fp,F_RDLCK); }
+int WriteLock(FILE *fp) { return DoLock(fp,F_WRLCK); }
+void ReleaseLock(FILE *fp) { DoLock(fp,F_UNLCK); }
 
 #endif /* CYGWIN */
 

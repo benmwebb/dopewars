@@ -128,6 +128,8 @@ void SetReuse(SOCKET sock);
 
 #include <sys/types.h>
 
+#include <stdio.h>
+
 #ifdef NETWORKING
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -183,6 +185,10 @@ void SetReuse(int sock);
 #endif /* CYGWIN */
 
 void MicroSleep(int microsec);
+
+int ReadLock(FILE *fp); 
+int WriteLock(FILE *fp); 
+void ReleaseLock(FILE *fp);
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1

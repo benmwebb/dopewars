@@ -903,10 +903,11 @@ int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 /* AntiqueScore (antique mode scores). Returns 1 on success, 0 on failure. */
    memset(MultiScore,0,sizeof(struct HISCORE)*NUMHISCORE);
    memset(AntiqueScore,0,sizeof(struct HISCORE)*NUMHISCORE);
-   if (ScoreFP) {
+   if (ScoreFP && ReadLock(ScoreFP)==0) {
       rewind(ScoreFP);
       HighScoreTypeRead(AntiqueScore,ScoreFP);
       HighScoreTypeRead(MultiScore,ScoreFP);
+      ReleaseLock(ScoreFP);
    } else return 0;
    return 1;
 }
@@ -914,11 +915,12 @@ int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 /* Writes out all the high scores from MultiScore and AntiqueScore; returns */
 /* 1 on success, 0 on failure.                                              */
-   if (ScoreFP) {
+   if (ScoreFP && WriteLock(ScoreFP)==0) {
       ftruncate(fileno(ScoreFP),0);
       rewind(ScoreFP);
       HighScoreTypeWrite(AntiqueScore,ScoreFP);
       HighScoreTypeWrite(MultiScore,ScoreFP);
+      ReleaseLock(ScoreFP);
    } else return 0;
    return 1;
 }
