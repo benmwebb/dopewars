@@ -5217,6 +5217,12 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   OPENFILENAME ofn;
   char file[800];
 
+  if (oldname) {
+    strncpy(file, oldname, sizeof(file));
+    file[sizeof(file) - 1] = '\0';
+  } else {
+    file[0] = '\0';
+  }
   ofn.lStructSize = sizeof(OPENFILENAME);
   ofn.hwndOwner = parent ? parent->hWnd : NULL;
   ofn.hInstance = NULL;
