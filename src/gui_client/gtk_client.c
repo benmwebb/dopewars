@@ -1057,6 +1057,17 @@ static void FreeCombatants(void)
   g_array_free(combatants, TRUE);
 }
 
+static void EnableFightButton(GtkWidget *button, gboolean enable)
+{
+  if (enable) {
+    gtk_widget_set_sensitive(button, TRUE);
+    gtk_widget_show(button);
+  } else {
+    gtk_widget_hide(button);
+    gtk_widget_set_sensitive(button, FALSE);
+  }
+}
+
 /* 
  * Given the network message "Data" concerning some happening during
  * combat, extracts the relevant data and updates the Fight dialog,
@@ -1149,26 +1160,10 @@ void DisplayFightMessage(char *Data)
     TextViewAppend(textview, "\n", NULL, TRUE);
   }
 
-  if (!CanRunHere || fp == F_LASTLEAVE) {
-    gtk_widget_show(Deal);
-  } else {
-    gtk_widget_hide(Deal);
-  }
-  if (CanFire && TotalGunsCarried(Play) > 0) {
-    gtk_widget_show(Fight);
-  } else {
-    gtk_widget_hide(Fight);
-  }
-  if (CanFire && TotalGunsCarried(Play) == 0) {
-    gtk_widget_show(Stand);
-  } else {
-    gtk_widget_hide(Stand);
-  }
-  if (fp != F_LASTLEAVE) {
-    gtk_widget_show(Run);
-  } else {
-    gtk_widget_hide(Run);
-  }
+  EnableFightButton(Deal, !CanRunHere || fp == F_LASTLEAVE);
+  EnableFightButton(Fight, CanFire && TotalGunsCarried(Play) > 0);
+  EnableFightButton(Stand, CanFire && TotalGunsCarried(Play) == 0);
+  EnableFightButton(Run, fp != F_LASTLEAVE);
 }
 
 /* 
