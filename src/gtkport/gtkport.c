@@ -1151,7 +1151,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   InitCommonControls();
-  LoadLibrary("RICHED32.DLL");
+  LoadLibrary("RICHED20.DLL");
 
   /* Rich Edit controls have two different class names, depending on whether
    * we want ANSI or Unicode - argh! */
@@ -1160,7 +1160,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   } else {
     RichEditClass = "RichEdit20A";
   }
-  RichEditClass = "RichEdit";
   HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
 
   if (!hPrevInstance) {
@@ -1958,10 +1957,18 @@ static void gtk_text_view_set_format(GtkTextView *textview,
   CHARFORMAT *cf, cfdef;
   GtkWidget *widget = GTK_WIDGET(textview);
   GtkTextBuffer *buffer;
+  DWORD st, end;
 
   if (!GTK_WIDGET_REALIZED(widget)) {
     return;
   }
+
+  /* RichEdit controls do something odd behind the scenes with line ends,
+   * so we use our guess for the last character position, and then read
+   * back the resultant selection to get the true "length" of the control */
+  mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)endpos, (LPARAM)endpos);
+  mySendMessage(widget->hWnd, EM_GETSEL, (WPARAM)&st, (LPARAM)&end);
+  endpos = (gint)end;
 
   mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)(endpos - len),
                 (LPARAM)endpos);
@@ -2029,8 +2036,13 @@ void gtk_editable_set_position(GtkEditable *editable, gint position)
   if (!GTK_WIDGET_REALIZED(widget))
     return;
   hWnd = widget->hWnd;
+
+  /* RichEdit 2.0 doesn't appear to show the caret unless we show the
+   * selection */
+  mySendMessage(hWnd, EM_HIDESELECTION, 0, 0);
   mySendMessage(hWnd, EM_SETSEL, (WPARAM)position, (LPARAM)position);
   mySendMessage(hWnd, EM_SCROLLCARET, 0, 0);
+  mySendMessage(hWnd, EM_HIDESELECTION, 1, 0);
 }
 
 gint gtk_editable_get_position(GtkEditable *editable)
