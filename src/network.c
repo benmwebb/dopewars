@@ -378,11 +378,11 @@ g_print("FIXME: SOCKS5 connect reply\n");
          if (data[0]!=0) {
             SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION);
          } else {
-            if (data[0]==90) {
+            if (data[1]==90) {
                NetBuf->status = NBS_CONNECTED;
                retval=TRUE;
-            } else if (data[0]>=SEC_REJECT && data[0]<=SEC_IDMISMATCH) {
-               SetError(&NetBuf->error,&ETSocks,data[0]);
+            } else if (data[1]>=SEC_REJECT && data[1]<=SEC_IDMISMATCH) {
+               SetError(&NetBuf->error,&ETSocks,data[1]);
             } else {
                SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN);
             }
