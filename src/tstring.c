@@ -78,10 +78,11 @@ gchar *GetTranslatedString(gchar *str,gchar *code,gboolean Caps) {
    return tstr;
 }
 
-void GetNextFormat(int *Index,gchar *str,int *StartPos,
+void GetNextFormat(guint *Index,gchar *str,int *StartPos,
                    int *EndPos,int *FmtPos,gchar *Type,int *ArgNum,int *Wid,
                    int *Prec,char *Code) {
-   int anum,wid,prec,i;
+   int anum,wid,prec;
+   guint i;
    gchar type;
    *StartPos=-1;
    *EndPos=*FmtPos=*ArgNum=*Wid=*Prec=0;
@@ -124,7 +125,8 @@ void GetNextFormat(int *Index,gchar *str,int *StartPos,
 }
 
 gchar *HandleTFmt(gchar *format, va_list va) {
-   int i,StrInd,StartPos,EndPos,FmtPos,ArgNum,DefaultArgNum,Wid,Prec;
+   int StrInd,StartPos,EndPos,FmtPos,Wid,Prec;
+   guint i,ArgNum,DefaultArgNum;
    char Code[3],Type;
    gchar *retstr,*fstr;
    GString *string,*tmpfmt;

@@ -775,7 +775,7 @@ void AddURLEnc(GString *str,gchar *unenc) {
 /* replacing "special" characters in the same way as the               */
 /* application/x-www-form-urlencoded media type, suitable for sending  */
 /* to CGI scripts etc.                                                 */ 
-   int i;
+   guint i;
    if (!unenc || !str) return;
    for (i=0;i<strlen(unenc);i++) {
       if ((unenc[i]>='a' && unenc[i]<='z') ||
@@ -1474,7 +1474,8 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
 void SendFightMessage(Player *Attacker,Player *Defender,
                       int BitchesKilled,FightPoint fp,
                       price_t Loot,gboolean Broadcast,gchar *Msg) {
-   int ArrayInd,ArmPercent,Damage,MaxDamage,i;
+   guint ArrayInd;
+   int ArmPercent,Damage,MaxDamage,i;
    Player *To;
    GString *text;
    gchar *BitchName;

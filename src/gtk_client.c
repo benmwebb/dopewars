@@ -748,7 +748,7 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
 /* Updates the display of information for a player/cop in the Fight dialog. */
 /* If the player's name (DefendName) already exists, updates the display of */
 /* total health and number of bitches - otherwise, adds a new entry.        */
-   gint i,RowIndex;
+   guint i,RowIndex;
    gchar *name;
    struct combatant *compt;
    GArray *combatants;
@@ -2857,10 +2857,6 @@ void DestroyShowing(GtkWidget *widget,gpointer data) {
    if (IsShowing) *IsShowing=FALSE;
 }
 
-gint DisallowDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
-   return(TRUE);
-}
-
 static void NewNameOK(GtkWidget *widget,GtkWidget *window) {
    GtkWidget *entry;
    gchar *text;
@@ -2916,6 +2912,10 @@ void NewNameDialog(void) {
    
    gtk_container_add(GTK_CONTAINER(window),vbox);
    gtk_widget_show_all(window);
+}
+
+gint DisallowDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
+   return(TRUE);
 }
 
 void GunShopDialog(void) {

@@ -799,7 +799,7 @@ void StopServer() {
    RemovePidFile();
 }
 
-void RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
+void RemovePlayerFromServer(Player *Play) {
 #ifdef GUI_SERVER
    if (Play->InputTag) gdk_input_remove(Play->InputTag);
 #endif
@@ -822,8 +822,7 @@ void ServerLoop() {
    GSList *list,*nextlist;
    fd_set readfs,writefs,errorfs;
    int topsock;
-   char WantQuit=FALSE;
-   char InputClosed=FALSE;
+   gboolean InputClosed=FALSE;
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
@@ -920,13 +919,14 @@ void ServerLoop() {
             }
             if (!DoneOK) {
 /* The socket has been shut down, or the buffer was filled - remove player */
-               RemovePlayerFromServer(tmp,WantQuit);
+               RemovePlayerFromServer(tmp);
                if (IsServerShutdown()) break;
                tmp=NULL;
             }
          }
          list=nextlist;
       }
+      if (list && IsServerShutdown()) break;
    }
    StopServer();
    g_string_free(LineBuf,TRUE);
@@ -938,12 +938,12 @@ static gint ListenTag=0;
 static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
 static void GuiSetTimeouts(void);
 static time_t NextTimeout=0;
-static guint TimeoutTag=-1;
+static guint TimeoutTag=0;
 
 static gint GuiDoTimeouts(gpointer data) {
 /* Forget the TimeoutTag so that GuiSetTimeouts doesn't delete it - it'll be
    deleted automatically anyway when we return FALSE */
-   TimeoutTag=-1;
+   TimeoutTag=0;
    NextTimeout=0;
 
    FirstServer=HandleTimeouts(FirstServer);
@@ -957,8 +957,8 @@ void GuiSetTimeouts(void) {
    TimeNow=time(NULL);
    MinTimeout=GetMinimumTimeout(FirstServer);
    if (TimeNow+MinTimeout < NextTimeout || NextTimeout<TimeNow) {
-      if (TimeoutTag!=-1) gtk_timeout_remove(TimeoutTag);
-      TimeoutTag = -1;
+      if (TimeoutTag>0) gtk_timeout_remove(TimeoutTag);
+      TimeoutTag = 0;
       if (MinTimeout>0) {
          TimeoutTag=gtk_timeout_add(MinTimeout*1000,GuiDoTimeouts,NULL);
          NextTimeout=TimeNow+MinTimeout;
@@ -1048,7 +1048,7 @@ static void GuiHandleSocket(gpointer data,gint socket,
       GuiSetTimeouts();  /* We may have set some new timeouts */
    }
    if (!DoneOK) {
-      RemovePlayerFromServer(Play,WantQuit);
+      RemovePlayerFromServer(Play);
       if (IsServerShutdown()) GuiQuitServer();
    }
 }
@@ -1667,7 +1667,7 @@ void AllowNextShooter(Player *Play) {
 }
 
 void DoReturnFire(Player *Play) {
-   int ArrayInd;
+   guint ArrayInd;
    Player *Defend;
 
    if (!Play || !Play->FightArray) return;
@@ -1687,7 +1687,7 @@ void RunFromCombat(Player *Play,int ToLocation) {
 /* is >=0, then it identifies the location that the player is       */
 /* trying to run to.                                                */
    int EscapeProb,RandNum;
-   int ArrayInd;
+   guint ArrayInd;
    gboolean FightingCop=FALSE;
    Player *Defend;
    char BackupAt;
@@ -1724,7 +1724,7 @@ void RunFromCombat(Player *Play,int ToLocation) {
 
 void CheckForKilledPlayers(Player *Play) {
    Player *Defend;
-   int ArrayInd;
+   guint ArrayInd;
    GPtrArray *KilledPlayers;
 
    KilledPlayers=g_ptr_array_new();
@@ -1754,7 +1754,7 @@ static void CheckCopsIntervene(Player *Play) {
 /* If "Play" is attacking someone, and no cops are currently present, */
 /* then have the cops intervene (with a probability dependent on the  */
 /* current location's PolicePresence)                                 */
-   gint ArrayInd;
+   guint ArrayInd;
    Player *Defend;
 
    if (!Play || !Play->FightArray) return; /* Sanity check */
@@ -1780,7 +1780,7 @@ static Player *GetFireTarget(Player *Play) {
 /* is attacking a designated target already, return that, otherwise    */
 /* return the first valid opponent in the player's FightArray.         */
    Player *Defend;
-   gint ArrayInd;
+   guint ArrayInd;
 
    if (Play->Attacking && g_slist_find(FirstServer,(gpointer)Play->Attacking)) {
       return Play->Attacking;
@@ -1867,7 +1867,7 @@ Player *GetNextShooter(Player *Play) {
 /* nothing (i.e. return NULL)                                         */
    Player *MinPlay,*Defend;
    time_t MinTimeout;
-   int ArrayInd;
+   guint ArrayInd;
    gboolean Tie=FALSE;
 
    if (!FightTimeout) return NULL;
@@ -1916,7 +1916,7 @@ void ResolveTipoff(Player *Play) {
 
 void WithdrawFromCombat(Player *Play) {
 /* Cleans up combat after player "Play" has left                    */
-   int i,j;
+   guint AttackInd,DefendInd;
    gboolean FightDone;
    Player *Attack,*Defend;
    GSList *list;
@@ -1926,10 +1926,10 @@ void WithdrawFromCombat(Player *Play) {
 
    ResolveTipoff(Play);
    FightDone=TRUE;
-   for (i=0;i<Play->FightArray->len;i++) {
-      Attack=(Player *)g_ptr_array_index(Play->FightArray,i);
-      for (j=0;j<i;j++) {
-         Defend=(Player *)g_ptr_array_index(Play->FightArray,j);
+   for (AttackInd=0;AttackInd<Play->FightArray->len;AttackInd++) {
+      Attack=(Player *)g_ptr_array_index(Play->FightArray,AttackInd);
+      for (DefendInd=0;DefendInd<AttackInd;DefendInd++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,DefendInd);
          if (Attack!=Play && Defend!=Play &&
              IsOpponent(Attack,Defend)) { FightDone=FALSE; break; }
       }
@@ -1945,8 +1945,8 @@ void WithdrawFromCombat(Player *Play) {
    g_ptr_array_remove(Play->FightArray,(gpointer)Play);
 
    if (FightDone) {
-      for (i=0;i<Play->FightArray->len;i++) {
-         Defend=(Player *)g_ptr_array_index(Play->FightArray,i);
+      for (DefendInd=0;DefendInd<Play->FightArray->len;DefendInd++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,DefendInd);
          Defend->FightArray=NULL;
          ResolveTipoff(Defend);
          if (IsCop(Defend)) {

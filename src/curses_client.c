@@ -815,7 +815,7 @@ void PrintHighScore(char *Data) {
 void PrintMessage(const gchar *text) {
 /* Prints a message "text" received via. a "printmessage" message in the */
 /* bottom part of the screen.                                            */
-   int i,line;
+   guint i,line;
    attrset(TextAttr);
    clear_line(16);
    for (i=0;i<strlen(text);i++) {
@@ -1026,7 +1026,8 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
 /* the prompt. If "ExpandOut" is also TRUE, the full words for    */
 /* the commands, rather than just their first letters, are        */
 /* displayed.                                                     */
-   int i,j,k,c;
+   int ch;
+   guint AllowInd,WordInd,i;
 
 /* Expansions of the single-letter keypresses for the benefit of the user.
    i.e. "Yes" is printed for the key "Y" etc. You should indicate to the
@@ -1034,35 +1035,39 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
    capitalising it or similar. */
    gchar *Words[] = { N_("Yes"), N_("No"), N_("Run"),
                       N_("Fight"), N_("Attack"), N_("Evade") };
-   gint numWords = sizeof(Words) / sizeof(Words[0]);
+   guint numWords = sizeof(Words) / sizeof(Words[0]);
    gchar *trWord;
 
    curs_set(1);
-   c=0;
+   ch='\0';
+
    if (!allowed || strlen(allowed)==0) return 0;
+
    if (PrintAllowed) {
       addch('[' | TextAttr);
-      for (i=0;i<strlen(allowed);i++) {
-         if (i>0) addch('/' | TextAttr);
-         for (j=0;j<numWords;j++) {
-            if (ExpandOut && orig_allowed[i]==Words[j][0]) {
-               trWord=_(Words[j]);
-               for (k=0;k<strlen(trWord);k++) {
-                  addch((guchar)trWord[k] | TextAttr);
+      for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
+         if (AllowInd>0) addch('/' | TextAttr);
+         for (WordInd=0;WordInd<numWords;WordInd++) {
+            if (ExpandOut && orig_allowed[AllowInd]==Words[WordInd][0]) {
+               trWord=_(Words[WordInd]);
+               for (i=0;i<strlen(trWord);i++) {
+                  addch((guchar)trWord[i] | TextAttr);
                }
                break;
             }
          }
-         if (j>=numWords) addch((guchar)allowed[i] | TextAttr);
+         if (WordInd>=numWords) addch((guchar)allowed[AllowInd] | TextAttr);
       }
       addch(']' | TextAttr);
       addch(' ' | TextAttr);
    }
    while (1) {
-      c=bgetch(); c=toupper(c);
-      for (i=0;i<strlen(allowed);i++) if (allowed[i]==c) {
-         addch((guint)c | TextAttr);
-         curs_set(0); return orig_allowed[i];
+      ch=bgetch(); ch=toupper(ch);
+      for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
+         if (allowed[AllowInd]==ch) {
+            addch((guint)ch | TextAttr);
+            curs_set(0); return orig_allowed[AllowInd];
+         }
       }
       if (AllowOther) break;
    }
@@ -1165,10 +1170,13 @@ void display_message(char *buf) {
 /* 10 to 14) scrolling previous messages up                      */
 /* If "buf" is NULL, clears the message area                     */
 /* If "buf" is a blank string, redisplays the message area       */
-   int x,y;
-   int wid;
+   guint x,y;
+   guint wid;
    static char Messages[5][200];
    char *bufpt;
+
+   if (Width<=4) return;
+
    wid = Width-4 < 200 ? Width-4 : 200;
    if (!buf) {
       for (y=0;y<5;y++) {

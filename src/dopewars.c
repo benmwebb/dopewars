@@ -732,20 +732,20 @@ Player *GetPlayerByName(char *Name,GSList *First) {
 
 price_t strtoprice(char *buf) {
 /* Forms a price based on the string representation in "buf"  */
-   int i,buflen,FracNum;
-   char digit,minus,suffix;
-   gboolean InFrac;
+   guint i,buflen,FracNum;
+   char digit,suffix;
+   gboolean minus,InFrac;
    price_t val=0;
-   minus=0;
+   minus=FALSE;
    InFrac=FALSE;
-   if (!buf) return 0;
+   if (!buf || !buf[0]) return 0;
    buflen=strlen(buf);
    suffix=buf[buflen-1];
    suffix=toupper(suffix);
    if (suffix=='M') FracNum=6;
    else if (suffix=='K') FracNum=3;
    else FracNum=0;
-   for (i=0;i<strlen(buf);i++) {
+   for (i=0;i<buflen;i++) {
       digit=buf[i];
       if (digit=='.' || digit==',') {
          InFrac=TRUE;
@@ -754,7 +754,7 @@ price_t strtoprice(char *buf) {
          else if (InFrac) FracNum--;
          val*=10;
          val+=(digit-'0');
-      } else if (digit=='-') minus=1;
+      } else if (digit=='-') minus=TRUE;
    }
    for (i=0;i<FracNum;i++) val*=10;
    if (minus) val=-val;
