@@ -968,18 +968,20 @@ void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data)
   CommitWriteBuffer(NetBuf, conn, addpt, addlen);
 }
 
+static void SetNetworkError(LastError **error) {
+#ifdef CYGWIN
+  SetError(error, ET_WINSOCK, WSAGetLastError(), NULL);
+#else
+  SetError(error, ET_HERRNO, h_errno, NULL);
+#endif
+}
+
 static struct hostent *LookupHostname(const gchar *host, LastError **error)
 {
   struct hostent *he;
 
-  if ((he = gethostbyname(host)) == NULL) {
-#ifdef CYGWIN
-    if (error)
-      SetError(error, ET_WINSOCK, WSAGetLastError(), NULL);
-#else
-    if (error)
-      SetError(error, ET_HERRNO, h_errno, NULL);
-#endif
+  if ((he = gethostbyname(host)) == NULL && error) {
+    SetNetworkError(error);
   }
   return he;
 }
@@ -1508,11 +1510,7 @@ int CreateTCPSocket(LastError **error)
   fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (fd == SOCKET_ERROR && error) {
-#ifdef CYGWIN
-    SetError(error, ET_WINSOCK, WSAGetLastError(), NULL);
-#else
-    SetError(error, ET_ERRNO, errno, NULL);
-#endif
+    SetNetworkError(error);
   }
 
   return fd;
@@ -1542,11 +1540,7 @@ gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,
       bind(sock, (struct sockaddr *)&bindaddr, sizeof(struct sockaddr));
 
   if (retval == SOCKET_ERROR && error) {
-#ifdef CYGWIN
-    SetError(error, ET_WINSOCK, WSAGetLastError(), NULL);
-#else
-    SetError(error, ET_ERRNO, errno, NULL);
-#endif
+    SetNetworkError(error);
   }
 
   return (retval != SOCKET_ERROR);
