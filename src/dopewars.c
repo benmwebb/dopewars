@@ -2350,6 +2350,13 @@ void SetupParameters(void)
     AssignName(&StoppedTo[i], _(DefaultStoppedTo[i]));
   }
 
+  /* Replace nasty null pointers with null strings */
+  for (i = 0; i < NUMGLOB; ++i) {
+    if (Globals[i].StringVal && !*Globals[i].StringVal) {
+      *Globals[i].StringVal = g_strdup("");
+    }
+  }
+
   /* Now read in the global configuration file */
   conf = GetGlobalConfigFile();
   if (conf) {
