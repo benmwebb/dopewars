@@ -23,24 +23,28 @@
 #define __NLS_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+# include <config.h>
 #endif
 
 #ifdef ENABLE_NLS
-#include <locale.h>
-#include <libintl.h>
-#define _(String) gettext (String)
-#ifdef gettext_noop
-#define N_(String) gettext_noop (String)
+# include <locale.h>
+# ifdef HAVE_GETTEXT
+#  include <libintl.h>
+# else
+#  include "../intl/libintl.h"
+# endif
+# define _(String) gettext (String)
+# ifdef gettext_noop
+#  define N_(String) gettext_noop (String)
+# else
+#  define N_(String) (String)
+# endif
 #else
-#define N_(String) (String)
-#endif
-#else
-#define gettext(String) (String)
-#define dgettext(Domain,Message) (Message)
-#define dcgettext(Domain,Message,Type) (Message)
-#define _(String) (String)
-#define N_(String) (String)
+# define gettext(String) (String)
+# define dgettext(Domain,Message) (Message)
+# define dcgettext(Domain,Message,Type) (Message)
+# define _(String) (String)
+# define N_(String) (String)
 #endif
 
 #endif /* __NLS_H__ */

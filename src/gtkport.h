@@ -330,6 +330,8 @@ struct _GtkItemFactory {
    gchar *path;
    GtkAccelGroup *accel_group;
    GtkWidget *top_widget;
+   GtkTranslateFunc translate_func;
+   gpointer translate_data;
 };
 
 struct _GtkBoxChild {

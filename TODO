@@ -1,3 +1,4 @@
+- Implement allow_shrink window attribute for Windows client
 - Make server run as an NT Service
 - Restore default configuration properly at the start of each game
 - Configuration file editor thingy in the client?

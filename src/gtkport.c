@@ -3174,6 +3174,7 @@ GtkItemFactory *gtk_item_factory_new(GtkType container_type,
    new_fac->path=g_strdup(path);
    new_fac->accel_group = accel_group;
    new_fac->top_widget=gtk_menu_bar_new();
+   new_fac->translate_func=NULL;
    return new_fac;
 }
 
@@ -3192,26 +3193,40 @@ static gint PathCmp(const gchar *path1,const gchar *path2) {
    return Match;
 }
 
+static gchar *TransPath(GtkItemFactory *ifactory,gchar *path) {
+  gchar *transpath=NULL;
+
+  if (ifactory->translate_func) {
+    transpath = (*ifactory->translate_func)(path,ifactory->translate_data);
+  }
+
+  return transpath ? transpath : path;
+}
+
 static void gtk_item_factory_parse_path(GtkItemFactory *ifactory,
                                         gchar *path,
                                         GtkItemFactoryChild **parent,
                                         GString *menu_title) {
-   GSList *list;
-   GtkItemFactoryChild *child;
-   gchar *root,*pt;
+  GSList *list;
+  GtkItemFactoryChild *child;
+  gchar *root,*pt,*transpath;
 
-   pt=strrchr(path,'/');
-   if (!pt) return;
-   g_string_assign(menu_title,pt+1);
-   root=g_strdup(path);
-   root[pt-path]='\0';
+  transpath = TransPath(ifactory,path);
+  pt=strrchr(transpath,'/');
+  if (pt) g_string_assign(menu_title,pt+1);
 
+  pt=strrchr(path,'/');
+  if (!pt) return;
+  root=g_strdup(path);
+  root[pt-path]='\0';
 
-   for (list=ifactory->children;list;list=g_slist_next(list)) {
-      child=(GtkItemFactoryChild *)list->data;
-      if (PathCmp(child->path,root)==1) { *parent=child; break; }
-   }
-   g_free(root);
+  for (list=ifactory->children;list;list=g_slist_next(list)) {
+    child=(GtkItemFactoryChild *)list->data;
+    if (PathCmp(child->path,root)==1) {
+      *parent=child; break;
+    }
+  }
+  g_free(root);
 }
 
 static gboolean gtk_item_factory_parse_accel(GtkItemFactory *ifactory,
@@ -3254,7 +3269,7 @@ void gtk_item_factory_create_item(GtkItemFactory *ifactory,
    GtkWidget *menu_item,*menu;
    ACCEL accel;
    gboolean haveaccel;
-
+   
    new_child=g_new0(GtkItemFactoryChild,1);
    new_child->path=g_strdup(entry->path);
 
@@ -3890,6 +3905,8 @@ void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
                                          GtkTranslateFunc func,
                                          gpointer data,
                                          GtkDestroyNotify notify) {
+  ifactory->translate_func = func;
+  ifactory->translate_data = data;
 }
 
 void gtk_widget_grab_default(GtkWidget *widget) {

@@ -93,26 +93,76 @@ static void LogFilePrintFunc(const gchar *string) {
   }
 }
 
-static void LogFileEnd() {
-   if (LogFile) fclose(LogFile);
+static void LogFileEnd(void) {
+  if (LogFile) fclose(LogFile);
 }
+
+#ifdef ENABLE_NLS
+static gchar *GetWindowsLocale(void) {
+  LCID userID;
+  WORD lang,sublang;
+  static gchar langenv[30];  /* Should only be 5 chars, so this'll be plenty */
+  gchar *oldlang;
+
+  langenv[0]='\0';
+  strcpy(langenv,"LANG=");
+
+  oldlang = getenv("LANG");
+
+  if (oldlang) {
+    g_print("Started with LANG = %s\n",oldlang);
+    return NULL;
+  }
+
+  userID = GetUserDefaultLCID();
+  lang = PRIMARYLANGID(LANGIDFROMLCID(userID));
+  sublang = SUBLANGID(LANGIDFROMLCID(userID));
+
+  switch(lang) {
+    case LANG_ENGLISH:
+      strcat(langenv,"en");
+      if (sublang==SUBLANG_ENGLISH_UK) strcat(langenv,"_gb");
+      break;
+    case LANG_FRENCH:
+      strcat(langenv,"fr"); break;
+    case LANG_GERMAN:
+      strcat(langenv,"de"); break;
+    case LANG_POLISH:
+      strcat(langenv,"pl"); break;
+    case LANG_PORTUGUESE:
+      strcat(langenv,"pt");
+      if (sublang==SUBLANG_PORTUGUESE_BRAZILIAN) strcat(langenv,"_br");
+      break;
+  }
+
+  if (strlen(langenv) > 5) {
+    g_print("Using Windows language %s\n",langenv);
+    return langenv;
+  } else return NULL;
+}
+#endif  /* ENABLE_NLS */
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
    gchar **split;
    int argc;
 #ifdef ENABLE_NLS
+   gchar *winlocale;
+#endif
+
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
+                     G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
+   LogFileStart();
+   g_set_print_handler(LogFilePrintFunc);
+
+#ifdef ENABLE_NLS
+   winlocale=GetWindowsLocale();
+   if (winlocale) putenv(winlocale);
+
    setlocale(LC_ALL,"");
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
-                     G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
-   split=g_strsplit(lpszCmdParam," ",0);
-   argc=0;
-   while (split[argc] && split[argc][0]) argc++;
-   LogFileStart();
-   g_set_print_handler(LogFilePrintFunc);
 
 /* Informational comment placed at the start of the Windows log file
    (this is used for messages printed during processing of the config
@@ -120,6 +170,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    g_print(_("# This is the dopewars startup log, containing any\n"
              "# informative messages resulting from configuration\n"
              "# file processing and the like.\n\n"));
+
+   split=g_strsplit(lpszCmdParam," ",0);
+   argc=0;
+   while (split[argc] && split[argc][0]) argc++;
+
    if (GeneralStartup(argc,split)==0) {
       if (WantVersion || WantHelp) {
          WindowPrintStart();
