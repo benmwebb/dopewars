@@ -5081,7 +5081,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   static gint retval;
   gboolean imm_return;
   gchar *ButtonData[MB_MAX] = {
-    N_("OK"), N_("Cancel"), N_("_Yes"), N_("_No")
+    GTK_STOCK_OK, GTK_STOCK_CANCEL, GTK_STOCK_YES, GTK_STOCK_NO
   };
 
   imm_return = Options & MB_IMMRETURN;
@@ -5114,9 +5114,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   hbbox = gtk_hbutton_box_new();
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
-      button = gtk_button_new_with_label("");
-      SetAccelerator(button, _(ButtonData[i]), button,
-                     "clicked", accel_group, FALSE);
+      button = gtk_button_new_from_stock(ButtonData[i]);
       if (!imm_return) {
         gtk_object_set_data(GTK_OBJECT(button), "retval", &retval);
       }

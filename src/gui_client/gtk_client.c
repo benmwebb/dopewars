@@ -73,7 +73,7 @@ struct ClientDataStruct {
   guint JetAccel;
 };
 
-GtkWidget *MainWindow;
+GtkWidget *MainWindow = NULL;
 
 static struct ClientDataStruct ClientData;
 static gboolean InGame = FALSE;
@@ -176,7 +176,7 @@ static gchar *MenuTranslate(const gchar *path, gpointer func_data)
 static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
                        const gchar *message, gpointer user_data)
 {
-  GtkMessageBox(NULL, message,
+  GtkMessageBox(MainWindow, message,
                 /* Titles of the message boxes for warnings and errors */
                 log_level & G_LOG_LEVEL_WARNING ? _("Warning") :
                 log_level & G_LOG_LEVEL_CRITICAL ? _("Error") :
