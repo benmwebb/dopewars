@@ -3465,7 +3465,7 @@ void SocksAuthDialog(NetworkBuffer *netbuf,gpointer data) {
 #else
 
 #include <glib.h>
-#include "dopewars.h" /* We need this for the definition of '_' */
+#include "nls.h" /* We need this for the definition of '_' */
 
 char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    if (!ReturnOnFail) {
