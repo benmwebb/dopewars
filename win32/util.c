@@ -209,20 +209,26 @@ void bstr_assign_progfilesdir(bstr *str)
 void bstr_append_progfilesdir(bstr *str)
 {
   HKEY key;
-  int len;
-  static const *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion";
-  static const *subval = "ProgramFilesDir";
+  static const char *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion";
+  static const char *subval = "ProgramFilesDir";
+  DWORD keylen, keytype;
   BOOL ok = FALSE;
 
-  len = str->bufsiz - str->length;
-  if (RegGetValue(HKEY_LOCAL_MACHINE, subkey, subval, RRF_RT_REG_SZ, NULL,
-                  NULL, &len) == ERROR_SUCCESS) {
-    len += 5;
-    bstr_expandby(str, len);
-    if (RegGetValue(HKEY_LOCAL_MACHINE, subkey, subval, RRF_RT_REG_SZ, NULL,
-                    str->text + str->length, &len) == ERROR_SUCCESS) {
-      ok = TRUE;
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, subkey, 0,
+                   KEY_READ, &key) == ERROR_SUCCESS) {
+    if (RegQueryValueEx(key, subval, NULL,
+                        &keytype, NULL, &keylen) == ERROR_SUCCESS &&
+        keytype == REG_SZ) {
+      char *progfiledir = bmalloc(keylen);
+
+      if (RegQueryValueEx(key, subval, NULL,
+                          &keytype, progfiledir, &keylen) == ERROR_SUCCESS) {
+        bstr_append(str, progfiledir);
+        ok = TRUE;
+      }
+      bfree(progfiledir);
     }
+    RegCloseKey(key);
   }
   if (!ok) {
     bstr_append(str, "C:\\Program Files");
@@ -776,6 +782,7 @@ char *GetInstallDir(char *product)
                       &keytype, installdir, &keylen) != ERROR_SUCCESS) {
     DisplayError("Could not get registry key value", FALSE, TRUE);
   }
+  RegCloseKey(key);
 
   bstr_free(str, TRUE);
   return installdir;
