@@ -187,10 +187,10 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
  */
 static void mvaddcentstr(const int row, const gchar *str)
 {
-  int col;
+  guint col, len;
 
-  col = (Width - strlen(str)) / 2;
-  col = MAX(col, 0);
+  len = strlen(str);
+  col = (len > Width ? 0 : (Width - len) / 2);
   mvaddstr(row, col, str);
 }
 
