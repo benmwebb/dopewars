@@ -82,7 +82,7 @@ static void SoundPlay_ESD(const gchar *snd)
     esd_sample_free(sock, cache[nextcache].esdid);
     g_free(cache[nextcache].name);
   }
-  cache[nextcache].esdid = esd_file_cache(sock, "", snd);
+  cache[nextcache].esdid = esd_file_cache(sock, PACKAGE, snd);
   cache[nextcache].name = g_strdup(snd);
   esd_sample_play(sock, cache[nextcache].esdid);
   nextcache = (nextcache + 1) % MAXCACHE;
