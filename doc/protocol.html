@@ -68,12 +68,14 @@ character, should normally be avoided in message data.</p>
 and should be ignored in reading messages from the server.</p>
 
 <p>The "data" field often contains multiple items, separated by ^ characters.
-Note that the last field in such a message should _not_ be assumed to be
-terminated by the message terminator, \n - it may also be terminated by a ^
-character. This allows the client to ignore extra fields, if later versions
+Note that the last field in such a message should <b>not</b> be assumed to be
+terminated by the message terminator, \n - although it always will be, it
+should also be first terminated by the field separator, the ^ character.
+This allows the client to ignore extra fields, if later versions
 of the protocol should add them. (N.B. This does not apply to free-form text
 fields, as in the C_QUESTION, C_PRINTMESSAGE, C_MSG, C_MSGTO, and C_FIGHTPRINT
-messages, which _do_ extend to the end of the message.) Note also that older
+messages, which _do_ extend to the end of the message; for these messages,
+the caret is generally interpreted as a line break.) Note also that older
 servers may not send all the fields, so if fewer fields than expected are
 received, the client should substitute default values.</p>
 
@@ -572,7 +574,7 @@ e.g.<br />
   </ul>
 </li>
 </ul>
-<p>Last update: <b>21-04-2002</b></p>
+<p>Last update: <b>29-04-2002</b></p>
 
 </body>
 </html>
