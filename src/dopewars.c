@@ -2453,11 +2453,12 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -t       force the use of a text-mode client (curses)\n\
               (by default, a windowed client is used when possible)\n\
   -C file  convert an \"old format\" score file to the new format\n\
-  -A       connect to a locally-running server for administration\n\
-  -h       display this help information\n\
+  -A       connect to a locally-running server for administration\n"), DATADIR);
+  PluginHelp();
+g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
 dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
-Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"), DATADIR);
+Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"));
 #endif
 }
 
