@@ -85,6 +85,7 @@ static void start_curses() {
    }
    cbreak();
    noecho();
+   meta(stdscr,TRUE);
    nodelay(stdscr,FALSE);
    keypad(stdscr,TRUE);
    curs_set(0);
@@ -781,7 +782,7 @@ void PrintMessage(const gchar *text) {
    for (i=0;i<strlen(text);i++) {
       if (text[i]=='^' || text[i]=='\n') {
          line++; move(line,1);
-      } else if (text[i]!='\r') addch(text[i]);
+      } else if (text[i]!='\r') addch((guchar)text[i]);
    }
 }
 
@@ -953,7 +954,7 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
       addch('[' | TextAttr);
       for (i=0;i<strlen(allowed);i++) {
          if (i>0) addch('/' | TextAttr);
-         addch(allowed[i] | TextAttr);
+         addch((guchar)allowed[i] | TextAttr);
       }
       addch(']' | TextAttr);
       addch(' ' | TextAttr);
@@ -961,7 +962,7 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
    while (1) {
       c=bgetch(); c=toupper(c);
       for (i=0;i<strlen(allowed);i++) if (allowed[i]==c) {
-         addch(c | TextAttr);
+         addch((guint)c | TextAttr);
          curs_set(0); return orig_allowed[i];
       }
       if (AllowOther) break;
@@ -1077,7 +1078,7 @@ void display_message(char *buf) {
       bufpt+=wid;
    }
    for (y=0;y<5;y++) for (x=0;x<wid;x++) {
-      mvaddch(y+10,x+2,Messages[y][x] | StatsAttr);
+      mvaddch(y+10,x+2,(guchar)Messages[y][x] | StatsAttr);
    }
    refresh();
 }
@@ -1269,7 +1270,7 @@ Player *ListPlayers(Player *Play,char Select,char *Prompt) {
       attrset(TextAttr);
       c=0;
       while (c<'A' || c>='A'+i) { c=bgetch(); c=toupper(c); }
-      if (Prompt) addch(c);
+      if (Prompt) addch((guint)c);
       list=FirstClient;
       while (c>='A') {
          if (list!=FirstClient) list=g_slist_next(list);
@@ -1335,16 +1336,16 @@ char *nice_input(char *prompt,int sy,int sx,char digitsonly,char *displaystr) {
                  (!digitsonly && c>=32 && c!='^' && c<127)) {
             g_string_append_c(text,c);
             i++;
-            addch(c);
+            addch((guint)c);
          } else if (digitsonly && (c=='.' || c==',') && !DecimalPoint) {
             g_string_append_c(text,'.');
-            addch(c);
+            addch((guint)c);
             DecimalPoint=TRUE;
          } else if (digitsonly && (c=='M' || c=='m' || c=='k' || c=='K')
                     && !Suffix) {
             g_string_append_c(text,c);
             i++;
-            addch(c);
+            addch((guint)c);
             Suffix=TRUE;
          }
       }

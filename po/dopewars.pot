@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-09-14 23:22+0100\n"
+"POT-Creation-Date: 2000-09-15 01:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -821,532 +821,532 @@ msgid ""
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
 
-#: src/curses_client.c:142
+#: src/curses_client.c:143
 msgid "D O P E W A R S"
 msgstr ""
 
-#: src/curses_client.c:147
+#: src/curses_client.c:148
 msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
 msgstr ""
 
-#: src/curses_client.c:149
+#: src/curses_client.c:150
 msgid "imaginary drug market.  dopewars is an All-American game which features"
 msgstr ""
 
-#: src/curses_client.c:151
+#: src/curses_client.c:152
 msgid "buying, selling, and trying to get past the cops!"
 msgstr ""
 
-#: src/curses_client.c:153
+#: src/curses_client.c:154
 msgid ""
 "The first thing you need to do is pay off your debt to the Loan Shark. After"
 msgstr ""
 
-#: src/curses_client.c:155
+#: src/curses_client.c:156
 msgid ""
 "that, your goal is to make as much money as possible (and stay alive)! You"
 msgstr ""
 
-#: src/curses_client.c:157
+#: src/curses_client.c:158
 msgid "have one month of game time to make your fortune."
 msgstr ""
 
-#: src/curses_client.c:159
+#: src/curses_client.c:160
 msgid "Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 msgstr ""
 
-#: src/curses_client.c:161
+#: src/curses_client.c:162
 #, c-format
 msgid "Version %s"
 msgstr ""
 
-#: src/curses_client.c:164
+#: src/curses_client.c:165
 msgid "dopewars is released under the GNU General Public Licence"
 msgstr ""
 
-#: src/curses_client.c:167
+#: src/curses_client.c:168
 msgid "Drug Dealing and Research     Dan Wolf"
 msgstr ""
 
-#: src/curses_client.c:168
+#: src/curses_client.c:169
 msgid "Play Testing                  Phil Davis           Owen Walsh"
 msgstr ""
 
-#: src/curses_client.c:170
+#: src/curses_client.c:171
 msgid "Extensive Play Testing        Katherine Holt       Caroline Moore"
 msgstr ""
 
-#: src/curses_client.c:172
+#: src/curses_client.c:173
 msgid "Constructive Criticism        Andrea Elliot-Smith  Pete Winn"
 msgstr ""
 
-#: src/curses_client.c:174
+#: src/curses_client.c:175
 msgid "Unconstructive Criticism      James Matthews"
 msgstr ""
 
-#: src/curses_client.c:176
+#: src/curses_client.c:177
 msgid "For information on the command line options, type dopewars -h at your"
 msgstr ""
 
-#: src/curses_client.c:178
+#: src/curses_client.c:179
 msgid ""
 "Unix prompt. This will display a help screen, listing the available options."
 msgstr ""
 
-#: src/curses_client.c:194
+#: src/curses_client.c:195
 msgid "Please enter the hostname and port of a dopewars server:-"
 msgstr ""
 
-#: src/curses_client.c:195
+#: src/curses_client.c:196
 msgid "Hostname: "
 msgstr ""
 
-#: src/curses_client.c:198
+#: src/curses_client.c:199
 msgid "Port: "
 msgstr ""
 
-#: src/curses_client.c:214
+#: src/curses_client.c:215
 msgid "No servers listed on metaserver"
 msgstr ""
 
-#: src/curses_client.c:218
+#: src/curses_client.c:219
 msgid "Please wait... attempting to contact metaserver..."
 msgstr ""
 
-#: src/curses_client.c:226
+#: src/curses_client.c:227
 msgid "Connection to metaserver established. Obtaining server list..."
 msgstr ""
 
-#: src/curses_client.c:239
+#: src/curses_client.c:240
 #, c-format
 msgid "Server : %s"
 msgstr ""
 
-#: src/curses_client.c:241
+#: src/curses_client.c:242
 #, c-format
 msgid "Port   : %d"
 msgstr ""
 
-#: src/curses_client.c:243
+#: src/curses_client.c:244
 #, c-format
 msgid "Version    : %s"
 msgstr ""
 
-#: src/curses_client.c:246
+#: src/curses_client.c:247
 #, c-format
 msgid "Players: -unknown- (maximum %d)"
 msgstr ""
 
-#: src/curses_client.c:249
+#: src/curses_client.c:250
 #, c-format
 msgid "Players: %d (maximum %d)"
 msgstr ""
 
-#: src/curses_client.c:253
+#: src/curses_client.c:254
 #, c-format
 msgid "Up since   : %s"
 msgstr ""
 
-#: src/curses_client.c:255
+#: src/curses_client.c:256
 #, c-format
 msgid "Comment: %s"
 msgstr ""
 
-#: src/curses_client.c:259
+#: src/curses_client.c:260
 msgid "N>ext server; P>revious server; S>elect this server... "
 msgstr ""
 
-#: src/curses_client.c:260
+#: src/curses_client.c:261
 msgid "NPS"
 msgstr ""
 
-#: src/curses_client.c:306
+#: src/curses_client.c:307
 msgid "Please wait... attempting to contact dopewars server..."
 msgstr ""
 
-#: src/curses_client.c:313
+#: src/curses_client.c:314
 #, c-format
 msgid "Error: %s"
 msgstr ""
 
-#: src/curses_client.c:316
+#: src/curses_client.c:317
 msgid "Could not start multiplayer dopewars"
 msgstr ""
 
-#: src/curses_client.c:323
+#: src/curses_client.c:324
 msgid "Will you... C>onnect to a different host and/or port"
 msgstr ""
 
-#: src/curses_client.c:325
+#: src/curses_client.c:326
 msgid "            L>ist the servers on the metaserver, and select one"
 msgstr ""
 
-#: src/curses_client.c:328
+#: src/curses_client.c:329
 msgid "            Q>uit (where you can start a server by typing "
 msgstr ""
 
-#: src/curses_client.c:331
+#: src/curses_client.c:332
 msgid "                   dopewars -s < /dev/null & )"
 msgstr ""
 
-#: src/curses_client.c:332
+#: src/curses_client.c:333
 msgid "         or P>lay single-player ? "
 msgstr ""
 
-#: src/curses_client.c:334
+#: src/curses_client.c:335
 msgid "CLQP"
 msgstr ""
 
-#: src/curses_client.c:371 src/gtk_client.c:809
+#: src/curses_client.c:372 src/gtk_client.c:809
 msgid "Where to, dude ? "
 msgstr ""
 
-#: src/curses_client.c:401
+#: src/curses_client.c:402
 #, c-format
 msgid "You can't get any cash for the following carried %s :"
 msgstr ""
 
-#: src/curses_client.c:414
+#: src/curses_client.c:415
 msgid "What do you want to drop? "
 msgstr ""
 
-#: src/curses_client.c:425
+#: src/curses_client.c:426
 msgid "How many do you drop? "
 msgstr ""
 
-#: src/curses_client.c:454 src/curses_client.c:829
+#: src/curses_client.c:455 src/curses_client.c:830
 msgid "What do you wish to buy? "
 msgstr ""
 
-#: src/curses_client.c:456 src/curses_client.c:831
+#: src/curses_client.c:457 src/curses_client.c:832
 msgid "What do you wish to sell? "
 msgstr ""
 
-#: src/curses_client.c:473
+#: src/curses_client.c:474
 #, c-format
 msgid "You can afford %d, and can carry %d. "
 msgstr ""
 
-#: src/curses_client.c:476
+#: src/curses_client.c:477
 msgid "How many do you buy? "
 msgstr ""
 
-#: src/curses_client.c:484
+#: src/curses_client.c:485
 #, c-format
 msgid "You have %d. "
 msgstr ""
 
-#: src/curses_client.c:486
+#: src/curses_client.c:487
 msgid "How many do you sell? "
 msgstr ""
 
-#: src/curses_client.c:509
+#: src/curses_client.c:510
 #, c-format
 msgid "Choose an errand to give one of your %s..."
 msgstr ""
 
-#: src/curses_client.c:515
+#: src/curses_client.c:516
 #, c-format
 msgid "   S>py on another dealer                  (cost: %s)"
 msgstr ""
 
-#: src/curses_client.c:519
+#: src/curses_client.c:520
 #, c-format
 msgid "   T>ip off the cops to another dealer     (cost: %s)"
 msgstr ""
 
-#: src/curses_client.c:522
+#: src/curses_client.c:523
 msgid "   G>et stuffed"
 msgstr ""
 
-#: src/curses_client.c:525
+#: src/curses_client.c:526
 msgid "or C>ontact your spies and receive reports"
 msgstr ""
 
-#: src/curses_client.c:527
+#: src/curses_client.c:528
 msgid "or N>o errand ? "
 msgstr ""
 
-#: src/curses_client.c:530
+#: src/curses_client.c:531
 msgid "STGCN"
 msgstr ""
 
-#: src/curses_client.c:533
+#: src/curses_client.c:534
 msgid "Whom do you want to spy on? "
 msgstr ""
 
-#: src/curses_client.c:538
+#: src/curses_client.c:539
 msgid "Whom do you want to tip the cops off to? "
 msgstr ""
 
-#: src/curses_client.c:543
+#: src/curses_client.c:544
 msgid " Are you sure? "
 msgstr ""
 
-#: src/curses_client.c:544 src/curses_client.c:562 src/curses_client.c:1691
+#: src/curses_client.c:545 src/curses_client.c:563 src/curses_client.c:1692
 msgid "YN"
 msgstr ""
 
-#: src/curses_client.c:560
+#: src/curses_client.c:561
 msgid "Are you sure you want to quit? "
 msgstr ""
 
-#: src/curses_client.c:568
+#: src/curses_client.c:569
 msgid "New name: "
 msgstr ""
 
-#: src/curses_client.c:624
+#: src/curses_client.c:625
 msgid "You have been pushed from the server. Reverting to single player mode."
 msgstr ""
 
-#: src/curses_client.c:634
+#: src/curses_client.c:635
 msgid "The server has terminated. Reverting to single player mode."
 msgstr ""
 
-#: src/curses_client.c:649 src/gtk_client.c:340 src/serverside.c:258
+#: src/curses_client.c:650 src/gtk_client.c:340 src/serverside.c:258
 #, c-format
 msgid "%s joins the game!"
 msgstr ""
 
-#: src/curses_client.c:654 src/gtk_client.c:346
+#: src/curses_client.c:655 src/gtk_client.c:346
 #, c-format
 msgid "%s has left the game."
 msgstr ""
 
-#: src/curses_client.c:659
+#: src/curses_client.c:660
 #, c-format
 msgid "%s will now be known as %s."
 msgstr ""
 
-#: src/curses_client.c:683
+#: src/curses_client.c:684
 msgid "S U B W A Y"
 msgstr ""
 
-#: src/curses_client.c:726
+#: src/curses_client.c:727
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it."
 msgstr ""
 
-#: src/curses_client.c:747
+#: src/curses_client.c:748
 msgid "H I G H   S C O R E S"
 msgstr ""
 
-#: src/curses_client.c:803
+#: src/curses_client.c:804
 msgid "Will you B>uy, S>ell, or L>eave? "
 msgstr ""
 
-#: src/curses_client.c:808
+#: src/curses_client.c:809
 msgid "BSL"
 msgstr ""
 
-#: src/curses_client.c:813
+#: src/curses_client.c:814
 #, c-format
 msgid "You don't have any %s to sell!"
 msgstr ""
 
-#: src/curses_client.c:820 src/gtk_client.c:1084
+#: src/curses_client.c:821 src/gtk_client.c:1084
 #, c-format
 msgid "You'll need more %s to carry any more %s!"
 msgstr ""
 
-#: src/curses_client.c:842 src/gtk_client.c:1088
+#: src/curses_client.c:843 src/gtk_client.c:1088
 #, c-format
 msgid "You don't have enough space to carry that %s!"
 msgstr ""
 
-#: src/curses_client.c:850 src/gtk_client.c:1092
+#: src/curses_client.c:851 src/gtk_client.c:1092
 #, c-format
 msgid "You don't have enough cash to buy that %s!"
 msgstr ""
 
-#: src/curses_client.c:863 src/gtk_client.c:1096
+#: src/curses_client.c:864 src/gtk_client.c:1096
 msgid "You don't have any to sell!"
 msgstr ""
 
-#: src/curses_client.c:887
+#: src/curses_client.c:888
 msgid "How much money do you pay back? "
 msgstr ""
 
-#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1925
+#: src/curses_client.c:894 src/curses_client.c:924 src/gtk_client.c:1925
 msgid "You don't have that much money!"
 msgstr ""
 
-#: src/curses_client.c:913
+#: src/curses_client.c:914
 msgid "Do you want to D>eposit money, W>ithdraw money, or L>eave ? "
 msgstr ""
 
-#: src/curses_client.c:916
+#: src/curses_client.c:917
 msgid "DWL"
 msgstr ""
 
-#: src/curses_client.c:918
+#: src/curses_client.c:919
 msgid "How much money? "
 msgstr ""
 
-#: src/curses_client.c:926 src/gtk_client.c:1918
+#: src/curses_client.c:927 src/gtk_client.c:1918
 msgid "There isn't that much money in the bank..."
 msgstr ""
 
-#: src/curses_client.c:1005
+#: src/curses_client.c:1006
 msgid "Press any key..."
 msgstr ""
 
-#: src/curses_client.c:1136
+#: src/curses_client.c:1137
 msgid "Messages"
 msgstr ""
 
-#: src/curses_client.c:1143 src/gtk_client.c:1377
+#: src/curses_client.c:1144 src/gtk_client.c:1377
 msgid "Stats"
 msgstr ""
 
-#: src/curses_client.c:1146
+#: src/curses_client.c:1147
 #, c-format
 msgid "Cash %17s"
 msgstr ""
 
-#: src/curses_client.c:1153
+#: src/curses_client.c:1154
 #, c-format
 msgid "Health             %3d"
 msgstr ""
 
-#: src/curses_client.c:1155
+#: src/curses_client.c:1156
 #, c-format
 msgid "Bank %17s"
 msgstr ""
 
-#: src/curses_client.c:1159
+#: src/curses_client.c:1160
 #, c-format
 msgid "Debt %17s"
 msgstr ""
 
-#: src/curses_client.c:1163
+#: src/curses_client.c:1164
 #, c-format
 msgid "Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1165
+#: src/curses_client.c:1166
 #, c-format
 msgid "%s %3d  Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1176
+#: src/curses_client.c:1177
 msgid "Trenchcoat"
 msgstr ""
 
-#: src/curses_client.c:1216
+#: src/curses_client.c:1217
 #, c-format
 msgid "Spy reports for %s"
 msgstr ""
 
-#: src/curses_client.c:1220 src/curses_client.c:1225
+#: src/curses_client.c:1221 src/curses_client.c:1226
 #, c-format
 msgid "%s..."
 msgstr ""
 
-#: src/curses_client.c:1246
+#: src/curses_client.c:1247
 msgid "No other players are currently logged on!"
 msgstr ""
 
-#: src/curses_client.c:1251
+#: src/curses_client.c:1252
 msgid "Players currently logged on:-"
 msgstr ""
 
-#: src/curses_client.c:1399
+#: src/curses_client.c:1400
 msgid "Hey dude, what's your name? "
 msgstr ""
 
-#: src/curses_client.c:1433
+#: src/curses_client.c:1434
 #, c-format
 msgid "Hey dude, the prices of %s here are:"
 msgstr ""
 
-#: src/curses_client.c:1445
+#: src/curses_client.c:1446
 msgid "Will you B>uy"
 msgstr ""
 
-#: src/curses_client.c:1446
+#: src/curses_client.c:1447
 msgid ", S>ell"
 msgstr ""
 
-#: src/curses_client.c:1447
+#: src/curses_client.c:1448
 msgid ", D>rop"
 msgstr ""
 
-#: src/curses_client.c:1448
+#: src/curses_client.c:1449
 msgid ", T>alk, P>age, L>ist"
 msgstr ""
 
-#: src/curses_client.c:1451
+#: src/curses_client.c:1452
 msgid ", G>ive"
 msgstr ""
 
-#: src/curses_client.c:1454
+#: src/curses_client.c:1455
 msgid ", F>ight"
 msgstr ""
 
-#: src/curses_client.c:1458
+#: src/curses_client.c:1459
 msgid ", J>et"
 msgstr ""
 
-#: src/curses_client.c:1460 src/curses_client.c:1475
+#: src/curses_client.c:1461 src/curses_client.c:1476
 msgid ", or Q>uit? "
 msgstr ""
 
-#: src/curses_client.c:1468
+#: src/curses_client.c:1469
 msgid "Do you "
 msgstr ""
 
-#: src/curses_client.c:1470
+#: src/curses_client.c:1471
 msgid "F>ight, "
 msgstr ""
 
-#: src/curses_client.c:1471
+#: src/curses_client.c:1472
 msgid "S>tand, "
 msgstr ""
 
-#: src/curses_client.c:1473
+#: src/curses_client.c:1474
 msgid "R>un, "
 msgstr ""
 
-#: src/curses_client.c:1474
+#: src/curses_client.c:1475
 msgid "D>eal "
 msgstr ""
 
-#: src/curses_client.c:1517
+#: src/curses_client.c:1518
 msgid "Connection to server lost! Reverting to single player mode"
 msgstr ""
 
-#: src/curses_client.c:1546
+#: src/curses_client.c:1547
 msgid "BSDTPLGFJQ"
 msgstr ""
 
-#: src/curses_client.c:1548
+#: src/curses_client.c:1549
 msgid "DRFSQ"
 msgstr ""
 
-#: src/curses_client.c:1576
+#: src/curses_client.c:1577
 msgid "List what? P>layers or S>cores? "
 msgstr ""
 
-#: src/curses_client.c:1577
+#: src/curses_client.c:1578
 msgid "PS"
 msgstr ""
 
-#: src/curses_client.c:1586
+#: src/curses_client.c:1587
 msgid "Whom do you want to page (talk privately to) ? "
 msgstr ""
 
-#: src/curses_client.c:1601
+#: src/curses_client.c:1602
 msgid "Talk: "
 msgstr ""
 
-#: src/curses_client.c:1690
+#: src/curses_client.c:1691
 msgid "Play again? "
 msgstr ""
 
-#: src/curses_client.c:1702
+#: src/curses_client.c:1703
 msgid ""
 "No curses client available - rebuild the binary passing the\n"
 "--enable-curses-client option to configure, or use a windowed\n"
