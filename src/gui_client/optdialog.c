@@ -667,7 +667,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
-  GtkWidget *hbox, *vbox, *hsep, *button;
+  GtkWidget *hbox, *vbox, *hsep, *button, *hbbox;
 
   struct ConfigMembers locmembers[] = {
     { "Police presence", "PolicePresence" },
@@ -842,21 +842,21 @@ void OptDialog(GtkWidget *widget, gpointer data)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbox = gtk_hbox_new(TRUE, 10);
+  hbbox = my_hbbox_new();
 
   button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
-  gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
                      GTK_SIGNAL_FUNC(FinishOptDialog), NULL);
-  gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
