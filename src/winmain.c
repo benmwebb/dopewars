@@ -60,6 +60,22 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    MessageBox(NULL,message,"Error",MB_OK|MB_ICONSTOP);
 }
 
+static GString *TextOutput=NULL;
+
+static void WindowPrintStart() {
+   TextOutput=g_string_new("");
+}
+
+static void WindowPrintFunc(const gchar *string) {
+   g_string_append(TextOutput,string);
+}
+
+static void WindowPrintEnd() {
+   MessageBox(NULL,TextOutput->str,"dopewars",MB_OK|MB_ICONINFORMATION);
+   g_string_free(TextOutput,TRUE);
+   TextOutput=NULL;
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
    gchar **split;
@@ -74,32 +90,45 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
    while (split[argc] && split[argc][0]) argc++;
-   if (GeneralStartup(argc,split)==0 && !WantVersion && !WantHelp) {
-      StartNetworking();
-      if (Server) {
-         AllocConsole();
-         SetConsoleTitle(_("dopewars server"));
-         g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                           ServerLogMessage,NULL);
-         g_set_print_handler(ServerPrintFunc);
-         newterm(NULL,NULL,NULL);
-         ServerLoop();
-      } else if (AIPlayer) {
-         AIPlayerLoop();
-      } else if (WantedClient==CLIENT_CURSES) {
-         AllocConsole();
-         SetConsoleTitle(_("dopewars"));
-         CursesLoop();
+   if (GeneralStartup(argc,split)==0) {
+      if (WantVersion || WantHelp) {
+         WindowPrintStart();
+         g_set_print_handler(WindowPrintFunc);
+         HandleHelpTexts();
+         WindowPrintEnd();
       } else {
+         StartNetworking();
+         if (Server) {
+            AllocConsole();
+            SetConsoleTitle(_("dopewars server"));
+            g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                              ServerLogMessage,NULL);
+            g_set_print_handler(ServerPrintFunc);
+            newterm(NULL,NULL,NULL);
+            ServerLoop();
+         } else if (AIPlayer) {
+            AllocConsole();
+            SetConsoleTitle(_("dopewars AI"));
+            g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                              ServerLogMessage,NULL);
+            g_set_print_handler(ServerPrintFunc);
+            newterm(NULL,NULL,NULL);
+            AIPlayerLoop();
+         } else if (WantedClient==CLIENT_CURSES) {
+            AllocConsole();
+            SetConsoleTitle(_("dopewars"));
+            CursesLoop();
+         } else {
 #if GUI_CLIENT
-         GtkLoop(hInstance,hPrevInstance);
+            GtkLoop(hInstance,hPrevInstance);
 #else
-         g_print(_("No graphical client available - rebuild the binary\n"
-                 "passing the --enable-gui-client option to configure, or\n"
-                 "use the curses client (if available) instead!\n"));
+            g_print(_("No graphical client available - rebuild the binary\n"
+                    "passing the --enable-gui-client option to configure, or\n"
+                    "use the curses client (if available) instead!\n"));
 #endif
+         }
+         StopNetworking();
       }
-      StopNetworking();
    }
    g_strfreev(split);
    CloseHighScoreFile();

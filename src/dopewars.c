@@ -1669,9 +1669,7 @@ int GeneralStartup(int argc,char *argv[]) {
 /* score init.) - Returns 0 if OK, -1 if something failed.           */
    SetupParameters();
    HandleCmdLine(argc,argv);
-   if (WantVersion || WantHelp) {
-      HandleHelpTexts();
-   } else if (!AIPlayer) {
+   if (!WantVersion && !WantHelp && !AIPlayer) {
       return InitHighScoreFile();
    }
    return 0;
@@ -1686,22 +1684,26 @@ int main(int argc,char *argv[]) {
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   if (GeneralStartup(argc,argv)==0 && !WantVersion && !WantHelp) {
-      StartNetworking();
-      if (Server) {
-         ServerLoop();
-      } else if (AIPlayer) {
-         AIPlayerLoop();
-      } else switch(WantedClient) {
-         case CLIENT_AUTO:
-            if (!GtkLoop(&argc,&argv,TRUE)) CursesLoop();
-            break;
-         case CLIENT_WINDOW:
-            GtkLoop(&argc,&argv,FALSE); break;
-         case CLIENT_CURSES:
-            CursesLoop(); break;
+   if (GeneralStartup(argc,argv)==0) {
+      if (WantVersion || WantHelp) {
+         HandleHelpTexts();
+      } else {
+         StartNetworking();
+         if (Server) {
+            ServerLoop();
+         } else if (AIPlayer) {
+            AIPlayerLoop();
+         } else switch(WantedClient) {
+            case CLIENT_AUTO:
+               if (!GtkLoop(&argc,&argv,TRUE)) CursesLoop();
+               break;
+            case CLIENT_WINDOW:
+               GtkLoop(&argc,&argv,FALSE); break;
+            case CLIENT_CURSES:
+               CursesLoop(); break;
+         }
+         StopNetworking();
       }
-      StopNetworking();
    }
    CloseHighScoreFile();
    g_free(PidFile);
