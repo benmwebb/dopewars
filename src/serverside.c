@@ -924,15 +924,26 @@ void RemovePlayerFromServer(Player *Play) {
 }
 
 #ifndef CYGWIN
+static gchar sockdir[] = "/tmp/.dopewars/";
+gchar *GetLocalSocket(void) {
+  return g_strdup_printf("%ssocket-%u",sockdir,Port);
+}
+
 static void CloseLocalSocket(int localsock) {
+  gchar *sockname;
+
   if (localsock>=0) close(localsock);
-  unlink("/tmp/.dopewars/socket");
-  rmdir("/tmp/.dopewars");
+
+  sockname=GetLocalSocket();
+  unlink(sockname);
+  rmdir(sockdir);
+  g_free(sockname);
 }
 
 static int SetupLocalSocket(void) {
   int sock;
   struct sockaddr_un addr;
+  gchar *sockname;
 
   CloseLocalSocket(-1);
 
@@ -941,15 +952,17 @@ static int SetupLocalSocket(void) {
 
   SetBlocking(sock,FALSE);
 
-  mkdir("/tmp/.dopewars",S_IRUSR|S_IWUSR|S_IXUSR);
+  sockname=GetLocalSocket();
+  mkdir(sockdir,S_IRUSR|S_IWUSR|S_IXUSR);
 
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path,"/tmp/.dopewars/socket",sizeof(addr.sun_path));
+  strncpy(addr.sun_path,sockname,sizeof(addr.sun_path));
   addr.sun_path[sizeof(addr.sun_path)-1]='\0';
 
   bind(sock,(struct sockaddr *)&addr,sizeof(struct sockaddr_un));
 
-  chmod("/tmp/.dopewars/socket",S_IRUSR|S_IWUSR);
+  chmod(sockname,S_IRUSR|S_IWUSR);
+  g_free(sockname);
 
   listen(sock,10);
   

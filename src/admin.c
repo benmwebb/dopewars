@@ -31,18 +31,22 @@
 #include <glib.h>
 
 #include "network.h"
+#include "serverside.h"
 
 static int OpenSocket(void) {
   struct sockaddr_un addr;
   int sock;
+  gchar *sockname;
+
+  sockname=GetLocalSocket();
 
   g_print("Attempting to connect to local dopewars server via. Unix domain\n"
-          "socket /tmp/.dopewars/socket...\n");
+          "socket %s...\n",sockname);
   sock = socket(PF_UNIX,SOCK_STREAM,0);
   if (sock==-1) { perror("socket"); exit(1); }
 
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path,"/tmp/.dopewars/socket",sizeof(addr.sun_path));
+  strncpy(addr.sun_path,sockname,sizeof(addr.sun_path));
   addr.sun_path[sizeof(addr.sun_path)-1]='\0';
 
   if (connect(sock,(struct sockaddr *)&addr,sizeof(struct sockaddr_un))==-1) {
@@ -50,6 +54,7 @@ static int OpenSocket(void) {
   }
 
   g_print("Connection established.\n\n");
+  g_free(sockname);
 
   return sock;
 }

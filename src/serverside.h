@@ -71,5 +71,8 @@ Player *GetNextShooter(Player *Play);
 #ifdef GUI_SERVER
 void GuiServerLoop(gboolean is_service);
 #endif
+#ifndef CYGWIN
+gchar *GetLocalSocket(void);
+#endif
 
 #endif
