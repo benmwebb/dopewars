@@ -51,7 +51,7 @@ static void display_intro();
 static void ResizeHandle(int sig);
 static void CheckForResize(Player *Play);
 static int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
-                  gboolean PrintAllowed);
+                  gboolean PrintAllowed,gboolean ExpandOut);
 static void clear_bottom(), clear_screen();
 static void clear_line(int line), clear_exceptfor(int skip);
 static void nice_wait();
@@ -257,7 +257,7 @@ static char *SelectServerFromMetaServer() {
       attrset(PromptAttr);
       mvaddstr(23,1,
                _("N>ext server; P>revious server; S>elect this server... "));
-      c=GetKey(_("NPS"),"NPS",FALSE,FALSE);
+      c=GetKey(_("NPS"),"NPS",FALSE,FALSE,FALSE);
       switch(c) {
          case 'S': AssignName(&ServerName,ThisServer->Name);
                    Port=ThisServer->Port;
@@ -331,7 +331,7 @@ static char ConnectToServer(Player *Play) {
                   _("                   dopewars -s < /dev/null & )"));
          mvaddstr(22,1,_("         or P>lay single-player ? "));
          attrset(TextAttr);
-         c=GetKey(_("CLQP"),"CLQP",FALSE,FALSE);
+         c=GetKey(_("CLQP"),"CLQP",FALSE,FALSE,FALSE);
          switch(c) {
             case 'Q': return FALSE;
             case 'P': ConnectMethod=CM_SINGLE;
@@ -527,7 +527,7 @@ static void GiveErrand(Player *Play) {
    mvaddstr(y++,2,_("or N>o errand ? "));
    curs_set(1);
    attrset(TextAttr);
-   c=GetKey(_("STGCN"),"STGCN",TRUE,FALSE);
+   c=GetKey(_("STGCN"),"STGCN",TRUE,FALSE,FALSE);
    if (Play->Bitches.Carried>0 || c=='C') switch (c) {
       case 'S':
          To=ListPlayers(Play,TRUE,_("Whom do you want to spy on? "));
@@ -541,7 +541,7 @@ static void GiveErrand(Player *Play) {
       case 'G':
          attrset(PromptAttr);
          addstr(_(" Are you sure? "));
-         c=GetKey(_("YN"),"YN",FALSE,TRUE);
+         c=GetKey(_("YN"),"YN",FALSE,TRUE,FALSE);
          if (c=='Y') SendClientMessage(Play,C_NONE,C_SACKBITCH,NULL,NULL);
          break;
       case 'C':
@@ -559,7 +559,7 @@ static int want_to_quit() {
    attrset(PromptAttr);
    mvaddstr(22,1,_("Are you sure you want to quit? "));
    attrset(TextAttr);
-   return (GetKey(_("YN"),"YN",FALSE,TRUE)!='N');
+   return (GetKey(_("YN"),"YN",FALSE,TRUE,FALSE)!='N');
 }
 
 static void change_name(Player *Play,char nullname) {
@@ -694,7 +694,7 @@ void HandleClientMessage(char *Message,Player *Play) {
          wrd=GetNextWord(&pt,"");
          PrintMessage(pt);
          addch(' ');
-         i=GetKey(wrd,wrd,FALSE,TRUE);
+         i=GetKey(_(wrd),wrd,FALSE,TRUE,TRUE);
          wrd=g_strdup_printf("%c",i);
          SendClientMessage(Play,C_NONE,C_ANSWER,
                            From==&Noone ? NULL : From,wrd);
@@ -805,7 +805,7 @@ void GunShop(Player *Play) {
       clear_line(22);
       mvaddstr(22,40-strlen(text)/2,text);
       attrset(TextAttr);
-      c=GetKey(_("BSL"),"BSL",FALSE,FALSE);
+      c=GetKey(_("BSL"),"BSL",FALSE,FALSE,FALSE);
       if (c=='L') break;
       if (c=='S' || c=='B') {
          clear_line(22);
@@ -913,7 +913,7 @@ void Bank(Player *Play) {
       mvaddstr(18,1,_("Do you want to D>eposit money, W>ithdraw money, "
                       "or L>eave ? "));
       attrset(TextAttr);
-      c=GetKey(_("DWL"),"DWL",FALSE,FALSE);
+      c=GetKey(_("DWL"),"DWL",FALSE,FALSE,FALSE);
       if (c=='L') return;
       text=nice_input(_("How much money? "),19,1,1,NULL);
       money=strtoprice(text); g_free(text);
@@ -937,7 +937,7 @@ void Bank(Player *Play) {
 }
 
 int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
-           gboolean PrintAllowed) {
+           gboolean PrintAllowed,gboolean ExpandOut) {
 /* Waits for keyboard input; will only accept a key listed in the */
 /* "allowed" string. This string may have been translated; thus   */
 /* the "orig_allowed" string contains the untranslated keys.      */
@@ -945,7 +945,16 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
 /* (e.g. if allowed[2] is pressed, orig_allowed[2] is returned)   */
 /* Case insensitive. If "AllowOther" is TRUE, keys other than the */
 /* given selection are allowed, and cause a zero return value.    */
-   int i,c;
+/* If "PrintAllowed" is TRUE, the allowed keys are printed after  */
+/* the prompt. If "ExpandOut" is also TRUE, the full words for    */
+/* the commands, rather than just their first letters, are        */
+/* displayed.                                                     */
+   int i,j,k,c;
+   gchar *Words[] = { N_("Yes"), N_("No"), N_("Run"),
+                      N_("Fight"), N_("Attack"), N_("Evade") };
+   gint numWords = sizeof(Words) / sizeof(Words[0]);
+   gchar *trWord;
+
    curs_set(1);
    c=0;
    if (!allowed || strlen(allowed)==0) return 0;
@@ -953,7 +962,16 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
       addch('[' | TextAttr);
       for (i=0;i<strlen(allowed);i++) {
          if (i>0) addch('/' | TextAttr);
-         addch((guchar)allowed[i] | TextAttr);
+         for (j=0;j<numWords;j++) {
+            if (ExpandOut && orig_allowed[i]==Words[j][0]) {
+               trWord=_(Words[j]);
+               for (k=0;k<strlen(trWord);k++) {
+                  addch((guchar)trWord[k] | TextAttr);
+               }
+               break;
+            }
+         }
+         if (j>=numWords) addch((guchar)allowed[i] | TextAttr);
       }
       addch(']' | TextAttr);
       addch(' ' | TextAttr);
@@ -1544,9 +1562,9 @@ static void Curses_DoGame(Player *Play) {
       }
 #endif /* NETWORKING */
          if (DisplayMode==DM_STREET) {
-            c=GetKey(_("BSDTPLGFJQ"),"BSDTPLGFJQ",TRUE,FALSE);
+            c=GetKey(_("BSDTPLGFJQ"),"BSDTPLGFJQ",TRUE,FALSE,FALSE);
          } else if (DisplayMode==DM_FIGHT) {
-            c=GetKey(_("DRFSQ"),"DRFSQ",TRUE,FALSE);
+            c=GetKey(_("DRFSQ"),"DRFSQ",TRUE,FALSE,FALSE);
          } else c=0;
 #if ! (NETWORKING || HAVE_SELECT)
          CheckForResize(Play);
@@ -1575,7 +1593,7 @@ static void Curses_DoGame(Player *Play) {
             } else if (c=='L' && Network) {
                attrset(PromptAttr);
                mvaddstr(23,20,_("List what? P>layers or S>cores? "));
-               i=GetKey(_("PS"),"PS",TRUE,FALSE);
+               i=GetKey(_("PS"),"PS",TRUE,FALSE,FALSE);
                if (i=='P') {
                   ListPlayers(Play,FALSE,NULL);
                } else if (i=='S') {
@@ -1689,7 +1707,7 @@ void CursesLoop() {
       CleanUpServer();
       attrset(TextAttr);
       mvaddstr(23,20,_("Play again? "));
-      c=GetKey(_("YN"),"YN",TRUE,TRUE);
+      c=GetKey(_("YN"),"YN",TRUE,TRUE,FALSE);
    }
    g_free(Name);
    end_curses();

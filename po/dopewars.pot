@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-10-02 00:17+0100\n"
+"POT-Creation-Date: 2000-10-02 01:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1088,7 +1088,7 @@ msgstr ""
 msgid " Are you sure? "
 msgstr ""
 
-#: src/curses_client.c:544 src/curses_client.c:562 src/curses_client.c:1692
+#: src/curses_client.c:544 src/curses_client.c:562 src/curses_client.c:1710
 msgid "YN"
 msgstr ""
 
@@ -1193,164 +1193,188 @@ msgstr ""
 msgid "There isn't that much money in the bank..."
 msgstr ""
 
-#: src/curses_client.c:1005
+#: src/curses_client.c:953
+msgid "Yes"
+msgstr ""
+
+#: src/curses_client.c:953
+msgid "No"
+msgstr ""
+
+#: src/curses_client.c:953
+msgid "Run"
+msgstr ""
+
+#: src/curses_client.c:954 src/gtk_client.c:525
+msgid "Fight"
+msgstr ""
+
+#: src/curses_client.c:954
+msgid "Attack"
+msgstr ""
+
+#: src/curses_client.c:954
+msgid "Evade"
+msgstr ""
+
+#: src/curses_client.c:1023
 msgid "Press any key..."
 msgstr ""
 
-#: src/curses_client.c:1136
+#: src/curses_client.c:1154
 msgid "Messages"
 msgstr ""
 
-#: src/curses_client.c:1143 src/gtk_client.c:1415
+#: src/curses_client.c:1161 src/gtk_client.c:1415
 msgid "Stats"
 msgstr ""
 
-#: src/curses_client.c:1146
+#: src/curses_client.c:1164
 #, c-format
 msgid "Cash %17s"
 msgstr ""
 
-#: src/curses_client.c:1153
+#: src/curses_client.c:1171
 #, c-format
 msgid "Health             %3d"
 msgstr ""
 
-#: src/curses_client.c:1155
+#: src/curses_client.c:1173
 #, c-format
 msgid "Bank %17s"
 msgstr ""
 
-#: src/curses_client.c:1159
+#: src/curses_client.c:1177
 #, c-format
 msgid "Debt %17s"
 msgstr ""
 
-#: src/curses_client.c:1163
+#: src/curses_client.c:1181
 #, c-format
 msgid "Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1165
+#: src/curses_client.c:1183
 #, c-format
 msgid "%s %3d  Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1176
+#: src/curses_client.c:1194
 msgid "Trenchcoat"
 msgstr ""
 
-#: src/curses_client.c:1216
+#: src/curses_client.c:1234
 #, c-format
 msgid "Spy reports for %s"
 msgstr ""
 
-#: src/curses_client.c:1220 src/curses_client.c:1225
+#: src/curses_client.c:1238 src/curses_client.c:1243
 #, c-format
 msgid "%s..."
 msgstr ""
 
-#: src/curses_client.c:1246
+#: src/curses_client.c:1264
 msgid "No other players are currently logged on!"
 msgstr ""
 
-#: src/curses_client.c:1251
+#: src/curses_client.c:1269
 msgid "Players currently logged on:-"
 msgstr ""
 
-#: src/curses_client.c:1399
+#: src/curses_client.c:1417
 msgid "Hey dude, what's your name? "
 msgstr ""
 
-#: src/curses_client.c:1434
+#: src/curses_client.c:1452
 #, c-format
 msgid "Hey dude, the prices of %s here are:"
 msgstr ""
 
-#: src/curses_client.c:1446
+#: src/curses_client.c:1464
 msgid "Will you B>uy"
 msgstr ""
 
-#: src/curses_client.c:1447
+#: src/curses_client.c:1465
 msgid ", S>ell"
 msgstr ""
 
-#: src/curses_client.c:1448
+#: src/curses_client.c:1466
 msgid ", D>rop"
 msgstr ""
 
-#: src/curses_client.c:1449
+#: src/curses_client.c:1467
 msgid ", T>alk, P>age, L>ist"
 msgstr ""
 
-#: src/curses_client.c:1452
+#: src/curses_client.c:1470
 msgid ", G>ive"
 msgstr ""
 
-#: src/curses_client.c:1455
+#: src/curses_client.c:1473
 msgid ", F>ight"
 msgstr ""
 
-#: src/curses_client.c:1459
+#: src/curses_client.c:1477
 msgid ", J>et"
 msgstr ""
 
-#: src/curses_client.c:1461 src/curses_client.c:1476
+#: src/curses_client.c:1479 src/curses_client.c:1494
 msgid ", or Q>uit? "
 msgstr ""
 
-#: src/curses_client.c:1469
+#: src/curses_client.c:1487
 msgid "Do you "
 msgstr ""
 
-#: src/curses_client.c:1471
+#: src/curses_client.c:1489
 msgid "F>ight, "
 msgstr ""
 
-#: src/curses_client.c:1472
+#: src/curses_client.c:1490
 msgid "S>tand, "
 msgstr ""
 
-#: src/curses_client.c:1474
+#: src/curses_client.c:1492
 msgid "R>un, "
 msgstr ""
 
-#: src/curses_client.c:1475
+#: src/curses_client.c:1493
 msgid "D>eal "
 msgstr ""
 
-#: src/curses_client.c:1518
+#: src/curses_client.c:1536
 msgid "Connection to server lost! Reverting to single player mode"
 msgstr ""
 
-#: src/curses_client.c:1547
+#: src/curses_client.c:1565
 msgid "BSDTPLGFJQ"
 msgstr ""
 
-#: src/curses_client.c:1549
+#: src/curses_client.c:1567
 msgid "DRFSQ"
 msgstr ""
 
-#: src/curses_client.c:1577
+#: src/curses_client.c:1595
 msgid "List what? P>layers or S>cores? "
 msgstr ""
 
-#: src/curses_client.c:1578
+#: src/curses_client.c:1596
 msgid "PS"
 msgstr ""
 
-#: src/curses_client.c:1587
+#: src/curses_client.c:1605
 msgid "Whom do you want to page (talk privately to) ? "
 msgstr ""
 
-#: src/curses_client.c:1602
+#: src/curses_client.c:1620
 msgid "Talk: "
 msgstr ""
 
-#: src/curses_client.c:1691
+#: src/curses_client.c:1709
 msgid "Play again? "
 msgstr ""
 
-#: src/curses_client.c:1703
+#: src/curses_client.c:1721
 msgid ""
 "No curses client available - rebuild the binary passing the\n"
 "--enable-curses-client option to configure, or use a windowed\n"
@@ -1487,10 +1511,6 @@ msgstr ""
 #: src/gtk_client.c:1872 src/gtk_client.c:2036 src/gtk_client.c:2317
 #: src/gtk_client.c:2484
 msgid "OK"
-msgstr ""
-
-#: src/gtk_client.c:525
-msgid "Fight"
 msgstr ""
 
 #: src/gtk_client.c:552
