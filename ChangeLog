@@ -18,6 +18,7 @@ cvs
     - The Windows build of dopewars should now use Unicode throughout, on
       platforms with Unicode support (i.e. NT/2000/XP)
     - Under Windows XP, the "pretty" new common controls are now used
+    - Sounds provided by Robin Kohli of www.19.5degs.com
 
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;
