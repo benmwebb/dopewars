@@ -37,6 +37,7 @@
 
 #define MYWM_SOCKETDATA (WM_USER+100)
 #define MYWM_TASKBAR    (WM_USER+101)
+#define MYWM_SERVICE    (WM_USER+102)
 
 extern HICON mainIcon;
 
