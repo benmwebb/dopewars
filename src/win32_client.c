@@ -38,6 +38,8 @@
 #include "message.h"
 #include "serverside.h"
 
+#include "gtk.c"
+
 #ifdef WIN32_CLIENT
 
 #define WM_SOCKETDATA   (WM_USER+100)
@@ -1789,6 +1791,8 @@ int APIENTRY Win32Loop(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          StopNetworking();
          return msg.wParam;
       }
+#elif GUI_CLIENT
+      GtkLoop(hInstance,hPrevInstance);
 #else
       g_print("No windowed client available - rebuild the binary passing the\n"
               "--enable-win32-client option to configure, or use the curses\n"

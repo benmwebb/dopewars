@@ -84,18 +84,15 @@ RANLIB = @RANLIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
-WIN_RC = @WIN_RC@
-WIN_RES = @WIN_RES@
 l = @l@
 localedir = @localedir@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c                    curses_client.c gtk_client.c win32_client.c 		   dopeos.c tstring.c @WIN_RC@
+dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c                    curses_client.c gtk_client.c win32_client.c 		   dopeos.c tstring.c
 
-dopewars_DEPENDENCIES = @WIN_RES@
 SUFFIXES = .rc .res
 INCLUDES = @GTK_CFLAGS@ -I.. -I.
-LDADD = @GTK_LIBS@ @WIN_RES@
+LDADD = @GTK_LIBS@
 DEFS = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 
 DOCPATH = /usr/doc/${PACKAGE}-${VERSION}/
@@ -112,6 +109,7 @@ LIBS = @LIBS@
 dopewars_OBJECTS =  AIPlayer.o serverside.o dopewars.o message.o \
 curses_client.o gtk_client.o win32_client.o dopeos.o tstring.o
 dopewars_LDADD = $(LDADD)
+dopewars_DEPENDENCIES = 
 dopewars_LDFLAGS = 
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -341,8 +339,6 @@ uninstall-am uninstall all-redirect all-am all installdirs \
 mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
-
-@WIN_MAKE_RES@
 
 install-exec-hook:
 	chown root.games ${bindir}/dopewars

@@ -5,8 +5,8 @@
 /* Define if dopewars should use TCP/IP networking to connect to servers */
 #undef NETWORKING
 
-/* Use the GTK+ client? */
-#undef GTK_CLIENT
+/* Use the graphical client? */
+#undef GUI_CLIENT
 
 /* Use the (n)curses client? */
 #undef CURSES_CLIENT

@@ -22,12 +22,17 @@
 #include <config.h>
 #endif
 
-#ifdef GTK_CLIENT
+#ifdef GUI_CLIENT
 
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef CYGWIN
+#include "gtk.h"
+#else
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#endif
 
 #include "dopeos.h"
 #include "dopewars.h"
@@ -40,11 +45,19 @@
 #define BT_SELL (GINT_TO_POINTER(2))
 #define BT_DROP (GINT_TO_POINTER(3))
 
+
+#ifndef CYGWIN
 #define MB_OK     1
 #define MB_CANCEL 2
 #define MB_YES    4
 #define MB_NO     8
+#define MB_YESNO  (MB_YES|MB_NO)
+#define IDOK      1
+#define IDCANCEL  2
+#define IDYES     4
+#define IDNO      8
 #define MB_MAX    4
+#endif
 
 #define ET_SPY    0
 #define ET_TIPOFF 1
@@ -112,8 +125,10 @@ static void Jet();
 static void DealDrugs(GtkWidget *widget,gpointer data);
 static void DealGuns(GtkWidget *widget,gpointer data);
 static void QuestionDialog(char *Data,Player *From);
-static gint MessageBox(GtkWidget *parent,const gchar *Title,
-                       const gchar *Text,gint Options);
+#ifndef CYGWIN
+static gint MessageBox(GtkWidget *parent,const gchar *Text,
+                       const gchar *Title,gint Options);
+#endif
 static void TransferDialog(gboolean Debt);
 static void ListPlayers(GtkWidget *widget,gpointer data);
 static void TalkToAll(GtkWidget *widget,gpointer data);
@@ -165,8 +180,9 @@ static gchar *MenuTranslate(const gchar *path,gpointer func_data) {
 
 static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                        const gchar *message,gpointer user_data) {
-   MessageBox(NULL,log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
-              message,MB_OK);
+   MessageBox(NULL,message,
+              log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
+              MB_OK);
 }
 
 #ifndef CYGWIN
@@ -185,8 +201,8 @@ static guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
 
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
-       MessageBox(ClientData.window,_("Quit Game"),_("Abandon current game?"),
-                  MB_YES|MB_NO)==MB_YES) {
+       MessageBox(ClientData.window,_("Abandon current game?"),_("Quit Game"),
+                  MB_YESNO)==IDYES) {
       gtk_main_quit();
    }
 }
@@ -196,15 +212,15 @@ void DestroyGtk(GtkWidget *widget,gpointer data) {
 }
 
 gint MainDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
-   return (InGame && MessageBox(ClientData.window,_("Quit Game"),
-           _("Abandon current game?"),MB_YES|MB_NO)==MB_NO);
+   return (InGame && MessageBox(ClientData.window,_("Abandon current game?"),
+                                _("Quit Game"),MB_YESNO)==IDNO);
 }
 
 
 void NewGame(GtkWidget *widget,gpointer data) {
    if (InGame) {
-      if (MessageBox(ClientData.window,_("Start new game"),
-          _("Abandon current game?"),MB_YES|MB_NO)==MB_YES) EndGame();
+      if (MessageBox(ClientData.window,_("Abandon current game?"),
+                     _("Start new game"),MB_YESNO)==IDYES) EndGame();
       else return;
    }
    NewGameDialog();
@@ -519,6 +535,22 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
    }
 }
 
+#ifndef CYGWIN
+static GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
+                                        GtkWidget **pack_widg) {
+   GtkWidget *hbox,*text,*vscroll;
+   GtkAdjustment *adj;
+   hbox=gtk_hbox_new(FALSE,0);
+   adj=(GtkAdjustment *)gtk_adjustment_new(0.0,0.0,100.0,1.0,10.0,10.0);
+   text=gtk_text_new(NULL,adj);
+   gtk_box_pack_start(GTK_BOX(hbox),text,TRUE,TRUE,0);
+   vscroll=gtk_vscrollbar_new(adj);
+   gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
+   *pack_widg=hbox;
+   return text;
+}
+#endif
+
 static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
                                  GtkBox *box,gint Answer) {
    GtkWidget *button;
@@ -532,8 +564,7 @@ static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
 }
 
 static void CreateFightDialog() {
-   GtkWidget *dialog,*vbox,*button,*hbox,*hbbox,*hsep,*text,*vscroll;
-   GtkAdjustment *adj;
+   GtkWidget *dialog,*vbox,*button,*hbox,*hbbox,*hsep,*text;
    GtkAccelGroup *accel_group;
    gchar *buf;
 
@@ -552,16 +583,11 @@ static void CreateFightDialog() {
 
    vbox=gtk_vbox_new(FALSE,7);
 
-   hbox=gtk_hbox_new(FALSE,0);
-   adj=(GtkAdjustment *)gtk_adjustment_new(0.0,0.0,100.0,1.0,10.0,10.0);
-   text=gtk_text_new(NULL,adj);
-   gtk_object_set_data(GTK_OBJECT(dialog),"text",text);
+   text=gtk_scrolled_text_new(NULL,NULL,&hbox);
+
    gtk_text_set_editable(GTK_TEXT(text),FALSE);
    gtk_text_set_word_wrap(GTK_TEXT(text),TRUE);
    gtk_object_set_data(GTK_OBJECT(dialog),"text",text);
-   gtk_box_pack_start(GTK_BOX(hbox),text,TRUE,TRUE,0);
-   vscroll=gtk_vscrollbar_new(adj);
-   gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
    gtk_widget_show_all(hbox);
    gtk_box_pack_start(GTK_BOX(vbox),hbox,TRUE,TRUE,0);
 
@@ -1130,24 +1156,24 @@ void DealGuns(GtkWidget *widget,gpointer data) {
 
    if (data!=BT_BUY && TotalGunsCarried(ClientData.Play)==0) {
       dpg_string_sprintf(text,_("You don't have any %tde!"),Names.Guns);
-      MessageBox(dialog,Title,text->str,MB_OK);
+      MessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && TotalGunsCarried(ClientData.Play) >=
                               ClientData.Play->Bitches.Carried+2) { 
       dpg_string_sprintf(text,
                          _("You'll need more %tde to carry any more %tde!"),
                          Names.Bitches,Names.Guns);
-      MessageBox(dialog,Title,text->str,MB_OK);
+      MessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Space > ClientData.Play->CoatSize) {
       dpg_string_sprintf(text,
                          _("You don't have enough space to carry that %tde!"),
                          Names.Gun);
-      MessageBox(dialog,Title,text->str,MB_OK);
+      MessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Price > ClientData.Play->Cash) {
       dpg_string_sprintf(text,_("You don't have enough cash to buy that %tde!"),
                          Names.Gun);
-      MessageBox(dialog,Title,text->str,MB_OK);
+      MessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_SELL && ClientData.Play->Guns[GunInd].Carried == 0) {
-      MessageBox(dialog,Title,_("You don't have any to sell!"),MB_OK);
+      MessageBox(dialog,_("You don't have any to sell!"),Title,MB_OK);
    } else {
       g_string_sprintf(text,"gun^%d^%d",GunInd,data==BT_BUY ? 1 : -1);
       SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text->str);
@@ -1375,7 +1401,11 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
                 _("_Fight") : _("_Jet!"),button,"clicked",accel_group);
 }
 
+#ifdef CYGWIN
+char GtkLoop(HINST hInstance,HINST hPrevInstance) {
+#else
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
+#endif
    GtkWidget *window,*vbox,*vbox2,*hbox,*frame,*table,*menubar,*text,
              *vpaned,*button,*vscroll,*clist;
    GtkAccelGroup *accel_group;
@@ -1383,9 +1413,13 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    GtkAdjustment *adj;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
+#ifdef CYGWIN
+   win32_init(hInstance,hPrevInstance);
+#else
    gtk_set_locale();
    if (ReturnOnFail && !gtk_init_check(argc,argv)) return FALSE;
    else if (!ReturnOnFail) gtk_init(argc,argv);
+#endif
 
 /* Set up message handlers */
    ClientMessageHandlerPt = HandleClientMessage;
@@ -1848,6 +1882,7 @@ void NewGameDialog() {
    gtk_widget_show_all(widgets.dialog);
 }
 
+#ifndef CYGWIN
 static void DestroyMessageBox(GtkWidget *widget,gpointer data) {
    gtk_main_quit();
 }
@@ -1861,8 +1896,8 @@ static void MessageBoxCallback(GtkWidget *widget,gpointer data) {
    gtk_widget_destroy(dialog);
 }
 
-gint MessageBox(GtkWidget *parent,const gchar *Title,
-                const gchar *Text,gint Options) {
+gint MessageBox(GtkWidget *parent,const gchar *Text,
+                const gchar *Title,gint Options) {
    GtkWidget *dialog,*button,*label,*vbox,*hbbox,*hsep;
    GtkAccelGroup *accel_group;
    gint i;
@@ -1912,6 +1947,7 @@ gint MessageBox(GtkWidget *parent,const gchar *Title,
    gtk_main();
    return retval;
 }
+#endif
 
 static void SendDoneMessage(GtkWidget *widget,gpointer data) {
    SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL);
@@ -1946,15 +1982,14 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
          money=-money;
       }
       if (-money>ClientData.Play->Bank) {
-         MessageBox(dialog,"Bank",
-                    _("There isn't that much money in the bank..."),
-                    MB_OK);
+         MessageBox(dialog,_("There isn't that much money in the bank..."),
+                    "Bank",MB_OK);
          return;
       }
    }
    if (money>ClientData.Play->Cash) {
-      MessageBox(dialog,Debt ? "Pay loan" : "Bank",
-                 _("You don't have that much money!"),MB_OK);
+      MessageBox(dialog,_("You don't have that much money!"),
+                 Debt ? "Pay loan" : "Bank",MB_OK);
       return;
    }
    text=pricetostr(money);
@@ -2334,7 +2369,7 @@ void SackBitch(GtkWidget *widget,gpointer data) {
    text=dpg_strdup_printf(_("Are you sure? (Any %tde or %tde carried\n"
                           "by this %tde may be lost!)"),Names.Guns,
                           Names.Drugs,Names.Bitch);
-   if (MessageBox(ClientData.window,title,text,MB_YES|MB_NO)==MB_YES) {
+   if (MessageBox(ClientData.window,text,title,MB_YESNO)==IDYES) {
       SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
    g_free(text); g_free(title);
@@ -2608,11 +2643,11 @@ void DisplaySpyReports(Player *Play) {
 
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    if (!ReturnOnFail) {
-      g_print(_("No GTK+ client available - rebuild the binary passing the\n"
-              "--enable-gtk-client option to configure, or use the curses\n"
-              "client (if available) instead!\n"));
+      g_print(_("No graphical client available - rebuild the binary passing\n"
+              "the --enable-gui-client option to configure, or use the\n"
+              "curses client (if available) instead!\n"));
    }
    return FALSE;
 }
 
-#endif /* GTK_CLIENT */
+#endif /* GUI_CLIENT */
