@@ -100,16 +100,23 @@ static gchar *do_convert(const gchar *from_codeset, const gchar *to_codeset,
   gchar *to_str;
 
   if (strcmp(to_codeset, "UTF-8") == 0 && strcmp(from_codeset, "UTF-8") == 0) {
-    const gchar *end;
+    const gchar *start, *end;
 
-    to_str = g_strdup(from_str);
-    if (!g_utf8_validate(to_str, -1, &end) && end) {
-      *((gchar *)end) = '\0';
+    if (from_len == -1) {
+      to_str = g_strdup(from_str);
+    } else {
+      to_str = g_strndup(from_str, from_len);
+    }
+    start = to_str;
+    while (start && *start && !g_utf8_validate(start, -1, &end)
+	   && end && *end) {
+      *((gchar *)end) = '?';
+      start = ++end;
     }
     return to_str;
   } else {
-    to_str = g_convert(from_str, from_len, to_codeset, from_codeset,
-                       NULL, NULL, NULL);
+    to_str = g_convert_with_fallback(from_str, from_len, to_codeset,
+                                     from_codeset, "?", NULL, NULL, NULL);
     if (to_str) {
       return to_str;
     } else {
