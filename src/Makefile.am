@@ -37,7 +37,7 @@ PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}
 DOPEBIN    = ${DOPEDIR}/dopewars
 PIXMAPS    = dopewars-pill.png dopewars-shot.png dopewars-weed.png
-EXTRA_DIST = ${PIXMAPS} pill.ico magic dopewars.rc
+EXTRA_DIST = ${PIXMAPS} pill.ico magic dopewars.rc dopewars.manifest
 CLEANFILES = dopewars.res dopewars.exe
 
 install-exec-hook:
