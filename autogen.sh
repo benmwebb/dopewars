@@ -100,7 +100,7 @@ version_check ()
   fi
 }
 
-version_check 1 "autoconf" "ftp://ftp.gnu.org/pub/gnu/autoconf/" 2 13 || DIE=1
+version_check 0 "autoconf" "ftp://ftp.gnu.org/pub/gnu/autoconf/" 2 13 || DIE=1
 version_check 0 "automake" "ftp://ftp.gnu.org/pub/gnu/automake/" 1 4 || DIE=1
 #version_check 0 "xgettext" "ftp://ftp.gnu.org/pub/gnu/gettext/" 0 10 38 || DIE=1
 #version_check 0 "msgfmt" "ftp://ftp.gnu.org/pub/gnu/gettext/" 0 10 38 || DIE=1
