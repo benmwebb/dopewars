@@ -1,7 +1,9 @@
 cvs
+    - Text-mode server is now non-interactive by default (server admin can
+      connect later with the -A option)
+    - Windows server can now be run as an NT Service
     - Fatal bug when visiting the bank (under Win2000/XP) fixed
     - Windows installer should now upgrade old versions properly
-    - Windows server can now be run as an NT Service
     - Currency can now be configured with Currency.Symbol and Currency.Prefix
     - Windows client windows cannot now be made unreadably small
     - Bank/loan shark dialog now warns on entering negative prices
