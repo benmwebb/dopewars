@@ -769,6 +769,8 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
    gchar *pt,*buf;
    guint ID;
 
+   if (!First || !Play) return;
+
    *AICode=*Code=C_NONE;
    *Other=&Noone;
    pt=Msg;
@@ -938,7 +940,7 @@ void SendFightReload(Player *To) {
 void SendOldCanFireMessage(Player *To,GString *text) {
    if (To->EventNum==E_FIGHT) {
       To->EventNum=E_FIGHTASK;
-      if (CanRunHere(To) && !HaveAbility(To,A_NEWFIGHT)) {
+      if (CanRunHere(To) && To->Health>0 && !HaveAbility(To,A_NEWFIGHT)) {
          if (text->len>0) g_string_append_c(text,'^');
          if (TotalGunsCarried(To)==0) {
             g_string_prepend(text,"YN^");

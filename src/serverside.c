@@ -1323,7 +1323,8 @@ void DoReturnFire(Player *Play) {
    if (!Play || !Play->FightArray) return;
 
    if (FightTimeout!=0 || !Play->IsCop) {
-      for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+      for (ArrayInd=0;Play->FightArray && ArrayInd<Play->FightArray->len;
+           ArrayInd++) {
          Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
          if (Defend->IsCop && CanPlayerFire(Defend)) Fire(Defend);
       }
@@ -1411,7 +1412,9 @@ void Fire(Player *Play) {
       }
    }
    CheckForKilledPlayers(Play);
-   DoReturnFire(Play);
+
+/* Careful, as we might have killed Player "Play" */
+   if (g_slist_find(FirstServer,(gpointer)Play)) DoReturnFire(Play);
 }
 
 gboolean CanPlayerFire(Player *Play) {
@@ -1441,6 +1444,34 @@ Player *GetNextShooter(Player *Play) {
    return MinPlay;
 }
 
+void ResolveTipoff(Player *Play) {
+   GString *text;
+
+   if (Play->IsCop || !CanRunHere(Play)) return;
+
+   if (g_slist_find(FirstServer,(gpointer)Play->OnBehalfOf)) {
+      g_message(_("%s: tipoff by %s finished OK."),GetPlayerName(Play),
+                GetPlayerName(Play->OnBehalfOf));
+      RemoveListPlayer(&(Play->TipList),Play->OnBehalfOf);
+      text=g_string_new("");
+      if (Play->Health==0) {
+         g_string_sprintf(text,
+           _("Following your tipoff, the cops ambushed %s, who was shot dead!"),
+           GetPlayerName(Play));
+      } else {
+         dpg_string_sprintf(text,
+                _("Following your tipoff, the cops ambushed %s, who escaped "
+                "with %d %tde. "),GetPlayerName(Play),
+                Play->Bitches.Carried,Names.Bitches);
+      }
+      GainBitch(Play->OnBehalfOf);
+      SendPlayerData(Play->OnBehalfOf);
+      SendPrintMessage(NULL,C_NONE,Play->OnBehalfOf,text->str);
+      g_string_free(text,TRUE);
+   }
+   Play->OnBehalfOf=NULL;
+}
+
 void WithdrawFromCombat(Player *Play) {
 /* Cleans up combat after player "Play" has left                    */
    int i,j;
@@ -1449,6 +1480,7 @@ void WithdrawFromCombat(Player *Play) {
 
    if (!Play->FightArray) return;
 
+   ResolveTipoff(Play);
    FightDone=TRUE;
    for (i=0;i<Play->FightArray->len;i++) {
       Attack=(Player *)g_ptr_array_index(Play->FightArray,i);
@@ -1467,6 +1499,7 @@ void WithdrawFromCombat(Player *Play) {
       for (i=0;i<Play->FightArray->len;i++) {
          Defend=(Player *)g_ptr_array_index(Play->FightArray,i);
          Defend->FightArray=NULL;
+         ResolveTipoff(Defend);
          if (Defend->IsCop) {
             FirstServer=RemovePlayer(Defend,FirstServer);
          } else if (Defend->Health==0) {
