@@ -255,10 +255,14 @@ AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork)
 
 dnl Enable plugins only if we can find the dlopen function, and
-dnl the user does not disable them
+dnl the user does not disable them with --disable-plugins or --disable-shared
 AC_ARG_ENABLE(plugins,
 [  --enable-plugins        use dynamically-loaded sound modules],
 [ plugins="$enableval" ],[ plugins="probe" ])
+
+if test "$enable_shared" = "no" ; then
+  plugins="no"
+fi
 
 if test "$plugins" != "no" ; then
   AC_SEARCH_LIBS(dlopen, dl)
