@@ -87,7 +87,7 @@ VERSION = @VERSION@
 l = @l@
 localedir = @localedir@
 
-SUBDIRS = src doc po intl
+SUBDIRS = intl src doc po
 
 DISTFILES = ABOUT-NLS
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4

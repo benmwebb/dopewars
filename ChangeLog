@@ -3,7 +3,7 @@
     - Internationalization (i18n) support
     - Tense and case-sensitive translated strings handled via. dpg_ analogues
       to glib's g_ string handling functions %P = price,
-      %Txx or %txx = tense-sensitive string
+      %Txx or %txx = tense-sensitive string, %/.../ = comment (ignored)
     - Networking revamped - now uses nonblocking sockets to improve server
       responsiveness and to remove deadlocks (previously, any client could
       halt server by sending an unterminated message); "abilities" added to
@@ -21,7 +21,7 @@
       client-specific code now placed in <xxx>_client.c, while generic code is
       in message.c
     - GTK+ client added
-    - Native "pointy-clicky" Win32 graphical client added
+    - Native "pointy-clicky" Win32 graphical client added (via. GTK+ emulation)
     - GLib dependency introduced; string and list handling is taken care of
       now by GLib routines
     - Configuration files now handled by GLib's GScanner; "string lists"

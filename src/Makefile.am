@@ -2,9 +2,10 @@ bin_PROGRAMS = dopewars
 dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c \
                    curses_client.c gtk_client.c winmain.c \
 		   dopeos.c tstring.c gtkport.c
+dopewars_DEPENDENCIES = @INTLLIBS@
 SUFFIXES = .rc .res
 INCLUDES = @GTK_CFLAGS@ -I.. -I.
-LDADD = @GTK_LIBS@
+LDADD = @GTK_LIBS@ @INTLLIBS@
 DEFS = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 
 DOCPATH=/usr/doc/${PACKAGE}-${VERSION}/

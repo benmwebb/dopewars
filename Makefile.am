@@ -1,4 +1,4 @@
-SUBDIRS = src doc po intl
+SUBDIRS = intl src doc po
 
 DISTFILES = ABOUT-NLS
 
