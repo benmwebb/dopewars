@@ -79,6 +79,9 @@
    (i.e. >= 1.2.10) */
 #undef HAVE_FIXED_GTK
 
+/* Do we have GTK+ 2.0 ? */
+#undef HAVE_GTK2
+
 /* The number of bytes in a long long.  */
 #undef SIZEOF_LONG_LONG
 
