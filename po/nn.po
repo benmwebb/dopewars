@@ -1,6 +1,6 @@
-# Norwegian Nynorsk translation for Dopewars. Might work with version 1.5.6.
+# translation of nn.po to Norsk nynorsk
+# Norwegian Nynorsk translation for dopewars. Might work with version 1.5.6.
 # Copyright (C) 2002 Åsmund Skjæveland
-# First author: Åsmund Skjæveland <aasmunds@student.matnat.uio.no>, 2002
 #
 #
 #
@@ -10,19 +10,21 @@
 # be - bunden eintal
 # uf - ubunden fleirtal
 # bf - bunden fleirtal
+# First author: Åsmund Skjæveland <aasmunds@student.matnat.uio.no>, 2002
+# Åsmund Skjæveland <aasmunds@fys.uio.no>, 2003
 #
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Dopewars\n"
+"Project-Id-Version: nn\n"
 "POT-Creation-Date: 2003-06-06 19:17+0100\n"
-"PO-Revision-Date: 2002-12-11 10:03+0100\n"
-"Last-Translator: Åsmund Skjæveland <aasmunds@student.matnat.uio.no>\n"
-"Language-Team: Norsk nynorsk <i18n-nn@lister.ping.uio.no>\n"
+"PO-Revision-Date: 2003-08-24 15:04+0200\n"
+"Last-Translator: Åsmund Skjæveland <aasmunds@fys.uio.no>\n"
+"Language-Team: Norsk nynorsk <i18n-no@lister.ping.uio.no>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 0.9.6\n"
+"X-Generator: KBabel 1.0\n"
 
 #. Name of a single bitch - if you need to use different words for
 #. * "bitch" depending on where in the sentence it occurs (e.g. subject or
@@ -336,8 +338,7 @@ msgstr "Lyd som blir spelt når ei av horene dine blir drepen"
 
 #: src/dopewars.c:425
 msgid "Sound file played when another player or cop is killed"
-msgstr ""
-"Lyd som blir spelt når ein annan spelar eller ei politimann blir drepen"
+msgstr "Lyd som blir spelt når ein annan spelar eller ei politimann blir drepen"
 
 #: src/dopewars.c:428
 msgid "Sound file played when you are killed"
@@ -823,8 +824,7 @@ msgid "Weed"
 msgstr "Jazztobakk"
 
 #: src/dopewars.c:741
-msgid ""
-"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+msgid "Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr "Columbiansk lasteskip lurte kystvakta! Jazztobakkprisen stuper!"
 
 #. The names of the default locations
@@ -954,8 +954,7 @@ msgstr "Ein dag utan dop er som ei natt"
 #: src/dopewars.c:793
 #, no-c-format
 msgid "We only use 20% of our brains, so why not burn out the other 80%"
-msgstr ""
-"Me bruker berre 20% av hjernane våre, så kvifor ikkje øydeleggja resten"
+msgstr "Me bruker berre 20% av hjernane våre, så kvifor ikkje øydeleggja resten"
 
 #: src/dopewars.c:794
 msgid "I'm soliciting contributions for Zombies for Christ"
@@ -1121,7 +1120,7 @@ msgstr "dopewars versjon %s\n"
 #. Usage information, printed when the user runs "dopewars -h"
 #. * (version with support for GNU long options)
 #: src/dopewars.c:2578
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: dopewars [OPTION]...\n"
 "Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
@@ -1196,6 +1195,7 @@ msgstr ""
 "  -t, --text-client       tving bruk av tekstklient (curses)\n"
 "                            (standard er å bruka ein grafisk klient når\n"
 "                            mogleg)\n"
+"  -P, --player=NAMN       Sett namnet på spelaren\n"
 "  -C, --convert=FIL       konverter ei poengfil i gamalt format til det\n"
 "                            nye formatet\n"
 
@@ -1218,7 +1218,7 @@ msgstr ""
 #. Usage information, printed when the user runs "dopewars -h"
 #. * (short options only version)
 #: src/dopewars.c:2615
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Usage: dopewars [OPTION]...\n"
 "Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
@@ -1274,6 +1274,7 @@ msgstr ""
 "  -w       tving bruk av grafisk klient (GTK+ eller Win32)\n"
 "  -t       tving bruk av tekstklient (curses)\n"
 "            (standard er å bruka ein grafisk klient når mogleg)\n"
+"  -P namn  Sett namnet på spelaren\n"
 "  -C fil   konverter ei poengfil i gamalt format til det nye formatet\n"
 "  -A       kopla til ein lokalt køyrande tenar for administrasjon\n"
 
@@ -1327,7 +1328,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:272
 msgid "English Translation           Ben Webb"
-msgstr ""
+msgstr "Engelsk omsetjing             Ben Webb"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:280
@@ -1335,8 +1336,7 @@ msgid "D O P E W A R S"
 msgstr "D O P E W A R S"
 
 #: src/curses_client/curses_client.c:285
-msgid ""
-"Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
+msgid "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
 msgstr "dopewars er tufta på Drug Wars av John E. Dell, og er ei simulering"
 
 #: src/curses_client/curses_client.c:287
@@ -1348,8 +1348,7 @@ msgid "buying, selling, and trying to get past the cops!"
 msgstr "og selja narkotika. Ikkje lat politiet ta deg!"
 
 #: src/curses_client/curses_client.c:291
-msgid ""
-"The first thing you need to do is pay off your debt to the Loan Shark. After"
+msgid "The first thing you need to do is pay off your debt to the Loan Shark. After"
 msgstr "Det fyrste du må gjera er å betala gjelda di til lånehaien."
 
 #: src/curses_client/curses_client.c:293
@@ -1364,8 +1363,7 @@ msgstr "Du har ein månad i speletid på å skapa formuen din."
 
 #: src/curses_client/curses_client.c:297
 #, c-format
-msgid ""
-"Version %-8s Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net"
 msgstr "Versjon %-8s Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net"
 
 #: src/curses_client/curses_client.c:300
@@ -1405,10 +1403,8 @@ msgid "For information on the command line options, type dopewars -h at your"
 msgstr "For informasjon om kommandolinevala, skriv dopewars -h på"
 
 #: src/curses_client/curses_client.c:321
-msgid ""
-"Unix prompt. This will display a help screen, listing the available options."
-msgstr ""
-"Unix-kommandolina. Det viser ein hjelpetekst med dei tilgjengelege vala."
+msgid "Unix prompt. This will display a help screen, listing the available options."
+msgstr "Unix-kommandolina. Det viser ein hjelpetekst med dei tilgjengelege vala."
 
 #. Prompts for hostname and port when selecting a server
 #. * manually
@@ -1541,8 +1537,7 @@ msgid "            L>ist the servers on the metaserver, and select one"
 msgstr "       L>ista tenarane på metatenaren, og velga ein"
 
 #: src/curses_client/curses_client.c:703
-msgid ""
-"            Q>uit (where you can start a server by typing \"dopewars -s\")"
+msgid "            Q>uit (where you can start a server by typing \"dopewars -s\")"
 msgstr "       A>vslutta (du kan starta ein tenar med «dopewars -s»)"
 
 #: src/curses_client/curses_client.c:705
@@ -1838,7 +1833,7 @@ msgstr "Trykk ein tast..."
 #. Title of the "Messages" window in the curses client
 #: src/curses_client/curses_client.c:1963
 msgid "Messages (-/+ scrolls up/down)"
-msgstr ""
+msgstr "Meldingar (-/+ rullar opp/ned)"
 
 #. Title of the "Stats" window in the curses client
 #: src/curses_client/curses_client.c:1973 src/gui_client/gtk_client.c:2275
@@ -2444,11 +2439,11 @@ msgstr "dopewars"
 #. Credits labels in GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2369
 msgid "English Translation"
-msgstr ""
+msgstr "Engelsk omsetjing"
 
 #: src/gui_client/gtk_client.c:2369
 msgid "Ben Webb"
-msgstr ""
+msgstr "Ben Webb"
 
 #: src/gui_client/gtk_client.c:2370
 msgid "Icons and graphics"
@@ -3229,8 +3224,7 @@ msgid "Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication"
 msgstr "Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering"
 
 #: src/serverside.c:241
-msgid ""
-"Attempt to connect to metaserver too frequently - waiting for next timeout"
+msgid "Attempt to connect to metaserver too frequently - waiting for next timeout"
 msgstr "Prøver for ofte å kopla til metatenaren - venter på neste tidsavbrot"
 
 #: src/serverside.c:301
@@ -3358,8 +3352,7 @@ msgstr "Kan ikkje lytta til nettverkssokkel. Avbryt."
 
 #: src/serverside.c:886
 #, c-format
-msgid ""
-"dopewars server version %s ready and waiting for connections on port %d."
+msgid "dopewars server version %s ready and waiting for connections on port %d."
 msgstr "dopewars-tenar versjon %s er klar og ventar på samband på port %d."
 
 #. Warning messages displayed if we fail to trap various signals
@@ -3440,8 +3433,7 @@ msgstr ""
 
 #: src/serverside.c:1276
 #, c-format
-msgid ""
-"dopewars server version %s ready for admin commands; try \"help\" for help"
+msgid "dopewars server version %s ready for admin commands; try \"help\" for help"
 msgstr ""
 "dopewars-tenar versjon %s er klar til å ta imot admin-kommandoar, prøv "
 "«help» for å få hjelp"
@@ -3664,8 +3656,7 @@ msgstr "Ut frå tipset ditt gjekk politiet mot %s, som vart skoten og drepen!"
 #: src/serverside.c:2937
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %tde. "
-msgstr ""
-"Ut frå tipset ditt rykka politiet ut mot %s, som kom seg unna med %d %tde."
+msgstr "Ut frå tipset ditt rykka politiet ut mot %s, som kom seg unna med %d %tde."
 
 #: src/serverside.c:3003
 msgid "YN^Do you pay a doctor %P to sew you up?"
@@ -3696,8 +3687,7 @@ msgstr "Luka vekk eit RandomOffer"
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %tde! That's a drag, "
 "man!"
-msgstr ""
-"Politihundar jagar deg %d kvartal! Du mista litt %tde. Det er hardt, mann."
+msgstr "Politihundar jagar deg %d kvartal! Du mista litt %tde. Det er hardt, mann."
 
 #: src/serverside.c:3085
 #, c-format
@@ -4252,10 +4242,8 @@ msgid "Asking SOCKS for connect to %s...\n"
 msgstr "Ber SOCKS om samband til %s...\n"
 
 #: src/AIPlayer.c:126
-msgid ""
-"Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication\n"
-msgstr ""
-"Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering\n"
+msgid "Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication\n"
+msgstr "Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering\n"
 
 #: src/AIPlayer.c:153
 #, c-format
@@ -4384,3 +4372,4 @@ msgid ""
 msgstr ""
 "Ugyldig modul «%s» vald.\n"
 "(%s tilgjengeleg, brukar «%s» no.)"
+
