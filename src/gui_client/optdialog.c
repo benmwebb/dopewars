@@ -462,17 +462,19 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
   }
 }
 
-static gboolean ReadFileToString(FILE *fp, gchar *str)
+static void ReadFileToString(FILE *fp, gchar *str)
 {
-  int len, mpos, numread;
+  int len, mpos;
   gchar *match, ch;
+  GString *file;
 
+  file = g_string_new("");
   len = strlen(str);
   match = g_new(gchar, len);
-  mpos = numread = 0;
+  mpos = 0;
 
-  while ((ch = fgetc(fp)) != EOF && mpos < len) {
-    numread++;
+  while (mpos < len && (ch = fgetc(fp)) != EOF) {
+    g_string_append_c(file, ch);
     match[mpos++] = ch;
     if (ch != str[mpos - 1]) {
       int start;
@@ -492,13 +494,15 @@ static gboolean ReadFileToString(FILE *fp, gchar *str)
   }
 
   g_free(match);
-  if (mpos == len) {
-    fseek(fp, numread, SEEK_SET);
-    ftruncate(fileno(fp), numread);
-    return TRUE;
-  } else {
-    return FALSE;
-  }
+
+  rewind(fp);
+  ftruncate(fileno(fp), 0);
+  fprintf(fp, file->str);
+
+  if (mpos < len)
+    fprintf(fp, str);
+
+  g_string_free(file, TRUE);
 }
 
 static void UpdateLocalConfig(void)
@@ -527,8 +531,7 @@ static void UpdateLocalConfig(void)
     return;
   }
 
-  if (!ReadFileToString(fp, header))
-    fprintf(fp, header);
+  ReadFileToString(fp, header);
   WriteConfigFile(fp);
 
   fclose(fp);
