@@ -76,6 +76,20 @@ static void WindowPrintEnd() {
    TextOutput=NULL;
 }
 
+static FILE *LogFile=NULL;
+
+static void LogFileStart() {
+   LogFile=fopen("dopewars-log.txt","w");
+}
+
+static void LogFilePrintFunc(const gchar *string) {
+   if (LogFile) fprintf(LogFile,string);
+}
+
+static void LogFileEnd() {
+   if (LogFile) fclose(LogFile);
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
    gchar **split;
@@ -85,12 +99,18 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                     LogMessage,NULL);
+   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
+                     G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
    while (split[argc] && split[argc][0]) argc++;
+   LogFileStart();
+   g_set_print_handler(LogFilePrintFunc);
+   g_print(_("# This is the dopewars startup log, containing any\n"
+             "# informative messages resulting from configuration\n"
+             "# file processing and the like.\n\n"));
    if (GeneralStartup(argc,split)==0) {
+      LogFileEnd();
       if (WantVersion || WantHelp) {
          WindowPrintStart();
          g_set_print_handler(WindowPrintFunc);
@@ -129,6 +149,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          }
          StopNetworking();
       }
+   } else {
+      LogFileEnd();
    }
    g_strfreev(split);
    CloseHighScoreFile();
