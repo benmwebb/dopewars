@@ -26,6 +26,7 @@
 
 #include <string.h>             /* For strcmp */
 #include <stdlib.h>             /* For atoi */
+#include <errno.h>              /* For errno */
 
 #include "dopewars.h"           /* For struct GLOBALS etc. */
 #include "gtk_client.h"         /* For mainwindow etc. */
@@ -461,10 +462,83 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
   }
 }
 
+static gboolean ReadFileToString(FILE *fp, gchar *str)
+{
+  int len, mpos, numread;
+  gchar *match, ch;
+
+  len = strlen(str);
+  match = g_new(gchar, len);
+  mpos = numread = 0;
+
+  while ((ch = fgetc(fp)) != EOF && mpos < len) {
+    numread++;
+    match[mpos++] = ch;
+    if (ch != str[mpos - 1]) {
+      int start;
+      gboolean shortmatch = FALSE;
+
+      for (start = 1; start < mpos; start++) {
+        if (memcmp(str, &match[start], mpos - start) == 0) {
+          mpos -= start;
+          memmove(match, &match[start], mpos);
+          shortmatch = TRUE;
+          break;
+        }
+      }
+      if (!shortmatch)
+        mpos = 0;
+    }
+  }
+
+  g_free(match);
+  if (mpos == len) {
+    fseek(fp, numread, SEEK_SET);
+    ftruncate(fileno(fp), numread);
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+static void UpdateLocalConfig(void)
+{
+  gchar *cfgfile;
+  FILE *fp;
+  static gchar *header =
+      "\n### Everything from here on is written automatically by the\n"
+      "### dopewars graphical client; you can edit it manually, but any\n"
+      "### formatting (comments, etc.) will be lost at the next rewrite.\n\n";
+
+  cfgfile = GetLocalConfigFile();
+  if (!cfgfile) {
+    g_warning(_("Could not determine local config file to write to"));
+    return;
+  }
+
+  fp = fopen(cfgfile, "r+");
+  if (!fp) {
+    fp = fopen(cfgfile, "w+");
+  }
+
+  if (!fp) {
+    g_warning(_("Could not open file %s: %s"), cfgfile, strerror(errno));
+    g_free(cfgfile);
+    return;
+  }
+
+  if (!ReadFileToString(fp, header))
+    fprintf(fp, header);
+  WriteConfigFile(fp);
+
+  fclose(fp);
+  g_free(cfgfile);
+}
+
 static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
 {
   SaveConfigWidgets();
-  WriteConfigFile(stdout);
+  UpdateLocalConfig();
   gtk_widget_destroy(dialog);
 }
 
