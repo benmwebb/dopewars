@@ -1,3 +1,10 @@
+25th June 2002
+     dopewars-1.5.7 released. There is now sound support (ESD and/or SDL
+on Unix systems, WinMM on Win32) although you have to provide your own WAVs
+(musicians take note - if you can provide suitable copyright-free sounds,
+then they can be included in future releases). Some minor bugs have been
+fixed, and overall security has been tightened up.
+
 29th April 2002
      dopewars-1.5.6 released. This corrects some problems with the GTK+2.0
 client in non-UTF8 locales, fixes a server memory corruption bug, and adds
