@@ -49,9 +49,16 @@ typedef enum {
    E_FULLBUF
 } CustomErrorCode;
 
+typedef struct _ErrTable {
+  gint code;
+  gchar *string;
+} ErrTable;
+
 void ClearError(LastError *error);
 gboolean IsError(LastError *error);
 void SetError(LastError *error,ErrorType *type,gint code);
+void LookupErrorCode(GString *str,gint code,ErrTable *table,
+                     gchar *fallbackstr);
 void g_string_assign_error(GString *str,LastError *error);
 void g_string_append_error(GString *str,LastError *error);
 

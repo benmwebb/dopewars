@@ -32,6 +32,7 @@
 #include <sys/socket.h> /* For struct sockaddr etc. */
 #include <netinet/in.h> /* For struct sockaddr_in etc. */
 #include <arpa/inet.h>  /* For socklen_t */
+#include <pwd.h>        /* For getpwuid */
 #include <string.h>     /* For memcpy, strlen etc. */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>     /* For close(), various types and constants */
@@ -55,6 +56,18 @@
    be dropped if either buffer is filled */
 #define MAXREADBUF   (32768)
 #define MAXWRITEBUF  (65536)
+
+/* SOCKS5 authentication method codes */
+typedef enum {
+   SM_NOAUTH =  0,   /* No authentication required */
+   SM_GSSAPI =  1,   /* GSSAPI */
+   SM_USERPWD = 2    /* Username/password authentication */
+} SocksMethods;
+
+static gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
+                                      unsigned RemotePort);
+static gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes);
+static gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes);
 
 #ifdef CYGWIN
 
@@ -105,8 +118,12 @@ static gboolean FinishConnect(int fd,LastError *error);
 
 static void NetBufCallBack(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) {
-      (*NetBuf->CallBack)(NetBuf,!NetBuf->WaitConnect,
-                          NetBuf->WriteBuf.DataPresent || NetBuf->WaitConnect);
+      (*NetBuf->CallBack)(NetBuf,NetBuf->status!=NBS_PRECONNECT,
+                          (NetBuf->status==NBS_CONNECTED &&
+                           NetBuf->WriteBuf.DataPresent) ||
+                          (NetBuf->status==NBS_SOCKSCONNECT &&
+                           NetBuf->negbuf.DataPresent) ||
+                          NetBuf->WaitConnect);
    }
 }
 
@@ -114,7 +131,19 @@ static void NetBufCallBackStop(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) (*NetBuf->CallBack)(NetBuf,FALSE,FALSE);
 }
 
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
+static void InitConnBuf(ConnBuf *buf) {
+   buf->Data=NULL;
+   buf->Length=0;
+   buf->DataPresent=0;
+}
+
+static void FreeConnBuf(ConnBuf *buf) {
+   g_free(buf->Data);
+   InitConnBuf(buf);
+}
+
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar,
+                       SocksServer *socks) {
 /* Initialises the passed network buffer, ready for use. Messages sent */
 /* or received on the buffered connection will be terminated by the    */
 /* given character, and if they end in "StripChar" it will be removed  */
@@ -125,10 +154,13 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
    NetBuf->CallBackData=NULL;
    NetBuf->Terminator=Terminator;
    NetBuf->StripChar=StripChar;
-   NetBuf->ReadBuf.Data=NetBuf->WriteBuf.Data=NULL;
-   NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
-   NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
+   InitConnBuf(&NetBuf->ReadBuf);
+   InitConnBuf(&NetBuf->WriteBuf);
+   InitConnBuf(&NetBuf->negbuf);
    NetBuf->WaitConnect=FALSE;
+   NetBuf->status = NBS_PRECONNECT;
+   NetBuf->socks = socks;
+   NetBuf->host = NULL;
    ClearError(&NetBuf->error);
 }
 
@@ -144,6 +176,7 @@ void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
 /* Sets up the given network buffer to handle data being sent/received */
 /* through the given socket                                            */
    NetBuf->fd=fd;
+   NetBuf->status=NBS_CONNECTED; /* Assume the socket is connected */
 }
 
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf) {
@@ -154,9 +187,31 @@ gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf) {
 
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
                                    unsigned RemotePort) {
+  gchar *realhost;
+  unsigned realport;
+
   ShutdownNetworkBuffer(NetBuf);
-  if (StartConnect(&NetBuf->fd,RemoteHost,RemotePort,TRUE,&NetBuf->error)) {
+
+  if (NetBuf->socks) {
+    realhost = NetBuf->socks->name;
+    realport = NetBuf->socks->port;
+  } else {
+    realhost = RemoteHost;
+    realport = RemotePort;
+  }
+
+  if (StartConnect(&NetBuf->fd,realhost,realport,TRUE,&NetBuf->error)) {
     NetBuf->WaitConnect=TRUE;
+
+    if (NetBuf->socks) {
+      if (!StartSocksNegotiation(NetBuf,RemoteHost,RemotePort)) {
+        NetBuf->WaitConnect=FALSE;
+        return FALSE;
+      } else {
+        NetBuf->status   = NBS_SOCKSCONNECT;
+        NetBuf->sockstat = NBSS_METHODS;
+      }
+    }
 
 /* Notify the owner if necessary to check for the connection completing */
     NetBufCallBack(NetBuf);
@@ -175,10 +230,13 @@ void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
 
    if (NetBuf->fd>=0) CloseSocket(NetBuf->fd);
 
-   g_free(NetBuf->ReadBuf.Data);
-   g_free(NetBuf->WriteBuf.Data);
+   FreeConnBuf(&NetBuf->ReadBuf);
+   FreeConnBuf(&NetBuf->WriteBuf);
+   FreeConnBuf(&NetBuf->negbuf);
 
-   InitNetworkBuffer(NetBuf,NetBuf->Terminator,NetBuf->StripChar);
+   g_free(NetBuf->host);
+
+   InitNetworkBuffer(NetBuf,NetBuf->Terminator,NetBuf->StripChar,NetBuf->socks);
 }
 
 void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
@@ -191,8 +249,147 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
    FD_SET(NetBuf->fd,readfds);
    if (errorfds) FD_SET(NetBuf->fd,errorfds);
    if (NetBuf->fd >= *MaxSock) *MaxSock=NetBuf->fd+1;
-   if (NetBuf->WriteBuf.DataPresent || NetBuf->WaitConnect) {
+   if ((NetBuf->status==NBS_CONNECTED && NetBuf->WriteBuf.DataPresent) ||
+       (NetBuf->status==NBS_SOCKSCONNECT && NetBuf->negbuf.DataPresent) ||
+       NetBuf->WaitConnect) {
       FD_SET(NetBuf->fd,writefds);
+   }
+}
+
+typedef enum {
+   SEC_5FAILURE = 1,
+   SEC_5RULESET = 2,
+   SEC_5NETDOWN = 3,
+   SEC_5UNREACH = 4,
+   SEC_5CONNREF = 5,
+   SEC_5TTLEXPIRED = 6,
+   SEC_5COMMNOSUPP = 7,
+   SEC_5ADDRNOSUPP = 8,
+
+   SEC_REJECT = 91,
+   SEC_NOIDENTD = 92,
+   SEC_IDMISMATCH = 93,
+
+   SEC_UNKNOWN = 200,
+   SEC_REPLYVERSION,
+   SEC_VERSION,
+   SEC_NOMETHODS
+} SocksErrorCode;
+
+static ErrTable SocksErrStr[] = {
+/* SOCKS version 5 error messages */
+  { SEC_5FAILURE,N_("SOCKS server general failure") },
+  { SEC_5RULESET,N_("Connection denied by SOCKS ruleset") },
+  { SEC_5NETDOWN,N_("SOCKS: Network unreachable") },
+  { SEC_5UNREACH,N_("SOCKS: Host unreachable") },
+  { SEC_5CONNREF,N_("SOCKS: Connection refused") },
+  { SEC_5TTLEXPIRED,N_("SOCKS: TTL expired") },
+  { SEC_5COMMNOSUPP,N_("SOCKS: Command not supported") },
+  { SEC_5ADDRNOSUPP,N_("SOCKS: Address type not supported") },
+  { SEC_NOMETHODS,N_("SOCKS server rejected all offered methods") },
+
+/* SOCKS version 4 error messages */
+  { SEC_REJECT,N_("SOCKS: Request rejected or failed") },
+  { SEC_NOIDENTD,N_("SOCKS: Rejected - unable to contact identd") },
+  { SEC_IDMISMATCH,N_("SOCKS: Rejected - identd reports different user-id") },
+
+/* SOCKS errors due to protocol violations */
+  { SEC_UNKNOWN,N_("Unknown SOCKS reply code") },
+  { SEC_REPLYVERSION,N_("Unknown SOCKS reply version code") },
+  { SEC_VERSION,N_("Unknown SOCKS server version") },
+  { 0,NULL }
+};
+
+static void SocksAppendError(GString *str,LastError *error) {
+   LookupErrorCode(str,error->code,SocksErrStr,_("SOCKS error code %d"));
+}
+
+static ErrorType ETSocks = { SocksAppendError };
+
+static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
+   guchar *addpt;
+   guint addlen,hostlen;
+   ConnBuf *conn;
+   unsigned short int netport;
+
+   conn=&NetBuf->negbuf;
+   g_assert(NetBuf->host);
+   hostlen=strlen(NetBuf->host);
+   if (hostlen>255) return FALSE;
+
+   netport = htons(NetBuf->port);
+   g_assert(sizeof(netport)==2);
+
+   addlen = hostlen + 7;
+   addpt = ExpandWriteBuffer(conn,addlen);
+   if (!addpt) {
+      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+   }
+   addpt[0] = 5;
+   addpt[1] = 1;
+   addpt[2] = 0;
+   addpt[3] = 3;
+   addpt[4] = hostlen;
+   strcpy(&addpt[5],NetBuf->host);
+   memcpy(&addpt[5+hostlen],&netport,sizeof(netport));
+
+   NetBuf->sockstat = NBSS_CONNECT;
+   g_print("FIXME: SOCKS5 CONNECT request sent\n");
+
+   conn->DataPresent+=addlen;
+
+/* If the buffer was empty before, we may need to tell the owner to check
+   the socket for write-ready status */
+   if ((gchar *)addpt==conn->Data) NetBufCallBack(NetBuf);
+
+   return TRUE;
+}
+
+static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
+   guchar *data;
+   gboolean retval=TRUE;
+   if (NetBuf->socks->version==5) {
+      if (NetBuf->sockstat == NBSS_METHODS) {
+         data = GetWaitingData(NetBuf,2);
+         if (data) {
+            retval=FALSE;
+            g_print("FIXME: Reply from SOCKS5 server: %d %d\n",data[0],data[1]);
+            if (data[0]!=5) {
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+            } else if (data[1]!=0 && data[1]!=2) {
+               SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
+            } else {
+               g_print("FIXME: Using SOCKS5 method %d\n",data[1]);
+               if (data[1]==SM_NOAUTH) {
+                  retval=Socks5Connect(NetBuf);
+               }
+            }
+            g_free(data);
+         }
+      } else if (NetBuf->sockstat == NBSS_CONNECT) {
+g_print("FIXME: SOCKS5 connect reply\n");
+      }
+      return retval;
+   } else {
+      data = GetWaitingData(NetBuf,8);
+      if (data) {
+         retval=FALSE;
+         g_print("FIXME: Reply from SOCKS4 server: %d %d\n",data[0],data[1]);
+         if (data[0]!=0) {
+            SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION);
+         } else {
+            if (data[0]==90) {
+               NetBuf->status = NBS_CONNECTED;
+               retval=TRUE;
+            } else if (data[0]>=SEC_REJECT && data[0]<=SEC_IDMISMATCH) {
+               SetError(&NetBuf->error,&ETSocks,data[0]);
+            } else {
+               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN);
+            }
+         }
+         g_free(data);
+      }
+      return retval;
    }
 }
 
@@ -214,6 +411,7 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
          retval=FinishConnect(NetBuf->fd,&NetBuf->error);
          ConnectDone=TRUE;
          NetBuf->WaitConnect=FALSE;
+         if (!NetBuf->socks) NetBuf->status = NBS_CONNECTED;
 
          if (!retval) {
             *WriteOK=FALSE;
@@ -224,7 +422,14 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
 
       if (ReadReady) {
          *ReadOK=ReadDataFromWire(NetBuf);
-         if (NetBuf->ReadBuf.DataPresent>0) DataWaiting=TRUE;
+         if (NetBuf->ReadBuf.DataPresent>0 &&
+             NetBuf->status==NBS_SOCKSCONNECT) {
+            if (!HandleSocksReply(NetBuf)) *ErrorOK=FALSE;
+         }
+         if (NetBuf->ReadBuf.DataPresent>0 &&
+             NetBuf->status!=NBS_SOCKSCONNECT) {
+            DataWaiting=TRUE;
+         }
       }
    }
 
@@ -238,7 +443,11 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
 /* If we just connected, then no need to listen for write-ready status
    any more */
       NetBufCallBack(NetBuf);
-   } else if (WriteReady && NetBuf->WriteBuf.DataPresent==0) {
+   } else if (WriteReady && 
+              ((NetBuf->status==NBS_CONNECTED &&
+                NetBuf->WriteBuf.DataPresent==0) ||
+               (NetBuf->status==NBS_SOCKSCONNECT &&
+                NetBuf->negbuf.DataPresent==0))) {
 /* If we wrote out everything, then tell the owner so that the socket no
    longer needs to be checked for write-ready status */
       NetBufCallBack(NetBuf);
@@ -296,6 +505,21 @@ gint CountWaitingMessages(NetworkBuffer *NetBuf) {
    return msgs;
 }
 
+gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes) {
+   ConnBuf *conn;
+   gchar *data;
+   conn=&NetBuf->ReadBuf;
+   if (!conn->Data || conn->DataPresent < numbytes) return NULL;
+
+   data = g_new(gchar,numbytes);
+   memcpy(data,conn->Data,numbytes);
+
+   memmove(&conn->Data[0],&conn->Data[numbytes],conn->DataPresent-numbytes);
+   conn->DataPresent-=numbytes;
+
+   return data;
+}
+
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
 /* Reads a complete (terminated) message from the network buffer. The    */
 /* message is removed from the buffer, and returned as a null-terminated */
@@ -307,7 +531,9 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
    char *SepPt;
    gchar *NewMessage;
    conn=&NetBuf->ReadBuf;
-   if (!conn->Data || !conn->DataPresent) return NULL;
+   if (!conn->Data || !conn->DataPresent/* || NetBuf->status!=NBS_CONNECTED*/) {
+      return NULL;
+   }
    SepPt=memchr(conn->Data,NetBuf->Terminator,conn->DataPresent);
    if (!SepPt) return NULL;
    *SepPt='\0';
@@ -366,40 +592,137 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
    return TRUE;
 }
 
+gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes) {
+   int newlen;
+   newlen = conn->DataPresent + numbytes;
+   if (newlen > conn->Length) {
+      conn->Length*=2;
+      conn->Length=MAX(conn->Length,newlen);
+      if (conn->Length > MAXWRITEBUF) conn->Length=MAXWRITEBUF;
+      if (newlen > conn->Length) return NULL;
+      conn->Data=g_realloc(conn->Data,conn->Length);
+   }
+
+   return (&conn->Data[conn->DataPresent]);
+}
+
 void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data) {
 /* Writes the null-terminated string "data" to the network buffer, ready   */
 /* to be sent to the wire when the network connection becomes free. The    */
 /* message is automatically terminated. Fails to write the message without */
 /* error if the buffer reaches its maximum size (although this error will  */
 /* be detected when an attempt is made to write the buffer to the wire).   */
-   int AddLength,NewLength;
+   gchar *addpt;
+   guint addlen;
    ConnBuf *conn;
    conn=&NetBuf->WriteBuf;
-   AddLength=strlen(data)+1;
-   NewLength=conn->DataPresent+AddLength;
-   if (NewLength > conn->Length) {
-      conn->Length*=2;
-      conn->Length=MAX(conn->Length,NewLength);
-      if (conn->Length > MAXWRITEBUF) conn->Length=MAXWRITEBUF;
-      if (NewLength > conn->Length) return;
-      conn->Data=g_realloc(conn->Data,conn->Length);
-   }
-   memcpy(&conn->Data[conn->DataPresent],data,AddLength);
-   conn->DataPresent=NewLength;
-   conn->Data[NewLength-1]=NetBuf->Terminator;
+
+   if (!data) return;
+   addlen = strlen(data)+1;
+   addpt = ExpandWriteBuffer(conn,addlen);
+   if (!addpt) return;
+
+   memcpy(addpt,data,addlen);
+   conn->DataPresent+=addlen;
+   addpt[addlen-1]=NetBuf->Terminator;
 
 /* If the buffer was empty before, we may need to tell the owner to check
    the socket for write-ready status */
-   if (NewLength==AddLength) NetBufCallBack(NetBuf);
+   if (addpt==conn->Data) NetBufCallBack(NetBuf);
 }
 
-gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
-/* Writes any waiting data in the network buffer to the wire. Returns */
-/* TRUE on success, or FALSE if the buffer's maximum length is        */
-/* reached, or the remote end has closed the connection.              */
+static struct hostent *LookupHostname(gchar *host,LastError *error) {
+   struct hostent *he;
+   if ((he=gethostbyname(host))==NULL) {
+#ifdef CYGWIN
+      if (error) SetError(error,ET_WINSOCK,WSAGetLastError());
+#else
+      if (error) SetError(error,ET_HERRNO,h_errno);
+#endif
+   }
+   return he;
+}
+
+gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
+                               unsigned RemotePort) {
+   static SocksMethods methods[] = {
+      SM_NOAUTH, SM_GSSAPI, SM_USERPWD
+   };
+   guint num_methods = sizeof(methods)/sizeof(methods[0]);
    ConnBuf *conn;
+   struct hostent *he;
+   guchar *addpt;
+   guint addlen,i;
+   struct in_addr *h_addr;
+   unsigned short int netport;
+   struct passwd *pwd;
+
+   conn=&NetBuf->negbuf;
+
+   if (NetBuf->socks->version==5) {
+      addlen=2+num_methods;
+      addpt = ExpandWriteBuffer(conn,addlen);
+      if (!addpt) {
+         g_print("FIXME: buffer size exceeded\n"); return FALSE;
+      }
+      addpt[0] = 5;   /* SOCKS version 5 */
+      addpt[1] = num_methods;
+      for (i=0;i<num_methods;i++) {
+         addpt[2+i] = (guchar)methods[i];
+      }
+      conn->DataPresent+=addlen;
+
+      g_free(NetBuf->host);
+      NetBuf->host = g_strdup(RemoteHost);
+      NetBuf->port = RemotePort;
+
+/* If the buffer was empty before, we may need to tell the owner to check
+   the socket for write-ready status */
+      if ((gchar *)addpt==conn->Data) NetBufCallBack(NetBuf);
+
+      return TRUE;
+   }
+
+   he = LookupHostname(RemoteHost,&NetBuf->error);
+   if (!he) return FALSE;
+
+   pwd = getpwuid(getuid());
+   if (!pwd || !pwd->pw_name) return FALSE;
+g_print("username %s\n",pwd->pw_name);
+
+   addlen=9+strlen(pwd->pw_name);
+
+   h_addr = (struct in_addr *)he->h_addr;
+   g_assert(sizeof(struct in_addr)==4);
+
+   netport = htons(RemotePort);
+   g_assert(sizeof(netport)==2);
+
+   addpt = ExpandWriteBuffer(conn,addlen);
+   if (!addpt) {
+      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+   }
+
+   addpt[0] = 4;  /* SOCKS version */
+   addpt[1] = 1;  /* CONNECT */
+   memcpy(&addpt[2],&netport,sizeof(netport));
+   memcpy(&addpt[4],h_addr,sizeof(struct in_addr));
+   strcpy(&addpt[8],pwd->pw_name);
+   addpt[addlen-1] = '\0';
+
+   g_print("FIXME: SOCKS CONNECT request sent\n");
+   
+   conn->DataPresent+=addlen;
+
+/* If the buffer was empty before, we may need to tell the owner to check
+   the socket for write-ready status */
+   if ((gchar *)addpt==conn->Data) NetBufCallBack(NetBuf);
+
+   return TRUE;
+}
+
+static gboolean WriteBufToWire(NetworkBuffer *NetBuf,ConnBuf *conn) {
    int CurrentPosition,BytesSent;
-   conn=&NetBuf->WriteBuf;
    if (!conn->Data || !conn->DataPresent) return TRUE;
    if (conn->Length==MAXWRITEBUF) {
       SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
@@ -431,6 +754,17 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
    }
    conn->DataPresent-=CurrentPosition;
    return TRUE;
+}
+
+gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
+/* Writes any waiting data in the network buffer to the wire. Returns */
+/* TRUE on success, or FALSE if the buffer's maximum length is        */
+/* reached, or the remote end has closed the connection.              */
+   if (NetBuf->status==NBS_SOCKSCONNECT) {
+      return WriteBufToWire(NetBuf,&NetBuf->negbuf);
+   } else {
+      return WriteBufToWire(NetBuf,&NetBuf->WriteBuf);
+   }
 }
 
 static void SendHttpRequest(HttpConnection *conn) {
@@ -495,7 +829,7 @@ gboolean OpenHttpConnection(HttpConnection **connpt,gchar *HostName,
    g_assert(HostName && Method && Query && connpt);
 
    conn=g_new0(HttpConnection,1);
-   InitNetworkBuffer(&conn->NetBuf,'\n','\r');
+   InitNetworkBuffer(&conn->NetBuf,'\n','\r',NULL);
    conn->HostName=g_strdup(HostName);
    if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
    conn->Method=g_strdup(Method);
@@ -687,14 +1021,9 @@ gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
    struct sockaddr_in ClientAddr;
    struct hostent *he;
 
-   if ((he=gethostbyname(RemoteHost))==NULL) {
-#ifdef CYGWIN
-      if (error) SetError(error,ET_WINSOCK,WSAGetLastError());
-#else
-      if (error) SetError(error,ET_HERRNO,h_errno);
-#endif
-      return FALSE;
-   }
+   he = LookupHostname(RemoteHost,error);
+   if (!he) return FALSE;
+
    *fd=socket(AF_INET,SOCK_STREAM,0);
    if (*fd==SOCKET_ERROR) {
 #ifdef CYGWIN

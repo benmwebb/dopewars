@@ -148,6 +148,8 @@ extern struct BITCH Bitch;
 extern price_t StartCash,StartDebt;
 extern struct NAMES Names;
 extern struct METASERVER MetaServer;
+extern SocksServer Socks;
+extern gboolean UseSocks;
 extern int NumTurns;
 extern int PlayerArmour,BitchArmour;
 extern int LogLevel;

@@ -35,11 +35,6 @@
 #include "error.h"
 #include "nls.h"
 
-typedef struct _ErrTable {
-  gint code;
-  gchar *string;
-} ErrTable;
-
 void ClearError(LastError *error) {
   error->type=NULL;
 }
@@ -53,8 +48,8 @@ void SetError(LastError *error,ErrorType *type,gint code) {
   error->code=code;
 }
 
-static void LookupErrorCode(GString *str,gint code,ErrTable *table,
-                            gchar *fallbackstr) {
+void LookupErrorCode(GString *str,gint code,ErrTable *table,
+                     gchar *fallbackstr) {
   for (;table && table->string;table++) {
     if (code==table->code) {
       g_string_append(str,_(table->string));

@@ -165,6 +165,9 @@ struct METASERVER DefaultMetaServer = {
    "","","dopewars server"
 };
 
+SocksServer Socks = { NULL,0,0 };
+gboolean UseSocks;
+
 int NumTurns=31;
 
 int PlayerArmour=100,BitchArmour=50;
@@ -182,6 +185,18 @@ struct GLOBALS Globals[] = {
      N_("Name of the high score file"),NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,NULL,&ServerName,NULL,"Server",
      N_("Name of the server to connect to"),NULL,NULL,0,"",NULL,NULL },
+   { NULL,&UseSocks,NULL,NULL,NULL,"Socks.Active",
+     N_("TRUE if a SOCKS server should be used for networking"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&Socks.name,NULL,"Socks.Name",
+     N_("The hostname of a SOCKS server to use"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &Socks.port,NULL,NULL,NULL,NULL,"Socks.Port",
+     N_("The port number of a SOCKS server to use"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &Socks.version,NULL,NULL,NULL,NULL,"Socks.Version",
+     N_("The version of the SOCKS protocol to use (4 or 5)"),
+     NULL,NULL,0,"",NULL,NULL },
    { NULL,&MetaServer.Active,NULL,NULL,NULL,"MetaServer.Active",
      N_("TRUE if server should report to a metaserver"),
      NULL,NULL,0,"",NULL,NULL },
@@ -642,7 +657,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
 #if NETWORKING
-   InitNetworkBuffer(&NewPlayer->NetBuf,'\n','\r');
+   InitNetworkBuffer(&NewPlayer->NetBuf,'\n','\r',UseSocks ? &Socks : NULL);
    if (Server) BindNetworkBufferToSocket(&NewPlayer->NetBuf,fd);
 #endif
    InitAbilities(NewPlayer);
@@ -1664,6 +1679,11 @@ void SetupParameters() {
    CopyNames(&Names,&DefaultNames);
    CopyMetaServer(&MetaServer,&DefaultMetaServer);
    CopyDrugs(&Drugs,&DefaultDrugs);
+
+   AssignName(&Socks.name,"socks");
+   Socks.port = 1080;
+   Socks.version = 4;
+   UseSocks = FALSE;
 
    ResizeLocations(sizeof(DefaultLocation)/sizeof(DefaultLocation[0]));
    for (i=0;i<NumLocation;i++) CopyLocation(&Location[i],&DefaultLocation[i]);

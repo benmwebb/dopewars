@@ -283,7 +283,7 @@ void GetClientMessage(gpointer data,gint socket,
    gboolean DoneOK,Connecting;
 
    NetBuf = &ClientData.Play->NetBuf;
-   Connecting = NetBuf->WaitConnect;
+   Connecting = NetBuf->status != NBS_CONNECTED;
    if (PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK) && !Connecting) {
       while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
@@ -291,8 +291,14 @@ void GetClientMessage(gpointer data,gint socket,
          g_free(pt);
       }
    }
-   if (Connecting && (!NetBuf->WaitConnect || !DoneOK)) {
+   if (Connecting && (NetBuf->status==NBS_CONNECTED || !DoneOK)) {
       FinishServerConnect(data,DoneOK);
+      if (DoneOK) {   /* Just in case, clean up any messages that came in */
+         while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
+            HandleClientMessage(pt,ClientData.Play);
+            g_free(pt);
+         }
+      }
    } else if (!DoneOK) {
       if (InGame) {
 /* The network connection to the server was dropped unexpectedly */

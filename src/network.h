@@ -65,19 +65,45 @@ typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 
+/* Information about a SOCKS server */
+typedef struct _SocksServer {
+   gchar *name;     /* hostname */
+   unsigned port;   /* port number */
+   int version;     /* desired protocol version (usually 4 or 5) */
+} SocksServer;
+
+/* The status of a network buffer */
+typedef enum {
+   NBS_PRECONNECT,    /* Socket is not connected */
+   NBS_SOCKSCONNECT,  /* A CONNECT request is being sent to a SOCKS server */
+   NBS_CONNECTED      /* Socket is connected */
+} NBStatus;
+
+/* Status of a SOCKS v5 negotiation */
+typedef enum {
+   NBSS_METHODS,      /* Negotiation of available methods */
+   NBSS_CONNECT       /* CONNECT request is being sent */
+} NBSocksStatus;
+
 /* Handles reading and writing messages from/to a network connection */
 struct _NetworkBuffer {
-   int fd;                /* File descriptor of the socket */
-   gint InputTag;         /* Identifier for gdk_input routines */
-   NBCallBack CallBack;   /* Function called when the socket read- or
-                             write-able status changes */
-   gpointer CallBackData; /* Data accessible to the callback function */
-   char Terminator;       /* Character that separates messages */
-   char StripChar;        /* Character that should be removed from messages */
-   ConnBuf ReadBuf;       /* New data, waiting for the application */
-   ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
-   gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
-   LastError error;       /* Any error from the last operation */
+   int fd;                 /* File descriptor of the socket */
+   gint InputTag;          /* Identifier for gdk_input routines */
+   NBCallBack CallBack;    /* Function called when the socket read- or
+                              write-able status changes */
+   gpointer CallBackData;  /* Data accessible to the callback function */
+   char Terminator;        /* Character that separates messages */
+   char StripChar;         /* Character that should be removed from messages */
+   ConnBuf ReadBuf;        /* New data, waiting for the application */
+   ConnBuf WriteBuf;       /* Data waiting to be written to the wire */
+   ConnBuf negbuf;         /* Output for protocol negotiation (e.g. SOCKS) */
+   gboolean WaitConnect;   /* TRUE if a non-blocking connect is in progress */
+   NBStatus status;        /* Status of the connection (if any) */
+   NBSocksStatus sockstat; /* Status of SOCKS negotiation (if any) */
+   SocksServer *socks;     /* If non-NULL, a SOCKS server to use */
+   gchar *host;            /* If non-NULL, the host to connect to */
+   unsigned port;          /* If non-NULL, the port to connect to */
+   LastError error;        /* Any error from the last operation */
 };
 
 /* Keeps track of the progress of an HTTP connection */
@@ -114,7 +140,8 @@ struct _HttpConnection {
    HttpStatus Status;
 };
 
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar);
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar,
+                       SocksServer *socks);
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
                               gpointer CallBackData);
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
