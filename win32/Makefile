@@ -31,8 +31,12 @@ manifest installfiles.gz: filelist makeinstall uninstall
 	sed -e 's/LICENCE/licence.txt/' < ../doc/index.html > index.html
 	sed -e 's/LICENCE/licence.txt/' < ../doc/developer.html > developer.html
 	sed -e 's/example-cfg/example-cfg.txt/' < ../doc/configfile.html > configfile.html
+	awk '{print $$0."\r"}' < ../LICENCE > licence.txt
+	awk '{print $$0."\r"}' < ../README > readme.txt
+	awk '{print $$0."\r"}' < ../doc/example-cfg > example-cfg.txt
 	./makeinstall
-	/bin/rm -f index.html configfile.html developer.html
+	/bin/rm -f index.html configfile.html developer.html licence.txt
+	/bin/rm -f example-cfg.txt readme.txt
 
 setup.res: setup.rc dialogs.rc contid.h manifest installfiles.gz
 	windres -O coff -o setup.res setup.rc
