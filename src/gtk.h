@@ -633,4 +633,6 @@ void gtk_spin_button_set_value(GtkSpinButton *spin_button,gfloat value);
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
                                     GtkAdjustment *adjustment);
 
+extern long AsyncSocketError;
+
 #endif

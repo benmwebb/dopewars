@@ -554,6 +554,7 @@ static HFONT hFont;
 static GSList *WindowList=NULL;
 static GSList *GdkInputs=NULL;
 static HWND TopLevel=NULL;
+long AsyncSocketError=0;
 
 static void gtk_set_default_font(HWND hWnd) {
    SendMessage(hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(FALSE,0));
@@ -778,7 +779,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          }
          break;
       case WM_SOCKETDATA:
+         AsyncSocketError=WSAGETSELECTERROR(lParam);
          DispatchSocketEvent((SOCKET)wParam,WSAGETSELECTEVENT(lParam));
+         AsyncSocketError=0;
          break;
       default:
          return DefWindowProc(hwnd,msg,wParam,lParam);
@@ -791,6 +794,7 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
    WindowList=NULL;
+   AsyncSocketError=0;
    if (!hPrevInstance) {
       wc.style		= CS_HREDRAW|CS_VREDRAW;
       wc.lpfnWndProc	= MainWndProc;

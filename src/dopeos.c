@@ -29,6 +29,9 @@
 #ifdef CYGWIN /* Code for native Win32 build under Cygwin */
 
 #include <conio.h>
+#ifdef GUI_CLIENT
+#include "gtk.h"
+#endif
 
 CHAR_INFO RealScreen[25][80],VirtualScreen[25][80];
 HANDLE hOut,hIn;
@@ -274,7 +277,14 @@ int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,
 }
 
 #if NETWORKING
-int GetSocketError() { return WSAGetLastError(); }
+int GetSocketError() {
+#ifdef GUI_CLIENT
+   if (AsyncSocketError) return AsyncSocketError;
+   else
+#endif
+return WSAGetLastError();
+}
+
 void fcntl(SOCKET s,int fsetfl,long cmd) {
    unsigned long param=1;
    ioctlsocket(s,cmd,&param);

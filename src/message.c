@@ -325,7 +325,11 @@ gboolean ReadConnectionBufferFromWire(Player *Play) {
       BytesRead=recv(Play->fd,&conn->Data[CurrentPosition],
                      conn->Length-CurrentPosition,0);
       if (BytesRead==SOCKET_ERROR) {
+#ifdef CYGWIN
+         if (GetSocketError()==WSAEWOULDBLOCK) break; else return FALSE;
+#else
          if (GetSocketError()==EAGAIN) break; else return FALSE;
+#endif
       } else if (BytesRead==0) {
          return FALSE;
       } else {
@@ -373,7 +377,11 @@ gboolean WriteConnectionBufferToWire(Player *Play) {
       BytesSent=send(Play->fd,&conn->Data[CurrentPosition],
                      conn->DataPresent-CurrentPosition,0);
       if (BytesSent==SOCKET_ERROR) {
+#ifdef CYGWIN
+         if (GetSocketError()==WSAEWOULDBLOCK) break; else return FALSE;
+#else
          if (GetSocketError()==EAGAIN) break; else return FALSE;
+#endif
       } else {
          CurrentPosition+=BytesSent;
       }
@@ -731,7 +739,11 @@ char *SetupNetwork(gboolean NonBlocking) {
    if (NonBlocking) fcntl(ClientSock,F_SETFL,O_NONBLOCK);
    if (connect(ClientSock,(struct sockaddr *)&ClientAddr,
        sizeof(struct sockaddr))==-1) {
+#ifdef CYGWIN
+      if (GetSocketError()==WSAEWOULDBLOCK) return NULL;
+#else
       if (GetSocketError()==EINPROGRESS) return NULL;
+#endif
       CloseSocket(ClientSock);
       return NoConnect;
    } else {
@@ -742,12 +754,13 @@ char *SetupNetwork(gboolean NonBlocking) {
 }
 
 char *FinishSetupNetwork() {
+   static char NoConnect[]= N_("Connection refused or no server present");
 #ifdef CYGWIN
+   if (GetSocketError()!=0) return NoConnect;
    Client=Network=TRUE;
    return NULL;
 #else
    int optval;
-   static char NoConnect[]= N_("Connection refused or no server present");
    socklen_t optlen;
 
    optlen=sizeof(optval);
@@ -755,7 +768,7 @@ char *FinishSetupNetwork() {
       return NoConnect;
    }
    if (optval==0) {
-      Client=TRUE; Network=TRUE;
+      Client=Network=TRUE;
       return NULL;
    } else {
       return NoConnect;
