@@ -1312,7 +1312,9 @@ void AllowNextShooter(Player *Play) {
    Player *NextShooter;
    if (FightTimeout) {
       NextShooter=GetNextShooter(Play);
-      if (NextShooter) NextShooter->FightTimeout=time(NULL);
+      if (NextShooter && !CanPlayerFire(NextShooter)) {
+         NextShooter->FightTimeout=0;
+      }
    }
 }
 
