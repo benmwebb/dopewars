@@ -37,18 +37,19 @@ details.</p>
 identical. Both will accept the same command line parameters and configuration
 options. However, since the standard Unix paths for the high score file and
 configuration files do not translate well to Windows, by default the program
-will look for both the configuration file <b>dopewars-config.txt</b> and the
-high score file <b>dopewars.sco</b> in the current directory. (N.B. The 
-standard Unix-like configuration files \Etc\Dopewars and $HOME\.Dopewars will
-be read before dopewars-config.txt if they are present, and if you build
-the program by hand, you'll need to use --datadir="." as an option to
-configure in order to get this behaviour for the high score file.)</p>
+will look for both the high score file <b>dopewars.sco</b> in the current
+directory, and will read a global configuration file <b>dopewars-config.txt</b>
+from the directory in which the dopewars binary was installed, followed by
+a per-user configuration file of the same name in the working directory.
+(If you build the program from source code by hand, you'll need to use
+--datadir="." as an option to configure in order to get this behaviour for
+the high score file.)</p>
 
 <hr />
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>14-10-2001</b></p>
+<p>Last update: <b>03-02-2002</b></p>
 
 </body>
 </html>

@@ -1,13 +1,13 @@
-This is dopewars 1.5.2, a game simulating the life of a drug dealer in 
+This is dopewars 1.5.3, a game simulating the life of a drug dealer in 
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.5.2 servers should handle clients as old as version 1.4.3 with
+dopewars 1.5.3 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.5.2!
+recommended that both clients and servers are upgraded to 1.5.3!
 
 INSTALLATION
 
@@ -17,10 +17,10 @@ Either...
    
 Or...
 
-2. Get the tarball dopewars-1.5.2.tar.gz from the same URL
-   Extract it via. tar -xvzf dopewars-1.5.2.tar.gz
+2. Get the tarball dopewars-1.5.3.tar.gz from the same URL
+   Extract it via. tar -xvzf dopewars-1.5.3.tar.gz
    Follow the instructions in the INSTALL file in the newly-created
-      dopewars-1.5.2 directory
+      dopewars-1.5.3 directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
@@ -32,10 +32,10 @@ score file can be selected with the -f switch.
 WIN32 INSTALLATION
 
 dopewars now compiles as a console or regular application under Win32
-(Windows 95,98,NT,2000). Almost all functionality of the standard Unix binary
-is retained; for example, all of the same command line switches are supported,
-and configuration files are still looked for in $HOME/.dopewars. However, for
-convenience, the configuration file "dopewars-config.txt" is also read.
+(Windows 95, 98, NT, 2000, XP). Almost all functionality of the standard Unix
+binary is retained; for example, all of the same command line switches are
+supported. However, for convenience, the configuration file is the more
+Windows-friendly "dopewars-config.txt".
 
 The easiest way to install the Win32 version is to download the precompiled
 binary. The supplied configure script, however, should build the binary
