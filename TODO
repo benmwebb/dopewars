@@ -1,4 +1,7 @@
-- Replace nasty GtkText widget with the official approved GTK+2 widget.
+- Replace nasty GtkText widget with the official approved GTK+2 widget
+  (GtkTextView). Use the new tag support to colourise different kinds of
+  messages in the main window.
+- Implement server option to buy more than one bitch at a time in the Pub.
 - Fail nicely if NumLocation (etc.) is set to zero
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
   (should also enforce this for config file / server admin)
