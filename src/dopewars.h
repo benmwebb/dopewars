@@ -328,6 +328,7 @@ struct GLOBALS {
   int *MaxIndex;
   void (*ResizeFunc) (int NewNum);
   gboolean Modified;
+  int MinVal;
 };
 
 extern const int NUMGLOB;
