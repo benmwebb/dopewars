@@ -787,7 +787,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Cops"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
-  table = gtk_table_new(5, 4, FALSE);
+  table = gtk_table_new(6, 4, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
@@ -831,8 +831,14 @@ void OptDialog(GtkWidget *widget, gpointer data)
   entry = NewConfigEntry("MetaServer.Comment");
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 4, 5);
 
+  label = gtk_label_new(_("MOTD (welcome message)"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("ServerMOTD");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 5, 6);
+
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
-  label = gtk_label_new(_("Metaserver"));
+  label = gtk_label_new(_("Server"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
   gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
