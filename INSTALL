@@ -12,13 +12,17 @@ test can be overridden (if, for example, you wanted to build the Unix version
 under Cygwin) with the --enable-nativewin32 option to configure e.g.
 
 to build the Win32 binary under Cygwin
-	./configure
+	./configure --datadir="."
 	(Cygwin should be automatically detected)
 or
-	./configure --enable-nativewin32
+	./configure --enable-nativewin32 --datadir="."
 
 to build the Unix version under Cygwin
 	./configure --disable-nativewin32
+
+(The --datadir="." forces the high score file to be placed in the current
+directory, which is rather more useful on a Windows system than the default
+location - see below.)
 
 For a smaller binary, you may wish to build a "stripped" binary by specifying
 the -s option in LDFLAGS. In a Bourne-compatible shell, this can be achieved
