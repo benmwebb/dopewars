@@ -1,4 +1,6 @@
 cvs
+    - Support for HTTP proxies and authentication
+    - SOCKS4 and SOCKS5 (user/password) support
     - French translation added by leonard
     - Boolean configuration variables (TRUE/FALSE) now supported
     - Metaserver code is now non-blocking (and should soon support more

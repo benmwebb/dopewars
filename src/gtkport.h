@@ -239,6 +239,7 @@ struct _GtkEditable {
 
 struct _GtkEntry {
    GtkEditable editable;
+   gint is_visible : 1;
 };
 
 struct _GtkSpinButton {
@@ -533,6 +534,7 @@ GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
 GtkWidget *gtk_frame_new(const gchar *text);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj);
 GtkWidget *gtk_entry_new();
+void gtk_entry_set_visibility(GtkEntry *entry,gboolean visible);
 GtkWidget *gtk_table_new(guint rows,guint cols,gboolean homogeneous);
 void gtk_table_resize(GtkTable *table,guint rows,guint cols);
 GtkItemFactory *gtk_item_factory_new(GtkType container_type,

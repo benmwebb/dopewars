@@ -1567,7 +1567,12 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
 }
 
 GtkWidget *gtk_entry_new() {
-   return GTK_WIDGET(GtkNewObject(&GtkEntryClass));
+   GtkEntry *entry;
+
+   entry = GTK_ENTRY(GtkNewObject(&GtkEntryClass));
+   entry->is_visible = TRUE;
+
+   return GTK_WIDGET(entry);
 }
 
 GtkWidget *gtk_clist_new(gint columns) {
@@ -2035,6 +2040,7 @@ void gtk_entry_realize(GtkWidget *widget) {
    gtk_set_default_font(widget->hWnd);
    gtk_editable_set_editable(GTK_EDITABLE(widget),
                              GTK_EDITABLE(widget)->is_editable);
+   gtk_entry_set_visibility(GTK_ENTRY(widget),GTK_ENTRY(widget)->is_visible);
    SendMessage(widget->hWnd,WM_SETTEXT,0,
                (LPARAM)GTK_EDITABLE(widget)->text->str);
 }
@@ -3794,6 +3800,13 @@ void gtk_window_add_accel_group(GtkWindow *window,GtkAccelGroup *accel_group) {
 void gtk_entry_set_text(GtkEntry *entry,const gchar *text) {
    int pos=0;
    gtk_editable_insert_text(GTK_EDITABLE(entry),text,strlen(text),&pos);
+}
+
+void gtk_entry_set_visibility(GtkEntry *entry,gboolean visible) {
+   HWND hWnd;
+   entry->is_visible = visible;
+   hWnd=GTK_WIDGET(entry)->hWnd;
+   if (hWnd) SendMessage(hWnd,EM_SETPASSWORDCHAR,visible ? 0 : (WPARAM)'*',0);
 }
 
 guint SetAccelerator(GtkWidget *labelparent,gchar *Text,

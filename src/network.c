@@ -59,14 +59,15 @@
 
 /* SOCKS5 authentication method codes */
 typedef enum {
-   SM_NOAUTH =  0,   /* No authentication required */
-   SM_GSSAPI =  1,   /* GSSAPI */
-   SM_USERPWD = 2    /* Username/password authentication */
+   SM_NOAUTH =  0,      /* No authentication required */
+   SM_GSSAPI =  1,      /* GSSAPI */
+   SM_USERPASSWD = 2    /* Username/password authentication */
 } SocksMethods;
 
 static gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
                                       unsigned RemotePort);
 static gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes);
+static gchar *PeekWaitingData(NetworkBuffer *NetBuf,int numbytes);
 static gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes);
 
 #ifdef CYGWIN
@@ -161,6 +162,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar,
    NetBuf->status = NBS_PRECONNECT;
    NetBuf->socks = socks;
    NetBuf->host = NULL;
+   NetBuf->userpasswd = NULL;
    ClearError(&NetBuf->error);
 }
 
@@ -170,6 +172,11 @@ void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
    NetBuf->CallBack=CallBack;
    NetBuf->CallBackData=CallBackData;
    NetBufCallBack(NetBuf);
+}
+
+void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
+                                    NBUserPasswd userpasswd) {
+   NetBuf->userpasswd=userpasswd;
 }
 
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
@@ -271,6 +278,9 @@ typedef enum {
    SEC_IDMISMATCH = 93,
 
    SEC_UNKNOWN = 200,
+   SEC_AUTHFAILED,
+   SEC_USERCANCEL,
+   SEC_ADDRTYPE,
    SEC_REPLYVERSION,
    SEC_VERSION,
    SEC_NOMETHODS
@@ -287,6 +297,9 @@ static ErrTable SocksErrStr[] = {
   { SEC_5COMMNOSUPP,N_("SOCKS: Command not supported") },
   { SEC_5ADDRNOSUPP,N_("SOCKS: Address type not supported") },
   { SEC_NOMETHODS,N_("SOCKS server rejected all offered methods") },
+  { SEC_ADDRTYPE,N_("Unknown SOCKS address type returned") },
+  { SEC_AUTHFAILED,N_("SOCKS authentication failed") },
+  { SEC_USERCANCEL,N_("SOCKS authentication cancelled by user") },
 
 /* SOCKS version 4 error messages */
   { SEC_REJECT,N_("SOCKS: Request rejected or failed") },
@@ -305,6 +318,44 @@ static void SocksAppendError(GString *str,LastError *error) {
 }
 
 static ErrorType ETSocks = { SocksAppendError };
+
+static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
+   gchar *user,*password;
+   gchar *addpt;
+   guint addlen;
+   ConnBuf *conn;
+
+   if (!NetBuf->userpasswd) {
+      SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
+      return FALSE;
+   }
+   if (!(*NetBuf->userpasswd)(NetBuf,&user,&password)) {
+      SetError(&NetBuf->error,&ETSocks,SEC_USERCANCEL);
+      return FALSE;
+   }
+
+   conn=&NetBuf->negbuf;
+   addlen = 3 + strlen(user) + strlen(password);
+   addpt = ExpandWriteBuffer(conn,addlen);
+   if (!addpt || strlen(user)>255 || strlen(password)>255) {
+      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+   }
+   addpt[0] = 1;  /* Subnegotiation version code */
+   addpt[1] = strlen(user);
+   strcpy(&addpt[2],user);
+   addpt[2+strlen(user)] = strlen(password);
+   strcpy(&addpt[3+strlen(user)],password);
+   g_free(user); g_free(password);
+
+   NetBuf->sockstat = NBSS_USERPASSWD;
+   conn->DataPresent+=addlen;
+
+/* If the buffer was empty before, we may need to tell the owner to check
+   the socket for write-ready status */
+   if ((gchar *)addpt==conn->Data) NetBufCallBack(NetBuf);
+
+   return TRUE;
+}
 
 static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
    guchar *addpt;
@@ -325,11 +376,11 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
    if (!addpt) {
       g_print("FIXME: buffer size exceeded\n"); return FALSE;
    }
-   addpt[0] = 5;
-   addpt[1] = 1;
-   addpt[2] = 0;
-   addpt[3] = 3;
-   addpt[4] = hostlen;
+   addpt[0] = 5;       /* SOCKS version 5 */
+   addpt[1] = 1;       /* CONNECT */
+   addpt[2] = 0;       /* reserved - must be zero */
+   addpt[3] = 3;       /* Address type - FQDN */
+   addpt[4] = hostlen; /* Length of address */
    strcpy(&addpt[5],NetBuf->host);
    memcpy(&addpt[5+hostlen],&netport,sizeof(netport));
 
@@ -347,6 +398,8 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
 
 static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
    guchar *data;
+   guchar addrtype;
+   guint replylen;
    gboolean retval=TRUE;
    if (NetBuf->socks->version==5) {
       if (NetBuf->sockstat == NBSS_METHODS) {
@@ -362,12 +415,53 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
                g_print("FIXME: Using SOCKS5 method %d\n",data[1]);
                if (data[1]==SM_NOAUTH) {
                   retval=Socks5Connect(NetBuf);
+               } else if (data[1]==SM_USERPASSWD) {
+                  retval=Socks5UserPasswd(NetBuf);
                }
+            }
+            g_free(data);
+         }
+      } else if (NetBuf->sockstat == NBSS_USERPASSWD) {
+         data = GetWaitingData(NetBuf,2);
+         if (data) {
+            retval=FALSE;
+            if (data[0]!=5) {
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+            } else if (data[1]!=0) {
+               SetError(&NetBuf->error,&ETSocks,SEC_AUTHFAILED);
+            } else {
+               retval=Socks5Connect(NetBuf);
             }
             g_free(data);
          }
       } else if (NetBuf->sockstat == NBSS_CONNECT) {
 g_print("FIXME: SOCKS5 connect reply\n");
+         data = PeekWaitingData(NetBuf,5);
+         if (data) {
+            retval=FALSE;
+            addrtype = data[3];
+            if (data[0]!=5) {
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+            } else if (data[1]>8) {
+               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN);
+            } else if (data[1]!=0) {
+               SetError(&NetBuf->error,&ETSocks,data[1]);
+            } else if (addrtype!=1 && addrtype!=3 && addrtype!=4) {
+               SetError(&NetBuf->error,&ETSocks,SEC_ADDRTYPE);
+            } else {
+               retval=TRUE;
+               replylen = 6;
+               if (addrtype==1) replylen+=4;   /* IPv4 address */
+               else if (addrtype==4) replylen+=16;   /* IPv6 address */
+               else replylen+=data[4];   /* FQDN */
+               data = GetWaitingData(NetBuf,replylen);
+               if (data) {
+                  g_print("FIXME: SOCKS5 sucessful connect\n");
+                  NetBuf->status = NBS_CONNECTED;
+                  g_free(data);
+               }
+            }
+         }
       }
       return retval;
    } else {
@@ -503,6 +597,13 @@ gint CountWaitingMessages(NetworkBuffer *NetBuf) {
       if (conn->Data[i]==NetBuf->Terminator) msgs++;
    }
    return msgs;
+}
+
+gchar *PeekWaitingData(NetworkBuffer *NetBuf,int numbytes) {
+   ConnBuf *conn;
+   conn=&NetBuf->ReadBuf;
+   if (!conn->Data || conn->DataPresent < numbytes) return NULL;
+   else return conn->Data;
 }
 
 gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes) {
@@ -645,21 +746,22 @@ static struct hostent *LookupHostname(gchar *host,LastError *error) {
 
 gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
                                unsigned RemotePort) {
-   static SocksMethods methods[] = {
-      SM_NOAUTH, SM_GSSAPI, SM_USERPWD
-   };
-   guint num_methods = sizeof(methods)/sizeof(methods[0]);
+   guint num_methods;
    ConnBuf *conn;
    struct hostent *he;
    guchar *addpt;
    guint addlen,i;
    struct in_addr *h_addr;
    unsigned short int netport;
+#ifndef CYGWIN
    struct passwd *pwd;
+#endif
 
    conn=&NetBuf->negbuf;
 
    if (NetBuf->socks->version==5) {
+      num_methods=1;
+      if (NetBuf->userpasswd) num_methods++;
       addlen=2+num_methods;
       addpt = ExpandWriteBuffer(conn,addlen);
       if (!addpt) {
@@ -667,9 +769,9 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
       }
       addpt[0] = 5;   /* SOCKS version 5 */
       addpt[1] = num_methods;
-      for (i=0;i<num_methods;i++) {
-         addpt[2+i] = (guchar)methods[i];
-      }
+      i=2;
+      addpt[i++] = SM_NOAUTH;
+      if (NetBuf->userpasswd) addpt[i++] = SM_USERPASSWD;
       conn->DataPresent+=addlen;
 
       g_free(NetBuf->host);
@@ -686,11 +788,15 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
    he = LookupHostname(RemoteHost,&NetBuf->error);
    if (!he) return FALSE;
 
+#ifndef CYGWIN
    pwd = getpwuid(getuid());
    if (!pwd || !pwd->pw_name) return FALSE;
 g_print("username %s\n",pwd->pw_name);
-
    addlen=9+strlen(pwd->pw_name);
+#else
+   addlen=13;
+#endif
+
 
    h_addr = (struct in_addr *)he->h_addr;
    g_assert(sizeof(struct in_addr)==4);
@@ -707,10 +813,14 @@ g_print("username %s\n",pwd->pw_name);
    addpt[1] = 1;  /* CONNECT */
    memcpy(&addpt[2],&netport,sizeof(netport));
    memcpy(&addpt[4],h_addr,sizeof(struct in_addr));
+#ifdef CYGWIN
+   strcpy(&addpt[8],"user");
+#else
    strcpy(&addpt[8],pwd->pw_name);
+#endif
    addpt[addlen-1] = '\0';
 
-   g_print("FIXME: SOCKS CONNECT request sent\n");
+   g_print("FIXME: SOCKS4 CONNECT request sent\n");
    
    conn->DataPresent+=addlen;
 
@@ -982,6 +1092,7 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
 gboolean HandleHttpCompletion(HttpConnection *conn) {
    NBCallBack CallBack;
    gpointer CallBackData;
+   NBUserPasswd userpasswd;
    gboolean retry=FALSE;
 
    if (conn->Tries>=5) {
@@ -1005,11 +1116,13 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
 
    if (retry) {
       CallBack=conn->NetBuf.CallBack;
+      userpasswd=conn->NetBuf.userpasswd;
       CallBackData=conn->NetBuf.CallBackData;
       ShutdownNetworkBuffer(&conn->NetBuf);
       if (StartHttpConnect(conn)) {
          SendHttpRequest(conn);
          SetNetworkBufferCallBack(&conn->NetBuf,CallBack,CallBackData);
+         SetNetworkBufferUserPasswdFunc(&conn->NetBuf,userpasswd);
          return FALSE;
       }
    }

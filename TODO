@@ -1,5 +1,5 @@
-- Support for HTTP authentication; report metaserver errors more clearly
-- SOCKS support?
+- Improve error reporting for network operations (e.g. metaserver)
+- GSS_API SOCKS support?
 - Busy loop in GTK+ client on server crash - seems to be a GLib bug
 - Fix problem with dialogs popping up while menus are open
 - Fix problem with Jet dialog during fights
