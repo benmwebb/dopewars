@@ -25,7 +25,14 @@
 #endif
 
 #include <glib.h>
+
+#ifdef PLUGINS
 #include <dlfcn.h>
+#else
+#include "plugins/sound_sdl.h"
+#include "plugins/sound_esd.h"
+#include "plugins/sound_winmm.h"
+#endif
 
 #include "sound.h"
 
@@ -33,25 +40,42 @@ static SoundDriver *driver = NULL;
 typedef SoundDriver *(*InitFunc)(void);
 void *soundmodule = NULL;
 
+static void AddPlugin(InitFunc ifunc)
+{
+  driver = (*ifunc)();
+  if (driver) {
+    g_print("%s sound plugin init OK\n", driver->name);
+  }
+}
+
 void SoundInit(void)
 {
+#ifdef PLUGINS
   InitFunc ifunc;
   
-  soundmodule = dlopen("sound.so", RTLD_NOW);
+  soundmodule = dlopen("libsound_esd.so", RTLD_NOW);
   if (!soundmodule) {
     /* FIXME: using dlerror() here causes a segfault later in the program */
     g_print("dlopen failed\n");
     return;
   }
-  ifunc = dlsym(soundmodule, "init");
+  ifunc = dlsym(soundmodule, "sound_esd_init");
   if (ifunc) {
-    driver = (*ifunc)();
-    if (driver) {
-      g_print("%s sound plugin init OK\n", driver->name);
-    }
+    AddPlugin(ifunc);
   } else {
     g_print("dlsym failed: %s\n", dlerror());
   }
+#else
+#ifdef HAVE_ESD
+  AddPlugin(sound_esd_init);
+#endif
+#ifdef HAVE_SDL_MIXER
+  AddPlugin(sound_sdl_init);
+#endif
+#ifdef HAVE_WINMM
+  AddPlugin(sound_winmm_init);
+#endif
+#endif
 }
 
 void SoundOpen(gchar *drivername)
@@ -66,9 +90,11 @@ void SoundClose(void)
   if (driver && driver->close) {
     driver->close();
   }
+#ifdef PLUGINS
   if (soundmodule) {
     dlclose(soundmodule);
   }
+#endif
 }
 
 void SoundPlay(const gchar *snd)
