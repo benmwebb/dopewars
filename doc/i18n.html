@@ -14,7 +14,14 @@ in German. This relies on translators to translate the program's output into
 each language beforehand, of course, and so native language speakers to carry
 out this task are always needed!
 
-<h2>Running dopewars with i18n support</h2>
+<ul>
+<li><a href="#running">Running dopewars with i18n support</a>
+<li><a href="#adding">Adding a new translation</a>
+<li><a href="#updating">Updating a translation for a new dopewars version</a>
+<li><a href="#current">Currently available translations</a>
+</ul>
+
+<a name="running"><h2>Running dopewars with i18n support</h2></a>
 i18n is only included in versions of dopewars later than 1.4.8. By default,
 "Native Language Support" is compiled in; binary installations should be
 already set up for i18n. When compiling dopewars from source code, the
@@ -37,7 +44,7 @@ shell and want a German translation, the command "<tt>export LANG=de</tt>"
 should fix the problem.
 </ul>
 
-<h2>Adding a new translation</h2>
+<a name="adding"><h2>Adding a new translation</h2></a>
 Translation files are kept in the subdirectory <tt>po/</tt> of the dopewars
 source code distribution. They are named by
 <a href="http://userpage.chemie.fu-berlin.de/diverse/doc/ISO_639.html">
@@ -74,7 +81,8 @@ probably crash the program on running! To fix this, use the special notation<br>
 (i.e. replace <b>%x</b> with <b>%n$x</b> where <b>n</b> is the index that the
 format specifier "should" have, starting from 1.)<p>
 
-<h2>Updating a translation for a new dopewars version</h2>
+<a name="updating"><h2>Updating a translation for a new dopewars
+version</h2></a>
 New versions of dopewars will often change what is printed to the user, and
 so may may require changes to the translation. To update an existing
 translation, "<tt>make</tt>" the new version of dopewars. This will create
@@ -91,11 +99,21 @@ Rebuild and reinstall dopewars, and the new translations should become
 available. Again, it is deeply appreciated if such updated files are
 contributed to the main dopewars distribution!<p>
 
+<a name="current"><h2>Currently available translations</h2></a>
+
+<ul>
+<li>German (<tt>de.po</tt>)
+<ul>
+<li>Maintained by: <a href="mailto:tobi@radical-linux.de">Tobias Mathes</a>
+<li>Version required: <b>1.4.8-devel</b> or CVS
+</ul>
+</ul>
+
 <hr><br>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>09-09-2000</b>
+Last update: <b>10-09-2000</b>
 
 </body>
 </html>
