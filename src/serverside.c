@@ -1143,7 +1143,7 @@ static int SetupLocalSocket(void)
 void ServerLoop()
 {
   Player *tmp;
-  GSList *list, *nextlist, *listcp;
+  GSList *list, *listcp;
   fd_set readfs, writefs, errorfs;
   int topsock;
   struct timeval timeout;
@@ -1154,6 +1154,7 @@ void ServerLoop()
 
 #ifndef CYGWIN
   int localsock;
+  GSList *nextlist;
   GPrintFunc oldprint;
   GSList *localconn = NULL;
 #endif
