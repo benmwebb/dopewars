@@ -12,6 +12,7 @@ AC_PROG_CC
 AC_ISC_POSIX
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
+AC_PROG_LIBTOOL
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -335,6 +336,7 @@ src/gui_client/Makefile
 src/curses_client/Makefile
 src/gtkport/Makefile
 src/cursesport/Makefile
+src/plugins/Makefile
 doc/Makefile
 intl/Makefile
 po/Makefile.in],
