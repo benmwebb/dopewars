@@ -3489,9 +3489,9 @@ rm -f conftest*
 
 
       if test "$CURSES_CLIENT" = "yes" ; then
-      echo $ac_n "checking for initscr in -lncurses""... $ac_c" 1>&6
-echo "configure:3494: checking for initscr in -lncurses" >&5
-ac_lib_var=`echo ncurses'_'initscr | sed 'y%./+-%__p_%'`
+      echo $ac_n "checking for newterm in -lncurses""... $ac_c" 1>&6
+echo "configure:3494: checking for newterm in -lncurses" >&5
+ac_lib_var=`echo ncurses'_'newterm | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -3503,10 +3503,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char initscr();
+char newterm();
 
 int main() {
-initscr()
+newterm()
 ; return 0; }
 EOF
 if { (eval echo configure:3513: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -3536,10 +3536,10 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-      if test "$ac_cv_lib_ncurses_initscr" = "no" ; then
-         echo $ac_n "checking for initscr in -lcurses""... $ac_c" 1>&6
-echo "configure:3542: checking for initscr in -lcurses" >&5
-ac_lib_var=`echo curses'_'initscr | sed 'y%./+-%__p_%'`
+      if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
+         echo $ac_n "checking for newterm in -lcurses""... $ac_c" 1>&6
+echo "configure:3542: checking for newterm in -lcurses" >&5
+ac_lib_var=`echo curses'_'newterm | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -3551,10 +3551,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char initscr();
+char newterm();
 
 int main() {
-initscr()
+newterm()
 ; return 0; }
 EOF
 if { (eval echo configure:3561: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -3584,10 +3584,10 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-         if test "$ac_cv_lib_curses_initscr" = "no" ; then
-            echo $ac_n "checking for initscr in -lcur_colr""... $ac_c" 1>&6
-echo "configure:3590: checking for initscr in -lcur_colr" >&5
-ac_lib_var=`echo cur_colr'_'initscr | sed 'y%./+-%__p_%'`
+         if test "$ac_cv_lib_curses_newterm" = "no" ; then
+            echo $ac_n "checking for newterm in -lcur_colr""... $ac_c" 1>&6
+echo "configure:3590: checking for newterm in -lcur_colr" >&5
+ac_lib_var=`echo cur_colr'_'newterm | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -3599,10 +3599,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char initscr();
+char newterm();
 
 int main() {
-initscr()
+newterm()
 ; return 0; }
 EOF
 if { (eval echo configure:3609: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -3632,7 +3632,7 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-            if test "$ac_cv_lib_cur_colr_initscr" = "no" ; then
+            if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
                echo "configure: warning: Cannot find any curses-type library" 1>&2
                CURSES_CLIENT="no"
             fi

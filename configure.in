@@ -69,12 +69,12 @@ else
 
    dnl On true Unix systems, test for valid curses-like libraries
    if test "$CURSES_CLIENT" = "yes" ; then
-      AC_CHECK_LIB(ncurses,initscr)
-      if test "$ac_cv_lib_ncurses_initscr" = "no" ; then
-         AC_CHECK_LIB(curses,initscr)
-         if test "$ac_cv_lib_curses_initscr" = "no" ; then
-            AC_CHECK_LIB(cur_colr,initscr)
-            if test "$ac_cv_lib_cur_colr_initscr" = "no" ; then
+      AC_CHECK_LIB(ncurses,newterm)
+      if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
+         AC_CHECK_LIB(curses,newterm)
+         if test "$ac_cv_lib_curses_newterm" = "no" ; then
+            AC_CHECK_LIB(cur_colr,newterm)
+            if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
                AC_MSG_WARN(Cannot find any curses-type library)
                CURSES_CLIENT="no"
             fi
