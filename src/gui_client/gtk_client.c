@@ -71,6 +71,13 @@ struct ClientDataStruct {
   guint JetAccel;
 };
 
+struct DealDiaStruct {
+  GtkWidget *dialog, *cost, *carrying, *space, *afford, *amount;
+  gint DrugInd;
+  gpointer Type;
+};
+static struct DealDiaStruct DealDialog;
+
 GtkWidget *MainWindow = NULL;
 
 static struct ClientDataStruct ClientData;
@@ -532,6 +539,9 @@ void HandleClientMessage(char *pt, Player *Play)
     gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
     if (IsShowingInventory) {
       UpdateInventory(&ClientData.InvenDrug, Play->Drugs, NumDrug, TRUE);
+    }
+    if (IsShowingDealDrugs) {
+      gtk_widget_destroy(DealDialog.dialog);
     }
     break;
   default:
@@ -1055,6 +1065,8 @@ void DisplayFightMessage(char *Data)
     return;
   }
   if (FightDialog) {
+    if (IsShowingDealDrugs)
+      gtk_widget_destroy(DealDialog.dialog);
     if (!GTK_WIDGET_VISIBLE(FightDialog))
       gtk_widget_show(FightDialog);
   } else {
@@ -1435,13 +1447,6 @@ void Jet(GtkWidget *parent)
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
 }
-
-struct DealDiaStruct {
-  GtkWidget *dialog, *cost, *carrying, *space, *afford, *amount;
-  gint DrugInd;
-  gpointer Type;
-};
-static struct DealDiaStruct DealDialog;
 
 static void UpdateDealDialog(void)
 {
