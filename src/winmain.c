@@ -87,7 +87,10 @@ static void LogFileStart() {
 }
 
 static void LogFilePrintFunc(const gchar *string) {
-   if (LogFile) fprintf(LogFile,string);
+  if (LogFile) {
+    fprintf(LogFile,string);
+    fflush(LogFile);
+  }
 }
 
 static void LogFileEnd() {
@@ -118,7 +121,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
              "# informative messages resulting from configuration\n"
              "# file processing and the like.\n\n"));
    if (GeneralStartup(argc,split)==0) {
-      LogFileEnd();
       if (WantVersion || WantHelp) {
          WindowPrintStart();
          g_set_print_handler(WindowPrintFunc);
@@ -186,9 +188,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          StopNetworking();
 #endif
       }
-   } else {
-      LogFileEnd();
    }
+   LogFileEnd();
    g_strfreev(split);
    CloseHighScoreFile();
    if (PidFile) g_free(PidFile);
