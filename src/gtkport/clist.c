@@ -274,15 +274,18 @@ void gtk_clist_realize(GtkWidget *widget)
                                             GWL_WNDPROC, (LONG)ListWndProc);
   gtk_set_default_font(widget->hWnd);
 
-  gtk_clist_update_all_widths(clist);
   for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
     row = (GtkCListRow *)rows->data;
     if (row) {
       mySendMessage(widget->hWnd, LB_ADDSTRING, 0, 1);
     }
   }
+  gtk_clist_update_all_widths(clist);
 
   for (i = 0; i < clist->cols; i++) {
+    if (clist->coldata[i].auto_resize) {
+      clist->coldata[i].width = clist->coldata[i].optimal_width;
+    }
     hdi.mask = HDI_TEXT | HDI_FORMAT | HDI_WIDTH;
     hdi.pszText = clist->coldata[i].title;
     if (hdi.pszText) {
