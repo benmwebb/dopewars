@@ -1,4 +1,7 @@
 cvs
+    - Fatal bug when visiting the bank (under Win2000/XP) fixed
+    - Windows installer should now upgrade old versions properly
+    - Windows server can now be run as an NT Service
     - Currency can now be configured with Currency.Symbol and Currency.Prefix
     - Windows client windows cannot now be made unreadably small
     - Bank/loan shark dialog now warns on entering negative prices
@@ -7,7 +10,7 @@ cvs
     - Documentation on the client-server protocol added
     - Windows graphical server can be minimized to the System Tray
     - Keyboard shortcuts for menu items in Windows client
-    - Default buttons for Windows client, bank bug (hopefully) fixed
+    - Default buttons (ENTER -> "OK") for Windows client
     - RPM build/make install can now be run as non-superuser
     - Code cleanups
 

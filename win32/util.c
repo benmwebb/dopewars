@@ -309,6 +309,7 @@ void FreeServiceDetails(NTService *service,BOOL freepts) {
 void FreeInstData(InstData *idata,BOOL freepts) {
   FreeFileList(idata->instfiles,freepts);
   FreeFileList(idata->extrafiles,freepts);
+  FreeFileList(idata->keepfiles,freepts);
 
   FreeLinkList(idata->startmenu,freepts);
   FreeLinkList(idata->desktop,freepts);
@@ -484,4 +485,250 @@ BOOL RemoveWholeDirectory(char *path) {
     }
   }
   return TRUE;
+}
+
+void RemoveService(NTService *service) {
+  SC_HANDLE scManager,scService;
+  SERVICE_STATUS status;
+
+  if (!service) return;
+
+  scManager = OpenSCManager(NULL,NULL,GENERIC_READ);
+
+  if (!scManager) {
+    DisplayError("Cannot connect to service manager",TRUE,FALSE);
+    return;
+  }
+
+  scService = OpenService(scManager,service->name,DELETE|SERVICE_STOP);
+  if (!scService) {
+    DisplayError("Cannot open service",TRUE,FALSE);
+  } else {
+    if (!ControlService(scService,SERVICE_CONTROL_STOP,&status) &&
+        GetLastError()!=ERROR_SERVICE_NOT_ACTIVE) {
+      DisplayError("Cannot stop service",TRUE,FALSE);
+    }
+    if (!DeleteService(scService)) {
+      DisplayError("Cannot delete service",TRUE,FALSE);
+    }
+    CloseServiceHandle(scService);
+  }
+
+  CloseServiceHandle(scManager);
+}
+
+char *read_line0(HANDLE hin) {
+  char *buf;
+  int bufsize=32,strind=0;
+  DWORD bytes_read;
+  buf = bmalloc(bufsize);
+
+  while (1) {
+    if (!ReadFile(hin,&buf[strind],1,&bytes_read,NULL)) {
+      printf("Read error\n"); break;
+    }
+    if (bytes_read==0) { buf[strind]='\0'; break; } 
+    else if (buf[strind]=='\0') break;
+    else {
+      strind++;
+      if (strind>=bufsize) {
+        bufsize*=2;
+        buf = brealloc(buf,bufsize);
+      }
+    }
+  }
+  if (strind==0) { bfree(buf); return NULL; }
+  else return buf;
+}
+
+InstLink *ReadLinkList(HANDLE fin) {
+  InstLink *first=NULL,*listpt=NULL,*newpt;
+  char *linkfile,*origfile,*args;
+
+  while (1) {
+    linkfile=read_line0(fin);
+    if (!linkfile) break;
+    origfile=read_line0(fin);
+    args=read_line0(fin);
+    if (!origfile) DisplayError("Corrupt install.log",FALSE,TRUE);
+    newpt = bmalloc(sizeof(InstLink));
+    if (listpt) listpt->next = newpt;
+    else first = newpt;
+    listpt = newpt;
+    newpt->next=NULL;
+    newpt->linkfile=linkfile;
+    newpt->origfile=origfile;
+    newpt->args=args;
+  }
+  return first;
+}
+
+NTService *ReadServiceDetails(HANDLE fin) {
+  NTService *service=NULL;
+  char *name,*disp,*desc,*exe;
+
+  name = read_line0(fin);
+  if (name) {
+    disp = read_line0(fin);
+    desc = read_line0(fin);
+    exe = read_line0(fin);
+    if (!disp || !desc || !exe) {
+      DisplayError("Corrupt install.log",FALSE,TRUE);
+    } else {
+      AddServiceDetails(name,disp,desc,exe,&service);
+    }
+  }
+
+  return service;
+}
+
+InstFiles *ReadFileList(HANDLE fin) {
+  InstFiles *first=NULL,*listpt=NULL,*newpt;
+  char *filename,*filesize;
+
+  while (1) {
+    filename=read_line0(fin);
+    if (!filename) break;
+    filesize=read_line0(fin);
+    if (!filesize) DisplayError("Corrupt install.log",FALSE,TRUE);
+    newpt = bmalloc(sizeof(InstFiles));
+    if (listpt) listpt->next = newpt;
+    else first = newpt;
+    listpt = newpt;
+
+    newpt->next=NULL;
+    newpt->filename=filename;
+    newpt->filesize=atol(filesize);
+    bfree(filesize);
+  }
+  return first;
+}
+
+char *GetInstallDir(char *product) {
+  HKEY key;
+  bstr *str;
+  DWORD keytype,keylen;
+  char *installdir;
+
+  str=bstr_new();
+  bstr_assign(str,UninstallKey);
+  bstr_appendpath(str,product);
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,str->text,0,
+                   KEY_ALL_ACCESS,&key)!=ERROR_SUCCESS) {
+    DisplayError("Could not open registry",FALSE,TRUE);
+  }
+
+  if (RegQueryValueEx(key,"InstallDirectory",NULL,
+                      &keytype,NULL,&keylen)!=ERROR_SUCCESS ||
+      keytype!=REG_SZ) {
+    DisplayError("Could not query registry key",FALSE,TRUE);
+  }
+
+  installdir = bmalloc(keylen);
+  if (RegQueryValueEx(key,"InstallDirectory",NULL,
+                      &keytype,installdir,&keylen)!=ERROR_SUCCESS) {
+    DisplayError("Could not get registry key value",FALSE,TRUE);
+  }
+
+  bstr_free(str,TRUE);
+  return installdir;
+}
+
+InstData *ReadOldInstData(HANDLE fin,char *product,char *installdir) {
+  InstData *idata;
+
+  idata=bmalloc(sizeof(InstData));
+
+  idata->product=product;
+  idata->installdir=installdir;
+  idata->startmenudir=read_line0(fin);
+
+  idata->instfiles = ReadFileList(fin);
+  idata->extrafiles = ReadFileList(fin);
+
+  idata->startmenu = ReadLinkList(fin);
+  idata->desktop = ReadLinkList(fin);
+
+  idata->service = ReadServiceDetails(fin);
+  idata->keepfiles = ReadFileList(fin);
+
+  return idata;
+}
+
+void DeleteFileList(InstFiles *listpt,HWND hwnd,InstFiles *keepfiles) {
+  bstr *str;
+  char *sep;
+  InstFiles *keeppt;
+
+  str=bstr_new();
+  for (;listpt;listpt=listpt->next) {
+    keeppt = keepfiles;
+    while (keeppt && strcmp(keeppt->filename,listpt->filename)!=0) {
+      keeppt = keeppt->next;
+    }
+    if (keeppt) {
+      keeppt->filesize=1; /* Mark that this file is already installed */
+    } else {
+      bstr_assign(str,"Deleting file: ");
+      bstr_append(str,listpt->filename);
+      SendMessage(hwnd,WM_SETTEXT,0,(LPARAM)str->text);
+      DeleteFile(listpt->filename);
+      sep = strrchr(listpt->filename,'\\');
+      if (sep) {
+        *sep = '\0';
+        RemoveWholeDirectory(listpt->filename);
+       *sep = '\\';
+      }
+    }
+  }
+  bstr_free(str,TRUE);
+}
+
+void DeleteLinkList(char *dir,InstLink *listpt,HWND hwnd) {
+  bstr *str;
+  str=bstr_new();
+  if (SetCurrentDirectory(dir)) {
+    for (;listpt;listpt=listpt->next) {
+      bstr_assign(str,"Deleting shortcut: ");
+      bstr_append(str,listpt->linkfile);
+      SendMessage(hwnd,WM_SETTEXT,0,(LPARAM)str->text);
+      DeleteFile(listpt->linkfile);
+    }
+  } else {
+    bstr_assign(str,"Could not find shortcut directory ");
+    bstr_append(str,dir);
+    DisplayError(str->text,TRUE,FALSE);
+  }
+  bstr_free(str,TRUE);
+}
+
+void RemoveUninstall(char *startmenu,char *product,BOOL delexe) {
+  bstr *inipath,*uninstpath,*uninstlink;
+
+  inipath=bstr_new();
+  uninstpath=bstr_new();
+  uninstlink=bstr_new();
+
+  bstr_assign(uninstlink,startmenu);
+  bstr_appendpath(uninstlink,"Uninstall ");
+  bstr_append(uninstlink,product);
+  bstr_append(uninstlink,".LNK");
+  DeleteFile(uninstlink->text);
+
+  if (delexe) {
+    bstr_assign_windir(inipath);
+    bstr_assign(uninstpath,inipath->text);
+
+    bstr_appendpath(inipath,"wininit.ini");
+    bstr_appendpath(uninstpath,UninstallEXE);
+
+    if (!WritePrivateProfileString("Renane","NUL",uninstpath->text,
+                                   inipath->text)) {
+      DisplayError("Cannot write to wininit.ini: ",TRUE,FALSE);
+    }
+  }
+
+  bstr_free(uninstlink,TRUE);
+  bstr_free(uninstpath,TRUE);
+  bstr_free(inipath,TRUE);
 }

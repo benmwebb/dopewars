@@ -41,6 +41,7 @@
 #include <signal.h>
 #include <glib.h>
 #include <stdarg.h>
+#include "admin.h"
 #include "curses_client.h"
 #include "dopeos.h"
 #include "gtk_client.h"
@@ -69,7 +70,13 @@ FILE *logfp;
 unsigned Port=7902;
 gboolean Sanitized,ConfigVerbose,DrugValue;
 gchar *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL,*ConvertFile=NULL;
-gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,WantConvert;
+gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,
+         WantConvert,WantAdmin;
+
+#ifdef CYGWIN
+gboolean MinToSysTray=TRUE;
+#endif
+
 ClientType WantedClient;
 int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
     NumPlaying=0,NumStoppedTo=0;
@@ -258,6 +265,11 @@ struct GLOBALS Globals[] = {
    { NULL,NULL,NULL,&MetaServer.proxypassword,NULL,
      "MetaServer.Proxy.Password",
      N_("Password for HTTP Basic proxy authentication"),
+     NULL,NULL,0,"",NULL,NULL },
+#endif /* NETWORKING */
+#ifdef CYGWIN
+   { NULL,&MinToSysTray,NULL,NULL,NULL,"MinToSysTray",
+     N_("If TRUE, the server minimizes to the System Tray"),
      NULL,NULL,0,"",NULL,NULL },
 #endif
    { NULL,NULL,NULL,&Pager,NULL,"Pager",
@@ -1433,7 +1445,8 @@ void ReadConfigFile(char *FileName) {
       while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner,FALSE)) {
          errors++;
          g_scanner_error(scanner,
-                         _("Unable to process configuration file line"));
+                         _("Unable to process configuration file line %d"),
+                         g_scanner_cur_line(scanner));
       }
       g_scanner_destroy(scanner);
       fclose(fp);
@@ -1448,8 +1461,8 @@ _("Errors were encountered during the reading of the configuration file.\n"
 "file \"dopewars-log.txt\" for further details."));
 #else
          g_warning(
-_("Errors were encountered during the reading of the configuration file.\n"
-"As a result, some settings may not work as expected. Please see the\n"
+_("Errors were encountered during the reading of the configuration\n"
+"file. As a result, some settings may not work as expected. Please see the\n"
 "messages on standard output for further details."));
 #endif
       }
@@ -1796,7 +1809,7 @@ void SetupParameters() {
    FirstClient=FirstServer=NULL;
    Noone.Name=g_strdup("Noone");
    WantColour=WantNetwork=TRUE;
-   WantHelp=WantConvert=WantVersion=WantAntique=FALSE;
+   WantHelp=WantConvert=WantVersion=WantAntique=WantAdmin=FALSE;
    WantedClient=CLIENT_AUTO;
    Server=AIPlayer=Client=Network=FALSE;
 
@@ -1891,16 +1904,16 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
                             default %s/dopewars.sco is used)\n\
   -o, --hostname=ADDR     specify a hostname where the server for multiplayer\n\
                             dopewars can be found\n\
-  -s, --public-server     run in server mode (note: for a \"non-interactive\"\n\
-                            server, simply run as\n\
-                            dopewars -s < /dev/null >> logfile & )\n\
+  -s, --public-server     run in server mode (note: see the -A option for\n\
+                            configuring a server once it\'s running)\n\
   -S, --private-server    run a \"private\" server (do not notify the metaserver)\n\
   -p, --port=PORT         specify the network port to use (default: 7902)\n\
-  -g, --config-file=FILE  specify the pathname of a dopewars configuration file.\n\
-                            This file is read immediately when the -g option\n\
+  -g, --config-file=FILE  specify the pathname of a dopewars configuration file;\n\
+                            this file is read immediately when the -g option\n\
                             is encountered\n\
   -r, --pidfile=FILE      maintain pid file \"FILE\" while running the server\n\
   -l, --logfile=FILE      write log information to \"FILE\"\n\
+  -A, --admin             connect to a locally-running server for administration\n\
   -c, --ai-player         create and run a computer player\n\
   -w, --windowed-client   force the use of a graphical (windowed)\n\
                             client (GTK+ or Win32)\n\
@@ -1926,11 +1939,11 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
               (by default %s/dopewars.sco is used)\n\
   -o addr  specify a hostname where the server for multiplayer dopewars\n\
               can be found\n\
-  -s       run in server mode (note: for a \"non-interactive\" server, simply\n\
-              run as dopewars -s < /dev/null >> logfile & )\n\
+  -s       run in server mode (note: see the -A option for configuring a\n\
+              server once it\'s running)\n\
   -S       run a \"private\" server (i.e. do not notify the metaserver)\n\
   -p port  specify the network port to use (default: 7902)\n\
-  -g file  specify the pathname of a dopewars configuration file. This file\n\
+  -g file  specify the pathname of a dopewars configuration file; this file\n\
               is read immediately when the -g option is encountered\n\
   -r file  maintain pid file \"file\" while running the server\n\
   -l file  write log information to \"file\"\n\
@@ -1939,6 +1952,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -t       force the use of a text-mode client (curses)\n\
               (by default, a windowed client is used when possible)\n\
   -C file  convert an \"old format\" score file to the new format\n\
+  -A       connect to a locally-running server for administration\n\
   -h       display this help information\n\
   -v       output version information and exit\n\n\
 dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
@@ -1948,7 +1962,7 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 
 void HandleCmdLine(int argc,char *argv[]) {
    int c;
-   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:N";
+   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NA";
 #ifdef HAVE_GETOPT_LONG
    static const struct option long_options[] = {
       { "no-color", no_argument, NULL, 'b' },
@@ -1967,6 +1981,7 @@ void HandleCmdLine(int argc,char *argv[]) {
       { "text-client", no_argument, NULL, 't' },
       { "convert", required_argument, NULL, 'C' },
       { "logfile", required_argument, NULL, 'l' },
+      { "admin", no_argument, NULL, 'A' },
       { "help", no_argument, NULL, 'h' },
       { "version", no_argument, NULL, 'v' },
       { 0, 0, 0, 0 }
@@ -1999,6 +2014,7 @@ void HandleCmdLine(int argc,char *argv[]) {
          case 'w': WantedClient=CLIENT_WINDOW; break;
          case 't': WantedClient=CLIENT_CURSES; break;
          case 'C': AssignName(&ConvertFile,optarg); WantConvert=TRUE; break;
+         case 'A': WantAdmin=TRUE; break;
       }
    } while (c!=-1);
 }
@@ -2008,7 +2024,7 @@ int GeneralStartup(int argc,char *argv[]) {
 /* score init.) - Returns 0 if OK, -1 if something failed.           */
    SetupParameters();
    HandleCmdLine(argc,argv);
-   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert) {
+   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
       return InitHighScoreFile();
    }
    return 0;
@@ -2063,6 +2079,8 @@ int main(int argc,char *argv[]) {
    if (GeneralStartup(argc,argv)==0) {
       if (WantVersion || WantHelp) {
          HandleHelpTexts();
+      } else if (WantAdmin) {
+         AdminServer();
       } else if (WantConvert) {
          ConvertHighScoreFile();
       } else {

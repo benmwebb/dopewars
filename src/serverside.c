@@ -598,10 +598,26 @@ void PrintHelpTo(FILE *fp) {
    g_string_free(VarName,TRUE);
 }
 
+static NetworkBuffer *reply_netbuf;
+static void ServerReply(const gchar *msg) {
+  int msglen;
+  gchar *msgcp;
+
+  if (reply_netbuf) {
+    msglen=strlen(msg);
+    while (msglen>0 && msg[msglen-1]=='\n') msglen--;
+    if (msglen>0) {
+      msgcp = g_strndup(msg,msglen);
+      QueueMessageForSend(reply_netbuf,msgcp);
+      g_free(msgcp);
+    }
+  } else g_print(msg);
+}
+
 void ServerHelp(void) {
 /* Displays a simple help screen listing the server commands and options */
    int i;
-#if CYGWIN || GUI_SERVER
+//#if CYGWIN || GUI_SERVER
    int Lines;
    GString *VarName;
    VarName=g_string_new("");
@@ -616,14 +632,14 @@ void ServerHelp(void) {
       }
       g_print("%-26s\t%s\n",VarName->str,_(Globals[i].Help));
       Lines++;
-#ifndef GUI_SERVER
+/*#ifndef GUI_SERVER
       if (Lines%24==0) {
          g_print(_("--More--")); bgetch(); g_print("\n");
       }
-#endif
+endif*/
    }
    g_string_free(VarName,TRUE);
-#else
+/*#else
    FILE *fp;
    fp=popen(Pager,"w");
    if (fp) {
@@ -634,7 +650,7 @@ void ServerHelp(void) {
          PrintHelpTo(stdout);
       }
    }
-#endif
+endif*/
 }
 
 #if NETWORKING
@@ -706,6 +722,7 @@ static void StartServer(void) {
 #endif
 
    Scanner=g_scanner_new(&ScannerConfig);
+   Scanner->msg_handler=ScannerErrorHandler;
    Scanner->input_name="(stdin)";
    CreatePidFile();
 
@@ -810,9 +827,23 @@ gboolean IsServerShutdown(void) {
    return (WantQuit && !FirstServer && !MetaConn);
 }
 
-void HandleServerCommand(char *string) {
+static GPrintFunc StartServerReply(NetworkBuffer *netbuf) {
+  reply_netbuf = netbuf;
+  if (netbuf) return g_set_print_handler(ServerReply);
+  else return NULL;
+}
+
+static void FinishServerReply(GPrintFunc oldprint) {
+  if (oldprint) g_set_print_handler(oldprint);
+}
+
+static void HandleServerCommand(char *string,NetworkBuffer *netbuf) {
    GSList *list;
    Player *tmp;
+   GPrintFunc oldprint;
+
+   oldprint = StartServerReply(netbuf);
+
    g_scanner_input_text(Scanner,string,strlen(string));
    if (!ParseNextConfig(Scanner,TRUE)) {
       if (g_strcasecmp(string,"help")==0 || g_strcasecmp(string,"h")==0 ||
@@ -827,27 +858,30 @@ void HandleServerCommand(char *string) {
             g_print(_("Users currently logged on:-\n"));
             for (list=FirstServer;list;list=g_slist_next(list)) {
                tmp=(Player *)list->data;
-               if (!IsCop(tmp)) g_print("%s\n",GetPlayerName(tmp));
+               if (!IsCop(tmp)) {
+                 g_print("%s\n",GetPlayerName(tmp));
+               }
             }
          } else g_print(_("No users currently logged on!\n"));
       } else if (g_strncasecmp(string,"push ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
-            dopelog(0,_("Pushing %s"),GetPlayerName(tmp));
+            g_print(_("Pushing %s\n"),GetPlayerName(tmp));
             SendServerMessage(NULL,C_NONE,C_PUSH,tmp,NULL);
-         } else g_warning(_("No such user!"));
+         } else g_print(_("No such user!\n"));
       } else if (g_strncasecmp(string,"kill ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
-            dopelog(0,_("%s killed"),GetPlayerName(tmp));
+            g_print(_("%s killed\n"),GetPlayerName(tmp));
             BroadcastToClients(C_NONE,C_KILL,GetPlayerName(tmp),tmp,
                                (Player *)FirstServer->data);
             FirstServer=RemovePlayer(tmp,FirstServer);
-         } else g_warning(_("No such user!"));
+         } else g_print(_("No such user!\n"));
       } else {
-         g_warning(_("Unknown command - try \"help\" for help..."));
+         g_print(_("Unknown command - try \"help\" for help...\n"));
       }
    }
+   FinishServerReply(oldprint);
 }
 
 Player *HandleNewConnection(void) {
@@ -890,27 +924,15 @@ void RemovePlayerFromServer(Player *Play) {
 }
 
 #ifndef CYGWIN
-static gchar sockdir[] = "/tmp/.dopewars/";
-
-static gchar *GetLocalSocket(void) {
-  return g_strdup_printf("%ssocket-%u",sockdir,Port);
-}
-
 static void CloseLocalSocket(int localsock) {
-  gchar *sockname;
-
   if (localsock>=0) close(localsock);
-
-  sockname=GetLocalSocket();
-  unlink(sockname);
-  rmdir(sockdir);
-  g_free(sockname);
+  unlink("/tmp/.dopewars/socket");
+  rmdir("/tmp/.dopewars");
 }
 
 static int SetupLocalSocket(void) {
   int sock;
   struct sockaddr_un addr;
-  gchar *sockname;
 
   CloseLocalSocket(-1);
 
@@ -919,20 +941,17 @@ static int SetupLocalSocket(void) {
 
   SetBlocking(sock,FALSE);
 
-  sockname=GetLocalSocket();
-  mkdir(sockdir,S_IRUSR|S_IWUSR|S_IXUSR);
+  mkdir("/tmp/.dopewars",S_IRUSR|S_IWUSR|S_IXUSR);
 
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path,sockname,sizeof(addr.sun_path));
+  strncpy(addr.sun_path,"/tmp/.dopewars/socket",sizeof(addr.sun_path));
   addr.sun_path[sizeof(addr.sun_path)-1]='\0';
 
   bind(sock,(struct sockaddr *)&addr,sizeof(struct sockaddr_un));
 
-  chmod(sockname,S_IRUSR|S_IWUSR);
+  chmod("/tmp/.dopewars/socket",S_IRUSR|S_IWUSR);
 
   listen(sock,10);
-
-  g_free(sockname);
   
   return sock;
 }
@@ -945,11 +964,12 @@ void ServerLoop() {
    GSList *list,*nextlist,*localconn=NULL;
    fd_set readfs,writefs,errorfs;
    int topsock;
+   GPrintFunc oldprint;
 // gboolean InputClosed=FALSE;
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean EndOfLine,DoneOK;
+   gboolean /*EndOfLine,*/DoneOK;
    gchar *buf;
 #ifndef CYGWIN
    int localsock;
@@ -1039,9 +1059,12 @@ void ServerLoop() {
         netbuf=g_new(NetworkBuffer,1);
         InitNetworkBuffer(netbuf,'\n','\r',NULL);
         BindNetworkBufferToSocket(netbuf,newlocal);
-        SetBlocking(newlocal,FALSE);
         localconn = g_slist_append(localconn,netbuf);
-g_print("New connection on Unix socket\n");
+        oldprint = StartServerReply(netbuf);
+        g_print(_("dopewars server version %s ready for admin commands; "
+                  "try \"help\" for help"),VERSION);
+        FinishServerReply(oldprint);
+        dopelog(1,_("New admin connection"));
       }
       list=localconn;
       while (list) {
@@ -1051,13 +1074,13 @@ g_print("New connection on Unix socket\n");
         if (netbuf) {
           if (RespondToSelect(netbuf,&readfs,&writefs,&errorfs,&DoneOK)) {
             while((buf=GetWaitingMessage(netbuf))!=NULL) {
-              g_print("Unix message received: %s\n",buf);
-              HandleServerCommand(buf);
+              dopelog(2,_("Admin command: %s"),buf);
+              HandleServerCommand(buf,netbuf);
               g_free(buf);
             }
           }
           if (!DoneOK) {
-g_print("Unix socket closed\n");
+            dopelog(1,_("Admin connection closed"));
             localconn = g_slist_remove(localconn,netbuf);
             ShutdownNetworkBuffer(netbuf);
             g_free(netbuf);
@@ -1198,7 +1221,7 @@ static void GuiDoCommand(GtkWidget *widget,gpointer data) {
    gchar *text;
    text=gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1);
    gtk_editable_delete_text(GTK_EDITABLE(widget),0,-1);
-   HandleServerCommand(text);
+   HandleServerCommand(text,NULL);
    g_free(text);
    if (IsServerShutdown()) GuiQuitServer();
 }
@@ -1289,7 +1312,7 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
       GuiQuitServer();
    } else {
       TriedPoliteShutdown=TRUE;
-      HandleServerCommand("quit");
+      HandleServerCommand("quit",NULL);
       if (IsServerShutdown()) GuiQuitServer();
    }
    return TRUE; /* Never allow automatic deletion - we handle it manually */
@@ -1297,6 +1320,7 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
 
 #ifdef CYGWIN
 static HWND mainhwnd=NULL;
+static BOOL systray=FALSE;
 
 static BOOL RegisterStatus(DWORD state) {
   SERVICE_STATUS status;
@@ -1367,7 +1391,7 @@ static LRESULT CALLBACK GuiServerWndProc(HWND hwnd,UINT msg,WPARAM wparam,
       if ((UINT)lparam==WM_LBUTTONDOWN) ShowWindow(mainhwnd,SW_SHOW);
       break;
     case WM_SYSCOMMAND:
-      if (wparam==SC_MINIMIZE) {
+      if (wparam==SC_MINIMIZE && systray) {
         ShowWindow(mainhwnd,SW_HIDE); return TRUE;
       }
       break;
@@ -1384,14 +1408,14 @@ static void SetupTaskBarIcon(GtkWidget *widget) {
   if (!widget && !mainhwnd) return;
 
   nid.hWnd = mainhwnd;
-  if (widget) {
+  if (widget && MinToSysTray) {
     nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid.uCallbackMessage = MYWM_TASKBAR;
     nid.hIcon = mainIcon;
     strcpy(nid.szTip,"dopewars server - running");
-    Shell_NotifyIcon(NIM_ADD,&nid);
-    SetCustomWndProc(GuiServerWndProc);
+    systray=Shell_NotifyIcon(NIM_ADD,&nid);
   } else {
+    systray=FALSE;
     Shell_NotifyIcon(NIM_DELETE,&nid);
   }
 }
@@ -1445,6 +1469,7 @@ void GuiServerLoop(gboolean is_service) {
 #ifdef CYGWIN
    mainhwnd=window->hWnd;
    SetupTaskBarIcon(window);
+   SetCustomWndProc(GuiServerWndProc);
    if (is_service && !RegisterStatus(SERVICE_RUNNING)) {
      dopelog(0,_("Failed to set NT Service status"));
      return;

@@ -35,7 +35,6 @@ void CleanUpServer(void);
 void BreakHandle(int sig);
 void ClientLeftServer(Player *Play);
 void StopServer(void);
-void HandleServerCommand(char *string);
 Player *HandleNewConnection(void);
 void ServerLoop(void);
 void HandleServerPlayer(Player *Play);

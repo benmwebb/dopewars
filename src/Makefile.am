@@ -1,5 +1,5 @@
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = AIPlayer.c curses_client.c dopeos.c dopewars.c \
+dopewars_SOURCES = admin.c AIPlayer.c curses_client.c dopeos.c dopewars.c \
                    error.c gtk_client.c message.c network.c serverside.c \
                    tstring.c winmain.c @GTKPORT_C@
 dopewars_DEPENDENCIES = @INTLLIBS@ @GTKPORT_O@ @WNDRES@

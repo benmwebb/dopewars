@@ -39,6 +39,7 @@ InstData *idata;
 HWND mainDlg[DL_NUM];
 DialogType CurrentDialog;
 HINSTANCE hInst=NULL;
+char *oldversion=NULL;
 
 DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
@@ -251,7 +252,7 @@ LPVOID GetResource(LPCTSTR resname,LPCTSTR restype) {
 }
 
 InstData *ReadInstData() {
-  InstFiles *lastinst=NULL,*lastextra=NULL;
+  InstFiles *lastinst=NULL,*lastextra=NULL,*lastkeep=NULL;
   InstLink *lastmenu=NULL,*lastdesktop=NULL;
   char *instdata,*pt,*filename,*line2,*line3,*line4;
   DWORD filesize;
@@ -319,6 +320,15 @@ InstData *ReadInstData() {
     line4=pt; pt += strlen(pt)+1;
     AddServiceDetails(filename,line2,line3,line4,&idata->service);
   }
+  while (1) {
+    filename=pt;
+    pt += strlen(pt)+1;
+    if (filename[0]) {
+      filesize=atol(pt);
+      pt += strlen(pt)+1;
+      AddInstFiles(filename,filesize,&lastkeep,&idata->keepfiles);
+    } else break;
+  }
 
   return idata;
 }
@@ -359,11 +369,15 @@ char *GetFirstFile(InstFiles *filelist,DWORD totalsize) {
   return outbuf;
 }
 
-BOOL OpenNextOutput(HANDLE *fout,InstFiles *filelist,InstFiles **listpt,
-                    DWORD *fileleft,HANDLE logf) {
+BOOL OpenNextOutput(HANDLE *fout,InstFiles *filelist,InstFiles *keepfiles,
+                    InstFiles **listpt,DWORD *fileleft,HANDLE logf,
+                    BOOL *skipfile) {
   char *filename,*sep;
   bstr *str;
+  InstFiles *keeppt;
   DWORD bytes_written;
+
+  *skipfile=FALSE;
 
   if (*fout) CloseHandle(*fout);
   *fout = INVALID_HANDLE_VALUE;
@@ -392,20 +406,29 @@ BOOL OpenNextOutput(HANDLE *fout,InstFiles *filelist,InstFiles **listpt,
       CreateWholeDirectory(filename);
       *sep = '\\';
     }
-    *fout = CreateFile(filename,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,0,NULL);
-    *fileleft = (*listpt)->filesize;
-    bstr_assign(str,"Installing file: ");
-    bstr_append(str,filename);
-    bstr_append(str," (size ");
-    bstr_append_long(str,(*listpt)->filesize);
-    bstr_append(str,")");
-    SendDlgItemMessage(mainDlg[DL_DOINSTALL],ST_FILELIST,
-                       WM_SETTEXT,0,(LPARAM)str->text);
-    if (*fout==INVALID_HANDLE_VALUE) {
-      bstr_assign(str,"Cannot create file ");
+    keeppt = keepfiles;
+    while (keeppt && strcmp(keeppt->filename,filename)!=0) keeppt=keeppt->next;
+
+/* If the file is already installed (filesize!=0), then skip it */
+    if (keeppt && keeppt->filesize!=0) {
+      *fout = INVALID_HANDLE_VALUE+1; /* Make sure the handle is valid */
+      *skipfile = TRUE;
+    } else {
+      *fout = CreateFile(filename,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,0,NULL);
+      bstr_assign(str,"Installing file: ");
       bstr_append(str,filename);
-      DisplayError(str->text,TRUE,FALSE);
+      bstr_append(str," (size ");
+      bstr_append_long(str,(*listpt)->filesize);
+      bstr_append(str,")");
+      SendDlgItemMessage(mainDlg[DL_DOINSTALL],ST_FILELIST,
+                         WM_SETTEXT,0,(LPARAM)str->text);
+      if (*fout==INVALID_HANDLE_VALUE) {
+        bstr_assign(str,"Cannot create file ");
+        bstr_append(str,filename);
+        DisplayError(str->text,TRUE,FALSE);
+      }
     }
+    *fileleft = (*listpt)->filesize;
   }
 
   bstr_free(str,TRUE);
@@ -569,13 +592,123 @@ void SetupUninstall() {
   bfree(startmenu);
 }
 
+void StartRemoveOldVersion(char *oldversion,InstData *idata,
+                           InstData **oldidata,HWND hwnd) {
+  InstData *old;
+  bstr *str;
+  char *oldidir,*startmenu,*desktop;
+  HANDLE fin;
+
+  *oldidata=NULL;
+
+  if (!oldversion) return;
+
+  oldidir = GetInstallDir(oldversion);
+
+  if (!SetCurrentDirectory(oldidir)) {
+    str=bstr_new();
+    bstr_assign(str,"Could not access old version's install directory ");
+    bstr_append(str,oldidir);
+    DisplayError(str->text,TRUE,TRUE);
+  }
+
+  fin = CreateFile("install.log",GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
+
+  if (fin) {
+    old = ReadOldInstData(fin,oldversion,oldidir);
+    CloseHandle(fin);
+    DeleteFile("install.log");
+
+    RemoveService(old->service);
+    DeleteFileList(old->instfiles,hwnd,idata->keepfiles);
+    DeleteFileList(old->extrafiles,hwnd,idata->keepfiles);
+
+    startmenu = GetStartMenuDir(old);
+    desktop = GetDesktopDir();
+    DeleteLinkList(startmenu,old->startmenu,hwnd);
+    DeleteLinkList(desktop,old->desktop,hwnd);
+
+    RemoveUninstall(startmenu,oldversion,FALSE);
+
+    bfree(startmenu); bfree(desktop);
+    *oldidata = old;
+  }
+}
+
+void FinishRemoveOldVersion(char *oldversion,InstData *idata,
+                            InstData *oldidata) {
+  InstFiles *keeppt;
+  bstr *str;
+  char *desktop,*startmenu;
+  if (!oldidata) return;
+
+  desktop = GetDesktopDir();
+
+  str = bstr_new();
+/* If we're installing into a different directory, move config. files etc.
+   from the old directory to the new one */
+  if (strcmp(oldidata->installdir,idata->installdir)!=0 &&
+      SetCurrentDirectory(oldidata->installdir)) {
+    for (keeppt = idata->keepfiles;keeppt;keeppt=keeppt->next) {
+      if (keeppt->filesize!=0) {
+        bstr_assign(str,idata->installdir);
+        bstr_appendpath(str,keeppt->filename);
+        if (CopyFile(keeppt->filename,str->text,FALSE)) {
+          DeleteFile(keeppt->filename);
+        }
+      }
+    }
+    SetCurrentDirectory(desktop); /* Make sure we're not in the install dir */
+    if (!RemoveWholeDirectory(oldidata->installdir)) {
+      bstr_assign(str,"Could not remove old install directory:\n");
+      bstr_append(str,oldidata->installdir);
+      bstr_append(str,"\nYou may wish to manually remove it later.");
+      DisplayError(str->text,FALSE,FALSE);
+    }
+  }
+
+  if (strcmp(idata->startmenudir,oldidata->startmenudir)!=0) {
+    SetCurrentDirectory(desktop); /* Make sure we're not in the menu dir */
+    startmenu = GetStartMenuDir(oldidata);
+    if (!RemoveWholeDirectory(startmenu)) {
+      bstr_assign(str,"Could not remove old Start Menu directory:\n");
+      bstr_append(str,startmenu);
+      bstr_append(str,"\nYou may wish to manually remove it later.");
+      DisplayError(str->text,FALSE,FALSE);
+    }
+    bfree(startmenu);
+  }
+
+/* Remove the old registry key */
+  bstr_assign(str,UninstallKey);
+  bstr_appendpath(str,oldversion);
+  RegDeleteKey(HKEY_LOCAL_MACHINE,str->text);
+
+  bfree(desktop);
+  bstr_free(str,TRUE);
+  
+  FreeInstData(oldidata,TRUE);
+  oldversion=NULL; /* This is freed by FreeInstData */
+}
+
 DWORD WINAPI DoInstall(LPVOID lpParam) {
-  HANDLE fout,logf;
+  HANDLE fout,logf,fin;
   DWORD bytes_written,fileleft;
+  BOOL skipfile;
   char *inbuf,*outbuf;
   int status,count;
   z_stream z;
   InstFiles *listpt;
+  InstData *oldidata;
+
+/* Steal the filesize attribute to mark that these files are not
+   already installed */
+  for (listpt=idata->keepfiles;listpt;listpt=listpt->next) {
+    listpt->filesize=0;
+  }
+
+  StartRemoveOldVersion(oldversion,idata,&oldidata,
+                        GetDlgItem(mainDlg[DL_DOINSTALL],ST_FILELIST));
 
   inbuf = GetResource(MAKEINTRESOURCE(1),"INSTFILE");
   if (!inbuf) return 0;
@@ -584,6 +717,16 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   if (!SetCurrentDirectory(idata->installdir)) {
     DisplayError("Cannot access install directory",TRUE,TRUE);
+  }
+
+/* Check for already-installed files */
+  for (listpt=idata->keepfiles;listpt;listpt=listpt->next) {
+    fin = CreateFile(listpt->filename,GENERIC_READ,0,NULL,OPEN_EXISTING,
+                     0,NULL);
+    if (fin != INVALID_HANDLE_VALUE) {
+      CloseHandle(fin);
+      listpt->filesize=1;
+    }
   }
 
   logf = CreateFile("install.log",GENERIC_WRITE,0,NULL,
@@ -596,7 +739,8 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   fout = INVALID_HANDLE_VALUE;
   listpt=NULL;
-  OpenNextOutput(&fout,idata->instfiles,&listpt,&fileleft,logf);
+  OpenNextOutput(&fout,idata->instfiles,idata->keepfiles,
+                 &listpt,&fileleft,logf,&skipfile);
 
   outbuf = bmalloc(BUFFER_SIZE);
 
@@ -616,17 +760,18 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
       count = BUFFER_SIZE - z.avail_out;
       z.next_out = outbuf;
       while (count >= fileleft) {
-        if (fileleft &&
+        if (fileleft && !skipfile &&
             !WriteFile(fout,z.next_out,fileleft,&bytes_written,NULL)) {
           printf("Write error\n");
         }
         count-=fileleft;
         z.next_out+=fileleft;
-        if (!OpenNextOutput(&fout,idata->instfiles,&listpt,
-                            &fileleft,logf)) break;
+        if (!OpenNextOutput(&fout,idata->instfiles,idata->keepfiles,
+                            &listpt,&fileleft,logf,&skipfile)) break;
       }
       if (fout==INVALID_HANDLE_VALUE) break;
-      if (count && !WriteFile(fout,z.next_out,count,&bytes_written,NULL)) {
+      if (count && !skipfile &&
+          !WriteFile(fout,z.next_out,count,&bytes_written,NULL)) {
         printf("Write error\n");
       }
       fileleft-=count;
@@ -637,7 +782,7 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
   }
 
   inflateEnd(&z);
-  CloseHandle(fout);
+  if (!skipfile) CloseHandle(fout);
 
   outbuf[0]='\0';
   if (!WriteFile(logf,outbuf,1,&bytes_written,NULL)) {
@@ -646,6 +791,8 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
   bfree(outbuf);
 
   WriteFileList(logf,idata->extrafiles);
+
+  FinishRemoveOldVersion(oldversion,idata,oldidata);
 
   InstallService(idata);
 
@@ -699,7 +846,11 @@ void FillFolderList(void) {
 }
 
 BOOL CheckExistingInstall(InstData *idata) {
-  bstr *str,*subkey;
+  bstr *str;
+  char *sep,*prodname,*prodversion;
+  char *subkey;
+  int sublen;
+  DWORD sublencp;
   HKEY key;
   DWORD ind;
   FILETIME ftime;
@@ -708,6 +859,9 @@ BOOL CheckExistingInstall(InstData *idata) {
   str=bstr_new();
   bstr_assign(str,UninstallKey);
   bstr_appendpath(str,idata->product);
+
+/* Split product into name and version */
+  sep = strrchr(idata->product,'-');
   
   if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,str->text,0,KEY_READ,&key)
       ==ERROR_SUCCESS) {
@@ -715,15 +869,45 @@ BOOL CheckExistingInstall(InstData *idata) {
     if (MessageBox(NULL,"This program appears to already be installed.\n"
                    "Are you sure you want to go ahead and install it anyway?",
                    idata->product,MB_YESNO)==IDNO) retval=FALSE;
-  } else {
-// TODO: Check for old versions to upgrade
+  } else if (sep) {
+    *sep='\0';
+    prodversion = sep+1;
+    prodname = bstrdup(idata->product);
+    *sep='-';
+    sublencp=sublen=strlen(idata->product)+30;
+    subkey = bmalloc(sublen);
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,UninstallKey,0,KEY_READ,&key)
         ==ERROR_SUCCESS) {
-/*    for (ind=0;RegEnumKeyEx(key,ind,subkey,subkey->len,
-                              NULL,NULL,NULL,&ftime)==ERROR_SUCCESS;ind++) {
-      }*/
+      ind=0;
+      while (RegEnumKeyEx(key,ind++,subkey,&sublencp,
+                          NULL,NULL,NULL,&ftime)==ERROR_SUCCESS) {
+        sublencp=sublen;
+        sep=strrchr(subkey,'-');
+        if (sep) {
+          *sep='\0';
+          if (strcmp(subkey,prodname)==0) {
+            bstr_assign(str,"You are trying to install ");
+            bstr_append(str,idata->product);
+            bstr_append(str,".\nHowever, version ");
+            bstr_append(str,sep+1);
+            bstr_append(str," appears to already be installed.\n"
+                        "Do you want to replace the existing version with "
+                        "this one?\n(If you answer \"No\", and continue, "
+                        "both versions will be installed.)");
+            if (MessageBox(NULL,str->text,"Existing version",MB_YESNO)==IDYES) {
+              *sep='-';
+              oldversion=bstrdup(subkey);
+            }
+            break;
+          }
+        }
+      }
+      RegCloseKey(key);
     }
+    bfree(prodname);
+    bfree(subkey);
   }
+  bstr_free(str,TRUE);
   return retval;
 }
 

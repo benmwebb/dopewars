@@ -1,7 +1,8 @@
-- Make Windows installer deal with old installed versions properly
-- Make server run as an NT Service
+- Admin of running servers
+    DONE (- feedback when setting/querying variables)
+    - mechanism for interacting with NT Service servers
+DONE for Unix - test Windows (- Fix error reporting for config. file reading)
 - Configuration file editor thingy in the client?
-- Make minimize-to-systray code a) more robust and b) configurable
 - GSS_API SOCKS support?
 - Fix problem with dialogs popping up while menus are open
 - Increase difficulty of escaping from another player - impose penalty on

@@ -53,6 +53,7 @@ typedef struct _InstData {
   NTService *service;
   InstFiles *instfiles;
   InstFiles *extrafiles;
+  InstFiles *keepfiles;
   InstLink *startmenu;
   InstLink *desktop;
 } InstData;
@@ -99,3 +100,9 @@ char *GetStartMenuDir(InstData *idata);
 char *GetDesktopDir(void);
 BOOL CreateWholeDirectory(char *path);
 BOOL RemoveWholeDirectory(char *path);
+void DeleteLinkList(char *dir,InstLink *listpt,HWND hwnd);
+void DeleteFileList(InstFiles *listpt,HWND hwnd,InstFiles *keepfiles);
+InstData *ReadOldInstData(HANDLE fin,char *product,char *installdir);
+char *GetInstallDir(char *product);
+void RemoveService(NTService *service);
+void RemoveUninstall(char *startmenu,char *product,BOOL delexe);

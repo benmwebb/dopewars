@@ -51,23 +51,23 @@ char *read_line(HANDLE hin) {
 InstData *ReadInstallData() {
   HANDLE fin;
   char *line,*line2,*line3,*line4;
-  InstFiles *lastinst=NULL,*lastextra=NULL;
+  InstFiles *lastinst=NULL,*lastextra=NULL,*lastkeep=NULL;
   InstLink *lastmenu=NULL,*lastdesktop=NULL;
   InstData *idata;
   int i;
   enum {
-    S_PRODUCT=0,S_INSTDIR,S_INSTALL,S_EXTRA,S_STARTMENUDIR,
+    S_PRODUCT=0,S_INSTDIR,S_INSTALL,S_EXTRA,S_KEEP,S_STARTMENUDIR,
     S_STARTMENU,S_DESKTOP,S_NTSERVICE,
     S_NONE
   } section=S_NONE;
   char *titles[S_NONE] = {
-    "[product]","[instdir]", "[install]","[extrafiles]","[startmenudir]",
-    "[startmenu]","[desktop]","[NT Service]"
+    "[product]","[instdir]", "[install]","[extrafiles]","[keepfiles]",
+    "[startmenudir]","[startmenu]","[desktop]","[NT Service]"
   };
 
   idata = bmalloc(sizeof(InstData));
   idata->installdir = idata->startmenudir = NULL;
-  idata->instfiles = idata->extrafiles = NULL;
+  idata->instfiles = idata->extrafiles = idata->keepfiles = NULL;
   idata->startmenu = idata->desktop = NULL;
   idata->service = NULL;
 
@@ -103,6 +103,9 @@ printf("start menu dir = %s\n",line);
           break;
         case S_EXTRA:
           AddInstFiles(line,0,&lastextra,&idata->extrafiles);
+          break;
+        case S_KEEP:
+          AddInstFiles(line,0,&lastkeep,&idata->keepfiles);
           break;
         case S_STARTMENU:
           line2=read_line(fin); line3=read_line(fin);
@@ -252,6 +255,7 @@ int main() {
   WriteLinkList(fout,idata->desktop);
 
   WriteServiceDetails(fout,idata->service);
+  WriteFileList(fout,idata->keepfiles);
 
   CloseHandle(fout);
   bfree(inbuf);

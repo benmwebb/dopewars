@@ -41,6 +41,11 @@ uninstall.exe
 dopewars-log.txt
 dopewars.sco
 
+[keepfiles]
+dopewars-config.txt
+dopewars-log.txt
+dopewars.sco
+
 [startmenudir]
 dopewars-1.5.3
 

@@ -155,7 +155,10 @@ extern gboolean Sanitized,ConfigVerbose,DrugValue;
 extern int NumLocation,NumGun,NumCop,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
 extern gchar *HiScoreFile,*ServerName,*Pager,*ConvertFile;
 extern gboolean WantHelp,WantVersion,WantAntique,WantColour,
-                WantNetwork,WantConvert;
+                WantNetwork,WantConvert,WantAdmin;
+#ifdef CYGWIN
+extern gboolean MinToSysTray;
+#endif
 extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;
 extern int DrugSortMethod,FightTimeout,IdleTimeout,ConnectTimeout;
@@ -393,4 +396,5 @@ void dopelog(int loglevel,const gchar *format,...);
 GLogLevelFlags LogMask(void);
 GString *GetLogString(GLogLevelFlags log_level,const gchar *message);
 void RestoreConfig(void);
+void ScannerErrorHandler(GScanner *scanner,gchar *msg,gint error);
 #endif
