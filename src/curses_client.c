@@ -32,11 +32,12 @@
 #include <signal.h>
 #include <errno.h>
 #include <glib.h>
-#include "dopeos.h"
 #include "curses_client.h"
-#include "serverside.h"
+#include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
+#include "serverside.h"
+#include "tstring.h"
 
 static void PrepareHighScoreScreen();
 static void PrintHighScore(char *Data);
@@ -394,12 +395,16 @@ static void DropDrugs(Player *Play) {
    int i,c,NumDrugs;
    GString *text;
    gchar *buf;
+   gchar *tfmt,**tstr;
+
    attrset(TextAttr);
    clear_bottom();
    text=g_string_new("");
-   g_string_sprintf(text,
-                    _("You can\'t get any cash for the following carried %s :"),
-                    Names.Drugs);
+   tstring_fmt(&tfmt,&tstr,
+               _("You can\'t get any cash for the following carried %tde :"),
+               Names.Drugs);
+   g_string_sprintf(text,tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
    mvaddstr(16,1,text->str);
    NumDrugs=0;
    for (i=0;i<NumDrug;i++) {
@@ -502,12 +507,16 @@ static void GiveErrand(Player *Play) {
    gchar *prstr;
    GString *text;
    Player *To;
+   gchar *tfmt,**tstr;
+
    text=g_string_new("");
    attrset(TextAttr);
    clear_bottom();
    y=17;
-   g_string_sprintf(text,_("Choose an errand to give one of your %s..."),
-                    Names.Bitches);
+   tstring_fmt(&tfmt,&tstr,_("Choose an errand to give one of your %tde..."),
+               Names.Bitches);
+   g_string_sprintf(text,tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
    mvaddstr(y++,1,text->str);
    attrset(PromptAttr);
    if (Play->Bitches.Carried>0) {
@@ -790,6 +799,8 @@ void GunShop(Player *Play) {
 /* decisions on to the server for sanity checking and implementation.  */
    int i,c,c2;
    gchar *text,*prstr;
+   gchar *tfmt,**tstr;
+
    print_status(Play,0);
    attrset(TextAttr);
    clear_bottom();
@@ -810,15 +821,20 @@ void GunShop(Player *Play) {
       if (c=='S' || c=='B') {
          clear_line(22);
          if (c=='S' && TotalGunsCarried(Play)==0) {
-            text=g_strdup_printf(_("You don't have any %s to sell!"),
-                                 Names.Guns);
+            tstring_fmt(&tfmt,&tstr,_("You don't have any %tde to sell!"),
+                        Names.Guns);
+            text=g_strdup_printf(tfmt,tstr[0]);
+            tstring_free(tfmt,tstr);
             mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
             nice_wait();
             clear_line(23);
             continue;
          } else if (c=='B' && TotalGunsCarried(Play)>=Play->Bitches.Carried+2) {
-            text=g_strdup_printf(_("You'll need more %s to carry any more %s!"),
-                                 Names.Bitches,Names.Guns);
+            tstring_fmt(&tfmt,&tstr,
+                        _("You'll need more %tde to carry any more %tde!"),
+                        Names.Bitches,Names.Guns);
+            text=g_strdup_printf(tfmt,tstr[0],tstr[1]);
+            tstring_free(tfmt,tstr);
             mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
             nice_wait();
             clear_line(23);
@@ -839,16 +855,20 @@ void GunShop(Player *Play) {
             if (c=='B') {
                if (Gun[c2].Space > Play->CoatSize) {
                   clear_line(22);
-                  text=g_strdup_printf(_("You don't have enough space to "
-                                         "carry that %s!"),Names.Gun);
+                  tstring_fmt(&tfmt,&tstr,_("You don't have enough space to "
+                              "carry that %tde!"),Names.Gun);
+                  text=g_strdup_printf(tfmt,tstr[0]);
+                  tstring_free(tfmt,tstr);
                   mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
                   nice_wait();
                   clear_line(23);
                   continue;
                } else if (Gun[c2].Price > Play->Cash) {
                   clear_line(22);
-                  text=g_strdup_printf(_("You don't have enough cash to buy "
-                                         "that %s!"),Names.Gun);
+                  tstring_fmt(&tfmt,&tstr,_("You don't have enough cash to buy "
+                              "that %tde!"),Names.Gun);
+                  text=g_strdup_printf(tfmt,tstr[0]);
+                  tstring_free(tfmt,tstr);
                   mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
                   nice_wait();
                   clear_line(23);
@@ -1120,6 +1140,7 @@ void print_status(Player *Play,char DispDrug) {
    int i,c;
    gchar *prstr,*caps;
    GString *text;
+   gchar *tfmt,**tstr;
 
    text=g_string_new(NULL);
    attrset(TitleAttr);
@@ -1180,10 +1201,10 @@ void print_status(Player *Play,char DispDrug) {
    attrset(TitleAttr);
    if (WantAntique) g_string_sprintf(text,_("Space %6d"),Play->CoatSize);
    else {
-      g_string_sprintf(text,_("%s %3d  Space %6d"),
-                       caps=InitialCaps(Names.Bitches),
+      tstring_fmt(&tfmt,&tstr,_("%Tde %3d  Space %6d"),Names.Bitches);
+      g_string_sprintf(text,tfmt,tstr[0],
                        Play->Bitches.Carried,Play->CoatSize);
-      g_free(caps);
+      tstring_free(tfmt,tstr);
    }
    mvaddstr(0,Width-2-strlen(text->str),text->str);
    print_location(Location[(int)Play->IsAt].Name);
@@ -1193,9 +1214,9 @@ void print_status(Player *Play,char DispDrug) {
    if (DispDrug) {
       if (WantAntique) mvaddstr(1,Width*3/4-5,_("Trenchcoat"));
       else {
-         caps=InitialCaps(Names.Drugs);
-         mvaddstr(1,Width*3/4-strlen(caps)/2,caps);
-         g_free(caps);
+         tstring_fmt(&tfmt,&tstr,_("**Stats: Drugs** %Tde"),Names.Drugs);
+         mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
+         tstring_free(tfmt,tstr);
       }
       for (i=0;i<NumDrug;i++) {
          if (Play->Drugs[i].Carried>0) {
@@ -1206,9 +1227,9 @@ void print_status(Player *Play,char DispDrug) {
          }
       }
    } else {
-      caps=InitialCaps(Names.Guns);
-      mvaddstr(1,Width*3/4-strlen(caps)/2,caps);
-      g_free(caps);
+      tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
+      mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
+      tstring_free(tfmt,tstr);
       for (i=0;i<NumGun;i++) {
          if (Play->Guns[i].Carried>0) {
             g_string_sprintf(text,"%-22s %3d",Gun[i].Name,
@@ -1227,21 +1248,23 @@ void print_status(Player *Play,char DispDrug) {
 void DisplaySpyReports(char *Data,Player *From,Player *To) {
 /* Parses details about player "From" from string "Data" and then */
 /* displays the lot, drugs and guns.                              */
-   gchar *caps,*text;
+   gchar *text;
+   gchar *tfmt,**tstr;
+
    ReceivePlayerData(To,Data,From);
 
    clear_bottom();
    text=g_strdup_printf(_("Spy reports for %s"),GetPlayerName(From));
    mvaddstr(17,1,text); g_free(text);
 
-   caps=InitialCaps(Names.Drugs);
-   text=g_strdup_printf(_("%s..."),caps);
-   mvaddstr(19,20,text); g_free(text); g_free(caps);
+   tstring_fmt(&tfmt,&tstr,_("%Tde..."),Names.Drugs);
+   text=g_strdup_printf(tfmt,tstr[0]);
+   mvaddstr(19,20,text); g_free(text); tstring_free(tfmt,tstr);
    print_status(From,1); nice_wait();
    clear_line(19);
-   caps=InitialCaps(Names.Guns);
-   text=g_strdup_printf(_("%s..."),caps);
-   mvaddstr(19,20,text); g_free(text); g_free(caps);
+   tstring_fmt(&tfmt,&tstr,_("%Tde..."),Names.Guns);
+   text=g_strdup_printf(tfmt,tstr[0]);
+   mvaddstr(19,20,text); g_free(text); tstring_free(tfmt,tstr);
    print_status(From,0); nice_wait();
 
    print_status(To,1); refresh();
@@ -1392,6 +1415,7 @@ static void Curses_DoGame(Player *Play) {
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
+   gchar *tfmt,**tstr;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
@@ -1449,9 +1473,11 @@ static void Curses_DoGame(Player *Play) {
             NumDrugsHere=0;
             for (i=0;i<NumDrug;i++) if (Play->Drugs[i].Price>0) NumDrugsHere++;
             clear_bottom();
-            g_string_sprintf(text,_("Hey dude, the prices of %s here are:"),
-                             Names.Drugs);
+            tstring_fmt(&tfmt,&tstr,_("Hey dude, the prices of %tde here are:"),
+                        Names.Drugs);
+            g_string_sprintf(text,tfmt,tstr[0]);
             mvaddstr(16,1,text->str);
+            tstring_free(tfmt,tstr);
             i=-1;
             for (c=0;c<NumDrugsHere;c++) {
                if ((i=GetNextDrugIndex(i,Play))==-1) break;
