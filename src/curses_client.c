@@ -85,7 +85,6 @@ static void start_curses() {
    }
    cbreak();
    noecho();
-   meta(stdscr,TRUE);
    nodelay(stdscr,FALSE);
    keypad(stdscr,TRUE);
    curs_set(0);
