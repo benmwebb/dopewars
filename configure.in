@@ -273,6 +273,7 @@ else
   PLUGLIBS="$SOUND_LIBS"
   AC_SUBST(PLUGLIBS)
 fi
+AM_CONDITIONAL(NOPLUGINS, test "$plugins" != "yes")
 
 dnl Enable networking by default under Win32, but on Unix systems
 dnl make it dependent on the availability of select and socket
