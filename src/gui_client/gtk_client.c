@@ -1137,6 +1137,7 @@ void DisplayFightMessage(char *Data)
       Play->Flags &= ~FIGHTING;
       break;
     default:
+      break;
     }
     accel_group = (GtkAccelGroup *)
         gtk_object_get_data(GTK_OBJECT(ClientData.window), "accel_group");
