@@ -37,6 +37,6 @@ install-exec-am:
 
 uninstall-local:
 	for plug in ${PLUGINS}; do \
-	  /bin/rm -f ${PLUGINDIR}/$${plug}; \
+	  /bin/rm -f ${PLUGINDIR}/`basename $${plug}`; \
 	done
 endif
