@@ -38,7 +38,6 @@
 #endif
 #include <string.h>
 #include <errno.h>
-#include <signal.h>
 #include <glib.h>
 #include <stdarg.h>
 #include "admin.h"
