@@ -49,7 +49,7 @@ static int OpenSocket(void)
 
   sockname = GetLocalSocket();
 
-  g_print(_("Attempting to connect to local dopewars server via. "
+  g_print(_("Attempting to connect to local dopewars server via "
             "Unix domain\n socket %s...\n"), sockname);
   sock = socket(PF_UNIX, SOCK_STREAM, 0);
   if (sock == -1) {
