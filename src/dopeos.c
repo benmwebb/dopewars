@@ -274,6 +274,7 @@ int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,
 }
 
 #if NETWORKING
+int GetSocketError() { return WSAGetLastError(); }
 void fcntl(SOCKET s,int fsetfl,long cmd) {
    unsigned long param=1;
    ioctlsocket(s,cmd,&param);
@@ -323,6 +324,7 @@ int bgetch() {
 #endif
 
 #if NETWORKING
+int GetSocketError() { return errno; }
 void StartNetworking() {}
 void StopNetworking() {}
 void SetReuse(int sock) {

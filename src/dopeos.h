@@ -116,6 +116,7 @@ int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfs,
 		struct timeval *tm);
 
 #if NETWORKING
+int GetSocketError();
 void fcntl(SOCKET s,int fsetfl,long cmd);
 #define CloseSocket(sock) closesocket(sock)
 void StartNetworking();
@@ -133,6 +134,7 @@ void SetReuse(SOCKET sock);
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <errno.h>
 #endif /* NETWORKING */
 
 /* Only include sys/wait.h on those systems which support it */
@@ -172,9 +174,12 @@ int bgetch();
 
 #if NETWORKING
 #define CloseSocket(sock) close(sock)
+int GetSocketError();
 void StartNetworking();
 void StopNetworking();
 void SetReuse(int sock);
+#define WSAECONNRESET EPIPE
+#define WSAEWOULDBLOCK EINPROGRESS
 #endif /* NETWORKING */
 
 #endif /* CYGWIN */

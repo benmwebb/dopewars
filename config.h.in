@@ -99,6 +99,9 @@
 /* Define if you have the getcwd function.  */
 #undef HAVE_GETCWD
 
+/* Define if you have the gethostbyname function.  */
+#undef HAVE_GETHOSTBYNAME
+
 /* Define if you have the getpagesize function.  */
 #undef HAVE_GETPAGESIZE
 

@@ -29,12 +29,14 @@
 #include <fcntl.h>
 #endif
 
+#ifndef CYGWIN
 #include <sys/types.h>
 #include <sys/socket.h>
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <glib.h>
-#include <errno.h>
 #include "dopeos.h"
 #include "dopewars.h"
 #include "serverside.h"
@@ -370,7 +372,7 @@ gboolean WriteConnectionBufferToWire(Player *Play) {
       BytesSent=send(Play->fd,&conn->Data[CurrentPosition],
                      conn->DataPresent-CurrentPosition,0);
       if (BytesSent==SOCKET_ERROR) {
-         if (errno==EPIPE) return FALSE;
+         if (GetSocketError()==WSAECONNRESET) return FALSE;
          break;
       } else {
          CurrentPosition+=BytesSent;
@@ -704,7 +706,7 @@ char *SetupNetwork(gboolean NonBlocking) {
    if (NonBlocking) fcntl(ClientSock,F_SETFL,O_NONBLOCK);
    if (connect(ClientSock,(struct sockaddr *)&ClientAddr,
        sizeof(struct sockaddr))==-1) {
-      if (errno==EINPROGRESS) return NULL;
+      if (GetSocketError()==WSAEWOULDBLOCK) return NULL;
       CloseSocket(ClientSock);
       return NoConnect;
    } else {
@@ -715,9 +717,13 @@ char *SetupNetwork(gboolean NonBlocking) {
 }
 
 char *FinishSetupNetwork() {
-   socklen_t optlen;
+#ifdef CYGWIN
+   Client=Network=TRUE;
+   return NULL;
+#else
    int optval;
    static char NoConnect[]= N_("Connection refused or no server present");
+   socklen_t optlen;
 
    optlen=sizeof(optval);
    if (getsockopt(ClientSock,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
@@ -729,6 +735,7 @@ char *FinishSetupNetwork() {
    } else {
       return NoConnect;
    }
+#endif
 }
 
 #endif /* NETWORKING */

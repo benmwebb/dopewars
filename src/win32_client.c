@@ -32,6 +32,7 @@
 
 #include "dopeos.h"
 #include "dopewars.h"
+#include "tstring.h"
 #include "curses_client.h"
 #include "win32_client.h"
 #include "message.h"
@@ -95,6 +96,8 @@ static void DisplaySpyReports(Player *Play);
 static void CreateStats(HWND hwnd,struct STATS *Stats,
                         gboolean CreateEdit,gboolean CreateButtons);
 static void SizeStats(HWND hwnd,struct STATS *Stats,RECT *rect);
+static void SizeStats(HWND hwnd,struct STATS *Stats,RECT *rect);
+static void SizeStats(HWND hwnd,struct STATS *Stats,RECT *rect);
 static void ShowStats(struct STATS *Stats,int State);
 
 static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
@@ -104,7 +107,6 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
 }
 
 static void DisplayStats(Player *Play,struct STATS *Stats) {
-   gchar *prstr,*caps;
    GString *text;
 
    text=g_string_new("");
@@ -166,8 +168,8 @@ void UpdateInventory(HWND HereList,HWND CarriedList,
    Player *Play;
    gint i;
    price_t price;
-   gchar *name,*prstr,*text;
    LRESULT addresult;
+   gchar *name,*text;
    gboolean CanBuy=FALSE,CanSell=FALSE,CanDrop=FALSE;
 
    Play=ClientData.Play;
@@ -754,14 +756,15 @@ BOOL CALLBACK TransferWndProc(HWND hwnd,UINT msg,UINT wParam,
    static char Type;
    HWND MoneyWnd;
    int buflen;
+   gchar *prstr;
    price_t money;
-   gchar *text,*prstr;
+   gchar *text;
    switch(msg) {
       case WM_INITDIALOG:
          Type=(char)lParam;
          text=dpg_strdup_printf("Cash: %P",ClientData.Play->Cash);
          SetDlgItemText(hwnd,ST_MONEY,text);
-         g_free(text); g_free(prstr);
+         g_free(text);
          if (Type==C_BANK) {
             CheckDlgButton(hwnd,RB_WITHDRAW,BST_CHECKED);
             text=dpg_strdup_printf("Bank: %P",ClientData.Play->Bank);
@@ -1775,7 +1778,6 @@ int APIENTRY Win32Loop(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          while(GetMessage(&msg,NULL,0,0)) {
             if ((!PlayerListWnd || !IsDialogMessage(PlayerListWnd,&msg)) &&
                 (!TalkWnd || !IsDialogMessage(TalkWnd,&msg)) &&
-                (!InventoryWnd || !IsDialogMessage(InventoryWnd,&msg)) &&
                 (!FightWnd || !IsDialogMessage(FightWnd,&msg)) &&
                 (!GunShopWnd || !IsDialogMessage(GunShopWnd,&msg)) &&
                 (!SpyReportsWnd || !IsDialogMessage(SpyReportsWnd,&msg)) &&
