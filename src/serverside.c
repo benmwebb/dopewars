@@ -479,7 +479,7 @@ void PrintHelpTo(FILE *fp) {
 void ServerHelp() {
 /* Displays a simple help screen listing the server commands and options */
    int i;
-#ifdef CYGWIN
+#if CYGWIN || GUI_SERVER
    int Lines;
    GString *VarName;
    VarName=g_string_new("");

@@ -14,6 +14,9 @@
 /* Use the Win32 client? */
 #undef WIN32_CLIENT
 
+/* Use a graphical server? */
+#undef GUI_SERVER
+
 #undef ENABLE_NLS
 #undef HAVE_CATGETS
 #undef HAVE_GETTEXT

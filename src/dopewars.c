@@ -43,6 +43,12 @@
 #include "tstring.h"
 #include "AIPlayer.h"
 
+#ifdef GUI_SERVER
+#ifndef CYGWIN
+#include "gtkport.h"
+#endif
+#endif
+
 int ClientSock,ListenSock;     
 char Network,Client,Server,NotifyMetaServer,AIPlayer;
 /* dopewars acting as standalone TCP server:
@@ -1703,7 +1709,13 @@ int main(int argc,char *argv[]) {
       } else {
          StartNetworking();
          if (Server) {
+#ifdef GUI_SERVER
+            gtk_set_locale();
+            gtk_init(&argc,&argv);
+            GuiServerLoop();
+#else
             ServerLoop();
+#endif
          } else if (AIPlayer) {
             AIPlayerLoop();
          } else switch(WantedClient) {
