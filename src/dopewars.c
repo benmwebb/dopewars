@@ -1660,12 +1660,12 @@ void CopyGun(struct GUN *dest, struct GUN *src)
 
 void CopyDrug(struct DRUG *dest, struct DRUG *src)
 {
-  AssignName(&dest->Name, _(src->Name));
+  AssignName(&dest->Name, src->Name[0] ? _(src->Name) : "");
   dest->MinPrice = src->MinPrice;
   dest->MaxPrice = src->MaxPrice;
   dest->Cheap = src->Cheap;
   dest->Expensive = src->Expensive;
-  AssignName(&dest->CheapStr, _(src->CheapStr));
+  AssignName(&dest->CheapStr, src->CheapStr[0] ? _(src->CheapStr) : "");
 }
 
 void CopyDrugs(struct DRUGS *dest, struct DRUGS *src)
@@ -2676,6 +2676,22 @@ void GeneralStartup(int argc, char *argv[])
     OpenHighScoreFile();
   } else {
     DropPrivileges();
+  }
+}
+
+/*
+ * Removes any ^ characters from the given string, which is modified in place.
+ */
+void StripTerminators(gchar *str)
+{
+  int i;
+
+  if (str) {
+    for (i = 0; i < strlen(str); i++) {
+      if (str[i] == '^') {
+        str[i] = '~';
+      }
+    }
   }
 }
 
