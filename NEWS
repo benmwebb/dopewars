@@ -1,3 +1,11 @@
+13th April 2002
+     dopewars-1.5.5 released. The code should now compile with GTK+2.0,
+and several minor glitches have been fixed.
+
+3rd March 2002
+     dopewars-1.5.4 released. This fixes bugs observed on the PPC platform,
+and adds a configuration file editor to the graphical client.
+
 4th February 2002
      dopewars-1.5.3 released. This fixes several bugs and annoyances in the
 Windows version, and supports running the Windows server as an "NT Service".
