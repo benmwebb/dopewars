@@ -212,6 +212,17 @@ GtkWidget *my_hbbox_new(void)
   return hbbox;
 }
 
+/*
+ * Sets the initial size and window manager hints of a dialog.
+ */
+void my_set_dialog_position(GtkWindow *dialog)
+{
+#ifdef HAVE_GLIB2
+  gtk_window_set_type_hint(dialog, GDK_WINDOW_TYPE_HINT_DIALOG);
+  gtk_window_set_position(dialog, GTK_WIN_POS_CENTER_ON_PARENT);
+#endif
+}
+
 void QuitGame(GtkWidget *widget, gpointer data)
 {
   if (!InGame || GtkMessageBox(ClientData.window,
@@ -306,6 +317,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
 
   /* Title of inventory window */
   gtk_window_set_title(GTK_WINDOW(window), _("Inventory"));
+  my_set_dialog_position(GTK_WINDOW(window));
 
   SetShowing(window, &IsShowingInventory);
 
@@ -603,6 +615,7 @@ void PrepareHighScoreDialog(void)
 
   /* Title of the GTK+ high score dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("High Scores"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -891,6 +904,7 @@ static void CreateFightDialog(void)
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_window_set_title(GTK_WINDOW(dialog), _("Fight"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -1424,6 +1438,7 @@ void Jet(GtkWidget *parent)
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   /* Title of 'Jet' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Jet to location"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
@@ -1644,6 +1659,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
   dialog = DealDialog.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(dialog), Action);
+  my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -1870,6 +1886,7 @@ void QuestionDialog(char *Data, Player *From)
 
   /* Title of the 'ask player a question' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
@@ -2361,6 +2378,7 @@ void display_intro(GtkWidget *widget, gpointer data)
 
   /* Title of GTK+ 'about' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("About dopewars"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
@@ -2530,6 +2548,7 @@ void TransferDialog(gboolean Debt)
                        Names.BankName);
   }
   gtk_window_set_title(GTK_WINDOW(dialog), text->str);
+  my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
@@ -2631,6 +2650,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
 
   /* Title of player list dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Player List"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 180);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
@@ -2732,6 +2752,7 @@ void TalkDialog(gboolean TalkToAll)
 
   /* Title of talk dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Talk to player(s)"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 190);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
@@ -2910,6 +2931,7 @@ void ErrandDialog(gint ErrandType)
     label = gtk_label_new(text);
     g_free(text);
   }
+  my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
@@ -3101,6 +3123,7 @@ void NewNameDialog(void)
 
   /* Title of dialog for changing a player's name */
   gtk_window_set_title(GTK_WINDOW(window), _("Change Name"));
+  my_set_dialog_position(GTK_WINDOW(window));
 
   gtk_window_set_modal(GTK_WINDOW(window), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(window),
@@ -3160,6 +3183,7 @@ void GunShopDialog(void)
   text = dpg_strdup_printf(_("%/GTK GunShop window title/%Tde"),
                            Names.GunShopName);
   gtk_window_set_title(GTK_WINDOW(window), text);
+  my_set_dialog_position(GTK_WINDOW(window));
   g_free(text);
   gtk_window_set_modal(GTK_WINDOW(window), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(window),
@@ -3222,6 +3246,7 @@ static void CreateSpyReports(void)
 
   /* Title of window to display reports from spies with other players */
   gtk_window_set_title(GTK_WINDOW(window), _("Spy reports"));
+  my_set_dialog_position(GTK_WINDOW(window));
 
   gtk_window_set_modal(GTK_WINDOW(window), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(window),

@@ -760,6 +760,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
   gtk_window_set_title(GTK_WINDOW(dialog), _("Options"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
 

@@ -485,6 +485,7 @@ void NewGameDialog(Player *play)
 
   /* Title of 'New Game' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("New Game"));
+  my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
@@ -718,6 +719,7 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
     /* Title of dialog for authenticating with a web server */
     gtk_window_set_title(GTK_WINDOW(window), _("Authentication Required"));
   }
+  my_set_dialog_position(GTK_WINDOW(window));
 
   gtk_window_set_modal(GTK_WINDOW(window), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(window),
@@ -832,6 +834,7 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
   /* Title of dialog for authenticating with a SOCKS server */
   gtk_window_set_title(GTK_WINDOW(window),
                        _("SOCKS Authentication Required"));
+  my_set_dialog_position(GTK_WINDOW(window));
 
   gtk_window_set_modal(GTK_WINDOW(window), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(window),
