@@ -88,7 +88,7 @@ static void SoundPlay_ESD(const gchar *snd)
   nextcache = (nextcache + 1) % MAXCACHE;
 }
 
-SoundDriver *init(void)
+SoundDriver *sound_esd_init(void)
 {
   static SoundDriver driver;
 

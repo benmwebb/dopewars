@@ -30,7 +30,7 @@
 #include "sound.h"
 
 #ifdef HAVE_SDL_MIXER
-SoundDriver *SoundInit_SDL(void);
+SoundDriver *sound_sdl_init(void);
 #endif /* HAVE_SDL_MIXER */
 
 #endif /* __DP_SOUND_SDL_H__ */

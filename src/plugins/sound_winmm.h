@@ -30,7 +30,7 @@
 #include "sound.h"
 
 #ifdef HAVE_WINMM
-SoundDriver *SoundInit_WinMM(void);
+SoundDriver *sound_winmm_init(void);
 #endif /* HAVE_WINMM */
 
 #endif /* __DP_SOUND_WINMM_H__ */

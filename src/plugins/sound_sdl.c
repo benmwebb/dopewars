@@ -107,7 +107,7 @@ static void SoundPlay_SDL(const gchar *snd)
   channel[chan_num].name = g_strdup(snd);
 }
 
-SoundDriver *init(void)
+SoundDriver *sound_sdl_init(void)
 {
   static SoundDriver driver;
 

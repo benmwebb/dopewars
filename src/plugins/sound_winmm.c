@@ -45,7 +45,7 @@ static void SoundPlay_WinMM(const gchar *snd)
   sndPlaySound(snd, SND_ASYNC);
 }
 
-SoundDriver *SoundInit_WinMM(void)
+SoundDriver *sound_winmm_init(void)
 {
   static SoundDriver driver;
 

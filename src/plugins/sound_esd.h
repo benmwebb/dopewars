@@ -30,7 +30,7 @@
 #include "sound.h"
 
 #ifdef HAVE_ESD
-SoundDriver *SoundInit_ESD(void);
+SoundDriver *sound_esd_init(void);
 #endif /* HAVE_ESD */
 
 #endif /* __DP_SOUND_ESD_H__ */
