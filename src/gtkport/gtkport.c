@@ -1706,14 +1706,24 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation)
 void gtk_frame_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   GtkFrame *frame;
-  GtkAllocation child_alloc;
+  GtkContainer *container;
 
   frame = GTK_FRAME(widget);
-  child_alloc.x = allocation->x + 3;
-  child_alloc.y = allocation->y + 3 + frame->label_req.height;
-  child_alloc.width = allocation->width - 6;
-  child_alloc.height = allocation->height - frame->label_req.height - 6;
-  gtk_container_set_size(widget, &child_alloc);
+  container = GTK_CONTAINER(widget);
+  allocation->x += container->border_width;
+  allocation->y += container->border_width;
+  allocation->width -= container->border_width * 2;
+  allocation->height -= container->border_width * 2;
+
+  if (container->child) {
+    GtkAllocation child_alloc;
+
+    child_alloc.x = allocation->x + 3;
+    child_alloc.y = allocation->y + 3 + frame->label_req.height;
+    child_alloc.width = allocation->width - 6;
+    child_alloc.height = allocation->height - frame->label_req.height - 6;
+    gtk_widget_set_size(container->child, &child_alloc);
+  }
 }
 
 void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type)
@@ -4280,9 +4290,7 @@ void gtk_notebook_destroy(GtkWidget *widget)
 void gtk_notebook_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   GSList *children;
-  GtkNotebookChild *note_child;
   RECT rect;
-  GtkAllocation child_alloc;
 
   gtk_container_set_size(widget, allocation);
   rect.left = allocation->x;
@@ -4290,17 +4298,19 @@ void gtk_notebook_set_size(GtkWidget *widget, GtkAllocation *allocation)
   rect.right = allocation->x + allocation->width;
   rect.bottom = allocation->y + allocation->height;
   TabCtrl_AdjustRect(widget->hWnd, FALSE, &rect);
-  child_alloc.x = rect.left + GTK_CONTAINER(widget)->border_width;
-  child_alloc.y = rect.top + GTK_CONTAINER(widget)->border_width;
-  child_alloc.width = rect.right - rect.left
-      - 2 * GTK_CONTAINER(widget)->border_width;
-  child_alloc.height = rect.bottom - rect.top
-      - 2 * GTK_CONTAINER(widget)->border_width;
 
   for (children = GTK_NOTEBOOK(widget)->children; children;
        children = g_slist_next(children)) {
-    note_child = (GtkNotebookChild *)(children->data);
+    GtkNotebookChild *note_child = (GtkNotebookChild *)(children->data);
     if (note_child && note_child->child) {
+      GtkAllocation child_alloc;
+
+      child_alloc.x = rect.left + GTK_CONTAINER(widget)->border_width;
+      child_alloc.y = rect.top + GTK_CONTAINER(widget)->border_width;
+      child_alloc.width = rect.right - rect.left
+                          - 2 * GTK_CONTAINER(widget)->border_width;
+      child_alloc.height = rect.bottom - rect.top
+                           - 2 * GTK_CONTAINER(widget)->border_width;
       SetWindowPos(note_child->tabpage, HWND_TOP,
                    rect.left, rect.top, rect.right - rect.left,
                    rect.bottom - rect.top, SWP_NOZORDER);
