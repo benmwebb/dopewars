@@ -21,6 +21,8 @@ static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
 static void gtk_entry_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
+static void gtk_entry_set_size(GtkWidget *widget,
+                               GtkAllocation *allocation);
 static void gtk_text_size_request(GtkWidget *widget,
                                   GtkRequisition *requisition);
 static void gtk_button_destroy(GtkWidget *widget);
@@ -284,6 +286,7 @@ static GtkClass GtkMenuClass = {
 
 static GtkSignalType GtkEditableSignals[] = {
    { "create",gtk_marshal_VOID__VOID,gtk_editable_create },
+   { "activate",gtk_marshal_VOID__VOID,NULL },
    { "",NULL,NULL }
 };
 
@@ -293,6 +296,7 @@ static GtkClass GtkEditableClass = {
 
 static GtkSignalType GtkEntrySignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_entry_size_request },
+   { "set_size",gtk_marshal_VOID__GPOIN,gtk_entry_set_size },
    { "realize",gtk_marshal_VOID__VOID,gtk_entry_realize },
    { "",NULL,NULL }
 };
@@ -584,38 +588,57 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    HPEN oldpen,dkpen,ltpen;
    RECT rect;
    HDC hDC;
-   if (msg==WM_PAINT) {
-      if (GetUpdateRect(hwnd,NULL,TRUE)) {
-         BeginPaint(hwnd,&ps);
-         GetClientRect(hwnd,&rect);
-         hDC=ps.hdc;
-         ltpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DHILIGHT));
-         dkpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DSHADOW));
+   GtkPaned *paned;
+   paned=GTK_PANED(GetWindowLong(hwnd,GWL_USERDATA));
+   switch(msg) {
+      case WM_PAINT:
+         if (GetUpdateRect(hwnd,NULL,TRUE)) {
+            BeginPaint(hwnd,&ps);
+            GetClientRect(hwnd,&rect);
+            hDC=ps.hdc;
+            ltpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DHILIGHT));
+            dkpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DSHADOW));
 
-         if (rect.right > rect.bottom) {
-            oldpen=SelectObject(hDC,ltpen);
-            MoveToEx(hDC,rect.left,rect.top,NULL);
-            LineTo(hDC,rect.right,rect.top);
+            if (rect.right > rect.bottom) {
+               oldpen=SelectObject(hDC,ltpen);
+               MoveToEx(hDC,rect.left,rect.top,NULL);
+               LineTo(hDC,rect.right,rect.top);
 
-            SelectObject(hDC,dkpen);
-            MoveToEx(hDC,rect.left,rect.bottom-1,NULL);
-            LineTo(hDC,rect.right,rect.bottom-1);
-         } else {
-            oldpen=SelectObject(hDC,ltpen);
-            MoveToEx(hDC,rect.left,rect.top,NULL);
-            LineTo(hDC,rect.left,rect.bottom);
+               SelectObject(hDC,dkpen);
+               MoveToEx(hDC,rect.left,rect.bottom-1,NULL);
+               LineTo(hDC,rect.right,rect.bottom-1);
+            } else {
+               oldpen=SelectObject(hDC,ltpen);
+               MoveToEx(hDC,rect.left,rect.top,NULL);
+               LineTo(hDC,rect.left,rect.bottom);
 
-            SelectObject(hDC,ltpen);
-            MoveToEx(hDC,rect.right-1,rect.top,NULL);
-            LineTo(hDC,rect.right-1,rect.bottom);
+               SelectObject(hDC,ltpen);
+               MoveToEx(hDC,rect.right-1,rect.top,NULL);
+               LineTo(hDC,rect.right-1,rect.bottom);
+            }
+
+            SelectObject(hDC,oldpen);
+            DeleteObject(ltpen); DeleteObject(dkpen);
+            EndPaint(hwnd,&ps);
          }
-
-         SelectObject(hDC,oldpen);
-         DeleteObject(ltpen); DeleteObject(dkpen);
-         EndPaint(hwnd,&ps);
-      }
-      return TRUE;
-   } else return DefWindowProc(hwnd,msg,wParam,lParam);
+         return TRUE;
+      case WM_LBUTTONDOWN:
+         if (!paned) break;
+         SetCapture(hwnd);
+         paned->Tracking=TRUE;
+         return TRUE;
+      case WM_MOUSEMOVE:
+         if (!paned||!paned->Tracking) break;
+         return TRUE;
+      case WM_LBUTTONUP:
+         if (!paned||!paned->Tracking) break;
+         ReleaseCapture();
+         paned->Tracking=FALSE;
+         return TRUE;
+      default:
+         return DefWindowProc(hwnd,msg,wParam,lParam);
+   }
+   return FALSE;
 }
 
 LRESULT CALLBACK GtkSepProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
@@ -2338,6 +2361,15 @@ void gtk_label_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 }
 
 void gtk_label_set_size(GtkWidget *widget,GtkAllocation *allocation) {
+   gint yexcess;
+   yexcess=allocation->height-widget->requisition.height;
+   if (yexcess > 0) {
+      allocation->y += yexcess/2;
+      allocation->height -= yexcess;
+   }
+}
+
+void gtk_entry_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    gint yexcess;
    yexcess=allocation->height-widget->requisition.height;
    if (yexcess > 0) {

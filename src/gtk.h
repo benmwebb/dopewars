@@ -218,6 +218,7 @@ struct _GtkPaned {
    GtkPanedChild children[2];
    gint handle_size,gutter_size;
    gint handle_pos;
+   gint Tracking : 1;
 };
 
 struct _GtkVPaned {
