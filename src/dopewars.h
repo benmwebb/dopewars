@@ -327,6 +327,7 @@ struct GLOBALS {
   char *NameStruct;
   int *MaxIndex;
   void (*ResizeFunc) (int NewNum);
+  gboolean Modified;
 };
 
 extern const int NUMGLOB;
