@@ -730,7 +730,6 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    RECT rect;
    static RECT GhostRect;
    HDC hDC;
-   HWND parent;
    gint newpos;
    GtkPaned *paned;
    paned=GTK_PANED(GetWindowLong(hwnd,GWL_USERDATA));
@@ -1595,7 +1594,7 @@ GtkWidget *gtk_clist_new(gint columns) {
    clist->ncols=columns;
    clist->cols=g_new0(GtkCListColumn,columns);
    for (i=0;i<columns;i++) {
-      clist->cols[i].width=50;
+      clist->cols[i].width=0;
       clist->cols[i].visible=TRUE;
       clist->cols[i].resizeable=TRUE;
    }
@@ -2200,7 +2199,6 @@ void gtk_clist_realize(GtkWidget *widget) {
    hdl.pwpos = &wp;
    SendMessage(header,HDM_LAYOUT,0,(LPARAM)&hdl);
    clist->header_size=wp.cy;
-/* g_print("Header %p, size %d\n",header,wp.cy);*/
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"LISTBOX","",
                                  WS_CHILD|WS_TABSTOP|LBS_DISABLENOSCROLL|
                                  WS_VSCROLL|
@@ -2294,10 +2292,10 @@ void gtk_clist_update_all_widths(GtkCList *clist) {
    SIZE size;
    HWND header;
 
-   for (i=0;i<clist->ncols;i++) clist->cols[i].width=0;
    header=clist->header;
    if (header) for (i=0;i<clist->ncols;i++) {
-      if (GetTextSize(header,clist->cols[i].title,&size)) {
+      if (GetTextSize(header,clist->cols[i].title,&size) &&
+          clist->cols[i].width<size.cx+2*LISTHEADERPACK) {
          clist->cols[i].width=size.cx+2*LISTHEADERPACK;
       }
    }
