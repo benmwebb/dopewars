@@ -30,9 +30,6 @@
 #ifdef CYGWIN                   /* Code for native Win32 build under Cygwin */
 
 #include <conio.h>
-#ifdef GUI_CLIENT
-#include "gtkport.h"
-#endif
 
 CHAR_INFO RealScreen[25][80], VirtualScreen[25][80];
 HANDLE hOut, hIn;
