@@ -1,12 +1,13 @@
 # List of source files containing translatable strings
 
 src/dopewars.c
-src/dopeos.c
+src/util.c
 src/curses_client/curses_client.c
 src/gui_client/gtk_client.c
 src/gui_client/optdialog.c
 src/gui_client/newgamedia.c
 src/gtkport/gtkport.c
+src/cursesport/cursesport.c
 src/winmain.c
 src/serverside.c
 src/error.c
