@@ -1,6 +1,7 @@
 Makefile
 Makefile.in
 POTFILES
+dopewars.pot
 *.gmo
 stamp-cat-id
 cat-id-tbl.c
