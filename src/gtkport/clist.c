@@ -137,6 +137,7 @@ GtkWidget *gtk_clist_new(gint columns)
     clist->coldata[i].width = 0;
     clist->coldata[i].visible = TRUE;
     clist->coldata[i].resizeable = TRUE;
+    clist->coldata[i].justification = GTK_JUSTIFY_LEFT;
   }
 
   return GTK_WIDGET(clist);
@@ -261,8 +262,20 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
         if (i == clist->cols - 1)
           rcCol.right = lpdis->rcItem.right;
         if (row->text[i]) {
+          UINT align;
+          switch(clist->coldata[i].justification) {
+          case GTK_JUSTIFY_RIGHT:
+            align = DT_RIGHT;
+            break;
+          case GTK_JUSTIFY_CENTER:
+            align = DT_CENTER;
+            break;
+          default:
+            align = DT_LEFT;
+            break;
+          }
           myDrawText(lpdis->hDC, row->text[i], -1, &rcCol,
-                     DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+                     align | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
         }
       }
   }
@@ -751,6 +764,7 @@ void gtk_clist_update_selection(GtkWidget *widget)
 void gtk_clist_set_column_justification(GtkCList *clist, gint column,
                                         GtkJustification justification)
 {
+  clist->coldata[column].justification = justification;
 }
 
 #else /* for systems with GTK+ */
