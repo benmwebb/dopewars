@@ -9,6 +9,7 @@ cvs
       file variables are now imposed for sanity
     - Quique's Spanish translation is now available both in standard Spanish
       (es.po) and es_ES.po, which uses drugs slang from Spain
+    - Fix for a trivial DOS of the server
 
 1.5.9   07-06-2003
     - The messages window in the curses client can now be scrolled with the

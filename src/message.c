@@ -1042,7 +1042,7 @@ int ProcessMessage(char *Msg, Player *Play, Player **Other, AICode *AI,
   pt = Msg;
   if (HaveAbility(Play, A_PLAYERID)) {
     buf = GetNextWord(&pt, NULL);
-    if (buf[0]) {
+    if (buf && buf[0]) {
       ID = atoi(buf);
       *Other = GetPlayerByID(ID, First);
     }
