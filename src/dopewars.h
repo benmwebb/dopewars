@@ -351,7 +351,7 @@ struct GLOBALS {
   int *MaxIndex;
   void (*ResizeFunc) (int NewNum);
   gboolean Modified;
-  int MinVal;
+  int MinVal, MaxVal;
 };
 
 struct CMDLINE { 
