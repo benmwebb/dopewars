@@ -145,6 +145,7 @@ struct LOG {
   gchar *File;
   gint Level;
   gchar *Timestamp;
+  FILE *fp;
 };
   
 
@@ -153,11 +154,13 @@ extern gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
 extern unsigned Port;
 extern gboolean Sanitized,ConfigVerbose,DrugValue;
 extern int NumLocation,NumGun,NumCop,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
-extern gchar *HiScoreFile,*ServerName,*Pager,*ConvertFile;
+extern gchar *HiScoreFile,*ServerName,*ConvertFile;
 extern gboolean WantHelp,WantVersion,WantAntique,WantColour,
                 WantNetwork,WantConvert,WantAdmin;
 #ifdef CYGWIN
 extern gboolean MinToSysTray;
+#else
+extern gboolean Daemonize;
 #endif
 extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;
@@ -326,6 +329,7 @@ extern char **StoppedTo;
 extern GSList *ServerList;
 extern GScannerConfig ScannerConfig;
 extern struct LOG Log;
+extern gint ConfigErrors;
 
 GSList *RemovePlayer(Player *Play,GSList *First);
 Player *GetPlayerByID(guint ID,GSList *First);
@@ -382,7 +386,7 @@ void SetPlayerName(Player *Play,char *Name);
 void HandleCmdLine(int argc,char *argv[]);
 void SetupParameters(void);
 void HandleHelpTexts(void);
-int GeneralStartup(int argc,char *argv[]);
+void GeneralStartup(int argc,char *argv[]);
 void ReadConfigFile(char *FileName);
 gboolean ParseNextConfig(GScanner *scanner,gboolean print);
 int GetGlobalIndex(gchar *ID1,gchar *ID2);
@@ -397,4 +401,6 @@ GLogLevelFlags LogMask(void);
 GString *GetLogString(GLogLevelFlags log_level,const gchar *message);
 void RestoreConfig(void);
 void ScannerErrorHandler(GScanner *scanner,gchar *msg,gint error);
+void OpenLog(void);
+void CloseLog(void);
 #endif

@@ -2031,6 +2031,8 @@ void CursesLoop(void) {
    char c;
    Player *Play;
 
+   if (!CheckHighScoreFileConfig()) return;
+
    start_curses();
    Width=COLS; Depth=LINES;
 

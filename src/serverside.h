@@ -55,7 +55,8 @@ void ClearFightTimeout(Player *Play);
 int GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
 void ConvertHighScoreFile(void);
-int InitHighScoreFile(void);
+void OpenHighScoreFile(void);
+gboolean CheckHighScoreFileConfig(void);
 void CloseHighScoreFile(void);
 gboolean HighScoreRead(FILE *fp,struct HISCORE *MultiScore,
                        struct HISCORE *AntiqueScore,gboolean ReadHeader);
@@ -68,6 +69,7 @@ void RunFromCombat(Player *Play,int ToLocation);
 gboolean CanPlayerFire(Player *Play);
 gboolean CanRunHere(Player *Play);
 Player *GetNextShooter(Player *Play);
+void DropPrivileges(void);
 #ifdef GUI_SERVER
 void GuiServerLoop(gboolean is_service);
 #endif

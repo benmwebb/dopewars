@@ -148,13 +148,16 @@ vanishes completely. Clicking on the System Tray icon will restore the
 window to its normal state. If FALSE, the System Tray is not used. Only
 supported on Windows systems.</dd>
 
-<dt><b>Pager=<i>"more"</i></b></dt>
-<dd>Sets the pager used to display multi-page output in an interactive server
-to <i>more</i>. ("less" is a popular alternative)</dd>
+<dt><b>Daemonize=<i>TRUE</i></b></dt>
+<dd>When the Unix server is successfully started, it immediately uses the
+fork() function to become a daemon, running in the background. Since this
+can cause problems with debugging, or with other programs that need to keep
+track of the process, setting Daemonize to FALSE will run the program in the
+foreground. Only supported on Unix systems.</dd>
 
 <dt><b>ConfigVerbose=<i>FALSE</i></b></dt>
 <dd>Prints extra feedback information when processing the config. file if set
-to TRUE; this only takes affect, of course, after the ConfigVerbose variable is
+to TRUE; this only takes effect, of course, after the ConfigVerbose variable is
 set, and then remains in force until it is reset again.</dd>
 </dl>
 
@@ -604,6 +607,6 @@ any drugs, and clients will display this information if available.</dd>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>20-11-2001</b></p>
+<p>Last update: <b>18-11-2001</b></p>
 </body>
 </html>

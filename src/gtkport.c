@@ -45,7 +45,7 @@
 HICON mainIcon=NULL;
 static WNDPROC customWndProc=NULL;
 
-static gint RecurseLevel=0;
+static guint RecurseLevel=0;
 
 static const gchar *WC_GTKSEP    = "WC_GTKSEP";
 static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
@@ -1059,6 +1059,10 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    }
 
    InitCommonControls();
+}
+
+guint gtk_main_level(void) {
+  return RecurseLevel;
 }
 
 void gtk_widget_update(GtkWidget *widget,gboolean ForceResize) {

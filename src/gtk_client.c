@@ -193,8 +193,9 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                        const gchar *message,gpointer user_data) {
    GtkMessageBox(NULL,message,
 /* Titles of the message boxes for warnings and errors */
-                 log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
-                 MB_OK|MB_IMMRETURN);
+                 log_level&G_LOG_LEVEL_WARNING ? _("Warning") :
+                 log_level&G_LOG_LEVEL_CRITICAL ? _("Error") : _("Message"),
+                 MB_OK|(gtk_main_level()>0 ? MB_IMMRETURN : 0));
 }
 
 void QuitGame(GtkWidget *widget,gpointer data) {
@@ -1795,8 +1796,10 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    ClientMessageHandlerPt = HandleClientMessage;
 
 /* Have the GLib log messages pop up in a nice dialog box */
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
-                     LogMessage,NULL);
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING
+                     | G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
+
+   if (!CheckHighScoreFileConfig()) return TRUE;
 
 /* Create the main player */
    ClientData.Play=g_new(Player,1);

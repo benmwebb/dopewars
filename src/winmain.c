@@ -145,141 +145,141 @@ static gchar *GetWindowsLocale(void) {
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
-   gchar **split;
-   int argc;
-   gboolean is_service;
-   gchar modpath[300],*lastslash;
+  gchar **split;
+  int argc;
+  gboolean is_service;
+  gchar modpath[300],*lastslash;
 #ifdef ENABLE_NLS
-   gchar *winlocale;
+  gchar *winlocale;
 #endif
 
 /* Are we running as an NT service? */
-   is_service = (lpszCmdParam && strncmp(lpszCmdParam,"-N",2)==0);
+  is_service = (lpszCmdParam && strncmp(lpszCmdParam,"-N",2)==0);
 
-   if (is_service) {
-     modpath[0]='\0';
-     GetModuleFileName(NULL,modpath,300);
-     lastslash=strrchr(modpath,'\\');
-     if (lastslash) *lastslash='\0';
-     SetCurrentDirectory(modpath);
-   }
+  if (is_service) {
+    modpath[0]='\0';
+    GetModuleFileName(NULL,modpath,300);
+    lastslash=strrchr(modpath,'\\');
+    if (lastslash) *lastslash='\0';
+    SetCurrentDirectory(modpath);
+  }
 
-   LogFileStart();
-   g_set_print_handler(LogFilePrintFunc);
+  LogFileStart();
+  g_set_print_handler(LogFilePrintFunc);
 
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE,
-                     ServerLogMessage,NULL);
+  g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE,ServerLogMessage,NULL);
 
-   if (!is_service) {
-     g_log_set_handler(NULL,G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
-                       LogMessage,NULL);
-   }
+  if (!is_service) {
+    g_log_set_handler(NULL,G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+                      LogMessage,NULL);
+  }
 
 #ifdef ENABLE_NLS
-   winlocale=GetWindowsLocale();
-   if (winlocale) putenv(winlocale);
+  winlocale=GetWindowsLocale();
+  if (winlocale) putenv(winlocale);
 
-   setlocale(LC_ALL,"");
-   bindtextdomain(PACKAGE,LOCALEDIR);
-   textdomain(PACKAGE);
+  setlocale(LC_ALL,"");
+  bindtextdomain(PACKAGE,LOCALEDIR);
+  textdomain(PACKAGE);
 #endif
 
 /* Informational comment placed at the start of the Windows log file
    (this is used for messages printed during processing of the config
    files - under Unix these are just printed to stdout) */
-   g_print(_("# This is the dopewars startup log, containing any\n"
-             "# informative messages resulting from configuration\n"
-             "# file processing and the like.\n\n"));
+  g_print(_("# This is the dopewars startup log, containing any\n"
+            "# informative messages resulting from configuration\n"
+            "# file processing and the like.\n\n"));
 
-   split=g_strsplit(lpszCmdParam," ",0);
-   argc=0;
-   while (split[argc] && split[argc][0]) argc++;
+  split=g_strsplit(lpszCmdParam," ",0);
+  argc=0;
+  while (split[argc] && split[argc][0]) argc++;
 
-   if (GeneralStartup(argc,split)==0) {
-    if (WantVersion || WantHelp) {
-      WindowPrintStart();
-      g_set_print_handler(WindowPrintFunc);
-      HandleHelpTexts();
-      WindowPrintEnd();
+  GeneralStartup(argc,split);
+  OpenLog();
+  if (WantVersion || WantHelp) {
+    WindowPrintStart();
+    g_set_print_handler(WindowPrintFunc);
+    HandleHelpTexts();
+    WindowPrintEnd();
 #ifdef NETWORKING
-    } else if (is_service) {
-      StartNetworking();
-Network=Server=TRUE;
-      win32_init(hInstance,hPrevInstance,"mainicon");
-      ServiceMain();
-      StopNetworking();
+  } else if (is_service) {
+    StartNetworking();
+    Network=Server=TRUE;
+    win32_init(hInstance,hPrevInstance,"mainicon");
+    ServiceMain();
+    StopNetworking();
 #endif
-    } else if (WantConvert) {
-      WindowPrintStart();
-      g_set_print_handler(WindowPrintFunc);
-      ConvertHighScoreFile();
-      WindowPrintEnd();
-    } else {
+  } else if (WantConvert) {
+    WindowPrintStart();
+    g_set_print_handler(WindowPrintFunc);
+    ConvertHighScoreFile();
+    WindowPrintEnd();
+  } else {
 #ifdef NETWORKING
-      StartNetworking();
+    StartNetworking();
 #endif
-         if (Server) {
+    if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
-            g_log_set_handler(NULL,G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
-            win32_init(hInstance,hPrevInstance,"mainicon");
-            GuiServerLoop(FALSE);
+      g_log_set_handler(NULL,G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
+      win32_init(hInstance,hPrevInstance,"mainicon");
+      GuiServerLoop(FALSE);
 #else
-            AllocConsole();
-            SetConsoleTitle(_("dopewars server"));
-            g_log_set_handler(NULL,
-                              LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                              ServerLogMessage,NULL);
-            g_set_print_handler(ServerPrintFunc);
-            newterm(NULL,NULL,NULL);
-            ServerLoop();
+      AllocConsole();
+      SetConsoleTitle(_("dopewars server"));
+      g_log_set_handler(NULL,
+                        LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                        ServerLogMessage,NULL);
+      g_set_print_handler(ServerPrintFunc);
+      newterm(NULL,NULL,NULL);
+      ServerLoop();
 #endif /* GUI_SERVER */
 #else
-            WindowPrintStart();
-            g_set_print_handler(WindowPrintFunc);
-            g_print(_("This binary has been compiled without networking "
-                      "support, and thus cannot run\nin server mode. "
-                      "Recompile passing --enable-networking to the "
-                      "configure script.\n"));
-            WindowPrintEnd();
+      WindowPrintStart();
+      g_set_print_handler(WindowPrintFunc);
+      g_print(_("This binary has been compiled without networking "
+                "support, and thus cannot run\nin server mode. "
+                "Recompile passing --enable-networking to the "
+                "configure script.\n"));
+      WindowPrintEnd();
 #endif /* NETWORKING */
-         } else if (AIPlayer) {
-            AllocConsole();
+    } else if (AIPlayer) {
+      AllocConsole();
 
 /* Title of the Windows window used for AI player output */
-            SetConsoleTitle(_("dopewars AI"));
+      SetConsoleTitle(_("dopewars AI"));
 
-            g_log_set_handler(NULL,
-                              LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                              ServerLogMessage,NULL);
-            g_set_print_handler(ServerPrintFunc);
-            newterm(NULL,NULL,NULL);
-            AIPlayerLoop();
-         } else if (WantedClient==CLIENT_CURSES) {
-            AllocConsole();
-            SetConsoleTitle(_("dopewars"));
-            CursesLoop();
-         } else {
+      g_log_set_handler(NULL,
+                        LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                        ServerLogMessage,NULL);
+      g_set_print_handler(ServerPrintFunc);
+      newterm(NULL,NULL,NULL);
+      AIPlayerLoop();
+    } else if (WantedClient==CLIENT_CURSES) {
+      AllocConsole();
+      SetConsoleTitle(_("dopewars"));
+      CursesLoop();
+    } else {
 #if GUI_CLIENT
-            GtkLoop(hInstance,hPrevInstance);
+      GtkLoop(hInstance,hPrevInstance);
 #else
-            g_print(_("No graphical client available - rebuild the binary\n"
-                    "passing the --enable-gui-client option to configure, or\n"
-                    "use the curses client (if available) instead!\n"));
+      g_print(_("No graphical client available - rebuild the binary\n"
+              "passing the --enable-gui-client option to configure, or\n"
+              "use the curses client (if available) instead!\n"));
 #endif
-         }
+    }
 #ifdef NETWORKING
-         StopNetworking();
+    StopNetworking();
 #endif
-      }
-   }
-   LogFileEnd();
-   g_strfreev(split);
-   CloseHighScoreFile();
-   g_free(PidFile);
-   g_free(Log.File);
-   g_free(ConvertFile);
-   return 0;
+  }
+  CloseLog();
+  LogFileEnd();
+  g_strfreev(split);
+  CloseHighScoreFile();
+  g_free(PidFile);
+  g_free(Log.File);
+  g_free(ConvertFile);
+  return 0;
 }
 
 #endif /* CYGWIN */

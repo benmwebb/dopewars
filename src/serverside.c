@@ -83,7 +83,7 @@ static char *attackquestiontr = N_("AE");
    down our own server). */
 #define METAMINTIME (60)
 
-int TerminateRequest,ReregisterRequest;
+int TerminateRequest,ReregisterRequest,RelogRequest;
 
 int MetaUpdateTimeout;
 int MetaMinTimeout;
@@ -565,6 +565,12 @@ void ReregisterHandle(int sig) {
    ReregisterRequest=1;
 }
 
+void RelogHandle(int sig) {
+/* Responds to a SIGHUP signal, and requests the main event loop to
+   close and then reopen the log file (if any). */
+  RelogRequest=1;
+}
+
 void BreakHandle(int sig) {
 /* Traps an attempt by the user to send dopewars a SIGTERM or SIGINT  */
 /* (e.g. pressing Ctrl-C) and signals for a "nice" shutdown. Restores */
@@ -616,41 +622,20 @@ static void ServerReply(const gchar *msg) {
 
 void ServerHelp(void) {
 /* Displays a simple help screen listing the server commands and options */
-   int i;
-//#if CYGWIN || GUI_SERVER
-   int Lines;
-   GString *VarName;
-   VarName=g_string_new("");
-   g_print(_(HelpText),VERSION);
-   Lines=16;
-   for (i=0;i<NUMGLOB;i++) {
-      if (Globals[i].NameStruct[0]) {
-         g_string_sprintf(VarName,"%s%s.%s",Globals[i].NameStruct,
-                          Globals[i].StructListPt ? "[x]" : "",Globals[i].Name);
-      } else {
-         g_string_assign(VarName,Globals[i].Name);
-      }
-      g_print("%-26s\t%s\n",VarName->str,_(Globals[i].Help));
-      Lines++;
-/*#ifndef GUI_SERVER
-      if (Lines%24==0) {
-         g_print(_("--More--")); bgetch(); g_print("\n");
-      }
-endif*/
-   }
-   g_string_free(VarName,TRUE);
-/*#else
-   FILE *fp;
-   fp=popen(Pager,"w");
-   if (fp) {
-      PrintHelpTo(fp);
-      i=pclose(fp);
-      if (i==-1 || (WIFEXITED(i) && WEXITSTATUS(i)==127)) {
-         g_warning(_("Pager exited abnormally - using stdout instead..."));
-         PrintHelpTo(stdout);
-      }
-   }
-endif*/
+  int i;
+  GString *VarName;
+  VarName=g_string_new("");
+  g_print(_(HelpText),VERSION);
+  for (i=0;i<NUMGLOB;i++) {
+    if (Globals[i].NameStruct[0]) {
+      g_string_sprintf(VarName,"%s%s.%s",Globals[i].NameStruct,
+                       Globals[i].StructListPt ? "[x]" : "",Globals[i].Name);
+    } else {
+      g_string_assign(VarName,Globals[i].Name);
+    }
+    g_print("%-26s\t%s\n",VarName->str,_(Globals[i].Help));
+  }
+  g_string_free(VarName,TRUE);
 }
 
 #if NETWORKING
@@ -677,42 +662,7 @@ void RemovePidFile(void) {
    if (PidFile) unlink(PidFile);
 }
 
-gboolean ReadServerKey(GString *LineBuf,gboolean *EndOfLine) {
-   int ch;
-   *EndOfLine=FALSE;
-#ifdef CYGWIN
-   ch=bgetch();
-   if (ch=='\0') {
-      return FALSE;
-   } else if (ch=='\r') {
-      g_print("\n");
-      *EndOfLine=TRUE;
-      return TRUE;
-   } else if (ch==8) {
-      if (strlen(LineBuf->str)>0) {
-         g_print("\010 \010");
-         g_string_truncate(LineBuf,strlen(LineBuf->str)-1);
-      }
-      return TRUE;
-   }
-   g_string_append_c(LineBuf,(gchar)ch);
-   g_print("%c",ch);
-   return TRUE;
-#else
-   while (1) {
-      ch=getchar();
-      if (ch==EOF) return FALSE;
-      else if (ch=='\n') {
-         *EndOfLine=TRUE;
-         break;
-      }
-      g_string_append_c(LineBuf,(gchar)ch);
-   }
-   return TRUE;
-#endif
-}
-
-static void StartServer(void) {
+static gboolean StartServer(void) {
    LastError *sockerr=NULL;
    GString *errstr;
 #ifndef CYGWIN
@@ -721,6 +671,7 @@ static void StartServer(void) {
    SERVICE_STATUS status;
 #endif
 
+   if (!CheckHighScoreFileConfig()) return FALSE;
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->msg_handler=ScannerErrorHandler;
    Scanner->input_name="(stdin)";
@@ -776,7 +727,7 @@ static void StartServer(void) {
 
    MetaUpdateTimeout=MetaMinTimeout=0;
 
-   TerminateRequest=ReregisterRequest=0;
+   TerminateRequest=ReregisterRequest=RelogRequest=0;
 
 #if !CYGWIN
    sact.sa_handler=ReregisterHandle;
@@ -785,6 +736,12 @@ static void StartServer(void) {
    if (sigaction(SIGUSR1,&sact,NULL)==-1) {
 /* Warning messages displayed if we fail to trap various signals */
       g_warning(_("Cannot install SIGUSR1 interrupt handler!"));
+   }
+   sact.sa_handler=RelogHandle;
+   sact.sa_flags=0;
+   sigemptyset(&sact.sa_mask);
+   if (sigaction(SIGHUP,&sact,NULL)==-1) {
+      g_warning(_("Cannot install SIGHUP interrupt handler!"));
    }
    sact.sa_handler=BreakHandle;
    sact.sa_flags=0;
@@ -795,9 +752,6 @@ static void StartServer(void) {
    if (sigaction(SIGTERM,&sact,NULL)==-1) {
       g_warning(_("Cannot install SIGTERM interrupt handler!"));
    }
-   if (sigaction(SIGHUP,&sact,NULL)==-1) {
-      g_warning(_("Cannot install SIGHUP interrupt handler!"));
-   }
    sact.sa_handler=SIG_IGN;
    sact.sa_flags=0;
    if (sigaction(SIGPIPE,&sact,NULL)==-1) {
@@ -806,6 +760,7 @@ static void StartServer(void) {
 #endif
 
    RegisterWithMetaServer(TRUE,TRUE,FALSE);
+   return TRUE;
 }
 
 void RequestServerShutdown(void) {
@@ -978,19 +933,22 @@ void ServerLoop() {
    fd_set readfs,writefs,errorfs;
    int topsock;
    GPrintFunc oldprint;
-// gboolean InputClosed=FALSE;
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean /*EndOfLine,*/DoneOK;
+   gboolean DoneOK;
    gchar *buf;
 #ifndef CYGWIN
    int localsock;
 #endif
 
-// if (fork()>0) return;
+   if (!StartServer()) return;
 
-   StartServer();
+#ifdef HAVE_FORK
+/* Daemonize; continue if the fork was successful and we are the child, or
+   if the fork failed */
+   if (Daemonize && fork()>0) return;
+#endif
 
 #ifndef CYGWIN
    localsock=SetupLocalSocket();
@@ -1001,7 +959,6 @@ void ServerLoop() {
       FD_ZERO(&readfs);
       FD_ZERO(&writefs);
       FD_ZERO(&errorfs);
-//    if (!InputClosed) FD_SET(0,&readfs);
       FD_SET(ListenSock,&readfs);
       FD_SET(ListenSock,&errorfs);
       topsock=ListenSock+1;
@@ -1038,29 +995,20 @@ void ServerLoop() {
                RegisterWithMetaServer(TRUE,TRUE,FALSE);
                continue;
             } else if (TerminateRequest) {
+               TerminateRequest=0;
                RequestServerShutdown();
                if (IsServerShutdown()) break;
                else continue;
+            } else if (RelogRequest) { /* Re-open log file */
+               RelogRequest=0;
+               CloseLog();
+               OpenLog();
+               continue;
             } else continue;
          }
          perror("select"); bgetch(); break;
       }
       FirstServer=HandleTimeouts(FirstServer);
-/*    if (FD_ISSET(0,&readfs)) {
-         if (ReadServerKey(LineBuf,&EndOfLine)==FALSE) {
-            if (isatty(0)) {
-               RequestServerShutdown();
-               if (IsServerShutdown()) break;
-            } else {
-               dopelog(0,_("Standard input closed."));
-               InputClosed=TRUE;
-            }
-         } else if (EndOfLine) {
-            HandleServerCommand(LineBuf->str);
-            if (IsServerShutdown()) break;
-            g_string_truncate(LineBuf,0);
-         }
-      }*/
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
@@ -1476,7 +1424,7 @@ void GuiServerLoop(gboolean is_service) {
      g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                        GuiServerLogMessage,NULL);
    }
-   StartServer();
+   if (!StartServer()) return;
 
    ListenTag=gdk_input_add(ListenSock,GDK_INPUT_READ,GuiNewConnect,NULL);
 #ifdef CYGWIN
@@ -1540,11 +1488,11 @@ void HighScoreTypeWrite(struct HISCORE *HiScore,FILE *fp) {
 }
 
 void CloseHighScoreFile() {
-/* Closes the high score file opened by InitHighScoreFile, below */
+/* Closes the high score file opened by OpenHighScoreFile, below */
    if (ScoreFP) fclose(ScoreFP);
 }
 
-static void DropPrivileges() {
+void DropPrivileges() {
 /* If we're running setuid/setgid, drop down to the privilege level of the  */
 /* user that started the dopewars process                                   */
 #ifndef CYGWIN
@@ -1648,45 +1596,70 @@ void ConvertHighScoreFile(void) {
    g_free(BackupFile);
 }
 
-int InitHighScoreFile(void) {
-/* Opens the high score file for later use, and then drops privileges.      */
-/* If the high score file cannot be found, returns -1 (0=success)           */
-   gboolean NewFile=FALSE;
-   char *OpenError=NULL;
+/* State, set by OpenHighScoreFile, and later used by
+   CheckHighScoreFileConfig */
+static gboolean NewFile;
+static int OpenError;
 
-   if (ScoreFP) return 0;  /* If already opened, then we're done */
+void OpenHighScoreFile(void) {
+/* Opens the high score file for later use, and then drops privileges. */
 
-   /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
-   ScoreFP=fopen(HiScoreFile,"r+");
-   if (!ScoreFP) {
-      ScoreFP=fopen(HiScoreFile,"w+");
-      if (!ScoreFP) OpenError=strerror(errno);
-      NewFile=TRUE;
-   }
+  NewFile=FALSE; OpenError=0;
 
-   DropPrivileges();
+  if (ScoreFP) return;  /* If already opened, then we're done */
 
-   if (!ScoreFP) {
-      g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s.\n"
-            "(%s.) Either ensure you have permissions to access\n"
-            "this file and directory, or specify an alternate high score "
-            "file with the\n-f command line option."),HiScoreFile,OpenError);
-      return -1;
-   }
+  /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
+  ScoreFP=fopen(HiScoreFile,"r+");
+  if (!ScoreFP) {
+    ScoreFP=fopen(HiScoreFile,"w+");
+    if (!ScoreFP) OpenError=errno;
+    NewFile=TRUE;
+  }
 
-   if (NewFile) {
-      HighScoreWriteHeader(ScoreFP);
-      fflush(ScoreFP);
-   } else if (!HighScoreReadHeader(ScoreFP,NULL)) {
-      g_log(NULL,G_LOG_LEVEL_CRITICAL,_("%s does not appear to be a valid\n"
-            "high score file - please check it. If it is a high score file\n"
-            "from an older version of dopewars, then first convert it to the\n"
-            "new format by running \"dopewars -C %s\"\n"
-            "from the command line."),HiScoreFile,HiScoreFile);
-      return -1;
-   }
+  DropPrivileges();
+}
 
-   return 0;
+gboolean CheckHighScoreFileConfig(void) {
+/* Checks the high score file opened by OpenHighScoreFile, above. Also warns
+   the user about other problems encountered during startup. Returns
+   TRUE if it's valid; otherwise, returns FALSE. */
+
+  if (!ScoreFP) {
+    g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s.\n"
+          "(%s.) Either ensure you have permissions to access\n"
+          "this file and directory, or specify an alternate high score "
+          "file with the\n-f command line option."),HiScoreFile,
+          strerror(OpenError));
+    return FALSE;
+  }
+
+  if (NewFile) {
+    HighScoreWriteHeader(ScoreFP);
+    fflush(ScoreFP);
+  } else if (!HighScoreReadHeader(ScoreFP,NULL)) {
+    g_log(NULL,G_LOG_LEVEL_CRITICAL,_("%s does not appear to be a valid\n"
+          "high score file - please check it. If it is a high score file\n"
+          "from an older version of dopewars, then first convert it to the\n"
+          "new format by running \"dopewars -C %s\"\n"
+          "from the command line."),HiScoreFile,HiScoreFile);
+    return FALSE;
+  }
+
+  if (ConfigErrors) {
+#ifdef CYGWIN
+    g_warning(
+_("Errors were encountered during the reading of the configuration file.\n"
+"As as result, some settings may not work as expected. Please consult the\n"
+"file \"dopewars-log.txt\" for further details."));
+#else
+    g_warning(
+_("Errors were encountered during the reading of the configuration\n"
+"file. As a result, some settings may not work as expected. Please see the\n"
+"messages on standard output for further details."));
+#endif
+  }
+
+  return TRUE;
 }
 
 gboolean HighScoreRead(FILE *fp,struct HISCORE *MultiScore,

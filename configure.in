@@ -175,7 +175,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strdup strstr getopt_long)
+AC_CHECK_FUNCS(strdup strstr getopt_long fork)
 
 dnl Enable networking by default under Win32, but on Unix systems
 dnl make it dependent on the availability of select and socket

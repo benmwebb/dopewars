@@ -26,11 +26,15 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <glib.h>
 
 #include "network.h"
+#include "nls.h"
 #include "serverside.h"
 
 static int OpenSocket(void) {
@@ -40,8 +44,8 @@ static int OpenSocket(void) {
 
   sockname=GetLocalSocket();
 
-  g_print("Attempting to connect to local dopewars server via. Unix domain\n"
-          "socket %s...\n",sockname);
+  g_print(_("Attempting to connect to local dopewars server via. Unix domain\n"
+          "socket %s...\n"),sockname);
   sock = socket(PF_UNIX,SOCK_STREAM,0);
   if (sock==-1) { perror("socket"); exit(1); }
 
@@ -53,7 +57,7 @@ static int OpenSocket(void) {
     perror("connect"); exit(1);
   }
 
-  g_print("Connection established.\n\n");
+  g_print(_("Connection established; use Ctrl-D to close your session.\n\n"));
   g_free(sockname);
 
   return sock;

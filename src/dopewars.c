@@ -52,9 +52,7 @@
 #include "AIPlayer.h"
 
 #ifdef GUI_SERVER
-#ifndef CYGWIN
 #include "gtkport.h"
-#endif
 #endif
 
 int ClientSock,ListenSock;     
@@ -66,16 +64,19 @@ gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
    dopewars in single-player or antique mode:
              Network=Server=Client=FALSE
 */
-FILE *logfp;
 unsigned Port=7902;
 gboolean Sanitized,ConfigVerbose,DrugValue;
-gchar *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL,*ConvertFile=NULL;
+gchar *HiScoreFile=NULL,*ServerName=NULL,*ConvertFile=NULL;
 gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,
          WantConvert,WantAdmin;
 
 #ifdef CYGWIN
 gboolean MinToSysTray=TRUE;
+#else
+gboolean Daemonize=TRUE;
 #endif
+
+gint ConfigErrors=0;
 
 ClientType WantedClient;
 int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
@@ -271,9 +272,11 @@ struct GLOBALS Globals[] = {
    { NULL,&MinToSysTray,NULL,NULL,NULL,"MinToSysTray",
      N_("If TRUE, the server minimizes to the System Tray"),
      NULL,NULL,0,"",NULL,NULL },
+#else
+   { NULL,&Daemonize,NULL,NULL,NULL,"Daemonize",
+     N_("If TRUE, the server runs in the background"),
+     NULL,NULL,0,"",NULL,NULL },
 #endif
-   { NULL,NULL,NULL,&Pager,NULL,"Pager",
-     N_("Program used to display multi-page output"),NULL,NULL,0,"",NULL,NULL },
    { &NumTurns,NULL,NULL,NULL,NULL,"NumTurns",
      N_("No. of game turns (if 0, game never ends)"),
      NULL,NULL,0,"",NULL,NULL },
@@ -1425,48 +1428,34 @@ void ScannerErrorHandler(GScanner *scanner,gchar *msg,gint error) {
 void ReadConfigFile(char *FileName) {
 /* Read a configuration file given by "FileName"; GScanner under Win32 */
 /* doesn't work properly with files, so we use a nasty workaround      */
-   FILE *fp;
-   gint errors=0;
+  FILE *fp;
 #ifdef CYGWIN
-   char *buf;
+  char *buf;
 #endif
-   GScanner *scanner;
-   fp=fopen(FileName,"r");
-   if (fp) {
-      scanner=g_scanner_new(&ScannerConfig);
-      scanner->input_name=FileName;
-      scanner->msg_handler=ScannerErrorHandler;
+  GScanner *scanner;
+  fp=fopen(FileName,"r");
+  if (fp) {
+    scanner=g_scanner_new(&ScannerConfig);
+    scanner->input_name=FileName;
+    scanner->msg_handler=ScannerErrorHandler;
 #ifdef CYGWIN
-      read_string(fp,&buf); if (!buf) { fclose(fp); return; }
-      g_scanner_input_text(scanner,buf,strlen(buf));
+    read_string(fp,&buf); if (!buf) { fclose(fp); return; }
+    g_scanner_input_text(scanner,buf,strlen(buf));
 #else
-      g_scanner_input_file(scanner,fileno(fp));
+    g_scanner_input_file(scanner,fileno(fp));
 #endif
-      while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner,FALSE)) {
-         errors++;
-         g_scanner_error(scanner,
-                         _("Unable to process configuration file line %d"),
-                         g_scanner_cur_line(scanner));
-      }
-      g_scanner_destroy(scanner);
-      fclose(fp);
+    while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner,FALSE)) {
+      ConfigErrors++;
+      g_scanner_error(scanner,
+                      _("Unable to process configuration file %s, line %d"),
+                      FileName,g_scanner_cur_line(scanner));
+    }
+    g_scanner_destroy(scanner);
+    fclose(fp);
 #ifdef CYGWIN
-      g_free(buf);
+    g_free(buf);
 #endif
-      if (errors) {
-#ifdef CYGWIN
-         g_warning(
-_("Errors were encountered during the reading of the configuration file.\n"
-"As as result, some settings may not work as expected. Please consult the\n"
-"file \"dopewars-log.txt\" for further details."));
-#else
-         g_warning(
-_("Errors were encountered during the reading of the configuration\n"
-"file. As a result, some settings may not work as expected. Please see the\n"
-"messages on standard output for further details."));
-#endif
-      }
-   }
+  }
 }
 
 gboolean ParseNextConfig(GScanner *scanner,gboolean print) {
@@ -1788,7 +1777,7 @@ gboolean SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
    return TRUE;
 }
 
-void SetupParameters() {
+void SetupParameters(void) {
 /* Sets up data - such as the location of the high score file - to    */
 /* hard-coded internal values, and then processes the global and      */
 /* user-specific configuration files                                  */
@@ -1815,16 +1804,15 @@ void SetupParameters() {
 
    Log.Level=2;
    Log.Timestamp=g_strdup("[%H:%M:%S] ");
-   Log.File=NULL;
+   Log.File=g_strdup("");
 
    Currency.Symbol = g_strdup("$");
    Currency.Prefix = TRUE;
 
 /* Set hard-coded default values */
-   g_free(HiScoreFile); g_free(ServerName); g_free(Pager);
+   g_free(HiScoreFile); g_free(ServerName);
    HiScoreFile=g_strdup_printf("%s/dopewars.sco",DATADIR);
    ServerName=g_strdup("localhost");
-   Pager=g_strdup("more");
 
    CopyNames(&Names,&DefaultNames);
    CopyDrugs(&Drugs,&DefaultDrugs);
@@ -2019,15 +2007,19 @@ void HandleCmdLine(int argc,char *argv[]) {
    } while (c!=-1);
 }
 
-int GeneralStartup(int argc,char *argv[]) {
-/* Does general startup stuff (config. files, command line, and high */
-/* score init.) - Returns 0 if OK, -1 if something failed.           */
-   SetupParameters();
-   HandleCmdLine(argc,argv);
-   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
-      return InitHighScoreFile();
-   }
-   return 0;
+void GeneralStartup(int argc,char *argv[]) {
+/* Does general startup stuff (config. files, command line, and high
+   score init.) */
+
+  ConfigErrors=0;
+  SetupParameters();
+  HandleCmdLine(argc,argv);
+
+  if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
+    OpenHighScoreFile();
+  } else {
+    DropPrivileges();
+  }
 }
 
 GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
@@ -2055,6 +2047,24 @@ GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
    return text;
 }
 
+void OpenLog(void) {
+  CloseLog();
+  if (Log.File[0]=='\0') return;
+  Log.fp = fopen(Log.File,"a");
+  if (Log.fp) {
+#ifdef SETVBUF_REVERSED /* 2nd and 3rd arguments are reversed on some systems */
+    setvbuf(Log.fp,_IOLBF,(char *)NULL,0);
+#else
+    setvbuf(Log.fp,(char *)NULL,_IOLBF,0);
+#endif
+  }
+}
+
+void CloseLog(void) {
+  if (Log.fp) fclose(Log.fp);
+  Log.fp = NULL;
+}
+
 #ifndef CYGWIN
 
 #if NETWORKING && !GUI_SERVER
@@ -2063,7 +2073,7 @@ static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    GString *text;
    text=GetLogString(log_level,message);
    if (text) {
-      fprintf(logfp ? logfp : stdout,"%s\n",text->str);
+      fprintf(Log.fp ? Log.fp : stdout,"%s\n",text->str);
       g_string_free(text,TRUE);
    }
 }
@@ -2076,59 +2086,50 @@ int main(int argc,char *argv[]) {
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   if (GeneralStartup(argc,argv)==0) {
-      if (WantVersion || WantHelp) {
-         HandleHelpTexts();
-      } else if (WantAdmin) {
-         AdminServer();
-      } else if (WantConvert) {
-         ConvertHighScoreFile();
-      } else {
+   GeneralStartup(argc,argv);
+   OpenLog();
+   if (WantVersion || WantHelp) {
+     HandleHelpTexts();
+   } else if (WantAdmin) {
+     AdminServer();
+   } else if (WantConvert) {
+     ConvertHighScoreFile();
+   } else {
 #ifdef NETWORKING
-         StartNetworking();
+     StartNetworking();
 #endif
-         if (Server) {
+     if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
-            gtk_set_locale();
-            gtk_init(&argc,&argv);
-            GuiServerLoop(FALSE);
+       gtk_set_locale();
+       gtk_init(&argc,&argv);
+       GuiServerLoop(FALSE);
 #else
-/* Deal with dopelog() stuff nicely */
-            logfp = fopen(Log.File,"a");
-            if (logfp) {
-#ifdef SETVBUF_REVERSED /* 2nd and 3rd arguments are reversed on some systems */
-              setvbuf(logfp,_IOLBF,(char *)NULL,0);
-#else
-              setvbuf(logfp,(char *)NULL,_IOLBF,0);
-#endif
-            }
-            g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
-            /*if (fork()<=0)*/ ServerLoop();
-            if (logfp) fclose(logfp);
+       g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
+       ServerLoop();
 #endif /* GUI_SERVER */
 #else
-            g_print(_("This binary has been compiled without networking "
-                      "support, and thus cannot run\nin server mode. "
-                      "Recompile passing --enable-networking to the "
-                      "configure script.\n"));
+       g_print(_("This binary has been compiled without networking "
+                 "support, and thus cannot run\nin server mode. "
+                 "Recompile passing --enable-networking to the "
+                 "configure script.\n"));
 #endif /* NETWORKING */
-         } else if (AIPlayer) {
-            AIPlayerLoop();
-         } else switch(WantedClient) {
-            case CLIENT_AUTO:
-               if (!GtkLoop(&argc,&argv,TRUE)) CursesLoop();
-               break;
-            case CLIENT_WINDOW:
-               GtkLoop(&argc,&argv,FALSE); break;
-            case CLIENT_CURSES:
-               CursesLoop(); break;
-         }
+     } else if (AIPlayer) {
+       AIPlayerLoop();
+     } else switch(WantedClient) {
+       case CLIENT_AUTO:
+         if (!GtkLoop(&argc,&argv,TRUE)) CursesLoop();
+         break;
+       case CLIENT_WINDOW:
+         GtkLoop(&argc,&argv,FALSE); break;
+       case CLIENT_CURSES:
+         CursesLoop(); break;
+     }
 #ifdef NETWORKING
-         StopNetworking();
+     StopNetworking();
 #endif
-      }
    }
+   CloseLog();
    CloseHighScoreFile();
    g_free(PidFile);
    g_free(Log.File);
