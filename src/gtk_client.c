@@ -36,6 +36,7 @@
 #include "serverside.h"
 #include "tstring.h"
 #include "gtkport.h"
+#include "dopewars-pill.xpm"
 
 #define BT_BUY  (GINT_TO_POINTER(1))
 #define BT_SELL (GINT_TO_POINTER(2))
@@ -1803,6 +1804,9 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    GtkAccelGroup *accel_group;
    GtkItemFactory *item_factory;
    GtkAdjustment *adj;
+   GdkBitmap *mask;
+   GdkPixmap *icon;
+   GtkStyle *style;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
 #ifdef CYGWIN
@@ -1896,6 +1900,14 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
 /* Just show the window, not the vbox - we'll do that when the game starts */
    gtk_widget_show(vbox2);
    gtk_widget_show(window);
+
+   gtk_widget_realize(window);
+   style = gtk_widget_get_style(window);
+
+   icon = gdk_pixmap_create_from_xpm_d(window->window, &mask,
+                                       &style->bg[GTK_STATE_NORMAL],
+                                       dopewars_pill_xpm);
+   gdk_window_set_icon(window->window, NULL, icon, mask);
 
    gtk_main();
 
