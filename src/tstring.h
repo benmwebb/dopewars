@@ -35,4 +35,6 @@ gchar *dpg_strdup_printf(gchar *format, ...);
 void dpg_string_sprintf(GString *string, gchar *format, ...);
 void dpg_string_sprintfa(GString *string, gchar *format, ...);
 
+gchar *GetDefaultTString(gchar *tstring);
+
 #endif /* __TSTRING_H__ */

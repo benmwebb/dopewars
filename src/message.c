@@ -218,6 +218,7 @@ void InitAbilities(Player *Play) {
    Play->Abil.Local[A_PLAYERID]=TRUE;
    Play->Abil.Local[A_NEWFIGHT]=TRUE;
    Play->Abil.Local[A_DRUGVALUE]=(DrugValue ? TRUE : FALSE);
+   Play->Abil.Local[A_TSTRING]=TRUE;
 
    if (!Network) for (i=0;i<A_NUM;i++) {
       Play->Abil.Remote[i]=Play->Abil.Shared[i]=Play->Abil.Local[i];
@@ -506,14 +507,28 @@ void SendSpyReport(Player *To,Player *SpiedOn) {
    g_string_free(text,TRUE);
 }
 
+#define NUMNAMES 8
+
 void SendInitialData(Player *To) {
+   gchar *LocalNames[NUMNAMES] = { Names.Bitch,Names.Bitches,Names.Gun,
+                                   Names.Guns,Names.Drug,Names.Drugs,
+                                   Names.Month,Names.Year };
+   gint i;
    GString *text;
+
    if (!Network) return;
+   if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
+      LocalNames[i] = GetDefaultTString(LocalNames[i]);
+   }
    text=g_string_new("");
-   g_string_sprintf(text,"%s^%d^%d^%d^%s^%s^%s^%s^%s^%s^%s^%s^",
-                         VERSION,NumLocation,NumGun,NumDrug,
-                         Names.Bitch,Names.Bitches,Names.Gun,Names.Guns,
-                         Names.Drug,Names.Drugs,Names.Month,Names.Year);
+   g_string_sprintf(text,"%s^%d^%d^%d^",VERSION,NumLocation,NumGun,NumDrug);
+   for (i=0;i<NUMNAMES;i++) {
+      g_string_append(text,LocalNames[i]);
+      g_string_append_c(text,'^');
+   }
+   if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
+      g_free(LocalNames[i]);
+   }
    if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
    SendServerMessage(NULL,C_NONE,C_INIT,To,text->str);
    g_string_free(text,TRUE);
@@ -548,30 +563,41 @@ void ReceiveInitialData(Player *Play,char *Data) {
 }
 
 void SendMiscData(Player *To) {
-   gchar *text,*prstr[2];
+   gchar *text,*prstr[2],*LocalName;
    int i;
+   gboolean HaveTString;
    if (!Network) return;
+   HaveTString=HaveAbility(To,A_TSTRING);
    text=g_strdup_printf("0^%c%s^%s^",DT_PRICES,
                         (prstr[0]=pricetostr(Prices.Spy)),
                         (prstr[1]=pricetostr(Prices.Tipoff)));
    SendServerMessage(NULL,C_NONE,C_DATA,To,text);
    g_free(prstr[0]); g_free(prstr[1]); g_free(text);
    for (i=0;i<NumGun;i++) {
-      text=g_strdup_printf("%d^%c%s^%s^%d^%d^",i,DT_GUN,Gun[i].Name,
+      if (HaveTString) LocalName=Gun[i].Name;
+      else LocalName=GetDefaultTString(Gun[i].Name);
+      text=g_strdup_printf("%d^%c%s^%s^%d^%d^",i,DT_GUN,LocalName,
                            (prstr[0]=pricetostr(Gun[i].Price)),
                            Gun[i].Space,Gun[i].Damage);
+      if (!HaveTString) g_free(LocalName);
       SendServerMessage(NULL,C_NONE,C_DATA,To,text);
       g_free(prstr[0]); g_free(text);
    }
    for (i=0;i<NumDrug;i++) {
-      text=g_strdup_printf("%d^%c%s^%s^%s^",i,DT_DRUG,Drug[i].Name,
+      if (HaveTString) LocalName=Drug[i].Name;
+      else LocalName=GetDefaultTString(Drug[i].Name);
+      text=g_strdup_printf("%d^%c%s^%s^%s^",i,DT_DRUG,LocalName,
                            (prstr[0]=pricetostr(Drug[i].MinPrice)),
                            (prstr[1]=pricetostr(Drug[i].MaxPrice)));
+      if (!HaveTString) g_free(LocalName);
       SendServerMessage(NULL,C_NONE,C_DATA,To,text);
       g_free(prstr[0]); g_free(prstr[1]); g_free(text);
    }
    for (i=0;i<NumLocation;i++) {
-      text=g_strdup_printf("%d^%c%s^",i,DT_LOCATION,Location[i].Name);
+      if (HaveTString) LocalName=Location[i].Name;
+      else LocalName=GetDefaultTString(Location[i].Name);
+      text=g_strdup_printf("%d^%c%s^",i,DT_LOCATION,LocalName);
+      if (!HaveTString) g_free(LocalName);
       SendServerMessage(NULL,C_NONE,C_DATA,To,text);
       g_free(text);
    }

@@ -42,6 +42,14 @@ typedef struct _FmtData {
    char Type;
 } FmtData;
 
+gchar *GetDefaultTString(gchar *tstring) {
+   gchar *dstr,*pt;
+   dstr=g_strdup(tstring);
+   pt=strchr(dstr,'_');
+   if (pt) *pt='\0';
+   return dstr;
+}
+
 gchar *GetTranslatedString(gchar *str,gchar *code,gboolean Caps) {
    gchar *dstr,*pt,*tstr,*Default,*tcode;
 

@@ -70,10 +70,12 @@ typedef long price_t;
 typedef long long price_t;
 #endif
 
-#define A_PLAYERID      0
-#define A_DRUGVALUE     1
-#define A_NEWFIGHT      2
-#define A_NUM           3
+#define A_PLAYERID      0    /* Use numeric IDs rather than player names
+                                in network messages */
+#define A_DRUGVALUE     1    /* Server keeps track of purchase price of drugs */
+#define A_NEWFIGHT      2    /* Use new unified fighting code */
+#define A_TSTRING       3    /* We understand the %Txx (tstring) notation */
+#define A_NUM           4
 typedef struct ABILITIES {
    gboolean Local[A_NUM];
    gboolean Remote[A_NUM];
