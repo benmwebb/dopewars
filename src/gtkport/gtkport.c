@@ -5123,7 +5123,6 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   gchar *pattern;
   GtkStyle *style;
   GdkColor color;
-  GdkColormap *colormap;
 
   color.red = 0;
   color.green = 0;
@@ -5133,8 +5132,6 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
 
   /* Set the text colour */
   style = gtk_style_new();
-  colormap = gtk_widget_get_colormap(label);
-  gdk_colormap_alloc_color(colormap, &color, FALSE, TRUE);
   style->fg[GTK_STATE_NORMAL] = color;
   gtk_widget_set_style(label, style);
 
