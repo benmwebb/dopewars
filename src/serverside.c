@@ -413,8 +413,10 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          }
          break;
       case C_SACKBITCH:
-         LoseBitch(Play,NULL,NULL);
-         SendPlayerData(Play);
+         if (Play->Bitches.Carried>0) {
+            LoseBitch(Play,NULL,NULL);
+            SendPlayerData(Play);
+         }
          break;
       case C_MSG:
          if (Network) g_message("%s: %s",GetPlayerName(Play),Data);

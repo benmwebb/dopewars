@@ -1579,8 +1579,10 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
 
 void UpdateMenus() {
    gboolean MultiPlayer;
+   gint Bitches;
 
    MultiPlayer = (FirstClient && FirstClient->next!=NULL);
+   Bitches = InGame && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
 
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                             "<main>/Talk"),InGame && Network);
@@ -1594,6 +1596,8 @@ void UpdateMenus() {
                             "<main>/Errands/Spy"),InGame && MultiPlayer);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                             "<main>/Errands/Tipoff"),InGame && MultiPlayer);
+   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
+                            "<main>/Errands/Sack Bitch"),Bitches>0);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                             "<main>/Errands/Get spy reports"),
                             InGame && MultiPlayer);
@@ -2661,6 +2665,9 @@ Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
 void SackBitch(GtkWidget *widget,gpointer data) {
    char *title,*text;
 
+/* Cannot sack bitches if you don't have any! */
+   if (ClientData.Play->Bitches.Carried<=0) return;
+
 /* Title of dialog to sack a bitch (%Tde = "Bitch" by default) */
    title=dpg_strdup_printf(_("Sack %Tde"),Names.Bitch);
 
@@ -2671,6 +2678,8 @@ void SackBitch(GtkWidget *widget,gpointer data) {
                           Names.Drugs,Names.Bitch);
 
    if (GtkMessageBox(ClientData.window,text,title,MB_YESNO)==IDYES) {
+      ClientData.Play->Bitches.Carried--;
+      UpdateMenus();
       SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
    g_free(text); g_free(title);
