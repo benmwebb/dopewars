@@ -1928,7 +1928,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -C, --convert=FILE      convert an \"old format\" score file to the new format\n\
   -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 #else
 /* Usage information, printed when the user runs "dopewars -h" (short
@@ -1961,7 +1961,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -A       connect to a locally-running server for administration\n\
   -h       display this help information\n\
   -v       output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 #endif
 }

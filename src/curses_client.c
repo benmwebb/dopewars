@@ -175,7 +175,7 @@ void display_intro(void) {
                   "possible (and stay alive)! You"));
    mvaddstr(9,1,_("have one month of game time to make your fortune."));
 
-   mvaddstr(11,18,_("Copyright (C) 1998-2001  Ben Webb "
+   mvaddstr(11,18,_("Copyright (C) 1998-2002  Ben Webb "
                     "ben@bellatrix.pcl.ox.ac.uk"));
    g_string_sprintf(text,_("Version %s"),VERSION);
    mvaddstr(11,2,text->str);

@@ -1946,7 +1946,7 @@ _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 
 /* Version and copyright notice in GTK+ 'about' dialog */
    VersionStr=g_strdup_printf(_("Version %s     "
-"Copyright (C) 1998-2001  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"),VERSION);
    label=gtk_label_new(VersionStr);
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
