@@ -2513,7 +2513,28 @@ void SetupParameters(void)
   }
 }
 
-void HandleHelpTexts()
+static void PluginHelp(void)
+{
+  GSList *listpt = NULL;
+  const gchar *plugname;
+#ifdef HAVE_GETOPT_LONG
+  g_print(_("  -u, --plugin=FILE       use sound plugin \"FILE\"\n"
+            "                            "));
+#else
+  g_print(_("  -u file  use sound plugin \"file\"\n"
+            "	          "));
+#endif
+  g_print("(\"none\"");
+  do {
+    plugname = GetPluginName(&listpt);
+    if (plugname) {
+      g_print(", \"%s\"", plugname);
+    }
+  } while(plugname);
+  g_print(_(" available)\n"));
+}
+
+void HandleHelpTexts(void)
 {
   g_print(_("dopewars version %s\n"), VERSION);
   if (!WantHelp)
@@ -2550,11 +2571,12 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
                             client (GTK+ or Win32)\n\
   -t, --text-client       force the use of a text-mode client (curses) (by\n\
                             default, a windowed client is used when possible)\n\
-  -C, --convert=FILE      convert an \"old format\" score file to the new format\n\
-  -h, --help              display this help information\n\
+  -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DATADIR);
+  PluginHelp();
+  g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
 dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
-Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"), DATADIR);
+Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"));
 #else
            /* Usage information, printed when the user runs "dopewars -h"
             * (short options only version) */
