@@ -1,10 +1,11 @@
 # Nasty hack; there seems to be no other way of disabling libtool for the
 # link of the main executable...
 if PLUGINS
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+MYLINK = $(LIBTOOL) --mode=link $(CCLD)
 else
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+MYLINK = $(CCLD)
 endif
+LINK = $(MYLINK) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 
 if GUI_CLIENT
 GUISUBDIR = gui_client
