@@ -2063,7 +2063,7 @@ void CursesLoop(void) {
 #else
 
 #include <glib.h>
-#include "dopewars.h" /* We need this for the definition of '_' */
+#include "nls.h" /* We need this for the definition of '_' */
 
 void CursesLoop(void) {
    g_print(_("No curses client available - rebuild the binary passing the\n"
