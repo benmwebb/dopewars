@@ -64,6 +64,7 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_datadir}/pixmaps/dopewars-pill.png
 %{_datadir}/pixmaps/dopewars-weed.png
 %{_datadir}/pixmaps/dopewars-shot.png
+%dir %{_datadir}/dopewars/
 %{_datadir}/dopewars/bye.wav
 %{_datadir}/dopewars/colt.wav
 %{_datadir}/dopewars/die.wav
