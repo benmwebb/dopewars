@@ -10,4 +10,5 @@ config.h.in
 config.log
 config.status
 stamp-h
+stamp-h.in
 dopewars.sco
