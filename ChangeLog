@@ -1,3 +1,7 @@
+cvs
+    - Fix for a curses client crash if the D key is pressed during attacks
+      by the cops
+
 1.5.9   07-06-2003
     - The messages window in the curses client can now be scrolled with the
       + and - keys
