@@ -27,7 +27,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
