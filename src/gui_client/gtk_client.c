@@ -2114,6 +2114,12 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
     gtk_init(argc, argv);
 #endif
 
+#ifdef HAVE_GLIB2
+  /* GTK+2 expects all strings to be UTF-8, so we force gettext to return
+   * all translations in this encoding here. */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
+#endif
+
   /* Set up message handlers */
   ClientMessageHandlerPt = HandleClientMessage;
 
