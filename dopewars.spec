@@ -42,7 +42,7 @@ rm -rf ${RPM_BUILD_ROOT}
 %attr(-,root,root) %doc doc/example-cfg doc/i18n.html doc/index.html
 %attr(-,root,root) %doc doc/installation.html doc/metaserver.html
 %attr(-,root,root) %doc doc/server.html doc/servercommands.html
-%attr(-,root,root) %doc doc/windows.html
+%attr(-,root,root) %doc doc/protocol.html doc/windows.html
 %attr(2755,root,games) /usr/bin/dopewars
 %attr(0660,root,games) %config /usr/share/dopewars.sco
 %attr(-,root,root) /usr/man/man6/dopewars.6.gz

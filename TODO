@@ -1,3 +1,8 @@
+- Make server run as an NT Service
+- Restore default configuration properly at the start of each game
+- Configuration file editor thingy in the client?
+- Make minimize-to-systray code a) more robust and b) configurable
+- Have bank/loan shark dialog warn on entering negative prices
 - GSS_API SOCKS support?
 - Fix problem with dialogs popping up while menus are open
 - Increase difficulty of escaping from another player - impose penalty on

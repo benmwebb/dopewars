@@ -1,4 +1,5 @@
 cvs
+    - Documentation on the client-server protocol added
     - Windows graphical server can be minimized to the System Tray
     - Keyboard shortcuts for menu items in Windows client
     - Default buttons for Windows client, bank bug (hopefully) fixed

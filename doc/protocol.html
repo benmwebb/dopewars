@@ -1,0 +1,602 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+<title>The dopewars network protocol</title>
+</head>
+
+<body>
+<h1>The dopewars network protocol</h1>
+
+<ul>
+<li><a href="#syntax">Syntax used in this document</a></li>
+<li><a href="#format">General message format</a></li>
+<li><a href="#startgame">Starting a game from the client</a></li>
+<li><a href="#refserver">Server to client message reference</a></li>
+<li><a href="#refclient">Client to server message reference</a></li>
+</ul>
+
+<h2><a name="syntax">Syntax used in this document</a></h2>
+
+<dl>
+<dt><tt>(runhere)</tt></dt>
+<dd>A single character field (equivalent to C's %c format).</dd>
+
+<dt><tt>&lt;ID&gt;</tt></dt>
+<dd>A numeric field - an integer printed in text form, without spaces, commas
+or other punctuation. Note that the number is not stored directly as its
+binary representation, but as a string - i.e. "100" takes 3 characters
+(bytes), not one. Equivalent to C's %d format.</dd>
+
+<dt><tt>"text"</tt></dt>
+<dd>Freeform text, equivalent to C's %s format.</dd>
+
+</dl>
+
+Anything else should be taken as literal characters, which should appear in
+the message exactly as printed here.
+
+<h2><a name="format">General message format</a></h2>
+
+<p>dopewars clients communicate with the dopewars server by means of a TCP/IP
+connection. Messages are sent in plain text, are of variable length, and
+are always terminated by a linefeed character ('\n', ASCII code 10)</p>
+
+<p>Messages themselves are typically split into 'words', delimited by the caret
+(^) character. The underline character (_) is also used to break up
+translatable strings (tstrings), if the <a href="#tstring">A_TSTRING</a>
+ability is active, and thus these two characters, together with the \n
+character, should normally be avoided in message data.</p>
+
+<p>Messages are usually of the format:-</p>
+
+<dl>
+<dt><tt>&lt;ID&gt;^(A)(C)"data"</tt></dt>
+<dd><tt>ID</tt> = player ID (may also be blank if this is not applicable)<br>
+<tt>A</tt> = one-letter message subtype code (used by AI players)<br>
+<tt>C</tt> = one-letter message type code<br>
+<tt>data</tt> = message-dependent information</dd>
+</dl>
+
+<p>e.g. "1^AFHello player"</p>
+
+<p>If ID is not specified, it should be left blank when sending to the server,
+and should be ignored in reading messages from the server.</p>
+
+<p>The "data" field often contains multiple items, separated by ^ characters.
+Note that the last field in such a message should _not_ be assumed to be
+terminated by the message terminator, \n - it may also be terminated by a ^
+character. This allows the client to ignore extra fields, if later versions
+of the protocol should add them. (N.B. This does not apply to free-form text
+fields, as in the C_QUESTION, C_PRINTMESSAGE, C_MSG, C_MSGTO, and C_FIGHTPRINT
+messages, which _do_ extend to the end of the message.)</p>
+
+<p>Message codes are shown below, together with the symbolic constants used in
+the dopewars code for clarity (e.g. the 'A' code is represented by
+C_PRINTMESSAGE)</p>
+
+<p>For the AI codes, see the AICode type in src/message.h</p>
+
+<p><a name="oldprotocol">N.B. Older versions of dopewars used a less
+sophisticated protocol:-</a></p>
+
+<dl>
+<dt><tt>"From"^"To"^(A)(C)"data"</tt></dt>
+<dd><tt>A</tt>, <tt>C</tt>, and <tt>data</tt> are the same; however
+<tt>"From"</tt> and <tt>"To"</tt> are the player <b>names</b> (not IDs) of
+the players that the message is coming from and going to. Again, these can
+often be left blank. This old protocol is used if the
+<a href="#playerid">A_PLAYERID</a> ability is not present.</dd>
+</dl>
+
+<p>e.g. "Fred^Bert^AFHello player"</p>
+
+<h2><a name="startgame">Starting a game from the client</a></h2>
+
+<p>To start a game, the client must first notify the server of the protocol
+it can support (with the <a href="#abilities">C_ABILITIES</a> message) and
+then provide a suitable player name (with the <a href="#name">C_NAME</a>
+message). Note that both of these messages must be sent using the
+<a href="#oldprotocol">old protocol</a>, as before protocol negotiation is
+complete (both server and client have sent a C_ABILITIES message) the server
+will default to using this protocol, for backwards compatibility. After sending
+these two messages, the game is run mainly by the server; the client should
+listen for incoming messages, and respond appropriately.</p>
+
+<h2><a name="refserver">Server to client message reference</a></h2>
+
+<p>The messages listed below may be sent from a dopewars server to the client.
+Most of these messages require some kind of processing to be done, and may
+require a response. The client cannot safely ignore such messages, as the
+server will not "retry" if the client does not respond.</p>
+
+<dl>
+
+<dt><b>C_PRINTMESSAGE</b> ('<tt>A</tt>')</dt>
+<dd>Sent when the server wishes the client to display some text<br>
+<tt>data</tt> = The text that the client should display; any ^ delimiters in
+this text should be taken to mean a new line.<br>
+e.g. "^AAGame over^You made the high score list"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_LIST</b> ('<tt>B</tt>')</dt>
+<dd>Used by the server to tell the client about other logged on players<br>
+<tt>data</tt> = <tt>"name"^&lt;ID&gt;</tt><br>
+<tt>name</tt> = the name of the player<br>
+<tt>ID</tt> = the numeric ID that should be used to communicate with this
+player<br>
+e.g. "^ABFred^1"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_ENDLIST</b> ('<tt>C</tt>')</dt>
+<dd>Signals that all players have been listed (no more C_LIST messages to
+come)<br>
+e.g. "^AC"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_NEWNAME</b> ('<tt>D</tt>')</dt>
+<dd>Signals that the name provided by the client is unsuitable (usually, this
+is because it's already been taken by another player)<br>
+N.B. This is always sent at the start of the game, before protocol negotiation,
+so uses the old format, e.g. "^^AD"<br>
+<b>Answer required:</b> yes - must send a suitable C_NAME message to
+proceed</dd>
+<p>
+
+<dt><b>C_MSG</b> ('<tt>E</tt>')</dt>
+<dd>Contains a message from one player (or the server admin) broadcast to all
+connected players.<br>
+<tt>data</tt> = the message to display<br>
+<tt>ID</tt> = the ID of the player that sent the message<br>
+e.g. "1^AEHello world"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_MSGTO</b> ('<tt>F</tt>')</dt>
+<dd>Contains a private message from one player to another<br>
+<tt>data</tt> = the message to display<br>
+<tt>ID</tt> = the ID of the player that sent the message<br>
+e.g. "1^AFHello player"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_JOIN</b> ('<tt>G</tt>')</dt>
+<dd>Sent by the server to all players when a new player joins the game
+(See C_LIST for format)<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_LEAVE</b> ('<tt>H</tt>')</dt>
+<dd>Sent by the server to all players when a player leaves the game<br>
+<tt>data</tt> = the name of the player that's leaving<br>
+<tt>ID</tt> = the ID of the player<br>
+e.g. "1^AHFred"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_SUBWAYFLASH</b> ('<tt>I</tt>')</dt>
+<dd>Used by the server to tell a client that it has just moved to a new
+location. (The client is not told where this location is, since this is
+information is contained in a C_UPDATE message.) Clients usually reset any
+location-dependent state (e.g. fights) on receiving this message, and flash
+a "subway" indicator or similar<br>
+e.g. "^AI"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_UPDATE</b> ('<tt>J</tt>')</dt>
+<dd>Used by the server to update client state. This is also used to tell the
+player about the state of another player (a report from a spy)<br>
+<tt>data</tt> = <tt>&lt;cash&gt;^&lt;debt&gt;^&lt;bank&gt;^&lt;health&gt;^&lt;coatsize&gt;^&lt;locn&gt;^&lt;turn&gt;^&lt;flags&gt;^&lt;GUNS&gt;^&lt;DRUGS&gt;^&lt;DRUGVALUE&gt;^&lt;bitches&gt;</tt><br>
+<tt>cash</tt>, <tt>debt</tt>, <tt>bank</tt> = money available, owed to the
+loan shark, in the bank<br>
+<tt>coatsize</tt> = amount of space available for drugs/guns<br>
+<tt>locn</tt> = zero-based game location<br>
+<tt>turn</tt> = turn number<br>
+<tt>flags</tt> = player status flags - see PlayerFlags in src/dopewars.h for
+the individual binary bits. The only one currently used is SPYINGON (16) which
+is set if the player is currently spying on one or more other players<br>
+<tt>GUNS</tt> = the numbers of each gun carried, separated by ^ characters
+(there should be NumGun numbers in this list - see the C_INIT message)<br>
+<tt>DRUGS</tt> = similar, for carried drugs<br>
+<tt>DRUGVALUE</tt> = similar, but contains the total cash value of each drug;
+N.B. this field is only sent if the ability
+<a href="#drugvalue">A_DRUGVALUE</a> is present<br>
+<tt>bitches</tt> = number of accompanying bitches<br>
+<tt>ID</tt> = blank for a status update, otherwise the ID of the player that
+you're spying on<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_DRUGHERE</b> ('<tt>K</tt>')</dt>
+<dd>Tells the client which drugs are available to buy at the current
+location<br>
+<tt>data</tt> = drug prices, separated by ^ characters. If a price is zero,
+that drug is not available here<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_GUNSHOP</b> ('<tt>L</tt>')</dt>
+<dd>Tells the client to start up the "gun shop", for buying/selling guns<br>
+e.g. "^AL"<br>
+<b>Answer required:</b> yes - zero or more C_BUYOBJECT messages, followed by a
+C_DONE message</dd>
+<p>
+
+<dt><b>C_LOANSHARK</b> ('<tt>M</tt>')</dt>
+<dd>Tells the client that the player has a chance to pay back the loan<br>
+e.g. "^AM"<br>
+<b>Answer required:</b> yes - an optional C_PAYLOAN message, followed by a
+C_DONE message</dd>
+<p>
+
+<dt><b>C_BANK</b> ('<tt>N</tt>')</dt>
+<dd>Tells the client that the player has a chance to visit the bank<br>
+e.g. "^AN"<br>
+<b>Answer required:</b> yes - an optional C_DEPOSIT message, followed by a
+C_DONE message</dd>
+<p>
+
+<dt><b>C_QUESTION</b> ('<tt>O</tt>')</dt>
+<dd>Used to display a message from the server that requires a response<br>
+<tt>data</tt> = <tt>"keys"^"message"</tt><br>
+<tt>keys</tt> = a list of the valid single-character responses - e.g. "YN" for
+a yes/no question; the client may use these keys directly, or expand them to
+complete words (e.g. YN -> Yes/No)<br>
+<tt>message</tt> = the message to display<br>
+e.g. "^AOYN^Would you like to visit the bank?"<br>
+<b>Answer required:</b> yes - a C_ANSWER message, containing one of the valid
+response keys</dd>
+<p>
+
+<dt><b>C_HISCORE</b> ('<tt>Q</tt>')</dt>
+<dd>Used for the server to tell the client about a high score; C_HISCORE
+messages should only ever be sent after a C_STARTHISCORE message and before a
+C_ENDHISCORE message<br>
+<tt>data</tt> = <tt>&lt;index&gt;^(B)"score"</tt><br>
+<tt>index</tt> = the zero-based index of the high score (0 is the top
+score)<br>
+<tt>B</tt> = the single character 'B' if this score should be displayed in
+bold (usually to indicate that it's "your" score) or 'N' otherwise<br>
+<tt>score</tt> = the text containing the score, date, and player name<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_STARTHISCORE</b> ('<tt>R</tt>')</dt>
+<dd>Tells the client that the server is about to send it a list of high scores;
+usually used by the client to display the title of a high score screen<br>
+e.g. "^AR"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_ENDHISCORE</b> ('<tt>S</tt>')</dt>
+<dd>Tells the client that the server has sent all of the high scores; usually
+used by the client to display a prompt to end the game (if data="end") or to
+return to the game (if data is not "end")<br>
+<tt>data</tt> = "end" if the game has finished, blank otherwise<br>
+e.g. "^ASend"<br>
+<b>Answer required:</b> no, but the client should disonnect if data="end"</dd>
+<p>
+
+<dt><b>C_PUSH</b> ('<tt>Z</tt>')</dt>
+<dd>Requests that the client leave the server<br>
+e.g. "^AZ"<br>
+<b>Answer required:</b> no, but the client should disconnect</dd>
+<p>
+
+<dt><b>C_QUIT</b> ('<tt>a</tt>')</dt>
+<dd>Notifies the client that the server is about to terminate<br>
+e.g. "^Aa"<br>
+<b>Answer required:</b> no, but the client should disconnect</dd>
+<p>
+
+<dt><b>C_RENAME</b> ('<tt>b</tt>')</dt>
+<dd>Instructs the client that another player has changed his/her name<br>
+<tt>data</tt> = the new player name<br>
+<tt>ID</tt> = the player's ID<br>
+e.g. "1^AbFred"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_INIT</b> ('<tt>k</tt>')</dt>
+<dd>Tells the client about various global game settings<br>
+<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"</tt><br>
+<tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br>
+<tt>numloc</tt> = the number of locations in the game<br>
+<tt>numgun</tt> = the number of guns in the game<br>
+<tt>numdrug</tt> = the number of drugs in the game<br>
+<tt>bitch</tt>, <tt>bitches</tt>, <tt>gun</tt>, <tt>guns</tt>, <tt>drug</tt>,
+<tt>drugs</tt>, <tt>month</tt>, <tt>year</tt>, <tt>loanshark</tt>,
+<tt>bank</tt>, <tt>gunshop</tt>, <tt>pub</tt> = various names used in the
+game<br>
+<tt>ID</tt> = the ID that the client should use to refer to itself<br>
+e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"<br>
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_DATA</b> ('<tt>l</tt>')</dt>
+<dd>Tells the client about various game settings - 4 variants on this message
+are possible:-
+
+<dl>
+<dt>Information about locations in the game</dt>
+<dd><tt>data</tt> = <tt>&lt;index&gt;^A"name"</tt><br>
+<tt>index</tt> = zero-based index of the location<br>
+<tt>name</tt> = name of the location<br>
+e.g. "^Al0^ABronx"</dd>
+<p>
+
+<dt>Information about drugs</dt>
+<dd><tt>data</tt> = <tt>&lt;index&gt;^B"name"^&lt;min&gt;^&lt;max&gt;</tt>
+<tt>index</tt> = zero-based index of the drug<br>
+<tt>name</tt> = name of the drug<br>
+<tt>min</tt> = the minimum price of the drug<br>
+<tt>max</tt> = the maximum price of the drug<br>
+e.g. "^Al1^BCocaine^15000^29000"</dd>
+<p>
+
+<dt>Information about guns</dt>
+<dd><tt>data</tt> = <tt>&lt;index&gt;^C"name"^&lt;price&gt;^&lt;space&gt;^&lt;damage&gt;</tt><br>
+<tt>index</tt> = zero-based index of the gun<br>
+<tt>name</tt> = name of the gun<br>
+<tt>price</tt> = the normal cost of the gun<br>
+<tt>damage</tt> = the maximum damage that the gun can do<br>
+e.g. "^Al2^CRuger^2900^4^4"</dd>
+<p>
+
+<dt>Miscellaneous information</dt>
+<dd><tt>data</tt> = <tt>0^D&lt;spy&gt;^&lt;tipoff&gt;</tt><br>
+<tt>spy</tt> = the price to spy on another player<br>
+<tt>tipoff</tt> = the price to tip off the cops to another player<br>
+e.g. "^Al0^D20000^10000"</dd>
+</dl>
+
+<b>Answer required:</b> no</dd>
+<p>
+
+<dt><b>C_FIGHTPRINT</b> ('<tt>m</tt>')</dt>
+<dd><tt>data</tt> = <tt>"attack"^"defend"^&lt;health&gt;^&lt;bitches&gt;^"bitchname"^&lt;killed&gt;^&lt;armpct&gt;^(fightpoint)(runhere)(loot)(canfire)^"text"</tt><br>
+<tt>attack</tt> = name of the attacker player/cop if applicable (if blank,
+it's you)<br>
+<tt>defend</tt> = name of the defending player/cop if applicable (if blank,
+it's you)<br>
+<tt>health</tt> = defender's health, if applicable<br>
+<tt>bitches</tt> = number of bitches/deputies accompanying the defending
+player<br>
+<tt>bitchname</tt> = usually "bitch", "bitches", "deputy" or "deputies"<br>
+<tt>killed</tt> = number of bitches killed in this attack<br>
+<tt>armpct</tt> = a number between 0 and 100 showing how heavily armed the
+attacker is<br>
+<tt>fightpoint</tt> =<br>
+<dl>
+<dt>'<tt>A</tt>' (<b>F_ARRIVED</b>)</dt>
+<dd>The "defending" player has just arrived on the scene</dd>
+
+<dt>'<tt>S</tt>' (<b>F_STAND</b>)</dt>
+<dd>The "attacking" player chose not to shoot</dd>
+
+<dt>'<tt>H</tt>' (<b>F_HIT</b>)</dt>
+<dd>The "attacking" player fired on the defender, and hit</dd>
+
+<dt>'<tt>M</tt>' (<b>F_MISS</b>)</dt>
+<dd>The "attacking" player fired on the defender, and missed</dd>
+
+<dt>'<tt>R</tt>' (<b>F_RELOAD</b>)</dt>
+<dd>The "attacking" player is ready to fire again</dd>
+
+<dt>'<tt>L</tt>' (<b>F_LEAVE</b>)</dt>
+<dd>The "attacking" player has fled the fight, but other opponents remain</dd>
+
+<dt>'<tt>D</tt>' (<b>F_LASTLEAVE</b>)</dt>
+<dd>The "attacking" player has fled, and nobody else is present, so the fight
+is over</dd>
+
+<dt>'<tt>F</tt>' (<b>F_FAILFLEE</b>)</dt>
+<dd>The "attacking" player tried to get away, but failed</dd>
+
+<dt>'<tt>G</tt>' (<b>F_MSG</b>)</dt>
+<dd>Nothing exciting has happened, but "text" should still be displayed</dd>
+</dl>
+
+<tt>runhere</tt> = '1' if running should take you to the current location (if
+'0', you should jet to another location)<br>
+<tt>loot</tt> = '1' if the attack resulted in a kill and a loot of the body<br>
+<tt>canfire</tt> = '1' if you are allowed to shoot at other players right
+now<br>
+<tt>text</tt> = explanatory text from the server, to be printed<br>
+<b>Answer required:</b> yes, depending on the message contents: usually a
+C_REQUESTJET or C_FIGHTACT message</dd>
+<p>
+
+<dt><a name="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
+<dd>Negotiates protocol extensions between client and server<br>
+<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)</tt><p>
+
+<a name="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather than
+player names to identify players in network messages ('0' otherwise). It is
+strongly recommended that this new protocol be used, as the old protocol is
+difficult to properly support, and is deprecated. However, the new protocol is
+only supported by servers of version 1.5.0 or above. (N.B. Since the old
+protocol does not support the C_ABILITIES message either, before the client and
+server have exchanged C_ABILITIES messages the server will "talk" using the old
+protocol. Thus, the C_ABILITIES message itself from the client, and any
+succeeding messages sent before the server sends C_ABILITIES back, must be
+sent using the old protocol. "Old" servers will ignore the C_ABILITIES
+message.) Ability name in dopewars code: <b>A_PLAYERID</b>
+<p>
+
+<a name="drugvalue"><tt>drugvalue</tt></a> = '1' if the server should keep track
+of how much players paid for their drugs, so that they can see whether they're
+getting a good deal when they come to sell them ('0' otherwise). Ability name
+in dopewars code: <b>A_DRUGVALUE</b>
+<p>
+
+<a name="newfight"><tt>newfight</tt></a> = '1' if we use the "new" fighting
+interface (documented here). Highly recommended. Ability name in dopewars
+code: <b>A_NEWFIGHT</b>
+<p>
+
+<a name="tstring"><tt>tstring</tt></a> = '1' if names of drugs etc. should be
+sent in the <a href="i18n.html">translated string</a> (tstring) notation;
+only necessary if you are supporting non-English languages. Ability name
+in dopewars code: <b>A_TSTRING</b>
+<p>
+
+e.g. "^^Ar1010" (N.B. the double ^ is a feature of the "old" protocol)</dd>
+
+</dl>
+
+<h2><a name="refclient">Client to server message reference</a></h2>
+
+<p>The messages are below are typically sent from the client to the server. Note
+that players do not communicate directly between each other, but always via.
+the server. Note also that some of these messages are also valid when sent
+from the server to the client.</p>
+
+<dl>
+
+<dt><b>C_MSG</b> ('<tt>E</tt>')</dt>
+<dd>Contains a message from one player to be broadcast to all connected
+players<br>
+<tt>data</tt> = the message to display<br>
+e.g. "^AEHello world"</dd>
+<p>
+
+<dt><b>C_MSGTO</b> ('<tt>F</tt>')</dt>
+<dd>Contains a private message from one player to another<br>
+<tt>data</tt> = the message to display<br>
+<tt>ID</tt> = the ID of the player to send the message to<br>
+e.g. "1^AFHello player"</dd>
+<p>
+
+<dt><b>C_BUYOBJECT</b> ('<tt>T</tt>')</dt>
+<dd>Requests the server to buy or sell an object<br>
+<tt>data</tt> = <tt>"type"^&lt;index&gt;^&lt;amount&gt;</tt><br>
+<tt>type</tt> = "bitch", "gun" or "drug"<br>
+<tt>index</tt> = the zero-based index of the gun/drug that you want to
+buy/sell, or zero if type="bitch"<br>
+<tt>amount</tt> = the number of objects to buy (or, if negative, to sell)<br>
+e.g. "^ATbitch^0^1"</dd>
+<p>
+
+<dt><b>C_DONE</b> ('<tt>U</tt>')</dt>
+<dd>Sent by the client when it's finished with the loan shark, bank, or gun
+shop<br>
+e.g. "^AU"</dd>
+<p>
+
+<dt><b>C_REQUESTJET</b> ('<tt>V</tt>')</dt>
+<dd>Asks the server to jet to a new location (or to run from a fight)<br>
+<tt>data</tt> = the numeric, zero-based, location to jet to<br>
+e.g. "^AV2"</dd>
+<p>
+
+<dt><b>C_PAYLOAN</b> ('<tt>W</tt>')</dt>
+<dd>Asks to pay back a loan to the loan shark<br>
+<tt>data</tt> = the amount of money to pay back<br>
+e.g. "^AW5000"</dd>
+<p>
+
+<dt><b>C_ANSWER</b> ('<tt>X</tt>')</dt>
+<dd>Sends the reply to a previous question from the server<br>
+<tt>data</tt> = the single character response<br>
+e.g. "^AXY"</dd>
+<p>
+
+<dt><b>C_DEPOSIT</b> ('<tt>Y</tt>')</dt>
+<dd>Asks to deposit money into (or withdraw money from) the bank<br>
+<tt>data</tt> = the amount of money to deposit, or (if negative) the amount
+to withdraw<br>
+e.g. "^AY10000"</dd>
+<p>
+
+<dt><a name="name"><b>C_NAME</b></a> ('<tt>c</tt>')</dt>
+<dd>Sent by the client to register the player name with the server<br>
+<tt>data</tt> = the player's name<br>
+N.B. this is always sent at the start of the game, in which case the old
+format should be used, e.g. "^^AcFred"</dd>
+<p>
+
+<dt><b>C_SACKBITCH</b> ('<tt>d</tt>')</dt>
+<dd>Requests that a bitch should be sacked<br>
+e.g. "^Ad"</dd>
+<p>
+
+<dt><b>C_TIPOFF</b> ('<tt>e</tt>')</dt>
+<dd>Asks the server to tip off the cops to another player<br>
+<tt>ID</tt> = the player ID to tip off the cops to<br>
+e.g. "1^Ae"</dd>
+<p>
+
+<dt><b>C_SPYON</b> ('<tt>f</tt>')</dt>
+<dd>Asks the server to spy on another player<br>
+<tt>ID</tt> = the player ID to spy on<br>
+e.g. "1^Af"</dd>
+<p>
+
+<dt><b>C_WANTQUIT</b> ('<tt>g</tt>')</dt>
+<dd>Tells the server that the client wishes to leave the game early<br>
+e.g. "^Ag"</dd>
+<p>
+
+<dt><b>C_CONTACTSPY</b> ('<tt>h</tt>')</dt>
+<dd>Asks the server to send back reports about all the players that we are
+currently spying on<br>
+e.g. "^Ah"</dd>
+<p>
+
+<dt><b>C_REQUESTSCORE</b> ('<tt>j</tt>')</dt>
+<dd>Asks the server to send back the high score list<br>
+e.g. "^Aj"</dd>
+<p>
+
+<dt><b>C_FIGHTACT</b> ('<tt>n</tt>')</dt>
+<dd>Responds to a previous C_FIGHTPRINT message<br>
+<tt>data</tt> = "<tt>F</tt>", "<tt>S</tt>", or "<tt>R</tt>"<br>
+<tt>F</tt> = return fire<br>
+<tt>S</tt> = stand and take it (do not return fire)<br>
+<tt>R</tt> = try to run away<br>
+N.B. If "runhere" is not set in the C_FIGHTPRINT message, the "R" response
+should not be sent - a C_REQUESTJET message should be sent instead.<br>
+e.g. "^AnF"</dd>
+<p>
+
+<dt><b>C_ABILITIES</b> ('<tt>r</tt>')</dt>
+<dd>Notifies the server of supported protocol features. See the explanation
+for the corresponding <a href="#abilities">server message</a>.<p>
+
+The client will receive this message in response to a previous C_ABILITIES
+message that it sent to the server. This reply message contains the abilities
+that the server is willing to support. The client should compare these to
+those that it previously offered, and then use only those abilities that both
+client and server support. (If the server does not support the new protocol,
+no C_ABILITIES reply message will be sent, and the client should assume that
+<b>no</b> abilities are supported.) The server will expect all client messages
+after the C_ABILITIES message to be compliant with these abilities.
+<p>
+
+e.g.<br>
+- client sends "1110" (supports everything except
+<a href="#tstring">A_TSTRING</a>)<br>
+- server responds with "1011" (supports everything except
+<a href="#drugvalue">A_DRUGVALUE</a>)<br>
+- client should adopt the abilities "1010" (
+<a href="#playerid">A_PLAYERID</a> and <a href="#newfight">A_NEWFIGHT</a>)</dd>
+
+</dl>
+
+<hr>
+<ul>
+<li><a href="index.html">Main index</a>
+<ul>
+<li><a href="developer.html">Notes for developers</a>
+</ul>
+</ul>
+<p>Last update: <b>25-10-2001</b></p>
+
+</body>
+</html>
