@@ -24,5 +24,5 @@
    (i.e. >= 1.2.10) */
 #undef HAVE_FIXED_GTK
 
-/* Do we have GTK+ 2.0 ? */
-#undef HAVE_GTK2
+/* Do we have GLIB 2.0 ? */
+#undef HAVE_GLIB2

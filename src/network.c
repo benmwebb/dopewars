@@ -1334,7 +1334,11 @@ static void StartHttpAuth(HttpConnection *conn, gboolean proxy,
   if (!conn->authfunc)
     return;
 
+#ifdef HAVE_GLIB2
+  split = g_strsplit(header, " ", 2);
+#else
   split = g_strsplit(header, " ", 1);
+#endif
 
   if (split[0] && split[1] && g_strcasecmp(split[0], "Basic") == 0 &&
       g_strncasecmp(split[1], "realm=", 6) == 0 && strlen(split[1]) > 6) {
@@ -1355,7 +1359,11 @@ static void ParseHtmlHeader(gchar *line, HttpConnection *conn,
   gchar **split, *host, *query;
   unsigned port;
 
+#ifdef HAVE_GLIB2
+  split = g_strsplit(line, " ", 2);
+#else
   split = g_strsplit(line, " ", 1);
+#endif
   if (split[0] && split[1]) {
     if (g_strcasecmp(split[0], "Location:") == 0 &&
         (conn->StatusCode == HEC_MOVETEMP
@@ -1393,7 +1401,11 @@ gchar *ReadHttpResponse(HttpConnection *conn, gboolean *doneOK)
     switch (conn->Status) {
     case HS_CONNECTING:        /* OK, we should have the HTTP status line */
       conn->Status = HS_READHEADERS;
+#ifdef HAVE_GLIB2
+      split = g_strsplit(msg, " ", 3);
+#else
       split = g_strsplit(msg, " ", 2);
+#endif
       if (split[0] && split[1]) {
         conn->StatusCode = atoi(split[1]);
       } else {

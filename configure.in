@@ -92,6 +92,7 @@ else
    glib2_found="no"
    if test "$USE_GLIB2" = "yes" ; then
      AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
+     AC_DEFINE(HAVE_GLIB2)
    fi
    if test "$glib2_found" = "no" ; then
      AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
@@ -117,16 +118,19 @@ else
    fi
 
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
-      dnl Tests for GTK
+      dnl Tests for GTK; N.B. bad things will happen if we use GTK+2 but
+      dnl GLIB1, or vice versa, so we try to stop that from happening.
       gtk2_found="no"
       if test "$USE_GLIB2" = "yes" ; then
         AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes")
       fi
       if test "$gtk2_found" = "yes" ; then
         HAVE_FIXED_GTK="yes"
-        AC_DEFINE(HAVE_GTK2)
       else
-        AM_PATH_GTK(1.2.0,gtk_found="yes",gtk_found="no")
+        gtk_found="no"
+        if test "$glib2_found" = "no" ; then
+          AM_PATH_GTK(1.2.0,gtk_found="yes")
+        fi
         if test "$gtk_found" = "no" ; then
            if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
              AC_MSG_ERROR(Cannot find GTK+)
