@@ -1,4 +1,4 @@
-cvs
+1.5.3   04-02-2002
     - Text-mode server is now non-interactive by default (server admin can
       connect later with the -A option)
     - Windows server can now be run as an NT Service
