@@ -17,6 +17,8 @@ The order of making dopewars settings is as follows:-
 <ol>
 <li>The global configuration file (if present) <b>/etc/dopewars</b>
 <li>The user-specific file (if present) <b>~/.dopewars</b>
+<li><i>(Windows only)</i> The file <b>dopewars-config.txt</b> in the current
+directory
 <li>Options specified on the <a href="commandline.html">command line</a>
 </ol>
 
@@ -24,10 +26,11 @@ Settings in a configuration file can set numbers, strings or "string lists".
 A numerical value is set with a command such as <b>Port=7902</b> (which sets
 the TCP port for mulitplayer connections to 7902).<p>
 
-String (text) values are set with commands such as <b>BankName="the bank"</b>
+String (text) values are set with commands such as <b>BankName='the bank'</b>
 (which sets the name of the bank). Notice that string values <b>must</b> be
-enclosed in quotes. Strings in double quotes understand escapes such as "\n";
-strings in single quotes do not treat backslash characters specially.<p>
+enclosed in quotes. Strings in double quotes understand escapes such as "\t";
+strings in single quotes do not treat backslash characters specially, and
+so should be used for Windows pathnames.<p>
 
 A string list is used for setting an array of strings; for example
 <b>SubwaySaying = { "Saying 1", "Saying 2", "Saying 3" }</b> sets up three
@@ -53,7 +56,7 @@ the parts in italics to customise your own server and client.<p>
 <li><a href="#metaserver">Metaserver configuration</a>
 <li><a href="#places">Basic configuration: places in the game</a>
 <li><a href="#drugs">Basic configuration: drug prices</a>
-<li><a href="#guns">Basic configuration: guns</a>
+<li><a href="#combat">Basic configuration: guns and fighting</a>
 <li><a href="#advanced">Advanced configuration</a>
 </ul>
 
@@ -159,9 +162,9 @@ The index within the square brackets can range from 1 to whatever
 NumLocation is set to above, or an error will be reported.
 
 <dt><b>Location[<i>4</i>].PolicePresence=<i>90</i></b>
-<dd>Sets the police presence in the <i>4th</i> location to <i>90%</i>. In
-theory this affects how likely it is for the police to catch players at
-each location; in practice, it has no effect (code not written yet - sorry!).
+<dd>Sets the police presence in the <i>4th</i> location to <i>90%</i>. This
+affects how likely it is for the police to attack players at each location
+when arriving, dropping drugs, or attacking other players.
 
 <dt><b>Location[<i>4</i>].MinDrug=<i>4</i></b>
 <dd>Sets the minimum possible number of different drugs that will be on sale
@@ -253,7 +256,7 @@ normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 <i>4</i>.
 </dl>
 
-<a name="guns"><h2>Basic configuration: guns</h2></a>
+<a name="combat"><h2>Basic configuration: guns and fighting</h2></a>
 <dl>
 <dt><b>NumGun=<i>4</i></b>
 <dd>Configures the game to have <i>4</i> guns available to players at the
@@ -272,9 +275,64 @@ of the value set here.
 inventory - i.e. carrying one of these guns uses the same spaces as 4 drugs.
 
 <dt><b>Gun[<i>3</i>].Damage=<i>4</i></b>
-<dd>Defines gun number <i>3</i> to do up to <i>4</i> points of damage - i.e.
-a successful hit with one of these guns decreases the target's health by
-up to 4 points.
+<dd>Defines gun number <i>3</i> to do up to <i>4</i> points of damage.
+
+<dt><b>PlayerArmour=<i>100</i></b>
+<dd>Sets the percentage armour rating of each player to <i>100</i> - this
+defines the amount of health that you lose when you are successfully hit.
+If 100, you lose the same number of health points as the gun's damage.
+If more than 100, you lose fewer health points, and if less than 100, you lose
+<b>more</b> health points than the gun's damage. This rating applies only
+when you have no bitches.
+
+<dt><b>BitchArmour=<i>50</i></b>
+<dd>Sets the percentage armour rating of each bitch to <i>50</i>.
+
+<dt><b>NumCop=<i>3</i></b>
+<dd>Configures the game to have <i>3</i> cops. If you kill the first one, you
+will later be attacked by the second one, and so on. (The last cop is 'undead'
+and will return even if you kill him.)
+
+<dt><b>Cop[<i>1</i>].Name=<i>Officer Hardass</i></b>
+<dd>Names the first cop to attack you <i>"Officer Hardass"</i>.
+
+<dt><b>Cop[<i>1</i>].DeputyName=<i>deputy</i></b>
+<dd>Names a solitary deputy accompanying the first cop <i>"deputy"</i>.
+
+<dt><b>Cop[<i>1</i>].DeputiesName=<i>deputies</i></b>
+<dd>Names more than one deputy accompanying the first cop <i>"deputies"</i>.
+
+<dt><b>Cop[<i>1</i>].Armour=<i>4</i></b>
+<dd>Sets the armour rating of the first cop to <i>4%</i>.
+
+<dt><b>Cop[<i>1</i>].DeputyArmour=<i>3</i></b>
+<dd>Sets the armour rating of the first cop's deputies to <i>3%</i>.
+
+<dt><b>Cop[<i>1</i>].AttackPenalty=<i>30</i></b>
+<dd>When attacking another player, whether you successfully hit them depends
+on whether your attack rating is greater than their defence rating, which are
+generally numbers between 0 and 100 (think of them as percentages). This
+penalises the first cop (and his deputies) by <i>30%</i> when attacking you.
+
+<dt><b>Cop[<i>1</i>].DefendPenalty=<i>30</i></b>
+<dd>Penalises the first cop (and his deputies) by <i>30%</i> when defending
+against a player.
+
+<dt><b>Cop[<i>1</i>].MinDeputies=<i>2</i></b>
+<dd>The first cop will be accompanied by a minimum of <i>2</i> deputies.
+
+<dt><b>Cop[<i>1</i>].MaxDeputies=<i>8</i></b>
+<dd>The first cop will be accompanied by a maximum of <i>8</i> deputies.
+
+<dt><b>Cop[<i>1</i>].GunIndex=<i>0</i></b>
+<dd>The first cop, and his deputies, will carry gun number <i>0</i>
+(zero-based).
+
+<dt><b>Cop[<i>1</i>].CopGun=<i>1</i></b>
+<dd>The first cop will carry <i>1</i> gun.
+
+<dt><b>Cop[<i>1</i>].DeputyGun=<i>1</i></b>
+<dd>The first cop's deputies will each carry <i>1</i> gun.
 </dl>
 
 <a name="advanced"><h2>Advanced configuration</h2></a>
@@ -331,34 +389,6 @@ takes at least 5 seconds.
 <dd>Each player will start the game with a debt to the loan shark of
 <i>$5,000</i>.
 
-<dt><b>Cops.EscapeProb=<i>70</i></b>
-<dd>Gives each player a <i>70%</i> chance of escaping successfully from 
-Officer Hardass or Bob on his own, if the player chooses to run
-
-<dt><b>Cops.DeputyEscape=<i>2</i></b>
-<dd>Decreases the probability of escaping from the cops by <i>2%</i> per
-deputy accompanying a police officer.
-
-<dt><b>Cops.HitProb=<i>65</i></b>
-<dd>Sets the probability of a lone policer officer hitting you in a firefight
-to <i>65%</i>.
-
-<dt><b>Cops.DeputyHit=<i>2</i></b>
-<dd>Increases the probability of the cops hitting you by <i>2%</i> per deputy
-accompanying a police officer.
-
-<dt><b>Cops.Damage=<i>5</i></b>
-<dd>Sets the maximum damage done to a player in a firefight with the cops
-to <i>5</i> per cop.
-
-<dt><b>Cops.Toughness=<i>2</i></b>
-<dd>Sets the difficulty of killing a cop to <i>2</i>. This works <b>against</b>
-the decreased difficulty provided by each extra gun a player has.
-
-<dt><b>Cops.DropProb=<i>30</i></b>
-<dd>Sets the probability that the cops will discover a player dropping drugs,
-and subsequently attack them, to <i>30%</i>.
-
 <dt><b>Names.Bitch=<i>"bitch"</i></b>
 <dd>Sets the word used to describe a single "bitch" in the game. Bitch, gun
 and drug names are automatically capitalised where necessary by the dopewars
@@ -389,14 +419,6 @@ is the month, in displaying the date in MM-DD-YYYY format)
 <dt><b>Names.Year=<i>"-1984"</i></b>
 <dd>Sets the text displayed to the immediate right of the current turn (by
 default, the year).
-
-<dt><b>Names.Officer=<i>"Hardass"</i></b>
-<dd>Sets the name of the first police officer to attack each player to
-<i>Hardass</i>.
-
-<dt><b>Names.ReserveOfficer=<i>"Bob"</i></b>
-<dd>Sets the name of the police officer which attacks the players if they
-kill the first one to <i>Bob</i>.
 
 <dt><b>Prices.Spy=<i>20000</i></b>
 <dd>Sets the price to pay a bitch to spy on another player to be
@@ -449,12 +471,16 @@ see <b>SubwaySaying</b> for more details.
 <dt><b>NumStoppedTo=<i>5</i></b>
 <dd>Sets there to be <i>5</i> distinct things which you can stop to do.
 
+<dt><b>DrugValue=<i>1</i></b>
+<dd>If non-zero, then the server will keep track of the price you paid for
+any drugs, and clients will display this information if available.
+
 </dl>
 
 <hr>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>09-09-2000</b>
+Last update: <b>29-04-2001</b>
 </body>
 </html>

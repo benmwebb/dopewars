@@ -9,32 +9,35 @@
 # An example of setting a numerical value
 MaxClients= 6
 
-/* An example of setting a string (text) value */
-HiScoreFile= "/var/lib/games/dopewars.sco"
+/* An example of setting a string (text) value (all strings should be quoted -
+   double-quotes can also be used, but these interpret C-style escape
+   sequences (like \t for a tab character) and so should be avoided, e.g, for
+   Windows path names) */
+HiScoreFile= '/var/lib/games/dopewars.sco'
 
 # An example of setting a string list value
-StoppedTo = { "drink a beer", "visit a friend",
-              "smoke a cigar" }
+StoppedTo = { 'drink a beer', 'visit a friend',
+              'smoke a cigar' }
 
 StartCash=2000000  # Start each player with $2million
 StartDebt=0
 Port=7904
-Pager="less"
+Pager='less'
 NumLocation=6
-Location[1].Name="Oxford"
-Location[2].Name="London"
-Location[3].Name="Birmingham"
-Location[4].Name="Manchester"
-Location[5].Name="Edinburgh"
-Location[6].Name="Milton Keynes"
+Location[1].Name='Oxford'
+Location[2].Name='London'
+Location[3].Name='Birmingham'
+Location[4].Name='Manchester'
+Location[5].Name='Edinburgh'
+Location[6].Name='Milton Keynes'
 
-Drug[1].Name="Smarties"
+Drug[1].Name='Smarties'
 Drug[1].Cheap=0
 Drug[1].Expensive=1
 Drug[1].MinPrice=5000
 Drug[1].MaxPrice=50000
 
-Gun[2].Name="Uzi 9mm"
+Gun[2].Name='Uzi 9mm'
 Gun[2].Price=500000
 Gun[2].Space=20
 Gun[2].Damage=50
