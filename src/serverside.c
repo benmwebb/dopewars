@@ -741,9 +741,8 @@ void StartServer() {
    }
 
 /* Initial startup message for the server */
-   g_print(_("dopewars server version %s ready and waiting for connections\n"
-             "on port %d. For assistance with server commands, enter the "
-             "command \"help\"\n"),VERSION,Port);
+   dopelog(0,_("dopewars server version %s ready and waiting for "
+               "connections on port %d."),VERSION,Port);
 
    if (listen(ListenSock,10)==SOCKET_ERROR) {
       perror("listen socket"); exit(1);
@@ -862,6 +861,7 @@ Player *HandleNewConnection(void) {
 }
 
 void StopServer() {
+   dopelog(0,_("dopewars server terminating."));
    g_scanner_destroy(Scanner);
    CleanUpServer();
    RemovePidFile();
@@ -887,12 +887,14 @@ void ServerLoop() {
    GSList *list,*nextlist;
    fd_set readfs,writefs,errorfs;
    int topsock;
-   gboolean InputClosed=FALSE;
+// gboolean InputClosed=FALSE;
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
    gboolean EndOfLine,DoneOK;
    gchar *buf;
+
+// if (fork()>0) return;
 
    StartServer();
 
@@ -901,7 +903,7 @@ void ServerLoop() {
       FD_ZERO(&readfs);
       FD_ZERO(&writefs);
       FD_ZERO(&errorfs);
-      if (!InputClosed) FD_SET(0,&readfs);
+//    if (!InputClosed) FD_SET(0,&readfs);
       FD_SET(ListenSock,&readfs);
       FD_SET(ListenSock,&errorfs);
       topsock=ListenSock+1;
@@ -921,7 +923,7 @@ void ServerLoop() {
          timeout.tv_sec=MinTimeout;
          timeout.tv_usec=0;
       }
-      if (bselect(topsock,&readfs,&writefs,&errorfs,
+      if (select(topsock,&readfs,&writefs,&errorfs,
                  MinTimeout==-1 ? NULL : &timeout)==-1) {
          if (errno==EINTR) {
             if (ReregisterRequest) {
@@ -937,7 +939,7 @@ void ServerLoop() {
          perror("select"); bgetch(); break;
       }
       FirstServer=HandleTimeouts(FirstServer);
-      if (FD_ISSET(0,&readfs)) {
+/*    if (FD_ISSET(0,&readfs)) {
          if (ReadServerKey(LineBuf,&EndOfLine)==FALSE) {
             if (isatty(0)) {
                RequestServerShutdown();
@@ -951,7 +953,7 @@ void ServerLoop() {
             if (IsServerShutdown()) break;
             g_string_truncate(LineBuf,0);
          }
-      }
+      }*/
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
