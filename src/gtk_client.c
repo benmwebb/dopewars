@@ -784,7 +784,8 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
 
 /* Display of number of bitches or deputies during combat (%tde="bitches"
    or "deputies" (etc.) by default) */
-   BitchText=dpg_strdup_printf(_("%d %tde"),DefendBitches,BitchName);
+   BitchText=dpg_strdup_printf(_("%/Combat: Bitches/%d %tde"),
+                               DefendBitches,BitchName);
 
 /* Display of health during combat */
    HealthText=g_strdup_printf(_("Health: %d"),DefendHealth);
@@ -911,7 +912,6 @@ void DisplayFightMessage(char *Data) {
 void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    gchar *prstr;
    GString *text;
-   gchar *tfmt,**tstr;
 
    text=g_string_new(NULL);
 
@@ -936,18 +936,18 @@ void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    gtk_label_set_text(GTK_LABEL(Status->DebtValue),prstr);
    g_free(prstr);
 
-/* Display of carried guns in GTK+ client status window */
-   tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
-   gtk_label_set_text(GTK_LABEL(Status->GunsName),tstr[0]);
-   tstring_free(tfmt,tstr);
+/* Display of carried guns in GTK+ client status window (%Tde="Guns"
+   by default) */
+   dpg_string_sprintf(text,_("%/GTK Stats: Guns/%Tde"),Names.Guns);
+   gtk_label_set_text(GTK_LABEL(Status->GunsName),text->str);
    g_string_sprintf(text,"%d",TotalGunsCarried(Play));
    gtk_label_set_text(GTK_LABEL(Status->GunsValue),text->str);
 
    if (!WantAntique) {
-/* Display of number of bitches in GTK+ client status window */
-      tstring_fmt(&tfmt,&tstr,_("**Stats: Bitches** %Tde"),Names.Bitches);
-      gtk_label_set_text(GTK_LABEL(Status->BitchesName),tstr[0]);
-      tstring_free(tfmt,tstr);
+/* Display of number of bitches in GTK+ client status window (%Tde="Bitches"
+   by default) */
+      dpg_string_sprintf(text,_("%/GTK Stats: Bitches/%Tde"),Names.Bitches);
+      gtk_label_set_text(GTK_LABEL(Status->BitchesName),text->str);
       g_string_sprintf(text,"%d",Play->Bitches.Carried);
       gtk_label_set_text(GTK_LABEL(Status->BitchesValue),text->str);
    } else {
@@ -2320,22 +2320,24 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
 
 void TransferDialog(gboolean Debt) {
    GtkWidget *dialog,*button,*label,*radio,*table,*vbox,*hbbox,*hsep,*entry;
-   gchar *text;
    GSList *group;
-   gchar *tfmt,**tstr;
+   GString *text;
+
+   text=g_string_new("");
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
                       GTK_SIGNAL_FUNC(SendDoneMessage),NULL);
    if (Debt) {
-      tstring_fmt(&tfmt,&tstr,
-                  _("**LoanShark window title** %Tde"),Names.LoanSharkName);
+/* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
+      dpg_string_sprintf(text,_("%/LoanShark window title/%Tde"),
+                         Names.LoanSharkName);
    } else {
-      tstring_fmt(&tfmt,&tstr,
-                  _("**BankName window title** %Tde"),Names.BankName);
+/* Title of bank dialog - (%Tde="The Bank" by default) */
+      dpg_string_sprintf(text,_("%/BankName window title/%Tde"),
+                         Names.LoanSharkName);
    }
-   gtk_window_set_title(GTK_WINDOW(dialog),tstr[0]);
-   tstring_free(tfmt,tstr);
+   gtk_window_set_title(GTK_WINDOW(dialog),text->str);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
@@ -2347,20 +2349,18 @@ void TransferDialog(gboolean Debt) {
    gtk_table_set_col_spacings(GTK_TABLE(table),4);
 
 /* Display of player's cash in bank or loan shark dialog */
-   text=dpg_strdup_printf(_("Cash: %P"),ClientData.Play->Cash);
-   label=gtk_label_new(text);
-   g_free(text);
+   dpg_string_sprintf(text,_("Cash: %P"),ClientData.Play->Cash);
+   label=gtk_label_new(text->str);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,0,1);
 
    if (Debt) {
 /* Display of player's debt in loan shark dialog */
-      text=dpg_strdup_printf(_("Debt: %P"),ClientData.Play->Debt);
+      dpg_string_sprintf(text,_("Debt: %P"),ClientData.Play->Debt);
    } else {
 /* Display of player's bank balance in bank dialog */
-      text=dpg_strdup_printf(_("Bank: %P"),ClientData.Play->Bank);
+      dpg_string_sprintf(text,_("Bank: %P"),ClientData.Play->Bank);
    }
-   label=gtk_label_new(text);
-   g_free(text);
+   label=gtk_label_new(text->str);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,1,2);
 
    gtk_object_set_data(GTK_OBJECT(dialog),"debt",GINT_TO_POINTER(Debt));
@@ -2411,6 +2411,8 @@ void TransferDialog(gboolean Debt) {
    gtk_container_add(GTK_CONTAINER(dialog),vbox);
 
    gtk_widget_show_all(dialog);
+
+   g_string_free(text,TRUE);
 }
 
 void ListPlayers(GtkWidget *widget,gpointer data) {
@@ -2829,7 +2831,7 @@ void NewNameDialog() {
 void GunShopDialog() {
    GtkWidget *window,*button,*hsep,*vbox,*hbox;
    GtkAccelGroup *accel_group;
-   gchar *tfmt,**tstr;
+   gchar *text;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_window_set_default_size(GTK_WINDOW(window),600,190);
@@ -2837,10 +2839,13 @@ void GunShopDialog() {
                       GTK_SIGNAL_FUNC(SendDoneMessage),NULL);
    accel_group=gtk_accel_group_new();
    gtk_window_add_accel_group(GTK_WINDOW(window),accel_group);
-   tstring_fmt(&tfmt,&tstr,
-               _("**GunShop window title** %Tde"),Names.GunShopName);
-   gtk_window_set_title(GTK_WINDOW(window),tstr[0]);
-   tstring_free(tfmt,tstr);
+
+/* Title of 'gun shop' dialog in GTK+ client (%Tde="Dan's House of Guns"
+   by default) */
+   text=dpg_strdup_printf(_("%/GTK GunShop window title/%Tde"),
+                          Names.GunShopName);
+   gtk_window_set_title(GTK_WINDOW(window),text);
+   g_free(text);
    gtk_window_set_modal(GTK_WINDOW(window),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(window),
                                 GTK_WINDOW(ClientData.window));

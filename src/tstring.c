@@ -78,56 +78,6 @@ gchar *GetTranslatedString(gchar *str,gchar *code,gboolean Caps) {
    return tstr;
 }
 
-void tstring_fmt(gchar **tformat,gchar ***tstrings,char *OrigFormat, ...) {
-   va_list ap;
-   GString *text;
-   int i;
-   gchar *str,*tstr,code[3],**strings;
-   GPtrArray *ptrarr;
-   gboolean Caps;
-
-   text=g_string_new("");
-   va_start(ap,OrigFormat);
-   ptrarr=g_ptr_array_new();
-
-   i=0;
-   while (i<strlen(OrigFormat)) {
-      g_string_append_c(text,OrigFormat[i]);
-      if (OrigFormat[i]=='%') {
-         i++;
-         if ((OrigFormat[i]=='T' || OrigFormat[i]=='t')
-             && i+2<strlen(OrigFormat)) {
-            Caps = (OrigFormat[i]=='T');
-            code[0]=OrigFormat[i+1];
-            code[1]=OrigFormat[i+2];
-            code[2]='\0';
-            i+=3;
-            g_string_append_c(text,'s');
-            str=va_arg(ap,char *);
-            tstr=GetTranslatedString(str,code,Caps);
-            g_ptr_array_add(ptrarr,(gpointer)tstr);
-         }
-      } else i++;
-   }
-   va_end(ap);
-   *tformat=text->str;
-   strings=g_new(char *,ptrarr->len+10);
-   for (i=0;i<ptrarr->len;i++) {
-      strings[i]=(gchar *)g_ptr_array_index(ptrarr,i);
-   }
-   strings[ptrarr->len]=NULL;
-   g_ptr_array_free(ptrarr,FALSE);
-   *tstrings=strings;
-   g_string_free(text,FALSE);
-}
-
-void tstring_free(gchar *tformat,gchar **tstrings) {
-   gchar **pt;
-   g_free(tformat);
-   for (pt=tstrings;*pt;pt++) g_free(*pt);
-   g_free(tstrings);
-}
-
 void GetNextFormat(int *Index,gchar *str,int *StartPos,
                    int *EndPos,int *FmtPos,gchar *Type,int *ArgNum,int *Wid,
                    int *Prec,char *Code) {

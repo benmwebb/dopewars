@@ -1205,7 +1205,6 @@ void print_status(Player *Play,char DispDrug) {
 /* right hand side of the screen; if FALSE, displays the carried guns. */
    int i,c;
    GString *text;
-   gchar *tfmt,**tstr;
 
    text=g_string_new(NULL);
    attrset(TitleAttr);
@@ -1293,10 +1292,10 @@ void print_status(Player *Play,char DispDrug) {
       if (WantAntique) mvaddstr(1,Width*3/4-5,_("Trenchcoat"));
       else {
 /* Title of the "drugs" window (the only important bit in this string is the
-   "%Tde" which is "Drugs" by default) */
-         tstring_fmt(&tfmt,&tstr,_("**Stats: Drugs** %Tde"),Names.Drugs);
-         mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
-         tstring_free(tfmt,tstr);
+   "%Tde" which is "Drugs" by default; the %/.../ part is ignored, so you
+   don't need to translate it; see doc/i18n.html) */
+         dpg_string_sprintf(text,_("%/Stats: Drugs/%Tde"),Names.Drugs);
+         mvaddstr(1,Width*3/4-strlen(text->str)/2,text->str);
       }
       for (i=0;i<NumDrug;i++) {
          if (Play->Drugs[i].Carried>0) {
@@ -1310,9 +1309,8 @@ void print_status(Player *Play,char DispDrug) {
    } else {
 /* Title of the "guns" window (the only important bit in this string is the
    "%Tde" which is "Guns" by default) */
-      tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
-      mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
-      tstring_free(tfmt,tstr);
+      dpg_string_sprintf(text,_("%/Stats: Guns/%Tde"),Names.Guns);
+      mvaddstr(1,Width*3/4-strlen(text->str)/2,text->str);
       for (i=0;i<NumGun;i++) {
          if (Play->Guns[i].Carried>0) {
 /* Display of carried guns (%tde="Baretta", etc. by default) */
@@ -1340,11 +1338,14 @@ void DisplaySpyReports(char *Data,Player *From,Player *To) {
    text=g_strdup_printf(_("Spy reports for %s"),GetPlayerName(From));
    mvaddstr(17,1,text); g_free(text);
 
-   text=dpg_strdup_printf(_("%Tde..."),Names.Drugs);
+/* Message displayed with a spy's list of drugs (%Tde="Drugs" by default) */
+   text=dpg_strdup_printf(_("%/Spy: Drugs/%Tde..."),Names.Drugs);
    mvaddstr(19,20,text); g_free(text);
    print_status(From,1); nice_wait();
    clear_line(19);
-   text=dpg_strdup_printf(_("%Tde..."),Names.Guns);
+
+/* Message displayed with a spy's list of guns (%Tde="Guns" by default) */
+   text=dpg_strdup_printf(_("%/Spy: Guns/%Tde..."),Names.Guns);
    mvaddstr(19,20,text); g_free(text);
    print_status(From,0); nice_wait();
 
