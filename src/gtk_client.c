@@ -1926,7 +1926,7 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
 }
 
 void display_intro(GtkWidget *widget,gpointer data) {
-   GtkWidget *dialog,*label,*table,*OKButton,*vbox,*hsep;
+   GtkWidget *dialog, *label, *table, *OKButton, *vbox, *hbox, *hsep;
    gchar *VersionStr;
    const int rows=6,cols=3;
    int i,j;
@@ -1989,9 +1989,19 @@ _("\nFor information on the command line options, type dopewars -h at your\n"
 "options.\n"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
-   label=gtk_url_new("http://dopewars.sourceforge.net/",
-                     "http://dopewars.sourceforge.net/");
-   gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
+   /* There must surely be a nicer way of making the URL
+    * centred - but I can't think of one...
+    */
+   hbox = gtk_hbox_new(FALSE, 0);
+   label = gtk_label_new("");
+   gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+   label = gtk_url_new("http://dopewars.sourceforge.net/",
+                       "http://dopewars.sourceforge.net/",
+                       WebBrowser);
+   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+   label = gtk_label_new("");
+   gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+   gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
 
    hsep=gtk_hseparator_new();
    gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
