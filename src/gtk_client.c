@@ -2158,10 +2158,29 @@ char GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   return TRUE;
 }
 
+static void PackCentredURL(GtkWidget *vbox, gchar *title, gchar *target,
+                           gchar *browser)
+{
+  GtkWidget *hbox, *label, *url;
+
+  /* There must surely be a nicer way of making the URL centred - but I
+   * can't think of one... */
+  hbox = gtk_hbox_new(FALSE, 0);
+  label = gtk_label_new("");
+  gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
+
+  url = gtk_url_new(title, target, browser);
+  gtk_box_pack_start(GTK_BOX(hbox), url, FALSE, FALSE, 0);
+    
+  label = gtk_label_new("");
+  gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+}
+
 void display_intro(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *label, *table, *OKButton, *vbox, *hbox, *hsep;
-  gchar *VersionStr;
+  GtkWidget *dialog, *label, *table, *OKButton, *vbox, *hsep;
+  gchar *VersionStr, *docindex;
   const int rows = 6, cols = 3;
   int i, j;
   gchar *table_data[6][3] = {
@@ -2233,17 +2252,12 @@ void display_intro(GtkWidget *widget, gpointer data)
                           "screen, listing the available options.\n"));
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
-  /* There must surely be a nicer way of making the URL centred - but I
-   * can't think of one... */
-  hbox = gtk_hbox_new(FALSE, 0);
-  label = gtk_label_new("");
-  gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
-  label = gtk_url_new("http://dopewars.sourceforge.net/",
-                      "http://dopewars.sourceforge.net/", WebBrowser);
-  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-  label = gtk_label_new("");
-  gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+  docindex = GetDocIndex();
+  PackCentredURL(vbox, "Local HTML documentation", docindex, WebBrowser);
+  g_free(docindex);
+
+  PackCentredURL(vbox, "http://dopewars.sourceforge.net/",
+                 "http://dopewars.sourceforge.net/", WebBrowser);
 
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
