@@ -727,6 +727,12 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    return g_slist_append(First,(gpointer)NewPlayer);
 }
 
+gboolean IsConnectedPlayer(Player *play) {
+/* Returns TRUE only if the given player has properly connected (i.e. has
+   a valid name) */
+  return (play && play->Name && play->Name[0]);
+}
+
 void UpdatePlayer(Player *Play) {
 /* Redimensions the Gun and Drug lists for "Play" */
    Play->Guns=(Inventory *)g_realloc(Play->Guns,NumGun*sizeof(Inventory));

@@ -274,6 +274,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
    GSList *list;
    struct timeval tv;
    gboolean Handled;
+
    if (ProcessMessage(Message,AIPlay,&From,&AI,&Code,
                       &Data,FirstClient)==-1) {
       g_warning("Bad network message. Oops."); return 0;

@@ -369,7 +369,9 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SetPlayerName(Play,Data);
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=Play && !IsCop(pt)) SendPlayerDetails(pt,Play,C_LIST);
+                  if (pt!=Play && IsConnectedPlayer(pt) && !IsCop(pt)) {
+                    SendPlayerDetails(pt,Play,C_LIST);
+                  }
                }
                SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
                RegisterWithMetaServer(TRUE,FALSE,TRUE);
@@ -380,7 +382,9 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                }
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=Play) SendPlayerDetails(Play,pt,C_JOIN);
+                  if (IsConnectedPlayer(pt) && pt!=Play) {
+                    SendPlayerDetails(Play,pt,C_JOIN);
+                  }
                }
                Play->EventNum=E_ARRIVE;
                SendPlayerData(Play);
@@ -525,8 +529,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          BroadcastToClients(C_NONE,C_MSG,Data,Play,Play);
          break;
       default:
-         g_warning("%s:%c:%s:%s",GetPlayerName(Play),Code,
-                                 GetPlayerName(To),Data);
+         dopelog(0,_("Unknown message: %s:%c:%s:%s"),GetPlayerName(Play),Code,
+                 GetPlayerName(To),Data);
          break;
    }
 }
@@ -536,6 +540,9 @@ void ClientLeftServer(Player *Play) {
 /* cleans up after them if necessary.                            */
    Player *tmp;
    GSList *list;
+
+   if (!IsConnectedPlayer(Play)) return;
+
    if (Play->EventNum==E_FIGHT || Play->EventNum==E_FIGHTASK) {
       WithdrawFromCombat(Play);
    }
@@ -1447,9 +1454,13 @@ void GuiServerLoop(gboolean is_service) {
 
 void FinishGame(Player *Play,char *Message) {
 /* Tells player "Play" that the game is over; display "Message" */
-   ClientLeftServer(Play);
    Play->EventNum=E_FINISH;
+   ClientLeftServer(Play);
    SendHighScores(Play,TRUE,Message);
+
+/* Blank the name, so that CountPlayers ignores this player */
+   SetPlayerName(Play,NULL);
+
 /* Make sure they do actually disconnect, eventually! */
    if (ConnectTimeout) {
       Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
@@ -1928,7 +1939,8 @@ void SendEvent(Player *To) {
          case E_ARRIVE:
             for (list=FirstServer;list;list=g_slist_next(list)) {
                Play=(Player *)list->data;
-               if (Play!=To && Play->IsAt==To->IsAt &&
+               if (IsConnectedPlayer(Play) && Play!=To &&
+                   Play->IsAt==To->IsAt &&
                    Play->EventNum==E_NONE && TotalGunsCarried(To)>0) {
                   text=g_strdup_printf(_("AE^%s is already here!^"
                                          "Do you Attack, or Evade?"),
@@ -2392,6 +2404,11 @@ void WithdrawFromCombat(Player *Play) {
    GSList *list;
    gchar *text;
 
+   for (list=FirstServer;list;list=g_slist_next(list)) {
+      Attack=(Player *)list->data;
+      if (Attack->Attacking==Play) Attack->Attacking=NULL;
+   }
+
    if (!Play->FightArray) return;
 
    ResolveTipoff(Play);
@@ -2404,11 +2421,6 @@ void WithdrawFromCombat(Player *Play) {
              IsOpponent(Attack,Defend)) { FightDone=FALSE; break; }
       }
       if (!FightDone) break;
-   }
-
-   for (list=FirstServer;list;list=g_slist_next(list)) {
-      Attack=(Player *)list->data;
-      if (Attack->Attacking==Play) Attack->Attacking=NULL;
    }
 
    SendFightLeave(Play,FightDone);
@@ -2734,6 +2746,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          break;
    } else if (From->EventNum==E_ARRIVE) {
       if ((answer[0]=='A' || answer[0]=='T') && 
+          IsConnectedPlayer(From->OnBehalfOf) &&
           g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
          Defender=From->OnBehalfOf;
          From->OnBehalfOf=NULL; /* So we don't think it was a tipoff */
@@ -2995,6 +3008,8 @@ GSList *HandleTimeouts(GSList *First) {
          dopelog(1,_("Player removed due to idle timeout"));
          SendPrintMessage(NULL,C_NONE,Play,"Disconnected due to idle timeout");
          ClientLeftServer(Play);
+/* Blank the name, so that CountPlayers ignores this player */
+         SetPlayerName(Play,NULL);
 /* Make sure they do actually disconnect, eventually! */
          if (ConnectTimeout) {
             Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
@@ -3003,7 +3018,8 @@ GSList *HandleTimeouts(GSList *First) {
          Play->ConnectTimeout=0;
          dopelog(1,_("Player removed due to connect timeout"));
          First=RemovePlayer(Play,First);
-      } else if (Play->FightTimeout!=0 && Play->FightTimeout<=timenow) {
+      } else if (IsConnectedPlayer(Play) &&
+                 Play->FightTimeout!=0 && Play->FightTimeout<=timenow) {
          ClearFightTimeout(Play);
          if (IsCop(Play)) Fire(Play);
          else SendFightReload(Play);

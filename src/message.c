@@ -433,12 +433,15 @@ void BroadcastToClients(AICode AI,MsgCode Code,char *Data,
 /* Sends the message made up of AI,Code and Data to all players except     */
 /* "Except" (if non-NULL). It will be sent by the server, and on behalf of */
 /* player "From"                                                           */
-   Player *tmp;
-   GSList *list;
-   for (list=FirstServer;list;list=g_slist_next(list)) {
-      tmp=(Player *)list->data;
-      if (tmp!=Except) SendServerMessage(From,AI,Code,tmp,Data);
-   }
+  Player *tmp;
+  GSList *list;
+
+  for (list=FirstServer;list;list=g_slist_next(list)) {
+    tmp=(Player *)list->data;
+    if (IsConnectedPlayer(tmp) && tmp!=Except) {
+      SendServerMessage(From,AI,Code,tmp,Data);
+    }
+  }
 }
 
 void SendInventory(Player *From,AICode AI,MsgCode Code,
