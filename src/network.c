@@ -442,13 +442,8 @@ static void SendHttpRequest(HttpConnection *conn) {
 
    text=g_string_new("");
 
-   if (conn->Redirect) {
-      g_string_sprintf(text,"%s %s HTTP/1.0",conn->Method,conn->Redirect);
-      g_free(conn->Redirect); conn->Redirect=NULL;
-   } else {
-      g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
-                       conn->Method,conn->HostName,conn->Port,conn->Query);
-   }
+   g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
+                    conn->Method,conn->HostName,conn->Port,conn->Query);
    QueueMessageForSend(&conn->NetBuf,text->str);
 
    if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
@@ -482,8 +477,8 @@ static gboolean StartHttpConnect(HttpConnection *conn) {
 
 gboolean OpenHttpConnection(HttpConnection **connpt,gchar *HostName,
                             unsigned Port,gchar *Proxy,unsigned ProxyPort,
-                            gchar *Method,gchar *Query,gchar *Headers,
-                            gchar *Body) {
+                            gchar *Method,gchar *Query,
+                            gchar *Headers,gchar *Body) {
    HttpConnection *conn;
    g_assert(HostName && Method && Query && connpt);
 
@@ -515,12 +510,72 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn->Query);
    g_free(conn->Headers);
    g_free(conn->Body);
-   g_free(conn->Redirect);
+   g_free(conn->RedirHost);
+   g_free(conn->RedirQuery);
    g_free(conn);
 }
 
 gboolean IsHttpError(HttpConnection *conn) {
    return IsError(&conn->NetBuf.error);
+}
+
+static gboolean ParseHtmlLocation(gchar *uri,gchar **host,unsigned *port,
+                                  gchar **query) {
+  gchar *uris,*colon,*slash;
+
+  uris = g_strstrip(uri);
+  if (!uris || strlen(uris)<7 ||
+      g_strncasecmp(uris,"http://",7)!=0) return FALSE;
+
+  uris+=7; /* skip to hostname */
+
+/* ':' denotes the port to connect to */
+  colon = strchr(uris,':');
+  if (colon && colon==uris) return FALSE; /* No hostname */
+
+/* '/' denotes the start of the path of the HTML file */
+  slash = strchr(uris,'/');
+  if (slash && slash==uris) return FALSE; /* No hostname */
+
+  if (colon && (!slash || slash>colon)) {
+    if (slash) *slash='\0';
+    *port = atoi(colon+1);
+    if (slash) *slash='\\';
+    if (*port==0) return FALSE; /* Invalid port */
+    *host = g_strndup(uris,colon-uris);
+  } else {
+    *port=80;
+    if (slash) *host=g_strndup(uris,slash-uris);
+    else *host=g_strdup(uris);
+  }
+
+  if (slash) {
+    *query = g_strdup(slash);
+  } else {
+    *query = g_strdup("/");
+  }
+  return TRUE;
+}
+
+static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
+  gchar **split,*host,*query;
+  unsigned port;
+
+  split=g_strsplit(line," ",1);
+  if (split[0] && split[1]) {
+    if (g_strcasecmp(split[0],"Location:")==0 &&
+        (conn->StatusCode==302 || conn->StatusCode==301)) {
+      if (ParseHtmlLocation(split[1],&host,&port,&query)) {
+        g_print("Redirect to %s:%u%s\n",host,port,query);
+        g_free(conn->RedirHost); g_free(conn->RedirQuery);
+        conn->RedirHost=host; conn->RedirQuery=query;
+        conn->RedirPort=port;
+      } else {
+        g_print("FIXME: Bad redirect\n");
+      }
+    }
+  }
+  g_strfreev(split);
 }
 
 gchar *ReadHttpResponse(HttpConnection *conn) {
@@ -539,18 +594,7 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          break;
       case HS_READHEADERS:
          if (msg[0]==0) conn->Status=HS_READSEPARATOR;
-         else {
-            split=g_strsplit(msg," ",1);
-            if (split[0] && split[1]) {
-               if (conn->StatusCode==302 && strcmp(split[0],"Location:")==0) {
-                  g_print("Redirect to %s\n",split[1]);
-                  g_free(conn->Redirect);
-                  conn->Redirect = g_strdup(split[1]);
-               }
-/*             g_print("Header %s (value %s) read\n",split[0],split[1]);*/
-            }
-            g_strfreev(split);
-         }
+         else ParseHtmlHeader(msg,conn);
          break;
       case HS_READSEPARATOR:
          conn->Status=HS_READBODY;
@@ -564,11 +608,22 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
 gboolean HandleHttpCompletion(HttpConnection *conn) {
    NBCallBack CallBack;
    gpointer CallBackData;
-   if (conn->Redirect) {
-      g_print("Following redirect\n");
+   if (conn->RedirHost) {
+      g_print("Following redirect to %s\n",conn->RedirHost);
       CallBack=conn->NetBuf.CallBack;
       CallBackData=conn->NetBuf.CallBackData;
       ShutdownNetworkBuffer(&conn->NetBuf);
+      g_free(conn->HostName); g_free(conn->Query);
+      conn->HostName = conn->RedirHost;
+      conn->Query = conn->RedirQuery;
+      conn->Port = conn->RedirPort;
+      conn->RedirHost = conn->RedirQuery = NULL;
+
+      if (conn->Tries>=5) {
+         g_print("FIXME: Number of tries exceeded\n");
+         return TRUE;
+      }
+
       if (StartHttpConnect(conn)) {
          SendHttpRequest(conn);
          SetNetworkBufferCallBack(&conn->NetBuf,CallBack,CallBackData);

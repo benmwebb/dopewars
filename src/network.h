@@ -95,7 +95,9 @@ typedef struct _HttpConnection {
    gchar *Query;          /* e.g. the path of the desired webpage */
    gchar *Headers;        /* if non-NULL, e.g. Content-Type */
    gchar *Body;           /* if non-NULL, data to send */
-   gchar *Redirect;       /* if non-NULL, a URL to redirect to */
+   gchar *RedirHost;      /* if non-NULL, a hostname to redirect to */
+   gchar *RedirQuery;     /* if non-NULL, the path to redirect to */
+   unsigned RedirPort;    /* The port on the host to redirect to */
    NetworkBuffer NetBuf;  /* The actual network connection itself */
    gint Tries;            /* Number of requests actually sent so far */
    gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
