@@ -35,22 +35,16 @@ void *brealloc(void *pt,UINT numbytes) {
   UINT numcp;
   void *newpt;
   if (!pt && numbytes) return bmalloc(numbytes);
-  else if (pt && !numbytes) bfree(pt);
-  else if (pt && numbytes) {
-    localpt = LocalReAlloc((HLOCAL)pt,numbytes,0);
-    if (localpt) return (void *)localpt;
-    else if (GetLastError()==ERROR_LOCKED) { /* OK, we'll do it the hard way */
-      newpt=bmalloc(numbytes);
-      memset(newpt,0,numbytes);
-      numcp = LocalSize((HLOCAL)pt);
-      if (numbytes < numcp) numcp = numbytes;
-      memcpy((char *)newpt,(char *)pt,numcp);
-      bfree(pt);
-      return newpt;
-    } else {
-      DisplayError("Could not reallocate memory: ",TRUE,TRUE);
-      ExitProcess(1);
-    }
+  else if (pt && !numbytes) {
+    bfree(pt);
+  } else if (pt && numbytes) {
+    newpt=bmalloc(numbytes);
+    memset(newpt,0,numbytes);
+    numcp = LocalSize((HLOCAL)pt);
+    if (numbytes < numcp) numcp = numbytes;
+    memcpy((char *)newpt,(char *)pt,numcp);
+    bfree(pt);
+    return newpt;
   }
   return NULL;
 }
@@ -90,13 +84,11 @@ void bstr_expandby(bstr *str,unsigned extralength) {
 }
 
 void bstr_setlength(bstr *str,unsigned length) {
-  if (length+1 <= str->bufsiz) {
-    if (length < str->length) {
-      str->length = length;
-      str->text[length]='\0';
-    }
+  if (length <= str->length) {
+    str->length = length;
+    str->text[length]='\0';
   } else {
-    bstr_expandby(str,length+1-str->bufsiz);
+    bstr_expandby(str,length-str->length);
   }
 }
 
