@@ -29,8 +29,10 @@ guifunc.o: guifunc.c guifunc.h
 
 manifest installfiles.gz: filelist makeinstall uninstall
 	sed -e 's/LICENCE/licence.txt/' < ../doc/index.html > index.html
+	sed -e 's/LICENCE/licence.txt/' < ../doc/developer.html > developer.html
+	sed -e 's/example-cfg/example-cfg.txt/' < ../doc/configfile.html > configfile.html
 	./makeinstall
-	/bin/rm -f index.html
+	/bin/rm -f index.html configfile.html developer.html
 
 setup.res: setup.rc dialogs.rc contid.h manifest installfiles.gz
 	windres -O coff -o setup.res setup.rc
