@@ -123,6 +123,11 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          g_set_print_handler(WindowPrintFunc);
          HandleHelpTexts();
          WindowPrintEnd();
+      } else if (WantConvert) {
+         WindowPrintStart();
+         g_set_print_handler(WindowPrintFunc);
+         ConvertHighScoreFile();
+         WindowPrintEnd();
       } else {
 #ifdef NETWORKING
          StartNetworking();
