@@ -1618,6 +1618,8 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    GtkAdjustment *adj;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
+   InitHighScoreFile();
+
 #ifdef CYGWIN
    win32_init(hInstance,hPrevInstance);
 #else
@@ -1709,6 +1711,8 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    gtk_widget_show(window);
 
    gtk_main();
+
+   CloseHighScoreFile();
    return TRUE;
 }
 

@@ -1824,6 +1824,8 @@ void CursesLoop() {
    start_curses();
    Width=COLS; Depth=LINES;
 
+   InitHighScoreFile();
+
 /* Set up message handlers */
    ClientMessageHandlerPt = HandleClientMessage;
    SocketWriteTestPt = NULL;
@@ -1849,6 +1851,8 @@ void CursesLoop() {
    }
    g_free(Name);
    end_curses();
+
+   CloseHighScoreFile();
 }
 
 #else

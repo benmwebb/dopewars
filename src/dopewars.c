@@ -43,8 +43,6 @@
 #include "tstring.h"
 #include "AIPlayer.h"
 
-static gid_t RealGID,EffGID;
-
 int ClientSock,ListenSock;     
 char Network,Client,Server,NotifyMetaServer,AIPlayer;
 /* dopewars acting as standalone TCP server:
@@ -1666,25 +1664,10 @@ void HandleCmdLine(int argc,char *argv[]) {
    }
 }
 
-void GetGroupIDs() {
-   RealGID = getgid();
-   EffGID = getegid();
-}
-
-void DropPrivileges() {
-   if (setgid(RealGID)!=0) perror("setgid");
-}
-
-void GoPrivileged() {
-   if (setgid(EffGID)!=0) perror("setgid");
-}
-
 #ifndef CYGWIN
 
 /* Standard program entry - Win32 uses WinMain() instead, in winmain.c */
 int main(int argc,char *argv[]) {
-   GetGroupIDs();
-   DropPrivileges();
 #ifdef ENABLE_NLS
    setlocale(LC_ALL,"");
    bindtextdomain(PACKAGE,LOCALEDIR);

@@ -405,7 +405,4 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
 void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                     GScanner *scanner);
 gboolean IsCop(Player *Play);
-void GetGroupIDs();
-void DropPrivileges();
-void GoPrivileged();
 #endif

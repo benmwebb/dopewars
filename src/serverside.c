@@ -65,6 +65,9 @@ GSList *FirstServer=NULL;
 
 static GScanner *Scanner;
 
+/* Handle to the high score file */
+static FILE *ScoreFP=NULL;
+
 /* Pointer to the filename of a pid file (if non-NULL) */
 char *PidFile;
 
@@ -564,14 +567,9 @@ gboolean ReadServerKey(GString *LineBuf,gboolean *EndOfLine) {
 void StartServer() {
    struct sockaddr_in ServerAddr;
    struct sigaction sact;
+
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
-   if (!CheckHighScoreFile()) {
-      g_error(_("Cannot open high score file %s.\n"
-                "Either ensure you have permissions to access this file and "
-                "directory, or\nspecify an alternate high score file with "
-                "the -f command line option."),HiScoreFile);
-   }
    CreatePidFile();
 
 /* Make the output line-buffered, so that the log file (if used) is */
@@ -741,6 +739,8 @@ void ServerLoop() {
    GString *LineBuf;
    gboolean EndOfLine;
 
+   InitHighScoreFile();
+
    StartServer();
 
    LineBuf=g_string_new("");
@@ -826,6 +826,8 @@ void ServerLoop() {
    }
    StopServer();
    g_string_free(LineBuf,TRUE);
+
+   CloseHighScoreFile();
 }
 #endif /* NETWORKING */
 
@@ -872,33 +874,39 @@ void HighScoreTypeWrite(struct HISCORE *HiScore,FILE *fp) {
    }
 }
 
-gboolean CheckHighScoreFile() {
-/* Tests to see whether the high score file is is read-and-writable        */
-   FILE *fp;
-   GoPrivileged();
-   fp=fopen(HiScoreFile,"a+");
-   DropPrivileges();
-   if (fp) {
-      fclose(fp);
-      return TRUE;
-   } else {
-      return FALSE;
+void CloseHighScoreFile() {
+/* Closes the high score file opened by InitHighScoreFile, below */
+   if (ScoreFP) fclose(ScoreFP);
+}
+
+void InitHighScoreFile() {
+/* Opens the high score file for later use, and then drops privileges.      */
+/* If the high score file cannot be found, exits the program with an error. */
+
+   if (ScoreFP) return;  /* If already opened, then we're done */
+
+   ScoreFP=fopen(HiScoreFile,"a+");
+
+   if (setregid(getgid(),getgid())!=0) perror("setregid");
+
+   if (!ScoreFP) {
+      g_warning(_("Cannot open high score file %s.\n"
+                "Either ensure you have permissions to access this file and "
+                "directory, or\nspecify an alternate high score file with "
+                "the -f command line option."),HiScoreFile);
+      exit(1);
    }
 }
 
 int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 /* Reads all the high scores into MultiScore and                           */
 /* AntiqueScore (antique mode scores). Returns 1 on success, 0 on failure. */
-   FILE *fp;
    memset(MultiScore,0,sizeof(struct HISCORE)*NUMHISCORE);
    memset(AntiqueScore,0,sizeof(struct HISCORE)*NUMHISCORE);
-   GoPrivileged();
-   fp=fopen(HiScoreFile,"r");
-   DropPrivileges();
-   if (fp) {
-      HighScoreTypeRead(AntiqueScore,fp);
-      HighScoreTypeRead(MultiScore,fp);
-      fclose(fp);
+   if (ScoreFP) {
+      rewind(ScoreFP);
+      HighScoreTypeRead(AntiqueScore,ScoreFP);
+      HighScoreTypeRead(MultiScore,ScoreFP);
    } else return 0;
    return 1;
 }
@@ -906,14 +914,11 @@ int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 /* Writes out all the high scores from MultiScore and AntiqueScore; returns */
 /* 1 on success, 0 on failure.                                              */
-   FILE *fp;
-   GoPrivileged();
-   fp=fopen(HiScoreFile,"w");
-   DropPrivileges();
-   if (fp) {
-      HighScoreTypeWrite(AntiqueScore,fp);
-      HighScoreTypeWrite(MultiScore,fp);
-      fclose(fp);
+   if (ScoreFP) {
+      ftruncate(fileno(ScoreFP),0);
+      rewind(ScoreFP);
+      HighScoreTypeWrite(AntiqueScore,ScoreFP);
+      HighScoreTypeWrite(MultiScore,ScoreFP);
    } else return 0;
    return 1;
 }
