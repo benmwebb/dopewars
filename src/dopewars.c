@@ -95,6 +95,7 @@ gint ConfigErrors = 0;
 ClientType WantedClient;
 int NumLocation = 0, NumGun = 0, NumCop = 0, NumDrug = 0, NumSubway = 0;
 int NumPlaying = 0, NumStoppedTo = 0;
+int DebtInterest = 10, BankInterest = 5;
 Player Noone;
 int LoanSharkLoc = DEFLOANSHARK, BankLoc = DEFBANK, GunShopLoc =
     DEFGUNSHOP;
@@ -371,6 +372,12 @@ struct GLOBALS Globals[] = {
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {&RoughPubLoc, NULL, NULL, NULL, NULL, "RoughPub",
    N_("Location of the pub"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {&DebtInterest, NULL, NULL, NULL, NULL, "DebtInterest",
+   N_("Daily interest rate on the loan shark debt"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {&BankInterest, NULL, NULL, NULL, NULL, "BankInterest",
+   N_("Daily interest rate on your bank balance"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Names.LoanSharkName, NULL, "LoanSharkName",
    N_("Name of the loan shark"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},

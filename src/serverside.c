@@ -524,8 +524,10 @@ void HandleServerMessage(gchar *buf, Player *Play)
               GetPlayerName(Play), Location[i].Name);
       Play->IsAt = i;
       Play->Turn++;
-      Play->Debt = (price_t)((float)Play->Debt * 1.1);
-      Play->Bank = (price_t)((float)Play->Bank * 1.05);
+      Play->Debt = Play->Debt * (DebtInterest + 100) / 100;
+      Play->Debt = MAX(Play->Debt, 0);
+      Play->Bank = Play->Bank * (BankInterest + 100) / 100;
+      Play->Bank = MAX(Play->Bank, 0);
       SendPlayerData(Play);
       Play->EventNum = E_SUBWAY;
       SendEvent(Play);

@@ -167,6 +167,7 @@ extern unsigned Port;
 extern gboolean Sanitized, ConfigVerbose, DrugValue;
 extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
+extern int DebtInterest, BankInterest;
 extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
 	     *WantedPlugin, *BindAddress;
 extern gboolean WantHelp, WantVersion, WantAntique, WantColour,
