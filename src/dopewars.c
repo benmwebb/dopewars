@@ -1952,18 +1952,25 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
       g_print(_("%s[%d] is %s\n"), GlobalName, StructIndex,
               (*(Globals[GlobalIndex].StringList))[StructIndex - 1]);
     } else {
+      GString *text;
+
+      text = g_string_new("");
       /* Display of the first part of an entire string list config. file
        * variable - e.g. "StoppedTo is { " (followed by "have a beer",
        * "smoke a joint" etc.) */
-      g_print(_("%s is { "), GlobalName);
+      g_string_sprintf(text, _("%s is { "), GlobalName);
       if (Globals[GlobalIndex].MaxIndex) {
         for (i = 0; i < *(Globals[GlobalIndex].MaxIndex); i++) {
           if (i > 0)
-            g_print(", ");
-          g_print("\"%s\"", (*(Globals[GlobalIndex].StringList))[i]);
+            g_string_append(text, ", ");
+          g_string_sprintfa(text, "\"%s\"",
+                            (*(Globals[GlobalIndex].StringList))[i]);
         }
       }
-      g_print(" }\n");
+      g_string_append(text, " }\n");
+
+      g_print(text->str);
+      g_string_free(text, TRUE);
     }
   }
   if (Globals[GlobalIndex].NameStruct[0])
@@ -2119,6 +2126,7 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
   }
   if (Globals[GlobalIndex].NameStruct[0])
     g_free(GlobalName);
+
   return TRUE;
 }
 
