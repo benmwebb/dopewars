@@ -41,6 +41,7 @@
 #include "nls.h"
 
 #if CYGWIN || !HAVE_GLIB2
+#include "unicodewrap.h"
 const gchar *GTK_STOCK_OK = N_("_OK");
 const gchar *GTK_STOCK_CLOSE = N_("_Close");
 const gchar *GTK_STOCK_CANCEL = N_("_Cancel");
@@ -1941,7 +1942,7 @@ void gtk_editable_delete_text(GtkEditable *editable,
 
   hWnd = widget->hWnd;
   if (hWnd) {
-    SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)editable->text->str);
+    mySetWindowText(hWnd, editable->text->str);
   }
 }
 
@@ -2325,12 +2326,12 @@ void gtk_window_realize(GtkWidget *widget)
   Parent = gtk_get_parent_hwnd(widget->parent);
   if (Parent) {
     widget->hWnd = CreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
-    SetWindowText(widget->hWnd, win->title);
+    mySetWindowText(widget->hWnd, win->title);
   } else {
-    widget->hWnd = CreateWindow("mainwin", win->title,
-                                WS_OVERLAPPEDWINDOW | CS_HREDRAW |
-                                CS_VREDRAW | resize, CW_USEDEFAULT, 0, 0,
-                                0, Parent, NULL, hInst, NULL);
+    widget->hWnd = myCreateWindow("mainwin", win->title,
+                                  WS_OVERLAPPEDWINDOW | CS_HREDRAW |
+                                  CS_VREDRAW | resize, CW_USEDEFAULT, 0, 0,
+                                  0, Parent, NULL, hInst, NULL);
     if (!TopLevel)
       TopLevel = widget->hWnd;
   }
@@ -2383,14 +2384,14 @@ void gtk_button_realize(GtkWidget *widget)
 
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow("BUTTON", but->text,
-                              WS_CHILD | WS_TABSTOP |
-                              (GTK_WIDGET_FLAGS(widget) & GTK_IS_DEFAULT ?
-                               BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow("BUTTON", but->text,
+                                WS_CHILD | WS_TABSTOP |
+                                (GTK_WIDGET_FLAGS(widget) & GTK_IS_DEFAULT ?
+                                 BS_DEFPUSHBUTTON : BS_PUSHBUTTON),
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
   gtk_set_default_font(widget->hWnd);
 }
 
@@ -2400,12 +2401,12 @@ void gtk_entry_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
-                                WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
-                                widget->allocation.x, widget->allocation.y,
-                                widget->allocation.width,
-                                widget->allocation.height, Parent, NULL,
-                                hInst, NULL);
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
+                                  WS_CHILD | WS_TABSTOP | ES_AUTOHSCROLL,
+                                  widget->allocation.x, widget->allocation.y,
+                                  widget->allocation.width,
+                                  widget->allocation.height, Parent, NULL,
+                                  hInst, NULL);
   /* Subclass the window (we assume that all edit boxes have the same
    * window procedure) */
   wpOrigEntryProc = (WNDPROC)SetWindowLong(widget->hWnd,
@@ -2416,8 +2417,7 @@ void gtk_entry_realize(GtkWidget *widget)
                             GTK_EDITABLE(widget)->is_editable);
   gtk_entry_set_visibility(GTK_ENTRY(widget),
                            GTK_ENTRY(widget)->is_visible);
-  SendMessage(widget->hWnd, WM_SETTEXT, 0,
-              (LPARAM)GTK_EDITABLE(widget)->text->str);
+  mySetWindowText(widget->hWnd, GTK_EDITABLE(widget)->text->str);
 }
 
 void gtk_text_realize(GtkWidget *widget)
@@ -2428,12 +2428,12 @@ void gtk_text_realize(GtkWidget *widget)
   Parent = gtk_get_parent_hwnd(widget);
   editable = GTK_EDITABLE(widget)->is_editable;
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
-                                WS_CHILD | (editable ? WS_TABSTOP : 0) |
-                                ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL |
-                                (GTK_TEXT(widget)->word_wrap ?
-                                 0 : ES_AUTOHSCROLL), 0, 0, 0,
-                                0, Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
+                                  WS_CHILD | (editable ? WS_TABSTOP : 0) |
+                                  ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL |
+                                  (GTK_TEXT(widget)->word_wrap ?
+                                   0 : ES_AUTOHSCROLL), 0, 0, 0,
+                                  0, Parent, NULL, hInst, NULL);
   /* Subclass the window (we assume that all multiline edit boxes have the 
    * same window procedure) */
   wpOrigTextProc = (WNDPROC)SetWindowLong(widget->hWnd,
@@ -2442,8 +2442,7 @@ void gtk_text_realize(GtkWidget *widget)
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
-  SendMessage(widget->hWnd, WM_SETTEXT, 0,
-              (LPARAM)GTK_EDITABLE(widget)->text->str);
+  mySetWindowText(widget->hWnd, GTK_EDITABLE(widget)->text->str);
 }
 
 void gtk_frame_realize(GtkWidget *widget)
@@ -2453,12 +2452,12 @@ void gtk_frame_realize(GtkWidget *widget)
 
   gtk_container_realize(widget);
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow("BUTTON", frame->text,
-                              WS_CHILD | BS_GROUPBOX,
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow("BUTTON", frame->text,
+                                WS_CHILD | BS_GROUPBOX,
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
   gtk_set_default_font(widget->hWnd);
 }
 
@@ -2470,12 +2469,12 @@ void gtk_check_button_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindow("BUTTON", but->text,
-                              WS_CHILD | WS_TABSTOP | BS_CHECKBOX,
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow("BUTTON", but->text,
+                                WS_CHILD | WS_TABSTOP | BS_CHECKBOX,
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   gtk_signal_connect(GTK_OBJECT(widget), "clicked",
                      gtk_toggle_button_toggled, NULL);
@@ -2494,12 +2493,12 @@ void gtk_radio_button_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindow("BUTTON", but->text,
-                              WS_CHILD | WS_TABSTOP | BS_RADIOBUTTON,
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow("BUTTON", but->text,
+                                WS_CHILD | WS_TABSTOP | BS_RADIOBUTTON,
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   gtk_signal_connect(GTK_OBJECT(widget), "clicked",
                      gtk_radio_button_clicked, NULL);
@@ -2725,12 +2724,12 @@ void gtk_label_realize(GtkWidget *widget)
   HWND Parent;
 
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow("STATIC", label->text,
-                              WS_CHILD | SS_CENTER,
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow("STATIC", label->text,
+                                WS_CHILD | SS_CENTER,
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
   gtk_set_default_font(widget->hWnd);
 }
 
@@ -2739,12 +2738,12 @@ void gtk_url_realize(GtkWidget *widget)
   HWND Parent;
 
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow(WC_GTKURL, GTK_LABEL(widget)->text,
-                              WS_CHILD,
-                              widget->allocation.x, widget->allocation.y,
-                              widget->allocation.width,
-                              widget->allocation.height, Parent, NULL,
-                              hInst, NULL);
+  widget->hWnd = myCreateWindow(WC_GTKURL, GTK_LABEL(widget)->text,
+                                WS_CHILD,
+                                widget->allocation.x, widget->allocation.y,
+                                widget->allocation.width,
+                                widget->allocation.height, Parent, NULL,
+                                hInst, NULL);
 }
 
 void gtk_container_add(GtkContainer *container, GtkWidget *widget)
@@ -3958,9 +3957,9 @@ void gtk_notebook_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindow(WC_TABCONTROL, "",
-                              WS_CHILD | WS_TABSTOP, 0, 0, 0, 0,
-                              Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindow(WC_TABCONTROL, "",
+                                WS_CHILD | WS_TABSTOP, 0, 0, 0, 0,
+                                Parent, NULL, hInst, NULL);
   if (widget->hWnd == NULL)
     g_print("Error creating window!\n");
   gtk_set_default_font(widget->hWnd);
@@ -4288,8 +4287,8 @@ void gtk_separator_realize(GtkWidget *widget)
   HWND Parent;
 
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow(WC_GTKSEP, "", WS_CHILD,
-                              0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindow(WC_GTKSEP, "", WS_CHILD,
+                                0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
 void gtk_object_set_data(GtkObject *object, const gchar *key,
@@ -4496,8 +4495,8 @@ void gtk_vpaned_realize(GtkWidget *widget)
 
   gtk_paned_realize(widget);
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow(WC_GTKVPANED, "", WS_CHILD,
-                              0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindow(WC_GTKVPANED, "", WS_CHILD,
+                                0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
 void gtk_hpaned_realize(GtkWidget *widget)
@@ -4506,8 +4505,8 @@ void gtk_hpaned_realize(GtkWidget *widget)
 
   gtk_paned_realize(widget);
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindow(WC_GTKHPANED, "", WS_CHILD,
-                              0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindow(WC_GTKHPANED, "", WS_CHILD,
+                                0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
 static void gtk_paned_set_handle_percent(GtkPaned *paned, gint16 req[2])
@@ -4711,10 +4710,10 @@ void gtk_option_menu_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "COMBOBOX", "",
-                                WS_CHILD | WS_TABSTOP | WS_VSCROLL |
-                                CBS_HASSTRINGS | CBS_DROPDOWNLIST,
-                                0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "COMBOBOX", "",
+                                  WS_CHILD | WS_TABSTOP | WS_VSCROLL |
+                                  CBS_HASSTRINGS | CBS_DROPDOWNLIST,
+                                  0, 0, 0, 0, Parent, NULL, hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   gtk_option_menu_set_menu(option_menu, option_menu->menu);
 }
@@ -4733,7 +4732,7 @@ void gtk_label_set_text(GtkLabel *label, const gchar *str)
   hWnd = GTK_WIDGET(label)->hWnd;
   if (hWnd) {
     gtk_widget_update(GTK_WIDGET(label), FALSE);
-    SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)label->text);
+    mySetWindowText(hWnd, label->text);
   }
 }
 
@@ -4751,7 +4750,7 @@ void gtk_button_set_text(GtkButton *button, gchar *text)
   hWnd = GTK_WIDGET(button)->hWnd;
   if (hWnd) {
     gtk_widget_update(GTK_WIDGET(button), FALSE);
-    SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)button->text);
+    mySetWindowText(hWnd, button->text);
   }
 }
 
@@ -4965,12 +4964,12 @@ void gtk_progress_bar_realize(GtkWidget *widget)
 
   prog = GTK_PROGRESS_BAR(widget);
   Parent = gtk_get_parent_hwnd(widget);
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, PROGRESS_CLASS, "",
-                                WS_CHILD,
-                                widget->allocation.x, widget->allocation.y,
-                                widget->allocation.width,
-                                widget->allocation.height, Parent, NULL,
-                                hInst, NULL);
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, PROGRESS_CLASS, "",
+                                  WS_CHILD,
+                                  widget->allocation.x, widget->allocation.y,
+                                  widget->allocation.width,
+                                  widget->allocation.height, Parent, NULL,
+                                  hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   SendMessage(widget->hWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 10000));
   SendMessage(widget->hWnd, PBM_SETPOS, (WPARAM)(10000.0 * prog->position), 0);
