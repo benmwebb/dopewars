@@ -303,6 +303,29 @@ gboolean WritePlayerDataToWire(Player *Play) {
    return WriteDataToWire(&Play->NetBuf);
 }
 
+typedef enum {
+  MEC_INTERNAL,
+  MEC_BADREPLY
+} MetaErrorCode;
+
+static void MetaAppendError(GString *str,LastError *error) {
+  switch (error->code) {
+    case MEC_INTERNAL:
+      g_string_sprintfa(str,_("Internal metaserver error \"%s\""),
+                        (gchar *)error->data);
+      break;
+    case MEC_BADREPLY:
+      g_string_sprintfa(str,_("Bad metaserver reply \"%s\""),
+                        (gchar *)error->data);
+      break;
+    default:
+      g_string_sprintfa(str,_("Unknown metaserver error code %d"),error->code);
+      break;
+  }
+}
+
+static ErrorType ETMeta = { MetaAppendError, NULL };
+
 gboolean OpenMetaHttpConnection(HttpConnection **conn) {
    gchar *query;
    gboolean retval;
@@ -330,7 +353,6 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
 
       NewServer=g_new0(ServerData,1);
       NewServer->Name=ReadHttpResponse(conn);
-      g_print("Server name %s read from metaserver\n",NewServer->Name);
       msg=ReadHttpResponse(conn);
       NewServer->Port=atoi(msg); g_free(msg);
       NewServer->Version=ReadHttpResponse(conn);
@@ -349,12 +371,11 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
       msg=ReadHttpResponse(conn);
       if (!msg) return FALSE;
       if (strlen(msg)>=14 && strncmp(msg,"FATAL ERROR:",12)==0) {
-         g_warning("Metaserver error: %s",&msg[13]);
-         g_free(msg);
+         SetError(&conn->NetBuf.error,&ETMeta,MEC_INTERNAL,g_strdup(&msg[13]));
          *doneOK=FALSE;
          return FALSE;
       } else if (strncmp(msg,"MetaServer:",11)!=0) {
-         g_warning("Bad reply from metaserver: %s",msg);
+         SetError(&conn->NetBuf.error,&ETMeta,MEC_BADREPLY,g_strdup(msg));
          g_free(msg);
          *doneOK=FALSE;
          return FALSE;
@@ -700,14 +721,15 @@ gboolean SetupNetwork(GString *errstr) {
 /* file descriptor for the newly-opened socket. TRUE is returned. If the   */
 /* connection fails, FALSE is returned, and errstr (if non-NULL) is filled */
 /* with a descriptive error message.                                       */
-   LastError err;
+   LastError *err;
 
    Network=Client=Server=FALSE;
    if (StartConnect(&ClientSock,ServerName,Port,FALSE,&err)) {
      Client=Network=TRUE;
      return TRUE;
    } else {
-     if (errstr) g_string_assign_error(errstr,&err);
+     if (errstr) g_string_assign_error(errstr,err);
+     FreeError(err);
      return FALSE;
    }
 }

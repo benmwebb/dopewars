@@ -35,17 +35,31 @@
 #include "error.h"
 #include "nls.h"
 
-void ClearError(LastError *error) {
-  error->type=NULL;
+void FreeError(LastError *error) {
+  if (!error) return;
+  if (error->type && error->type->FreeErrorData) {
+    (*error->type->FreeErrorData)(error);
+  } else {
+    g_free(error->data);
+  }
+  g_free(error);
 }
 
-gboolean IsError(LastError *error) {
-  return (error->type!=NULL);
-}
+LastError *NewError(ErrorType *type,gint code,gpointer data) {
+  LastError *error;
 
-void SetError(LastError *error,ErrorType *type,gint code) {
+  error = g_new0(LastError,1);
   error->type=type;
   error->code=code;
+  error->data=data;
+
+  return error;
+}
+
+void SetError(LastError **error,ErrorType *type,gint code,gpointer data) {
+  if (!error) return;
+  if (*error) FreeError(*error);
+  *error = NewError(type,code,data);
 }
 
 void LookupErrorCode(GString *str,gint code,ErrTable *table,
@@ -69,7 +83,7 @@ void CustomAppendError(GString *str,LastError *error) {
   LookupErrorCode(str,error->code,CustomErrStr,_("Internal error code %d"));
 }
 
-static ErrorType ETCustom = { CustomAppendError };
+static ErrorType ETCustom = { CustomAppendError,NULL };
 ErrorType *ET_CUSTOM = &ETCustom;
 
 /* "errno" error handling */
@@ -77,7 +91,7 @@ void ErrnoAppendError(GString *str,LastError *error) {
   g_string_append(str,strerror(error->code));
 }
 
-static ErrorType ETErrno = { ErrnoAppendError };
+static ErrorType ETErrno = { ErrnoAppendError,NULL };
 ErrorType *ET_ERRNO = &ETErrno;
 
 #ifdef CYGWIN
@@ -110,7 +124,7 @@ void WinsockAppendError(GString *str,LastError *error) {
   LookupErrorCode(str,error->code,WSAErrStr,_("Network error code %d"));
 }
 
-static ErrorType ETWinsock = { WinsockAppendError };
+static ErrorType ETWinsock = { WinsockAppendError,NULL };
 ErrorType *ET_WINSOCK = &ETWinsock;
 
 /* Standard Win32 "GetLastError" handling */
@@ -124,7 +138,7 @@ void Win32AppendError(GString *str,LastError *error) {
   LocalFree(lpMsgBuf);
 }
 
-static ErrorType ETWin32 = { Win32AppendError };
+static ErrorType ETWin32 = { Win32AppendError,NULL };
 ErrorType *ET_WIN32 = &ETWin32;
 
 #else
@@ -141,7 +155,7 @@ void HErrnoAppendError(GString *str,LastError *error) {
   LookupErrorCode(str,error->code,DNSErrStr,_("Name server error code %d"));
 }
 
-static ErrorType ETHErrno = { HErrnoAppendError };
+static ErrorType ETHErrno = { HErrnoAppendError,NULL };
 ErrorType *ET_HERRNO = &ETHErrno;
 
 #endif /* CYGWIN */

@@ -31,11 +31,13 @@
 struct _LastError;
 typedef struct _ErrorType {
    void (*AppendErrorString)(GString *str,struct _LastError *error);
+   void (*FreeErrorData)(struct _LastError *error);
 } ErrorType;
 
 typedef struct _LastError {
   gint code;
   ErrorType *type;
+  gpointer data;
 } LastError;
 
 extern ErrorType *ET_CUSTOM,*ET_ERRNO;
@@ -54,9 +56,9 @@ typedef struct _ErrTable {
   gchar *string;
 } ErrTable;
 
-void ClearError(LastError *error);
-gboolean IsError(LastError *error);
-void SetError(LastError *error,ErrorType *type,gint code);
+void FreeError(LastError *error);
+LastError *NewError(ErrorType *type,gint code,gpointer data);
+void SetError(LastError **error,ErrorType *type,gint code,gpointer data);
 void LookupErrorCode(GString *str,gint code,ErrTable *table,
                      gchar *fallbackstr);
 void g_string_assign_error(GString *str,LastError *error);

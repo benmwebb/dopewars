@@ -237,7 +237,7 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    refresh();
 
    if (!OpenMetaHttpConnection(&MetaConn)) {
-      g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+      g_string_assign_error(errstr,MetaConn->NetBuf.error);
       CloseHttpConnection(MetaConn);
       return FALSE;
    }
@@ -265,7 +265,7 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
       }
       if (!DoneOK && HandleHttpCompletion(MetaConn)) {
          if (IsHttpError(MetaConn)) {
-            g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+            g_string_assign_error(errstr,MetaConn->NetBuf.error);
             CloseHttpConnection(MetaConn);
             return FALSE;
          }

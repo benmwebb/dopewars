@@ -115,18 +115,10 @@ void SetBlocking(int sock,gboolean blocking) {
 
 #endif /* CYGWIN */
 
-static gboolean FinishConnect(int fd,LastError *error);
+static gboolean FinishConnect(int fd,LastError **error);
 
 static void NetBufCallBack(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) {
-g_print("status = %d, read = %d, write = %d\n",
-NetBuf->status,
-NetBuf->status!=NBS_PRECONNECT,
-                          (NetBuf->status==NBS_CONNECTED &&
-                           NetBuf->WriteBuf.DataPresent) ||
-                          (NetBuf->status==NBS_SOCKSCONNECT &&
-                           NetBuf->negbuf.DataPresent) ||
-                          NetBuf->WaitConnect);
       (*NetBuf->CallBack)(NetBuf,NetBuf->status!=NBS_PRECONNECT,
                           (NetBuf->status==NBS_CONNECTED &&
                            NetBuf->WriteBuf.DataPresent) ||
@@ -173,7 +165,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar,
    NetBuf->socks = socks;
    NetBuf->host = NULL;
    NetBuf->userpasswd = NULL;
-   ClearError(&NetBuf->error);
+   NetBuf->error = NULL;
 }
 
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
@@ -253,6 +245,8 @@ void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
    FreeConnBuf(&NetBuf->WriteBuf);
    FreeConnBuf(&NetBuf->negbuf);
 
+   FreeError(NetBuf->error); NetBuf->error=NULL;
+
    g_free(NetBuf->host);
 
    InitNetworkBuffer(NetBuf,NetBuf->Terminator,NetBuf->StripChar,NetBuf->socks);
@@ -329,7 +323,7 @@ static void SocksAppendError(GString *str,LastError *error) {
    LookupErrorCode(str,error->code,SocksErrStr,_("SOCKS error code %d"));
 }
 
-static ErrorType ETSocks = { SocksAppendError };
+static ErrorType ETSocks = { SocksAppendError,NULL };
 
 typedef enum {
   HEC_TRIESEX   = 1,
@@ -379,11 +373,11 @@ static void HTTPAppendError(GString *str,LastError *error) {
   }
 }
 
-static ErrorType ETHTTP = { HTTPAppendError };
+static ErrorType ETHTTP = { HTTPAppendError,NULL };
 
 static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
    if (!NetBuf->userpasswd) {
-      SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
+      SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS,NULL);
       return FALSE;
    } else {
 /* Request a username and password (the callback function should in turn
@@ -401,14 +395,14 @@ gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
    ConnBuf *conn;
 
    if (!user || !password) {
-      SetError(&NetBuf->error,&ETSocks,SEC_USERCANCEL);
+      SetError(&NetBuf->error,&ETSocks,SEC_USERCANCEL,NULL);
       return FALSE;
    }
    conn=&NetBuf->negbuf;
    addlen = 3 + strlen(user) + strlen(password);
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt || strlen(user)>255 || strlen(password)>255) {
-      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
       return FALSE;
    }
    addpt[0] = 1;  /* Subnegotiation version code */
@@ -444,7 +438,7 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
    addlen = hostlen + 7;
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt) {
-      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
       return FALSE;
    }
    addpt[0] = 5;       /* SOCKS version 5 */
@@ -480,9 +474,9 @@ g_print("Handling SOCKS5 reply\n");
             retval=FALSE;
             g_print("FIXME: Reply from SOCKS5 server: %d %d\n",data[0],data[1]);
             if (data[0]!=5) {
-               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION,NULL);
             } else if (data[1]!=0 && data[1]!=2) {
-               SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
+               SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS,NULL);
             } else {
                g_print("FIXME: Using SOCKS5 method %d\n",data[1]);
                if (data[1]==SM_NOAUTH) {
@@ -498,9 +492,9 @@ g_print("Handling SOCKS5 reply\n");
          if (data) {
             retval=FALSE;
             if (data[0]!=5) {
-               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION,NULL);
             } else if (data[1]!=0) {
-               SetError(&NetBuf->error,&ETSocks,SEC_AUTHFAILED);
+               SetError(&NetBuf->error,&ETSocks,SEC_AUTHFAILED,NULL);
             } else {
                retval=Socks5Connect(NetBuf);
             }
@@ -513,13 +507,13 @@ g_print("FIXME: SOCKS5 connect reply\n");
             retval=FALSE;
             addrtype = data[3];
             if (data[0]!=5) {
-               SetError(&NetBuf->error,&ETSocks,SEC_VERSION);
+               SetError(&NetBuf->error,&ETSocks,SEC_VERSION,NULL);
             } else if (data[1]>8) {
-               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN);
+               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN,NULL);
             } else if (data[1]!=0) {
-               SetError(&NetBuf->error,&ETSocks,data[1]);
+               SetError(&NetBuf->error,&ETSocks,data[1],NULL);
             } else if (addrtype!=1 && addrtype!=3 && addrtype!=4) {
-               SetError(&NetBuf->error,&ETSocks,SEC_ADDRTYPE);
+               SetError(&NetBuf->error,&ETSocks,SEC_ADDRTYPE,NULL);
             } else {
                retval=TRUE;
                replylen = 6;
@@ -545,16 +539,16 @@ g_print("FIXME: SOCKS5 connect reply\n");
       if (data) {
          retval=FALSE;
          if (data[0]!=0) {
-            SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION);
+            SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION,NULL);
          } else {
             if (data[1]==90) {
                NetBuf->status = NBS_CONNECTED;
                NetBufCallBack(NetBuf); /* status has changed */
                retval=TRUE;
             } else if (data[1]>=SEC_REJECT && data[1]<=SEC_IDMISMATCH) {
-               SetError(&NetBuf->error,&ETSocks,data[1]);
+               SetError(&NetBuf->error,&ETSocks,data[1],NULL);
             } else {
-               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN);
+               SetError(&NetBuf->error,&ETSocks,SEC_UNKNOWN,NULL);
             }
          }
          g_free(data);
@@ -743,7 +737,7 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
    while(1) {
       if (CurrentPosition>=conn->Length) {
          if (conn->Length==MAXREADBUF) {
-            SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+            SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
             return FALSE; /* drop connection */
          }
          if (conn->Length==0) conn->Length=256; else conn->Length*=2;
@@ -756,11 +750,11 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
 #ifdef CYGWIN
          int Error = WSAGetLastError();
          if (Error==WSAEWOULDBLOCK) break;
-         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
+         else { SetError(&NetBuf->error,ET_WINSOCK,Error,NULL); return FALSE; }
 #else
          if (errno==EAGAIN) break;
          else if (errno!=EINTR) {
-            SetError(&NetBuf->error,ET_ERRNO,errno);
+            SetError(&NetBuf->error,ET_ERRNO,errno,NULL);
             return FALSE;
          }
 #endif
@@ -768,7 +762,6 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
          return FALSE;
       } else {
          CurrentPosition+=BytesRead;
-g_print("%d bytes read from wire\n",BytesRead);
          conn->DataPresent=CurrentPosition;
       }
    }
@@ -814,13 +807,13 @@ void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data) {
    if (addpt==conn->Data) NetBufCallBack(NetBuf);
 }
 
-static struct hostent *LookupHostname(gchar *host,LastError *error) {
+static struct hostent *LookupHostname(gchar *host,LastError **error) {
    struct hostent *he;
    if ((he=gethostbyname(host))==NULL) {
 #ifdef CYGWIN
-      if (error) SetError(error,ET_WINSOCK,WSAGetLastError());
+      if (error) SetError(error,ET_WINSOCK,WSAGetLastError(),NULL);
 #else
-      if (error) SetError(error,ET_HERRNO,h_errno);
+      if (error) SetError(error,ET_HERRNO,h_errno,NULL);
 #endif
    }
    return he;
@@ -850,7 +843,7 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
       addlen=2+num_methods;
       addpt = ExpandWriteBuffer(conn,addlen);
       if (!addpt) {
-         SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+         SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
          return FALSE;
       }
       addpt[0] = 5;   /* SOCKS version 5 */
@@ -881,12 +874,12 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
    bufsize=0;
    WNetGetUser(NULL,username,&bufsize);
    if (GetLastError()!=ERROR_MORE_DATA) {
-     SetError(&NetBuf->error,ET_WIN32,GetLastError());
+     SetError(&NetBuf->error,ET_WIN32,GetLastError(),NULL);
      return FALSE;
    } else {
      username=g_malloc(bufsize);
      if (WNetGetUser(NULL,username,&bufsize)!=NO_ERROR) {
-       SetError(&NetBuf->error,ET_WIN32,GetLastError());
+       SetError(&NetBuf->error,ET_WIN32,GetLastError(),NULL);
        return FALSE;
      }
    }
@@ -907,7 +900,7 @@ g_print("username %s\n",pwd->pw_name);
 
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt) {
-      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
       return FALSE;
    }
 
@@ -936,7 +929,7 @@ static gboolean WriteBufToWire(NetworkBuffer *NetBuf,ConnBuf *conn) {
    int CurrentPosition,BytesSent;
    if (!conn->Data || !conn->DataPresent) return TRUE;
    if (conn->Length==MAXWRITEBUF) {
-      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
       return FALSE;
    }
    CurrentPosition=0;
@@ -947,16 +940,15 @@ static gboolean WriteBufToWire(NetworkBuffer *NetBuf,ConnBuf *conn) {
 #ifdef CYGWIN
          int Error=WSAGetLastError();
          if (Error==WSAEWOULDBLOCK) break;
-         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
+         else { SetError(&NetBuf->error,ET_WINSOCK,Error,NULL); return FALSE; }
 #else
          if (errno==EAGAIN) break;
          else if (errno!=EINTR) {
-            SetError(&NetBuf->error,ET_ERRNO,errno);
+            SetError(&NetBuf->error,ET_ERRNO,errno,NULL);
             return FALSE;
          }
 #endif
       } else {
-g_print("%d bytes written to wire\n",BytesSent);
          CurrentPosition+=BytesSent;
       }
    }
@@ -973,10 +965,8 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
 /* TRUE on success, or FALSE if the buffer's maximum length is        */
 /* reached, or the remote end has closed the connection.              */
    if (NetBuf->status==NBS_SOCKSCONNECT) {
-g_print("Writing negbuf\n");
       return WriteBufToWire(NetBuf,&NetBuf->negbuf);
    } else {
-g_print("Writing WriteBuf\n");
       return WriteBufToWire(NetBuf,&NetBuf->WriteBuf);
    }
 }
@@ -1084,10 +1074,6 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn);
 }
 
-gboolean IsHttpError(HttpConnection *conn) {
-   return IsError(&conn->NetBuf.error);
-}
-
 gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
                                gchar *user,gchar *password) {
    gchar **ptuser,**ptpassword;
@@ -1190,13 +1176,11 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
       }
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==HEC_AUTHREQ) {
-      g_print("FIXME: Authentication %s required\n",split[1]);
       StartHttpAuth(conn,FALSE,split[1]);
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
     } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
                conn->StatusCode==HEC_PROXYAUTH) {
-      g_print("FIXME: Proxy authentication %s required\n",split[1]);
       StartHttpAuth(conn,TRUE,split[1]);
     }
   }
@@ -1237,7 +1221,7 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    gpointer CallBackData;
    NBUserPasswd userpasswd;
    gboolean retry=FALSE;
-   LastError *error;
+   LastError **error;
 
    error=&conn->NetBuf.error;
 
@@ -1249,12 +1233,11 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    }
 
    if (conn->Tries>=5) {
-      SetError(error,&ETHTTP,HEC_TRIESEX);
+      SetError(error,&ETHTTP,HEC_TRIESEX,NULL);
       return TRUE;
    }
 
    if (conn->RedirHost) {
-      g_print("Following redirect to %s\n",conn->RedirHost);
       g_free(conn->HostName); g_free(conn->Query);
       conn->HostName = conn->RedirHost;
       conn->Query = conn->RedirQuery;
@@ -1263,12 +1246,10 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
       retry = TRUE;
    }
    if (conn->StatusCode==HEC_AUTHREQ && conn->user && conn->password) {
-      g_print("Trying again with authentication\n");
       retry = TRUE;
    }
    if (conn->StatusCode==HEC_PROXYAUTH && conn->proxyuser &&
        conn->proxypassword) {
-      g_print("Trying again with proxy authentication\n");
       retry = TRUE;
    }
 
@@ -1284,28 +1265,32 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
          return FALSE;
       }
    } else if (conn->StatusCode>=300) {
-     SetError(error,&ETHTTP,conn->StatusCode);
+     SetError(error,&ETHTTP,conn->StatusCode,NULL);
    }
    return TRUE;
 }
 
-int CreateTCPSocket(LastError *error) {
+gboolean IsHttpError(HttpConnection *conn) {
+  return (conn->NetBuf.error!=NULL);
+}
+
+int CreateTCPSocket(LastError **error) {
   int fd;
 
   fd=socket(AF_INET,SOCK_STREAM,0);
 
   if (fd==SOCKET_ERROR && error) {
 #ifdef CYGWIN
-    SetError(error,ET_WINSOCK,WSAGetLastError());
+    SetError(error,ET_WINSOCK,WSAGetLastError(),NULL);
 #else
-    SetError(error,ET_ERRNO,errno);
+    SetError(error,ET_ERRNO,errno,NULL);
 #endif
   }
 
   return fd;
 }
   
-gboolean BindTCPSocket(int sock,unsigned port,LastError *error) {
+gboolean BindTCPSocket(int sock,unsigned port,LastError **error) {
   struct sockaddr_in bindaddr;
   int retval;
 
@@ -1318,9 +1303,9 @@ gboolean BindTCPSocket(int sock,unsigned port,LastError *error) {
 
   if (retval==SOCKET_ERROR && error) {
 #ifdef CYGWIN
-    SetError(error,ET_WINSOCK,WSAGetLastError());
+    SetError(error,ET_WINSOCK,WSAGetLastError(),NULL);
 #else
-    SetError(error,ET_ERRNO,errno);
+    SetError(error,ET_ERRNO,errno,NULL);
 #endif
   }
 
@@ -1328,7 +1313,7 @@ gboolean BindTCPSocket(int sock,unsigned port,LastError *error) {
 }
 
 gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
-                      gboolean NonBlocking,LastError *error) {
+                      gboolean NonBlocking,LastError **error) {
    struct sockaddr_in ClientAddr;
    struct hostent *he;
 
@@ -1350,10 +1335,10 @@ gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
 #ifdef CYGWIN
       int errcode=WSAGetLastError();
       if (errcode==WSAEWOULDBLOCK) return TRUE;
-      else if (error) SetError(error,ET_WINSOCK,errcode);
+      else if (error) SetError(error,ET_WINSOCK,errcode,NULL);
 #else
       if (errno==EINPROGRESS) return TRUE;
-      else if (error) SetError(error,ET_ERRNO,errno);
+      else if (error) SetError(error,ET_ERRNO,errno,NULL);
 #endif
       CloseSocket(*fd); *fd=-1;
       return FALSE;
@@ -1363,13 +1348,13 @@ gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
    return TRUE;
 }
 
-gboolean FinishConnect(int fd,LastError *error) {
+gboolean FinishConnect(int fd,LastError **error) {
    int errcode;
 #ifdef CYGWIN
    errcode = WSAGetLastError();
    if (errcode==0) return TRUE;
    else {
-     if (error) { SetError(error,ET_WINSOCK,errcode); }
+     if (error) { SetError(error,ET_WINSOCK,errcode,NULL); }
      return FALSE;
    }
 #else
@@ -1385,7 +1370,7 @@ gboolean FinishConnect(int fd,LastError *error) {
    }
    if (errcode==0) return TRUE;
    else {
-     if (error) { SetError(error,ET_ERRNO,errcode); }
+     if (error) { SetError(error,ET_ERRNO,errcode,NULL); }
      return FALSE;
    }
 #endif /* CYGWIN */

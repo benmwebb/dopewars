@@ -142,7 +142,7 @@ static gboolean MetaConnectError(HttpConnection *conn) {
    GString *errstr;
    if (!IsHttpError(conn)) return FALSE;
    errstr=g_string_new("");
-   g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+   g_string_assign_error(errstr,MetaConn->NetBuf.error);
    dopelog(1,_("Failed to connect to metaserver at %s:%u (%s)"),
            MetaServer.Name,MetaServer.Port,errstr->str);
    g_string_free(errstr,TRUE);
@@ -648,7 +648,8 @@ gboolean ReadServerKey(GString *LineBuf,gboolean *EndOfLine) {
 }
 
 void StartServer() {
-   struct sockaddr_in ServerAddr;
+   LastError *sockerr;
+   GString *errstr;
 #ifndef CYGWIN
    struct sigaction sact;
 #endif
@@ -670,22 +671,29 @@ void StartServer() {
    Network=TRUE;
    FirstServer=NULL;
    ClientMessageHandlerPt=NULL;
-   ListenSock=socket(AF_INET,SOCK_STREAM,0);
+   ListenSock=CreateTCPSocket(&sockerr);
    if (ListenSock==SOCKET_ERROR) {
-/* FIXME
-MessageBox(NULL,"Cannot create socket",NULL,MB_OK); */
-      perror("create socket"); exit(1);
+     errstr=g_string_new("");
+     g_string_assign_error(errstr,sockerr);
+     g_log(NULL,G_LOG_LEVEL_CRITICAL,
+           _("Cannot create server (listening) socket (%s) Aborting."),
+           errstr->str);
+     g_string_free(errstr,TRUE);
+     FreeError(sockerr);
+     exit(1);
    }
    SetReuse(ListenSock);
    SetBlocking(ListenSock,FALSE);
-  
-   ServerAddr.sin_family=AF_INET;
-   ServerAddr.sin_port=htons(Port);
-   ServerAddr.sin_addr.s_addr=INADDR_ANY;
-   memset(ServerAddr.sin_zero,0,sizeof(ServerAddr.sin_zero));
-   if (bind(ListenSock,(struct sockaddr *)&ServerAddr,
-       sizeof(struct sockaddr)) == SOCKET_ERROR) {
-      perror("bind socket"); exit(1);
+
+   if (!BindTCPSocket(ListenSock,Port,&sockerr)) {
+     errstr=g_string_new("");
+     g_string_assign_error(errstr,sockerr);
+     g_log(NULL,G_LOG_LEVEL_CRITICAL,
+           _("Cannot listen on port %u (%s) Aborting."),
+           Port,errstr->str);
+     g_string_free(errstr,TRUE);
+     FreeError(sockerr);
+     exit(1);
    }
 
 /* Initial startup message for the server */

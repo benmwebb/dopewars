@@ -108,7 +108,7 @@ struct _NetworkBuffer {
                                SOCKS5 authentication */  
    gchar *host;             /* If non-NULL, the host to connect to */
    unsigned port;           /* If non-NULL, the port to connect to */
-   LastError error;         /* Any error from the last operation */
+   LastError *error;        /* Any error from the last operation */
 };
 
 /* Keeps track of the progress of an HTTP connection */
@@ -185,17 +185,17 @@ gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             gchar *Method,gchar *Query,
                             gchar *Headers,gchar *Body);
 void CloseHttpConnection(HttpConnection *conn);
-gboolean IsHttpError(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
 gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
                                gchar *user,gchar *password);
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data);
 gboolean HandleHttpCompletion(HttpConnection *conn);
+gboolean IsHttpError(HttpConnection *conn);
 
-int CreateTCPSocket(LastError *error);
-gboolean BindTCPSocket(int sock,unsigned port,LastError *error);
+int CreateTCPSocket(LastError **error);
+gboolean BindTCPSocket(int sock,unsigned port,LastError **error);
 gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
-                      gboolean NonBlocking,LastError *error);
+                      gboolean NonBlocking,LastError **error);
 void StartNetworking(void);
 void StopNetworking(void);
 

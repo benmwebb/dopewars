@@ -1945,10 +1945,10 @@ static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
    gchar *text;
    LastError *error;
 
-   if (meta) error=&widgets->MetaConn->NetBuf.error;
-   else error=&ClientData.Play->NetBuf.error;
+   if (meta) error=widgets->MetaConn->NetBuf.error;
+   else error=ClientData.Play->NetBuf.error;
 
-   if (!IsError(error)) return;
+   if (!error) return;
 
    neterr = g_string_new("");
    g_string_assign_error(neterr,error);
@@ -2108,9 +2108,9 @@ static void HandleMetaSock(gpointer data,gint socket,
    NBStatus oldstatus;
    NBSocksStatus oldsocks;
 
-g_print("HandleMetaSock: read %d, write %d\n",
+/*g_print("HandleMetaSock: read %d, write %d\n",
         condition&GDK_INPUT_READ,
-        condition&GDK_INPUT_WRITE);
+        condition&GDK_INPUT_WRITE);*/
    widgets=(struct StartGameStruct *)data;
    if (!widgets->MetaConn) return;
 
@@ -3201,7 +3201,6 @@ static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
    oldsocks = widgets->MetaConn->NetBuf.sockstat;
 
    if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password)) {
-      g_print("FIXME: Connect error on setauth\n");
       MetaDone(widgets);
    } else {
       DisplayConnectStatus(widgets,TRUE,oldstatus,oldsocks);
