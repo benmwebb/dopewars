@@ -187,13 +187,15 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
 /*
  * Creates an hbutton_box widget, and sets a sensible spacing.
  * N.B. Should use gtk_hbutton_box_set_spacing_default() instead, but
- * I can't get this to actually work...
+ * this doesn't seem to actually work with GTK+2...
  */
 GtkWidget *my_hbbox_new(void)
 {
   GtkWidget *hbbox = gtk_hbutton_box_new();
 
+#ifdef HAVE_GLIB2
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
+#endif
   return hbbox;
 }
 
@@ -2112,6 +2114,10 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 
   gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
   gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);
+
+#ifndef HAVE_GLIB2
+  gtk_hbutton_box_set_spacing_default(8);
+#endif
 
   window = MainWindow = ClientData.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
