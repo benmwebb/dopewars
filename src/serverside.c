@@ -2311,7 +2311,7 @@ int SendCopOffer(Player *To, OfferForce Force)
     return (OfferObject(To, Force == FORCEBITCH));
   } else if (i < 50) {
     return (RandomOffer(To));
-  } else if (Sanitized) {
+  } else if (Sanitized || NumCop == 0) {
     return 0;
   } else {
     CopsAttackPlayer(To);
@@ -2327,6 +2327,11 @@ void CopsAttackPlayer(Player *Play)
 {
   Player *Cops;
   gint CopIndex, NumDeputy, GunIndex;
+
+  if (NumCop == 0) {
+    g_warning(_("No cops!"));
+    return;
+  }
 
   CopIndex = 1 - Play->CopIndex;
   if (CopIndex < 0) {
@@ -2613,7 +2618,7 @@ static void CheckCopsIntervene(Player *Play)
   guint ArrayInd;
   Player *Defend;
 
-  if (!Play || !Play->FightArray)
+  if (!Play || !Play->FightArray || NumCop == 0)
     return;                     /* Sanity check */
 
   if (!Play->Attacking)
@@ -3330,12 +3335,15 @@ void BuyObject(Player *From, char *data)
       From->Cash -= amount * From->Drugs[index].Price;
       SendPlayerData(From);
 
-      if (!Sanitized && (From->Drugs[index].Price == 0 &&
-                         brandom(0,
-                                 100) <
-                         Location[From->IsAt].PolicePresence)) {
-        SendPrintMessage(NULL, C_NONE, From,
-                         _("The cops spot you dropping drugs!"));
+      if (!Sanitized && NumCop > 0
+          && (From->Drugs[index].Price == 0 &&
+              brandom(0, 100) < Location[From->IsAt].PolicePresence)) {
+        gchar *text;
+
+        text = dpg_strdup_printf(_("The cops spot you dropping %tde!"),
+                                 Names.Drugs);
+        SendPrintMessage(NULL, C_NONE, From, text);
+        g_free(text);
         CopsAttackPlayer(From);
       }
     }
