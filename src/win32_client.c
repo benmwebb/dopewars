@@ -234,17 +234,18 @@ static void SetErrandMenus(HWND hwnd) {
    DrawMenuBar(hwnd);
 }
 
-static void HandleClientMessage(char *pt,Player *ReallyTo) {
+static void HandleClientMessage(char *pt,Player *Play) {
    char *Data,Code,AICode,DisplayMode;
-   Player *From,*To,*Play;
+   Player *From,*tmp;
    gboolean Handled;
    gchar *text;
    LRESULT Answer;
    GSList *list;
-   if (ProcessMessage(pt,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
+/* Ignore server's To: field (bin it in tmp); use "Play" instead */
+   if (ProcessMessage(pt,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
       return;
    }
-   Handled=HandleGenericClientMessage(From,AICode,Code,To,Data,&DisplayMode);
+   Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
    switch(Code) {
       case C_STARTHISCORE:
          if (ScoresWnd) {
@@ -268,11 +269,11 @@ static void HandleClientMessage(char *pt,Player *ReallyTo) {
          DisplayFightMessage(Data); break;
       case C_PUSH:
          g_warning("You have been pushed from the server.");
-         SwitchToSinglePlayer(To);
+         SwitchToSinglePlayer(Play);
          break;
       case C_QUIT:
          g_warning("The server has terminated.");
-         SwitchToSinglePlayer(To);
+         SwitchToSinglePlayer(Play);
          break;
       case C_NEWNAME:
          DialogBox(hInst,MAKEINTRESOURCE(NewNameDia),
@@ -299,7 +300,7 @@ static void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
       case C_MSGTO:
          text=g_strdup_printf("%s->%s: %s",GetPlayerName(From),
-                              GetPlayerName(To),Data);
+                              GetPlayerName(Play),Data);
          PrintMessage(text); g_free(text);
          break;
       case C_JOIN:
@@ -319,18 +320,18 @@ static void HandleClientMessage(char *pt,Player *ReallyTo) {
                                ClientData.Window,QuestionWndProc,(LPARAM)Data);
          if (Answer!=0) {
             text=g_strdup_printf("%c",(char)Answer);
-            SendClientMessage(To,C_NONE,C_ANSWER,
-                              From==&Noone ? NULL : From,text,To);
+            SendClientMessage(Play,C_NONE,C_ANSWER,
+                              From==&Noone ? NULL : From,text,Play);
             g_free(text);
          }
          break;
       case C_SUBWAYFLASH:
          DisplayFightMessage(NULL);
          for (list=FirstClient;list;list=g_slist_next(list)) {
-            Play=(Player *)list->data;
-            Play->Flags &= ~FIGHTING;
+            tmp=(Player *)list->data;
+            tmp->Flags &= ~FIGHTING;
          }
-         text=g_strdup_printf("Jetting to %s",Location[(int)To->IsAt].Name);
+         text=g_strdup_printf("Jetting to %s",Location[(int)Play->IsAt].Name);
          PrintMessage(text); g_free(text);
          break;
       case C_ENDLIST:
@@ -338,8 +339,8 @@ static void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,To);
-            UpdateStatus(To,TRUE);
+            ReceivePlayerData(Data,Play);
+            UpdateStatus(Play,TRUE);
          } else {
             ReceivePlayerData(Data,From);
             DisplaySpyReports(From);
@@ -348,10 +349,10 @@ static void HandleClientMessage(char *pt,Player *ReallyTo) {
       case C_DRUGHERE:
          UpdateInventory(ClientData.Stats.HereList,ClientData.Stats.CarriedList,
                          ClientData.Stats.BuyButton,ClientData.Stats.SellButton,
-                         ClientData.Stats.DropButton,To->Drugs,NumDrug,TRUE);
+                         ClientData.Stats.DropButton,Play->Drugs,NumDrug,TRUE);
          if (InventoryWnd) {
             UpdateInventory(NULL,GetDlgItem(InventoryWnd,LB_INVENDRUGS),
-                            NULL,NULL,NULL,To->Drugs,NumDrug,TRUE);
+                            NULL,NULL,NULL,Play->Drugs,NumDrug,TRUE);
          }
          break;
    }
@@ -1423,7 +1424,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          } else {
             if (ReadConnectionBufferFromWire(ClientData.Play)) {
                while ((pt=ReadFromConnectionBuffer(ClientData.Play))!=NULL) {
-                  HandleClientMessage(pt,NULL); g_free(pt);
+                  HandleClientMessage(pt,ClientData.Play); g_free(pt);
                }
             } else {
                if (Network) WSAAsyncSelect(ClientSock,ClientData.Window,0,0);
