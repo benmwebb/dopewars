@@ -9,7 +9,7 @@ Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz
 Obsoletes:     dopewars-esd = 1.5.7
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires: SDL_mixer-devel, esound-devel
+BuildRequires: SDL_mixer-devel, SDL-devel, esound-devel
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -82,6 +82,9 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
+* Mon Oct 21 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+- Dependency on SDL-devel added to properly build SDL plugin
+
 * Fri Oct 18 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
 - ESD plugin incorporated into main package
 - Sound files added to distribution
