@@ -153,7 +153,9 @@ echo "+ removing config.cache ... "
 rm -f config.cache
 
 echo "+ running configure ... "
-echo "using: $@"
+if test -n "$*"; then
+  echo "using: $@"
+fi
 echo
 
 ./configure "$@" || {
