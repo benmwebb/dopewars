@@ -2789,28 +2789,30 @@ Player *GetNextShooter(Player *Play)
 {
   Player *MinPlay, *Defend;
   time_t MinTimeout;
+  guint mintie;
   guint ArrayInd;
-  gboolean Tie = FALSE;
 
   if (!FightTimeout)
     return NULL;
 
   MinPlay = NULL;
   MinTimeout = 0;
+  mintie = 0;
   for (ArrayInd = 0; ArrayInd < Play->FightArray->len; ArrayInd++) {
     Defend = (Player *)g_ptr_array_index(Play->FightArray, ArrayInd);
     if (Defend == Play)
       continue;
     if (Defend->FightTimeout == 0)
       return NULL;
-    if (MinTimeout == 0 || Defend->FightTimeout <= MinTimeout) {
-      Tie = (Defend->FightTimeout == MinTimeout);
+    if (MinTimeout == 0 || Defend->FightTimeout < MinTimeout
+        || (Defend->FightTimeout == MinTimeout && Defend->tiebreak < mintie)) {
       MinPlay = Defend;
       MinTimeout = Defend->FightTimeout;
+      mintie = Defend->tiebreak;
     }
   }
 
-  return (Tie ? NULL : MinPlay);
+  return MinPlay;
 }
 
 void ResolveTipoff(Player *Play)
@@ -3504,10 +3506,28 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
  */
 void SetFightTimeout(Player *Play)
 {
-  if (FightTimeout)
+  if (FightTimeout) {
     Play->FightTimeout = time(NULL) + (time_t) FightTimeout;
-  else
+
+    /* Make sure we have a higher tiebreak value than any other player with
+     * the same fight timeout (since FightTimeout only has second resolution,
+     * and possibly only microseconds have elapsed) */
+    Play->tiebreak = 0;
+    if (Play->FightTimeout) {
+      GSList *listpt;
+
+      for (listpt = FirstServer; listpt; listpt = g_slist_next(listpt)) {
+        Player *listplay = (Player *)listpt->data;
+
+        if (listplay && listplay != Play
+            && listplay->FightTimeout == Play->FightTimeout) {
+          Play->tiebreak = MAX(Play->tiebreak, listplay->tiebreak + 1);
+        }
+      }
+    }
+  } else {
     Play->FightTimeout = 0;
+  }
 }
 
 /* 

@@ -285,6 +285,7 @@ struct PLAYER_T {
   Inventory *Guns, *Drugs, Bitches;
   EventCode EventNum, ResyncNum;
   time_t FightTimeout, IdleTimeout, ConnectTimeout;
+  guint tiebreak;
   price_t DocPrice;
   DopeList SpyList, TipList;
   Player *OnBehalfOf;
