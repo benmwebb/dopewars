@@ -1,6 +1,7 @@
 Makefile
 Makefile.in
 .deps
+.libs
 dopewars
 dopewars.res
 dopewars.exe
