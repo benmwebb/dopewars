@@ -764,6 +764,8 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define GTK_STOCK_CLOSE   _("Close")
 #define GTK_STOCK_CANCEL  _("Cancel")
 #define GTK_STOCK_REFRESH _("Refresh")
+#define GTK_STOCK_YES     _("Yes")
+#define GTK_STOCK_NO      _("No")
 
 GtkWidget *gtk_button_new_from_stock(const gchar *label);
 
