@@ -925,7 +925,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
   case WM_CLOSE:
     gtk_signal_emit(GTK_OBJECT(widget), "delete_event",
                     &event, &signal_return);
-    return FALSE;
+    return TRUE;
   case WM_COMMAND:
     if (HIWORD(wParam) == 0 || HIWORD(wParam) == 1) {
       menu = gtk_window_get_menu_ID(GTK_WINDOW(widget), LOWORD(wParam));
