@@ -93,17 +93,6 @@ if test "$CYGWIN" = "yes" ; then
 else
    AC_MSG_RESULT([Configuring for Unix binary])
 
-   dnl We NEED glib - so test for it first
-   glib2_found="no"
-   if test "$USE_GLIB2" = "yes" ; then
-     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
-   fi
-   if test "$glib2_found" = "no" ; then
-     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
-   else
-     AC_DEFINE(HAVE_GLIB2, 1, [Do we have GLIB 2.0 ?])
-   fi
-
    dnl On true Unix systems, test for valid curses-like libraries
    if test "$CURSES_CLIENT" != "no" ; then
       AC_CHECK_LIB(ncurses,newterm)
@@ -123,20 +112,16 @@ else
       fi
    fi
 
+   gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
-      dnl Tests for GTK; N.B. bad things will happen if we use GTK+2 but
-      dnl GLIB1, or vice versa, so we try to stop that from happening.
-      gtk2_found="no"
       if test "$USE_GLIB2" = "yes" ; then
-        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes")
+        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
       fi
       if test "$gtk2_found" = "yes" ; then
         HAVE_FIXED_GTK="yes"
       else
         gtk_found="no"
-        if test "$glib2_found" = "no" ; then
-          AM_PATH_GTK(1.2.0,gtk_found="yes")
-        fi
+        AM_PATH_GTK(1.2.0,gtk_found="yes")
         if test "$gtk_found" = "no" ; then
            if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
              AC_MSG_ERROR(Cannot find GTK+)
@@ -162,6 +147,17 @@ else
            AC_MSG_RESULT([$HAVE_FIXED_GTK])
         fi
      fi
+   fi
+
+   dnl We NEED glib; N.B. don't link against glib2 if we're using GTK+1
+   glib2_found="no"
+   if test "$USE_GLIB2" = "yes" -a "$gtk2_found" != "no"; then
+     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
+   fi
+   if test "$glib2_found" = "no" ; then
+     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
+   else
+     AC_DEFINE(HAVE_GLIB2, 1, [Do we have GLIB 2.0 ?])
    fi
 
    dnl Add esound support if available
