@@ -100,6 +100,8 @@ ErrorType *ET_ERRNO = &ETErrno;
 static ErrTable WSAErrStr[] = {
 /* These are the explanations of the various Windows Sockets error codes */
   { WSANOTINITIALISED,N_("WinSock has not been properly initialised") },
+  { WSASYSNOTREADY,N_("Network subsystem is not ready") },
+  { WSAVERNOTSUPPORTED,N_("WinSock version not supported") },
   { WSAENETDOWN,N_("The network subsystem has failed") },
   { WSAEADDRINUSE,N_("Address already in use") },
   { WSAENETDOWN,N_("Cannot reach the network") },

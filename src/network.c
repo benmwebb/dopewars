@@ -74,8 +74,17 @@ static gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes);
 
 void StartNetworking() {
   WSADATA wsaData;
+  LastError *error;
+  GString *errstr;
+
   if (WSAStartup(MAKEWORD(1,0),&wsaData)!=0) {
-    g_warning(_("Cannot initialise WinSock!"));
+    error = NewError(ET_WINSOCK,WSAGetLastError(),NULL);
+    errstr = g_string_new("");
+    g_string_assign_error(errstr,error);
+    g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot initialise WinSock (%s)!"),
+          errstr->str);
+    g_string_free(errstr,TRUE);
+    FreeError(error);
     exit(1);
   }
 }
