@@ -105,7 +105,7 @@ static void WriteConfigValue(FILE *fp, Converter *conv, int GlobalIndex,
   } else if (Globals[GlobalIndex].BoolVal) {
     fprintf(fp, "%s = %s\n", GlobalName,
             *GetGlobalBoolean(GlobalIndex, StructIndex) ?
-            _("TRUE") : _("FALSE"));
+            "TRUE" : "FALSE");
   } else if (Globals[GlobalIndex].PriceVal) {
     gchar *prstr = pricetostr(*GetGlobalPrice(GlobalIndex, StructIndex));
 
