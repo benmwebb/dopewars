@@ -15,6 +15,8 @@ cvs
       encoding (usually taken from the locale) to be overridden, and to allow
       the inclusion of other config files
     - Spanish translation added by Quique
+    - The Windows build of dopewars should now use Unicode throughout, on
+      platforms with Unicode support (i.e. NT/2000/XP)
 
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;
