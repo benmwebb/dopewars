@@ -57,7 +57,8 @@ struct _GtkCListRow {
 struct _GtkCList {
   GtkContainer container;
   gint cols, rows;
-  HWND header;
+  HWND header, scrollwin;
+  int scrollpos;
   gint16 header_size;
   GSList *rowdata;
   GtkCListColumn *coldata;
@@ -103,6 +104,9 @@ void gtk_clist_set_column_auto_resize(GtkCList *clist, gint column,
                                       gboolean auto_resize);
 void gtk_clist_set_column_justification(GtkCList *clist, gint column,
                                         GtkJustification justification);
+
+/* Private functions */
+void InitCListClass(HINSTANCE hInstance);
 #endif /* CYGWIN */
 
 #endif

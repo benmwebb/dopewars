@@ -36,6 +36,10 @@
 #define LISTITEMHPACK  3
 #define LISTHEADERPACK 6
 
+static const gchar *WC_GTKCLISTHDR = "WC_GTKCLISTHDR";
+
+static WNDPROC wpOrigListProc;
+
 static void gtk_clist_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
 static void gtk_clist_set_size(GtkWidget *widget,
@@ -70,6 +74,40 @@ static GtkClass GtkCListClass = {
   "clist", &GtkContainerClass, sizeof(GtkCList), GtkCListSignals,
   gtk_clist_wndproc
 };
+
+static void SetCListHeaderSize(GtkCList *clist)
+{
+  RECT rc;
+  HWND hWnd;
+  int width;
+
+  hWnd = GTK_WIDGET(clist)->hWnd;
+  clist->scrollpos = GetScrollPos(hWnd, SB_HORZ);
+
+  GetWindowRect(hWnd, &rc);
+  width = (int)mySendMessage(hWnd, LB_GETHORIZONTALEXTENT, 0, 0);
+  width = MAX(width, rc.right - rc.left) + 100;
+
+  SetWindowPos(clist->header, HWND_TOP, -clist->scrollpos, 0,
+               width, clist->header_size, SWP_NOZORDER);
+}
+
+static LRESULT APIENTRY ListWndProc(HWND hwnd, UINT msg, WPARAM wParam,
+                                    LPARAM lParam)
+{
+  LRESULT retval;
+  GtkWidget *widget;
+
+  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+  retval = myCallWindowProc(wpOrigListProc, hwnd, msg, wParam, lParam);
+
+  if (msg == WM_HSCROLL && widget) {
+    GtkCList *clist = GTK_CLIST(widget);
+    SetCListHeaderSize(clist);
+  }
+
+  return retval;
+}
 
 gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
                            LPARAM lParam, gboolean *dodef)
@@ -126,6 +164,23 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
   return FALSE;
 }
 
+static void gtk_clist_set_extent(GtkCList *clist)
+{
+  gint i;
+  HWND hWnd;
+
+  hWnd = GTK_WIDGET(clist)->hWnd;
+  if (hWnd) {
+    int width = 0;
+
+    for (i = 0; i < clist->cols; i++) {
+      width += clist->coldata[i].width;
+    }
+    mySendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
+    SetCListHeaderSize(clist);
+  }
+}
+
 void gtk_clist_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   GtkCList *clist = GTK_CLIST(widget);
@@ -136,11 +191,12 @@ void gtk_clist_set_size(GtkWidget *widget, GtkAllocation *allocation)
     pt.x = allocation->x;
     pt.y = allocation->y;
     MapWidgetOrigin(widget, &pt);
-    SetWindowPos(clist->header, HWND_TOP, pt.x, pt.y,
+    SetWindowPos(clist->scrollwin, HWND_TOP, pt.x, pt.y,
                  allocation->width, clist->header_size, SWP_NOZORDER);
     allocation->y += clist->header_size - 1;
     allocation->height -= clist->header_size - 1;
   }
+  gtk_clist_set_extent(clist);
 }
 
 GtkWidget *gtk_clist_new(gint columns)
@@ -149,6 +205,7 @@ GtkWidget *gtk_clist_new(gint columns)
   int i;
 
   clist = GTK_CLIST(GtkNewObject(&GtkCListClass));
+  clist->scrollpos = 0;
   clist->cols = columns;
   clist->coldata = g_new0(GtkCListColumn, columns);
   clist->rows = 0;
@@ -175,7 +232,7 @@ void gtk_clist_size_request(GtkWidget *widget, GtkRequisition *requisition)
 
 void gtk_clist_realize(GtkWidget *widget)
 {
-  HWND Parent, header;
+  HWND Parent, header, scrollwin;
   HD_LAYOUT hdl;
   HD_ITEM hdi;
   RECT rcParent;
@@ -190,13 +247,17 @@ void gtk_clist_realize(GtkWidget *widget)
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   rcParent.left = rcParent.top = 0;
   rcParent.right = rcParent.bottom = 800;
+  scrollwin = myCreateWindow(WC_GTKCLISTHDR, NULL,
+                             WS_CHILD, 0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  SetWindowLong(scrollwin, GWL_USERDATA, (LONG)widget);
   header = myCreateWindowEx(0, WC_HEADER, NULL,
-                            WS_CHILD | WS_BORDER | HDS_HORZ
+                            WS_CHILD | WS_BORDER | HDS_HORZ | WS_VISIBLE
                             | (GTK_CLIST(widget)->coldata[0].button_passive ?
                                0 : HDS_BUTTONS),
-                            0, 0, 0, 0, Parent, NULL, hInst, NULL);
+                            0, 0, 0, 0, scrollwin, NULL, hInst, NULL);
   SetWindowLong(header, GWL_USERDATA, (LONG)widget);
   GTK_CLIST(widget)->header = header;
+  GTK_CLIST(widget)->scrollwin = scrollwin;
   gtk_set_default_font(header);
   hdl.prc = &rcParent;
   hdl.pwpos = &wp;
@@ -207,6 +268,9 @@ void gtk_clist_realize(GtkWidget *widget)
                                   | WS_HSCROLL | LBS_OWNERDRAWFIXED
                                   | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
                                   hInst, NULL);
+  /* Subclass the window */
+  wpOrigListProc = (WNDPROC)mySetWindowLong(widget->hWnd,
+                                            GWL_WNDPROC, (LONG)ListWndProc);
   gtk_set_default_font(widget->hWnd);
 
   gtk_clist_update_all_widths(clist);
@@ -235,14 +299,14 @@ void gtk_clist_realize(GtkWidget *widget)
 void gtk_clist_show(GtkWidget *widget)
 {
   if (GTK_WIDGET_REALIZED(widget)) {
-    ShowWindow(GTK_CLIST(widget)->header, SW_SHOWNORMAL);
+    ShowWindow(GTK_CLIST(widget)->scrollwin, SW_SHOWNORMAL);
   }
 }
 
 void gtk_clist_hide(GtkWidget *widget)
 {
   if (GTK_WIDGET_REALIZED(widget)) {
-    ShowWindow(GTK_CLIST(widget)->header, SW_HIDE);
+    ShowWindow(GTK_CLIST(widget)->scrollwin, SW_HIDE);
   }
 }
 
@@ -310,22 +374,6 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
   SetBkMode(lpdis->hDC, oldbkmode);
   if (lpdis->itemState & ODS_FOCUS) {
     DrawFocusRect(lpdis->hDC, &lpdis->rcItem);
-  }
-}
-
-static void gtk_clist_set_extent(GtkCList *clist)
-{
-  gint i;
-  HWND hWnd;
-
-  hWnd = GTK_WIDGET(clist)->hWnd;
-  if (hWnd) {
-    int width = 0;
-
-    for (i = 0; i < clist->cols; i++) {
-      width += clist->coldata[i].width;
-    }
-    mySendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
   }
 }
 
@@ -792,6 +840,42 @@ void gtk_clist_set_column_justification(GtkCList *clist, gint column,
                                         GtkJustification justification)
 {
   clist->coldata[column].justification = justification;
+}
+
+static LRESULT CALLBACK CListHdrWndProc(HWND hwnd, UINT msg, WPARAM wParam,
+                                        LPARAM lParam)
+{
+  GtkWidget *widget;
+  gboolean retval = FALSE, dodef = TRUE;
+
+  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+
+  if (widget) {
+    retval = gtk_clist_wndproc(widget, msg, wParam, lParam, &dodef);
+  }
+
+  if (dodef) {
+    return myDefWindowProc(hwnd, msg, wParam, lParam);
+  } else {
+    return retval;
+  }
+}
+
+void InitCListClass(HINSTANCE hInstance)
+{
+  WNDCLASS wc;
+
+  wc.style = 0;
+  wc.lpfnWndProc = CListHdrWndProc;
+  wc.cbClsExtra = 0;
+  wc.cbWndExtra = 0;
+  wc.hInstance = hInstance;
+  wc.hIcon = NULL;
+  wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+  wc.hbrBackground = NULL;
+  wc.lpszMenuName = NULL;
+  wc.lpszClassName = WC_GTKCLISTHDR;
+  myRegisterClass(&wc);
 }
 
 #else /* for systems with GTK+ */
