@@ -51,6 +51,7 @@ rm -rf ${RPM_BUILD_ROOT}
 /usr/share/locale/de/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pl/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
+/usr/share/locale/fr/LC_MESSAGES/dopewars.mo
 
 %changelog
 * Wed Sep 26 2001 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
