@@ -22,7 +22,6 @@ StoppedTo = { 'drink a beer', 'visit a friend',
 StartCash=2000000  # Start each player with $2million
 StartDebt=0
 Port=7904
-Pager='less'
 NumLocation=6
 Location[1].Name='Oxford'
 Location[2].Name='London'
