@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-10-01 19:16+0100\n"
+"POT-Creation-Date: 2000-10-02 00:17+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1002,7 +1002,7 @@ msgstr ""
 msgid "CLQP"
 msgstr ""
 
-#: src/curses_client.c:371 src/gtk_client.c:817
+#: src/curses_client.c:371 src/gtk_client.c:822
 msgid "Where to, dude ? "
 msgstr ""
 
@@ -1108,12 +1108,12 @@ msgstr ""
 msgid "The server has terminated. Reverting to single player mode."
 msgstr ""
 
-#: src/curses_client.c:649 src/gtk_client.c:341 src/serverside.c:258
+#: src/curses_client.c:649 src/gtk_client.c:340 src/serverside.c:259
 #, c-format
 msgid "%s joins the game!"
 msgstr ""
 
-#: src/curses_client.c:654 src/gtk_client.c:347
+#: src/curses_client.c:654 src/gtk_client.c:346
 #, c-format
 msgid "%s has left the game."
 msgstr ""
@@ -1150,22 +1150,22 @@ msgstr ""
 msgid "You don't have any %s to sell!"
 msgstr ""
 
-#: src/curses_client.c:820 src/gtk_client.c:1092
+#: src/curses_client.c:820
 #, c-format
 msgid "You'll need more %s to carry any more %s!"
 msgstr ""
 
-#: src/curses_client.c:842 src/gtk_client.c:1096
+#: src/curses_client.c:842
 #, c-format
 msgid "You don't have enough space to carry that %s!"
 msgstr ""
 
-#: src/curses_client.c:850 src/gtk_client.c:1100
+#: src/curses_client.c:850
 #, c-format
 msgid "You don't have enough cash to buy that %s!"
 msgstr ""
 
-#: src/curses_client.c:863 src/gtk_client.c:1104
+#: src/curses_client.c:863 src/gtk_client.c:1134
 msgid "You don't have any to sell!"
 msgstr ""
 
@@ -1173,7 +1173,7 @@ msgstr ""
 msgid "How much money do you pay back? "
 msgstr ""
 
-#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1934
+#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1962
 msgid "You don't have that much money!"
 msgstr ""
 
@@ -1189,7 +1189,7 @@ msgstr ""
 msgid "How much money? "
 msgstr ""
 
-#: src/curses_client.c:926 src/gtk_client.c:1927
+#: src/curses_client.c:926 src/gtk_client.c:1955
 msgid "There isn't that much money in the bank..."
 msgstr ""
 
@@ -1201,7 +1201,7 @@ msgstr ""
 msgid "Messages"
 msgstr ""
 
-#: src/curses_client.c:1143 src/gtk_client.c:1386
+#: src/curses_client.c:1143 src/gtk_client.c:1415
 msgid "Stats"
 msgstr ""
 
@@ -1357,91 +1357,91 @@ msgid ""
 "client (if available) instead!\n"
 msgstr ""
 
-#: src/gtk_client.c:141
+#: src/gtk_client.c:142
 msgid "/_Game"
 msgstr ""
 
-#: src/gtk_client.c:142
+#: src/gtk_client.c:143
 msgid "/Game/_New"
 msgstr ""
 
-#: src/gtk_client.c:143
+#: src/gtk_client.c:144
 msgid "/Game/_Quit"
 msgstr ""
 
-#: src/gtk_client.c:144
+#: src/gtk_client.c:145
 msgid "/_Talk"
 msgstr ""
 
-#: src/gtk_client.c:145
+#: src/gtk_client.c:146
 msgid "/Talk/To _All"
 msgstr ""
 
-#: src/gtk_client.c:146
+#: src/gtk_client.c:147
 msgid "/Talk/To _Player"
 msgstr ""
 
-#: src/gtk_client.c:147
+#: src/gtk_client.c:148
 msgid "/_List"
 msgstr ""
 
-#: src/gtk_client.c:148
+#: src/gtk_client.c:149
 msgid "/List/_Players"
 msgstr ""
 
-#: src/gtk_client.c:149
+#: src/gtk_client.c:150
 msgid "/List/_Scores"
 msgstr ""
 
-#: src/gtk_client.c:150
+#: src/gtk_client.c:151
 msgid "/List/_Inventory"
 msgstr ""
 
-#: src/gtk_client.c:151
+#: src/gtk_client.c:152
 msgid "/_Errands"
 msgstr ""
 
-#: src/gtk_client.c:152
+#: src/gtk_client.c:153
 msgid "/Errands/_Spy"
 msgstr ""
 
-#: src/gtk_client.c:153
+#: src/gtk_client.c:154
 msgid "/Errands/_Tipoff"
 msgstr ""
 
-#: src/gtk_client.c:154
+#: src/gtk_client.c:155
 msgid "/Errands/Sack _Bitch"
 msgstr ""
 
-#: src/gtk_client.c:155
+#: src/gtk_client.c:156
 msgid "/Errands/_Get spy reports"
 msgstr ""
 
-#: src/gtk_client.c:156
+#: src/gtk_client.c:157
 msgid "/_Help"
 msgstr ""
 
-#: src/gtk_client.c:157
+#: src/gtk_client.c:158
 msgid "/Help/_About"
 msgstr ""
 
-#: src/gtk_client.c:167
+#: src/gtk_client.c:168
 msgid "Warning"
 msgstr ""
 
-#: src/gtk_client.c:167
+#: src/gtk_client.c:168
 msgid "Message"
 msgstr ""
 
-#: src/gtk_client.c:173 src/gtk_client.c:184
+#: src/gtk_client.c:174 src/gtk_client.c:185
 msgid "Quit Game"
 msgstr ""
 
-#: src/gtk_client.c:173 src/gtk_client.c:185 src/gtk_client.c:192
+#: src/gtk_client.c:174 src/gtk_client.c:186 src/gtk_client.c:193
 msgid "Abandon current game?"
 msgstr ""
 
-#: src/gtk_client.c:191
+#: src/gtk_client.c:192
 msgid "Start new game"
 msgstr ""
 
@@ -1449,192 +1449,227 @@ msgstr ""
 msgid "Inventory"
 msgstr ""
 
-#: src/gtk_client.c:240 src/gtk_client.c:2169 src/gtk_client.c:2533
+#: src/gtk_client.c:238 src/gtk_client.c:2197 src/gtk_client.c:2578
 msgid "Close"
 msgstr ""
 
-#: src/gtk_client.c:270
+#: src/gtk_client.c:268
 msgid "Connection to server lost - switching to single player mode"
 msgstr ""
 
-#: src/gtk_client.c:315
+#: src/gtk_client.c:314
 msgid "You have been pushed from the server."
 msgstr ""
 
-#: src/gtk_client.c:320
+#: src/gtk_client.c:319
 msgid "The server has terminated."
 msgstr ""
 
-#: src/gtk_client.c:361
-#, c-format
-msgid "Jetting to %s"
+#: src/gtk_client.c:360
+msgid "Jetting to %tde"
 msgstr ""
 
-#: src/gtk_client.c:369
+#: src/gtk_client.c:370
 #, c-format
 msgid "_Spy\t(%s)"
 msgstr ""
 
-#: src/gtk_client.c:373
+#: src/gtk_client.c:374
 #, c-format
 msgid "_Tipoff\t(%s)"
 msgstr ""
 
-#: src/gtk_client.c:407
+#: src/gtk_client.c:408
 msgid "High Scores"
 msgstr ""
 
-#: src/gtk_client.c:441 src/gtk_client.c:1043 src/gtk_client.c:1499
-#: src/gtk_client.c:1844 src/gtk_client.c:2008 src/gtk_client.c:2284
-#: src/gtk_client.c:2441
+#: src/gtk_client.c:442 src/gtk_client.c:1057 src/gtk_client.c:1527
+#: src/gtk_client.c:1872 src/gtk_client.c:2036 src/gtk_client.c:2317
+#: src/gtk_client.c:2484
 msgid "OK"
 msgstr ""
 
-#: src/gtk_client.c:523
+#: src/gtk_client.c:525
 msgid "Fight"
 msgstr ""
 
-#: src/gtk_client.c:550
-#, c-format
-msgid "_Deal %s"
+#: src/gtk_client.c:552
+msgid "_Deal %Tde"
 msgstr ""
 
-#: src/gtk_client.c:554 src/gtk_client.c:1135 src/gtk_client.c:1332
+#: src/gtk_client.c:558 src/gtk_client.c:1165 src/gtk_client.c:1362
 msgid "_Fight"
 msgstr ""
 
-#: src/gtk_client.c:557
+#: src/gtk_client.c:561
 msgid "_Stand"
 msgstr ""
 
-#: src/gtk_client.c:560 src/gtk_client.c:1134
+#: src/gtk_client.c:564 src/gtk_client.c:1164
 msgid "_Run"
 msgstr ""
 
-#: src/gtk_client.c:808
+#: src/gtk_client.c:644
+msgid "**Stats: Guns** %Tde"
+msgstr ""
+
+#: src/gtk_client.c:651
+msgid "**Stats: Bitches** %Tde"
+msgstr ""
+
+#: src/gtk_client.c:813
 msgid "Jet to location"
 msgstr ""
 
-#: src/gtk_client.c:877
+#: src/gtk_client.c:883
 #, c-format
 msgid "at %s"
 msgstr ""
 
-#: src/gtk_client.c:882
-#, c-format
-msgid "You are currently carrying %d %s"
+#: src/gtk_client.c:888
+msgid "You are currently carrying %d %tde"
 msgstr ""
 
-#: src/gtk_client.c:887
+#: src/gtk_client.c:895
 #, c-format
 msgid "Available space: %d"
 msgstr ""
 
-#: src/gtk_client.c:892
+#: src/gtk_client.c:900
 #, c-format
 msgid "You can afford %d"
 msgstr ""
 
-#: src/gtk_client.c:941 src/gtk_client.c:1072
+#: src/gtk_client.c:949 src/gtk_client.c:1087
 msgid "Buy"
 msgstr ""
 
-#: src/gtk_client.c:942 src/gtk_client.c:1073
+#: src/gtk_client.c:950 src/gtk_client.c:1088
 msgid "Sell"
 msgstr ""
 
-#: src/gtk_client.c:943 src/gtk_client.c:1074
+#: src/gtk_client.c:951 src/gtk_client.c:1089
 msgid "Drop"
 msgstr ""
 
-#: src/gtk_client.c:1031
-#, c-format
-msgid "%s how many?"
+#: src/gtk_client.c:1040
+msgid "Buy how many?"
 msgstr ""
 
-#: src/gtk_client.c:1049 src/gtk_client.c:1844 src/gtk_client.c:2019
-#: src/gtk_client.c:2292
+#: src/gtk_client.c:1042
+msgid "Sell how many?"
+msgstr ""
+
+#: src/gtk_client.c:1044
+msgid "Drop how many?"
+msgstr ""
+
+#: src/gtk_client.c:1063 src/gtk_client.c:1872 src/gtk_client.c:2047
+#: src/gtk_client.c:2325
 msgid "Cancel"
 msgstr ""
 
-#: src/gtk_client.c:1088
-#, c-format
-msgid "You don't have any %s!"
+#: src/gtk_client.c:1100
+msgid "Buy %tde"
 msgstr ""
 
-#: src/gtk_client.c:1134 src/gtk_client.c:1845
+#: src/gtk_client.c:1101
+msgid "Sell %tde"
+msgstr ""
+
+#: src/gtk_client.c:1102
+msgid "Drop %tde"
+msgstr ""
+
+#: src/gtk_client.c:1108
+msgid "You don't have any %tde!"
+msgstr ""
+
+#: src/gtk_client.c:1115
+msgid "You'll need more %tde to carry any more %tde!"
+msgstr ""
+
+#: src/gtk_client.c:1122
+msgid "You don't have enough space to carry that %tde!"
+msgstr ""
+
+#: src/gtk_client.c:1129
+msgid "You don't have enough cash to buy that %tde!"
+msgstr ""
+
+#: src/gtk_client.c:1164 src/gtk_client.c:1873
 msgid "_Yes"
 msgstr ""
 
-#: src/gtk_client.c:1134 src/gtk_client.c:1845
+#: src/gtk_client.c:1164 src/gtk_client.c:1873
 msgid "_No"
 msgstr ""
 
-#: src/gtk_client.c:1135
+#: src/gtk_client.c:1165
 msgid "_Attack"
 msgstr ""
 
-#: src/gtk_client.c:1135
+#: src/gtk_client.c:1165
 msgid "_Evade"
 msgstr ""
 
-#: src/gtk_client.c:1153
+#: src/gtk_client.c:1183
 msgid "Question"
 msgstr ""
 
-#: src/gtk_client.c:1282
+#: src/gtk_client.c:1312
 msgid "Space"
 msgstr ""
 
-#: src/gtk_client.c:1287
+#: src/gtk_client.c:1317
 msgid "Cash"
 msgstr ""
 
-#: src/gtk_client.c:1292
+#: src/gtk_client.c:1322
 msgid "Debt"
 msgstr ""
 
-#: src/gtk_client.c:1297
+#: src/gtk_client.c:1327
 msgid "Bank"
 msgstr ""
 
-#: src/gtk_client.c:1312
+#: src/gtk_client.c:1342
 msgid "Health"
 msgstr ""
 
-#: src/gtk_client.c:1332
+#: src/gtk_client.c:1362
 msgid "_Jet!"
 msgstr ""
 
-#: src/gtk_client.c:1363
+#: src/gtk_client.c:1392
 msgid "dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1446
+#: src/gtk_client.c:1474
 msgid "Drug Dealing and Research"
 msgstr ""
 
-#: src/gtk_client.c:1447
+#: src/gtk_client.c:1475
 msgid "Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1448
+#: src/gtk_client.c:1476
 msgid "Extensive Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1450
+#: src/gtk_client.c:1478
 msgid "Constructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1452
+#: src/gtk_client.c:1480
 msgid "Unconstructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1456
+#: src/gtk_client.c:1484
 msgid "About dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1465
+#: src/gtk_client.c:1493
 msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "imaginary drug market.  dopewars is an All-American game which features\n"
@@ -1646,245 +1681,243 @@ msgid ""
 "have one month of game time to make your fortune.\n"
 msgstr ""
 
-#: src/gtk_client.c:1473
+#: src/gtk_client.c:1501
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
 
-#: src/gtk_client.c:1491
+#: src/gtk_client.c:1519
 msgid ""
 "\n"
 "For information on the command line options, type dopewars -h at your\n"
 "Unix prompt. This will display a help screen, listing the available options."
 msgstr ""
 
-#: src/gtk_client.c:1529 src/gtk_client.c:1552
+#: src/gtk_client.c:1557 src/gtk_client.c:1580
 #, c-format
 msgid "Status: Could not connect (%s)"
 msgstr ""
 
-#: src/gtk_client.c:1540
+#: src/gtk_client.c:1568
 #, c-format
 msgid "Status: Attempting to contact %s..."
 msgstr ""
 
-#: src/gtk_client.c:1600
+#: src/gtk_client.c:1628
 #, c-format
 msgid "%d of %d"
 msgstr ""
 
-#: src/gtk_client.c:1664 src/gtk_client.c:1705 src/gtk_client.c:1746
+#: src/gtk_client.c:1692 src/gtk_client.c:1733 src/gtk_client.c:1774
 msgid "Server"
 msgstr ""
 
-#: src/gtk_client.c:1665 src/gtk_client.c:1720
+#: src/gtk_client.c:1693 src/gtk_client.c:1748
 msgid "Port"
 msgstr ""
 
-#: src/gtk_client.c:1666
+#: src/gtk_client.c:1694
 msgid "Version"
 msgstr ""
 
-#: src/gtk_client.c:1667
+#: src/gtk_client.c:1695
 msgid "Players"
 msgstr ""
 
-#: src/gtk_client.c:1668
+#: src/gtk_client.c:1696
 msgid "Comment"
 msgstr ""
 
-#: src/gtk_client.c:1681
+#: src/gtk_client.c:1709
 msgid "New Game"
 msgstr ""
 
-#: src/gtk_client.c:1690
+#: src/gtk_client.c:1718
 msgid "Hey dude, what's your _name?"
 msgstr ""
 
-#: src/gtk_client.c:1712
+#: src/gtk_client.c:1740
 msgid "Host name"
 msgstr ""
 
-#: src/gtk_client.c:1735 src/gtk_client.c:1798
+#: src/gtk_client.c:1763 src/gtk_client.c:1826
 msgid "_Connect"
 msgstr ""
 
-#: src/gtk_client.c:1748 src/gtk_client.c:1769
+#: src/gtk_client.c:1776 src/gtk_client.c:1797
 msgid "Single player"
 msgstr ""
 
-#: src/gtk_client.c:1754
+#: src/gtk_client.c:1782
 msgid "_Antique mode"
 msgstr ""
 
-#: src/gtk_client.c:1761
+#: src/gtk_client.c:1789
 msgid "_Start single-player game"
 msgstr ""
 
-#: src/gtk_client.c:1771 src/gtk_client.c:1809
+#: src/gtk_client.c:1799 src/gtk_client.c:1837
 msgid "Metaserver"
 msgstr ""
 
-#: src/gtk_client.c:1788
+#: src/gtk_client.c:1816
 msgid "_Update"
 msgstr ""
 
-#: src/gtk_client.c:1813
+#: src/gtk_client.c:1841
 msgid "Status: Waiting for user input"
 msgstr ""
 
-#: src/gtk_client.c:1965
+#: src/gtk_client.c:1993
 #, c-format
 msgid "Cash: %s"
 msgstr ""
 
-#: src/gtk_client.c:1972
+#: src/gtk_client.c:2000
 #, c-format
 msgid "Debt: %s"
 msgstr ""
 
-#: src/gtk_client.c:1975
+#: src/gtk_client.c:2003
 #, c-format
 msgid "Bank: %s"
 msgstr ""
 
-#: src/gtk_client.c:1983
+#: src/gtk_client.c:2011
 msgid "Pay back:"
 msgstr ""
 
-#: src/gtk_client.c:1986
+#: src/gtk_client.c:2014
 msgid "Deposit"
 msgstr ""
 
-#: src/gtk_client.c:1990
+#: src/gtk_client.c:2018
 msgid "Withdraw"
 msgstr ""
 
-#: src/gtk_client.c:2014
+#: src/gtk_client.c:2042
 msgid "Pay all"
 msgstr ""
 
-#: src/gtk_client.c:2036
+#: src/gtk_client.c:2064
 msgid "Player List"
 msgstr ""
 
-#: src/gtk_client.c:2124
+#: src/gtk_client.c:2152
 msgid "Talk to player(s)"
 msgstr ""
 
-#: src/gtk_client.c:2146
+#: src/gtk_client.c:2174
 msgid "Talk to all players"
 msgstr ""
 
-#: src/gtk_client.c:2150
+#: src/gtk_client.c:2178
 msgid "Message:-"
 msgstr ""
 
-#: src/gtk_client.c:2163
+#: src/gtk_client.c:2191
 msgid "Send"
 msgstr ""
 
-#: src/gtk_client.c:2254
+#: src/gtk_client.c:2283
 msgid "Spy On Player"
 msgstr ""
 
-#: src/gtk_client.c:2256
-#, c-format
+#: src/gtk_client.c:2285
 msgid ""
-"Please choose the player to spy on. Your %s will\n"
+"Please choose the player to spy on. Your %tde will\n"
 "then offer his services to the player, and if successful,\n"
 "you will be able to view the player's stats with the\n"
-"\"Get spy reports\" menu. Remember that the %s will leave\n"
-"you, so any %s or %s that he's carrying may be lost!"
+"\"Get spy reports\" menu. Remember that the %tde will leave\n"
+"you, so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2264
+#: src/gtk_client.c:2295
 msgid "Tip Off The Cops"
 msgstr ""
 
-#: src/gtk_client.c:2266
-#, c-format
+#: src/gtk_client.c:2297
 msgid ""
-"Please choose the player to tip off the cops to. Your %s will\n"
+"Please choose the player to tip off the cops to. Your %tde will\n"
 "help the cops to attack that player, and then report back to you\n"
-"on the encounter. Remember that the %s will leave you temporarily,\n"
-"so any %s or %s that he's carrying may be lost!"
+"on the encounter. Remember that the %tde will leave you temporarily,\n"
+"so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2306
-#, c-format
-msgid "Sack %s"
+#: src/gtk_client.c:2339
+msgid "Sack %Tde"
 msgstr ""
 
-#: src/gtk_client.c:2307
-#, c-format
+#: src/gtk_client.c:2343
 msgid ""
-"Are you sure? (Any %s or %s carried\n"
-"by this %s may be lost!)"
+"Are you sure? (Any %tde or %tde carried\n"
+"by this %tde may be lost!)"
 msgstr ""
 
-#: src/gtk_client.c:2327
+#: src/gtk_client.c:2366
 msgid "Name"
 msgstr ""
 
-#: src/gtk_client.c:2328
+#: src/gtk_client.c:2367
 msgid "Price"
 msgstr ""
 
-#: src/gtk_client.c:2329
+#: src/gtk_client.c:2368
 msgid "Number"
 msgstr ""
 
-#: src/gtk_client.c:2331
+#: src/gtk_client.c:2370
 msgid "_Buy ->"
 msgstr ""
 
-#: src/gtk_client.c:2332
+#: src/gtk_client.c:2371
 msgid "<- _Sell"
 msgstr ""
 
-#: src/gtk_client.c:2333
+#: src/gtk_client.c:2372
 msgid "_Drop <-"
 msgstr ""
 
-#: src/gtk_client.c:2338
-#, c-format
-msgid "%s here"
+#: src/gtk_client.c:2377
+msgid "%Tde here"
 msgstr ""
 
-#: src/gtk_client.c:2341
-#, c-format
-msgid "%s carried"
+#: src/gtk_client.c:2382
+msgid "%Tde carried"
 msgstr ""
 
-#: src/gtk_client.c:2417
+#: src/gtk_client.c:2460
 msgid "Change Name"
 msgstr ""
 
-#: src/gtk_client.c:2427
+#: src/gtk_client.c:2470
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it:-"
 msgstr ""
 
-#: src/gtk_client.c:2486
+#: src/gtk_client.c:2507
+msgid "**GunShop window title** %Tde"
+msgstr ""
+
+#: src/gtk_client.c:2531
 msgid "Done"
 msgstr ""
 
-#: src/gtk_client.c:2519
+#: src/gtk_client.c:2564
 msgid "Spy reports"
 msgstr ""
 
-#: src/gtk_client.c:2590
+#: src/gtk_client.c:2630
 msgid ""
 "No GTK+ client available - rebuild the binary passing the\n"
 "--enable-gtk-client option to configure, or use the curses\n"
 "client (if available) instead!\n"
 msgstr ""
 
-#: src/serverside.c:71
+#: src/serverside.c:72
 #, c-format
 msgid ""
 "dopewars server version %s commands and settings\n"
@@ -1906,103 +1939,103 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/serverside.c:103
+#: src/serverside.c:104
 msgid "cannot send data to metaserver\n"
 msgstr ""
 
-#: src/serverside.c:125
+#: src/serverside.c:126
 #, c-format
 msgid "Sending data to metaserver at %s\n"
 msgstr ""
 
-#: src/serverside.c:127
+#: src/serverside.c:128
 #, c-format
 msgid "Notifying metaserver at %s\n"
 msgstr ""
 
-#: src/serverside.c:130
+#: src/serverside.c:131
 msgid "cannot locate metaserver\n"
 msgstr ""
 
-#: src/serverside.c:135
+#: src/serverside.c:136
 msgid "cannot create socket for metaserver communication\n"
 msgstr ""
 
-#: src/serverside.c:169
+#: src/serverside.c:170
 msgid "cannot read high score file\n"
 msgstr ""
 
-#: src/serverside.c:268
+#: src/serverside.c:269
 #, c-format
 msgid "MaxClients (%d) exceeded - dropping connection"
 msgstr ""
 
-#: src/serverside.c:272
+#: src/serverside.c:273
 msgid ""
 "Sorry, but this server has a limit of 1 player, which has been "
 "reached.^Please try connecting again later."
 msgstr ""
 
-#: src/serverside.c:277
+#: src/serverside.c:278
 #, c-format
 msgid ""
 "Sorry, but this server has a limit of %d players, which has been "
 "reached.^Please try connecting again later."
 msgstr ""
 
-#: src/serverside.c:290
+#: src/serverside.c:291
 #, c-format
 msgid "%s will now be known as %s"
 msgstr ""
 
-#: src/serverside.c:305
+#: src/serverside.c:306
 msgid "Your dealing time is up..."
 msgstr ""
 
-#: src/serverside.c:316
+#: src/serverside.c:317
 #, c-format
 msgid "%s: DENIED jet to %s"
 msgstr ""
 
-#: src/serverside.c:362
+#: src/serverside.c:363
 #, c-format
 msgid "%s now spying on %s"
 msgstr ""
 
-#: src/serverside.c:370
+#: src/serverside.c:371
 #, c-format
 msgid "%s spy on %s: DENIED"
 msgstr ""
 
-#: src/serverside.c:376
+#: src/serverside.c:377
 #, c-format
 msgid "%s tipped off the cops to %s"
 msgstr ""
 
-#: src/serverside.c:384
+#: src/serverside.c:385
 #, c-format
 msgid "%s tipoff about %s: DENIED"
 msgstr ""
 
-#: src/serverside.c:490
+#: src/serverside.c:491
 msgid "--More--"
 msgstr ""
 
-#: src/serverside.c:501
+#: src/serverside.c:502
 msgid "Pager exited abnormally - using stdout instead..."
 msgstr ""
 
-#: src/serverside.c:516
+#: src/serverside.c:517
 #, c-format
 msgid "Maintaining pid file %s"
 msgstr ""
 
-#: src/serverside.c:520
+#: src/serverside.c:521
 #, c-format
 msgid "Cannot create pid file %s"
 msgstr ""
 
-#: src/serverside.c:569
+#: src/serverside.c:570
 #, c-format
 msgid ""
 "Cannot open high score file %s.\n"
@@ -2010,252 +2043,241 @@ msgid ""
 "specify an alternate high score file with the -f command line option."
 msgstr ""
 
-#: src/serverside.c:606
+#: src/serverside.c:607
 #, c-format
 msgid ""
 "dopewars server version %s ready and waiting for connections\n"
 "on port %d. For assistance with server commands, enter the command \"help\"\n"
 msgstr ""
 
-#: src/serverside.c:623
+#: src/serverside.c:624
 msgid "Cannot install SIGUSR1 interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:629
+#: src/serverside.c:630
 msgid "Cannot install SIGINT interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:632
+#: src/serverside.c:633
 msgid "Cannot install SIGTERM interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:635
+#: src/serverside.c:636
 msgid "Cannot install SIGHUP interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:640
+#: src/serverside.c:641
 msgid "Cannot install pipe handler!"
 msgstr ""
 
-#: src/serverside.c:663
+#: src/serverside.c:664
 msgid "Users currently logged on:-\n"
 msgstr ""
 
-#: src/serverside.c:668
+#: src/serverside.c:669
 msgid "No users currently logged on!"
 msgstr ""
 
-#: src/serverside.c:672
+#: src/serverside.c:673
 #, c-format
 msgid "Pushing %s"
 msgstr ""
 
-#: src/serverside.c:674 src/serverside.c:682
+#: src/serverside.c:675 src/serverside.c:683
 msgid "No such user!"
 msgstr ""
 
-#: src/serverside.c:678
+#: src/serverside.c:679
 #, c-format
 msgid "%s killed"
 msgstr ""
 
-#: src/serverside.c:684
+#: src/serverside.c:685
 msgid "Unknown command - try \"help\" for help..."
 msgstr ""
 
-#: src/serverside.c:701
+#: src/serverside.c:702
 #, c-format
 msgid "got connection from %s"
 msgstr ""
 
-#: src/serverside.c:717
+#: src/serverside.c:718
 #, c-format
 msgid "%s leaves the server!"
 msgstr ""
 
-#: src/serverside.c:785
+#: src/serverside.c:786
 msgid "Standard input closed."
 msgstr ""
 
-#: src/serverside.c:928
+#: src/serverside.c:929
 #, c-format
 msgid "Unable to read high score file %s"
 msgstr ""
 
-#: src/serverside.c:948
+#: src/serverside.c:949
 msgid "Congratulations! You made the high scores!"
 msgstr ""
 
-#: src/serverside.c:961
+#: src/serverside.c:962
 msgid "You didn't even make the high score table..."
 msgstr ""
 
-#: src/serverside.c:975
+#: src/serverside.c:976
 #, c-format
 msgid "Unable to write high score file %s"
 msgstr ""
 
-#: src/serverside.c:994
+#: src/serverside.c:995
 msgid "(R.I.P.)"
 msgstr ""
 
-#: src/serverside.c:1029
+#: src/serverside.c:1032
 #, c-format
 msgid "%s: Tipoff from %s"
 msgstr ""
 
-#: src/serverside.c:1046
-#, c-format
-msgid "One of your %s was spying for %s.^The spy %s!"
+#: src/serverside.c:1050
+msgid "One of your %tde was spying for %s.^The spy %s!"
 msgstr ""
 
-#: src/serverside.c:1054
+#: src/serverside.c:1060
 #, c-format
 msgid "Your spy working with %s has been discovered!^The spy %s!"
 msgstr ""
 
-#: src/serverside.c:1077
+#: src/serverside.c:1083
 #, c-format
 msgid " The lady next to you on the subway said,^ \"%s\"%s"
 msgstr ""
 
-#: src/serverside.c:1080
+#: src/serverside.c:1086
 msgid "^    (at least, you -think- that's what she said)"
 msgstr ""
 
-#: src/serverside.c:1082
+#: src/serverside.c:1088
 #, c-format
 msgid " You hear someone playing %s"
 msgstr ""
 
-#: src/serverside.c:1091 src/serverside.c:1100 src/serverside.c:1109
-#: src/serverside.c:1118
-#, c-format
-msgid "YN^Would you like to visit %s?"
-msgstr ""
-
-#: src/serverside.c:1129
-#, c-format
-msgid "YN^^Would you like to hire %s %s for %s?"
-msgstr ""
-
+#: src/serverside.c:1097 src/serverside.c:1108 src/serverside.c:1119
 #: src/serverside.c:1130
-msgid "an"
+msgid "YN^Would you like to visit %tde?"
 msgstr ""
 
-#: src/serverside.c:1130
-msgid "a"
+#: src/serverside.c:1143
+msgid "YN^^Would you like to hire a %tde for %s?"
 msgstr ""
 
-#: src/serverside.c:1142
+#: src/serverside.c:1158
 #, c-format
 msgid "AE^%s is already here!^Do you Attack, or Evade?"
 msgstr ""
 
-#: src/serverside.c:1465
+#: src/serverside.c:1480
 msgid "You were mugged in the subway!"
 msgstr ""
 
-#: src/serverside.c:1476
+#: src/serverside.c:1491
 #, c-format
 msgid "You meet a friend! He gives you %d %s."
 msgstr ""
 
-#: src/serverside.c:1481
+#: src/serverside.c:1496
 #, c-format
 msgid "You meet a friend! You give him %d %s."
 msgstr ""
 
-#: src/serverside.c:1490
+#: src/serverside.c:1505
 msgid "Sanitized away a RandomOffer"
 msgstr ""
 
-#: src/serverside.c:1495
+#: src/serverside.c:1510
 #, c-format
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
 msgstr ""
 
-#: src/serverside.c:1511
+#: src/serverside.c:1526
 #, c-format
 msgid "You find %d %s on a dead dude in the subway!"
 msgstr ""
 
-#: src/serverside.c:1523
+#: src/serverside.c:1538
 #, c-format
 msgid "Your mama made brownies with some of your %s! They were great!"
 msgstr ""
 
-#: src/serverside.c:1533
+#: src/serverside.c:1548
 msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
 
-#: src/serverside.c:1540
+#: src/serverside.c:1555
 #, c-format
 msgid "You stopped to %s."
 msgstr ""
 
-#: src/serverside.c:1561
+#: src/serverside.c:1576
 #, c-format
 msgid "Would you like to buy a bigger trenchcoat for %s?"
 msgstr ""
 
-#: src/serverside.c:1566
+#: src/serverside.c:1581
 #, c-format
 msgid "YN^Hey dude! I'll help carry your %s for a mere %s. Yes or no?"
 msgstr ""
 
-#: src/serverside.c:1578
+#: src/serverside.c:1593
 #, c-format
 msgid "YN^Would you like to buy a %s for %s?"
 msgstr ""
 
-#: src/serverside.c:1684 src/serverside.c:1777
+#: src/serverside.c:1699 src/serverside.c:1792
 #, c-format
 msgid "%s: offer was on behalf of %s"
 msgstr ""
 
-#: src/serverside.c:1687
+#: src/serverside.c:1702
 #, c-format
 msgid "%s has accepted your %s!^Use the G key to contact your spy."
 msgstr ""
 
-#: src/serverside.c:1733
+#: src/serverside.c:1748
 msgid ""
 "You hallucinated for three days on the wildest trip you ever imagined!^Then "
 "you died because your brain disintegrated!"
 msgstr ""
 
-#: src/serverside.c:1757
+#: src/serverside.c:1772
 #, c-format
 msgid "Too late - %s has just left!"
 msgstr ""
 
-#: src/serverside.c:1780
+#: src/serverside.c:1795
 #, c-format
 msgid "%s has rejected your %s!"
 msgstr ""
 
-#: src/serverside.c:1823
+#: src/serverside.c:1838
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
 msgstr ""
 
-#: src/serverside.c:1825
+#: src/serverside.c:1840
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
 
-#: src/serverside.c:1984
+#: src/serverside.c:1999
 msgid "Player removed due to idle timeout"
 msgstr ""
 
-#: src/serverside.c:1994
+#: src/serverside.c:2009
 msgid "Player removed due to connect timeout"
 msgstr ""
 
-#: src/message.c:524
+#: src/message.c:525
 #, c-format
 msgid ""
 "This server is version %s, while your client is version %s.\n"
@@ -2264,150 +2286,146 @@ msgid ""
 "for the latest version."
 msgstr ""
 
-#: src/message.c:667
+#: src/message.c:668
 msgid "Could not find host"
 msgstr ""
 
-#: src/message.c:668
+#: src/message.c:669
 msgid "Could not create network socket"
 msgstr ""
 
-#: src/message.c:669 src/message.c:702
+#: src/message.c:670 src/message.c:703
 msgid "Connection refused or no server present"
 msgstr ""
 
-#: src/message.c:861
+#: src/message.c:862
 msgid "Cannot locate metaserver"
 msgstr ""
 
-#: src/message.c:862
+#: src/message.c:863
 msgid "Cannot create socket"
 msgstr ""
 
-#: src/message.c:864
+#: src/message.c:865
 msgid "Metaserver not running HTTP or connection denied"
 msgstr ""
 
-#: src/message.c:944
+#: src/message.c:945
 msgid "Do you run?"
 msgstr ""
 
-#: src/message.c:947
+#: src/message.c:948
 msgid "Do you run, or fight?"
 msgstr ""
 
-#: src/message.c:1048
+#: src/message.c:1051
 msgid "pitifully armed"
 msgstr ""
 
-#: src/message.c:1049
+#: src/message.c:1052
 msgid "lightly armed"
 msgstr ""
 
-#: src/message.c:1050
+#: src/message.c:1053
 msgid "moderately well armed"
 msgstr ""
 
-#: src/message.c:1051
+#: src/message.c:1054
 msgid "heavily armed"
 msgstr ""
 
-#: src/message.c:1052
+#: src/message.c:1055
 msgid "armed to the teeth"
 msgstr ""
 
-#: src/message.c:1054
-#, c-format
-msgid "%s arrives with %d %s, %s!"
+#: src/message.c:1057
+msgid "%s arrives with %d %tde, %s!"
 msgstr ""
 
-#: src/message.c:1060
+#: src/message.c:1065
 #, c-format
 msgid "%s stands and takes it"
 msgstr ""
 
-#: src/message.c:1062
+#: src/message.c:1067
 msgid "You stand there like a dummy."
 msgstr ""
 
-#: src/message.c:1067
+#: src/message.c:1072
 #, c-format
 msgid "%s has got away!"
 msgstr ""
 
-#: src/message.c:1069
+#: src/message.c:1074
 msgid "You got away!"
 msgstr ""
 
-#: src/message.c:1074
+#: src/message.c:1079
 msgid "Guns reloaded..."
 msgstr ""
 
-#: src/message.c:1079
+#: src/message.c:1084
 #, c-format
 msgid "%s shoots at %s... and misses!"
 msgstr ""
 
-#: src/message.c:1082
+#: src/message.c:1087
 #, c-format
 msgid "%s shoots at you... and misses!"
 msgstr ""
 
-#: src/message.c:1085
+#: src/message.c:1090
 #, c-format
 msgid "You missed %s!"
 msgstr ""
 
-#: src/message.c:1091
+#: src/message.c:1096
 #, c-format
 msgid "%s shoots %s dead."
 msgstr ""
 
-#: src/message.c:1094
-#, c-format
-msgid "%s shoots at %s and kills a %s!"
+#: src/message.c:1099
+msgid "%s shoots at %s and kills a %tde!"
 msgstr ""
 
-#: src/message.c:1097
+#: src/message.c:1104
 #, c-format
 msgid "%s shoots at %s."
 msgstr ""
 
-#: src/message.c:1102
+#: src/message.c:1109
 #, c-format
 msgid "%s wasted you, man! What a drag!"
 msgstr ""
 
-#: src/message.c:1105
-#, c-format
-msgid "%s shoots at you... and kills a %s!"
+#: src/message.c:1113
+msgid "%s shoots at you... and kills a %tde!"
 msgstr ""
 
-#: src/message.c:1108
+#: src/message.c:1118
 #, c-format
 msgid "%s hits you, man!"
 msgstr ""
 
-#: src/message.c:1112
+#: src/message.c:1122
 #, c-format
 msgid "You killed %s!"
 msgstr ""
 
-#: src/message.c:1114
-#, c-format
-msgid "You hit %s, and killed a %s!"
+#: src/message.c:1124
+msgid "You hit %s, and killed a %tde!"
 msgstr ""
 
-#: src/message.c:1117
+#: src/message.c:1129
 #, c-format
 msgid "You hit %s!"
 msgstr ""
 
-#: src/message.c:1120
+#: src/message.c:1132
 msgid " You loot the body!"
 msgstr ""
 
-#: src/message.c:1123
+#: src/message.c:1135
 #, c-format
 msgid " (Health: %d)"
 msgstr ""

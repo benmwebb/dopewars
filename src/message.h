@@ -72,10 +72,6 @@
 #define C_CHANGEDISP   'p'
 #define C_NETMESSAGE   'q'
 #define C_ABILITIES    'r'
-#define C_FIGHTARRIVE  's'
-#define C_FIGHTSHOOT   't'
-#define C_FIGHTLEAVE   'u'
-#define C_FIGHTRELOAD  'v'
 
 #define C_NONE        'A'
 #define C_ASKLOAN     'B'

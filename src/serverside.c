@@ -35,9 +35,10 @@
 #include <stdlib.h>
 #include <glib.h>
 #include "dopeos.h"
-#include "serverside.h"
 #include "dopewars.h"
 #include "message.h"
+#include "serverside.h"
+#include "tstring.h"
 
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
@@ -1012,6 +1013,8 @@ void SendEvent(Player *To) {
    Player *Play;
    GSList *list;
    gchar *prstr;
+   gchar *tfmt,**tstr;
+
    if (!To) return;
    if (To->EventNum==E_MAX) To->EventNum=E_NONE;
    if (To->EventNum==E_NONE || To->EventNum>=E_OUTOFSYNC) return;
@@ -1043,10 +1046,13 @@ void SendEvent(Player *To) {
                    brandom(0,100)<10+To->SpyList.Data[i].Turns) {
                    if (TotalGunsCarried(To) > 0) j=brandom(0,NUMDISCOVER);
                    else j=brandom(0,NUMDISCOVER-1);
-                   text=g_strdup_printf(_("One of your %s was spying for %s."
-                                          "^The spy %s!"),Names.Bitches,
+                   tstring_fmt(&tfmt,&tstr,
+                               _("One of your %tde was spying for %s."
+                                 "^The spy %s!"),Names.Bitches);
+                   text=g_strdup_printf(tfmt,tstr[0],
                                         GetPlayerName(To->SpyList.Data[i].Play),
                                         _(Discover[j]));
+                   tstring_free(tfmt,tstr);
                    if (j!=DEFECT) LoseBitch(To,NULL,NULL);
                    SendPlayerData(To);
                    SendPrintMessage(NULL,C_NONE,To,text);
@@ -1088,8 +1094,10 @@ void SendEvent(Player *To) {
             break;
          case E_LOANSHARK:
             if (To->IsAt+1==LoanSharkLoc && To->Debt>0) {
-               text=g_strdup_printf(_("YN^Would you like to visit %s?"),
-                                    Names.LoanSharkName);
+               tstring_fmt(&tfmt,&tstr,_("YN^Would you like to visit %tde?"),
+                           Names.LoanSharkName);
+               text=g_strdup_printf(tfmt,tstr[0]);
+               tstring_free(tfmt,tstr);
                SendQuestion(NULL,C_ASKLOAN,To,text);
                g_free(text);
                return;
@@ -1097,8 +1105,10 @@ void SendEvent(Player *To) {
             break;
          case E_BANK:
             if (To->IsAt+1==BankLoc) {
-               text=g_strdup_printf(_("YN^Would you like to visit %s?"),
-                                    Names.BankName);
+               tstring_fmt(&tfmt,&tstr,_("YN^Would you like to visit %tde?"),
+                           Names.BankName);
+               text=g_strdup_printf(tfmt,tstr[0]);
+               tstring_free(tfmt,tstr);
                SendQuestion(NULL,C_ASKBANK,To,text);
                g_free(text);
                return;
@@ -1106,8 +1116,10 @@ void SendEvent(Player *To) {
             break;
          case E_GUNSHOP:
             if (To->IsAt+1==GunShopLoc && !Sanitized && !WantAntique) {
-               text=g_strdup_printf(_("YN^Would you like to visit %s?"),
-                                    Names.GunShopName);
+               tstring_fmt(&tfmt,&tstr,_("YN^Would you like to visit %tde?"),
+                           Names.GunShopName);
+               text=g_strdup_printf(tfmt,tstr[0]);
+               tstring_free(tfmt,tstr);
                SendQuestion(NULL,C_ASKGUNSHOP,To,text);
                g_free(text);
                return;
@@ -1115,8 +1127,10 @@ void SendEvent(Player *To) {
             break;
          case E_ROUGHPUB:
             if (To->IsAt+1==RoughPubLoc && !WantAntique) {
-               text=g_strdup_printf(_("YN^Would you like to visit %s?"),
-                                    Names.RoughPubName);
+               tstring_fmt(&tfmt,&tstr,_("YN^Would you like to visit %tde?"),
+                           Names.RoughPubName);
+               text=g_strdup_printf(tfmt,tstr[0]);
+               tstring_free(tfmt,tstr);
                SendQuestion(NULL,C_ASKPUB,To,text);
                g_free(text);
                return;
@@ -1125,10 +1139,12 @@ void SendEvent(Player *To) {
          case E_HIREBITCH:
             if (To->IsAt+1==RoughPubLoc && !WantAntique) {
                To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice);
-               text=g_strdup_printf(
-                       _("YN^^Would you like to hire %s %s for %s?"),
-                       StartsWithVowel(Names.Bitch) ? _("an") : _("a"),
-                       Names.Bitch,prstr=FormatPrice(To->Bitches.Price));
+               tstring_fmt(&tfmt,&tstr,
+                           _("YN^^Would you like to hire a %tde for %s?"),
+                           Names.Bitch);
+               text=g_strdup_printf(tfmt,tstr[0],
+                                    prstr=FormatPrice(To->Bitches.Price));
+               tstring_free(tfmt,tstr);
                SendQuestion(NULL,C_ASKBITCH,To,text);
                g_free(text); g_free(prstr);
                return;

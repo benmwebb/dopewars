@@ -34,6 +34,7 @@
 #include "gtk_client.h"
 #include "message.h"
 #include "serverside.h"
+#include "tstring.h"
 
 #define BT_BUY  (GINT_TO_POINTER(1))
 #define BT_SELL (GINT_TO_POINTER(2))
@@ -202,7 +203,6 @@ void ListScores(GtkWidget *widget,gpointer data) {
 void ListInventory(GtkWidget *widget,gpointer data) {
    GtkWidget *window,*button,*hsep,*vbox,*hbox;
    GtkAccelGroup *accel_group;
-   gchar *caps;
 
    if (IsShowingInventory) return;
    window=gtk_window_new(GTK_WINDOW_DIALOG);
@@ -225,12 +225,10 @@ void ListInventory(GtkWidget *widget,gpointer data) {
    vbox=gtk_vbox_new(FALSE,7);
 
    hbox=gtk_hbox_new(FALSE,7);
-   caps=InitialCaps(Names.Drugs);
-   CreateInventory(hbox,caps,accel_group,FALSE,FALSE,
-                   &ClientData.InvenDrug,NULL); g_free(caps);
-   caps=InitialCaps(Names.Guns);
-   CreateInventory(hbox,caps,accel_group,FALSE,FALSE,
-                   &ClientData.InvenGun,NULL); g_free(caps);
+   CreateInventory(hbox,Names.Drugs,accel_group,FALSE,FALSE,
+                   &ClientData.InvenDrug,NULL);
+   CreateInventory(hbox,Names.Guns,accel_group,FALSE,FALSE,
+                   &ClientData.InvenGun,NULL);
 
    gtk_box_pack_start(GTK_BOX(vbox),hbox,TRUE,TRUE,0);
 
@@ -290,6 +288,7 @@ void HandleClientMessage(char *pt,Player *Play) {
    gboolean Handled;
    GtkWidget *MenuItem;
    GSList *list;
+   gchar *tfmt,**tstr;
 
    if (ProcessMessage(pt,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
       return;
@@ -358,9 +357,11 @@ void HandleClientMessage(char *pt,Player *Play) {
             tmp=(Player *)list->data;
             tmp->Flags &= ~FIGHTING;
          }
-         text=g_strdup_printf(_("Jetting to %s"),
-                              Location[(int)Play->IsAt].Name);
+         tstring_fmt(&tfmt,&tstr,_("Jetting to %tde"),
+                     Location[(int)Play->IsAt].Name);
+         text=g_strdup_printf(tfmt,tstr[0]);
          PrintMessage(text); g_free(text);
+         tstring_free(tfmt,tstr);
          break;
       case C_ENDLIST:
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
@@ -513,6 +514,7 @@ static void CreateFightDialog() {
    GtkAdjustment *adj;
    GtkAccelGroup *accel_group;
    gchar *buf;
+   gchar *tfmt,**tstr;
 
    FightDialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
@@ -547,7 +549,9 @@ static void CreateFightDialog() {
    gtk_widget_show(hsep);
 
    hbbox=gtk_hbutton_box_new();
-   buf=g_strdup_printf(_("_Deal %s"),Names.Drugs);
+   tstring_fmt(&tfmt,&tstr,_("_Deal %Tde"),Names.Drugs);
+   buf=g_strdup_printf(tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
    button=AddFightButton(buf,accel_group,GTK_BOX(hbbox),'D');
    gtk_widget_show(button);
 
@@ -610,8 +614,9 @@ void DisplayFightMessage(char *Data) {
 }
 
 void DisplayStats(Player *Play,struct StatusWidgets *Status) {
-   gchar *prstr,*caps;
+   gchar *prstr;
    GString *text;
+   gchar *tfmt,**tstr;
 
    text=g_string_new(NULL);
 
@@ -636,16 +641,16 @@ void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    gtk_label_set_text(GTK_LABEL(Status->DebtValue),prstr);
    g_free(prstr);
 
-   caps=InitialCaps(Names.Guns);
-   gtk_label_set_text(GTK_LABEL(Status->GunsName),caps);
-   g_free(caps);
+   tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
+   gtk_label_set_text(GTK_LABEL(Status->GunsName),tstr[0]);
+   tstring_free(tfmt,tstr);
    g_string_sprintf(text,"%d",TotalGunsCarried(Play));
    gtk_label_set_text(GTK_LABEL(Status->GunsValue),text->str);
 
    if (!WantAntique) {
-      caps=InitialCaps(Names.Bitches);
-      gtk_label_set_text(GTK_LABEL(Status->BitchesName),caps);
-      g_free(caps);
+      tstring_fmt(&tfmt,&tstr,_("**Stats: Bitches** %Tde"),Names.Bitches);
+      gtk_label_set_text(GTK_LABEL(Status->BitchesName),tstr[0]);
+      tstring_free(tfmt,tstr);
       g_string_sprintf(text,"%d",Play->Bitches.Carried);
       gtk_label_set_text(GTK_LABEL(Status->BitchesValue),text->str);
    } else {
@@ -868,6 +873,7 @@ static void UpdateDealDialog() {
    GtkAdjustment *spin_adj;
    gint DrugInd,CanDrop,CanCarry,CanAfford,MaxDrug;
    Player *Play;
+   gchar *tfmt,**tstr;
 
    text=g_string_new(NULL);
    DrugInd=DealDialog.DrugInd;
@@ -879,8 +885,10 @@ static void UpdateDealDialog() {
    gtk_label_set_text(GTK_LABEL(DealDialog.cost),text->str);
 
    CanDrop=Play->Drugs[DrugInd].Carried;
-   g_string_sprintf(text,_("You are currently carrying %d %s"),
-                    CanDrop,Drug[DrugInd].Name);
+   tstring_fmt(&tfmt,&tstr,_("You are currently carrying %d %tde"),
+               Drug[DrugInd].Name);
+   g_string_sprintf(text,tfmt,CanDrop,tstr[0]);
+   tstring_free(tfmt,tstr);
    gtk_label_set_text(GTK_LABEL(DealDialog.carrying),text->str);
 
    CanCarry=Play->CoatSize;
@@ -1028,7 +1036,13 @@ void DealDrugs(GtkWidget *widget,gpointer data) {
       gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
    }
    hbox=gtk_hbox_new(FALSE,7);
-   g_string_sprintf(text,_("%s how many?"),Action);
+   if (data==BT_BUY) {
+      g_string_sprintf(text,_("Buy how many?"));
+   } else if (data==BT_SELL) {
+      g_string_sprintf(text,_("Sell how many?"));
+   } else {
+      g_string_sprintf(text,_("Drop how many?"));
+   }
    label=gtk_label_new(text->str);
    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
    spin_adj=(GtkAdjustment *)gtk_adjustment_new(1.0,1.0,2.0,1.0,10.0,10.0);
@@ -1067,6 +1081,7 @@ void DealGuns(GtkWidget *widget,gpointer data) {
    gint row,GunInd;
    gchar *Action,*Title;
    GString *text;
+   gchar *tfmt,**tstr;
 
    dialog=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
    if (data==BT_BUY) Action=_("Buy");
@@ -1081,24 +1096,39 @@ void DealGuns(GtkWidget *widget,gpointer data) {
       GunInd=GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist),row));
    } else return;
 
-   Title=g_strdup_printf("%s %s",Action,Names.Guns);
+   
+   if (data==BT_BUY) tstring_fmt(&tfmt,&tstr,_("Buy %tde"),Names.Guns);
+   else if (data==BT_SELL) tstring_fmt(&tfmt,&tstr,_("Sell %tde"),Names.Guns);
+   else tstring_fmt(&tfmt,&tstr,_("Drop %tde"),Names.Guns);
+   Title=g_strdup_printf(tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
    text=g_string_new("");
 
    if (data!=BT_BUY && TotalGunsCarried(ClientData.Play)==0) {
-      g_string_sprintf(text,_("You don't have any %s!"),Names.Guns);
+      tstring_fmt(&tfmt,&tstr,_("You don't have any %tde!"),Names.Guns);
+      g_string_sprintf(text,tfmt,tstr[0]);
+      tstring_free(tfmt,tstr);
       MessageBox(dialog,Title,text->str,MB_OK);
    } else if (data==BT_BUY && TotalGunsCarried(ClientData.Play) >=
                               ClientData.Play->Bitches.Carried+2) { 
-      g_string_sprintf(text,_("You'll need more %s to carry any more %s!"),
-                           Names.Bitches,Names.Guns);
+      tstring_fmt(&tfmt,&tstr,
+                  _("You'll need more %tde to carry any more %tde!"),
+                  Names.Bitches,Names.Guns);
+      g_string_sprintf(text,tfmt,tstr[0],tstr[1]);
+      tstring_free(tfmt,tstr);
       MessageBox(dialog,Title,text->str,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Space > ClientData.Play->CoatSize) {
-      g_string_sprintf(text,_("You don't have enough space to carry that %s!"),
-                           Names.Gun);
+      tstring_fmt(&tfmt,&tstr,
+                  _("You don't have enough space to carry that %tde!"),
+                  Names.Gun);
+      g_string_sprintf(text,tfmt,tstr[0]);
+      tstring_free(tfmt,tstr);
       MessageBox(dialog,Title,text->str,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Price > ClientData.Play->Cash) {
-      g_string_sprintf(text,_("You don't have enough cash to buy that %s!"),
-                           Names.Gun);
+      tstring_fmt(&tfmt,&tstr,
+                  _("You don't have enough cash to buy that %tde!"),Names.Gun);
+      g_string_sprintf(text,tfmt,tstr[0]);
+      tstring_free(tfmt,tstr);
       MessageBox(dialog,Title,text->str,MB_OK);
    } else if (data==BT_SELL && ClientData.Play->Guns[GunInd].Carried == 0) {
       MessageBox(dialog,Title,_("You don't have any to sell!"),MB_OK);
@@ -1341,7 +1371,6 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    GtkAccelGroup *accel_group;
    GtkItemFactory *item_factory;
    GtkAdjustment *adj;
-   gchar *buf;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
    gtk_set_locale();
@@ -1406,9 +1435,8 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    gtk_paned_pack1(GTK_PANED(vpaned),hbox,TRUE,TRUE);
 
    hbox=gtk_hbox_new(FALSE,7);
-   buf=InitialCaps(Names.Drugs);
-   CreateInventory(hbox,buf,accel_group,TRUE,TRUE,&ClientData.Drug,
-                   DealDrugs); g_free(buf);
+   CreateInventory(hbox,Names.Drugs,accel_group,TRUE,TRUE,&ClientData.Drug,
+                   DealDrugs);
    clist=ClientData.Drug.HereList;
    gtk_clist_column_titles_active(GTK_CLIST(clist));
    gtk_clist_set_compare_func(GTK_CLIST(clist),DrugSortFunc);
@@ -2240,6 +2268,7 @@ void TipOff(GtkWidget *widget,gpointer data) {
 void ErrandDialog(gint ErrandType) {
    GtkWidget *dialog,*clist,*button,*vbox,*hbbox,*hsep,*label;
    gchar *text;
+   gchar *tfmt,**tstr;
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
@@ -2252,22 +2281,26 @@ void ErrandDialog(gint ErrandType) {
 
    if (ErrandType==ET_SPY) {
       gtk_window_set_title(GTK_WINDOW(dialog),_("Spy On Player"));
-      text=g_strdup_printf(
-_("Please choose the player to spy on. Your %s will\n"
+      tstring_fmt(&tfmt,&tstr,
+_("Please choose the player to spy on. Your %tde will\n"
 "then offer his services to the player, and if successful,\n"
 "you will be able to view the player's stats with the\n"
-"\"Get spy reports\" menu. Remember that the %s will leave\n"
-"you, so any %s or %s that he's carrying may be lost!"),
+"\"Get spy reports\" menu. Remember that the %tde will leave\n"
+"you, so any %tde or %tde that he's carrying may be lost!"),
 Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
+      text=g_strdup_printf(tfmt,tstr[0],tstr[1],tstr[2],tstr[3]);
+      tstring_free(tfmt,tstr);
       label=gtk_label_new(text); g_free(text);
    } else {
       gtk_window_set_title(GTK_WINDOW(dialog),_("Tip Off The Cops"));
-      text=g_strdup_printf(
-_("Please choose the player to tip off the cops to. Your %s will\n"
+      tstring_fmt(&tfmt,&tstr,
+_("Please choose the player to tip off the cops to. Your %tde will\n"
 "help the cops to attack that player, and then report back to you\n"
-"on the encounter. Remember that the %s will leave you temporarily,\n"
-"so any %s or %s that he's carrying may be lost!"),
+"on the encounter. Remember that the %tde will leave you temporarily,\n"
+"so any %tde or %tde that he's carrying may be lost!"),
 Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
+      text=g_strdup_printf(tfmt,tstr[0],tstr[1],tstr[2],tstr[3]);
+      tstring_free(tfmt,tstr);
       label=gtk_label_new(text); g_free(text);
    }
 
@@ -2301,16 +2334,21 @@ Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
 }
 
 void SackBitch(GtkWidget *widget,gpointer data) {
-   char *caps,*title,*text;
-   caps=InitialCaps(Names.Bitch);
-   title=g_strdup_printf(_("Sack %s"),caps);
-   text=g_strdup_printf(_("Are you sure? (Any %s or %s carried\n"
-                        "by this %s may be lost!)"),Names.Guns,
-                        Names.Drugs,Names.Bitch);
+   char *title,*text;
+   gchar *tfmt,**tstr;
+   tstring_fmt(&tfmt,&tstr,_("Sack %Tde"),Names.Bitch);
+   title=g_strdup_printf(tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
+   tstring_fmt(&tfmt,&tstr,
+               _("Are you sure? (Any %tde or %tde carried\n"
+                 "by this %tde may be lost!)"),Names.Guns,
+               Names.Drugs,Names.Bitch);
+   text=g_strdup_printf(tfmt,tstr[0],tstr[1],tstr[2]);
+   tstring_free(tfmt,tstr);
    if (MessageBox(ClientData.window,title,text,MB_YES|MB_NO)==MB_YES) {
       SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
-   g_free(caps); g_free(text); g_free(title);
+   g_free(text); g_free(title);
 }
 
 void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
@@ -2323,6 +2361,7 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
    gchar *titles[2][2];
    gchar *button_text[3];
    gpointer button_type[3]  = { BT_BUY, BT_SELL, BT_DROP };
+   gchar *tfmt,**tstr;
 
    titles[0][0]=titles[1][0]=_("Name");
    titles[0][1]=_("Price");
@@ -2335,10 +2374,14 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
    text=g_string_new("");
 
    if (CreateHere) {
-      g_string_sprintf(text,_("%s here"),Objects);
+      tstring_fmt(&tfmt,&tstr,_("%Tde here"),Objects);
+      g_string_sprintf(text,tfmt,tstr[0]);
+      tstring_free(tfmt,tstr);
       widgets->HereFrame=frame[0]=gtk_frame_new(text->str);
    }
-   g_string_sprintf(text,_("%s carried"),Objects);
+   tstring_fmt(&tfmt,&tstr,_("%Tde carried"),Objects);
+   g_string_sprintf(text,tfmt,tstr[0]);
+   tstring_free(tfmt,tstr);
    widgets->CarriedFrame=frame[1]=gtk_frame_new(text->str);
 
    widgets->HereList=widgets->CarriedList=NULL;
@@ -2452,7 +2495,7 @@ void NewNameDialog() {
 void GunShopDialog() {
    GtkWidget *window,*button,*hsep,*vbox,*hbox;
    GtkAccelGroup *accel_group;
-   gchar *text;
+   gchar *tfmt,**tstr;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_window_set_default_size(GTK_WINDOW(window),600,190);
@@ -2460,7 +2503,10 @@ void GunShopDialog() {
                       GTK_SIGNAL_FUNC(SendDoneMessage),NULL);
    accel_group=gtk_accel_group_new();
    gtk_window_add_accel_group(GTK_WINDOW(window),accel_group);
-   gtk_window_set_title(GTK_WINDOW(window),Names.GunShopName);
+   tstring_fmt(&tfmt,&tstr,
+               _("**GunShop window title** %Tde"),Names.GunShopName);
+   gtk_window_set_title(GTK_WINDOW(window),tstr[0]);
+   tstring_free(tfmt,tstr);
    gtk_window_set_modal(GTK_WINDOW(window),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(window),
                                 GTK_WINDOW(ClientData.window));
@@ -2474,9 +2520,8 @@ void GunShopDialog() {
    vbox=gtk_vbox_new(FALSE,7);
 
    hbox=gtk_hbox_new(FALSE,7);
-   text=InitialCaps(Names.Guns);
-   CreateInventory(hbox,text,accel_group,TRUE,TRUE,&ClientData.Gun,
-                   DealGuns); g_free(text);
+   CreateInventory(hbox,Names.Guns,accel_group,TRUE,TRUE,&ClientData.Gun,
+                   DealGuns);
 
    gtk_box_pack_start(GTK_BOX(vbox),hbox,TRUE,TRUE,0);
 
@@ -2544,7 +2589,6 @@ static void CreateSpyReports() {
 void DisplaySpyReports(Player *Play) {
    GtkWidget *dialog,*notebook,*vbox,*hbox,*frame,*label,*table;
    GtkAccelGroup *accel_group;
-   gchar *caps;
    struct StatusWidgets Status;
    struct InventoryWidgets SpyDrugs,SpyGuns;
 
@@ -2561,12 +2605,8 @@ void DisplaySpyReports(Player *Play) {
    gtk_box_pack_start(GTK_BOX(vbox),frame,FALSE,FALSE,0);
 
    hbox=gtk_hbox_new(FALSE,5);
-   caps=InitialCaps(Names.Drugs);
-   CreateInventory(hbox,caps,accel_group,FALSE,FALSE,&SpyDrugs,NULL);
-   g_free(caps);
-   caps=InitialCaps(Names.Guns);
-   CreateInventory(hbox,caps,accel_group,FALSE,FALSE,&SpyGuns,NULL);
-   g_free(caps);
+   CreateInventory(hbox,Names.Drugs,accel_group,FALSE,FALSE,&SpyDrugs,NULL);
+   CreateInventory(hbox,Names.Guns,accel_group,FALSE,FALSE,&SpyGuns,NULL);
 
    gtk_box_pack_start(GTK_BOX(vbox),hbox,TRUE,TRUE,0);
    label=gtk_label_new(GetPlayerName(Play));

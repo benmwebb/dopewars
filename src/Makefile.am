@@ -1,7 +1,7 @@
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c \
                    curses_client.c gtk_client.c win32_client.c \
-		   dopeos.c @WIN_RC@
+		   dopeos.c tstring.c @WIN_RC@
 dopewars_DEPENDENCIES = @WIN_RES@
 SUFFIXES = .rc .res
 INCLUDES = @GTK_CFLAGS@ -I.. -I.

@@ -38,6 +38,7 @@
 #include "dopeos.h"
 #include "dopewars.h"
 #include "serverside.h"
+#include "tstring.h"
 #include "message.h"
 
 /* Maximum sizes (in bytes) of read and write buffers - connections should
@@ -1044,6 +1045,7 @@ void FormatFightMessage(Player *To,GString *text,
                         int Bitches,int BitchesKilled,int ArmPercent,
                         gchar FightPoint,gboolean Loot) {
    gchar *Armament;
+   gchar *tfmt,**tstr;
    switch(FightPoint) {
       case F_ARRIVED:
          Armament= ArmPercent<10 ? _("pitifully armed")       :
@@ -1052,8 +1054,10 @@ void FormatFightMessage(Player *To,GString *text,
                    ArmPercent<80 ? _("heavily armed")         :
                                    _("armed to the teeth");
          if (DefendName[0]) {
-            g_string_sprintfa(text,_("%s arrives with %d %s, %s!"),
-                              DefendName,Bitches,Names.Bitches,Armament);
+            tstring_fmt(&tfmt,&tstr,_("%s arrives with %d %tde, %s!"),
+                        Names.Bitches);
+            g_string_sprintfa(text,tfmt,DefendName,Bitches,tstr[0],Armament);
+            tstring_free(tfmt,tstr);
          }
          break;
       case F_STAND:
@@ -1092,8 +1096,10 @@ void FormatFightMessage(Player *To,GString *text,
                g_string_sprintfa(text,_("%s shoots %s dead."),
                                  AttackName,DefendName);
             } else if (BitchesKilled) {
-               g_string_sprintfa(text,_("%s shoots at %s and kills a %s!"),
-                                 AttackName,DefendName,Names.Bitch);
+               tstring_fmt(&tfmt,&tstr,_("%s shoots at %s and kills a %tde!"),
+                           Names.Bitch);
+               g_string_sprintfa(text,tfmt,AttackName,DefendName,tstr[0]);
+               tstring_free(tfmt,tstr);
              } else {
                g_string_sprintfa(text,_("%s shoots at %s."),
                                  AttackName,DefendName);
@@ -1103,8 +1109,11 @@ void FormatFightMessage(Player *To,GString *text,
                g_string_sprintfa(text,_("%s wasted you, man! What a drag!"),
                                  AttackName);
             } else if (BitchesKilled) {
-               g_string_sprintfa(text,_("%s shoots at you... and kills a %s!"),
-                                 AttackName,Names.Bitch);
+               tstring_fmt(&tfmt,&tstr,
+                           _("%s shoots at you... and kills a %tde!"),
+                           Names.Bitch);
+               g_string_sprintfa(text,tfmt,AttackName,tstr[0]);
+               tstring_free(tfmt,tstr);
             } else {
                g_string_sprintfa(text,_("%s hits you, man!"),AttackName);
             }
@@ -1112,8 +1121,10 @@ void FormatFightMessage(Player *To,GString *text,
             if (Health==0 && Bitches==0) {
                g_string_sprintfa(text,_("You killed %s!"),DefendName);
             } else if (BitchesKilled) {
-               g_string_sprintfa(text,_("You hit %s, and killed a %s!"),
-                                 DefendName,Names.Bitch);
+               tstring_fmt(&tfmt,&tstr,_("You hit %s, and killed a %tde!"),
+                           Names.Bitch);
+               g_string_sprintfa(text,tfmt,DefendName,tstr[0]);
+               tstring_free(tfmt,tstr);
             } else {
                g_string_sprintfa(text,_("You hit %s!"),DefendName);
             }
