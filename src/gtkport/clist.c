@@ -246,7 +246,14 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
   FillRect(lpdis->hDC, &lpdis->rcItem, bkgrnd);
 
   if (lpdis->itemID >= 0 && lpdis->itemID < clist->rows) {
+    int width;
     row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, lpdis->itemID);
+    lpdis->rcItem.left = 0;
+    width = 0;
+    for (i = 0; i < clist->cols; i++) {
+      width += clist->coldata[i].width;
+    }
+    lpdis->rcItem.right = MAX(lpdis->rcItem.right, width);
     CurrentX = lpdis->rcItem.left;
     rcCol.top = lpdis->rcItem.top;
     rcCol.bottom = lpdis->rcItem.bottom;
@@ -257,10 +264,10 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
         rcCol.right = CurrentX - LISTITEMHPACK;
         if (rcCol.left > lpdis->rcItem.right)
           rcCol.left = lpdis->rcItem.right;
-        if (rcCol.right > lpdis->rcItem.right)
-          rcCol.right = lpdis->rcItem.right;
+        if (rcCol.right > lpdis->rcItem.right - LISTITEMHPACK)
+          rcCol.right = lpdis->rcItem.right - LISTITEMHPACK;
         if (i == clist->cols - 1)
-          rcCol.right = lpdis->rcItem.right;
+          rcCol.right = lpdis->rcItem.right - LISTITEMHPACK;
         if (row->text[i]) {
           UINT align;
           switch(clist->coldata[i].justification) {
