@@ -1,5 +1,7 @@
 #include <windows.h>
 
+1   24        "setup.manifest"
+
 0   INSTLIST  "manifest"
 1   INSTFILE  "installfiles.gz"
 

@@ -8,7 +8,8 @@ EXTRA_DIST = ABOUT-NLS LICENCE dopewars.desktop dopewars.spec depcomp \
              win32/dialogs.rc win32/filelist win32/guifunc.c win32/guifunc.h \
              win32/makeinstall.c win32/setup.c win32/setup.ico win32/setup.rc \
              win32/uninstall.c win32/uninstall.rc win32/util.c win32/util.h \
-             win32/zlib/Makefile.nocygwin win32/zlib/README.zlib
+             win32/zlib/Makefile.nocygwin win32/zlib/README.zlib \
+             win32/setup.manifest win32/uninstall.manifest
 CLEANFILES = dopewars.sco dopewars-log.txt dopewars-config.txt
 
 install-data-local:
