@@ -1,21 +1,21 @@
-- Fix GTK+ modal dialog behaviour (mouse grabbing during fighting) - _seems_
-  to be OK...
-- Revamp player-player fighting
+- Revamp player-player fighting; use same system for fighting the cops and
+  for fighting other players (perhaps the cops can intervene in fights);
+  add SWAT teams, soldiers, etc. as dealers get more and more guns
 - Increase cops' toughness - they should kill a bitch in 50-70% of encounters
   (and damage should be cumulative)
 - Increase difficulty of escaping from another player - impose penalty on
   running (lose drugs, free shot, destination revealed)
 - Alliances/cartels - several players share cash
-- Fix spying in server (currently you can spy on other players _before_ they
-  accept your bitch!)
 - Graphical mode server? (would avoid select() problems under Win32)
-- Problems reported with display of large prices and health - "seems" to be
-  OK now... (i.e. I can't see anything wrong with it!)
 - Introduce minimum/maximum players options - AI players automatically
   spawned/killed to "fill the gaps" when humans leave/enter
 - "Deal" option when meeting players?
 - Bribe/steal bitches when meeting players (difficulty inv. prop. to number of
   bitches?)
+- Problems reported with display of large prices and health - "seems" to be
+  OK now... (i.e. I can't see anything wrong with it!)
+- Fix GTK+ modal dialog behaviour (mouse grabbing during fighting) - _seems_
+  to be OK...
 - Fix bug with players leaving the game during fights (first, must find it)
 - Metaserver keeps list of game types of each server
 Cannot reproduce... can you? (- Investigate deadlock during fighting if both

@@ -323,7 +323,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
       case C_CONTACTSPY:
          for (list=FirstServer;list;list=g_slist_next(list)) {
             tmp=(Player *)list->data;
-            if (tmp!=Play && GetListEntry(&(tmp->SpyList),Play)>=0) {
+            i=GetListEntry(&(tmp->SpyList),Play);
+            if (tmp!=Play && i>=0 && tmp->SpyList.Data[i].Turns>=0) {
                SendSpyReport(Play,tmp);
             }
         }

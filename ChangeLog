@@ -8,6 +8,7 @@
     - Drug values now stored by server (e.g. "you have 5 Weed @ $600); sent
       only if DrugValue config. variable is set, and only to new clients
       (based on a patch by Pierre F)
+    - Spying fixed (cannot now spy on a player until they accept your bitch)
     - Longer T>alk and P>age messages allowed in curses client
     - Minor bug fixes to configure options
     - Client-side code moved out of clientside.c and dopewars.c;
