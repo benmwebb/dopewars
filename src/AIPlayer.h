@@ -1,7 +1,7 @@
 /* AIPlayer.h   Header file for dopewars computer player code           */
 /* Copyright (C)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
-/*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
+/*                WWW: http://dopewars.sourceforge.net/                 */
 
 /* This program is free software; you can redistribute it and/or        */
 /* modify it under the terms of the GNU General Public License          */
