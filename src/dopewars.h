@@ -83,6 +83,10 @@ struct NAMES {
   gchar *GunShopName, *RoughPubName;
 };
 
+struct SOUNDS {
+  gchar *FightHit, *FightMiss, *FightReload, *Jet, *TalkToAll, *TalkPrivate;
+};
+
 #ifdef NETWORKING
 
 struct METASERVER {
@@ -179,6 +183,7 @@ extern struct PRICES Prices;
 extern struct BITCH Bitch;
 extern price_t StartCash, StartDebt;
 extern struct NAMES Names;
+extern struct SOUNDS Sounds;
 
 #ifdef NETWORKING
 extern struct METASERVER MetaServer;
