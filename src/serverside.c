@@ -1736,7 +1736,9 @@ void CloseHighScoreFile()
 void DropPrivileges()
 {
 #ifndef CYGWIN
-  if (setregid(getgid(), getgid()) != 0) {
+  /* Ignore the error if we've ended up with (gid == egid) anyway */
+  if (setregid(getgid(), getgid()) != 0
+      && (getgid() != getegid())) {
     perror("setregid");
     exit(1);
   }
