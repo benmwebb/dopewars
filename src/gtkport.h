@@ -713,12 +713,15 @@ void gtk_timeout_remove(guint timeout_handler_id);
 #define MB_CANCEL 2
 #define MB_YES    4
 #define MB_NO     8
+#define MB_MAX    4
 #define MB_YESNO  (MB_YES|MB_NO)
 #define IDOK      1
 #define IDCANCEL  2
 #define IDYES     4
 #define IDNO      8
-#define MB_MAX    4
+
+/* Other flags */
+#define MB_IMMRETURN 16
 
 #endif  /* CYGWIN */
 

@@ -1,3 +1,8 @@
+- Do something about modal dialogs & networking - ideally we want to suspend
+  network processing while a modal dialog is active, otherwise you get nasty
+  double g_free()'s, etc. when the modal dialog returns under some circumstances
+  (Temporary fix, for GTK+ at least, is to introduce MB_IMMRETURN flag to 
+  GtkMessageBox, which causes an immediate return, without calling gtk_main)
 - Improve error reporting for network operations (e.g. metaserver)
 - GSS_API SOCKS support?
 - Busy loop in GTK+ client on server crash - seems to be a GLib bug

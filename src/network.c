@@ -475,6 +475,7 @@ g_print("FIXME: SOCKS5 connect reply\n");
             SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION);
          } else {
             if (data[1]==90) {
+               g_print("FIXME: SOCKS4 sucessful connect\n");
                NetBuf->status = NBS_CONNECTED;
                NetBufCallBack(NetBuf); /* status has changed */
                retval=TRUE;
@@ -508,7 +509,10 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
          retval=FinishConnect(NetBuf->fd,&NetBuf->error);
          ConnectDone=TRUE;
          NetBuf->WaitConnect=FALSE;
-         if (!NetBuf->socks) NetBuf->status = NBS_CONNECTED;
+         if (!NetBuf->socks) {
+g_print("FIXME: Non-SOCKS successful connect\n");
+            NetBuf->status = NBS_CONNECTED;
+         }
 
          if (!retval) {
             *WriteOK=FALSE;

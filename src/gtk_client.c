@@ -184,7 +184,7 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    GtkMessageBox(NULL,message,
 /* Titles of the message boxes for warnings and errors */
                  log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
-                 MB_OK);
+                 MB_OK|MB_IMMRETURN);
 }
 
 void QuitGame(GtkWidget *widget,gpointer data) {
@@ -2052,14 +2052,27 @@ static void HandleMetaSock(gpointer data,gint socket,
                            GdkInputCondition condition) {
    struct StartGameStruct *widgets;
    gboolean DoneOK;
+   NBStatus oldstatus,newstatus;
+   gchar *text;
 
    widgets=(struct StartGameStruct *)data;
    if (!widgets->MetaConn) return;
+
+   oldstatus = widgets->MetaConn->NetBuf.status;
 
    if (NetBufHandleNetwork(&widgets->MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
       while (HandleWaitingMetaServerData(widgets->MetaConn,
                                          &widgets->NewMetaList,&DoneOK)) {}
+   }
+   newstatus = widgets->MetaConn->NetBuf.status;
+   if (newstatus == NBS_SOCKSCONNECT && oldstatus==NBS_PRECONNECT) {
+      text=g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
+                           Socks.name);
+      SetStartGameStatus(widgets,text); g_free(text);
+   } else if (newstatus == NBS_CONNECTED && oldstatus!=NBS_CONNECTED) {
+      SetStartGameStatus(widgets,
+           _("Status: Obtaining server information from metaserver"));
    }
    if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
       ConnectError(widgets,TRUE);

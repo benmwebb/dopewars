@@ -4525,9 +4525,11 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    GtkAccelGroup *accel_group;
    gint i;
    static gint retval;
+   gboolean imm_return;
    gchar *ButtonData[MB_MAX] = { N_("OK"), N_("Cancel"),
                                  N_("_Yes"), N_("_No") };
 
+   imm_return = Options & MB_IMMRETURN;
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    accel_group=gtk_accel_group_new();
    gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
@@ -4535,8 +4537,10 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    if (parent) gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                             GTK_WINDOW(parent));
-   gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
-                      GTK_SIGNAL_FUNC(DestroyGtkMessageBox),NULL);
+   if (!imm_return) {
+      gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
+                         GTK_SIGNAL_FUNC(DestroyGtkMessageBox),NULL);
+   }
    if (Title) gtk_window_set_title(GTK_WINDOW(dialog),Title);
 
    vbox=gtk_vbox_new(FALSE,7);
@@ -4557,7 +4561,9 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
          button=gtk_button_new_with_label("");
          SetAccelerator(button,_(ButtonData[i]),button,
                        "clicked",accel_group);
-         gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
+         if (!imm_return) {
+            gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
+         }
          gtk_signal_connect(GTK_OBJECT(button),"clicked",
                             GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
                             GINT_TO_POINTER(1<<i));
@@ -4567,7 +4573,7 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
    gtk_container_add(GTK_CONTAINER(dialog),vbox);
    gtk_widget_show_all(dialog);
-   gtk_main();
+   if (!imm_return) gtk_main();
    return retval;
 }
 
