@@ -100,7 +100,7 @@
    and vice versa.  */
 /* *INDENT-ON* */
 
-GSList *FirstClient;
+GSList *FirstClient = NULL;
 
 static Converter *netconv = NULL;
 

@@ -114,7 +114,7 @@ HttpConnection *MetaConn = NULL;
 static FILE *ScoreFP = NULL;
 
 /* Pointer to the filename of a pid file (if non-NULL) */
-char *PidFile;
+char *PidFile = NULL;
 
 static char HelpText[] = {
   /* Help on various general server commands */

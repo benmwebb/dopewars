@@ -80,7 +80,7 @@ gboolean Network, Client, Server, WantAntique = FALSE;
  */
 unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue, Antique = FALSE;
-gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
+gchar *HiScoreFile = NULL, *ServerName = NULL;
 gchar *ServerMOTD = NULL, *BindAddress = NULL;
 
 struct DATE StartDate = {
@@ -191,7 +191,9 @@ struct NAMES DefaultNames = {
   N_("Dan\'s House of Guns"), N_("the pub")
 };
 
-struct CURRENCY Currency;
+struct CURRENCY Currency = {
+  NULL, TRUE
+};
 
 struct PRICES Prices = {
   20000, 10000
@@ -2363,21 +2365,11 @@ static void SetupParameters(GSList *extraconfigs)
   GSList *list;
   int i;
 
-  /* Initialise variables */
-  srand((unsigned)time(NULL));
-  PidFile = NULL;
-  ConvertFile = NULL;
-  Location = NULL;
-  Gun = NULL;
-  Drug = NULL;
-  SubwaySaying = Playing = StoppedTo = NULL;
   DrugValue = TRUE;
   Sanitized = ConfigVerbose = FALSE;
-  NumLocation = NumGun = NumDrug = 0;
-  FirstClient = FirstServer = NULL;
-  Noone.Name = g_strdup("Noone");
   Server = Client = Network = FALSE;
 
+  g_free(Currency.Symbol);
   /* The currency symbol */
   Currency.Symbol = g_strdup(_("$"));
   Currency.Prefix = (strcmp("Currency.Prefix=TRUE",
@@ -2403,6 +2395,9 @@ static void SetupParameters(GSList *extraconfigs)
   AssignName(&Socks.name, "socks");
   Socks.port = 1080;
   Socks.version = 4;
+  g_free(Socks.user);
+  g_free(Socks.authuser);
+  g_free(Socks.authpassword);
   Socks.user = g_strdup("");
   Socks.numuid = FALSE;
   Socks.authuser = g_strdup("");
@@ -2725,9 +2720,12 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   OpenHighScoreFile();
   DropPrivileges();
 
+  /* Initialise variables */
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
+  srand((unsigned)time(NULL));
+  Noone.Name = g_strdup("Noone");
 
   return ParseCmdLine(argc, argv);
 }
