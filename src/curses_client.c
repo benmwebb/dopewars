@@ -168,18 +168,19 @@ void display_intro() {
            _("dopewars is released under the GNU General Public Licence"));
    mvaddstr(12,(Width-text->len)/2,text->str);
 
-   mvaddstr(14,7,_("Drug Dealing and Research     Dan Wolf"));
-   mvaddstr(15,7,_("Play Testing                  Phil Davis           "
+   mvaddstr(14,7,_("Icons and Graphics            Ocelot Mantis"));
+   mvaddstr(15,7,_("Drug Dealing and Research     Dan Wolf"));
+   mvaddstr(16,7,_("Play Testing                  Phil Davis           "
                    "Owen Walsh"));
-   mvaddstr(16,7,_("Extensive Play Testing        Katherine Holt       "
+   mvaddstr(17,7,_("Extensive Play Testing        Katherine Holt       "
                    "Caroline Moore"));
-   mvaddstr(17,7,_("Constructive Criticism        Andrea Elliot-Smith  "
+   mvaddstr(18,7,_("Constructive Criticism        Andrea Elliot-Smith  "
                    "Pete Winn"));
-   mvaddstr(18,7,_("Unconstructive Criticism      James Matthews"));
+   mvaddstr(19,7,_("Unconstructive Criticism      James Matthews"));
 
-   mvaddstr(20,3,_("For information on the command line options, type "
+   mvaddstr(21,3,_("For information on the command line options, type "
                    "dopewars -h at your"));
-   mvaddstr(21,1,_("Unix prompt. This will display a help screen, listing "
+   mvaddstr(22,1,_("Unix prompt. This will display a help screen, listing "
                    "the available options."));
 
    g_string_free(text,TRUE);

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=dopewars
+Name[de]=Drogenkrieg
+Comment=dopewars drug dealing game
+Exec=dopewars
+Icon=dopewars-weed.png
+Terminal=0
+Type=Application

@@ -1787,10 +1787,11 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
 void display_intro(GtkWidget *widget,gpointer data) {
    GtkWidget *dialog,*label,*table,*OKButton,*vbox,*hsep;
    gchar *VersionStr;
-   const int rows=5,cols=3;
+   const int rows=6,cols=3;
    int i,j;
-   gchar *table_data[5][3] = {
+   gchar *table_data[6][3] = {
 /* Credits labels in GTK+ 'about' dialog */
+      { N_("Icons and graphics"),"Ocelot Mantis", NULL },
       { N_("Drug Dealing and Research"), "Dan Wolf", NULL },
       { N_("Play Testing"), "Phil Davis", "Owen Walsh" },
       { N_("Extensive Play Testing"), "Katherine Holt",

@@ -1,3 +1,6 @@
+cvs
+    - Icons (courtesy of Ocelot Mantis) and GNOME desktop entry added
+
 1.5.0   13-05-2001
     - Fixes for spurious tipoffs
     - High scores should now be written properly on Win32 systems
