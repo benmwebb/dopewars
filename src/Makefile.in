@@ -67,6 +67,8 @@ GLIB_CONFIG = @GLIB_CONFIG@
 GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
+GTKPORT_C = @GTKPORT_C@
+GTKPORT_O = @GTKPORT_O@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_CONFIG = @GTK_CONFIG@
 GTK_LIBS = @GTK_LIBS@
@@ -91,12 +93,12 @@ l = @l@
 localedir = @localedir@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c                    curses_client.c gtk_client.c winmain.c 		   dopeos.c tstring.c gtkport.c
+dopewars_SOURCES = AIPlayer.c serverside.c dopewars.c message.c                    curses_client.c gtk_client.c winmain.c 		   dopeos.c tstring.c @GTKPORT_C@
 
-dopewars_DEPENDENCIES = @INTLLIBS@
+dopewars_DEPENDENCIES = @INTLLIBS@ @GTKPORT_O@
 SUFFIXES = .rc .res
 INCLUDES = @GTK_CFLAGS@ -I.. -I.
-LDADD = @GTK_LIBS@ @INTLLIBS@
+LDADD = @GTKPORT_O@ @GTK_LIBS@ @INTLLIBS@
 DEFS = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 
 DOCPATH = /usr/doc/${PACKAGE}-${VERSION}/
@@ -111,7 +113,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 dopewars_OBJECTS =  AIPlayer.o serverside.o dopewars.o message.o \
-curses_client.o gtk_client.o winmain.o dopeos.o tstring.o gtkport.o
+curses_client.o gtk_client.o winmain.o dopeos.o tstring.o
 dopewars_LDADD = $(LDADD)
 dopewars_LDFLAGS = 
 CFLAGS = @CFLAGS@
@@ -126,8 +128,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 TAR = gtar
 GZIP_ENV = --best
 DEP_FILES =  .deps/AIPlayer.P .deps/curses_client.P .deps/dopeos.P \
-.deps/dopewars.P .deps/gtk_client.P .deps/gtkport.P .deps/message.P \
-.deps/serverside.P .deps/tstring.P .deps/winmain.P
+.deps/dopewars.P .deps/gtk_client.P .deps/message.P .deps/serverside.P \
+.deps/tstring.P .deps/winmain.P
 SOURCES = $(dopewars_SOURCES)
 OBJECTS = $(dopewars_OBJECTS)
 

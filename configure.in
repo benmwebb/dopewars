@@ -137,6 +137,14 @@ else
    AC_MSG_RESULT(Using text-mode server)
 fi
 
+if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+   dnl Compile in the gtkport stuff for any kind of GUI
+   GTKPORT_C="gtkport.c"
+   GTKPORT_O="gtkport.o"
+   AC_SUBST(GTKPORT_C)
+   AC_SUBST(GTKPORT_O)
+fi
+
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
