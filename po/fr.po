@@ -1179,7 +1179,7 @@ msgstr ""
 "  -h       affiche cet ecran d'aide\n"
 "  -v       affiche la version et quitte\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, et distribue sous GNU GPL\n"
+"dopewars is Copyright (C) Ben Webb 1998-2003, et distribue sous GNU GPL\n"
 "Envoyer les bugs a l'auteur : ben@bellatrix.pcl.ox.ac.uk\n"
 
 #: src/dopewars.c:2607
@@ -1187,7 +1187,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1256,7 +1256,7 @@ msgstr ""
 "  -h       affiche cet ecran d'aide\n"
 "  -v       affiche la version et quitte\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, et distribue sous GNU GPL\n"
+"dopewars is Copyright (C) Ben Webb 1998-2003, et distribue sous GNU GPL\n"
 "Envoyer les bugs a l'auteur : ben@bellatrix.pcl.ox.ac.uk\n"
 
 #: src/dopewars.c:2642
@@ -1264,7 +1264,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1324,16 +1324,16 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:222
 msgid ""
-"that, your goal is to make as much money as possible (and stay alive)! You"
+"that, your goal is to make as much money as possible (and stay alive)!"
 msgstr "votre but est de faire le plus de fric possible en restant vivant! Tu"
 
 #: src/curses_client/curses_client.c:224
-msgid "have one month of game time to make your fortune."
+msgid "You have one month of game time to make your fortune."
 msgstr "as un mois de temps de jeu pour faire fortune."
 
 #: src/curses_client/curses_client.c:226
-msgid "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgid "Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr "Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client/curses_client.c:228
 #, c-format
@@ -1342,7 +1342,7 @@ msgstr "Version %s"
 
 #: src/curses_client/curses_client.c:230
 msgid "dopewars is released under the GNU General Public Licence"
-msgstr "dopewars est distribue sous la license GNU."
+msgstr "dopewars est distribue sous la license GPL de GNU."
 
 #: src/curses_client/curses_client.c:234
 msgid "Icons and Graphics            Ocelot Mantis"
@@ -2467,10 +2467,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2405
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars est diffuse sous la GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog

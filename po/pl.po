@@ -1181,7 +1181,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1255,7 +1255,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1314,16 +1314,16 @@ msgstr "Najpierw musisz sp³aciæ d³ug Z³otym Pasom. Potem twoim celem jest"
 
 #: src/curses_client/curses_client.c:222
 msgid ""
-"that, your goal is to make as much money as possible (and stay alive)! You"
+"that, your goal is to make as much money as possible (and stay alive)!"
 msgstr "zarobienie tak du¿o forsy, jak siê da i pozostanie przy ¿yciu!"
 
 #: src/curses_client/curses_client.c:224
-msgid "have one month of game time to make your fortune."
+msgid "You have one month of game time to make your fortune."
 msgstr "Masz jeden miesi±c na zdobycie fortuny."
 
 #: src/curses_client/curses_client.c:226
-msgid "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "   Copyright (C) 1998-2002 Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgid "Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr "   Copyright (C) 1998-2003 Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client/curses_client.c:228
 #, c-format
@@ -2455,10 +2455,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2405
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Wersja %s    Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Wersja %s    Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars s± publikowane zgodnie z GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
