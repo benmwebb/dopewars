@@ -836,6 +836,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkAccelGroup *accel_group, gboolean needalt);
 GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
                                  GtkWidget **pack_widg);
+GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
 
