@@ -95,6 +95,7 @@ static void NewGameDialog(void);
 static void StartGame(void);
 static void EndGame(void);
 static void UpdateMenus(void);
+static gboolean AuthDialog(HttpConnection *conn,gchar *realm);
 
 #ifdef NETWORKING
 static void GetClientMessage(gpointer data,gint socket,
@@ -2074,6 +2075,7 @@ static void UpdateMetaServerList(GtkWidget *widget,
 
    if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
+      SetHttpAuthFunc(widgets->MetaConn,AuthDialog);
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
    } else {
@@ -3074,6 +3076,112 @@ void DisplaySpyReports(Player *Play) {
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),vbox,label);
 
    gtk_widget_show_all(notebook);
+}
+
+static void OKAuthDialog(GtkWidget *widget,GtkWidget *window) {
+   GtkWidget *userentry,*passwdentry;
+   gchar *username,*password;
+   HttpConnection *conn;
+   gboolean *retval;
+
+   userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
+   passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
+                                                  "password");
+   retval = (gboolean *)gtk_object_get_data(GTK_OBJECT(window),"retval");
+   conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),"httpconn");
+   g_assert(userentry && passwdentry && retval && conn);
+
+   *retval = TRUE;
+
+   username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
+   password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
+
+   SetHttpAuthentication(conn,username,password);
+   g_free(username); g_free(password);
+
+   gtk_widget_destroy(window);
+}
+
+void DestroyAuthDialog(GtkWidget *widget,gpointer data) {
+   gtk_main_quit();
+}
+
+gboolean AuthDialog(HttpConnection *conn,gchar *realm) {
+   GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
+   gboolean retval=FALSE;
+
+   window=gtk_window_new(GTK_WINDOW_DIALOG);
+   gtk_signal_connect(GTK_OBJECT(window),"destroy",
+                      GTK_SIGNAL_FUNC(DestroyAuthDialog),NULL);
+   gtk_object_set_data(GTK_OBJECT(window),"retval",(gpointer)&retval);
+   gtk_object_set_data(GTK_OBJECT(window),"httpconn",(gpointer)conn);
+
+   if (conn->proxyauth) {
+      gtk_window_set_title(GTK_WINDOW(window),
+/* Title of dialog for authenticating with a proxy server */
+                           _("Proxy Authentication Required"));
+   } else {
+/* Title of dialog for authenticating with a web server */
+      gtk_window_set_title(GTK_WINDOW(window),_("Authentication Required"));
+   }
+
+   gtk_window_set_modal(GTK_WINDOW(window),TRUE);
+   gtk_window_set_transient_for(GTK_WINDOW(window),
+                                GTK_WINDOW(ClientData.window));
+   gtk_container_set_border_width(GTK_CONTAINER(window),7);
+
+   vbox=gtk_vbox_new(FALSE,7);
+
+   table=gtk_table_new(3,3,FALSE);
+   gtk_table_set_row_spacings(GTK_TABLE(table),10);
+   gtk_table_set_col_spacings(GTK_TABLE(table),5);
+
+   label=gtk_label_new("Realm:");
+   gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,1);
+
+   label=gtk_label_new(realm);
+   gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,0,1);
+
+   label=gtk_label_new("User name:");
+   gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
+
+   entry=gtk_entry_new();
+   gtk_object_set_data(GTK_OBJECT(window),"username",(gpointer)entry);
+   gtk_table_attach_defaults(GTK_TABLE(table),entry,1,2,1,2);
+
+   label=gtk_label_new("Password:");
+   gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,2,3);
+
+   entry=gtk_entry_new();
+   gtk_object_set_data(GTK_OBJECT(window),"password",(gpointer)entry);
+   gtk_entry_set_visibility(GTK_ENTRY(entry),FALSE);
+   gtk_table_attach_defaults(GTK_TABLE(table),entry,1,2,2,3);
+
+   gtk_box_pack_start(GTK_BOX(vbox),table,TRUE,TRUE,0);
+
+   hsep=gtk_hseparator_new();
+   gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
+
+   hbbox = gtk_hbutton_box_new();
+
+   button=gtk_button_new_with_label(_("OK"));
+   gtk_signal_connect(GTK_OBJECT(button),"clicked",
+                      GTK_SIGNAL_FUNC(OKAuthDialog),(gpointer)window);
+   gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+
+   button=gtk_button_new_with_label(_("Cancel"));
+   gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
+                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                             (gpointer)window);
+   gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+
+   gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
+
+   gtk_container_add(GTK_CONTAINER(window),vbox);
+   gtk_widget_show_all(window);
+
+   gtk_main();
+   return retval;
 }
 
 #else

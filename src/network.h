@@ -85,8 +85,12 @@ typedef enum {
    HS_CONNECTING, HS_READHEADERS, HS_READSEPARATOR, HS_READBODY
 } HttpStatus;
 
+typedef struct _HttpConnection HttpConnection;
+
+typedef gboolean (*HCAuthFunc)(struct _HttpConnection *conn,gchar *realm);
+
 /* A structure used to keep track of an HTTP connection */
-typedef struct _HttpConnection {
+struct _HttpConnection {
    gchar *HostName;       /* The machine on which the desired page resides */
    unsigned Port;         /* The port */
    gchar *Proxy;          /* If non-NULL, a web proxy to use */
@@ -98,11 +102,16 @@ typedef struct _HttpConnection {
    gchar *RedirHost;      /* if non-NULL, a hostname to redirect to */
    gchar *RedirQuery;     /* if non-NULL, the path to redirect to */
    unsigned RedirPort;    /* The port on the host to redirect to */
+   HCAuthFunc authfunc;   /* Callback function for authentication */
+   gboolean proxyauth;    /* TRUE if the authentication is with a proxy */
+   gchar *realm;          /* The realm for basic HTTP authentication */
+   gchar *user;           /* The supplied username */
+   gchar *password;       /* The supplied password */
    NetworkBuffer NetBuf;  /* The actual network connection itself */
    gint Tries;            /* Number of requests actually sent so far */
    gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
    HttpStatus Status;
-} HttpConnection;
+};
 
 void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar);
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
@@ -132,6 +141,8 @@ gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
 void CloseHttpConnection(HttpConnection *conn);
 gboolean IsHttpError(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
+void SetHttpAuthentication(HttpConnection *conn,gchar *user,gchar *password);
+void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc);
 gboolean HandleHttpCompletion(HttpConnection *conn);
 
 gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,

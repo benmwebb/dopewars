@@ -512,11 +512,27 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn->Body);
    g_free(conn->RedirHost);
    g_free(conn->RedirQuery);
+   g_free(conn->realm);
+   g_free(conn->user);
+   g_free(conn->password);
    g_free(conn);
 }
 
 gboolean IsHttpError(HttpConnection *conn) {
    return IsError(&conn->NetBuf.error);
+}
+
+void SetHttpAuthentication(HttpConnection *conn,gchar *user,gchar *password) {
+   g_assert(conn && user && password);
+   g_free(conn->user);
+   g_free(conn->password);
+   conn->user = g_strdup(user);
+   conn->password = g_strdup(password);
+}
+
+void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc) {
+   g_assert(conn && authfunc);
+   conn->authfunc = authfunc;
 }
 
 static gboolean ParseHtmlLocation(gchar *uri,gchar **host,unsigned *port,
@@ -576,6 +592,7 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
+      if (conn->authfunc) (*conn->authfunc)(conn,split[1]);
     }
   }
   g_strfreev(split);
