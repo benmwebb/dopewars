@@ -184,14 +184,14 @@ int bgetch() {
    return (int)(Buffer[0]);
 }
 
-char *index(char *str,char ch) {
+char *index(const char *str,int ch) {
    int i;
    for (i=0;i<strlen(str);i++) { if (str[i]==ch) return str+i; }
    return NULL;
 }
 
 int apos=0;
-int getopt(int argc,char *argv[],char *str) {
+int getopt(int argc,char * const argv[],const char *str) {
    int i,c;
    char *pt;
    while (apos<argc && argv[apos]) {

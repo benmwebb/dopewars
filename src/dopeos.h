@@ -97,8 +97,8 @@ void mvaddstr(int x,int y,char *str);
 void mvaddch(int x,int y,int ch);
 int bgetch();
 #define erase() clear_screen()
-char *index(char *str,char ch);
-int getopt(int argc,char *argv[],char *str);
+char *index(const char *str,int ch);
+int getopt(int argc,char * const argv[],const char *str);
 extern char *optarg;
 
 typedef int ssize_t;
