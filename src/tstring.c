@@ -108,3 +108,138 @@ void tstring_free(gchar *tformat,gchar **tstrings) {
    for (pt=tstrings;*pt;pt++) g_free(*pt);
    g_free(tstrings);
 }
+
+void GetNextFormat(int Index,gchar *str,int *StartPos,
+                   int *EndPos,int *ArgNum,char *Code,gboolean *Caps) {
+   int anum;
+   *StartPos=*EndPos=*ArgNum=0;
+   Code[0]=0;
+   anum=0;
+   while (str[Index]) {
+      if (str[Index]=='%') {
+         *StartPos=*EndPos=Index++;
+         while (str[Index]>='0' && str[Index]<='9') {
+            anum=anum*10+str[Index]-'0';
+            Index++;
+         }
+         if (str[Index]=='$') {
+            *EndPos=Index++; *ArgNum=anum;
+         }
+         if ((str[Index]=='T' || str[Index]=='t') && Index+2<strlen(str)) {
+            *Caps=(str[Index]=='T');
+            Code[0]=str[Index+1];
+            Code[1]=str[Index+2];
+            Code[2]=0;
+            *EndPos=Index+2;
+         }
+         return;
+      } else Index++;
+   }
+}
+
+void GetNextTString(gchar *str,int index,gchar *Code,gboolean *Caps,
+                    int *NumArg,int *StartPos,int *EndPos) {
+   int i;
+   *StartPos=*EndPos=0;
+   i=index;
+   while (str[i]) {
+      if (str[i]=='%') {
+         i++;
+         if ((str[i]=='T' || str[i]=='t')
+             && i+2<strlen(str)) {
+            (*NumArg)++;
+            *StartPos=i-1;
+            *Caps = (str[i]=='T');
+            Code[0]=str[i+1];
+            Code[1]=str[i+2];
+            Code[2]='\0';
+            i+=3;
+            *EndPos=i;
+            return;
+         }
+      } else i++;
+   }
+}
+
+int SkipNextTString(gchar *str,int index) {
+   gchar Code[3];
+   gboolean Caps;
+   int NumArg,StartPos,EndPos;
+   GetNextTString(str,index,Code,&Caps,&NumArg,&StartPos,&EndPos);
+   return EndPos;
+}
+
+void SubstNextTString(GString *string,int *NumArg,GPtrArray *strs) {
+   gchar Code[3];
+   gboolean Caps;
+   int StartPos,EndPos;
+   gchar *str,*tstr;
+
+   GetNextTString(string->str,0,Code,&Caps,NumArg,&StartPos,&EndPos);
+   if (EndPos!=0 && *NumArg>=1 && *NumArg<=strs->len) {
+      str=(gchar *)g_ptr_array_index(strs,*NumArg-1);
+      tstr=GetTranslatedString(str,Code,Caps);
+      g_string_erase(string,StartPos,EndPos-StartPos);
+      g_string_insert(string,StartPos,tstr);
+      g_free(tstr);
+   }
+}
+
+gchar *HandleTFmt(gchar *format, va_list args) {
+   GString *string;
+   gchar *retstr;
+   GPtrArray *tstrs;
+   int i,numtstr,NumArg;
+
+   string=g_string_new(format);
+   tstrs=g_ptr_array_new();
+   i=numtstr=0;
+   while (1) {
+      i=SkipNextTString(string->str,i);
+      if (i!=0) numtstr++; else break;
+   }
+   for (i=0;i<numtstr;i++) {
+      g_ptr_array_add(tstrs,(gpointer)va_arg(args,char *));
+   }
+   NumArg=0;
+   for (i=0;i<numtstr;i++) {
+      SubstNextTString(string,&NumArg,tstrs);
+   }
+   retstr=string->str;
+   g_ptr_array_free(tstrs,FALSE);
+   g_string_free(string,FALSE);
+   return retstr;
+}
+
+gchar *dpg_strdup_printf(gchar *format, ...) {
+   va_list ap;
+   gchar *newfmt,*retstr;
+   va_start(ap,format);
+   newfmt=HandleTFmt(format,ap);
+   retstr=g_strdup_vprintf(newfmt,ap);
+   g_free(newfmt);
+   va_end(ap);
+   return retstr;
+}
+
+void dpg_string_sprintf(GString *string, gchar *format, ...) {
+   va_list ap;
+   gchar *newfmt,*retstr;
+   va_start(ap,format);
+   newfmt=HandleTFmt(format,ap);
+   retstr=g_strdup_vprintf(newfmt,ap);
+   g_string_assign(string,retstr);
+   g_free(newfmt); g_free(retstr);
+   va_end(ap);
+}
+
+void dpg_string_sprintfa(GString *string, gchar *format, ...) {
+   va_list ap;
+   gchar *newfmt,*retstr;
+   va_start(ap,format);
+   newfmt=HandleTFmt(format,ap);
+   retstr=g_strdup_vprintf(newfmt,ap);
+   g_string_append(string,retstr);
+   g_free(newfmt); g_free(retstr);
+   va_end(ap);
+}

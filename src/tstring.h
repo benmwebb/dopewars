@@ -30,4 +30,8 @@
 void tstring_fmt(gchar **tformat,gchar ***tstrings,char *OrigFormat, ...);
 void tstring_free(gchar *tformat,gchar **tstrings);
 
+gchar *dpg_strdup_printf(gchar *format, ...);
+void dpg_string_sprintf(GString *string, gchar *format, ...);
+void dpg_string_sprintfa(GString *string, gchar *format, ...);
+
 #endif /* __TSTRING_H__ */
