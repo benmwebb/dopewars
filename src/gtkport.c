@@ -213,6 +213,8 @@ static void gtk_window_update_focus(GtkWindow *window);
 static void gtk_window_set_focus(GtkWindow *window);
 static void gtk_window_handle_user_size(GtkWindow *window,
                                         GtkAllocation *allocation);
+static void gtk_window_handle_minmax_size(GtkWindow *window,
+                                          LPMINMAXINFO minmax);
 static void gtk_window_handle_auto_size(GtkWindow *window,
                                         GtkAllocation *allocation);
 static void gtk_window_set_initial_position(GtkWindow *window,
@@ -850,6 +852,14 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          gtk_window_handle_user_size(GTK_WINDOW(window),&alloc);
          gtk_widget_set_size(window,&alloc);
          break;
+      case WM_GETMINMAXINFO:
+         widget=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
+         if (widget) klass=GTK_OBJECT(widget)->klass; else klass=NULL;
+         if (klass==&GtkWindowClass) {
+           gtk_window_handle_minmax_size(GTK_WINDOW(widget),
+                                         (LPMINMAXINFO)lParam);
+         }
+         break;
       case WM_ACTIVATE:
       case WM_ACTIVATEAPP:
          widget=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
@@ -1289,6 +1299,7 @@ GtkWidget *gtk_window_new(GtkWindowType type) {
 
    win->title=g_strdup("");
    win->type=type;
+   win->allow_grow = TRUE;
    
    return GTK_WIDGET(win);
 }
@@ -1315,6 +1326,13 @@ void gtk_window_set_transient_for(GtkWindow *window,GtkWindow *parent) {
          SetParent(GTK_WIDGET(window)->hWnd,GTK_WIDGET(parent)->hWnd);
       }
    }
+}
+
+void gtk_window_set_policy(GtkWindow *window,gint allow_shrink,
+                           gint allow_grow,gint auto_shrink) {
+  window->allow_shrink = allow_shrink;
+  window->allow_grow = allow_grow;
+  window->auto_shrink = auto_shrink;
 }
 
 void gtk_window_set_menu(GtkWindow *window,GtkMenuBar *menu_bar) {
@@ -1988,15 +2006,19 @@ void gtk_vbox_set_size(GtkWidget *widget,GtkAllocation *allocation) {
 void gtk_window_realize(GtkWidget *widget) {
    GtkWindow *win=GTK_WINDOW(widget);
    HWND Parent;
+   DWORD resize=0;
+
+   if (win->allow_shrink || win->allow_grow) resize=WS_SIZEBOX;
+
    Parent=gtk_get_parent_hwnd(widget->parent);
    if (win->type==GTK_WINDOW_TOPLEVEL) {
       widget->hWnd = CreateWindow("mainwin",win->title,
-                        WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX,
+                        WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|resize,
                         CW_USEDEFAULT,0,0,0,Parent,NULL,hInst,NULL);
       if (!TopLevel) TopLevel=widget->hWnd;
    } else {
       widget->hWnd = CreateWindow(WC_GTKDIALOG,win->title,
-                        WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX,
+                        WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW|resize,
                         CW_USEDEFAULT,0,0,0,Parent,NULL,hInst,NULL);
    }
    WindowList=g_slist_append(WindowList,(gpointer)win);
@@ -4446,6 +4468,20 @@ void gtk_option_menu_update_selection(GtkWidget *widget) {
 
 void gtk_window_handle_user_size(GtkWindow *window,
                                  GtkAllocation *allocation) {
+}
+
+void gtk_window_handle_minmax_size(GtkWindow *window,LPMINMAXINFO minmax) {
+  GtkRequisition *req;
+
+  req = &GTK_WIDGET(window)->requisition;
+  if (!window->allow_shrink) {
+    minmax->ptMinTrackSize.x = req->width;
+    minmax->ptMinTrackSize.y = req->height;
+  }
+  if (!window->allow_grow) {
+    minmax->ptMaxTrackSize.x = req->width;
+    minmax->ptMaxTrackSize.y = req->height;
+  }
 }
 
 void gtk_window_set_initial_position(GtkWindow *window,

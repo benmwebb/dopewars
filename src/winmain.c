@@ -247,7 +247,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    LogFileEnd();
    g_strfreev(split);
    CloseHighScoreFile();
-   if (PidFile) g_free(PidFile);
+   g_free(PidFile);
+   g_free(Log.File);
+   g_free(ConvertFile);
    return 0;
 }
 

@@ -90,6 +90,11 @@ struct METASERVER {
 };
 #endif
 
+struct CURRENCY {
+  gchar *Symbol;
+  gboolean Prefix;
+};
+
 struct PRICES {
    price_t Spy,Tipoff;
 };
@@ -136,6 +141,13 @@ typedef enum {
    PEYOTE, SHROOMS, SPEED, WEED
 } DrugIndex;
 
+struct LOG {
+  gchar *File;
+  gint Level;
+  gchar *Timestamp;
+};
+  
+
 extern int ClientSock,ListenSock;
 extern gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
 extern unsigned Port;
@@ -148,6 +160,7 @@ extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;
 extern int DrugSortMethod,FightTimeout,IdleTimeout,ConnectTimeout;
 extern int MaxClients,AITurnPause;
+extern struct CURRENCY Currency;
 extern struct PRICES Prices;
 extern struct BITCH Bitch;
 extern price_t StartCash,StartDebt;
@@ -161,8 +174,6 @@ extern gboolean UseSocks;
 
 extern int NumTurns;
 extern int PlayerArmour,BitchArmour;
-extern int LogLevel;
-extern gchar *LogTimestamp;
 
 #define MAXLOG        6
 
@@ -311,6 +322,7 @@ extern char **SubwaySaying;
 extern char **StoppedTo;
 extern GSList *ServerList;
 extern GScannerConfig ScannerConfig;
+extern struct LOG Log;
 
 GSList *RemovePlayer(Player *Play,GSList *First);
 Player *GetPlayerByID(guint ID,GSList *First);
@@ -380,4 +392,5 @@ gboolean IsCop(Player *Play);
 void dopelog(int loglevel,const gchar *format,...);
 GLogLevelFlags LogMask(void);
 GString *GetLogString(GLogLevelFlags log_level,const gchar *message);
+void RestoreConfig(void);
 #endif

@@ -1,4 +1,8 @@
 cvs
+    - Currency can now be configured with Currency.Symbol and Currency.Prefix
+    - Windows client windows cannot now be made unreadably small
+    - Bank/loan shark dialog now warns on entering negative prices
+    - Default configuration is restored properly at the start of each game
     - Translations should now work with the Windows client
     - Documentation on the client-server protocol added
     - Windows graphical server can be minimized to the System Tray

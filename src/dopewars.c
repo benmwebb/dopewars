@@ -65,9 +65,10 @@ gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
    dopewars in single-player or antique mode:
              Network=Server=Client=FALSE
 */
+FILE *logfp;
 unsigned Port=7902;
 gboolean Sanitized,ConfigVerbose,DrugValue;
-char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL,*ConvertFile=NULL;
+gchar *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL,*ConvertFile=NULL;
 gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,WantConvert;
 ClientType WantedClient;
 int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
@@ -150,6 +151,8 @@ struct NAMES DefaultNames = {
    N_("Dan\'s House of Guns"),N_("the pub")
 };
 
+struct CURRENCY Currency;
+
 struct PRICES Prices = {
    20000,10000
 };
@@ -175,8 +178,7 @@ int NumTurns=31;
 
 int PlayerArmour=100,BitchArmour=50;
 
-int LogLevel=2;
-gchar *LogTimestamp=NULL;
+struct LOG Log;
 
 struct GLOBALS Globals[] = {
 /* The following strings are the helptexts for all the options that can be
@@ -263,10 +265,19 @@ struct GLOBALS Globals[] = {
    { &NumTurns,NULL,NULL,NULL,NULL,"NumTurns",
      N_("No. of game turns (if 0, game never ends)"),
      NULL,NULL,0,"",NULL,NULL },
-   { &LogLevel,NULL,NULL,NULL,NULL,"LogLevel",
+   { NULL,NULL,NULL,&Currency.Symbol,NULL,"Currency.Symbol",
+     N_("The currency symbol (e.g. $)"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,&Currency.Prefix,NULL,NULL,NULL,"Currency.Prefix",
+     N_("If TRUE, the currency symbol precedes prices"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&Log.File,NULL,"Log.File",
+     N_("File to write log messages to"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &Log.Level,NULL,NULL,NULL,NULL,"Log.Level",
      N_("Controls the number of log messages produced"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,NULL,&LogTimestamp,NULL,"LogTimestamp",
+   { NULL,NULL,NULL,&Log.Timestamp,NULL,"Log.Timestamp",
      N_("strftime() format string for log timestamps"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,&Sanitized,NULL,NULL,NULL,"Sanitized",
@@ -863,7 +874,9 @@ gchar *FormatPrice(price_t price) {
       g_string_prepend(PriceStr,thou);
       First=FALSE;
    }
-   g_string_prepend_c(PriceStr,'$');
+   if (Currency.Prefix) g_string_prepend(PriceStr,Currency.Symbol);
+   else g_string_append(PriceStr,Currency.Symbol);
+
    NewBuffer=PriceStr->str;
    /* Free the string structure only, not the char data */
    g_string_free(PriceStr,FALSE);
@@ -1336,6 +1349,63 @@ void CopyDrugs(struct DRUGS *dest,struct DRUGS *src) {
    dest->ExpensiveMultiply=src->ExpensiveMultiply;
 }
 
+static struct PRICES BackupPrices;
+static struct NAMES BackupNames;
+static struct DRUG *BackupDrug=NULL;
+static struct GUN *BackupGun=NULL;
+static struct LOCATION *BackupLocation=NULL;
+static struct CURRENCY BackupCurrency = { NULL,TRUE };
+static gint NumBackupDrug=0,NumBackupGun=0,NumBackupLocation=0;
+
+void BackupConfig(void) {
+  gint i;
+  BackupPrices.Spy = Prices.Spy;
+  BackupPrices.Tipoff = Prices.Tipoff;
+  AssignName(&BackupCurrency.Symbol,Currency.Symbol);
+  BackupCurrency.Prefix = Currency.Prefix;
+  CopyNames(&BackupNames,&Names);
+
+/* Free existing backups of guns, drugs, and locations */
+  for (i=0;i<NumBackupGun;i++) g_free(BackupGun[i].Name);
+  g_free(BackupGun);
+  for (i=0;i<NumBackupDrug;i++) {
+    g_free(BackupDrug[i].Name);
+    g_free(BackupDrug[i].CheapStr);
+  }
+  g_free(BackupDrug);
+  for (i=0;i<NumBackupLocation;i++) g_free(BackupLocation[i].Name);
+  g_free(BackupLocation);
+
+  NumBackupGun = NumGun;
+  BackupGun = g_new0(struct GUN,NumGun);
+  for (i=0;i<NumGun;i++) CopyGun(&BackupGun[i],&Gun[i]);
+
+  NumBackupDrug = NumDrug;
+  BackupDrug = g_new0(struct DRUG,NumDrug);
+  for (i=0;i<NumDrug;i++) CopyDrug(&BackupDrug[i],&Drug[i]);
+
+  NumBackupLocation = NumLocation;
+  BackupLocation = g_new0(struct LOCATION,NumLocation);
+  for (i=0;i<NumLocation;i++) CopyLocation(&BackupLocation[i],&Location[i]);
+}
+
+void RestoreConfig(void) {
+  gint i;
+
+  Prices.Spy = BackupPrices.Spy;
+  Prices.Tipoff = BackupPrices.Tipoff;
+  CopyNames(&Names,&BackupNames);
+  AssignName(&Currency.Symbol,BackupCurrency.Symbol);
+  Currency.Prefix = BackupCurrency.Prefix;
+
+  ResizeGuns(NumBackupGun);
+  for (i=0;i<NumGun;i++) CopyGun(&Gun[i],&BackupGun[i]);
+  ResizeDrugs(NumBackupDrug);
+  for (i=0;i<NumDrug;i++) CopyDrug(&Drug[i],&BackupDrug[i]);
+  ResizeLocations(NumBackupLocation);
+  for (i=0;i<NumLocation;i++) CopyLocation(&Location[i],&BackupLocation[i]);
+}
+
 void ScannerErrorHandler(GScanner *scanner,gchar *msg,gint error) {
    g_print("%s\n",msg);
 }
@@ -1730,13 +1800,18 @@ void SetupParameters() {
    WantedClient=CLIENT_AUTO;
    Server=AIPlayer=Client=Network=FALSE;
 
+   Log.Level=2;
+   Log.Timestamp=g_strdup("[%H:%M:%S] ");
+   Log.File=NULL;
+
+   Currency.Symbol = g_strdup("$");
+   Currency.Prefix = TRUE;
+
 /* Set hard-coded default values */
    g_free(HiScoreFile); g_free(ServerName); g_free(Pager);
-   g_free(LogTimestamp);
    HiScoreFile=g_strdup_printf("%s/dopewars.sco",DATADIR);
    ServerName=g_strdup("localhost");
    Pager=g_strdup("more");
-   LogTimestamp=g_strdup("[%H:%M:%S] ");
 
    CopyNames(&Names,&DefaultNames);
    CopyDrugs(&Drugs,&DefaultDrugs);
@@ -1790,6 +1865,10 @@ void SetupParameters() {
    systems only) */
    ReadConfigFile("dopewars-config.txt");
 #endif
+
+/* Save this configuration, so we can restore those elements that get
+   overwritten when we connect to a dopewars server */
+  BackupConfig();
 }
 
 void HandleHelpTexts() {
@@ -1820,7 +1899,8 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -g, --config-file=FILE  specify the pathname of a dopewars configuration file.\n\
                             This file is read immediately when the -g option\n\
                             is encountered\n\
-  -r, --pidfile=FILE      maintain pid file \"file\" while running the server\n\
+  -r, --pidfile=FILE      maintain pid file \"FILE\" while running the server\n\
+  -l, --logfile=FILE      write log information to \"FILE\"\n\
   -c, --ai-player         create and run a computer player\n\
   -w, --windowed-client   force the use of a graphical (windowed)\n\
                             client (GTK+ or Win32)\n\
@@ -1853,6 +1933,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -g file  specify the pathname of a dopewars configuration file. This file\n\
               is read immediately when the -g option is encountered\n\
   -r file  maintain pid file \"file\" while running the server\n\
+  -l file  write log information to \"file\"\n\
   -c       create and run a computer player\n\
   -w       force the use of a graphical (windowed) client (GTK+ or Win32)\n\
   -t       force the use of a text-mode client (curses)\n\
@@ -1867,7 +1948,7 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 
 void HandleCmdLine(int argc,char *argv[]) {
    int c;
-   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:";
+   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:";
 #ifdef HAVE_GETOPT_LONG
    static const struct option long_options[] = {
       { "no-color", no_argument, NULL, 'b' },
@@ -1885,6 +1966,7 @@ void HandleCmdLine(int argc,char *argv[]) {
       { "windowed-client", no_argument, NULL, 'w' },
       { "text-client", no_argument, NULL, 't' },
       { "convert", required_argument, NULL, 'C' },
+      { "logfile", required_argument, NULL, 'l' },
       { "help", no_argument, NULL, 'h' },
       { "version", no_argument, NULL, 'v' },
       { 0, 0, 0, 0 }
@@ -1913,6 +1995,7 @@ void HandleCmdLine(int argc,char *argv[]) {
          case 'p': Port=atoi(optarg); break;
          case 'g': ReadConfigFile(optarg); break;
          case 'r': AssignName(&PidFile,optarg); break;
+         case 'l': AssignName(&Log.File,optarg); break;
          case 'w': WantedClient=CLIENT_WINDOW; break;
          case 't': WantedClient=CLIENT_CURSES; break;
          case 'C': AssignName(&ConvertFile,optarg); WantConvert=TRUE; break;
@@ -1940,16 +2023,16 @@ GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
    struct tm *timep;
 
    text=g_string_new("");
-   if (LogTimestamp) {
+   if (Log.Timestamp) {
       tim=time(NULL);
       timep=localtime(&tim);
-      strftime(TimeBuf,80,LogTimestamp,timep);
+      strftime(TimeBuf,80,Log.Timestamp,timep);
       TimeBuf[79]='\0';
       g_string_append(text,TimeBuf);
    }
 
    for (i=0;i<MAXLOG;i++) if (log_level&(1<<(G_LOG_LEVEL_USER_SHIFT+i))) {
-      if (i>LogLevel) { g_string_free(text,TRUE); return NULL; }
+      if (i>Log.Level) { g_string_free(text,TRUE); return NULL; }
       g_string_sprintfa(text,"%d: ",i);
    }
    g_string_append(text,message);
@@ -1964,7 +2047,8 @@ static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    GString *text;
    text=GetLogString(log_level,message);
    if (text) {
-      g_print("%s\n",text->str); g_string_free(text,TRUE);
+      fprintf(logfp ? logfp : stdout,"%s\n",text->str);
+      g_string_free(text,TRUE);
    }
 }
 #endif
@@ -1993,8 +2077,17 @@ int main(int argc,char *argv[]) {
             GuiServerLoop();
 #else
 /* Deal with dopelog() stuff nicely */
+            logfp = fopen(Log.File,"a");
+            if (logfp) {
+#ifdef SETVBUF_REVERSED /* 2nd and 3rd arguments are reversed on some systems */
+              setvbuf(logfp,_IOLBF,(char *)NULL,0);
+#else
+              setvbuf(logfp,(char *)NULL,_IOLBF,0);
+#endif
+            }
             g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
-            ServerLoop();
+            /*if (fork()<=0)*/ ServerLoop();
+            fclose(logfp);
 #endif /* GUI_SERVER */
 #else
             g_print(_("This binary has been compiled without networking "
@@ -2020,6 +2113,7 @@ int main(int argc,char *argv[]) {
    }
    CloseHighScoreFile();
    g_free(PidFile);
+   g_free(Log.File);
    g_free(ConvertFile);
    return 0;
 }

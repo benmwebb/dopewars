@@ -427,12 +427,25 @@ against a player.</dd>
 
 <h2><a name="advanced">Advanced configuration</a></h2>
 <dl>
-<dt><b>LogLevel=<i>2</i></b></dt>
+<dt><b>Currrency.Symbol=<i>$</i></b></dt>
+<dd>Uses the dollar (<i>$</i>) symbol to display all prices of drugs, guns,
+etc.</dd>
+
+<dt><b>Currrency.Prefix=<i>TRUE</i></b></dt>
+<dd>Prints Currency.Symbol in front of any price - e.g. "$1,000"; if
+FALSE, prints it after the price - e.g. "1,000 $".</dd>
+
+<dt><b>Log.File=<i>dopewars.log</i></b></dt>
+<dd>By default, server log messages are printed to the screen (standard
+output). By setting this variable, they will instead be written to the file
+<i>dopewars.log</i>.</dd>
+
+<dt><b>Log.Level=<i>2</i></b></dt>
 <dd>Most server log messages are given a priority level, from 0 (most urgent)
 to 5 (most verbose). This setting instructs the server only to log messages
 from level 0 up to <i>2</i>, inclusive.</dd>
 
-<dt><b>LogTimestamp=<i>"[%H:%M:%S] "</i></b></dt>
+<dt><b>Log.Timestamp=<i>"[%H:%M:%S] "</i></b></dt>
 <dd>Prefixes all log messages with a timestamp of the form (e.g.)
 <i>[16:34:49]</i>. This is a string which is passed as input to the
 <tt>strftime(3)</tt> function. If this is set to a blank string, then no
@@ -584,6 +597,6 @@ any drugs, and clients will display this information if available.</dd>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>16-10-2001</b></p>
+<p>Last update: <b>28-10-2001</b></p>
 </body>
 </html>

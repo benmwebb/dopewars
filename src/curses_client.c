@@ -1400,6 +1400,7 @@ void print_status(Player *Play,gboolean DispDrug) {
 
    text=g_string_new(NULL);
    attrset(TitleAttr);
+   clear_line(0);
    g_string_sprintf(text,"%s%02d%s",Names.Month,Play->Turn,Names.Year);
    mvaddstr(0,3,text->str);
 
@@ -2048,6 +2049,7 @@ void CursesLoop(void) {
       Curses_DoGame(Play);
       ShutdownNetwork(Play);
       CleanUpServer();
+      RestoreConfig();
       attrset(TextAttr);
       mvaddstr(23,20,_("Play again? "));
       c=GetKey(_("YN"),"YN",TRUE,TRUE,FALSE);

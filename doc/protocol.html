@@ -73,7 +73,9 @@ terminated by the message terminator, \n - it may also be terminated by a ^
 character. This allows the client to ignore extra fields, if later versions
 of the protocol should add them. (N.B. This does not apply to free-form text
 fields, as in the C_QUESTION, C_PRINTMESSAGE, C_MSG, C_MSGTO, and C_FIGHTPRINT
-messages, which _do_ extend to the end of the message.)</p>
+messages, which _do_ extend to the end of the message.) Note also that older
+servers may not send all the fields, so if fewer fields than expected are
+received, the client should substitute default values.</p>
 
 <p>Message codes are shown below, together with the symbolic constants used in
 the dopewars code for clarity (e.g. the 'A' code is represented by
@@ -287,7 +289,7 @@ e.g. "1^AbFred"<br />
 
 <dt><b>C_INIT</b> ('<tt>k</tt>')</dt>
 <dd>Tells the client about various global game settings<br />
-<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"</tt><br />
+<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"^(prefix)"currency"</tt><br />
 <tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br />
 <tt>numloc</tt> = the number of locations in the game<br />
 <tt>numgun</tt> = the number of guns in the game<br />
@@ -297,7 +299,10 @@ e.g. "1^AbFred"<br />
 <tt>bank</tt>, <tt>gunshop</tt>, <tt>pub</tt> = various names used in the
 game<br />
 <tt>ID</tt> = the ID that the client should use to refer to itself<br />
-e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"<br />
+<tt>prefix</tt> = '1' if the currency symbol (e.g. $) should be printed before
+prices in the game, '0' otherwise<br />
+<tt>currency</tt> = the currency symbol to use<br />
+e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"^1$<br />
 <b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_DATA</b> ('<tt>l</tt>')</dt>
@@ -553,7 +558,7 @@ e.g.<br />
   </ul>
 </li>
 </ul>
-<p>Last update: <b>25-10-2001</b></p>
+<p>Last update: <b>29-10-2001</b></p>
 
 </body>
 </html>

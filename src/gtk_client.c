@@ -439,7 +439,7 @@ void HandleClientMessage(char *pt,Player *Play) {
                                               "<main>/Errands/Sack Bitch...");
 
 /* Text for the Errands/Sack Bitch menu item */
-         text=dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde"),
+         text=dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde..."),
                                 Names.Bitch);
          SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
@@ -1626,6 +1626,7 @@ void EndGame(void) {
    ShutdownNetwork(ClientData.Play);
    UpdatePlayerLists();
    CleanUpServer();
+   RestoreConfig();
    InGame=FALSE;
    UpdateMenus();
 }
@@ -2495,41 +2496,50 @@ static void TransferPayAll(GtkWidget *widget,GtkWidget *dialog) {
 }
 
 static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
-   gpointer Debt;
-   GtkWidget *deposit,*entry;
-   gchar *text;
-   price_t money;
+  gpointer Debt;
+  GtkWidget *deposit,*entry;
+  gchar *text,*title;
+  price_t money;
+  gboolean withdraw=FALSE;
 
-   Debt=gtk_object_get_data(GTK_OBJECT(dialog),"debt");
-   entry=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog),"entry"));
-   text=gtk_editable_get_chars(GTK_EDITABLE(entry),0,-1);
-   money=strtoprice(text);
-   g_free(text);
+  Debt=gtk_object_get_data(GTK_OBJECT(dialog),"debt");
+  entry=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog),"entry"));
+  text=gtk_editable_get_chars(GTK_EDITABLE(entry),0,-1);
+  money=strtoprice(text);
+  g_free(text);
 
-   if (money<0) money=0;
-   if (Debt) {
-      if (money>ClientData.Play->Debt) money=ClientData.Play->Debt;
-   } else {
-      deposit=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog),"deposit"));
-      if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit))) {
-         money=-money;
-      }
-      if (-money>ClientData.Play->Bank) {
-         GtkMessageBox(dialog,_("There isn't that much money available..."),
-                       Names.BankName,MB_OK);
-         return;
-      }
-   }
-   if (money>ClientData.Play->Cash) {
-      GtkMessageBox(dialog,_("You don't have that much money!"),
-                    Debt ? Names.LoanSharkName : Names.BankName,MB_OK);
-      return;
-   }
-   text=pricetostr(money);
-   SendClientMessage(ClientData.Play,C_NONE,
-                     Debt ? C_PAYLOAN : C_DEPOSIT,NULL,text);
-   g_free(text);
-   gtk_widget_destroy(dialog);
+  if (Debt) {
+/* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
+    title = dpg_strdup_printf(_("%/LoanShark window title/%Tde"),
+                              Names.LoanSharkName);
+    if (money>ClientData.Play->Debt) money=ClientData.Play->Debt;
+  } else {
+/* Title of bank dialog - (%Tde="The Bank" by default) */
+    title = dpg_strdup_printf(_("%/BankName window title/%Tde"),
+                              Names.BankName);
+    deposit=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog),"deposit"));
+    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit))) {
+      withdraw=TRUE;
+    }
+  }
+
+  if (money<0) {
+    GtkMessageBox(dialog,_("You must enter a positive amount of money!"),
+                  title,MB_OK);
+  } else if (!Debt && withdraw && money>ClientData.Play->Bank) {
+    GtkMessageBox(dialog,_("There isn't that much money available..."),
+                  title,MB_OK);
+  } else if (money>ClientData.Play->Cash) {
+    GtkMessageBox(dialog,_("You don't have that much money!"),
+                  title,MB_OK);
+  } else {
+    text=pricetostr(withdraw ? -money : money);
+    SendClientMessage(ClientData.Play,C_NONE,
+                      Debt ? C_PAYLOAN : C_DEPOSIT,NULL,text);
+    g_free(text);
+    gtk_widget_destroy(dialog);
+  }
+  g_free(title);
 }
 
 void TransferDialog(gboolean Debt) {
@@ -2593,14 +2603,20 @@ void TransferDialog(gboolean Debt) {
       radio=gtk_radio_button_new_with_label(group,_("Withdraw"));
       gtk_table_attach_defaults(GTK_TABLE(table),radio,0,1,3,4);
    }
-   label=gtk_label_new("$");
-   gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,2,4);
+   label=gtk_label_new(Currency.Symbol);
    entry=gtk_entry_new();
    gtk_entry_set_text(GTK_ENTRY(entry),"0");
    gtk_object_set_data(GTK_OBJECT(dialog),"entry",entry);
    gtk_signal_connect(GTK_OBJECT(entry),"activate",
                       GTK_SIGNAL_FUNC(TransferOK),dialog);
-   gtk_table_attach_defaults(GTK_TABLE(table),entry,2,3,2,4);
+
+   if (Currency.Prefix) {
+     gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,2,4);
+     gtk_table_attach_defaults(GTK_TABLE(table),entry,2,3,2,4);
+   } else {
+     gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,2,4);
+     gtk_table_attach_defaults(GTK_TABLE(table),entry,1,2,2,4);
+   }
 
    gtk_box_pack_start(GTK_BOX(vbox),table,TRUE,TRUE,0);
 

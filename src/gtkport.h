@@ -449,6 +449,9 @@ struct _GtkWindow {
    GtkWidget *focus;
    HACCEL hAccel;
    guint modal : 1;
+   guint allow_shrink : 1;
+   guint allow_grow : 1;
+   guint auto_shrink : 1;
 };
 
 typedef struct _GtkTable GtkTable;
@@ -534,6 +537,8 @@ GtkWidget *gtk_window_new(GtkWindowType type);
 void gtk_window_set_title(GtkWindow *window,const gchar *title);
 void gtk_window_set_default_size(GtkWindow *window,gint width,gint height);
 void gtk_window_set_transient_for(GtkWindow *window,GtkWindow *parent);
+void gtk_window_set_policy(GtkWindow *window,gint allow_shrink,
+                           gint allow_grow,gint auto_shrink);
 void gtk_container_add(GtkContainer *container,GtkWidget *widget);
 void gtk_container_set_border_width(GtkContainer *container,guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);

@@ -512,73 +512,82 @@ void SendSpyReport(Player *To,Player *SpiedOn) {
 #define NUMNAMES 12
 
 void SendInitialData(Player *To) {
-   gchar *LocalNames[NUMNAMES] = { Names.Bitch,Names.Bitches,Names.Gun,
-                                   Names.Guns,Names.Drug,Names.Drugs,
-                                   Names.Month,Names.Year,Names.LoanSharkName,
-                                   Names.BankName,Names.GunShopName,
-                                   Names.RoughPubName };
-   gint i;
-   GString *text;
+  gchar *LocalNames[NUMNAMES] = { Names.Bitch,Names.Bitches,Names.Gun,
+                                  Names.Guns,Names.Drug,Names.Drugs,
+                                  Names.Month,Names.Year,Names.LoanSharkName,
+                                  Names.BankName,Names.GunShopName,
+                                  Names.RoughPubName };
+  gint i;
+  GString *text;
 
-   if (!Network) return;
-   if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
-      LocalNames[i] = GetDefaultTString(LocalNames[i]);
-   }
-   text=g_string_new("");
-   g_string_sprintf(text,"%s^%d^%d^%d^",VERSION,NumLocation,NumGun,NumDrug);
-   for (i=0;i<8;i++) {
-      g_string_append(text,LocalNames[i]);
-      g_string_append_c(text,'^');
-   }
-   if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
+  if (!Network) return;
+  if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
+    LocalNames[i] = GetDefaultTString(LocalNames[i]);
+  }
+  text=g_string_new("");
+  g_string_sprintf(text,"%s^%d^%d^%d^",VERSION,NumLocation,NumGun,NumDrug);
+  for (i=0;i<8;i++) {
+    g_string_append(text,LocalNames[i]);
+    g_string_append_c(text,'^');
+  }
+  if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
 
 /* Player ID is expected after the first 8 names, so send the rest now */
-   for (i=8;i<NUMNAMES;i++) {
-      g_string_append(text,LocalNames[i]);
-      g_string_append_c(text,'^');
-   }
+  for (i=8;i<NUMNAMES;i++) {
+    g_string_append(text,LocalNames[i]);
+    g_string_append_c(text,'^');
+  }
 
-   if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
-      g_free(LocalNames[i]);
-   }
-   SendServerMessage(NULL,C_NONE,C_INIT,To,text->str);
-   g_string_free(text,TRUE);
+  if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
+    g_free(LocalNames[i]);
+  }
+
+  g_string_sprintfa(text,"%c%s^",Currency.Prefix ? '1' : '0',Currency.Symbol);
+  SendServerMessage(NULL,C_NONE,C_INIT,To,text->str);
+  g_string_free(text,TRUE);
 }
 
 void ReceiveInitialData(Player *Play,char *Data) {
-   char *pt,*ServerVersion;
-   GSList *list;
-   pt=Data;
-   ServerVersion=GetNextWord(&pt,"(unknown)");
-   ResizeLocations(GetNextInt(&pt,NumLocation));
-   ResizeGuns(GetNextInt(&pt,NumGun));
-   ResizeDrugs(GetNextInt(&pt,NumDrug));
-   for (list=FirstClient;list;list=g_slist_next(list)) {
-      UpdatePlayer((Player*)list->data);
-   }
-   AssignName(&Names.Bitch,GetNextWord(&pt,""));
-   AssignName(&Names.Bitches,GetNextWord(&pt,""));
-   AssignName(&Names.Gun,GetNextWord(&pt,""));
-   AssignName(&Names.Guns,GetNextWord(&pt,""));
-   AssignName(&Names.Drug,GetNextWord(&pt,""));
-   AssignName(&Names.Drugs,GetNextWord(&pt,""));
-   AssignName(&Names.Month,GetNextWord(&pt,""));
-   AssignName(&Names.Year,GetNextWord(&pt,""));
-   if (HaveAbility(Play,A_PLAYERID)) Play->ID=GetNextInt(&pt,0);
+  char *pt,*ServerVersion,*curr;
+  GSList *list;
+  pt=Data;
+  ServerVersion=GetNextWord(&pt,"(unknown)");
+  ResizeLocations(GetNextInt(&pt,NumLocation));
+  ResizeGuns(GetNextInt(&pt,NumGun));
+  ResizeDrugs(GetNextInt(&pt,NumDrug));
+  for (list=FirstClient;list;list=g_slist_next(list)) {
+    UpdatePlayer((Player*)list->data);
+  }
+  AssignName(&Names.Bitch,GetNextWord(&pt,""));
+  AssignName(&Names.Bitches,GetNextWord(&pt,""));
+  AssignName(&Names.Gun,GetNextWord(&pt,""));
+  AssignName(&Names.Guns,GetNextWord(&pt,""));
+  AssignName(&Names.Drug,GetNextWord(&pt,""));
+  AssignName(&Names.Drugs,GetNextWord(&pt,""));
+  AssignName(&Names.Month,GetNextWord(&pt,""));
+  AssignName(&Names.Year,GetNextWord(&pt,""));
+  if (HaveAbility(Play,A_PLAYERID)) Play->ID=GetNextInt(&pt,0);
 
 /* Servers up to version 1.4.8 don't send the following names, so 
    default to the existing values if they haven't been sent */
-   AssignName(&Names.LoanSharkName,GetNextWord(&pt,Names.LoanSharkName));
-   AssignName(&Names.BankName,GetNextWord(&pt,Names.BankName));
-   AssignName(&Names.GunShopName,GetNextWord(&pt,Names.GunShopName));
-   AssignName(&Names.RoughPubName,GetNextWord(&pt,Names.RoughPubName));
+  AssignName(&Names.LoanSharkName,GetNextWord(&pt,Names.LoanSharkName));
+  AssignName(&Names.BankName,GetNextWord(&pt,Names.BankName));
+  AssignName(&Names.GunShopName,GetNextWord(&pt,Names.GunShopName));
+  AssignName(&Names.RoughPubName,GetNextWord(&pt,Names.RoughPubName));
 
-   if (strcmp(VERSION,ServerVersion)!=0) {
-      g_message(_("This server is version %s, while your client is "
+/* Currency data are only sent by versions >= 1.5.3 */
+  curr = GetNextWord(&pt,NULL);
+  if (curr && strlen(curr)>=1) {
+    Currency.Prefix = (curr[0]=='1');
+    AssignName(&Currency.Symbol,&curr[1]);
+  }
+
+  if (strcmp(VERSION,ServerVersion)!=0) {
+    g_message(_("This server is version %s, while your client is "
 "version %s.\nBe warned that different versions may not be fully compatible!\n"
-"Refer to the website at http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/\n"
+"Refer to the website at http://dopewars.sourceforge.net/\n"
 "for the latest version."),ServerVersion,VERSION);
-   }
+  }
 }
 
 void SendMiscData(Player *To) {
