@@ -577,6 +577,7 @@ void CreatePidFile(void) {
 /* Creates a pid file (if "PidFile" is non-NULL) and writes the process */
 /* ID into it                                                           */
    FILE *fp;
+   char *OpenError;
    if (!PidFile) return;
    fp=fopen(PidFile,"w");
    if (fp) {
@@ -584,7 +585,10 @@ void CreatePidFile(void) {
       fprintf(fp,"%ld\n",(long)getpid());
       fclose(fp);
       chmod(PidFile,S_IREAD|S_IWRITE);
-   } else g_warning(_("Cannot create pid file %s"),PidFile);
+   } else {
+      OpenError=strerror(errno);
+      g_warning(_("Cannot create pid file %s: %s"),PidFile,OpenError);
+   }
 }
 
 void RemovePidFile(void) {
@@ -1215,6 +1219,7 @@ void ConvertHighScoreFile(void) {
 /* Converts an old format high score file to the new format. */
    FILE *old,*backup;
    gchar *BackupFile,ch;
+   char *OldError=NULL,*BackupError=NULL;
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
 
 /* The user running dopewars must be allowed to mess with the score file */
@@ -1223,40 +1228,54 @@ void ConvertHighScoreFile(void) {
    BackupFile = g_strdup_printf("%s.bak",ConvertFile);
 
    old=fopen(ConvertFile,"r+");
+   if (!old) OldError = strerror(errno);
+
    backup=fopen(BackupFile,"w");
+   if (!backup) BackupError = strerror(errno);
 
    if (old && backup) {
 
-/* First, make a backup of the old file */
-      ftruncate(fileno(backup),0); rewind(backup);
+/* First, make sure that the "old" file doesn't have a valid "new" header */
       rewind(old);
-      while(1) {
-         ch = fgetc(old);
-         if (ch==EOF) break; else fputc(ch,backup);
-      }
-      fclose(backup);
+      if (HighScoreReadHeader(old,NULL)) {
+         g_log(NULL,G_LOG_LEVEL_CRITICAL,
+               _("The high score file %s\n"
+                 "is already in the new format! Aborting."),
+               ConvertFile);
+         fclose(old); fclose(backup);
+      } else {
+/* Make a backup of the old file */
+         ftruncate(fileno(backup),0); rewind(backup);
+         rewind(old);
+         while(1) {
+            ch = fgetc(old);
+            if (ch==EOF) break; else fputc(ch,backup);
+         }
+         fclose(backup);
 
 /* Read in the scores without the header, and then write out with the header */
-      if (!HighScoreRead(old,MultiScore,AntiqueScore,FALSE)) {
-         g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Error reading scores from %s."),
-               ConvertFile);
-      } else {
-         ftruncate(fileno(old),0); rewind(old);
-         if (HighScoreWrite(old,MultiScore,AntiqueScore)) {
-            g_message(_("The high score file %s has been converted to the new "
-                        "format.\nA backup of the old file has been created "
-                        "as %s.\n"),ConvertFile,BackupFile);
+         if (!HighScoreRead(old,MultiScore,AntiqueScore,FALSE)) {
+            g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Error reading scores from %s."),
+                  ConvertFile);
+         } else {
+            ftruncate(fileno(old),0); rewind(old);
+            if (HighScoreWrite(old,MultiScore,AntiqueScore)) {
+               g_message(_("The high score file %s has been converted to the "
+                           "new format.\nA backup of the old file has been "
+                           "created as %s.\n"),ConvertFile,BackupFile);
+            }
          }
+         fclose(old);
       }
-      fclose(old);
    } else {
       if (!old) {
-         g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s."),
-               ConvertFile);
+         g_log(NULL,G_LOG_LEVEL_CRITICAL,
+               _("Cannot open high score file %s: %s."),
+               ConvertFile,OldError);
       } else if (!backup) {
          g_log(NULL,G_LOG_LEVEL_CRITICAL,
-               _("Cannot create backup of the high score file (%s)."),
-               BackupFile);
+               _("Cannot create backup (%s) of the\nhigh score file: %s."),
+               BackupFile,BackupError);
       }
    }
 
@@ -1267,6 +1286,7 @@ int InitHighScoreFile(void) {
 /* Opens the high score file for later use, and then drops privileges.      */
 /* If the high score file cannot be found, returns -1 (0=success)           */
    gboolean NewFile=FALSE;
+   char *OpenError=NULL;
 
    if (ScoreFP) return 0;  /* If already opened, then we're done */
 
@@ -1274,6 +1294,7 @@ int InitHighScoreFile(void) {
    ScoreFP=fopen(HiScoreFile,"r+");
    if (!ScoreFP) {
       ScoreFP=fopen(HiScoreFile,"w+");
+      if (!ScoreFP) OpenError=strerror(errno);
       NewFile=TRUE;
    }
 
@@ -1281,9 +1302,9 @@ int InitHighScoreFile(void) {
 
    if (!ScoreFP) {
       g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s.\n"
-            "Either ensure you have permissions to access this file and "
-            "directory, or\nspecify an alternate high score file with "
-            "the -f command line option."),HiScoreFile);
+            "(%s.) Either ensure you have permissions to access\n"
+            "this file and directory, or specify an alternate high score "
+            "file with the\n-f command line option."),HiScoreFile,OpenError);
       return -1;
    }
 
