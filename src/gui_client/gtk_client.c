@@ -1375,7 +1375,7 @@ void JetButtonPressed(GtkWidget *widget, gpointer data)
 {
   if (InGame) {
     if (ClientData.Play->Flags & FIGHTING) {
-      DisplayFightMessage(NULL);
+      DisplayFightMessage("");
     } else {
       Jet(NULL);
     }
