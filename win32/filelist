@@ -40,7 +40,9 @@ dopewars.exe
 dopewars server.lnk
 dopewars.exe
 -s
-
+dopewars command line options.lnk
+dopewars.exe
+-h
 dopewars help.lnk
 index.html
 
