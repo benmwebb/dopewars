@@ -207,31 +207,32 @@ void display_intro(void)
 
   /* Curses client introduction screen */
   text = g_string_new(_("D O P E W A R S"));
-  mvaddstr(1, (Width - text->len) / 2, text->str);
+  mvaddstr(0, (Width - text->len) / 2, text->str);
 
   attrset(TextAttr);
 
-  mvaddstr(3, 1, _("Based on John E. Dell's old Drug Wars game, dopewars "
+  mvaddstr(2, 1, _("Based on John E. Dell's old Drug Wars game, dopewars "
                    "is a simulation of an"));
-  mvaddstr(4, 1, _("imaginary drug market.  dopewars is an All-American "
+  mvaddstr(3, 1, _("imaginary drug market.  dopewars is an All-American "
                    "game which features"));
-  mvaddstr(5, 1, _("buying, selling, and trying to get past the cops!"));
+  mvaddstr(4, 1, _("buying, selling, and trying to get past the cops!"));
 
-  mvaddstr(7, 1, _("The first thing you need to do is pay off your "
+  mvaddstr(6, 1, _("The first thing you need to do is pay off your "
                    "debt to the Loan Shark. After"));
-  mvaddstr(8, 1, _("that, your goal is to make as much money as "
+  mvaddstr(7, 1, _("that, your goal is to make as much money as "
                    "possible (and stay alive)! You"));
-  mvaddstr(9, 1, _("have one month of game time to make your fortune."));
+  mvaddstr(8, 1, _("have one month of game time to make your fortune."));
 
-  mvaddstr(11, 18, _("Copyright (C) 1998-2002  Ben Webb "
+  mvaddstr(10, 18, _("Copyright (C) 1998-2002  Ben Webb "
                      "ben@bellatrix.pcl.ox.ac.uk"));
   g_string_sprintf(text, _("Version %s"), VERSION);
-  mvaddstr(11, 2, text->str);
+  mvaddstr(10, 2, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
                           "General Public Licence"));
-  mvaddstr(12, (Width - text->len) / 2, text->str);
+  mvaddstr(11, (Width - text->len) / 2, text->str);
 
-  mvaddstr(14, 7, _("Icons and Graphics            Ocelot Mantis"));
+  mvaddstr(13, 7, _("Icons and Graphics            Ocelot Mantis"));
+  mvaddstr(14, 7, _("Sounds                        Robin Kohli, 19.5degs.com"));
   mvaddstr(15, 7, _("Drug Dealing and Research     Dan Wolf"));
   mvaddstr(16, 7, _("Play Testing                  Phil Davis           "
                     "Owen Walsh"));

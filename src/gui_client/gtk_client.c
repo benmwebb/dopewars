@@ -2360,9 +2360,10 @@ void display_intro(GtkWidget *widget, gpointer data)
   const int rows = 6, cols = 3;
   int i, j;
   GtkAccelGroup *accel_group;
-  gchar *table_data[6][3] = {
+  gchar *table_data[7][3] = {
     /* Credits labels in GTK+ 'about' dialog */
     {N_("Icons and graphics"), "Ocelot Mantis", NULL},
+    {N_("Sounds"), "Robin Kohli, 19.5degs.com", NULL},
     {N_("Drug Dealing and Research"), "Dan Wolf", NULL},
     {N_("Play Testing"), "Phil Davis", "Owen Walsh"},
     {N_("Extensive Play Testing"), "Katherine Holt",
