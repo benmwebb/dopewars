@@ -75,6 +75,7 @@ typedef struct ABILITIES {
                                  * connection has */
   gboolean Shared[A_NUM];       /* Abilites shared by us and the
                                  * remote host */
+  gint RemoteNum;               /* The remote host's idea of what A_NUM is */
 } Abilities;
 
 struct NAMES {

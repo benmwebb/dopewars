@@ -348,6 +348,35 @@ void SendPlayerDetails(Player *Play, Player *To, MsgCode Code)
   g_string_free(text, TRUE);
 }
 
+/*
+ * Checks the version of the client that has connected, and sends a
+ * warning message if it's old.
+ */
+void RemoteVersionCheck(Player *Play)
+{
+  /* Client didn't send a C_ABILITIES message at all, so is either broken
+   * or is version 1.4.8 or earlier. */
+  if (Play->Abil.RemoteNum == 0) {
+    SendPrintMessage(NULL, C_VERSIONCHECK, Play,
+        _("You appear to be using an extremely old (version 1.4.x) client.^"
+          "While this will probably work, many of the newer features^"
+          "will be unsupported. Get the latest version from the^"
+          "dopewars website, http://dopewars.sourceforge.net/."));
+
+  /* The client has a smaller value of A_NUM; this means that not only does
+   * it not support some features, it doesn't even know they might exist. */
+  } else if (Play->Abil.RemoteNum < A_NUM) {
+    SendPrintMessage(NULL, C_VERSIONCHECK, Play,
+        _("Warning: your client is too old to support all of this^"
+          "server's features. For the full \"experience\", get^"
+          "the latest version of dopewars from the^"
+          "website, http://dopewars.sourceforge.net/."));
+  }
+
+  /* Otherwise, the client is either the same version as the server, or
+   * it's newer. Both should be OK, so do nothing. */
+}
+
 /* 
  * Given a message "buf", from player "Play", performs processing and
  * sends suitable replies.
@@ -389,6 +418,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
       SendServerMessage(NULL, C_NONE, C_NEWNAME, Play, NULL);
     } else if (strlen(GetPlayerName(Play)) == 0 && Data[0]) {
       if (CountPlayers(FirstServer) < MaxClients || !Network) {
+        RemoteVersionCheck(Play);
         SendAbilities(Play);
         CombineAbilities(Play);
         SendInitialData(Play);

@@ -237,6 +237,7 @@ void InitAbilities(Player *Play)
     Play->Abil.Remote[i] = FALSE;
     Play->Abil.Shared[i] = FALSE;
   }
+  Play->Abil.RemoteNum = 0;
 
   /* Set local abilities; abilities that are client-dependent (e.g.
    * A_NEWFIGHT) can be overridden by individual clients if required, by
@@ -247,10 +248,12 @@ void InitAbilities(Player *Play)
   Play->Abil.Local[A_TSTRING] = TRUE;
   Play->Abil.Local[A_DONEFIGHT] = TRUE;
 
-  if (!Network)
+  if (!Network) {
     for (i = 0; i < A_NUM; i++) {
       Play->Abil.Remote[i] = Play->Abil.Shared[i] = Play->Abil.Local[i];
     }
+    Play->Abil.RemoteNum = A_NUM;
+  }
 }
 
 /* 
@@ -264,13 +267,15 @@ void SendAbilities(Player *Play)
 
   if (!Network)
     return;
-  for (i = 0; i < A_NUM; i++)
+  for (i = 0; i < A_NUM; i++) {
     Data[i] = (Play->Abil.Local[i] ? '1' : '0');
+  }
   Data[A_NUM] = '\0';
-  if (Server)
+  if (Server) {
     SendServerMessage(NULL, C_NONE, C_ABILITIES, Play, Data);
-  else
+  } else {
     SendClientMessage(Play, C_NONE, C_ABILITIES, NULL, Data);
+  }
 }
 
 /* 
@@ -285,7 +290,8 @@ void ReceiveAbilities(Player *Play, gchar *Data)
   InitAbilities(Play);
   if (!Network)
     return;
-  Length = MIN(strlen(Data), A_NUM);
+  Play->Abil.RemoteNum = strlen(Data);
+  Length = MIN(Play->Abil.RemoteNum, A_NUM);
   for (i = 0; i < Length; i++) {
     Play->Abil.Remote[i] = (Data[i] == '1' ? TRUE : FALSE);
   }
@@ -721,14 +727,6 @@ void ReceiveInitialData(Player *Play, char *Data)
   if (curr && strlen(curr) >= 1) {
     Currency.Prefix = (curr[0] == '1');
     AssignName(&Currency.Symbol, &curr[1]);
-  }
-
-  if (strcmp(VERSION, ServerVersion) != 0) {
-    g_message(_("This server is version %s, while your client is "
-                "version %s.\nBe warned that different versions may not "
-                "be fully compatible!\nRefer to the website at "
-                "http://dopewars.sourceforge.net/\nfor the latest version."),
-              ServerVersion, VERSION);
   }
 }
 
