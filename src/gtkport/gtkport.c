@@ -3917,6 +3917,11 @@ void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num)
   }
 }
 
+gint gtk_notebook_get_current_page(GtkNotebook *notebook)
+{
+  return notebook->selection;
+}
+
 void gtk_notebook_realize(GtkWidget *widget)
 {
   GSList *children;

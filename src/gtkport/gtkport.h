@@ -597,6 +597,7 @@ void gtk_notebook_append_page(GtkNotebook *notebook, GtkWidget *child,
 void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label, gint position);
 void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num);
+gint gtk_notebook_get_current_page(GtkNotebook *notebook);
 GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
                               gfloat step_increment, gfloat page_increment,
                               gfloat page_size);
