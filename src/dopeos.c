@@ -316,6 +316,10 @@ void SetReuse(SOCKET sock) {
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+
 int Width,Depth;
 
 #ifdef CURSES_CLIENT
@@ -354,7 +358,7 @@ void MicroSleep(int microsec) {
 #if HAVE_SELECT
    struct timeval tv;
    tv.tv_sec=0;
-   tv.tv_usec=100000;
+   tv.tv_usec=microsec;
    bselect(0,NULL,NULL,NULL,&tv);
 #endif
 }
