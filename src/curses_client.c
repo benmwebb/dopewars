@@ -41,7 +41,7 @@
 #include "serverside.h"
 #include "tstring.h"
 
-static void PrepareHighScoreScreen();
+static void PrepareHighScoreScreen(void);
 static void PrintHighScore(char *Data);
 
 static int ResizedFlag;
@@ -56,14 +56,14 @@ static gchar FightPoint;
 
 /* Function definitions; make them static so as not to clash with functions
    of the same name in different clients */
-static void display_intro();
+static void display_intro(void);
 static void ResizeHandle(int sig);
 static void CheckForResize(Player *Play);
 static int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
                   gboolean PrintAllowed,gboolean ExpandOut);
-static void clear_bottom(), clear_screen();
+static void clear_bottom(void), clear_screen(void);
 static void clear_line(int line), clear_exceptfor(int skip);
-static void nice_wait();
+static void nice_wait(void);
 static void DisplayFightMessage(Player *Play,char *text);
 static void DisplaySpyReports(char *Data,Player *From,Player *To);
 static void display_message(char *buf);
@@ -80,7 +80,7 @@ static void Bank(Player *Play);
 
 static char DisplayMode,QuitRequest;
 
-static void start_curses() {
+static void start_curses(void) {
 /* Initialises the curses library for accessing the screen */
    cur_screen=newterm(NULL,stdout,stdin);
    if (WantColour) {
@@ -99,7 +99,7 @@ static void start_curses() {
    curs_set(0);
 }
 
-static void end_curses() {
+static void end_curses(void) {
 /* Shuts down the curses screen library */
    keypad(stdscr,FALSE);
    curs_set(1);
@@ -141,7 +141,7 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    attrset(TextAttr); clear_bottom();
 }
 
-void display_intro() {
+void display_intro(void) {
 /* Displays a dopewars introduction screen */
    GString *text;
    attrset(TextAttr);
@@ -195,7 +195,7 @@ void display_intro() {
 }
 
 #ifdef NETWORKING
-static void SelectServerManually() {
+static void SelectServerManually(void) {
 /* Prompts the user to enter a server name and port to connect to */
    gchar *text,*PortText;
    if (ServerName[0]=='(') AssignName(&ServerName,"localhost");
@@ -212,7 +212,7 @@ static void SelectServerManually() {
    g_free(text); g_free(PortText);
 }
 
-static char *SelectServerFromMetaServer() {
+static char *SelectServerFromMetaServer(void) {
 /* Contacts the dopewars metaserver, and obtains a list of valid */
 /* server/port pairs, one of which the user should select.       */
 /* Returns a pointer to a static string containing an error      */
@@ -594,7 +594,7 @@ static void GiveErrand(Player *Play) {
    }
 }
 
-static int want_to_quit() {
+static int want_to_quit(void) {
 /* Asks the user if he/she _really_ wants to quit dopewars */
    attrset(TextAttr);
    clear_line(22);
@@ -778,7 +778,7 @@ void HandleClientMessage(char *Message,Player *Play) {
    }
 }
 
-void PrepareHighScoreScreen() {
+void PrepareHighScoreScreen(void) {
 /* Responds to a "starthiscore" message by clearing the screen and */
 /* displaying the title for the high scores screen                 */
    char *text;
@@ -1079,13 +1079,13 @@ void clear_exceptfor(int skip) {
 }
 
 
-void clear_bottom() {
+void clear_bottom(void) {
 /* Clears screen lines 16 to 23 */
    int i;
    for (i=16;i<=23;i++) clear_line(i);
 }
 
-void clear_screen() {
+void clear_screen(void) {
 /* Clears the entire screen; 24 lines of 80 characters each */
    int i;
    for (i=0;i<Depth;i++) clear_line(i);
@@ -1822,7 +1822,7 @@ static void Curses_DoGame(Player *Play) {
    g_string_free(text,TRUE);
 }
 
-void CursesLoop() {
+void CursesLoop(void) {
    char c;
    gchar *Name=NULL;
    Player *Play;
@@ -1862,7 +1862,7 @@ void CursesLoop() {
 #include <glib.h>
 #include "dopewars.h" /* We need this for the definition of '_' */
 
-void CursesLoop() {
+void CursesLoop(void) {
    g_print(_("No curses client available - rebuild the binary passing the\n"
            "--enable-curses-client option to configure, or use a windowed\n"
            "client (if available) instead!\n"));

@@ -88,10 +88,10 @@ static void DestroyGtk(GtkWidget *widget,gpointer data);
 static void NewGame(GtkWidget *widget,gpointer data);
 static void ListScores(GtkWidget *widget,gpointer data);
 static void ListInventory(GtkWidget *widget,gpointer data);
-static void NewGameDialog();
-static void StartGame();
-static void EndGame();
-static void UpdateMenus();
+static void NewGameDialog(void);
+static void StartGame(void);
+static void EndGame(void);
+static void UpdateMenus(void);
 
 #ifdef NETWORKING
 static void GetClientMessage(gpointer data,gint socket,
@@ -100,7 +100,7 @@ static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
 #endif
 
 static void HandleClientMessage(char *buf,Player *Play);
-static void PrepareHighScoreDialog();
+static void PrepareHighScoreDialog(void);
 static void AddScoreToDialog(char *Data);
 static void CompleteHighScoreDialog(gboolean AtEnd);
 static void PrintMessage(char *Data);
@@ -113,7 +113,7 @@ static void UpdateInventory(struct InventoryWidgets *Inven,
                             Inventory *Objects,int NumObjects,
                             gboolean AreDrugs);
 static void JetButtonPressed(GtkWidget *widget,gpointer data);
-static void Jet();
+static void Jet(void);
 static void DealDrugs(GtkWidget *widget,gpointer data);
 static void DealGuns(GtkWidget *widget,gpointer data);
 static void QuestionDialog(char *Data,Player *From);
@@ -122,7 +122,7 @@ static void ListPlayers(GtkWidget *widget,gpointer data);
 static void TalkToAll(GtkWidget *widget,gpointer data);
 static void TalkToPlayers(GtkWidget *widget,gpointer data);
 static void TalkDialog(gboolean TalkToAll);
-static GtkWidget *CreatePlayerList();
+static GtkWidget *CreatePlayerList(void);
 static void UpdatePlayerList(GtkWidget *clist,gboolean IncludeSelf);
 static void TipOff(GtkWidget *widget,gpointer data);
 static void SpyOnPlayer(GtkWidget *widget,gpointer data);
@@ -130,9 +130,9 @@ static void ErrandDialog(gint ErrandType);
 static void SackBitch(GtkWidget *widget,gpointer data);
 static void DestroyShowing(GtkWidget *widget,gpointer data);
 static gint DisallowDelete(GtkWidget *widget,GdkEvent *event,gpointer data);
-static void GunShopDialog();
-static void NewNameDialog();
-static void UpdatePlayerLists();
+static void GunShopDialog(void);
+static void NewNameDialog(void);
+static void UpdatePlayerLists(void);
 static void CreateInventory(GtkWidget *hbox,gchar *Objects,
                             GtkAccelGroup *accel_group,
                             gboolean CreateButtons,gboolean CreateHere,
@@ -424,7 +424,7 @@ struct HiScoreDiaStruct {
 };
 static struct HiScoreDiaStruct HiScoreDialog;
 
-void PrepareHighScoreDialog() {
+void PrepareHighScoreDialog(void) {
 /* Creates an empty dialog to display high scores */
    GtkWidget *dialog,*vbox,*hsep,*table;
 
@@ -640,7 +640,7 @@ struct combatant {
    GtkWidget *name,*bitches,*healthprog,*healthlabel;
 };
 
-static void CreateFightDialog() {
+static void CreateFightDialog(void) {
 /* Creates an empty Fight dialog. Usually this only needs to be done once, */
 /* as when the user "closes" it, it is only hidden, ready to be reshown    */
 /* later. Buttons for all actions are added here, and are hidden/shown     */
@@ -806,7 +806,7 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
    g_free(BitchText); g_free(HealthText);
 }
 
-static void FreeCombatants() {
+static void FreeCombatants(void) {
 /* Cleans up the list of all players/cops involved in a fight. */
    GArray *combatants;
    combatants=(GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
@@ -1089,7 +1089,7 @@ void JetButtonPressed(GtkWidget *widget,gpointer data) {
    }
 }
 
-void Jet() {
+void Jet(void) {
    GtkWidget *dialog,*table,*button,*label,*vbox;
    GtkAccelGroup *accel_group;
    gint boxsize,i,row,col;
@@ -1163,7 +1163,7 @@ struct DealDiaStruct {
 };
 static struct DealDiaStruct DealDialog;
 
-static void UpdateDealDialog() {
+static void UpdateDealDialog(void) {
    GString *text;
    GtkAdjustment *spin_adj;
    gint DrugInd,CanDrop,CanCarry,CanAfford,MaxDrug;
@@ -1518,7 +1518,7 @@ void QuestionDialog(char *Data,Player *From) {
    g_strfreev(split);
 }
 
-void StartGame() {
+void StartGame(void) {
    Player *Play;
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
@@ -1538,7 +1538,7 @@ void StartGame() {
    UpdatePlayerLists();
 }
 
-void EndGame() {
+void EndGame(void) {
    DisplayFightMessage(NULL);
    gtk_widget_hide_all(ClientData.vbox);
    gtk_editable_delete_text(GTK_EDITABLE(ClientData.messages),0,-1);
@@ -1588,7 +1588,7 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
    return 0;
 }
 
-void UpdateMenus() {
+void UpdateMenus(void) {
    gboolean MultiPlayer;
    gint Bitches;
 
@@ -2081,7 +2081,7 @@ static void CloseNewGameDia(GtkWidget *widget,
 #endif
 }
 
-void NewGameDialog() {
+void NewGameDialog(void) {
    GtkWidget *vbox,*vbox2,*hbox,*label,*entry,*notebook,*frame,*button;
    GtkWidget *dialog;
    GtkAccelGroup *accel_group;
@@ -2604,7 +2604,7 @@ void TalkDialog(gboolean TalkToAll) {
    gtk_widget_show_all(dialog);
 }
 
-GtkWidget *CreatePlayerList() {
+GtkWidget *CreatePlayerList(void) {
    GtkWidget *clist;
    gchar *text[1];
 
@@ -2856,7 +2856,7 @@ static void NewNameOK(GtkWidget *widget,GtkWidget *window) {
    g_free(text);
 }
 
-void NewNameDialog() {
+void NewNameDialog(void) {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
@@ -2899,7 +2899,7 @@ void NewNameDialog() {
    gtk_widget_show_all(window);
 }
 
-void GunShopDialog() {
+void GunShopDialog(void) {
    GtkWidget *window,*button,*hsep,*vbox,*hbox;
    GtkAccelGroup *accel_group;
    gchar *text;
@@ -2952,7 +2952,7 @@ void GunShopDialog() {
    gtk_widget_show_all(window);
 }
 
-void UpdatePlayerLists() {
+void UpdatePlayerLists(void) {
    if (IsShowingPlayerList) UpdatePlayerList(ClientData.PlayerList,FALSE);
    if (IsShowingTalkList) UpdatePlayerList(ClientData.TalkList,FALSE);
 }
@@ -2965,7 +2965,7 @@ static void DestroySpyReports(GtkWidget *widget,gpointer data) {
    SpyReportsDialog=NULL;
 }
 
-static void CreateSpyReports() {
+static void CreateSpyReports(void) {
    GtkWidget *window,*button,*vbox,*notebook;
    GtkAccelGroup *accel_group;
 

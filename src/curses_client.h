@@ -26,6 +26,6 @@
 #include <config.h>
 #endif
 
-void CursesLoop();
+void CursesLoop(void);
 
 #endif
