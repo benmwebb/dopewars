@@ -82,7 +82,8 @@ gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
 gboolean OpenMetaHttpConnection(HttpConnection **conn);
-gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt);
+gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
+                                     gboolean *doneOK);
 void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
 

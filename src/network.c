@@ -460,6 +460,7 @@ g_print("FIXME: SOCKS5 connect reply\n");
                   g_print("FIXME: SOCKS5 sucessful connect\n");
                   NetBuf->status = NBS_CONNECTED;
                   g_free(data);
+                  NetBufCallBack(NetBuf); /* status has changed */
                }
             }
          }
@@ -475,6 +476,7 @@ g_print("FIXME: SOCKS5 connect reply\n");
          } else {
             if (data[1]==90) {
                NetBuf->status = NBS_CONNECTED;
+               NetBufCallBack(NetBuf); /* status has changed */
                retval=TRUE;
             } else if (data[1]>=SEC_REJECT && data[1]<=SEC_IDMISMATCH) {
                SetError(&NetBuf->error,&ETSocks,data[1]);
@@ -592,6 +594,8 @@ gint CountWaitingMessages(NetworkBuffer *NetBuf) {
    ConnBuf *conn;
    gint i,msgs=0;
 
+   if (NetBuf->status!=NBS_CONNECTED) return 0;
+
    conn=&NetBuf->ReadBuf;
 
    if (conn->Data) for (i=0;i<conn->DataPresent;i++) {
@@ -633,7 +637,7 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
    char *SepPt;
    gchar *NewMessage;
    conn=&NetBuf->ReadBuf;
-   if (!conn->Data || !conn->DataPresent/* || NetBuf->status!=NBS_CONNECTED*/) {
+   if (!conn->Data || !conn->DataPresent || NetBuf->status!=NBS_CONNECTED) {
       return NULL;
    }
    SepPt=memchr(conn->Data,NetBuf->Terminator,conn->DataPresent);
@@ -953,6 +957,7 @@ gboolean OpenHttpConnection(HttpConnection **connpt,gchar *HostName,
    if (Body && Body[0]) conn->Body=g_strdup(Body);
    conn->Port = Port;
    conn->ProxyPort = ProxyPort;
+   conn->user = conn->password = NULL;
    *connpt = conn;
 
    if (StartHttpConnect(conn)) {

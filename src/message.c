@@ -317,9 +317,11 @@ gboolean OpenMetaHttpConnection(HttpConnection **conn) {
    return retval;
 }
 
-gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
+gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
+                                     gboolean *doneOK) {
    gchar *msg;
    ServerData *NewServer;
+   g_assert(conn && listpt && doneOK);
 
 /* If we're done reading the headers, only read if the data for a whole
    server is available (8 lines) N.B. "Status" is from the _last_ read */
@@ -346,8 +348,16 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
       /* This should be the first line of the body, the "MetaServer:" line */
       msg=ReadHttpResponse(conn);
       if (!msg) return FALSE;
-      if (strncmp(msg,"MetaServer:",11)!=0) {
+      if (strlen(msg)>=14 && strncmp(msg,"FATAL ERROR:",12)==0) {
+         g_warning("Metaserver error: %s",&msg[13]);
+         g_free(msg);
+         *doneOK=FALSE;
+         return FALSE;
+      } else if (strncmp(msg,"MetaServer:",11)!=0) {
          g_warning("Bad reply from metaserver: %s",msg);
+         g_free(msg);
+         *doneOK=FALSE;
+         return FALSE;
       }
       g_free(msg);
    } else {

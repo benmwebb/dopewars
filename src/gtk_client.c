@@ -1933,6 +1933,10 @@ static gboolean GetStartGamePlayerName(struct StartGameStruct *widgets,
 }
 
 #ifdef NETWORKING
+static void SetStartGameStatus(struct StartGameStruct *widgets,gchar *msg) {
+   gtk_label_set_text(GTK_LABEL(widgets->status),msg);
+}
+
 static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
    GString *neterr;
    gchar *text;
@@ -1955,8 +1959,7 @@ static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
       text=g_strdup_printf(_("Status: Could not connect (%s)"),neterr->str);
    }
 
-   gtk_label_set_text(GTK_LABEL(widgets->status),text);
-   g_free(text);
+   SetStartGameStatus(widgets,text); g_free(text);
    g_string_free(neterr,TRUE);
 }
 
@@ -1974,7 +1977,13 @@ static void DoConnect(struct StartGameStruct *widgets) {
    gchar *text;
 /* Message displayed during the attempted connect to a dopewars server */
    text=g_strdup_printf(_("Status: Attempting to contact %s..."),ServerName);
-   gtk_label_set_text(GTK_LABEL(widgets->status),text); g_free(text);
+   SetStartGameStatus(widgets,text); g_free(text);
+
+/* Terminate any existing connection attempts */
+   ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
+   if (widgets->MetaConn) {
+      CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
+   }
 
    if (StartNetworkBufferConnect(&ClientData.Play->NetBuf,ServerName,Port)) {
       SetNetworkBufferCallBack(&ClientData.Play->NetBuf,SocketStatus,
@@ -2050,7 +2059,7 @@ static void HandleMetaSock(gpointer data,gint socket,
    if (NetBufHandleNetwork(&widgets->MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
       while (HandleWaitingMetaServerData(widgets->MetaConn,
-                                         &widgets->NewMetaList)) {}
+                                         &widgets->NewMetaList,&DoneOK)) {}
    }
    if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
       ConnectError(widgets,TRUE);
@@ -2074,10 +2083,20 @@ void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
 static void UpdateMetaServerList(GtkWidget *widget,
                                  struct StartGameStruct *widgets) {
    GtkWidget *metaserv;
+   gchar *text;
+
+/* Terminate any existing connection attempts */
+   ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
    if (widgets->MetaConn) {
       CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
+
    ClearServerList(&widgets->NewMetaList);
+
+/* Message displayed during the attempted connect to the metaserver */
+   text=g_strdup_printf(_("Status: Attempting to contact %s..."),
+                        MetaServer.Name);
+   SetStartGameStatus(widgets,text); g_free(text);
 
    if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
@@ -2123,9 +2142,10 @@ static void StartSinglePlayer(GtkWidget *widget,
 static void CloseNewGameDia(GtkWidget *widget,
                             struct StartGameStruct *widgets) {
 #ifdef NETWORKING
+/* Terminate any existing connection attempts */
+   ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
    if (widgets->MetaConn) {
-      CloseHttpConnection(widgets->MetaConn);
-      widgets->MetaConn=NULL;
+      CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
    ClearServerList(&widgets->NewMetaList);
 #endif
