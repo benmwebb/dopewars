@@ -89,13 +89,23 @@ list the servers available at the metaserver, prompt the user to enter a
 server name and port, or play in single player mode, respectively.
 This option can be overridden with the -o <a href="commandline.html#server">
 command line option</a> (but be sure to protect the brackets from the shell
-if you use one of the "special" names).</dd>
+if you use one of the "special" names). <b>Note</b> that this only changes
+the name of the server that the client connects to - if you're running your
+own server it does not change the address that it binds to. For that, see
+the <b>BindAddress</b> variable.</dd>
 
 <dt><b>ServerMOTD=<i>"Welcome to my dopewars server"</i></b></dt>
 <dd>When running a server, any client that connects displays the welcome
 "message of the day" <i>"Welcome to my dopewars server"</i>. This can
 be used, for example, to inform users of any special features that the
 server has.</dd>
+
+<dt><b>BindAddress=<i>"localhost"</i></b></dt>
+<dd>Forces your dopewars server (if you run one) to accept network connections
+only on the <i>localhost</i> network interface. (This can be a host name,
+or an IP address.) If this is left blank (the default) then the server will
+accept connections coming in on any valid network interface.
+</dd>
 
 <dt><b>Socks.Active=<i>FALSE</i></b></dt>
 <dd>Instructs the dopewars client to connect directly to the given server,
@@ -635,7 +645,7 @@ can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>15-07-2002</b><br />
+  Last update: <b>16-07-2002</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>

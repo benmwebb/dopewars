@@ -79,7 +79,7 @@ gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
 unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue;
 gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
-gchar *ServerMOTD = NULL, *WantedPlugin = NULL;
+gchar *ServerMOTD = NULL, *WantedPlugin = NULL, *BindAddress = NULL;
 gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
 gboolean WantConvert, WantAdmin;
 
@@ -235,6 +235,9 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &ServerMOTD, NULL, "ServerMOTD",
    N_("Server's welcome message of the day"), NULL, NULL, 0, "", NULL,
    NULL, FALSE, 0},
+  {NULL, NULL, NULL, &BindAddress, NULL, "BindAddress",
+   N_("Network address for the server to listen on"), NULL, NULL, 0, "",
+   NULL, NULL, FALSE, 0},
 #ifdef NETWORKING
   {NULL, &UseSocks, NULL, NULL, NULL, "Socks.Active",
    N_("TRUE if a SOCKS server should be used for networking"),
@@ -2304,8 +2307,10 @@ void SetupParameters(void)
   /* Set hard-coded default values */
   g_free(ServerName);
   g_free(ServerMOTD);
+  g_free(BindAddress);
   ServerName = g_strdup("localhost");
   ServerMOTD = g_strdup("");
+  BindAddress = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
 

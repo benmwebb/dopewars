@@ -859,7 +859,7 @@ static gboolean StartServer(void)
 
   SetBlocking(ListenSock, FALSE);
 
-  if (!BindTCPSocket(ListenSock, Port, &sockerr)) {
+  if (!BindTCPSocket(ListenSock, BindAddress, Port, &sockerr)) {
     errstr = g_string_new("");
     g_string_assign_error(errstr, sockerr);
     g_log(NULL, G_LOG_LEVEL_CRITICAL,

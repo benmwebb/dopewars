@@ -968,7 +968,7 @@ void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data)
   CommitWriteBuffer(NetBuf, conn, addpt, addlen);
 }
 
-static struct hostent *LookupHostname(gchar *host, LastError **error)
+static struct hostent *LookupHostname(const gchar *host, LastError **error)
 {
   struct hostent *he;
 
@@ -1518,14 +1518,24 @@ int CreateTCPSocket(LastError **error)
   return fd;
 }
 
-gboolean BindTCPSocket(int sock, unsigned port, LastError **error)
+gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,
+                       LastError **error)
 {
   struct sockaddr_in bindaddr;
   int retval;
+  struct hostent *he;
 
   bindaddr.sin_family = AF_INET;
   bindaddr.sin_port = htons(port);
-  bindaddr.sin_addr.s_addr = INADDR_ANY;
+  if (addr && addr[0]) {
+    he = LookupHostname(addr, error);
+    if (!he) {
+      return FALSE;
+    }
+    bindaddr.sin_addr = *((struct in_addr *)he->h_addr);
+  } else {
+    bindaddr.sin_addr.s_addr = INADDR_ANY;
+  }
   memset(bindaddr.sin_zero, 0, sizeof(bindaddr.sin_zero));
 
   retval =

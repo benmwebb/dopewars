@@ -226,7 +226,8 @@ gboolean HandleHttpCompletion(HttpConnection *conn);
 gboolean IsHttpError(HttpConnection *conn);
 
 int CreateTCPSocket(LastError **error);
-gboolean BindTCPSocket(int sock, unsigned port, LastError **error);
+gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,
+                       LastError **error);
 void StartNetworking(void);
 void StopNetworking(void);
 
