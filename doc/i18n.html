@@ -17,6 +17,7 @@ out this task are always needed!
 <ul>
 <li><a href="#running">Running dopewars with i18n support</a>
 <li><a href="#adding">Adding a new translation</a>
+<li><a href="#dopespec">dopewars specifics</a>
 <li><a href="#updating">Updating a translation for a new dopewars version</a>
 <li><a href="#current">Currently available translations</a>
 </ul>
@@ -37,7 +38,8 @@ the following are some possible explanations:-
 <li>dopewars cannot find the locale-specific language file - by default, stored
 under /usr/local/share/locale/
 <li>Your language is not yet supported - why not add it yourself?
-<li>Your system does not have locale support
+<li>Your system does not have locale support (at present i18n only functions
+properly on Unix systems - not Windows)
 <li>You haven't set an environment variable to specify your locale (usually
 this is done automatically). For example, if you're using the <tt>bash</tt>
 shell and want a German translation, the command "<tt>export LANG=de</tt>"
@@ -81,6 +83,50 @@ probably crash the program on running! To fix this, use the special notation<br>
 (i.e. replace <b>%x</b> with <b>%n$x</b> where <b>n</b> is the index that the
 format specifier "should" have, starting from 1.)<p>
 
+<a name="dopespec"><h2>dopewars specifics</h2>
+<ul>
+<li>When questions are asked in the curses (text mode) client, the keys that
+you are allowed to press in reply are stored in a string. This should be
+translated to suitable keys in your language, in the <b>same</b> order as 
+the original - e.g. "<tt>YN</tt>" (for Yes/No) could be translated in German
+to "<tt>JN</tt>" (for Ja/Nein).<p>
+
+<li>When a dopewars server asks a client a question, the valid replies are
+sent at the start of the message, followed by a "<tt>^</tt>" character. These
+replies define the dopewars protocol, and so should <b>not</b> be
+translated - they will prevent clients and servers from talking to each other
+properly. So for example, the string "<tt>YN^Would you like to visit %s?</tt>"
+should be translated as you wish, but with the "<tt>YN^</tt>" at the start
+left unchanged.<p>
+
+<li>The <tt>%txx</tt> notation is used for "translated strings". This notation
+is exactly equivalent to the standard C "<tt>%s</tt>" notation for a string,
+and does essentially the same thing, except that the two-letter code which
+follows the <tt>%t</tt> is used to select an "alternative form" of the word
+- for example, your language may have different words for "bitch" depending
+on whether the word is the subject or the object of the sentence. You are
+free to translate <tt>%txx</tt> to use the most appropriate form of the word.
+If you wish to capitalise the first letter of the word (as used in English for
+titles, etc.) then use "<tt>%T</tt>" rather than "<tt>%t</tt>".<p>
+
+Obviously dopewars cannot guess what your "alternative forms" are; you must
+specify them yourself. Essentially, when setting a string in a dopewars
+configuration file (or the defaults, which are set in dopewars.c) alternative
+forms can be added by alternating two-letter codes and alternative forms after
+the original word, separating them by ^ symbols. For example,<br>
+<tt>Names.Bitch = "bitch^no^bitcho^ac^bitche"</tt><br>
+specifies two alternative forms for "bitch", identified by the "<tt>no</tt>"
+and "<tt>ac</tt>" codes. You can then use "bitcho" anywhere that "bitch" is
+normally used by translating the relevant string as "<tt>%tno</tt>" (and to
+get "bitche" use "<tt>%tac</tt>"). If you specify a two letter code
+in the translation that you haven't given an alternative form for, the
+default word ("bitch") will be used. In the original English, "<tt>%tde</tt>"
+is used for this purpose, but there is nothing special about the "<tt>de</tt>"
+code - you can use it yourself if you like, and you can use as many
+different two-letter codes as you want to.
+
+</ul>
+
 <a name="updating"><h2>Updating a translation for a new dopewars
 version</h2></a>
 New versions of dopewars will often change what is printed to the user, and
@@ -107,13 +153,26 @@ contributed to the main dopewars distribution!<p>
 <li>Maintained by: <a href="mailto:tobi@radical-linux.de">Tobias Mathes</a>
 <li>Version required: <b>1.4.8-devel</b> or CVS
 </ul>
+
+<li>Polish (<tt>pl.po</tt>)
+<ul>
+<li>Maintained by: <a href="mailto:jeszua@panda.bg.univ.gda.pl">Slawomir
+Molenda</a>
+<li>Version required: <b>1.4.8-devel</b> or CVS
+</ul>
+
+<li>Portuguese (Brazil) (<tt>pt_BR.po</tt>)
+<ul>
+<li>Maintained by: <a href="mailto:hugo@netdados.com.br">Hugo Cisneiros</a>
+<li>Version required: <b>1.4.8-devel</b> or CVS
+</ul>
 </ul>
 
 <hr><br>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>10-09-2000</b>
+Last update: <b>02-12-2000</b>
 
 </body>
 </html>
