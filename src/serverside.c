@@ -47,6 +47,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <glib.h>
+#include "configfile.h"         /* For UpdateConfigFile */
 #include "dopewars.h"
 #include "log.h"
 #include "message.h"
@@ -118,18 +119,19 @@ char *PidFile;
 static char HelpText[] = {
   /* Help on various general server commands */
   N_("dopewars server version %s commands and settings\n\n"
-     "help                       Displays this help screen\n"
-     "list                       Lists all players logged on\n"
-     "push <player>              Politely asks the named player to leave\n"
-     "kill <player>              Abruptly breaks the connection with the "
+     "help                     Displays this help screen\n"
+     "list                     Lists all players logged on\n"
+     "push <player>            Politely asks the named player to leave\n"
+     "kill <player>            Abruptly breaks the connection with the "
      "named player\n"
-     "msg:<mesg>                 Send message to all players\n"
-     "quit                       Gracefully quit, after notifying all players\n"
-     "<variable>=<value>         Sets the named variable to the given value\n"
-     "<variable>                 Displays the value of the named variable\n"
-     "<list>[x].<var>=<value>    Sets the named variable in the given list,\n"
-     "                           index x, to the given value\n"
-     "<list>[x].<var>            Displays the value of the named list variable\n"
+     "msg:<mesg>               Send message to all players\n"
+     "save <file>              Save current configuration to the named file\n"
+     "quit                     Gracefully quit, after notifying all players\n"
+     "<variable>=<value>       Sets the named variable to the given value\n"
+     "<variable>               Displays the value of the named variable\n"
+     "<list>[x].<var>=<value>  Sets the named variable in the given list,\n"
+     "                         index x, to the given value\n"
+     "<list>[x].<var>          Displays the value of the named list variable\n"
      "\nValid variables are listed below:-\n\n")
 };
 
@@ -956,6 +958,20 @@ static void FinishServerReply(GPrintFunc oldprint)
     g_set_print_handler(oldprint);
 }
 
+static void ServerSaveConfigFile(const char *string)
+{
+  gchar *file = NULL;
+
+  if (!string) {
+    file = GetLocalConfigFile();
+    string = file;
+  }
+  if (UpdateConfigFile(file)) {
+    g_print(_("Configuration file saved OK as %s\n"), string);
+  }
+  g_free(file);
+}
+
 static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
 {
   GSList *list;
@@ -973,6 +989,10 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
       RequestServerShutdown();
     } else if (g_strncasecmp(string, "msg:", 4) == 0) {
       BroadcastToClients(C_NONE, C_MSG, string + 4, NULL, NULL);
+    } else if (g_strncasecmp(string, "save ", 5) == 0) {
+      ServerSaveConfigFile(string + 5);
+    } else if (g_strcasecmp(string, "save") == 0) {
+      ServerSaveConfigFile(NULL);
     } else if (g_strcasecmp(string, "list") == 0) {
       if (FirstServer) {
         g_print(_("Users currently logged on:-\n"));

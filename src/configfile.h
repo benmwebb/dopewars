@@ -25,6 +25,6 @@
 
 #include <glib.h>
 
-void UpdateConfigFile(const gchar *cfgfile);
+gboolean UpdateConfigFile(const gchar *cfgfile);
 
 #endif /* __DP_CONFIGFILE_H__ */

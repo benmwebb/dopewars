@@ -195,19 +195,21 @@ static void WriteConfigFile(FILE *fp)
   }
 }
 
-void UpdateConfigFile(gchar *cfgfile)
+gboolean UpdateConfigFile(const gchar *cfgfile)
 {
   FILE *fp;
+  gchar *defaultfile;
   static gchar *header =
       "\n### Everything from here on is written automatically by\n"
       "### the dopewars program; you can edit it manually, but any\n"
       "### formatting (comments, etc.) will be lost at the next rewrite.\n\n";
 
-  if (!cfgfile) {
-    cfgfile = GetLocalConfigFile();
+  defaultfile = GetLocalConfigFile();
+  if (!cfgfile || !cfgfile[0]) {
+    cfgfile = defaultfile;
     if (!cfgfile) {
       g_warning(_("Could not determine local config file to write to"));
-      return;
+      return FALSE;
     }
   }
 
@@ -220,13 +222,14 @@ void UpdateConfigFile(gchar *cfgfile)
     gchar *errstr = ErrStrFromErrno(errno);
     g_warning(_("Could not open file %s: %s"), cfgfile, errstr);
     g_free(errstr);
-    g_free(cfgfile);
-    return;
+    g_free(defaultfile);
+    return FALSE;
   }
 
   ReadFileToString(fp, header, 50);
   WriteConfigFile(fp);
 
   fclose(fp);
-  g_free(cfgfile);
+  g_free(defaultfile);
+  return TRUE;
 }
