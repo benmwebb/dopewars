@@ -44,9 +44,6 @@
 #include "sound.h"
 #include "tstring.h"
 
-static void PrepareHighScoreScreen(void);
-static void PrintHighScore(char *Data);
-
 static int ResizedFlag;
 static SCREEN *cur_screen;
 
@@ -95,6 +92,11 @@ static void PrintMessage(const gchar *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
 static void Bank(Player *Play);
+static void PrepareHighScoreScreen(void);
+static void PrintHighScore(char *Data);
+static void scroll_msg_area_up(void);
+static void scroll_msg_area_down(void);
+
 
 #ifdef NETWORKING
 static void HttpAuthFunc(HttpConnection *conn, gboolean proxyauth,
@@ -1515,6 +1517,14 @@ int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
   do {
     ch = bgetch();
     ch = toupper(ch);
+    /* Handle scrolling of message window */
+    if (ch == '-') {
+      scroll_msg_area_up();
+      continue;
+    } else if (ch == '+') {
+      scroll_msg_area_down();
+      continue;
+    }
     for (AllowInd = 0; AllowInd < strlen(allowed); AllowInd++) {
       if (allowed[AllowInd] == ch) {
         addch((guint)ch | TextAttr);
@@ -1660,6 +1670,27 @@ static int get_msg_area_bottom(void)
   return 14;
 }
 
+/* Number of lines that the message window is scrolled back by */
+static int scrollpos = 0;
+
+/*
+ * Scrolls the message area up a page
+ */
+static void scroll_msg_area_up(void)
+{
+  scrollpos += (get_msg_area_bottom() - get_msg_area_top() + 1);
+  display_message("");
+}
+
+/*
+ * Scrolls the message area down a page
+ */
+static void scroll_msg_area_down(void)
+{
+  scrollpos -= (get_msg_area_bottom() - get_msg_area_top() + 1);
+  display_message("");
+}
+
 /* 
  * Displays a network message "buf" in the message area
  * scrolling previous messages up.
@@ -1689,6 +1720,7 @@ void display_message(const char *buf)
     g_list_free(msgs);
     msgs = NULL;
     num_msgs = 0;
+    scrollpos = 0;
     /* Display a blank message area */
     if (Network) {
       for (y = 0; y < depth; y++) {
@@ -1712,7 +1744,14 @@ void display_message(const char *buf)
     pt = NULL;
     data = NULL;
     if (nextpt) {
-      int lines = 0, displines = depth;
+      int lines = 0, displines, total_lines = 0;
+      
+      /* Correct for having scrolled down too far */
+      if (scrollpos < 0) {
+	scrollpos = 0;
+      }
+
+      displines = depth + scrollpos;
       /* Find the message to display at the top of the message area */
       do {
 	displines -= lines;
@@ -1720,7 +1759,13 @@ void display_message(const char *buf)
 	nextpt = g_list_previous(pt);
         data = pt->data;
         lines = (strlen(data) + wid - 1) / wid;
+	total_lines += lines;
       } while (displines > lines && nextpt);
+      
+      /* Correct for having scrolled up too far */
+      if ((depth + scrollpos) > total_lines && total_lines > depth) {
+	scrollpos = total_lines - depth;
+      }
 
       /* Correct for the first line starting partway through a message */
       if (displines < lines) {
@@ -1818,7 +1863,7 @@ void print_status(Player *Play, gboolean DispDrug)
     addch(ACS_RTEE);
 
     /* Title of the "Messages" window in the curses client */
-    mvaddstr(9, 15, _("Messages"));
+    mvaddstr(9, 15, _("Messages (-/+ scrolls up/down)"));
 
     mvaddch(9, Width / 2, ACS_BTEE);
     mvaddch(15, 1, ACS_LLCORNER);

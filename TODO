@@ -1,4 +1,3 @@
-- Scrollbar in curses client "Messages" box
 - Better use of screen space in curses client for large xterms etc.
 - Preserve chat messages at end of game (so they aren't lost when looking at
   the high score list) ?
