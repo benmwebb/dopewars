@@ -30,6 +30,11 @@ dopewars installation should require no more than the following:-
 	make
 	make install
 
+(To build a CVS version, you must have the automake and autoconf packages
+installed. Run ./autogen to generate the Makefiles and configure script.
+You will also need the gettext package if you want to enable NLS support,
+in order to generate the necessary .po files.)
+
 (If you also wish to build the Windows installer program, see the instructions
 in the win32/ subdirectory of the dopewars source code distribution.)
 
