@@ -5,7 +5,7 @@ dnl AM_PATH_GLIB_2_0([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [
 dnl Test for GLIB, and define GLIB_CFLAGS and GLIB_LIBS, if gmodule, gobject or 
 dnl gthread is specified in MODULES, pass to pkg-config
 dnl
-AC_DEFUN(AM_PATH_GLIB_2_0,
+AC_DEFUN([AM_PATH_GLIB_2_0],
 [dnl 
 dnl Get the cflags and libraries from pkg-config
 dnl
@@ -191,9 +191,7 @@ main ()
           echo "*** If you have an old version installed, it is best to remove it, although"
           echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means GLIB was incorrectly installed"
-          echo "*** or that you have moved GLIB since it was installed. In the latter case, you"
-          echo "*** may want to edit the pkg-config script: $PKG_CONFIG" ])
+          echo "*** exact error that occured. This usually means GLIB is incorrectly installed."])
           CFLAGS="$ac_save_CFLAGS"
           LIBS="$ac_save_LIBS"
        fi

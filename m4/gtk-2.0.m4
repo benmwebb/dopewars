@@ -5,7 +5,7 @@ dnl AM_PATH_GTK_2_0([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [,
 dnl Test for GTK+, and define GTK_CFLAGS and GTK_LIBS, if gthread is specified in MODULES, 
 dnl pass to pkg-config
 dnl
-AC_DEFUN(AM_PATH_GTK_2_0,
+AC_DEFUN([AM_PATH_GTK_2_0],
 [dnl 
 dnl Get the cflags and libraries from pkg-config
 dnl
@@ -30,7 +30,7 @@ AC_ARG_ENABLE(gtktest, [  --disable-gtktest       do not try to compile and run 
     if pkg-config --atleast-pkgconfig-version 0.7 ; then
       :
     else
-      echo *** pkg-config too old; version 0.7 or better required.
+      echo "*** pkg-config too old; version 0.7 or better required."
       no_gtk=yes
       PKG_CONFIG=no
     fi
@@ -163,8 +163,8 @@ main ()
         :
        else
           echo "*** Could not run GTK+ test program, checking why..."
-          ac_save_CFLAGS="$CFLAGS"
-          ac_save_LIBS="$LIBS"
+	  ac_save_CFLAGS="$CFLAGS"
+	  ac_save_LIBS="$LIBS"
           CFLAGS="$CFLAGS $GTK_CFLAGS"
           LIBS="$LIBS $GTK_LIBS"
           AC_TRY_LINK([
@@ -181,9 +181,7 @@ main ()
           echo "*** If you have an old version installed, it is best to remove it, although"
           echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means GTK+ was incorrectly installed"
-          echo "*** or that you have moved GTK+ since it was installed. In the latter case, you"
-          echo "*** may want to edit the pkg-config script: $PKG_CONFIG" ])
+          echo "*** exact error that occured. This usually means GTK+ is incorrectly installed."])
           CFLAGS="$ac_save_CFLAGS"
           LIBS="$ac_save_LIBS"
        fi
