@@ -2042,7 +2042,7 @@ void NewGameDialog() {
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                 GTK_WINDOW(ClientData.window));
-   gtk_window_set_default_size(GTK_WINDOW(dialog),400,250);
+   gtk_window_set_default_size(GTK_WINDOW(dialog),500,300);
    accel_group=gtk_accel_group_new();
 
 /* Title of 'New Game' dialog */
@@ -2163,7 +2163,7 @@ void NewGameDialog() {
                                                              &scrollwin);
    gtk_clist_column_titles_passive(GTK_CLIST(clist));
    gtk_clist_set_selection_mode(GTK_CLIST(clist),GTK_SELECTION_SINGLE);
-   gtk_clist_set_column_width(GTK_CLIST(clist),0,100);
+   gtk_clist_set_column_width(GTK_CLIST(clist),0,130);
    gtk_clist_set_column_width(GTK_CLIST(clist),1,35);
 
    gtk_box_pack_start(GTK_BOX(vbox2),scrollwin,TRUE,TRUE,0);
