@@ -2,6 +2,7 @@ cvs
     - On fight termination the player is now allowed to close the "Fight"
       dialog before any new dialogs pop up
     - Bug caused by a "fight" interrupting a "deal" fixed
+    - dopewars no longer crashes if you set e.g. NumGun = 0
     - Incorrect handling of WM_CLOSE under Win32 fixed
     - Unix server now fails "gracefully" if it cannot create the Unix domain
       socket for admin connections
