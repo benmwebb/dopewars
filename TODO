@@ -1,3 +1,5 @@
+- User accounts (i.e. players connect with a username and password, so can
+  build up their status over several games, or save and continue games)
 - Popup to let you know you only have x days left before the end of the game
 - Better use of screen space in curses client for large xterms etc.
 - Preserve chat messages at end of game (so they aren't lost when looking at
