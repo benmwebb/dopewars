@@ -161,6 +161,7 @@ extern gboolean WantHelp,WantVersion,WantAntique,WantColour,
 extern gboolean MinToSysTray;
 #else
 extern gboolean Daemonize;
+extern gchar *WebBrowser;
 #endif
 extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;

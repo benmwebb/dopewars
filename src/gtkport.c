@@ -22,6 +22,13 @@
 #include <config.h>
 #endif
 
+#ifndef CYGWIN
+#include <sys/types.h>   /* For pid_t (fork) */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>      /* For fork and execv */
+#endif
+#endif /* !CYGWIN */
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -53,7 +60,7 @@ static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
 
-static BOOL GetTextSize(HWND hWnd,char *text,LPSIZE lpSize);
+static BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
 static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
 static void gtk_entry_size_request(GtkWidget *widget,
@@ -415,7 +422,7 @@ static GtkClass GtkLabelClass = {
 };
 
 static GtkSignalType GtkUrlSignals[] = {
-  { "size_request",gtk_marshal_VOID__GPOIN,gtk_label_size_request },
+  { "size_request",gtk_marshal_VOID__GPOIN,gtk_url_size_request },
   { "set_size",gtk_marshal_VOID__GPOIN,gtk_label_set_size },
   { "realize",gtk_marshal_VOID__VOID,gtk_url_realize },
   { "destroy",gtk_marshal_VOID__VOID,gtk_url_destroy },
@@ -634,7 +641,7 @@ const GtkType GTK_TYPE_WINDOW=&GtkWindowClass;
 const GtkType GTK_TYPE_MENU_BAR=&GtkMenuBarClass;
 
 static HINSTANCE hInst;
-static HFONT hFont, urlFont;
+static HFONT defFont, urlFont;
 static GSList *WindowList=NULL;
 static GSList *GdkInputs=NULL;
 static GSList *GtkTimeouts=NULL;
@@ -643,7 +650,7 @@ static HWND TopLevel=NULL;
 static WNDPROC wpOrigEntryProc,wpOrigTextProc;
 
 static void gtk_set_default_font(HWND hWnd) {
-   SendMessage(hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(FALSE,0));
+   SendMessage(hWnd,WM_SETFONT,(WPARAM)defFont,MAKELPARAM(FALSE,0));
 }
 
 static GtkObject *GtkNewObject(GtkClass *klass) {
@@ -833,7 +840,6 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam) {
     target = GTK_URL(widget)->target;
 
     ShellExecute(hwnd, "open", target, NULL, NULL, 0);
-//  MessageBox(NULL, "URL triggered", NULL, MB_OK);
     return FALSE;
   } else return DefWindowProc(hwnd, msg, wParam, lParam);
 }
@@ -1039,7 +1045,7 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    WNDCLASS wc;
 
    hInst=hInstance;
-   hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
+   defFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
    urlFont = CreateFont(14, 0, 0, 0, FW_SEMIBOLD, FALSE, TRUE, FALSE,
                         ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
                         DEFAULT_QUALITY, FF_SWISS | DEFAULT_PITCH, NULL);
@@ -1488,7 +1494,7 @@ void gtk_button_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 
    gtk_container_size_request(widget,requisition);
 
-   if (GetTextSize(widget->hWnd,but->text,&size)) {
+   if (GetTextSize(widget->hWnd, but->text, &size, defFont)) {
       requisition->width = size.cx + 15;
       requisition->height = size.cy + 10;
    }
@@ -1496,14 +1502,15 @@ void gtk_button_size_request(GtkWidget *widget,GtkRequisition *requisition) {
            requisition->width,requisition->height);*/
 }
 
-BOOL GetTextSize(HWND hWnd,char *text,LPSIZE lpSize) {
+BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont) {
    HDC hDC;
    BOOL RetVal=0;
    SIZE LineSize;
    HFONT oldFont;
    char *endpt,*startpt;
+
    hDC=GetDC(hWnd);
-   oldFont=SelectObject(hDC,hFont);
+   oldFont = SelectObject(hDC, hFont);
 
    startpt=text;
    lpSize->cx=lpSize->cy=0;
@@ -1530,7 +1537,7 @@ BOOL GetTextSize(HWND hWnd,char *text,LPSIZE lpSize) {
 
 void gtk_entry_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    SIZE size;
-   if (GetTextSize(widget->hWnd,"Sample text",&size)) {
+   if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
       requisition->width = size.cx;
       requisition->height = size.cy+8;
    }
@@ -1538,7 +1545,7 @@ void gtk_entry_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 
 void gtk_text_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    SIZE size;
-   if (GetTextSize(widget->hWnd,"Sample text",&size)) {
+   if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
       requisition->width = size.cx;
       requisition->height = size.cy*2+8;
    }
@@ -1550,7 +1557,7 @@ void gtk_frame_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 
    gtk_container_size_request(widget,requisition);
 
-   if (GetTextSize(widget->hWnd,frame->text,&size)) {
+   if (GetTextSize(widget->hWnd, frame->text, &size, defFont)) {
       frame->label_req.width = size.cx;
       frame->label_req.height = size.cy;
       if (size.cx > requisition->width) requisition->width=size.cx;
@@ -1634,7 +1641,8 @@ GtkWidget *gtk_label_new(const gchar *text) {
    return GTK_WIDGET(label);
 }
 
-GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
+                       const gchar *bin)
 {
   GtkUrl *url;
 
@@ -1642,6 +1650,8 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
 
   GTK_LABEL(url)->text = g_strdup(text);
   url->target = g_strdup(target);
+
+  /* N.B. "bin" is ignored under Win32 */
 
   return GTK_WIDGET(url);
 }
@@ -2277,7 +2287,7 @@ void gtk_radio_button_destroy(GtkWidget *widget) {
 void gtk_clist_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    SIZE size;
 
-   if (GetTextSize(widget->hWnd,"Sample text",&size)) {
+   if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
       requisition->width = size.cx;
       requisition->height = size.cy*6+12;
    }
@@ -2421,7 +2431,7 @@ void gtk_clist_update_all_widths(GtkCList *clist) {
 
    header=clist->header;
    if (header) for (i=0;i<clist->ncols;i++) {
-      if (GetTextSize(header,clist->cols[i].title,&size) &&
+      if (GetTextSize(header, clist->cols[i].title, &size, defFont) &&
           clist->cols[i].width<size.cx+2*LISTHEADERPACK) {
          clist->cols[i].width=size.cx+2*LISTHEADERPACK;
       }
@@ -2440,8 +2450,9 @@ void gtk_clist_update_widths(GtkCList *clist,gchar *text[]) {
    hWnd=GTK_WIDGET(clist)->hWnd;
    if (!hWnd) return;
    for (i=0;i<clist->ncols;i++) {
-      if (clist->cols[i].auto_resize && GetTextSize(hWnd,text[i],&size) &&
-          size.cx+2*LISTITEMHPACK > clist->cols[i].width) {
+      if (clist->cols[i].auto_resize
+          && GetTextSize(hWnd, text[i], &size, defFont)
+          && size.cx+2*LISTITEMHPACK > clist->cols[i].width) {
          clist->cols[i].width = size.cx+2*LISTITEMHPACK;
       }
    }
@@ -2694,12 +2705,23 @@ void gtk_label_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    SIZE size;
    GtkLabel *label=GTK_LABEL(widget);
 
-   if (GetTextSize(widget->hWnd,label->text,&size)) {
+   if (GetTextSize(widget->hWnd, label->text, &size, defFont)) {
       requisition->width = size.cx;
       requisition->height = size.cy;
    }
 /* g_print("Label requesting size %d by %d\n",requisition->width,
            requisition->height);*/
+}
+
+void gtk_url_size_request(GtkWidget *widget, GtkRequisition *requisition)
+{
+  SIZE size;
+  GtkLabel *label = GTK_LABEL(widget);
+
+  if (GetTextSize(widget->hWnd, label->text, &size, urlFont)) {
+    requisition->width = size.cx;
+    requisition->height = size.cy;
+  }
 }
 
 void gtk_label_set_size(GtkWidget *widget,GtkAllocation *allocation) {
@@ -4389,7 +4411,7 @@ void gtk_option_menu_size_request(GtkWidget *widget,
                                   GtkRequisition *requisition) {
    SIZE size;
 
-   if (GetTextSize(widget->hWnd,"Sample text",&size)) {
+   if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
       requisition->width = size.cx+40;
       requisition->height = size.cy+4;
    }
@@ -4658,7 +4680,7 @@ void gtk_progress_bar_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition) {
    SIZE size;
 
-   if (GetTextSize(widget->hWnd,"Sample",&size)) {
+   if (GetTextSize(widget->hWnd, "Sample", &size, defFont)) {
       requisition->width = size.cx;
       requisition->height = size.cy;
    }
@@ -4849,32 +4871,65 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    return retval;
 }
 
-GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
+static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
+{
+  GdkCursor *cursor;
+
+  cursor = gdk_cursor_new(GDK_HAND2);
+  gdk_window_set_cursor(label->window, cursor);
+  gdk_cursor_destroy(cursor);
+}
+
+static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
+                                  gpointer data)
+{
+#ifdef HAVE_FORK
+  gchar *bin, *target, *args[3];
+  pid_t pid;
+
+  target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
+  bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
+
+  if (target && target[0] && bin && bin[0]) {
+    args[0] = bin;
+    args[1] = target;
+    args[2] = NULL;
+    pid = fork();
+    if (pid == 0) {
+      execvp(bin, args);
+      g_print("dopewars: cannot execute %s\n", bin);
+      _exit(1);
+    }
+  }
+
+#endif
+  return TRUE;
+}
+
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
+                       const gchar *bin)
 {
   GtkWidget *label, *eventbox;
-  GtkUrl *url;
   int i, len;
   gchar *pattern;
   GtkStyle *style;
   GdkColor color;
   GdkColormap *colormap;
-  GdkCursor *cursor;
 
   color.red = 0;
   color.green = 0;
   color.blue = 0xDDDD;
 
-  url = g_new0(GtkUrl, 1);
-  url->target = g_strdup(target);
-
   label = gtk_label_new(text);
 
+  /* Set the text colour */
   style = gtk_style_new();
   colormap = gtk_widget_get_colormap(label);
   gdk_colormap_alloc_color(colormap, &color, FALSE, TRUE);
   style->fg[GTK_STATE_NORMAL] = color;
   gtk_widget_set_style(label, style);
 
+  /* Make the text underlined */
   len = strlen(text);
   pattern = g_new(gchar, len+1);
   for (i = 0; i < len; i++) pattern[i] = '_';
@@ -4882,15 +4937,19 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
   gtk_label_set_pattern(GTK_LABEL(label), pattern);
   g_free(pattern);
 
-  url->label = GTK_LABEL(label);
-
-/*gtk_widget_realize(label);
-
-  cursor = gdk_cursor_new(GDK_HAND2);
-  gdk_window_set_cursor(label->window, cursor);
-  gdk_cursor_destroy(cursor);*/
+  /* We cannot set the cursor until the widget is realized, so
+   * set up a handler to do this later
+   */
+  gtk_signal_connect(GTK_OBJECT(label), "realize",
+                     GTK_SIGNAL_FUNC(gtk_url_set_cursor), label);
 
   eventbox = gtk_event_box_new();
+  gtk_object_set_data_full(GTK_OBJECT(eventbox), "target",
+                           g_strdup(target), g_free);
+  gtk_object_set_data_full(GTK_OBJECT(eventbox), "bin",
+                           g_strdup(bin), g_free);
+  gtk_signal_connect(GTK_OBJECT(eventbox), "button-release-event",
+                     GTK_SIGNAL_FUNC(gtk_url_triggered), NULL);
 
   gtk_container_add(GTK_CONTAINER(eventbox), label);
 

@@ -510,6 +510,7 @@ struct _GtkTableRowCol {
 #define GTK_RADIO_BUTTON(obj) ((GtkRadioButton *)(obj))
 #define GTK_CHECK_BUTTON(obj) ((GtkCheckButton *)(obj))
 #define GTK_LABEL(obj) ((GtkLabel *)(obj))
+#define GTK_URL(obj) ((GtkUrl *)(obj))
 #define GTK_TABLE(obj) ((GtkTable *)(obj))
 #define GTK_MENU_SHELL(obj) ((GtkMenuShell *)(obj))
 #define GTK_MENU_BAR(obj) ((GtkMenuBar *)(obj))
@@ -756,14 +757,12 @@ typedef struct _GtkUrl GtkUrl;
 
 struct _GtkUrl {
   GtkLabel *label;
-  gchar *target;
+  gchar *target, *bin;
 };
 
 #endif  /* CYGWIN */
 
 /* Global functions */
-#define GTK_URL(obj) ((GtkUrl *)(obj))
-
 gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
                    const gchar *Title,gint Options);
 GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,gchar *titles[],
@@ -773,6 +772,7 @@ guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
                      GtkAccelGroup *accel_group);
 GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
                                  GtkWidget **pack_widg);
-GtkWidget *gtk_url_new(const gchar *text, const gchar *target);
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
+                       const gchar *bin);
 
 #endif /* __GTKPORT_H__ */
