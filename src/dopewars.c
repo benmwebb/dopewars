@@ -2704,7 +2704,6 @@ void GeneralStartup(int argc, char *argv[])
 
   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
     OpenHighScoreFile();
-    SoundInit();
   } else {
     DropPrivileges();
   }
@@ -2849,6 +2848,7 @@ int main(int argc, char *argv[])
   textdomain(PACKAGE);
 #endif
   WantUTF8Errors(FALSE);
+  SoundInit();
   GeneralStartup(argc, argv);
   OpenLog();
   if (WantVersion || WantHelp) {
