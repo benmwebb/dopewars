@@ -33,7 +33,7 @@ Run in server mode. If you want a non-interactive server, use the command:
 dopewars -s < /dev/null >>logfile &
 .TP
 .B \-S
-Run as a "private" server
+Run as a "private" server (do not report to the metaserver)
 .TP
 .B \-p port
 Specify the network port to use
@@ -47,6 +47,13 @@ Specify the pathname of a PID file to maintain while running as a server
 .B \-c
 Create and run a computer player
 .TP
+.B \-w
+Force the use of a graphical client (GTK+ or Win32)
+.TP
+.B \-t
+Force the use of a text-mode (curses) client (by default, a windowed client
+is used when possible)
+.TP
 .B \-h
 Display a help screen
 .TP
@@ -54,4 +61,5 @@ Display a help screen
 Output version information and exit.
 .SH AUTHOR
 This manual page was written by Leon Breedt <ljb@debian.org>,
-for the Debian GNU/Linux system (but may be used by others).
+for the Debian GNU/Linux system (but may be used by others). Additional
+updates by Ben Webb <ben@bellatrix.pcl.ox.ac.uk>.
