@@ -1734,14 +1734,10 @@ void gtk_check_button_size_request(GtkWidget *widget,
 GtkWidget *gtk_button_new_with_label(const gchar *label)
 {
   GtkButton *but;
-  gint i;
 
   but = GTK_BUTTON(GtkNewObject(&GtkButtonClass));
   but->text = g_strdup(label);
-  for (i = 0; i < strlen(but->text); i++) {
-    if (but->text[i] == '_')
-      but->text[i] = '&';
-  }
+  g_strdelimit(but->text, "_", '&');
 
   return GTK_WIDGET(but);
 }
@@ -1749,14 +1745,10 @@ GtkWidget *gtk_button_new_with_label(const gchar *label)
 GtkWidget *gtk_check_button_new_with_label(const gchar *label)
 {
   GtkButton *but;
-  gint i;
 
   but = GTK_BUTTON(GtkNewObject(&GtkCheckButtonClass));
   but->text = g_strdup(label);
-  for (i = 0; i < strlen(but->text); i++) {
-    if (but->text[i] == '_')
-      but->text[i] = '&';
-  }
+  g_strdelimit(but->text, "_", '&');
 
   return GTK_WIDGET(but);
 }
@@ -1776,14 +1768,10 @@ GtkWidget *gtk_radio_button_new_with_label(GSList *group,
   GtkButton *but;
   GtkRadioButton *radio;
   GSList *listpt;
-  gint i;
 
   but = GTK_BUTTON(GtkNewObject(&GtkRadioButtonClass));
   but->text = g_strdup(label);
-  for (i = 0; i < strlen(but->text); i++) {
-    if (but->text[i] == '_')
-      but->text[i] = '&';
-  }
+  g_strdelimit(but->text, "_", '&');
 
   if (group == NULL)
     GTK_TOGGLE_BUTTON(but)->toggled = TRUE;
@@ -3699,17 +3687,13 @@ void gtk_menu_prepend(GtkMenu *menu, GtkWidget *child)
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label)
 {
   GtkMenuItem *menu_item;
-  gint i;
 
   menu_item = GTK_MENU_ITEM(GtkNewObject(&GtkMenuItemClass));
   menu_item->accelind = -1;
   menu_item->text = g_strdup(label);
   menu_item->check = 0;
   menu_item->active = 0;
-  for (i = 0; i < strlen(menu_item->text); i++) {
-    if (menu_item->text[i] == '_')
-      menu_item->text[i] = '&';
-  }
+  g_strdelimit(menu_item->text, "_", '&');
   return GTK_WIDGET(menu_item);
 }
 
@@ -4723,15 +4707,11 @@ void gtk_option_menu_realize(GtkWidget *widget)
 
 void gtk_label_set_text(GtkLabel *label, const gchar *str)
 {
-  gint i;
   HWND hWnd;
 
   g_free(label->text);
   label->text = g_strdup(str ? str : "");
-  for (i = 0; i < strlen(label->text); i++) {
-    if (label->text[i] == '_')
-      label->text[i] = '&';
-  }
+  g_strdelimit(label->text, "_", '&');
   hWnd = GTK_WIDGET(label)->hWnd;
   if (hWnd) {
     gtk_widget_update(GTK_WIDGET(label), FALSE);
@@ -4741,15 +4721,11 @@ void gtk_label_set_text(GtkLabel *label, const gchar *str)
 
 void gtk_button_set_text(GtkButton *button, gchar *text)
 {
-  gint i;
   HWND hWnd;
 
   g_free(button->text);
   button->text = g_strdup(text ? text : "");
-  for (i = 0; i < strlen(button->text); i++) {
-    if (button->text[i] == '_')
-      button->text[i] = '&';
-  }
+  g_strdelimit(button->text, "_", '&');
   hWnd = GTK_WIDGET(button)->hWnd;
   if (hWnd) {
     gtk_widget_update(GTK_WIDGET(button), FALSE);
@@ -4759,15 +4735,11 @@ void gtk_button_set_text(GtkButton *button, gchar *text)
 
 static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
 {
-  gint i;
   GtkWidget *widget = GTK_WIDGET(menuitem);
 
   g_free(menuitem->text);
   menuitem->text = g_strdup(text ? text : "");
-  for (i = 0; i < strlen(menuitem->text); i++) {
-    if (menuitem->text[i] == '_')
-      menuitem->text[i] = '&';
-  }
+  g_strdelimit(menuitem->text, "_", '&');
 
   if (GTK_WIDGET_REALIZED(widget)) {
     MENUITEMINFO mii;
@@ -4790,8 +4762,9 @@ guint gtk_label_parse_uline(GtkLabel *label, const gchar *str)
   gtk_label_set_text(label, str);
   if (str)
     for (i = 0; i < strlen(str); i++) {
-      if (str[i] == '_')
+      if (str[i] == '_') {
         return str[i + 1];
+      }
     }
   return 0;
 }
@@ -5377,7 +5350,7 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin)
 {
   GtkWidget *label, *eventbox;
-  int i, len;
+  int i;
   gchar *pattern;
   GtkStyle *style;
   GdkColor color;
@@ -5399,12 +5372,7 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   gtk_style_unref(style);
 
   /* Make the text underlined */
-  len = strlen(text);
-  pattern = g_new(gchar, len + 1);
-
-  for (i = 0; i < len; i++)
-    pattern[i] = '_';
-  pattern[len] = '\0';
+  pattern = g_strnfill(strlen(text), '_');
   gtk_label_set_pattern(GTK_LABEL(label), pattern);
   g_free(pattern);
 
