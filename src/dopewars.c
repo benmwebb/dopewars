@@ -1009,18 +1009,18 @@ int GetNextDrugIndex(int OldIndex,Player *Play) {
       if (Play->Drugs[i].Price!=0 && i!=OldIndex && i!=MaxIndex && 
           (MaxIndex==-1 || 
               (DrugSortMethod==DS_ATOZ && 
-               strcasecmp(Drug[MaxIndex].Name,Drug[i].Name)>0) || 
+               g_strcasecmp(Drug[MaxIndex].Name,Drug[i].Name)>0) || 
               (DrugSortMethod==DS_ZTOA && 
-               strcasecmp(Drug[MaxIndex].Name,Drug[i].Name)<0) || 
+               g_strcasecmp(Drug[MaxIndex].Name,Drug[i].Name)<0) || 
               (DrugSortMethod==DS_CHEAPFIRST && 
                Play->Drugs[MaxIndex].Price > Play->Drugs[i].Price) ||
               (DrugSortMethod==DS_CHEAPLAST && 
                Play->Drugs[MaxIndex].Price < Play->Drugs[i].Price)) &&
           (OldIndex==-1 || 
               (DrugSortMethod==DS_ATOZ && 
-               strcasecmp(Drug[OldIndex].Name,Drug[i].Name)<=0) ||
+               g_strcasecmp(Drug[OldIndex].Name,Drug[i].Name)<=0) ||
               (DrugSortMethod==DS_ZTOA && 
-               strcasecmp(Drug[OldIndex].Name,Drug[i].Name)>=0) ||
+               g_strcasecmp(Drug[OldIndex].Name,Drug[i].Name)>=0) ||
               (DrugSortMethod==DS_CHEAPFIRST && 
                Play->Drugs[OldIndex].Price <= Play->Drugs[i].Price) ||
               (DrugSortMethod==DS_CHEAPLAST && 
@@ -1398,12 +1398,12 @@ int GetGlobalIndex(gchar *ID1,gchar *ID2) {
    const int NumGlob=sizeof(Globals)/sizeof(Globals[0]);
    if (!ID1) return -1;
    for (i=0;i<NumGlob;i++) {
-      if (strcasecmp(ID1,Globals[i].Name)==0 && !Globals[i].NameStruct[0]) {
+      if (g_strcasecmp(ID1,Globals[i].Name)==0 && !Globals[i].NameStruct[0]) {
 /* Just a bog-standard ID1=value */
          return i;
       }
-      if (strcasecmp(ID1,Globals[i].NameStruct)==0 && ID2 &&
-          strcasecmp(ID2,Globals[i].Name)==0 &&
+      if (g_strcasecmp(ID1,Globals[i].NameStruct)==0 && ID2 &&
+          g_strcasecmp(ID2,Globals[i].Name)==0 &&
           Globals[i].StructStaticPt && Globals[i].StructListPt) {
 /* ID1[index].ID2=value */
          return i;
@@ -1552,15 +1552,15 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
               G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
       parsed=FALSE;
       if (token==G_TOKEN_IDENTIFIER) {
-         if (strcasecmp(scanner->value.v_identifier,_("TRUE"))==0 ||
-             strcasecmp(scanner->value.v_identifier,_("YES"))==0 ||
-             strcasecmp(scanner->value.v_identifier,_("ON"))==0 ||
+         if (g_strcasecmp(scanner->value.v_identifier,_("TRUE"))==0 ||
+             g_strcasecmp(scanner->value.v_identifier,_("YES"))==0 ||
+             g_strcasecmp(scanner->value.v_identifier,_("ON"))==0 ||
              strcmp(scanner->value.v_identifier,"1")==0) {
             parsed=TRUE;
             *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=TRUE;
-         } else if (strcasecmp(scanner->value.v_identifier,_("FALSE"))==0 ||
-             strcasecmp(scanner->value.v_identifier,_("NO"))==0 ||
-             strcasecmp(scanner->value.v_identifier,_("OFF"))==0 ||
+         } else if (g_strcasecmp(scanner->value.v_identifier,_("FALSE"))==0 ||
+             g_strcasecmp(scanner->value.v_identifier,_("NO"))==0 ||
+             g_strcasecmp(scanner->value.v_identifier,_("OFF"))==0 ||
              strcmp(scanner->value.v_identifier,"0")==0) {
             parsed=TRUE;
             *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=FALSE;

@@ -1610,9 +1610,9 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
 
    switch(DrugSortMethod) {
       case DS_ATOZ:
-         return strcasecmp(Drug[index1].Name,Drug[index2].Name);
+         return g_strcasecmp(Drug[index1].Name,Drug[index2].Name);
       case DS_ZTOA:
-         return strcasecmp(Drug[index2].Name,Drug[index1].Name);
+         return g_strcasecmp(Drug[index2].Name,Drug[index1].Name);
       case DS_CHEAPFIRST:
          pricediff=ClientData.Play->Drugs[index1].Price-
                    ClientData.Play->Drugs[index2].Price;
@@ -2250,11 +2250,11 @@ void NewGameDialog(void) {
    entry=widgets.hostname=gtk_entry_new();
 
    ServerEntry = "localhost";
-   if (strcasecmp(ServerName,SN_META)==0) {
+   if (g_strcasecmp(ServerName,SN_META)==0) {
       NewGameType=2;
       UpdateMeta=TRUE;
-   } else if (strcasecmp(ServerName,SN_PROMPT)==0) NewGameType=0;
-   else if (strcasecmp(ServerName,SN_SINGLE)==0)   NewGameType=1;
+   } else if (g_strcasecmp(ServerName,SN_PROMPT)==0) NewGameType=0;
+   else if (g_strcasecmp(ServerName,SN_SINGLE)==0)   NewGameType=1;
    else ServerEntry = ServerName;
 
    gtk_entry_set_text(GTK_ENTRY(entry),ServerEntry);

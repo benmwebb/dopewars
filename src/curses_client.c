@@ -342,14 +342,14 @@ static gboolean ConnectToServer(Player *Play) {
 
    errstr = g_string_new("");
 
-   if (strcasecmp(ServerName,SN_META)==0 || ConnectMethod==CM_META) {
+   if (g_strcasecmp(ServerName,SN_META)==0 || ConnectMethod==CM_META) {
       ConnectMethod=CM_META;
       MetaOK=SelectServerFromMetaServer(Play,errstr);
-   } else if (strcasecmp(ServerName,SN_PROMPT)==0 ||
+   } else if (g_strcasecmp(ServerName,SN_PROMPT)==0 ||
               ConnectMethod==CM_PROMPT) {
       ConnectMethod=CM_PROMPT;
       SelectServerManually();
-   } else if (strcasecmp(ServerName,SN_SINGLE)==0 ||
+   } else if (g_strcasecmp(ServerName,SN_SINGLE)==0 ||
               ConnectMethod==CM_SINGLE) {
       ConnectMethod=CM_SINGLE;
       g_string_free(errstr,TRUE);

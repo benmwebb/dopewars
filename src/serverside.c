@@ -755,14 +755,14 @@ void HandleServerCommand(char *string) {
    Player *tmp;
    g_scanner_input_text(Scanner,string,strlen(string));
    if (!ParseNextConfig(Scanner)) {
-      if (strcasecmp(string,"help")==0 || strcasecmp(string,"h")==0 ||
+      if (g_strcasecmp(string,"help")==0 || g_strcasecmp(string,"h")==0 ||
           strcmp(string,"?")==0) {
          ServerHelp();
-      } else if (strcasecmp(string,"quit")==0) {
+      } else if (g_strcasecmp(string,"quit")==0) {
          RequestServerShutdown();
-      } else if (strncasecmp(string,"msg:",4)==0) {
+      } else if (g_strncasecmp(string,"msg:",4)==0) {
          BroadcastToClients(C_NONE,C_MSG,string+4,NULL,NULL);
-      } else if (strcasecmp(string,"list")==0) {
+      } else if (g_strcasecmp(string,"list")==0) {
          if (FirstServer) {
             g_print(_("Users currently logged on:-\n"));
             for (list=FirstServer;list;list=g_slist_next(list)) {
@@ -770,13 +770,13 @@ void HandleServerCommand(char *string) {
                if (!IsCop(tmp)) g_print("%s\n",GetPlayerName(tmp));
             }
          } else g_print(_("No users currently logged on!\n"));
-      } else if (strncasecmp(string,"push ",5)==0) {
+      } else if (g_strncasecmp(string,"push ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
             dopelog(0,_("Pushing %s"),GetPlayerName(tmp));
             SendServerMessage(NULL,C_NONE,C_PUSH,tmp,NULL);
          } else g_warning(_("No such user!"));
-      } else if (strncasecmp(string,"kill ",5)==0) {
+      } else if (g_strncasecmp(string,"kill ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
             dopelog(0,_("%s killed"),GetPlayerName(tmp));
