@@ -25,9 +25,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #ifndef CYGWIN
 #include <sys/types.h>
@@ -40,6 +37,7 @@
 #include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
+#include "network.h"
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
@@ -274,279 +272,7 @@ gboolean HaveAbility(Player *Play,gint Type) {
    else return (Play->Abil.Shared[Type]);
 }
 
-void ClearError(LastError *error) {
-  error->type=ET_NOERROR;
-}
-
-void SetError(LastError *error,ErrorType type,gint code) {
-  error->type=type;
-  error->code=code;
-}
-
-typedef struct _ErrStr {
-  int code;
-  char *string;
-} ErrStr;
-
-static ErrStr CustomErrStr[] = {
-  { E_FULLBUF,N_("Connection dropped due to full buffer") },
-  { 0,NULL }
-};
-
-#ifdef CYGWIN
-
-static ErrStr WSAErrStr[] = {
-  { WSANOTINITIALISED,N_("WinSock has not been properly initialised") },
-  { WSAENETDOWN,N_("The network subsystem has failed") },
-  { WSAEADDRINUSE,N_("Address already in use") },
-  { WSAENETDOWN,N_("Cannot reach the network") },
-  { WSAETIMEDOUT,N_("The connection timed out") },
-  { WASEMFILE,N_("Out of file descriptors") },
-  { WASENOBUFS,N_("Out of buffer space") },
-  { WSAEOPNOTSUPP,N_("Operation not supported") },
-  { WSAECONNABORTED,N_("Connection aborted due to failure") },
-  { WSAECONNRESET,N_("Connection reset by remote host") },
-  { WSAECONNREFUSED,N_("Connection refused") },
-  { WSAEAFNOSUPPORT,N_("Address family not supported") },
-  { WSAEPROTONOSUPPORT,N_("Protocol not supported") },
-  { WSAESOCKTNOSUPPORT,N_("Socket type not supported") },
-  { WSAHOST_NOT_FOUND,N_("Host not found") },
-  { WSATRY_AGAIN,N_("Temporary name server error - try again later") },
-  { WSANO_RECOVERY,N_("Failed to contact nameserver") },
-  { WSANO_DATA,N_("Valid name, but no DNS data record present") },
-  { 0,NULL }
-};
-
-#else
-
-static ErrStr DNSErrStr[] = {
-  { HOST_NOT_FOUND,N_("Host not found") },
-  { TRY_AGAIN,N_("Temporary name server error - try again later") },
-  { 0,NULL }
-};
-
-#endif
-
-static gchar *LookupErrorCode(gint code,ErrStr *str,gchar *fallbackstr) {
-  for (;str && str->string;str++) {
-    if (code==str->code) return g_strdup(_(str->string));
-  }
-  return g_strdup_printf(fallbackstr,code);
-}
-
-gchar *GetErrorString(LastError *error) {
-  switch (error->type) {
-    case ET_NOERROR:
-      return NULL;
-    case ET_CUSTOM:
-      return LookupErrorCode(error->code,CustomErrStr,
-                             _("Unknown internal error code %d"));
-    case ET_ERRNO:
-      return g_strdup(strerror(error->code));
-#ifdef CYGWIN
-    case ET_WIN32:
-      return NULL;
-    case ET_WINSOCK:
-      return LookupErrorCode(error->code,WSAErrStr,
-                             _("Unknown WinSock error code %d"));
-#else
-    case ET_HERRNO:
-      return LookupErrorCode(error->code,DNSErrStr,
-                             _("Unknown DNS error code %d"));
-#endif
-  }
-  return NULL;
-}
-
 #if NETWORKING
-static void NetBufCallBack(NetworkBuffer *NetBuf) {
-   if (NetBuf && NetBuf->CallBack) {
-      (*NetBuf->CallBack)(NetBuf,!NetBuf->WaitConnect,
-                          NetBuf->WriteBuf.DataPresent || NetBuf->WaitConnect);
-   }
-}
-
-static void NetBufCallBackStop(NetworkBuffer *NetBuf) {
-   if (NetBuf && NetBuf->CallBack) (*NetBuf->CallBack)(NetBuf,FALSE,FALSE);
-}
-
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
-/* Initialises the passed network buffer, ready for use. Messages sent */
-/* or received on the buffered connection will be terminated by the    */
-/* given character, and if they end in "StripChar" it will be removed  */
-/* before the messages are sent or received.                           */
-   NetBuf->fd=-1;
-   NetBuf->InputTag=0;
-   NetBuf->CallBack=NULL;
-   NetBuf->CallBackData=NULL;
-   NetBuf->Terminator=Terminator;
-   NetBuf->StripChar=StripChar;
-   NetBuf->ReadBuf.Data=NetBuf->WriteBuf.Data=NULL;
-   NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
-   NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
-   NetBuf->WaitConnect=FALSE;
-   ClearError(&NetBuf->error);
-}
-
-void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
-                              gpointer CallBackData) {
-   NetBufCallBackStop(NetBuf);
-   NetBuf->CallBack=CallBack;
-   NetBuf->CallBackData=CallBackData;
-   NetBufCallBack(NetBuf);
-}
-
-void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
-/* Sets up the given network buffer to handle data being sent/received */
-/* through the given socket                                            */
-   NetBuf->fd=fd;
-}
-
-gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf) {
-/* Returns TRUE if the pointer is to a valid network buffer, and it's */
-/* connected to an active socket.                                     */
-   return (NetBuf && NetBuf->fd>=0);
-}
-
-static void ConnectError(gchar *Msg) {
-   g_warning(_("Cannot connect to remote host: %s"),Msg);
-}
-
-gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
-                                   unsigned RemotePort) {
-   gchar *retval;
-
-   ShutdownNetworkBuffer(NetBuf);
-   retval=StartConnect(&NetBuf->fd,RemoteHost,RemotePort,TRUE);
-
-   if (retval) {
-      SetError(&NetBuf->error,ET_HERRNO,h_errno);
-      ConnectError(retval); return FALSE;
-   } else {
-      NetBuf->WaitConnect=TRUE;
-
-/* Notify the owner if necessary to check for the connection completing */
-      NetBufCallBack(NetBuf);
-
-      return TRUE;
-   }
-}
-
-void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
-/* Frees the network buffer's data structures (leaving it in the  */
-/* 'initialised' state) and closes the accompanying socket.       */
-
-   NetBufCallBackStop(NetBuf);
-
-   if (NetBuf->fd>=0) CloseSocket(NetBuf->fd);
-
-   g_free(NetBuf->ReadBuf.Data);
-   g_free(NetBuf->WriteBuf.Data);
-
-   InitNetworkBuffer(NetBuf,NetBuf->Terminator,NetBuf->StripChar);
-}
-
-void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
-                               fd_set *writefds,fd_set *errorfds,int *MaxSock) {
-/* Updates the sets of read and write file descriptors to monitor    */
-/* input to/output from the given network buffer. MaxSock is updated */
-/* with the highest-numbered file descriptor (plus 1) for use in a   */
-/* later select() call.                                              */
-   if (!NetBuf || NetBuf->fd<=0) return;
-   FD_SET(NetBuf->fd,readfds);
-   if (errorfds) FD_SET(NetBuf->fd,errorfds);
-   if (NetBuf->fd >= *MaxSock) *MaxSock=NetBuf->fd+1;
-   if (NetBuf->WriteBuf.DataPresent || NetBuf->WaitConnect) {
-      FD_SET(NetBuf->fd,writefds);
-   }
-}
-
-static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
-                                     gboolean WriteReady,gboolean ErrorReady,
-                                     gboolean *ReadOK,gboolean *WriteOK,
-                                     gboolean *ErrorOK) {
-/* Reads and writes data if the network connection is ready. Sets the  */
-/* various OK variables to TRUE if no errors occurred in the relevant  */
-/* operations, and returns TRUE if data was read and is waiting for    */
-/* processing.                                                         */
-   gboolean DataWaiting=FALSE,ConnectDone=FALSE;
-   gchar *retval;
-   *ReadOK=*WriteOK=*ErrorOK=TRUE;
-
-   if (ErrorReady) *ErrorOK=FALSE;
-   else if (NetBuf->WaitConnect) {
-      if (WriteReady) {
-         retval=FinishConnect(NetBuf->fd);
-         ConnectDone=TRUE;
-         NetBuf->WaitConnect=FALSE;
-
-         if (retval) {
-            *WriteOK=FALSE;
-            ConnectError(retval);
-         }
-      }
-   } else {
-      if (WriteReady) *WriteOK=WriteDataToWire(NetBuf);
-
-      if (ReadReady) {
-         *ReadOK=ReadDataFromWire(NetBuf);
-         if (NetBuf->ReadBuf.DataPresent>0) DataWaiting=TRUE;
-      }
-   }
-
-   if (!(*ErrorOK && *WriteOK && *ReadOK)) {
-/* We don't want to check the socket any more */
-      NetBufCallBackStop(NetBuf);
-/* If there were errors, then the socket is now useless - so close it */
-      CloseSocket(NetBuf->fd);
-      NetBuf->fd=-1;
-   } else if (ConnectDone) {
-/* If we just connected, then no need to listen for write-ready status
-   any more */
-      NetBufCallBack(NetBuf);
-   } else if (WriteReady && NetBuf->WriteBuf.DataPresent==0) {
-/* If we wrote out everything, then tell the owner so that the socket no
-   longer needs to be checked for write-ready status */
-      NetBufCallBack(NetBuf);
-   }
-
-   return DataWaiting;
-}
-
-gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
-                         fd_set *writefds,fd_set *errorfds,
-                         gboolean *DoneOK) {
-/* Responds to a select() call by reading/writing data as necessary.   */
-/* If any data were read, TRUE is returned. "DoneOK" is set TRUE       */
-/* unless a fatal error (i.e. the connection was broken) occurred.     */
-   gboolean ReadOK,WriteOK,ErrorOK;
-   gboolean DataWaiting=FALSE;
-
-   *DoneOK=TRUE;
-   if (!NetBuf || NetBuf->fd<=0) return DataWaiting;
-   DataWaiting=DoNetworkBufferStuff(NetBuf,FD_ISSET(NetBuf->fd,readfds),
-                        FD_ISSET(NetBuf->fd,writefds),
-                        errorfds ? FD_ISSET(NetBuf->fd,errorfds) : FALSE,
-                        &ReadOK,&WriteOK,&ErrorOK);
-   *DoneOK=(WriteOK && ErrorOK && ReadOK);
-   return DataWaiting;
-}
-
-gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf,gboolean ReadReady,
-                             gboolean WriteReady,gboolean *DoneOK) {
-   gboolean ReadOK,WriteOK,ErrorOK;
-   gboolean DataWaiting=FALSE;
-
-   *DoneOK=TRUE;
-   if (!NetBuf || NetBuf->fd<=0) return DataWaiting;
-
-   DataWaiting=DoNetworkBufferStuff(NetBuf,ReadReady,WriteReady,FALSE,
-                                    &ReadOK,&WriteOK,&ErrorOK);
-
-   *DoneOK=(WriteOK && ErrorOK && ReadOK);
-   return DataWaiting;
-}
-
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
                              gboolean WriteReady,gboolean *DoneOK) {
 /* Reads and writes player data from/to the network if it is ready.  */
@@ -565,322 +291,29 @@ gchar *GetWaitingPlayerMessage(Player *Play) {
    return GetWaitingMessage(&Play->NetBuf);
 }
 
-gint CountWaitingMessages(NetworkBuffer *NetBuf) {
-/* Returns the number of complete (terminated) messages waiting in the   */
-/* given network buffer. This is the number of times that                */
-/* GetWaitingMessage() can be safely called without it returning NULL.   */
-   ConnBuf *conn;
-   gint i,msgs=0;
-
-   conn=&NetBuf->ReadBuf;
-
-   if (conn->Data) for (i=0;i<conn->DataPresent;i++) {
-      if (conn->Data[i]==NetBuf->Terminator) msgs++;
-   }
-   return msgs;
-}
-
-gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
-/* Reads a complete (terminated) message from the network buffer. The    */
-/* message is removed from the buffer, and returned as a null-terminated */
-/* string (the network terminator is removed). If no complete message is */
-/* waiting, NULL is returned. The string is dynamically allocated, and   */
-/* so must be g_free'd by the caller.                                    */
-   ConnBuf *conn;
-   int MessageLen;
-   char *SepPt;
-   gchar *NewMessage;
-   conn=&NetBuf->ReadBuf;
-   if (!conn->Data || !conn->DataPresent) return NULL;
-   SepPt=memchr(conn->Data,NetBuf->Terminator,conn->DataPresent);
-   if (!SepPt) return NULL;
-   *SepPt='\0';
-   MessageLen=SepPt-conn->Data+1;
-   SepPt--;
-   if (NetBuf->StripChar && *SepPt==NetBuf->StripChar) *SepPt='\0';
-   NewMessage=g_new(gchar,MessageLen);
-   memcpy(NewMessage,conn->Data,MessageLen);
-   if (MessageLen<conn->DataPresent) {
-      memmove(&conn->Data[0],&conn->Data[MessageLen],
-              conn->DataPresent-MessageLen);
-   }
-   conn->DataPresent-=MessageLen;
-   return NewMessage;
-}
-
 gboolean ReadPlayerDataFromWire(Player *Play) {
   return ReadDataFromWire(&Play->NetBuf);
-}
-
-gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
-/* Reads any waiting data on the given network buffer's TCP/IP connection */
-/* into the read buffer. Returns FALSE if the connection was closed, or   */
-/* if the read buffer's maximum size was reached.                         */
-   ConnBuf *conn;
-   int CurrentPosition,BytesRead,Error;
-   conn=&NetBuf->ReadBuf;
-   CurrentPosition=conn->DataPresent;
-   while(1) {
-      if (CurrentPosition>=conn->Length) {
-         if (conn->Length==MAXREADBUF) {
-            SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
-            return FALSE; /* drop connection */
-         }
-         if (conn->Length==0) conn->Length=256; else conn->Length*=2;
-         if (conn->Length>MAXREADBUF) conn->Length=MAXREADBUF;
-         conn->Data=g_realloc(conn->Data,conn->Length);
-      }
-      BytesRead=recv(NetBuf->fd,&conn->Data[CurrentPosition],
-                     conn->Length-CurrentPosition,0);
-      if (BytesRead==SOCKET_ERROR) {
-         Error = GetSocketError();
-#ifdef CYGWIN
-         if (Error==WSAEWOULDBLOCK) break;
-         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
-#else
-         if (Error==EAGAIN) break;
-         else if (Error!=EINTR) {
-            SetError(&NetBuf->error,ET_ERRNO,Error);
-            return FALSE;
-         }
-#endif
-      } else if (BytesRead==0) {
-         return FALSE;
-      } else {
-         CurrentPosition+=BytesRead;
-         conn->DataPresent=CurrentPosition;
-      }
-   }
-   return TRUE;
 }
 
 void QueuePlayerMessageForSend(Player *Play,gchar *data) {
    QueueMessageForSend(&Play->NetBuf,data);
 }
 
-void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data) {
-/* Writes the null-terminated string "data" to the network buffer, ready   */
-/* to be sent to the wire when the network connection becomes free. The    */
-/* message is automatically terminated. Fails to write the message without */
-/* error if the buffer reaches its maximum size (although this error will  */
-/* be detected when an attempt is made to write the buffer to the wire).   */
-   int AddLength,NewLength;
-   ConnBuf *conn;
-   conn=&NetBuf->WriteBuf;
-   AddLength=strlen(data)+1;
-   NewLength=conn->DataPresent+AddLength;
-   if (NewLength > conn->Length) {
-      conn->Length*=2;
-      conn->Length=MAX(conn->Length,NewLength);
-      if (conn->Length > MAXWRITEBUF) conn->Length=MAXWRITEBUF;
-      if (NewLength > conn->Length) return;
-      conn->Data=g_realloc(conn->Data,conn->Length);
-   }
-   memcpy(&conn->Data[conn->DataPresent],data,AddLength);
-   conn->DataPresent=NewLength;
-   conn->Data[NewLength-1]=NetBuf->Terminator;
-
-/* If the buffer was empty before, we may need to tell the owner to check
-   the socket for write-ready status */
-   if (NewLength==AddLength) NetBufCallBack(NetBuf);
-}
-
 gboolean WritePlayerDataToWire(Player *Play) {
    return WriteDataToWire(&Play->NetBuf);
 }
 
-gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
-/* Writes any waiting data in the network buffer to the wire. Returns */
-/* TRUE on success, or FALSE if the buffer's maximum length is        */
-/* reached, or the remote end has closed the connection.              */
-   ConnBuf *conn;
-   int CurrentPosition,BytesSent,Error;
-   conn=&NetBuf->WriteBuf;
-   if (!conn->Data || !conn->DataPresent) return TRUE;
-   if (conn->Length==MAXWRITEBUF) {
-      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
-      return FALSE;
-   }
-   CurrentPosition=0;
-   while (CurrentPosition<conn->DataPresent) {
-      BytesSent=send(NetBuf->fd,&conn->Data[CurrentPosition],
-                     conn->DataPresent-CurrentPosition,0);
-      if (BytesSent==SOCKET_ERROR) {
-         Error=GetSocketError();
-#ifdef CYGWIN
-         if (Error==WSAEWOULDBLOCK) break;
-         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
-#else
-         if (Error==EAGAIN) break;
-         else if (Error!=EINTR) {
-            SetError(&NetBuf->error,ET_ERRNO,Error);
-            return FALSE;
-         }
-#endif
-      } else {
-         CurrentPosition+=BytesSent;
-      }
-   }
-   if (CurrentPosition>0 && CurrentPosition<conn->DataPresent) {
-      memmove(&conn->Data[0],&conn->Data[CurrentPosition],
-              conn->DataPresent-CurrentPosition);
-   }
-   conn->DataPresent-=CurrentPosition;
-   return TRUE;
-}
-
-static void SendHttpRequest(HttpConnection *conn) {
-   GString *text;
-
-   conn->Tries++;
-   conn->StatusCode=0;
-   conn->Status=HS_CONNECTING;
-
-   text=g_string_new("");
-
-   if (conn->Redirect) {
-      g_string_sprintf(text,"%s %s HTTP/1.0",conn->Method,conn->Redirect);
-      g_free(conn->Redirect); conn->Redirect=NULL;
-   } else {
-      g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
-                       conn->Method,conn->HostName,conn->Port,conn->Query);
-   }
-   QueueMessageForSend(&conn->NetBuf,text->str);
-
-   if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
-
-   g_string_sprintf(text,"User-Agent: dopewars/%s",VERSION);
-   QueueMessageForSend(&conn->NetBuf,text->str);
-
-/* Insert a blank line between headers and body */
-   QueueMessageForSend(&conn->NetBuf,"");
-
-   if (conn->Body) QueueMessageForSend(&conn->NetBuf,conn->Body);
-
-   g_string_free(text,TRUE);
-}
-
-static gboolean StartHttpConnect(HttpConnection *conn) {
-   gchar *ConnectHost;
-   unsigned ConnectPort;
-
-   if (conn->Proxy) {
-      ConnectHost=conn->Proxy; ConnectPort=conn->ProxyPort;
-   } else {
-      ConnectHost=conn->HostName; ConnectPort=conn->Port;
-   }
-      
-   if (!StartNetworkBufferConnect(&conn->NetBuf,ConnectHost,ConnectPort)) {
-      CloseHttpConnection(conn);
-      return FALSE;
-   }
-   return TRUE;
-}
-
-HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
-                                   gchar *Proxy,unsigned ProxyPort,
-                                   gchar *Method,gchar *Query,
-                                   gchar *Headers,gchar *Body) {
-   HttpConnection *conn;
-   g_assert(HostName && Method && Query);
-
-   conn=g_new0(HttpConnection,1);
-   InitNetworkBuffer(&conn->NetBuf,'\n','\r');
-   conn->HostName=g_strdup(HostName);
-   if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
-   conn->Method=g_strdup(Method);
-   conn->Query=g_strdup(Query);
-   if (Headers && Headers[0]) conn->Headers=g_strdup(Headers);
-   if (Body && Body[0]) conn->Body=g_strdup(Body);
-   conn->Port = Port;
-   conn->ProxyPort = ProxyPort;
-
-   if (!StartHttpConnect(conn)) return NULL;
-   SendHttpRequest(conn);
-
-   return conn;
-}
-
-HttpConnection *OpenMetaHttpConnection() {
+gboolean OpenMetaHttpConnection(HttpConnection **conn) {
    gchar *query;
-   HttpConnection *retval;
+   gboolean retval;
 
    query = g_strdup_printf("%s?output=text&getlist=%d",
                            MetaServer.Path,METAVERSION);
-   retval = OpenHttpConnection(MetaServer.Name,MetaServer.Port,
+   retval = OpenHttpConnection(conn,MetaServer.Name,MetaServer.Port,
                                MetaServer.ProxyName,MetaServer.ProxyPort,
                                "GET",query,NULL,NULL);
-   if (retval) g_print("HTTP connection successfully established\n");
    g_free(query);
    return retval;
-}
-
-void CloseHttpConnection(HttpConnection *conn) {
-   ShutdownNetworkBuffer(&conn->NetBuf);
-   g_free(conn->HostName);
-   g_free(conn->Proxy);
-   g_free(conn->Method);
-   g_free(conn->Query);
-   g_free(conn->Headers);
-   g_free(conn->Body);
-   g_free(conn->Redirect);
-   g_free(conn);
-}
-
-gchar *ReadHttpResponse(HttpConnection *conn) {
-   gchar *msg,**split;
-
-   msg=GetWaitingMessage(&conn->NetBuf);
-   if (msg) switch(conn->Status) {
-      case HS_CONNECTING:    /* OK, we should have the HTTP status line */
-         conn->Status=HS_READHEADERS;
-         split=g_strsplit(msg," ",2);
-         if (split[0] && split[1]) {
-            conn->StatusCode=atoi(split[1]);
-            g_print("HTTP status code %d returned\n",conn->StatusCode);
-         } else g_warning("Invalid HTTP status line %s",msg);
-         g_strfreev(split);
-         break;
-      case HS_READHEADERS:
-         if (msg[0]==0) conn->Status=HS_READSEPARATOR;
-         else {
-            split=g_strsplit(msg," ",1);
-            if (split[0] && split[1]) {
-               if (conn->StatusCode==302 && strcmp(split[0],"Location:")==0) {
-                  g_print("Redirect to %s\n",split[1]);
-                  g_free(conn->Redirect);
-                  conn->Redirect = g_strdup(split[1]);
-               }
-/*             g_print("Header %s (value %s) read\n",split[0],split[1]);*/
-            }
-            g_strfreev(split);
-         }
-         break;
-      case HS_READSEPARATOR:
-         conn->Status=HS_READBODY;
-         break;
-      case HS_READBODY:   /* At present, we do nothing special with the body */
-         break;
-   }
-   return msg;
-}
-
-gboolean HandleHttpCompletion(HttpConnection *conn) {
-   NBCallBack CallBack;
-   gpointer CallBackData;
-   if (conn->Redirect) {
-      g_print("Following redirect\n");
-      CallBack=conn->NetBuf.CallBack;
-      CallBackData=conn->NetBuf.CallBackData;
-      ShutdownNetworkBuffer(&conn->NetBuf);
-      if (StartHttpConnect(conn)) {
-         SendHttpRequest(conn);
-         SetNetworkBufferCallBack(&conn->NetBuf,CallBack,CallBackData);
-         return FALSE;
-      }
-   }
-   CloseHttpConnection(conn);
-   return TRUE;
 }
 
 gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
@@ -1250,87 +683,23 @@ price_t GetNextPrice(gchar **Data,price_t Default) {
 }
 
 #if NETWORKING
-char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
-                   gboolean NonBlocking) {
-   struct sockaddr_in ClientAddr;
-   struct hostent *he;
-   static char NoHost[]= N_("Could not find host");
-
-   if ((he=gethostbyname(RemoteHost))==NULL) {
-      return NoHost;
-   }
-   *fd=socket(AF_INET,SOCK_STREAM,0);
-   if (*fd==SOCKET_ERROR) {
-      return strerror(errno);
-   }
-
-   ClientAddr.sin_family=AF_INET;
-   ClientAddr.sin_port=htons(RemotePort);
-   ClientAddr.sin_addr=*((struct in_addr *)he->h_addr);
-   memset(ClientAddr.sin_zero,0,sizeof(ClientAddr.sin_zero));
-
-   if (NonBlocking) fcntl(*fd,F_SETFL,O_NONBLOCK);
-   if (connect(*fd,(struct sockaddr *)&ClientAddr,
-       sizeof(struct sockaddr))==-1) {
-#ifdef CYGWIN
-      if (GetSocketError()==WSAEWOULDBLOCK) return NULL;
-#else
-      if (GetSocketError()==EINPROGRESS) return NULL;
-#endif
-      CloseSocket(*fd); *fd=-1;
-      return strerror(errno);
-   } else {
-      fcntl(*fd,F_SETFL,O_NONBLOCK);
-   }
-   return NULL;
-}
-
-char *FinishConnect(int fd) {
-   int Error;
-#ifdef CYGWIN
-   Error = GetSocketError();
-   if (Error==0) return NULL;
-   else return strerror(Error);
-#else
-#ifdef HAVE_SOCKLEN_T
-   socklen_t optlen;
-#else
-   int optlen;
-#endif
-
-   optlen=sizeof(Error);
-   if (getsockopt(fd,SOL_SOCKET,SO_ERROR,&Error,&optlen)==-1) {
-      Error = errno;
-   }
-   if (Error==0) return NULL;
-   else return strerror(Error);
-#endif /* CYGWIN */
-}
-
-char *SetupNetwork(gboolean NonBlocking) {
+gboolean SetupNetwork(GString *errstr) {
 /* Sets up the connection from the client to the server. If the connection */
 /* is successful, Network and Client are set to TRUE, and ClientSock is a  */
-/* file descriptor for the newly-opened socket. NULL is returned. If the   */
-/* connection fails, a pointer to an error message is returned.            */
-/* If "NonBlocking" is TRUE, a non-blocking connect() is carried out. In   */
-/* this case, the routine returns successfully after initiating the        */
-/* connect call; the caller should then select() the socket for writing,   */
-/* before calling FinishSetupNetwork()                                     */
-   char *retval;
+/* file descriptor for the newly-opened socket. TRUE is returned. If the   */
+/* connection fails, FALSE is returned, and errstr (if non-NULL) is filled */
+/* with a descriptive error message.                                       */
+   LastError err;
 
    Network=Client=Server=FALSE;
-   retval=StartConnect(&ClientSock,ServerName,Port,NonBlocking);
-   if (!retval && !NonBlocking) Client=Network=TRUE;
-   return retval;
+   if (StartConnect(&ClientSock,ServerName,Port,FALSE,&err)) {
+     Client=Network=TRUE;
+     return TRUE;
+   } else {
+     if (errstr) g_string_assign_error(errstr,&err);
+     return FALSE;
+   }
 }
-
-char *FinishSetupNetwork() {
-   gchar *retval;
-   retval=FinishConnect(ClientSock);
-   if (!retval) Client=Network=TRUE;
-   return retval;
-}
-
 #endif /* NETWORKING */
 
 void SwitchToSinglePlayer(Player *Play) {
@@ -1340,16 +709,7 @@ void SwitchToSinglePlayer(Player *Play) {
 /* that the game can be continued in single player mode            */
    Player *NewPlayer;
    if (!Network || !Client || !FirstClient) return;
-   if (Play!=FirstClient->data) {
-      g_error("Oops! FirstClient should be player!");
-   }
-   while (g_slist_next(FirstClient)) {
-      FirstClient=RemovePlayer((Player *)g_slist_next(FirstClient)->data,
-                               FirstClient);
-   }
-#ifdef NETWORKING
-   ShutdownNetworkBuffer(&Play->NetBuf);
-#endif
+   ShutdownNetwork(Play);
    CleanUpServer();
    Network=Server=Client=FALSE;
    InitAbilities(Play);
@@ -1361,12 +721,20 @@ void SwitchToSinglePlayer(Player *Play) {
    SendEvent(NewPlayer);
 }
 
-void ShutdownNetwork() {
+void ShutdownNetwork(Player *Play) {
 /* Closes down the client side of the network connection. Clears the list */
-/* of client players, and closes the network socket.                      */
-   while (FirstClient) {
-      FirstClient=RemovePlayer((Player *)FirstClient->data,FirstClient);
+/* of client players (with the exception of "you", the player "Play"),    */
+/* and closes the network socket.                                         */
+   if (Play!=FirstClient->data) {
+      g_error("Oops! FirstClient should be player!");
    }
+   while (g_slist_next(FirstClient)) {
+      FirstClient=RemovePlayer((Player *)g_slist_next(FirstClient)->data,
+                               FirstClient);
+   }
+#ifdef NETWORKING
+   ShutdownNetworkBuffer(&Play->NetBuf);
+#endif
    Client=Network=Server=FALSE;
 }
 

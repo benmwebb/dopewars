@@ -216,11 +216,11 @@ static void SelectServerManually(void) {
    g_free(text); g_free(PortText);
 }
 
-static char *SelectServerFromMetaServer(Player *Play) {
+static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
 /* Contacts the dopewars metaserver, and obtains a list of valid */
 /* server/port pairs, one of which the user should select.       */
-/* Returns a pointer to a static string containing an error      */
-/* message if the connection failed, otherwise NULL.             */
+/* Returns TRUE on success; on failure FALSE is returned, and    */
+/* errstr is assigned an error message.                          */
    int c;
    GSList *ListPt;
    ServerData *ThisServer;
@@ -228,22 +228,23 @@ static char *SelectServerFromMetaServer(Player *Play) {
    gint index;
    fd_set readfds,writefds;
    int maxsock;
-   gboolean DoneOK=TRUE;
+   gboolean DoneOK;
    HttpConnection *MetaConn;
-   static char NoServers[] = N_("No servers listed on metaserver");
 
    attrset(TextAttr);
    clear_bottom();
    mvaddstr(17,1,_("Please wait... attempting to contact metaserver..."));
    refresh();
 
-   MetaConn = OpenMetaHttpConnection();
-
-   if (!MetaConn) return "Cannot connect";
+   if (!OpenMetaHttpConnection(&MetaConn)) {
+      g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+      CloseHttpConnection(MetaConn);
+      return FALSE;
+   }
 
    ClearServerList(&ServerList);
 
-   while(DoneOK) {
+   do {
       FD_ZERO(&readfds); FD_ZERO(&writefds);
       FD_SET(0,&readfds); maxsock=1;
       SetSelectForNetworkBuffer(&MetaConn->NetBuf,&readfds,&writefds,
@@ -263,15 +264,14 @@ static char *SelectServerFromMetaServer(Player *Play) {
          while (HandleWaitingMetaServerData(MetaConn,&ServerList)) {}
       }
       if (!DoneOK) {
-         g_print("Metaserver communication closed");
+         if (IsHttpError(MetaConn)) {
+            g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+            CloseHttpConnection(MetaConn);
+            return FALSE;
+         }
       }
-   }
+   } while (DoneOK);
    CloseHttpConnection(MetaConn);
-
-/* clear_line(17);
-   mvaddstr(17,1,
-          _("Connection to metaserver established. Obtaining server list..."));
-   refresh();*/
 
    text=g_string_new("");
 
@@ -321,23 +321,30 @@ static char *SelectServerFromMetaServer(Player *Play) {
                    break;
       }
    }
-   if (!ServerList) return NoServers;
+   if (!ServerList) {
+      g_string_assign(errstr,"No servers listed on metaserver");
+      return FALSE;
+   }
    clear_line(17);
    refresh();
    g_string_free(text,TRUE);
-   return NULL;
+   return TRUE;
 }
 
-static char ConnectToServer(Player *Play) {
+static gboolean ConnectToServer(Player *Play) {
 /* Connects to a dopewars server. Prompts the user to select a server */
 /* if necessary. Returns TRUE, unless the user elected to quit the    */
 /* program rather than choose a valid server.                         */
-   char *pt=NULL,*MetaError=NULL;
+   gboolean MetaOK=TRUE,NetOK=TRUE;
+   GString *errstr;
    gchar *text;
    int c;
+
+   errstr = g_string_new("");
+
    if (strcasecmp(ServerName,SN_META)==0 || ConnectMethod==CM_META) {
       ConnectMethod=CM_META;
-      MetaError=SelectServerFromMetaServer(Play);
+      MetaOK=SelectServerFromMetaServer(Play,errstr);
    } else if (strcasecmp(ServerName,SN_PROMPT)==0 ||
               ConnectMethod==CM_PROMPT) {
       ConnectMethod=CM_PROMPT;
@@ -345,31 +352,33 @@ static char ConnectToServer(Player *Play) {
    } else if (strcasecmp(ServerName,SN_SINGLE)==0 ||
               ConnectMethod==CM_SINGLE) {
       ConnectMethod=CM_SINGLE;
+      g_string_free(errstr,TRUE);
       return TRUE;
    }
    while (1) {
       attrset(TextAttr);
       clear_bottom();
-      if (!MetaError) {
+      if (MetaOK) {
          mvaddstr(17,1,
                   _("Please wait... attempting to contact dopewars server..."));
          refresh();
-         pt=SetupNetwork(FALSE);
+         NetOK=SetupNetwork(errstr);
       }
-      if (pt || MetaError) {
+      if (!NetOK || !MetaOK) {
          clear_line(17);
-         if (MetaError) {
+         if (!MetaOK) {
 /* Display of an error while contacting the metaserver */
-            text=g_strdup_printf(_("Error: %s"),_(MetaError));
+            mvaddstr(16,1,_("Cannot get metaserver details"));
+            text=g_strdup_printf("   (%s)",errstr->str);
             mvaddstr(17,1,text); g_free(text);
          } else {
 /* Display of an error message while trying to contact a dopewars server
    (the error message itself is displayed on the next screen line) */
             mvaddstr(16,1,_("Could not start multiplayer dopewars"));
-            text=g_strdup_printf("   (%s)",_(pt));
+            text=g_strdup_printf("   (%s)",errstr->str);
             mvaddstr(17,1,text); g_free(text);
          }
-         pt=MetaError=NULL;
+         MetaOK=NetOK=TRUE;
          attrset(PromptAttr);
          mvaddstr(18,1,
                   _("Will you... C>onnect to a different host and/or port"));
@@ -388,11 +397,13 @@ static char ConnectToServer(Player *Play) {
    the same (C>onnect, L>ist, Q>uit, P>lay single-player) */
          c=GetKey(_("CLQP"),"CLQP",FALSE,FALSE,FALSE);
          switch(c) {
-            case 'Q': return FALSE;
+            case 'Q': g_string_free(errstr,TRUE);
+                      return FALSE;
             case 'P': ConnectMethod=CM_SINGLE;
+                      g_string_free(errstr,TRUE);
                       return TRUE;
             case 'L': ConnectMethod=CM_META;
-                      MetaError=SelectServerFromMetaServer(Play);
+                      MetaOK=SelectServerFromMetaServer(Play,errstr);
                       break;
             case 'C': ConnectMethod=CM_PROMPT;
                       SelectServerManually();
@@ -400,6 +411,7 @@ static char ConnectToServer(Player *Play) {
          }
       } else break;
    }
+   g_string_free(errstr,TRUE);
    return TRUE;
 }
 #endif /* NETWORKING */
@@ -1870,7 +1882,6 @@ static void Curses_DoGame(Player *Play) {
 
 void CursesLoop(void) {
    char c;
-   gchar *Name=NULL;
    Player *Play;
 
    start_curses();
@@ -1885,20 +1896,17 @@ void CursesLoop(void) {
 
    display_intro();
 
-   c='Y';
-   while(c=='Y') {
-      Play=g_new(Player,1);
-      FirstClient=AddPlayer(0,Play,FirstClient);
-      SetPlayerName(Play,Name);
+   Play=g_new(Player,1);
+   FirstClient=AddPlayer(0,Play,FirstClient);
+   do {
       Curses_DoGame(Play);
-      g_free(Name); Name=g_strdup(GetPlayerName(Play));
-      ShutdownNetwork();
+      ShutdownNetwork(Play);
       CleanUpServer();
       attrset(TextAttr);
       mvaddstr(23,20,_("Play again? "));
       c=GetKey(_("YN"),"YN",TRUE,TRUE,FALSE);
-   }
-   g_free(Name);
+   } while (c=='Y');
+   FirstClient=RemovePlayer(Play,FirstClient);
    end_curses();
 }
 

@@ -25,8 +25,18 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
+#include <sys/types.h>  /* For size_t etc. */
 #include <sys/stat.h>
+
+#ifdef CYGWIN
+#include <windows.h>    /* For datatypes such as BOOL */
+#include <winsock.h>    /* For network functions */
+#else
+#include <sys/socket.h> /* For struct sockaddr etc. */
+#include <netinet/in.h> /* For struct sockaddr_in etc. */
+#include <arpa/inet.h>  /* For socklen_t */
+#endif /* CYGWIN */
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -37,23 +47,13 @@
 #include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
+#include "network.h"
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
 
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
 #ifdef GUI_SERVER
 #include "gtkport.h"
-#endif
-
-#ifndef SD_SEND
-#define SD_SEND 1
-#endif
-#ifndef SD_RECV
-#define SD_RECV 0
 #endif
 
 static const price_t MINTRENCHPRICE=200,MAXTRENCHPRICE=300;
@@ -138,6 +138,17 @@ static void MetaSocketStatus(NetworkBuffer *NetBuf,
                              gboolean Read,gboolean Write);
 #endif
 
+static gboolean MetaConnectError(HttpConnection *conn) {
+   GString *errstr;
+   if (!IsHttpError(conn)) return FALSE;
+   errstr=g_string_new("");
+   g_string_assign_error(errstr,&MetaConn->NetBuf.error);
+   dopelog(1,_("Failed to connect to metaserver at %s:%u (%s)"),
+           MetaServer.Name,MetaServer.Port,errstr->str);
+   g_string_free(errstr,TRUE);
+   return TRUE;
+}
+
 void RegisterWithMetaServer(gboolean Up,gboolean SendData,
                             gboolean RespectTimeout) {
 /* Sends server details to the metaserver, if specified. If "Up" is  */
@@ -151,6 +162,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
    GString *headers,*body;
    gchar *prstr;
+   gboolean retval;
    int i;
 
    if (!MetaServer.Active || !NotifyMetaServer || WantQuit) return;
@@ -205,16 +217,20 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
                     "Content-Type: application/x-www-form-urlencoded\n"
                     "Content-Length: %d",(int)strlen(body->str));
    
-   MetaConn=OpenHttpConnection(MetaServer.Name,MetaServer.Port,
-                               MetaServer.ProxyName,MetaServer.ProxyPort,
-                               "POST",MetaServer.Path,headers->str,body->str);
+   retval=OpenHttpConnection(&MetaConn,MetaServer.Name,MetaServer.Port,
+                             MetaServer.ProxyName,MetaServer.ProxyPort,
+                             "POST",MetaServer.Path,headers->str,body->str);
    g_string_free(headers,TRUE);
    g_string_free(body,TRUE);
 
-   if (MetaConn) {
+   if (retval) {
       dopelog(2,_("Waiting for metaserver connect to %s:%u..."),
               MetaServer.Name,MetaServer.Port);
-   } else return;
+   } else {
+      MetaConnectError(MetaConn);
+      CloseHttpConnection(MetaConn); MetaConn=NULL;
+      return;
+   }
 #ifdef GUI_SERVER
    SetNetworkBufferCallBack(&MetaConn->NetBuf,MetaSocketStatus,NULL);
 #endif
@@ -277,14 +293,13 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          }
          SendServerMessage(Play,AI,Code,To,Data);
          break;
-      case C_NETMESSAGE:
-         dopelog(1,"Net:%s\n",Data);
-/*       shutdown(Play->fd,SD_RECV);*/
+/*    case C_NETMESSAGE:
+         dopelog(1,"Net:%s\n",Data);*/
 /* Make sure they do actually disconnect, eventually! */
-         if (ConnectTimeout) {
+/*       if (ConnectTimeout) {
             Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
          }
-         break;
+         break;*/
       case C_ABILITIES:
          ReceiveAbilities(Play,Data);
          break;
@@ -339,7 +354,6 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                }
                SendServerMessage(NULL,C_NONE,C_PRINTMESSAGE,Play,text);
                g_free(text);
-/*             shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
                if (ConnectTimeout) {
                   Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
@@ -657,10 +671,12 @@ void StartServer() {
    ClientMessageHandlerPt=NULL;
    ListenSock=socket(AF_INET,SOCK_STREAM,0);
    if (ListenSock==SOCKET_ERROR) {
+/* FIXME
+MessageBox(NULL,"Cannot create socket",NULL,MB_OK); */
       perror("create socket"); exit(1);
    }
    SetReuse(ListenSock);
-   fcntl(ListenSock,F_SETFL,O_NONBLOCK);
+   SetBlocking(ListenSock,FALSE);
   
    ServerAddr.sin_family=AF_INET;
    ServerAddr.sin_port=htons(Port);
@@ -783,7 +799,7 @@ Player *HandleNewConnection(void) {
        &cadsize))==-1) {
       perror("accept socket"); bgetch(); exit(1);
    }
-   fcntl(ClientSock,F_SETFL,O_NONBLOCK);
+   SetBlocking(ClientSock,FALSE);
    dopelog(2,_("got connection from %s"),inet_ntoa(ClientAddr.sin_addr));
    tmp=g_new(Player,1);
    FirstServer=AddPlayer(ClientSock,tmp,FirstServer);
@@ -899,8 +915,10 @@ void ServerLoop() {
             }
          }
          if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-            dopelog(4,"MetaServer: (closed)\n");
-            MetaConn=NULL;
+            if (!MetaConnectError(MetaConn)) {
+               dopelog(4,"MetaServer: (closed)\n");
+            }
+            CloseHttpConnection(MetaConn); MetaConn=NULL;
             if (IsServerShutdown()) break;
          }
       }
@@ -1016,8 +1034,10 @@ void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
       }
    }
    if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-      dopelog(4,"MetaServer: (closed)\n");
-      MetaConn=NULL;
+      if (!MetaConnectError(MetaConn)) {
+         dopelog(4,"MetaServer: (closed)\n");
+      }
+      CloseHttpConnection(MetaConn); MetaConn=NULL;
       if (IsServerShutdown()) GuiQuitServer();
    }
 }
@@ -1136,7 +1156,6 @@ void FinishGame(Player *Play,char *Message) {
    ClientLeftServer(Play);
    Play->EventNum=E_FINISH;
    SendHighScores(Play,TRUE,Message);
-/* shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
    if (ConnectTimeout) {
       Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
@@ -2657,7 +2676,6 @@ GSList *HandleTimeouts(GSList *First) {
          dopelog(1,_("Player removed due to idle timeout"));
          SendPrintMessage(NULL,C_NONE,Play,"Disconnected due to idle timeout");
          ClientLeftServer(Play);
-/*       shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
          if (ConnectTimeout) {
             Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;

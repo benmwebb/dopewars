@@ -27,7 +27,9 @@
 #endif
 
 #include <glib.h>
+#include "error.h"
 #include "dopewars.h"
+#include "network.h"
 
 typedef enum {
    C_PRINTMESSAGE = 'A',
@@ -48,10 +50,6 @@ typedef enum {
    C_ASKPUB, C_ASKBANK, C_ASKRUN, C_ASKRUNFIGHT, C_ASKSEW,
    C_MEETPLAYER, C_FIGHT, C_FIGHTDONE
 } AICode;
-
-typedef enum {
-   E_FULLBUF
-} CustomError;
 
 #define DT_LOCATION    'A'
 #define DT_DRUG        'B'
@@ -76,47 +74,6 @@ void SendPrintMessage(Player *From,AICode AI,Player *To,char *Data);
 void SendQuestion(Player *From,AICode AI,Player *To,char *Data);
 
 #if NETWORKING
-/* Keeps track of the progress of an HTTP connection */
-typedef enum {
-   HS_CONNECTING, HS_READHEADERS, HS_READSEPARATOR, HS_READBODY
-} HttpStatus;
-
-/* A structure used to keep track of an HTTP connection */
-typedef struct _HttpConnection {
-   gchar *HostName;       /* The machine on which the desired page resides */
-   unsigned Port;         /* The port */
-   gchar *Proxy;          /* If non-NULL, a web proxy to use */
-   unsigned ProxyPort;    /* The port to use for talking to the proxy */
-   gchar *Method;         /* e.g. GET, POST */
-   gchar *Query;          /* e.g. the path of the desired webpage */
-   gchar *Headers;        /* if non-NULL, e.g. Content-Type */
-   gchar *Body;           /* if non-NULL, data to send */
-   gchar *Redirect;       /* if non-NULL, a URL to redirect to */
-   NetworkBuffer NetBuf;  /* The actual network connection itself */
-   gint Tries;            /* Number of requests actually sent so far */
-   gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
-   HttpStatus Status;
-} HttpConnection;
-
-char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
-                   gboolean NonBlocking);
-char *FinishConnect(int fd);
-
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar);
-void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
-                              gpointer CallBackData);
-gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
-void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
-gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
-                                   unsigned RemotePort);
-void ShutdownNetworkBuffer(NetworkBuffer *NetBuf);
-void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
-                               fd_set *writefds,fd_set *errorfds,int *MaxSock);
-gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
-                         fd_set *writefds,fd_set *errorfds,
-                         gboolean *DoneOK);
-gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf,gboolean ReadReady,
-                             gboolean WriteReady,gboolean *DoneOK);
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
                              gboolean WriteReady,gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
@@ -124,27 +81,10 @@ void QueuePlayerMessageForSend(Player *Play,gchar *data);
 gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
-gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
-gboolean WriteDataToWire(NetworkBuffer *NetBuf);
-void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data);
-gint CountWaitingMessages(NetworkBuffer *NetBuf);
-gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
-
-HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
-                                   gchar *Proxy,unsigned ProxyPort,
-                                   gchar *Method,gchar *Query,
-                                   gchar *Headers,gchar *Body);
-HttpConnection *OpenMetaHttpConnection(void);
-void CloseHttpConnection(HttpConnection *conn);
-gchar *ReadHttpResponse(HttpConnection *conn);
-gboolean HandleHttpCompletion(HttpConnection *conn);
+gboolean OpenMetaHttpConnection(HttpConnection **conn);
 gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt);
 void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
-
-void ClearError(LastError *error);
-void SetError(LastError *error,ErrorType type,gint code);
-gchar *GetErrorString(LastError *error);
 
 extern GSList *FirstClient;
 
@@ -168,9 +108,8 @@ gchar *GetNextWord(gchar **Data,gchar *Default);
 void AssignNextWord(gchar **Data,gchar **Dest);
 int GetNextInt(gchar **Data,int Default);
 price_t GetNextPrice(gchar **Data,price_t Default);
-char *SetupNetwork(gboolean NonBlocking);
-char *FinishSetupNetwork(void);
-void ShutdownNetwork(void);
+gboolean SetupNetwork(GString *errstr);
+void ShutdownNetwork(Player *Play);
 void SwitchToSinglePlayer(Player *Play);
 int ProcessMessage(char *Msg,Player *Play,Player **Other,AICode *AI,
                    MsgCode *Code,char **Data,GSList *First);
@@ -199,4 +138,5 @@ void SendFightMessage(Player *Attacker,Player *Defender,
 void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         Player *Defender,int BitchesKilled,int ArmPercent,
                         FightPoint fp,price_t Loot);
-#endif
+
+#endif /* __MESSAGE_H__ */

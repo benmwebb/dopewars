@@ -220,7 +220,6 @@ void sigemptyset(int *mask) {}
 void sigaddset(int *mask,int sig) {}
 int sigaction(int sig,struct sigaction *sact,char *pt) { return 0; }
 void sigprocmask(int flag,int *mask,char *pt) {}
-void gettimeofday(void *pt,void *pt2) {}
 void standout() {}
 void standend() {}
 
@@ -280,45 +279,10 @@ int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,
    return retval;
 }
 
-#if NETWORKING
-int GetSocketError() {
-#ifdef GUI_CLIENT
-   if (AsyncSocketError) return AsyncSocketError;
-   else
-#endif
-return WSAGetLastError();
-}
-
-void fcntl(SOCKET s,int fsetfl,long cmd) {
-   unsigned long param=1;
-   ioctlsocket(s,cmd,&param);
-}
-
-void StartNetworking() {
-   WSADATA wsaData;
-   if (WSAStartup(MAKEWORD(1,0),&wsaData)!=0) {
-      printf("Cannot initialise WinSock!\n");
-      exit(1);
-   }
-}
-
-void StopNetworking() { WSACleanup(); }
-
-void SetReuse(SOCKET sock) {
-   BOOL tmp;
-   tmp=TRUE;
-   if (setsockopt(sock,SOL_SOCKET,
-                  SO_REUSEADDR,(char *)(&tmp),sizeof(tmp))==-1) {
-      perror("setsockopt"); exit(1);
-   }
-}
-
 /* We don't do locking under Win32 right now */
 int ReadLock(FILE *fp) { return 0; }
 int WriteLock(FILE *fp) { return 0; }
 void ReleaseLock(FILE *fp) { }
-
-#endif /* NETWORKING */
 
 #else /* Code for Unix build */
 
@@ -350,20 +314,6 @@ int bgetch() {
    return c;
 }
 #endif
-
-#if NETWORKING
-int GetSocketError() { return errno; }
-void StartNetworking() {}
-void StopNetworking() {}
-void SetReuse(int sock) {
-   int i;
-   i=1;
-   if (setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,
-                  &i,sizeof(i))==-1) {
-      perror("setsockopt"); exit(1);
-   }
-}
-#endif /* NETWORKING */
 
 static int DoLock(FILE *fp,int l_type) {
    struct flock lk;

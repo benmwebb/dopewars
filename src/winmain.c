@@ -33,7 +33,6 @@
 #include "dopewars.h"
 #include "nls.h"
 #include "tstring.h"
-#include "tstring.h"
 #include "AIPlayer.h"
 #include "curses_client.h"
 #include "gtk_client.h"

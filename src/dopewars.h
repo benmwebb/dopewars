@@ -43,6 +43,8 @@
 
 #include <glib.h>
 #include "dopeos.h"
+#include "error.h"
+#include "network.h"
 
 /* Make price_t be a long long if the type is supported by the compiler */
 #if SIZEOF_LONG_LONG == 0
@@ -234,45 +236,6 @@ struct TDopeList {
    int Number;
 };
 typedef struct TDopeList DopeList;
-
-typedef struct tagConnBuf {
-   gchar *Data;     /* bytes waiting to be read/written      */
-   int Length;      /* allocated length of the "Data" buffer */
-   int DataPresent; /* number of bytes currently in "Data"   */
-} ConnBuf;            
-
-typedef struct _NetworkBuffer NetworkBuffer;
-
-typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
-
-typedef enum {
-  ET_NOERROR, ET_CUSTOM, ET_ERRNO,
-#ifdef CYGWIN
-  ET_WIN32, ET_WINSOCK
-#else
-  ET_HERRNO
-#endif
-} ErrorType;
-
-typedef struct _LastError {
-  gint code;
-  ErrorType type;
-} LastError;
-
-/* Handles reading and writing messages from/to a network connection */
-struct _NetworkBuffer {
-   int fd;                /* File descriptor of the socket */
-   gint InputTag;         /* Identifier for gdk_input routines */
-   NBCallBack CallBack;   /* Function called when the socket read- or
-                             write-able status changes */
-   gpointer CallBackData; /* Data accessible to the callback function */
-   char Terminator;       /* Character that separates messages */
-   char StripChar;        /* Character that should be removed from messages */
-   ConnBuf ReadBuf;       /* New data, waiting for the application */
-   ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
-   gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
-   LastError error;       /* Any error from the last operation */
-};
 
 struct PLAYER_T {
    guint ID;

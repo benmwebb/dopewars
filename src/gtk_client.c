@@ -62,13 +62,20 @@ struct StatusWidgets {
 
 struct ClientDataStruct {
    GtkWidget *window,*messages;
-   gchar *PlayerName;
    Player *Play;
    GtkItemFactory *Menu;
    struct StatusWidgets Status;
    struct InventoryWidgets Drug,Gun,InvenDrug,InvenGun;
    GtkWidget *JetButton,*vbox,*PlayerList,*TalkList;
    guint JetAccel;
+};
+
+struct StartGameStruct {
+   GtkWidget *dialog,*name,*hostname,*port,*antique,*status,*metaserv;
+#ifdef NETWORKING
+   HttpConnection *MetaConn;
+   GSList *NewMetaList;
+#endif
 };
 
 static struct ClientDataStruct ClientData;
@@ -95,10 +102,13 @@ static void GetClientMessage(gpointer data,gint socket,
 static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 static void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,
                              gboolean Write);
+static void FinishServerConnect(struct StartGameStruct *widgets,
+                                gboolean ConnectOK);
 
 /* List of servers on the metaserver */
 static GSList *MetaList=NULL;
-#endif
+
+#endif /* NETWORKING */
 
 static void HandleClientMessage(char *buf,Player *Play);
 static void PrepareHighScoreDialog(void);
@@ -268,15 +278,21 @@ void ListInventory(GtkWidget *widget,gpointer data) {
 void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
-   gboolean DoneOK;
+   NetworkBuffer *NetBuf;
+   gboolean DoneOK,Connecting;
+
+   NetBuf = &ClientData.Play->NetBuf;
+   Connecting = NetBuf->WaitConnect;
    if (PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
-                           condition&GDK_INPUT_WRITE,&DoneOK)) {
+                           condition&GDK_INPUT_WRITE,&DoneOK) && !Connecting) {
       while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
          HandleClientMessage(pt,ClientData.Play);
          g_free(pt);
       }
    }
-   if (!DoneOK) {
+   if (Connecting && (!NetBuf->WaitConnect || !DoneOK)) {
+      FinishServerConnect(data,DoneOK);
+   } else if (!DoneOK) {
       if (InGame) {
 /* The network connection to the server was dropped unexpectedly */
          g_warning(_("Connection to server lost - switching to "
@@ -294,7 +310,7 @@ void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
       NetBuf->InputTag=gdk_input_add(NetBuf->fd,
                                      (Read ? GDK_INPUT_READ : 0) |
                                      (Write ? GDK_INPUT_WRITE : 0),
-                                     GetClientMessage,NULL);
+                                     GetClientMessage,NetBuf->CallBackData);
    }
 }
 #endif /* NETWORKING */
@@ -331,14 +347,16 @@ void HandleClientMessage(char *pt,Player *Play) {
       case C_PUSH:
 /* The server admin has asked us to leave - so warn the user, and do so */
          ShutdownNetworkBuffer(&Play->NetBuf);
-         g_warning(_("You have been pushed from the server."));
+         g_warning(_("You have been pushed from the server.\n"
+                     "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
          UpdateMenus();
          break;
       case C_QUIT:
 /* The server has sent us notice that it is shutting down */
          ShutdownNetworkBuffer(&Play->NetBuf);
-         g_warning(_("The server has terminated."));
+         g_warning(_("The server has terminated.\n"
+                     "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
          UpdateMenus();
          break;
@@ -1542,19 +1560,10 @@ void QuestionDialog(char *Data,Player *From) {
 }
 
 void StartGame(void) {
-   Player *Play;
-   Play=ClientData.Play=g_new(Player,1);
-   FirstClient=AddPlayer(0,Play,FirstClient);
-#ifdef NETWORKING
-   if (Network) {
-      BindNetworkBufferToSocket(&Play->NetBuf,ClientSock);
-      SetNetworkBufferCallBack(&Play->NetBuf,SocketStatus,NULL);
-   }
-#endif
+   Player *Play=ClientData.Play;
    InitAbilities(Play);
    SendAbilities(Play);
-   SetPlayerName(Play,ClientData.PlayerName);
-   SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);
+   SendNullClientMessage(Play,C_NONE,C_NAME,NULL,GetPlayerName(Play));
    InGame=TRUE;
    UpdateMenus();
    gtk_widget_show_all(ClientData.vbox);
@@ -1565,9 +1574,7 @@ void EndGame(void) {
    DisplayFightMessage(NULL);
    gtk_widget_hide_all(ClientData.vbox);
    gtk_editable_delete_text(GTK_EDITABLE(ClientData.messages),0,-1);
-   g_free(ClientData.PlayerName);
-   ClientData.PlayerName=g_strdup(GetPlayerName(ClientData.Play));
-   ShutdownNetwork();
+   ShutdownNetwork(ClientData.Play);
    UpdatePlayerLists();
    CleanUpServer();
    InGame=FALSE;
@@ -1741,8 +1748,10 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                      LogMessage,NULL);
 
-   ClientData.PlayerName=NULL;
-   ClientData.Play=NULL;
+/* Create the main player */
+   ClientData.Play=g_new(Player,1);
+   FirstClient=AddPlayer(0,ClientData.Play,FirstClient);
+
    window=ClientData.window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 /* Title of main window in GTK+ client */
@@ -1815,6 +1824,9 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    gtk_widget_show(window);
 
    gtk_main();
+
+/* Free the main player */
+   FirstClient=RemovePlayer(ClientData.Play,FirstClient);
 
    return TRUE;
 }
@@ -1900,15 +1912,6 @@ _("\nFor information on the command line options, type dopewars -h at your\n"
    gtk_widget_show_all(dialog);
 }
 
-struct StartGameStruct {
-   GtkWidget *dialog,*name,*hostname,*port,*antique,*status,*metaserv;
-#ifdef NETWORKING
-   gint ConnectTag;
-   HttpConnection *MetaConn;
-   GSList *NewMetaList;
-#endif
-};
-
 static gboolean GetStartGamePlayerName(struct StartGameStruct *widgets,
                                        gchar **PlayerName) {
    g_free(*PlayerName);
@@ -1923,45 +1926,54 @@ static gboolean GetStartGamePlayerName(struct StartGameStruct *widgets,
 }
 
 #ifdef NETWORKING
-static void FinishServerConnect(gpointer data,gint socket,
-                                GdkInputCondition condition) {
-   gchar *text,*NetworkError;
-   struct StartGameStruct *widgets;
+static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
+   GString *neterr;
+   gchar *text;
+   LastError *error;
 
-   widgets=(struct StartGameStruct *)data;
+   if (meta) error=&widgets->MetaConn->NetBuf.error;
+   else error=&ClientData.Play->NetBuf.error;
 
-   gdk_input_remove(widgets->ConnectTag);
-   widgets->ConnectTag=0;
-   NetworkError=FinishSetupNetwork();
-   if (NetworkError) {
-/* Error: GTK+ client could not connect to the given dopewars server */
-      text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
-      gtk_label_set_text(GTK_LABEL(widgets->status),text);
-      g_free(text);
+   if (!IsError(error)) return;
+
+   neterr = g_string_new("");
+   g_string_assign_error(neterr,error);
+
+   if (meta) {
+/* Error: GTK+ client could not connect to the metaserver */
+      text=g_strdup_printf(_("Status: Could not connect to metaserver (%s)"),
+                           neterr->str);
    } else {
+/* Error: GTK+ client could not connect to the given dopewars server */
+      text=g_strdup_printf(_("Status: Could not connect (%s)"),neterr->str);
+   }
+
+   gtk_label_set_text(GTK_LABEL(widgets->status),text);
+   g_free(text);
+   g_string_free(neterr,TRUE);
+}
+
+void FinishServerConnect(struct StartGameStruct *widgets,gboolean ConnectOK) {
+   if (ConnectOK) {
+      Client=Network=TRUE;
       gtk_widget_destroy(widgets->dialog);
       StartGame();
+   } else {
+      ConnectError(widgets,FALSE);
    } 
 }
 
 static void DoConnect(struct StartGameStruct *widgets) {
-   gchar *text,*NetworkError;
+   gchar *text;
 /* Message displayed during the attempted connect to a dopewars server */
    text=g_strdup_printf(_("Status: Attempting to contact %s..."),ServerName);
    gtk_label_set_text(GTK_LABEL(widgets->status),text); g_free(text);
 
-   if (widgets->ConnectTag!=0) {
-      gdk_input_remove(widgets->ConnectTag); CloseSocket(ClientSock);
-      widgets->ConnectTag=0;
-   }
-   NetworkError=SetupNetwork(TRUE);
-   if (!NetworkError) {
-      widgets->ConnectTag=gdk_input_add(ClientSock,GDK_INPUT_WRITE,
-                                        FinishServerConnect,(gpointer)widgets);
+   if (StartNetworkBufferConnect(&ClientData.Play->NetBuf,ServerName,Port)) {
+      SetNetworkBufferCallBack(&ClientData.Play->NetBuf,SocketStatus,
+                               (gpointer)widgets);
    } else {
-      text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
-      gtk_label_set_text(GTK_LABEL(widgets->status),text);
-      g_free(text);
+      ConnectError(widgets,FALSE);
    }
 }
 
@@ -1973,7 +1985,7 @@ static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
    text=gtk_editable_get_chars(GTK_EDITABLE(widgets->port),0,-1);
    Port=atoi(text); g_free(text);
 
-   if (!GetStartGamePlayerName(widgets,&ClientData.PlayerName)) return;
+   if (!GetStartGamePlayerName(widgets,&ClientData.Play->Name)) return;
    DoConnect(widgets);
 }
 
@@ -1985,11 +1997,13 @@ static void FillMetaServerList(struct StartGameStruct *widgets,
    GSList *ListPt;
    gint row;
 
+   if (UseNewList && !widgets->NewMetaList) return;
+
    metaserv=widgets->metaserv;
    gtk_clist_freeze(GTK_CLIST(metaserv));
    gtk_clist_clear(GTK_CLIST(metaserv));
 
-   if (UseNewList && widgets->NewMetaList) {
+   if (UseNewList) {
      ClearServerList(&MetaList);
      MetaList=widgets->NewMetaList;
      widgets->NewMetaList=NULL;
@@ -2032,7 +2046,7 @@ static void HandleMetaSock(gpointer data,gint socket,
                                          &widgets->NewMetaList)) {}
    }
    if (!DoneOK) {
-      g_print("Metaserver communication closed\n");
+      ConnectError(widgets,TRUE);
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
       FillMetaServerList(widgets,TRUE);
@@ -2054,17 +2068,17 @@ static void UpdateMetaServerList(GtkWidget *widget,
                                  struct StartGameStruct *widgets) {
    GtkWidget *metaserv;
    if (widgets->MetaConn) {
-      CloseHttpConnection(widgets->MetaConn);
-      widgets->MetaConn=NULL;
+      CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
    ClearServerList(&widgets->NewMetaList);
 
-   widgets->MetaConn = OpenMetaHttpConnection();
-
-   if (widgets->MetaConn) {
+   if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
+   } else {
+      ConnectError(widgets,TRUE);
+      CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
 }
 
@@ -2083,7 +2097,7 @@ static void MetaServerConnect(GtkWidget *widget,
       AssignName(&ServerName,ThisServer->Name);
       Port=ThisServer->Port;
 
-      if (!GetStartGamePlayerName(widgets,&ClientData.PlayerName)) return;
+      if (!GetStartGamePlayerName(widgets,&ClientData.Play->Name)) return;
       DoConnect(widgets);
    }
 }
@@ -2093,39 +2107,20 @@ static void StartSinglePlayer(GtkWidget *widget,
                               struct StartGameStruct *widgets) {
    WantAntique=
           gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->antique));
-   if (!GetStartGamePlayerName(widgets,&ClientData.PlayerName)) return;
+   if (!GetStartGamePlayerName(widgets,&ClientData.Play->Name)) return;
    StartGame();
    gtk_widget_destroy(widgets->dialog);
 }
 
 static void CloseNewGameDia(GtkWidget *widget,
                             struct StartGameStruct *widgets) {
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                     LogMessage,NULL);
 #ifdef NETWORKING
-   if (widgets->ConnectTag) {
-      gdk_input_remove(widgets->ConnectTag);
-      CloseSocket(ClientSock);
-      widgets->ConnectTag=0;
-   }
    if (widgets->MetaConn) {
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
    }
    ClearServerList(&widgets->NewMetaList);
 #endif
-}
-
-static void NewGameLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
-                              const gchar *message,gpointer user_data) {
-   struct StartGameStruct *widgets;
-   gchar *text;
-
-   widgets = (struct StartGameStruct *)user_data;
-
-   text=g_strdup_printf(_("Status: %s"),message);
-   gtk_label_set_text(GTK_LABEL(widgets->status),text);
-   g_free(text);
 }
 
 void NewGameDialog(void) {
@@ -2146,7 +2141,6 @@ void NewGameDialog(void) {
    server_titles[3]=_("Players");
    server_titles[4]=_("Comment");
 
-   widgets.ConnectTag=0;
    widgets.MetaConn=NULL;
    widgets.NewMetaList=NULL;
 
@@ -2183,9 +2177,7 @@ void NewGameDialog(void) {
    entry=widgets.name=gtk_entry_new();
    gtk_widget_add_accelerator(entry,"grab-focus",accel_group,AccelKey,0,
                            GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
-   if (ClientData.PlayerName) {
-      gtk_entry_set_text(GTK_ENTRY(entry),ClientData.PlayerName);
-   }
+   gtk_entry_set_text(GTK_ENTRY(entry),GetPlayerName(ClientData.Play));
    gtk_box_pack_start(GTK_BOX(hbox),entry,TRUE,TRUE,0);
    
    gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
@@ -2322,9 +2314,6 @@ void NewGameDialog(void) {
 /* Caption of status label in New Game dialog before anything has happened */
    label=widgets.status=gtk_label_new(_("Status: Waiting for user input"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
-
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                     NewGameLogMessage,(gpointer)&widgets);
 
    gtk_container_add(GTK_CONTAINER(widgets.dialog),vbox);
 

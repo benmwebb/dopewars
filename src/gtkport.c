@@ -30,25 +30,6 @@
 #include "gtkport.h"
 #include "nls.h"
 
-/* Internationalization stuff */
-
-#ifdef ENABLE_NLS
-#include <locale.h>
-#include <libintl.h>
-#define _(String) gettext (String)
-#ifdef gettext_noop
-#define N_(String) gettext_noop (String)
-#else
-#define N_(String) (String)
-#endif
-#else
-#define gettext(String) (String)
-#define dgettext(Domain,Message) (Message)
-#define dcgettext(Domain,Message,Type) (Message)
-#define _(String) (String)
-#define N_(String) (String)
-#endif
-
 #ifdef CYGWIN
 
 #include <windows.h>
@@ -636,7 +617,6 @@ static GSList *WindowList=NULL;
 static GSList *GdkInputs=NULL;
 static GSList *GtkTimeouts=NULL;
 static HWND TopLevel=NULL;
-long AsyncSocketError=0;
 
 static WNDPROC wpOrigEntryProc,wpOrigTextProc;
 
@@ -942,9 +922,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          }
          break;
       case WM_SOCKETDATA:
-         AsyncSocketError=WSAGETSELECTERROR(lParam);
+/* Make any error available by the usual WSAGetLastError() mechanism */
+         WSASetLastError(WSAGETSELECTERROR(lParam));
          DispatchSocketEvent((SOCKET)wParam,WSAGETSELECTEVENT(lParam));
-         AsyncSocketError=0;
          break;
       case WM_TIMER:
          DispatchTimeoutEvent((UINT)wParam);
@@ -983,7 +963,6 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
    WindowList=NULL;
-   AsyncSocketError=0;
    if (!hPrevInstance) {
       wc.style		= CS_HREDRAW|CS_VREDRAW;
       wc.lpfnWndProc	= MainWndProc;

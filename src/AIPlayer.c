@@ -46,7 +46,6 @@ static void AISendRandomMessage(Player *AIPlay);
 static void AISetName(Player *AIPlay);
 static void AIHandleQuestion(char *Data,AICode AI,Player *AIPlay,Player *From);
 
-#define NUMNAMES      8
 #define MINSAFECASH   300
 #define MINSAFEHEALTH 140
 
@@ -64,21 +63,23 @@ int RealLoanShark,RealBank,RealGunShop,RealPub;
 void AIPlayerLoop() {
 /* Main loop for AI players. Connects to server, plays game, */
 /* and then disconnects.                                     */
-   gchar *pt;
+   GString *errstr;
+   gchar *msg;
    Player *AIPlay;
    fd_set readfs,writefs;
    gboolean DoneOK,QuitRequest;
    int MaxSock;
 
+   errstr=g_string_new("");
    AIPlay=g_new(Player,1);
    FirstClient=AddPlayer(0,AIPlay,FirstClient);
    g_message(_("AI Player started; attempting to contact server at %s:%d..."),
              ServerName,Port);
-   pt=SetupNetwork(FALSE);
-   if (pt) {
+   if (!SetupNetwork(errstr)) {
       g_log(NULL,G_LOG_LEVEL_CRITICAL,
             _("Could not connect to dopewars server\n(%s)\n"
-              "AI Player terminating abnormally."),_(pt));
+              "AI Player terminating abnormally."),errstr->str);
+      g_string_free(errstr,TRUE);
       return;
    }
    BindNetworkBufferToSocket(&AIPlay->NetBuf,ClientSock);
@@ -106,8 +107,8 @@ void AIPlayerLoop() {
 
       if (RespondToSelect(&AIPlay->NetBuf,&readfs,&writefs,NULL,&DoneOK)) {
          QuitRequest=FALSE;
-         while ((pt=GetWaitingPlayerMessage(AIPlay))!=NULL) {
-            if (HandleAIMessage(pt,AIPlay)) {
+         while ((msg=GetWaitingPlayerMessage(AIPlay))!=NULL) {
+            if (HandleAIMessage(msg,AIPlay)) {
                QuitRequest=TRUE;
                break;
             }
@@ -119,17 +120,21 @@ void AIPlayerLoop() {
          break;
       }
    }
-   ShutdownNetwork();
+   ShutdownNetwork(AIPlay);
+   g_string_free(errstr,TRUE);
+   FirstClient=RemovePlayer(AIPlay,FirstClient);
    g_print(_("AI Player terminated OK.\n"));
 }
 
 void AISetName(Player *AIPlay) {
 /* Chooses a random name for the AI player, and informs the server */
-   char *AINames[NUMNAMES] = {
+   char *AINames[] = {
       "Chip", "Dopey", "Al", "Dan", "Bob", "Fred", "Bert", "Jim"
    };
+   const gint NumNames = sizeof(AINames)/sizeof(AINames[0]);
    gchar *text;
-   text=g_strdup_printf("AI) %s",AINames[brandom(0,NUMNAMES)]);
+
+   text=g_strdup_printf("AI) %s",AINames[brandom(0,NumNames)]);
    SetPlayerName(AIPlay,text);
    g_free(text);
    SendNullClientMessage(AIPlay,C_NONE,C_NAME,NULL,GetPlayerName(AIPlay));

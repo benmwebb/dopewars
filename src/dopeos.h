@@ -30,10 +30,6 @@
 #include <windows.h>
 #include <string.h>
 
-#if NETWORKING
-#include <winsock.h>
-#endif
-
 #include <stdio.h>
 
 void refresh();
@@ -104,40 +100,19 @@ int bgetch();
 char *index(char *str,char ch);
 int getopt(int argc,char *argv[],char *str);
 extern char *optarg;
-#define F_SETFL 0
-#define O_NONBLOCK FIONBIO
 
 typedef int ssize_t;
-void gettimeofday(void *pt,void *pt2);
 void standout();
 void standend();
 void endwin();
 int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfs,
 		struct timeval *tm);
 
-#if NETWORKING
-int GetSocketError();
-void fcntl(SOCKET s,int fsetfl,long cmd);
-#define CloseSocket(sock) closesocket(sock)
-void StartNetworking();
-void StopNetworking();
-void SetReuse(SOCKET sock);
-#endif
-
 #else /* Definitions for Unix build */
 
 #include <sys/types.h>
 
 #include <stdio.h>
-
-#ifdef NETWORKING
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#endif /* NETWORKING */
-
 #include <errno.h>
 
 /* Only include sys/wait.h on those systems which support it */
@@ -172,14 +147,6 @@ int bgetch(void);
 
 #define bselect select
 
-#if NETWORKING
-#define CloseSocket(sock) close(sock)
-int GetSocketError(void);
-void StartNetworking(void);
-void StopNetworking(void);
-void SetReuse(int sock);
-#endif /* NETWORKING */
-
 #endif /* CYGWIN */
 
 void MicroSleep(int microsec);
@@ -189,10 +156,6 @@ int WriteLock(FILE *fp);
 void ReleaseLock(FILE *fp);
 
 /* Now make definitions if they haven't been done properly */
-#ifndef SOCKET_ERROR
-#define SOCKET_ERROR -1
-#endif
-
 #ifndef WEXITSTATUS
 #define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
 #endif

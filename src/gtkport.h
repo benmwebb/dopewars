@@ -700,8 +700,6 @@ void gtk_progress_bar_update(GtkProgressBar *pbar,gfloat percentage);
 guint gtk_timeout_add(guint32 interval,GtkFunction function,gpointer data);
 void gtk_timeout_remove(guint timeout_handler_id);
 
-extern long AsyncSocketError;
-
 #else   /* CYGWIN */
 
 /* Include standard GTK+ headers on Unix systems */
