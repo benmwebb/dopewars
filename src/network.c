@@ -119,6 +119,14 @@ static gboolean FinishConnect(int fd,LastError *error);
 
 static void NetBufCallBack(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) {
+g_print("status = %d, read = %d, write = %d\n",
+NetBuf->status,
+NetBuf->status!=NBS_PRECONNECT,
+                          (NetBuf->status==NBS_CONNECTED &&
+                           NetBuf->WriteBuf.DataPresent) ||
+                          (NetBuf->status==NBS_SOCKSCONNECT &&
+                           NetBuf->negbuf.DataPresent) ||
+                          NetBuf->WaitConnect);
       (*NetBuf->CallBack)(NetBuf,NetBuf->status!=NBS_PRECONNECT,
                           (NetBuf->status==NBS_CONNECTED &&
                            NetBuf->WriteBuf.DataPresent) ||
@@ -710,6 +718,7 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
          return FALSE;
       } else {
          CurrentPosition+=BytesRead;
+g_print("%d bytes read from wire\n",BytesRead);
          conn->DataPresent=CurrentPosition;
       }
    }
@@ -897,6 +906,7 @@ static gboolean WriteBufToWire(NetworkBuffer *NetBuf,ConnBuf *conn) {
          }
 #endif
       } else {
+g_print("%d bytes written to wire\n",BytesSent);
          CurrentPosition+=BytesSent;
       }
    }
@@ -913,8 +923,10 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
 /* TRUE on success, or FALSE if the buffer's maximum length is        */
 /* reached, or the remote end has closed the connection.              */
    if (NetBuf->status==NBS_SOCKSCONNECT) {
+g_print("Writing negbuf\n");
       return WriteBufToWire(NetBuf,&NetBuf->negbuf);
    } else {
+g_print("Writing WriteBuf\n");
       return WriteBufToWire(NetBuf,&NetBuf->WriteBuf);
    }
 }
@@ -1090,6 +1102,25 @@ static gboolean ParseHtmlLocation(gchar *uri,gchar **host,unsigned *port,
   return TRUE;
 }
 
+static void StartHttpAuth(HttpConnection *conn,gboolean proxy,gchar *header) {
+   gchar *realm,**split;
+
+   if (!conn->authfunc) return;
+
+   split=g_strsplit(header," ",1);
+
+   if (split[0] && split[1] && g_strcasecmp(split[0],"Basic")==0 &&
+       g_strncasecmp(split[1],"realm=",6)==0 && strlen(split[1])>6) {
+     realm = &split[1][6];
+     conn->waitinput=TRUE;
+     (*conn->authfunc)(conn,proxy,realm);
+   } else {
+     g_print("FIXME: Bad HTTP auth header\n");
+   }
+
+   g_strfreev(split);
+}
+
 static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
   gchar **split,*host,*query;
   unsigned port;
@@ -1109,19 +1140,13 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
-      if (conn->authfunc) {
-         conn->waitinput=TRUE;
-         (*conn->authfunc)(conn,FALSE,split[1]);
-      }
+      StartHttpAuth(conn,FALSE,split[1]);
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
     } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
                conn->StatusCode==407) {
       g_print("FIXME: Proxy authentication %s required\n",split[1]);
-      if (conn->authfunc) {
-         conn->waitinput=TRUE;
-         (*conn->authfunc)(conn,TRUE,split[1]);
-      }
+      StartHttpAuth(conn,TRUE,split[1]);
     }
   }
   g_strfreev(split);
@@ -1204,8 +1229,50 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
          SetNetworkBufferUserPasswdFunc(&conn->NetBuf,userpasswd);
          return FALSE;
       }
+   } else {
+      if (conn->StatusCode>=300) {
+        g_print("FIXME: Connection failed, code %d\n",conn->StatusCode);
+      }
    }
    return TRUE;
+}
+
+int CreateTCPSocket(LastError *error) {
+  int fd;
+
+  fd=socket(AF_INET,SOCK_STREAM,0);
+
+  if (fd==SOCKET_ERROR && error) {
+#ifdef CYGWIN
+    SetError(error,ET_WINSOCK,WSAGetLastError());
+#else
+    SetError(error,ET_ERRNO,errno);
+#endif
+  }
+
+  return fd;
+}
+  
+gboolean BindTCPSocket(int sock,unsigned port,LastError *error) {
+  struct sockaddr_in bindaddr;
+  int retval;
+
+  bindaddr.sin_family=AF_INET;
+  bindaddr.sin_port=htons(port);
+  bindaddr.sin_addr.s_addr=INADDR_ANY;
+  memset(bindaddr.sin_zero,0,sizeof(bindaddr.sin_zero));
+
+  retval = bind(sock,(struct sockaddr *)&bindaddr,sizeof(struct sockaddr));
+
+  if (retval==SOCKET_ERROR && error) {
+#ifdef CYGWIN
+    SetError(error,ET_WINSOCK,WSAGetLastError());
+#else
+    SetError(error,ET_ERRNO,errno);
+#endif
+  }
+
+  return (retval!=SOCKET_ERROR);
 }
 
 gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
@@ -1216,15 +1283,8 @@ gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
    he = LookupHostname(RemoteHost,error);
    if (!he) return FALSE;
 
-   *fd=socket(AF_INET,SOCK_STREAM,0);
-   if (*fd==SOCKET_ERROR) {
-#ifdef CYGWIN
-      if (error) SetError(error,ET_WINSOCK,WSAGetLastError());
-#else
-      if (error) SetError(error,ET_ERRNO,errno);
-#endif
-      return FALSE;
-   }
+   *fd=CreateTCPSocket(error);
+   if (*fd==SOCKET_ERROR) return FALSE;
 
    ClientAddr.sin_family=AF_INET;
    ClientAddr.sin_port=htons(RemotePort);

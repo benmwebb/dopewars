@@ -2057,6 +2057,9 @@ static void HandleMetaSock(gpointer data,gint socket,
    NBStatus oldstatus,newstatus;
    gchar *text;
 
+g_print("HandleMetaSock: read %d, write %d\n",
+        condition&GDK_INPUT_READ,
+        condition&GDK_INPUT_WRITE);
    widgets=(struct StartGameStruct *)data;
    if (!widgets->MetaConn) return;
 
@@ -3127,11 +3130,17 @@ void DisplaySpyReports(Player *Play) {
 }
 
 static void OKAuthDialog(GtkWidget *widget,GtkWidget *window) {
+   gtk_object_set_data(GTK_OBJECT(window),"authok",GINT_TO_POINTER(TRUE));
+   gtk_widget_destroy(window);
+}
+
+static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
    GtkWidget *userentry,*passwdentry;
-   gchar *username,*password;
-   gpointer proxy;
+   gchar *username=NULL,*password=NULL;
+   gpointer proxy,authok;
    HttpConnection *conn;
 
+   authok = gtk_object_get_data(GTK_OBJECT(window),"authok");
    proxy = gtk_object_get_data(GTK_OBJECT(window),"proxy");
    userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
    passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
@@ -3139,34 +3148,16 @@ static void OKAuthDialog(GtkWidget *widget,GtkWidget *window) {
    conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),"httpconn");
    g_assert(userentry && passwdentry && conn);
 
-   username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
-   password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
-
-   gtk_object_set_data(GTK_OBJECT(window),"authdone",GINT_TO_POINTER(TRUE));
+   if (authok) {
+     username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
+     password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
+   }
 
    if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password)) {
       g_print("FIXME: Connect error on setauth\n");
    }
+
    g_free(username); g_free(password);
-
-   gtk_widget_destroy(window);
-}
-
-void DestroyAuthDialog(GtkWidget *widget,gpointer data) {
-   HttpConnection *conn;
-   gpointer authdone,proxy;
-
-   authdone = gtk_object_get_data(GTK_OBJECT(widget),"authdone");
-   conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(widget),"httpconn");
-   proxy = gtk_object_get_data(GTK_OBJECT(widget),"proxy");
-
-   if (authdone) {
-      g_print("Auth already done, thanks\n");
-   } else {
-      if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),NULL,NULL)) {
-         g_print("FIXME: Connect error on unsetauth\n");
-      }
-   }
 }
 
 void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm) {

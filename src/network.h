@@ -191,6 +191,8 @@ gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc);
 gboolean HandleHttpCompletion(HttpConnection *conn);
 
+int CreateTCPSocket(LastError *error);
+gboolean BindTCPSocket(int sock,unsigned port,LastError *error);
 gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
                       gboolean NonBlocking,LastError *error);
 void StartNetworking(void);
