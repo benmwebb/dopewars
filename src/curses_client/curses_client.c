@@ -2424,10 +2424,10 @@ void CursesLoop(struct CMDLINE *cmdline)
   char c;
   Player *Play;
 
+  InitConfiguration(cmdline);
   if (!CheckHighScoreFileConfig())
     return;
 
-  InitConfiguration(cmdline);
   WantColour = cmdline->colour;
   WantNetwork = cmdline->network;
 
