@@ -1868,8 +1868,8 @@ struct StartGameStruct {
    gint ConnectTag;
 };
 
-static void FinishConnect(gpointer data,gint socket,
-                          GdkInputCondition condition) {
+static void FinishServerConnect(gpointer data,gint socket,
+                                GdkInputCondition condition) {
    gchar *text,*NetworkError;
    struct StartGameStruct *widgets;
 
@@ -1902,7 +1902,7 @@ static void DoConnect(struct StartGameStruct *widgets) {
    NetworkError=SetupNetwork(TRUE);
    if (!NetworkError) {
       widgets->ConnectTag=gdk_input_add(ClientSock,GDK_INPUT_WRITE,
-                                        FinishConnect,(gpointer)widgets);
+                                        FinishServerConnect,(gpointer)widgets);
    } else {
       text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
       gtk_label_set_text(GTK_LABEL(widgets->status),text);

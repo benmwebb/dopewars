@@ -288,12 +288,32 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator) {
    NetBuf->ReadBuf.Data=NetBuf->WriteBuf.Data=NULL;
    NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
    NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
+   NetBuf->WaitConnect=FALSE;
 }
 
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
 /* Sets up the given network buffer to handle data being sent/received */
 /* through the given socket                                            */
    NetBuf->fd=fd;
+}
+
+static void MetaConnectError(gchar *Msg) {
+   g_warning(_("Cannot connect to metaserver: %s"),Msg);
+}
+
+gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
+                                   unsigned RemotePort) {
+   gchar *retval;
+
+   ShutdownNetworkBuffer(NetBuf);
+   retval=StartConnect(&NetBuf->fd,RemoteHost,RemotePort,TRUE);
+
+   if (retval) {
+      MetaConnectError(retval); return FALSE;
+   } else {
+      NetBuf->WaitConnect=TRUE;
+      return TRUE;
+   }
 }
 
 void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
@@ -316,7 +336,9 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
    FD_SET(NetBuf->fd,readfds);
    if (errorfds) FD_SET(NetBuf->fd,errorfds);
    if (NetBuf->fd >= *MaxSock) *MaxSock=NetBuf->fd+1;
-   if (NetBuf->WriteBuf.DataPresent) FD_SET(NetBuf->fd,writefds);
+   if (NetBuf->WriteBuf.DataPresent || NetBuf->WaitConnect) {
+      FD_SET(NetBuf->fd,writefds);
+   }
 }
 
 static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
@@ -328,7 +350,19 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
 /* operations, and returns TRUE if data was read and is waiting for    */
 /* processing.                                                         */
    gboolean DataWaiting=FALSE;
+   gchar *retval;
    *ReadOK=*WriteOK=*ErrorOK=TRUE;
+
+   if (NetBuf->WaitConnect) {
+      if (WriteReady) {
+         retval=FinishConnect(NetBuf->fd);
+         if (retval) {
+            *WriteOK=FALSE;
+            MetaConnectError(retval);
+         } else NetBuf->WaitConnect=FALSE;
+      }
+      return FALSE;
+   }
 
    if (ErrorReady) *ErrorOK=FALSE;
 
@@ -348,6 +382,8 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
 /* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
 /* a fatal error (i.e. the connection was broken) occurred.            */
    gboolean ReadOK,WriteOK,ErrorOK;
+   *DataWaiting=FALSE;
+   if (!NetBuf || NetBuf->fd<=0) return TRUE;
    *DataWaiting=DoNetworkBufferStuff(NetBuf,FD_ISSET(NetBuf->fd,readfds),
                         FD_ISSET(NetBuf->fd,writefds),
                         errorfds ? FD_ISSET(NetBuf->fd,errorfds) : FALSE,
@@ -361,6 +397,8 @@ gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
 /* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
 /* a fatal error (i.e. the connection was broken) occurred.            */
    gboolean ReadOK,WriteOK,ErrorOK;
+   *DataWaiting=FALSE;
+   if (!Play || Play->NetBuf.fd<=0) return TRUE;
    *DataWaiting=DoNetworkBufferStuff(&Play->NetBuf,ReadReady,WriteReady,FALSE,
                                      &ReadOK,&WriteOK,&ErrorOK);
 
@@ -831,59 +869,48 @@ price_t GetNextPrice(gchar **Data,price_t Default) {
 }
 
 #if NETWORKING
-char *SetupNetwork(gboolean NonBlocking) {
-/* Sets up the connection from the client to the server. If the connection */
-/* is successful, Network and Client are set to TRUE, and ClientSock is a  */
-/* file descriptor for the newly-opened socket. NULL is returned. If the   */
-/* connection fails, a pointer to an error message is returned.            */
-/* If "NonBlocking" is TRUE, a non-blocking connect() is carried out. In   */
-/* this case, the routine returns successfully after initiating the        */
-/* connect call; the caller should then select() the socket for writing,   */
-/* before calling FinishSetupNetwork()                                     */
+char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
+                   gboolean NonBlocking) {
    struct sockaddr_in ClientAddr;
    struct hostent *he;
    static char NoHost[]= N_("Could not find host");
    static char NoSocket[]= N_("Could not create network socket");
    static char NoConnect[]= N_("Connection refused or no server present");
 
-   Network=Client=Server=FALSE;
-
-   if ((he=gethostbyname(ServerName))==NULL) {
+   if ((he=gethostbyname(RemoteHost))==NULL) {
       return NoHost;
    }
-   ClientSock=socket(AF_INET,SOCK_STREAM,0);
-   if (ClientSock==SOCKET_ERROR) {
+   *fd=socket(AF_INET,SOCK_STREAM,0);
+   if (*fd==SOCKET_ERROR) {
       return NoSocket;
    }
 
    ClientAddr.sin_family=AF_INET;
-   ClientAddr.sin_port=htons(Port);
+   ClientAddr.sin_port=htons(RemotePort);
    ClientAddr.sin_addr=*((struct in_addr *)he->h_addr);
    memset(ClientAddr.sin_zero,0,sizeof(ClientAddr.sin_zero));
 
-   if (NonBlocking) fcntl(ClientSock,F_SETFL,O_NONBLOCK);
-   if (connect(ClientSock,(struct sockaddr *)&ClientAddr,
+   if (NonBlocking) fcntl(*fd,F_SETFL,O_NONBLOCK);
+   if (connect(*fd,(struct sockaddr *)&ClientAddr,
        sizeof(struct sockaddr))==-1) {
 #ifdef CYGWIN
       if (GetSocketError()==WSAEWOULDBLOCK) return NULL;
 #else
       if (GetSocketError()==EINPROGRESS) return NULL;
 #endif
-      CloseSocket(ClientSock);
+      CloseSocket(*fd); *fd=-1;
       return NoConnect;
    } else {
-      fcntl(ClientSock,F_SETFL,O_NONBLOCK);
+      fcntl(*fd,F_SETFL,O_NONBLOCK);
    }
-   Client=TRUE; Network=TRUE;
    return NULL;
 }
 
-char *FinishSetupNetwork() {
+char *FinishConnect(int fd) {
    static char NoConnect[]= N_("Connection refused or no server present");
 #ifdef CYGWIN
    if (GetSocketError()!=0) return NoConnect;
-   Client=Network=TRUE;
-   return NULL;
+   else return NULL;
 #else
    int optval;
 #ifdef HAVE_SOCKLEN_T
@@ -893,16 +920,33 @@ char *FinishSetupNetwork() {
 #endif
 
    optlen=sizeof(optval);
-   if (getsockopt(ClientSock,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
+   if (getsockopt(fd,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
       return NoConnect;
    }
-   if (optval==0) {
-      Client=Network=TRUE;
-      return NULL;
-   } else {
-      return NoConnect;
-   }
+   if (optval==0) return NULL;
+   else return NoConnect;
 #endif /* CYGWIN */
+}
+
+char *SetupNetwork(gboolean NonBlocking) {
+/* Sets up the connection from the client to the server. If the connection */
+/* is successful, Network and Client are set to TRUE, and ClientSock is a  */
+/* file descriptor for the newly-opened socket. NULL is returned. If the   */
+/* connection fails, a pointer to an error message is returned.            */
+/* If "NonBlocking" is TRUE, a non-blocking connect() is carried out. In   */
+/* this case, the routine returns successfully after initiating the        */
+/* connect call; the caller should then select() the socket for writing,   */
+/* before calling FinishSetupNetwork()                                     */
+   char *retval;
+
+   Network=Client=Server=FALSE;
+   retval=StartConnect(&ClientSock,ServerName,Port,NonBlocking);
+   if (!retval) Client=Network=TRUE;
+   return retval;
+}
+
+char *FinishSetupNetwork() {
+   return FinishConnect(ClientSock);
 }
 
 #endif /* NETWORKING */

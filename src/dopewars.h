@@ -279,10 +279,11 @@ typedef struct tagConnBuf {
 
 /* Handles reading and writing messages from/to a network connection */
 typedef struct tagNetworkBuffer {
-   int fd;              /* File descriptor of the socket */
-   char Terminator;     /* Character that separates messages */
-   ConnBuf ReadBuf;     /* New data, waiting for the application */
-   ConnBuf WriteBuf;    /* Data waiting to be written to the wire */
+   int fd;                /* File descriptor of the socket */
+   char Terminator;       /* Character that separates messages */
+   ConnBuf ReadBuf;       /* New data, waiting for the application */
+   ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
+   gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
 } NetworkBuffer;
 
 struct PLAYER_T {

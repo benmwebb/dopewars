@@ -773,6 +773,14 @@ void ServerLoop() {
    int MinTimeout;
    GString *LineBuf;
    gboolean EndOfLine,DataWaiting;
+   NetworkBuffer MetaNetBuf;
+   gchar *buf;
+
+   InitNetworkBuffer(&MetaNetBuf,'\n');
+/* if (StartNetworkBufferConnect(&MetaNetBuf,"bellatrix.pcl.ox.ac.uk",80)) {
+      g_print("Waiting for metaserver connect...\n");
+      QueueMessageForSend(&MetaNetBuf,"GET /~ben/cgi-bin/server.pl?getlist=1&output=text HTTP/1.0\n");
+   }*/
 
    StartServer();
 
@@ -785,6 +793,8 @@ void ServerLoop() {
       FD_SET(ListenSock,&readfs);
       FD_SET(ListenSock,&errorfs);
       topsock=ListenSock+1;
+      SetSelectForNetworkBuffer(&MetaNetBuf,&readfs,&writefs,
+                                &errorfs,&topsock);
       for (list=FirstServer;list;list=g_slist_next(list)) {
          tmp=(Player *)list->data;
          if (!IsCop(tmp)) {
@@ -824,6 +834,16 @@ void ServerLoop() {
       }
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
+      }
+      if (!RespondToSelect(&MetaNetBuf,&readfs,&writefs,
+                           &errorfs,&DataWaiting)) {
+/*       g_warning("Metaserver connection closed");*/
+         ShutdownNetworkBuffer(&MetaNetBuf);
+      } else if (DataWaiting) {
+         while ((buf=GetWaitingMessage(&MetaNetBuf))) {
+            g_print("Meta: %s\n",buf);
+            g_free(buf);
+         }
       }
       list=FirstServer;
       while (list) {

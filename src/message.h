@@ -115,8 +115,14 @@ void SendPrintMessage(Player *From,char AICode,Player *To,char *Data);
 void SendQuestion(Player *From,char AICode,Player *To,char *Data);
 
 #if NETWORKING
+char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
+                   gboolean NonBlocking);
+char *FinishConnect(int fd);
+
 void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
+gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
+                                   unsigned RemotePort);
 void ShutdownNetworkBuffer(NetworkBuffer *NetBuf);
 void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
                                fd_set *writefds,fd_set *errorfds,int *MaxSock);
