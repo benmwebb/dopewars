@@ -43,9 +43,7 @@
 #include <glib.h>
 #include <stdarg.h>
 #include "admin.h"
-#include "curses_client.h"
 #include "dopeos.h"
-#include "gtk_client.h"
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
@@ -53,8 +51,16 @@
 #include "AIPlayer.h"
 #include "winmain.h"
 
+#ifdef CURSES_CLIENT
+#include "curses_client/curses_client.h"
+#endif
+
+#ifdef GUI_CLIENT
+#include "gui_client/gtk_client.h"
+#endif
+
 #ifdef GUI_SERVER
-#include "gtkport.h"
+#include "gtkport/gtkport.h"
 #endif
 
 int ClientSock, ListenSock;
@@ -2648,6 +2654,40 @@ static void ServerLogMessage(const gchar *log_domain,
     fprintf(Log.fp ? Log.fp : stdout, "%s\n", text->str);
     g_string_free(text, TRUE);
   }
+}
+#endif
+
+#ifndef CURSES_CLIENT
+/*
+ * Stub function to report an error if the Curses client is requested and
+ * it isn't compiled in.
+ */
+void CursesLoop(void)
+{
+  g_print(_("No curses client available - rebuild the binary passing the\n"
+            "--enable-curses-client option to configure, or use a windowed\n"
+            "client (if available) instead!\n"));
+}
+#endif
+
+#ifndef GUI_CLIENT
+/*
+ * Stub function to report an error if the GTK+ client is requested and
+ * it isn't compiled in.
+ */
+#ifdef CYGWIN
+gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                 gboolean ReturnOnFail)
+#else
+gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
+#endif
+{
+  if (!ReturnOnFail) {
+    g_print(_("No graphical client available - rebuild the binary\n"
+              "passing the --enable-gui-client option to configure, or\n"
+              "use the curses client (if available) instead!\n"));
+  }
+  return FALSE;
 }
 #endif
 

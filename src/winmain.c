@@ -36,12 +36,21 @@
 #include "nls.h"
 #include "tstring.h"
 #include "AIPlayer.h"
-#include "curses_client.h"
-#include "gtk_client.h"
 #include "message.h"
 #include "serverside.h"
-#include "gtkport.h"
 #include "winmain.h"
+
+#ifdef CURSES_CLIENT
+#include "curses_client/curses_client.h"
+#endif
+
+#ifdef GUI_CLIENT
+#include "gui_client/gtk_client.h"
+#endif
+
+#ifdef GUI_SERVER
+#include "gtkport/gtkport.h"
+#endif
 
 static void ServerLogMessage(const gchar *log_domain,
                              GLogLevelFlags log_level,
@@ -310,18 +319,24 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       g_set_print_handler(ServerPrintFunc);
       newterm(NULL, NULL, NULL);
       AIPlayerLoop();
-    } else if (WantedClient == CLIENT_CURSES) {
-      AllocConsole();
-      SetConsoleTitle(_("dopewars"));
-      CursesLoop();
     } else {
-#if GUI_CLIENT
-      GtkLoop(hInstance, hPrevInstance);
-#else
-      g_print(_("No graphical client available - rebuild the binary\n"
-                "passing the --enable-gui-client option to configure, or\n"
-                "use the curses client (if available) instead!\n"));
-#endif
+      switch (WantedClient) {
+      case CLIENT_AUTO:
+        if (!GtkLoop(hInstance, hPrevInstance, TRUE)) {
+          AllocConsole();
+          SetConsoleTitle(_("dopewars"));
+          CursesLoop();
+        }
+        break;
+      case CLIENT_WINDOW:
+        GtkLoop(hInstance, hPrevInstance, FALSE);
+        break;
+      case CLIENT_CURSES:
+        AllocConsole();
+        SetConsoleTitle(_("dopewars"));
+        CursesLoop();
+        break;
+      }
     }
 #ifdef NETWORKING
     StopNetworking();

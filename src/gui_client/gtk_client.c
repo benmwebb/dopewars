@@ -24,8 +24,6 @@
 #include <config.h>
 #endif
 
-#ifdef GUI_CLIENT
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -37,7 +35,7 @@
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
-#include "gtkport.h"
+#include "gtkport/gtkport.h"
 #include "dopewars-pill.xpm"
 
 #define BT_BUY  (GINT_TO_POINTER(1))
@@ -2034,10 +2032,11 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 }
 
 #ifdef CYGWIN
-char GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance)
+gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                 gboolean ReturnOnFail)
 {
 #else
-char GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
+gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 {
 #endif
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
@@ -3909,22 +3908,3 @@ void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 }
 
 #endif /* NETWORKING */
-
-#else
-
-#include <glib.h>
-#include "nls.h"                /* We need this for the definition of '_' */
-
-char GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
-{
-  if (!ReturnOnFail) {
-    /* Error message displayed if the user tries to run the graphical
-     * client when none is compiled into the dopewars binary. */
-    g_print(_("No graphical client available - rebuild the binary\n"
-              "passing the --enable-gui-client option to configure, or\n"
-              "use the curses client (if available) instead!\n"));
-  }
-  return FALSE;
-}
-
-#endif /* GUI_CLIENT */

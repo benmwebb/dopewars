@@ -422,4 +422,18 @@ gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
 void WriteConfigFile(void);
 gchar *GetDocIndex(void);
+
+#ifndef CURSES_CLIENT
+void CursesLoop(void);
+#endif
+
+#ifndef GUI_CLIENT
+#ifdef CYGWIN
+gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                 gboolean ReturnOnFail);
+#else
+gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
+#endif
+#endif
+
 #endif

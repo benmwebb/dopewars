@@ -24,8 +24,6 @@
 #include <config.h>
 #endif
 
-#ifdef CURSES_CLIENT
-
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -2409,17 +2407,3 @@ void CursesLoop(void)
   FirstClient = RemovePlayer(Play, FirstClient);
   end_curses();
 }
-
-#else
-
-#include <glib.h>
-#include "nls.h"                /* We need this for the definition of '_' */
-
-void CursesLoop(void)
-{
-  g_print(_("No curses client available - rebuild the binary passing the\n"
-            "--enable-curses-client option to configure, or use a windowed\n"
-            "client (if available) instead!\n"));
-}
-
-#endif /* CURSES_CLIENT */

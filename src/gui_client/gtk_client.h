@@ -27,14 +27,15 @@
 #include <config.h>
 #endif
 
-#include "gtkport.h"
+#include "gtkport/gtkport.h"
 
 extern GtkWidget *MainWindow;
 
 #ifdef CYGWIN
-char GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance);
+gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                 gboolean ReturnOnFail);
 #else
-char GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
+gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
 #endif
 
 #endif
