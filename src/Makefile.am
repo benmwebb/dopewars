@@ -18,16 +18,17 @@ dopewars_DEPENDENCIES = @INTLLIBS@ @WNDRES@ $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP)
 dopewars_LDADD = $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = admin.c AIPlayer.c dopeos.c dopewars.c \
-                   error.c message.c network.c serverside.c \
-                   tstring.c winmain.c
-
-INCLUDES   = -I.. -I. @GTK_CFLAGS@
+dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h dopeos.c dopeos.h \
+                   dopewars.c dopewars.h error.c error.h message.c message.h \
+                   network.c network.h nls.h serverside.c serverside.h \
+                   tstring.c tstring.h winmain.c winmain.h
+INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@
 DEFS       = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
-PIXMAPS    = dopewars-pill.png dopewars-shot.png dopewars-weed.png
 DOPEDIR    = ${DESTDIR}${bindir}
 DOPEBIN    = ${DOPEDIR}/dopewars
+PIXMAPS    = dopewars-pill.png dopewars-shot.png dopewars-weed.png
+EXTRA_DIST = ${PIXMAPS} pill.ico magic dopewars.rc
 
 install-exec-hook:
 	@chgrp games ${DOPEBIN} || chgrp wheel ${DOPEBIN} || \
@@ -37,7 +38,9 @@ install-exec-hook:
 
 install-data-local:
 	${mkinstalldirs} ${PIXDIR}
-	${INSTALL} -m 0644 ${PIXMAPS} ${PIXDIR}
+	for pix in ${PIXMAPS}; do \
+	  ${INSTALL} -m 0644 ${srcdir}/$${pix} ${PIXDIR}; \
+	done
 
 %.res: %.rc
 	windres -O coff -o $@ $<

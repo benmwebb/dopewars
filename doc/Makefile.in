@@ -95,12 +95,12 @@ localedir = @localedir@
 
 DOCPATH = ${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/
 DOCS = aiplayer.html configfile.html index.html i18n.html server.html \
-      clientplay.html credits.html installation.html \
-      servercommands.html commandline.html developer.html \
-      metaserver.html protocol.html windows.html
+             clientplay.html credits.html installation.html \
+             servercommands.html commandline.html developer.html \
+             metaserver.html protocol.html windows.html
 
 man_MANS = dopewars.6
-EXTRA_DIST = ${man_MANS}
+EXTRA_DIST = ${man_MANS} ${DOCS}
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -252,7 +252,9 @@ mostlyclean distclean maintainer-clean
 
 install-data-local:
 	${INSTALL} -d -m 0755 ${DOCPATH}
-	${INSTALL} -m 0644 ${DOCS} ${DOCPATH}
+	for doc in ${DOCS}; do \
+	  ${INSTALL} -m 0644 ${srcdir}/$${doc} ${DOCPATH}; \
+	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

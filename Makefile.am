@@ -1,9 +1,10 @@
 SUBDIRS    = intl src doc po
-DISTFILES  = ABOUT-NLS
 DESKTOPDIR = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP    = dopewars.desktop
 SCOREDIR   = ${DESTDIR}${datadir}
 SCORE      = ${SCOREDIR}/dopewars.sco
+EXTRA_DIST = ABOUT-NLS LICENCE dopewars.desktop dopewars.spec \
+             runindent.sh win32
 
 install-data-local:
 	${mkinstalldirs} ${SCOREDIR}
@@ -13,4 +14,4 @@ install-data-local:
 	chmod 0660 ${SCORE}
 	src/dopewars -C ${SCORE}
 	${mkinstalldirs} ${DESKTOPDIR}
-	${INSTALL} -m 0644 ${DESKTOP} ${DESKTOPDIR}
+	${INSTALL} -m 0644 ${srcdir}/${DESKTOP} ${DESKTOPDIR}
