@@ -5057,14 +5057,20 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
 
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
 {
-  GtkWidget *textview, *scrollwin;
+  GtkWidget *textview, *scrollwin, *frame;
 
   textview = gtk_text_view_new();
+
+  frame = gtk_frame_new(NULL);
+  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(scrollwin), textview);
-  *pack_widg = scrollwin;
+  gtk_container_add(GTK_CONTAINER(frame), scrollwin);
+
+  *pack_widg = frame;
   return textview;
 }
 
