@@ -845,8 +845,8 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
       SetTextColor(hDC, RGB(0, 0, 0xCC));
       SetBkMode(hDC, TRANSPARENT);
       GetClientRect(hwnd, &wndrect);
-      DrawText(hDC, text, -1, &wndrect,
-               DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS);
+      myDrawText(hDC, text, -1, &wndrect,
+                 DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS);
       SelectObject(hDC, oldFont);
       EndPaint(hwnd, &ps);
     }
