@@ -192,7 +192,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    QueueMessageForSend(&MetaNetBuf,text->str);
    QueueMessageForSend(&MetaNetBuf,
                        "Content-Type: application/x-www-form-urlencoded");
-   g_string_sprintf(text,"Content-Length: %d\n",strlen(query->str));
+   g_string_sprintf(text,"Content-Length: %d\n",(int)strlen(query->str));
    QueueMessageForSend(&MetaNetBuf,text->str);
 
    QueueMessageForSend(&MetaNetBuf,query->str);
