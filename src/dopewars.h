@@ -1,5 +1,5 @@
 /* dopewars.h  Common structures and stuff for Dopewars                 */
-/* Copyright (C)  1998-2000  Ben Webb                                   */
+/* Copyright (C)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
 

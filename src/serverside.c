@@ -1,5 +1,5 @@
 /* serverside.c   Handles the server side of dopewars                   */
-/* Copyright (c)  1998-2000  Ben Webb                                   */
+/* Copyright (c)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
 
