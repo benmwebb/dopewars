@@ -10,6 +10,7 @@ AM_CONFIG_HEADER(config.h)
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_INSTALL
+AC_PROG_MAKE_SET
 
 dnl Do i18n stuff
 ALL_LINGUAS="de pl pt_BR"
@@ -31,10 +32,6 @@ AC_ARG_ENABLE(curses-client,
 [  --enable-curses-client  include curses client],
 [ CURSES_CLIENT="$enableval" ],[ CURSES_CLIENT="yes" ])
 
-WIN_RC=""
-WIN_RES=""
-WIN_MAKE_RES="/dev/null"
-
 dnl Test for Cygwin environment
 AC_CYGWIN
 dnl Let the user override this with the --enable-nativewin32 option
@@ -52,9 +49,6 @@ if test "$CYGWIN" = "yes" ; then
 
    CFLAGS="$CFLAGS -mwindows -fnative-struct -mno-cygwin"
    LIBS="$LIBS -lwsock32 -lcomctl32"
-   if test "$GUI_CLIENT" = "yes" ; then
-      AC_DEFINE(GUI_CLIENT)
-   fi
 
    dnl Glib stuff
    LDFLAGS="$LDFLAGS -lglib-1.3"
@@ -91,10 +85,6 @@ else
       fi
    fi
 
-   if test "$GUI_CLIENT" = "yes" ; then
-      AC_DEFINE(GUI_CLIENT)
-   fi
-
    dnl Glib stuff
    CFLAGS="$CFLAGS `glib-config --cflags`"
    LDFLAGS="$LDFLAGS `glib-config --libs`"
@@ -113,6 +103,7 @@ fi
 
 if test "$GUI_CLIENT" = "yes" ; then
    AC_MSG_RESULT(Compiling in graphical client)
+   AC_DEFINE(GUI_CLIENT)
 fi
 
 if test "$CURSES_CLIENT" = "yes" ; then
