@@ -746,7 +746,6 @@ void ServerHelp(void)
 void CreatePidFile(void)
 {
   FILE *fp;
-  char *OpenError;
 
   if (!PidFile)
     return;
@@ -757,8 +756,9 @@ void CreatePidFile(void)
     fclose(fp);
     chmod(PidFile, S_IREAD | S_IWRITE);
   } else {
-    OpenError = strerror(errno);
+    gchar *OpenError = ErrStrFromErrno(errno);
     g_warning(_("Cannot create pid file %s: %s"), PidFile, OpenError);
+    g_free(OpenError);
   }
 }
 
@@ -1804,7 +1804,7 @@ void ConvertHighScoreFile(void)
   FILE *old, *backup;
   gchar *BackupFile;
   int ch;
-  char *OldError = NULL, *BackupError = NULL;
+  gchar *OldError = NULL, *BackupError = NULL;
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
 
   /* The user running dopewars must be allowed to mess with the score file */
@@ -1813,12 +1813,14 @@ void ConvertHighScoreFile(void)
   BackupFile = g_strdup_printf("%s.bak", ConvertFile);
 
   old = fopen(ConvertFile, "r+");
-  if (!old)
-    OldError = strerror(errno);
+  if (!old) {
+    OldError = ErrStrFromErrno(errno);
+  }
 
   backup = fopen(BackupFile, "w");
-  if (!backup)
-    BackupError = strerror(errno);
+  if (!backup) {
+    BackupError = ErrStrFromErrno(errno);
+  }
 
   if (old && backup) {
 
@@ -1874,6 +1876,8 @@ void ConvertHighScoreFile(void)
   }
 
   g_free(BackupFile);
+  g_free(OldError);
+  g_free(BackupError);
 }
 
 /* State, set by OpenHighScoreFile, and later used by
@@ -1913,12 +1917,14 @@ gboolean CheckHighScoreFileConfig(void)
 {
 
   if (!ScoreFP) {
+    gchar *errstr = ErrStrFromErrno(OpenError);
     g_log(NULL, G_LOG_LEVEL_CRITICAL,
           _("Cannot open high score file %s.\n"
             "(%s.) Either ensure you have permissions to access\n"
             "this file and directory, or specify an alternate high score "
             "file with the\n-f command line option."),
-          HiScoreFile, strerror(OpenError));
+          HiScoreFile, errstr);
+    g_free(errstr);
     return FALSE;
   }
 
