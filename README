@@ -57,9 +57,9 @@ program will attempt to connect to a dopewars server so that players can send
 messages back and forth, and shoot each other if they really want to...
 
 dopewars -s
-Starts a dopewars server. By default this is an interactive server; if you
-want to put it in the background (on a Unix system) then run it as 
-"dopewars -s < /dev/null > /dev/null &" or similar.
+Starts a dopewars server. This sits in the background and handles multi-player
+games. You probably want to use the -l command line option too to direct its
+log output to somewhere sensible.
 
 dopewars -c
 Create and run a computer dopewars player. This will attempt to connect
