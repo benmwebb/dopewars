@@ -34,6 +34,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <glib.h>
+#include "configfile.h"
 #include "curses_client.h"
 #include "cursesport/cursesport.h"
 #include "dopewars.h"
@@ -2424,6 +2425,8 @@ void CursesLoop(void)
 
   if (!CheckHighScoreFileConfig())
     return;
+
+  ConvertConfigFile();
 
   /* Save the configuration, so we can restore those elements that get
    * overwritten when we connect to a dopewars server */

@@ -829,6 +829,7 @@ static gboolean StartServer(void)
   Scanner->msg_handler = ScannerErrorHandler;
   Scanner->input_name = "(stdin)";
   CreatePidFile();
+  ConvertConfigFile();
 
   /* Make the output line-buffered, so that the log file (if used) is
    * updated regularly */

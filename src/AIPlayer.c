@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <glib.h>
+#include "configfile.h"
 #include "dopewars.h"
 #include "message.h"
 #include "nls.h"
@@ -142,6 +143,8 @@ void AIPlayerLoop()
   NBStatus oldstatus;
   NBSocksStatus oldsocks;
   NetworkBuffer *netbuf;
+
+  ConvertConfigFile();
 
   errstr = g_string_new("");
   AIPlay = g_new(Player, 1);
