@@ -1,4 +1,5 @@
 - Startscreen
+- Track down server memory corruption bug!
 - Implement server option to buy more than one bitch at a time in the Pub.
 - Fail nicely if NumLocation (etc.) is set to zero
 - Allow customisation of GtkTextView tag colours
