@@ -826,7 +826,7 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
    struct hostent *he;
    guchar *addpt;
    guint addlen,i;
-   struct in_addr *h_addr;
+   struct in_addr *haddr;
    unsigned short int netport;
 #ifdef CYGWIN
    gchar *username=NULL;
@@ -892,7 +892,7 @@ g_print("username %s\n",pwd->pw_name);
    addlen=9+strlen(pwd->pw_name);
 #endif
 
-   h_addr = (struct in_addr *)he->h_addr;
+   haddr = (struct in_addr *)he->h_addr;
    g_assert(sizeof(struct in_addr)==4);
 
    netport = htons(RemotePort);
@@ -904,10 +904,11 @@ g_print("username %s\n",pwd->pw_name);
       return FALSE;
    }
 
+
    addpt[0] = 4;  /* SOCKS version */
    addpt[1] = 1;  /* CONNECT */
    memcpy(&addpt[2],&netport,sizeof(netport));
-   memcpy(&addpt[4],h_addr,sizeof(struct in_addr));
+   memcpy(&addpt[4],haddr,sizeof(struct in_addr));
 #ifdef CYGWIN
    strcpy(&addpt[8],username);
    g_free(username);
