@@ -2076,7 +2076,7 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
   } else if (Globals[GlobalIndex].StringVal) {
     scanner->config->identifier_2_string = TRUE;
     scanner->config->cset_identifier_first =
-        G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS
+        G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z G_CSET_LATINS
         G_CSET_LATINC;
     scanner->config->cset_identifier_nth =
         G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS
