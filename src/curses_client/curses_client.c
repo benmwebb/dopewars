@@ -60,6 +60,9 @@ static SCREEN *cur_screen;
 /* Current size of the screen */
 static int Width, Depth;
 
+/* Maximum number of messages to store (for scrollback etc.) */
+const static int MaxMessages = 1000;
+
 #ifdef NETWORKING
 static enum {
   CM_SERVER, CM_PROMPT, CM_META, CM_SINGLE
@@ -81,7 +84,7 @@ static void clear_line(int line), clear_exceptfor(int skip);
 static void nice_wait(void);
 static void DisplayFightMessage(Player *Play, char *text);
 static void DisplaySpyReports(char *Data, Player *From, Player *To);
-static void display_message(char *buf);
+static void display_message(const char *buf);
 static void print_location(char *text);
 static void print_status(Player *Play, gboolean DispDrug);
 static char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
@@ -192,6 +195,27 @@ static void mvaddcentstr(const int row, const gchar *str)
   len = strlen(str);
   col = (len > Width ? 0 : (Width - len) / 2);
   mvaddstr(row, col, str);
+}
+
+/*
+ * Displays a string at the given coordinates and with the given
+ * attributes. If the string is longer than "wid", it is truncated, and
+ * if shorter, it is padded with spaces.
+ */
+static void mvaddfixwidstr(const int row, const int col, const int wid,
+                           const gchar *str, const int attrs)
+{
+  int strwid = str ? strlen(str) : 0;
+  int strind;
+
+  strwid = MIN(strwid, wid);
+
+  for (strind = 0; strind < strwid; ++strind) {
+    mvaddch(row, col + strind, (guchar)str[strind] | attrs);
+  }
+  for (strind = strwid; strind < wid; ++strind) {
+    mvaddch(row, col + strind, (guchar)' ' | attrs);
+  }
 }
 
 /* 
@@ -1623,49 +1647,109 @@ void DisplayFightMessage(Player *Play, char *text)
   }
 }
 
+/*
+ * Returns the topmost row of the message area
+ */
+static int get_msg_area_top(void)
+{
+  return 10;
+}
+
+/*
+ * Returns the bottommost row of the message area
+ */
+static int get_msg_area_bottom(void)
+{
+  return 14;
+}
+
 /* 
- * Displays a network message "buf" in the message area (lines
- * 10 to 14) scrolling previous messages up.
+ * Displays a network message "buf" in the message area
+ * scrolling previous messages up.
  * If "buf" is NULL, clears the message area
  * If "buf" is a blank string, redisplays the message area
  */
-void display_message(char *buf)
+void display_message(const char *buf)
 {
-  guint x, y;
+  guint y, top, depth;
   guint wid;
-  static gchar Messages[5][200];
-  gchar *bufpt;
+  static GList *msgs = NULL;
+  static int num_msgs = 0;
 
-  if (Width <= 4)
+  top = get_msg_area_top();
+  depth = get_msg_area_bottom() - top + 1;
+  wid = Width - 4;
+
+  if (wid < 0 || depth < 0) {
     return;
-
-  wid = MIN(Width - 4, 200);
+  }
 
   if (!buf) {
-    for (y = 0; y < 5; y++) {
-      memset(Messages[y], ' ', 200);
-      if (Network) {
-        mvaddch(y + 10, 0, ' ' | TextAttr);
-        addch(ACS_VLINE | StatsAttr);
-        for (x = 0; x < wid; x++)
-          addch(' ' | StatsAttr);
-        addch(ACS_VLINE | StatsAttr);
-        addch(' ' | TextAttr);
+    GList *pt;
+    for (pt = msgs; pt; pt = g_list_next(pt)) {
+      g_free(pt->data);
+    }
+    g_list_free(msgs);
+    msgs = NULL;
+    num_msgs = 0;
+    /* Display a blank message area */
+    if (Network) {
+      for (y = 0; y < depth; y++) {
+        mvaddfixwidstr(y + top, 2, wid, NULL, StatsAttr);
       }
     }
   } else if (Network) {
-    bufpt = buf;
-    while (bufpt[0] != 0) {
-      memmove(Messages[0], Messages[1], 200 * 4);
-      memset(Messages[4], ' ', 200);
-      memcpy(Messages[4], bufpt,
-             strlen(bufpt) > wid ? wid : strlen(bufpt));
-      bufpt += MIN(strlen(bufpt), wid);
-    }
-    for (y = 0; y < 5; y++)
-      for (x = 0; x < wid; x++) {
-        mvaddch(y + 10, x + 2, (guchar)Messages[y][x] | StatsAttr);
+    GList *pt, *nextpt;
+    gchar *data;
+    if (buf[0]) {
+      /* Remove the first message if we've got to the limit */
+      if (num_msgs == MaxMessages && msgs) {
+	g_free(msgs->data);
+	msgs = g_list_remove(msgs, msgs->data);
       }
+      msgs = g_list_append(msgs, g_strdup(buf));
+      ++num_msgs;
+    }
+
+    nextpt = g_list_last(msgs);
+    pt = NULL;
+    data = NULL;
+    if (nextpt) {
+      int lines = 0, displines = depth;
+      /* Find the message to display at the top of the message area */
+      do {
+	displines -= lines;
+	pt = nextpt;
+	nextpt = g_list_previous(pt);
+        data = pt->data;
+        lines = (strlen(data) + wid - 1) / wid;
+      } while (displines > lines && nextpt);
+
+      /* Correct for the first line starting partway through a message */
+      if (displines < lines) {
+	data += wid * (lines - displines);
+      }
+    }
+
+    /* Display the relevant messages, line by line */
+    y = 0;
+    while (y < depth && pt) {
+      mvaddfixwidstr(y + top, 2, wid, data, StatsAttr);
+      ++y;
+      if (strlen(data) > wid) {
+	data += wid;
+      } else {
+	pt = g_list_next(pt);
+	if (pt) {
+	  data = pt->data;
+	}
+      }
+    }
+
+    /* Blank out any remaining lines in the message area */
+    for (; y < depth; ++y) {
+      mvaddfixwidstr(y + top, 2, wid, NULL, StatsAttr);
+    }
     refresh();
   }
 }
