@@ -11,6 +11,7 @@ cvs
       shortcuts; now fixed.
     - configure should now work properly if GLib 2.0 is installed but
       GTK2.0 is not
+    - Norwegian Nynorsk translation added
 
 1.5.6   29-04-2002
     - Bug fix: the server will only let you pay back loans or deal with the
