@@ -96,7 +96,8 @@ static void StartGame(void);
 static void EndGame(void);
 static void UpdateMenus(void);
 static void AuthDialog(HttpConnection *conn,
-                       gboolean proxyauth,gchar *realm);
+                       gboolean proxyauth,gchar *realm,
+                       gpointer data);
 
 #ifdef NETWORKING
 static void GetClientMessage(gpointer data,gint socket,
@@ -2050,12 +2051,61 @@ static void FillMetaServerList(struct StartGameStruct *widgets,
    gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
+static void SetMetaStatus(struct StartGameStruct *widgets,
+                          NBStatus oldstatus,NBSocksStatus oldsocks) {
+  NBStatus status;
+  NBSocksStatus sockstat;
+  gchar *text;
+
+  status = widgets->MetaConn->NetBuf.status;
+  sockstat = widgets->MetaConn->NetBuf.sockstat;
+  if (oldstatus==status && sockstat==oldsocks) return;
+
+  switch (status) {
+    case NBS_PRECONNECT:
+      break;
+    case NBS_SOCKSCONNECT:
+      switch (sockstat) {
+        case NBSS_METHODS:
+          text=g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
+                               Socks.name);
+          SetStartGameStatus(widgets,text); g_free(text);
+          break;
+        case NBSS_USERPASSWD:
+          SetStartGameStatus(widgets,
+                        _("Status: Authenticating with SOCKS server"));
+          break;
+        case NBSS_CONNECT:
+          text=g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
+                               MetaServer.Name);
+          SetStartGameStatus(widgets,text); g_free(text);
+          break;
+      }
+      break;
+    case NBS_CONNECTED:
+      SetStartGameStatus(widgets,
+           _("Status: Obtaining server information from metaserver..."));
+      break;
+  }
+}
+
+static void MetaDone(struct StartGameStruct *widgets) {
+  if (IsHttpError(widgets->MetaConn)) {
+    ConnectError(widgets,TRUE);
+  } else {
+    SetStartGameStatus(widgets,NULL);
+  }
+  CloseHttpConnection(widgets->MetaConn);
+  widgets->MetaConn=NULL;
+  FillMetaServerList(widgets,TRUE);
+}
+
 static void HandleMetaSock(gpointer data,gint socket,
                            GdkInputCondition condition) {
    struct StartGameStruct *widgets;
    gboolean DoneOK;
-   NBStatus oldstatus,newstatus;
-   gchar *text;
+   NBStatus oldstatus;
+   NBSocksStatus oldsocks;
 
 g_print("HandleMetaSock: read %d, write %d\n",
         condition&GDK_INPUT_READ,
@@ -2064,30 +2114,18 @@ g_print("HandleMetaSock: read %d, write %d\n",
    if (!widgets->MetaConn) return;
 
    oldstatus = widgets->MetaConn->NetBuf.status;
+   oldsocks = widgets->MetaConn->NetBuf.sockstat;
 
    if (NetBufHandleNetwork(&widgets->MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
       while (HandleWaitingMetaServerData(widgets->MetaConn,
                                          &widgets->NewMetaList,&DoneOK)) {}
    }
-   newstatus = widgets->MetaConn->NetBuf.status;
-   if (newstatus == NBS_SOCKSCONNECT && oldstatus==NBS_PRECONNECT) {
-      text=g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
-                           Socks.name);
-      SetStartGameStatus(widgets,text); g_free(text);
-   } else if (newstatus == NBS_CONNECTED && oldstatus!=NBS_CONNECTED) {
-      SetStartGameStatus(widgets,
-           _("Status: Obtaining server information from metaserver"));
-   }
+
    if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
-      if (IsHttpError(widgets->MetaConn)) {
-         ConnectError(widgets,TRUE);
-      } else {
-         SetStartGameStatus(widgets,NULL);
-      }
-      CloseHttpConnection(widgets->MetaConn);
-      widgets->MetaConn=NULL;
-      FillMetaServerList(widgets,TRUE);
+      MetaDone(widgets);
+   } else {
+      SetMetaStatus(widgets,oldstatus,oldsocks);
    }
 }
 
@@ -2122,7 +2160,7 @@ static void UpdateMetaServerList(GtkWidget *widget,
 
    if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
-      SetHttpAuthFunc(widgets->MetaConn,AuthDialog);
+      SetHttpAuthFunc(widgets->MetaConn,AuthDialog,(gpointer)widgets);
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
    } else {
@@ -3138,36 +3176,52 @@ static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
    GtkWidget *userentry,*passwdentry;
    gchar *username=NULL,*password=NULL;
    gpointer proxy,authok;
+   struct StartGameStruct *widgets;
    HttpConnection *conn;
+   NBStatus oldstatus;
+   NBSocksStatus oldsocks;
 
    authok = gtk_object_get_data(GTK_OBJECT(window),"authok");
    proxy = gtk_object_get_data(GTK_OBJECT(window),"proxy");
    userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
    passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
                                                   "password");
+   widgets = (struct StartGameStruct *)gtk_object_get_data(GTK_OBJECT(window),
+                                                           "widgets");
    conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),"httpconn");
-   g_assert(userentry && passwdentry && conn);
+   g_assert(userentry && passwdentry && conn && widgets);
 
    if (authok) {
      username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
      password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
    }
 
+   oldstatus = widgets->MetaConn->NetBuf.status;
+   oldsocks = widgets->MetaConn->NetBuf.sockstat;
+
    if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password)) {
       g_print("FIXME: Connect error on setauth\n");
+      MetaDone(widgets);
+   } else {
+      SetMetaStatus(widgets,oldstatus,oldsocks);
    }
 
    g_free(username); g_free(password);
 }
 
-void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm) {
+void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm,
+                gpointer data) {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
+   struct StartGameStruct *widgets;
+
+   widgets = (struct StartGameStruct *)data;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(window),"destroy",
                       GTK_SIGNAL_FUNC(DestroyAuthDialog),NULL);
    gtk_object_set_data(GTK_OBJECT(window),"proxy",GINT_TO_POINTER(proxy));
    gtk_object_set_data(GTK_OBJECT(window),"httpconn",(gpointer)conn);
+   gtk_object_set_data(GTK_OBJECT(window),"widgets",(gpointer)widgets);
 
    if (proxy) {
       gtk_window_set_title(GTK_WINDOW(window),

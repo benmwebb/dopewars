@@ -1059,9 +1059,10 @@ gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
    else return TRUE;
 }
 
-void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc) {
+void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data) {
    g_assert(conn && authfunc);
    conn->authfunc = authfunc;
+   conn->authdata = data;
 }
 
 static gboolean ParseHtmlLocation(gchar *uri,gchar **host,unsigned *port,
@@ -1113,7 +1114,7 @@ static void StartHttpAuth(HttpConnection *conn,gboolean proxy,gchar *header) {
        g_strncasecmp(split[1],"realm=",6)==0 && strlen(split[1])>6) {
      realm = &split[1][6];
      conn->waitinput=TRUE;
-     (*conn->authfunc)(conn,proxy,realm);
+     (*conn->authfunc)(conn,proxy,realm,conn->authdata);
    } else {
      g_print("FIXME: Bad HTTP auth header\n");
    }

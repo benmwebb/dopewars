@@ -124,7 +124,7 @@ typedef enum {
 typedef struct _HttpConnection HttpConnection;
 
 typedef void (*HCAuthFunc)(struct _HttpConnection *conn,
-                           gboolean proxyauth,gchar *realm);
+                           gboolean proxyauth,gchar *realm,gpointer data);
 
 /* A structure used to keep track of an HTTP connection */
 struct _HttpConnection {
@@ -140,6 +140,7 @@ struct _HttpConnection {
    gchar *RedirQuery;     /* if non-NULL, the path to redirect to */
    unsigned RedirPort;    /* The port on the host to redirect to */
    HCAuthFunc authfunc;   /* Callback function for authentication */
+   gpointer authdata;     /* Data to be passed to authfunc */
    gboolean waitinput;    /* TRUE if we're waiting for auth etc.
                              to be supplied */
    gchar *user;           /* The supplied username for HTTP auth */
@@ -188,7 +189,7 @@ gboolean IsHttpError(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
 gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
                                gchar *user,gchar *password);
-void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc);
+void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data);
 gboolean HandleHttpCompletion(HttpConnection *conn);
 
 int CreateTCPSocket(LastError *error);
