@@ -1247,6 +1247,13 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
   case F_RELOAD:
     SoundPlay(Sounds.FightReload);
     break;
+  case F_FAILFLEE:
+    SoundPlay(*AttackName[0] ? Sounds.EnemyFailFlee : Sounds.FailFlee);
+    break;
+  case F_LEAVE:
+  case F_LASTLEAVE:
+    SoundPlay(*AttackName[0] ? Sounds.EnemyFlee : Sounds.Flee);
+    break;
   default:
     break;
   }

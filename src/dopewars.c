@@ -158,7 +158,7 @@ struct NAMES Names = {
 };
 struct SOUNDS Sounds = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* N.B. The slightly over-enthusiastic comments here are for the benefit
@@ -420,6 +420,18 @@ struct GLOBALS Globals[] = {
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.Killed, NULL, "Sounds.Killed",
    N_("Sound file played when you are killed"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.EnemyFailFlee, NULL, "Sounds.EnemyFailFlee",
+   N_("Sound file played when a player tries to escape, but fails"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.FailFlee, NULL, "Sounds.FailFlee",
+   N_("Sound file played when you try to escape, but fail"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.EnemyFlee, NULL, "Sounds.EnemyFlee",
+   N_("Sound file played when a player successfully escapes"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.Flee, NULL, "Sounds.Flee",
+   N_("Sound file played when you successfully escape"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.Jet, NULL, "Sounds.Jet",
    N_("Sound file played on arriving at a new location"), NULL, NULL, 0, "",
