@@ -452,7 +452,9 @@ static void SendHttpRequest(HttpConnection *conn) {
 
    if (conn->user && conn->password) {
       userpasswd = g_strdup_printf("%s:%s",conn->user,conn->password);
-      g_string_assign(text,"Authorization: Basic ");
+      g_string_assign(text,conn->proxyauth ? "Proxy-Authenticate" :
+                                             "Authorization");
+      g_string_append(text,": Basic ");
       AddB64Enc(text,userpasswd);
       g_free(userpasswd);
       QueueMessageForSend(&conn->NetBuf,text->str);
@@ -602,6 +604,14 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
+      conn->proxyauth=TRUE;
+      if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
+/* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
+   HTTP/1.0 proxies seem to support it anyway */
+    } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
+               conn->StatusCode==407) {
+      g_print("FIXME: Proxy authentication %s required\n",split[1]);
+      conn->proxyauth=TRUE;
       if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
     }
   }
