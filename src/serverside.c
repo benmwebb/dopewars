@@ -48,6 +48,7 @@
 #include <stdlib.h>
 #include <glib.h>
 #include "dopewars.h"
+#include "log.h"
 #include "message.h"
 #include "network.h"
 #include "nls.h"

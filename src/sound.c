@@ -38,6 +38,7 @@
 #endif
 
 #include "dopewars.h"
+#include "log.h"
 #include "nls.h"
 #include "sound.h"
 
