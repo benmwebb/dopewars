@@ -39,5 +39,6 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
 #endif
 
 void GuiStartGame(void);
+GtkWidget *my_hbbox_new(void);
 
 #endif
