@@ -1581,11 +1581,8 @@ void clear_screen(void)
  */
 void nice_wait()
 {
-  gchar *text;
-
   attrset(PromptAttr);
-  text = _("Press any key...");
-  mvaddstr(23, (Width - strlen(text)) / 2, text);
+  mvaddcentstr(23, _("Press any key..."));
   bgetch();
   attrset(TextAttr);
 }
