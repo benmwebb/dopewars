@@ -2685,7 +2685,7 @@ void GeneralStartup(int argc, char *argv[])
  */
 void StripTerminators(gchar *str)
 {
-  int i;
+  guint i;
 
   if (str) {
     for (i = 0; i < strlen(str); i++) {
