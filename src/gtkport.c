@@ -2314,8 +2314,10 @@ void gtk_clist_draw_row(GtkCList *clist,LPDRAWITEMSTRUCT lpdis) {
          if (rcCol.left > lpdis->rcItem.right) rcCol.left=lpdis->rcItem.right;
          if (rcCol.right > lpdis->rcItem.right) rcCol.right=lpdis->rcItem.right;
          if (i==clist->ncols-1) rcCol.right=lpdis->rcItem.right;
-         if (row->text[i]) DrawText(lpdis->hDC,row->text[i],-1,&rcCol,
-                                    DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+         if (row->text[i]) {
+           DrawText(lpdis->hDC,row->text[i],-1,&rcCol,
+                    DT_LEFT|DT_SINGLELINE|DT_VCENTER|DT_END_ELLIPSIS);
+         }
       }
    }
 
