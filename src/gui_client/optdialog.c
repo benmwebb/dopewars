@@ -792,10 +792,31 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Locations"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
+  table = gtk_table_new(4, 2, FALSE);
+  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  gtk_container_set_border_width(GTK_CONTAINER(table), 7);
+
   hbox = CreateList("Drug", drugmembers);
-  gtk_container_set_border_width(GTK_CONTAINER(hbox), 7);
+  gtk_table_attach_defaults(GTK_TABLE(table), hbox, 0, 2, 0, 1);
+
+  hsep = gtk_hseparator_new();
+  gtk_table_attach_defaults(GTK_TABLE(table), hsep, 0, 2, 1, 2);
+
+  label = gtk_label_new(_("Expensive string 1"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("Drugs.ExpensiveStr1");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
+
+  label = gtk_label_new(_("Expensive string 2"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("Drugs.ExpensiveStr2");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 3, 4);
+
   label = gtk_label_new(_("Drugs"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
   hbox = CreateList("Gun", gunmembers);
   gtk_container_set_border_width(GTK_CONTAINER(hbox), 7);
