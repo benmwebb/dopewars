@@ -24,23 +24,34 @@
 #include <config.h>
 #endif
 
-#include "sound_esd.h"
-#include "sound_sdl.h"
-#include "sound_winmm.h"
+#include <glib.h>
+#include <gmodule.h>
+
+#include "sound.h"
 
 static SoundDriver *driver = NULL;
+typedef SoundDriver *(*InitFunc)(void);
+GModule *soundmodule = NULL;
 
 void SoundInit(void)
 {
-#ifdef HAVE_SDL_MIXER
-  driver = SoundInit_SDL();
-#endif
-//#ifdef HAVE_ESD
-//  driver = SoundInit_ESD();
-//#endif
-#ifdef HAVE_WINMM
-  driver = SoundInit_WinMM();
-#endif
+  InitFunc ifunc;
+  gchar *err;
+  
+  soundmodule = g_module_open("sound.so", G_MODULE_BIND_LAZY);
+  if (!soundmodule) {
+    g_print("g_module_open failed: %s\n", g_module_error());
+    return;
+  }
+  if (g_module_symbol(soundmodule, "init", (gpointer *)&ifunc)) {
+    g_print("module symbol = %p\n", ifunc);
+    driver = (*ifunc)();
+    if (driver) {
+      g_print("Plugin %s init OK\n", driver->name);
+    }
+  } else {
+    g_print("g_module_symbol failed: %s\n", g_module_error());
+  }
 }
 
 void SoundOpen(gchar *drivername)
@@ -54,6 +65,9 @@ void SoundClose(void)
 {
   if (driver && driver->close) {
     driver->close();
+  }
+  if (soundmodule) {
+    g_module_close(soundmodule);
   }
 }
 
