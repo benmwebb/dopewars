@@ -55,7 +55,7 @@
 #include "tstring.h"
 
 #ifdef GUI_SERVER
-#include "gtkport.h"
+#include "gtkport/gtkport.h"
 #endif
 
 static const price_t MINTRENCHPRICE = 200, MAXTRENCHPRICE = 300;
