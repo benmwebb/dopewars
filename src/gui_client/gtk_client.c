@@ -770,6 +770,8 @@ void PrintMessage(char *text, char *tagname)
   TextViewAppend(messages, "\n", NULL, TRUE);
 }
 
+static void FreeCombatants(void);
+
 /* 
  * Called when one of the action buttons in the Fight dialog is clicked.
  * "data" specifies which button (Deal Drugs/Run/Fight/Stand) was pressed.
@@ -791,8 +793,13 @@ static void FightCallback(GtkWidget *widget, gpointer data)
   switch (Answer) {
   case 'D':
     gtk_widget_hide(FightDialog);
-    if (!(Play->Flags & FIGHTING) && HaveAbility(Play, A_DONEFIGHT)) {
-      SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
+    if (!(Play->Flags & FIGHTING)) {
+      if (HaveAbility(Play, A_DONEFIGHT)) {
+        SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
+      }
+      FreeCombatants();
+      gtk_widget_destroy(FightDialog);
+      FightDialog = NULL;
     }
     break;
   case 'R':
