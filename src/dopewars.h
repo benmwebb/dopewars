@@ -304,6 +304,11 @@ struct PLAYER_T {
 #define CM_PROMPT 1
 #define CM_META   2
 #define CM_SINGLE 3
+
+#define SN_PROMPT "(Prompt)"
+#define SN_META   "(MetaServer)"
+#define SN_SINGLE "(Single)"
+
 typedef struct tag_serverdata {
    char *Name;
    int Port;

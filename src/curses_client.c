@@ -289,14 +289,14 @@ static char ConnectToServer(Player *Play) {
    char *pt=NULL,*MetaError=NULL;
    gchar *text;
    int c;
-   if (strcasecmp(ServerName,"(MetaServer)")==0 || ConnectMethod==CM_META) {
+   if (strcasecmp(ServerName,SN_META)==0 || ConnectMethod==CM_META) {
       ConnectMethod=CM_META;
       MetaError=SelectServerFromMetaServer();
-   } else if (strcasecmp(ServerName,"(Prompt)")==0 ||
+   } else if (strcasecmp(ServerName,SN_PROMPT)==0 ||
               ConnectMethod==CM_PROMPT) {
       ConnectMethod=CM_PROMPT;
       SelectServerManually();
-   } else if (strcasecmp(ServerName,"(Single)")==0 ||
+   } else if (strcasecmp(ServerName,SN_SINGLE)==0 ||
               ConnectMethod==CM_SINGLE) {
       ConnectMethod=CM_SINGLE;
       return TRUE;

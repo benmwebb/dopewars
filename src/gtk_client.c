@@ -62,6 +62,9 @@
 #define ET_SPY    0
 #define ET_TIPOFF 1
 
+/* Which notebook page to display in the New Game dialog */
+static gint NewGameType=0;
+
 struct InventoryWidgets {
    GtkWidget *HereList,*CarriedList;
    GtkWidget *HereFrame,*CarriedFrame;
@@ -1823,9 +1826,10 @@ void NewGameDialog() {
    GtkWidget *table,*clist,*scrollwin,*dialog,*hbbox;
    GtkAccelGroup *accel_group;
    gchar *text;
-   gchar *server_titles[5];
+   gchar *server_titles[5],*ServerEntry;
    static struct StartGameStruct widgets;
    guint AccelKey;
+   gboolean UpdateMeta=FALSE;
 
    server_titles[0]=_("Server");
    server_titles[1]=_("Port");
@@ -1880,7 +1884,16 @@ void NewGameDialog() {
    gtk_table_attach(GTK_TABLE(table),label,0,1,0,1,
                     GTK_SHRINK,GTK_SHRINK,0,0);
    entry=widgets.hostname=gtk_entry_new();
-   gtk_entry_set_text(GTK_ENTRY(entry),ServerName);
+
+   ServerEntry = "localhost";
+   if (strcasecmp(ServerName,SN_META)==0) {
+      NewGameType=2;
+      UpdateMeta=TRUE;
+   } else if (strcasecmp(ServerName,SN_PROMPT)==0) NewGameType=0;
+   else if (strcasecmp(ServerName,SN_SINGLE)==0)   NewGameType=1;
+   else ServerEntry = ServerName;
+
+   gtk_entry_set_text(GTK_ENTRY(entry),ServerEntry);
    gtk_table_attach(GTK_TABLE(table),entry,1,2,0,1,
                     GTK_EXPAND|GTK_SHRINK|GTK_FILL,
                     GTK_EXPAND|GTK_SHRINK|GTK_FILL,0,0);
@@ -1973,9 +1986,14 @@ void NewGameDialog() {
    gtk_container_add(GTK_CONTAINER(widgets.dialog),vbox);
 
    gtk_widget_grab_focus(widgets.name);
-   FillMetaServerList(&widgets);
+   if (UpdateMeta) {
+      UpdateMetaServerList(NULL,&widgets);
+   } else {
+      FillMetaServerList(&widgets);
+   }
 
    gtk_widget_show_all(widgets.dialog);
+   gtk_notebook_set_page(GTK_NOTEBOOK(notebook),NewGameType);
 }
 
 #ifndef CYGWIN
