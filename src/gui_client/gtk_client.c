@@ -283,8 +283,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  /* Caption of the button to close a dialog */
-  button = gtk_button_new_with_label(_("Close"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)window);
@@ -699,8 +698,7 @@ void CompleteHighScoreDialog(gboolean AtEnd)
   if (!HiScoreDialog.dialog)
     return;
 
-  /* Caption of the "OK" button in dialogs */
-  OKButton = gtk_button_new_with_label(_("OK"));
+  OKButton = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect_object(GTK_OBJECT(OKButton), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -1511,7 +1509,7 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
 void DealDrugs(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *label, *hbox, *hbbox, *button, *spinner, *menu,
-      *optionmenu, *menuitem, *vbox, *hsep;
+      *optionmenu, *menuitem, *vbox, *hsep, *defbutton;
   GtkAdjustment *spin_adj;
   GtkAccelGroup *accel_group;
   GtkWidget *clist;
@@ -1649,15 +1647,14 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = gtk_hbutton_box_new();
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(DealOKCallback), data);
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default(button);
+  defbutton = button;
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
-  /* Caption of "Cancel" button for GTK+ client dialogs */
-  button = gtk_button_new_with_label(_("Cancel"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -1670,6 +1667,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   UpdateDealDialog();
 
   gtk_widget_show_all(dialog);
+  gtk_widget_grab_default(defbutton);
 }
 
 void DealGuns(GtkWidget *widget, gpointer data)
@@ -2276,7 +2274,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  OKButton = gtk_button_new_with_label(_("OK"));
+  OKButton = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect_object(GTK_OBJECT(OKButton), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -2438,7 +2436,7 @@ void TransferDialog(gboolean Debt)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = gtk_hbutton_box_new();
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(TransferOK), dialog);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
@@ -2497,7 +2495,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -2624,7 +2622,7 @@ void TalkDialog(gboolean TalkToAll)
                      GTK_SIGNAL_FUNC(TalkSend), (gpointer)&TalkData);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
-  button = gtk_button_new_with_label(_("Close"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -2764,7 +2762,7 @@ void ErrandDialog(gint ErrandType)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = gtk_hbutton_box_new();
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_object_set_data(GTK_OBJECT(button), "dialog", dialog);
   gtk_object_set_data(GTK_OBJECT(button), "errandtype",
                       GINT_TO_POINTER(ErrandType));
@@ -2951,7 +2949,7 @@ void NewNameDialog(void)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(NewNameOK), window);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
@@ -3065,7 +3063,7 @@ static void CreateSpyReports(void)
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
-  button = gtk_button_new_with_label(_("Close"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)window);
