@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-09-12 01:16+0100\n"
+"POT-Creation-Date: 2000-09-12 15:02+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -998,7 +998,7 @@ msgstr ""
 msgid "CLQP"
 msgstr ""
 
-#: src/curses_client.c:363 src/gtk_client.c:805
+#: src/curses_client.c:363 src/gtk_client.c:808
 msgid "Where to, dude ? "
 msgstr ""
 
@@ -1015,11 +1015,11 @@ msgstr ""
 msgid "How many do you drop? "
 msgstr ""
 
-#: src/curses_client.c:446 src/curses_client.c:816
+#: src/curses_client.c:446 src/curses_client.c:819
 msgid "What do you wish to buy? "
 msgstr ""
 
-#: src/curses_client.c:448 src/curses_client.c:818
+#: src/curses_client.c:448 src/curses_client.c:821
 msgid "What do you wish to sell? "
 msgstr ""
 
@@ -1084,7 +1084,7 @@ msgstr ""
 msgid " Are you sure? "
 msgstr ""
 
-#: src/curses_client.c:536 src/curses_client.c:554 src/curses_client.c:1674
+#: src/curses_client.c:536 src/curses_client.c:554 src/curses_client.c:1677
 msgid "YN"
 msgstr ""
 
@@ -1096,257 +1096,257 @@ msgstr ""
 msgid "New name: "
 msgstr ""
 
-#: src/curses_client.c:610
+#: src/curses_client.c:613
 msgid "You have been pushed from the server. Reverting to single player mode."
 msgstr ""
 
-#: src/curses_client.c:620
+#: src/curses_client.c:623
 msgid "The server has terminated. Reverting to single player mode."
 msgstr ""
 
-#: src/curses_client.c:635 src/gtk_client.c:335 src/serverside.c:262
+#: src/curses_client.c:638 src/gtk_client.c:337 src/serverside.c:263
 #, c-format
 msgid "%s joins the game!"
 msgstr ""
 
-#: src/curses_client.c:640 src/gtk_client.c:341
+#: src/curses_client.c:643 src/gtk_client.c:343
 #, c-format
 msgid "%s has left the game."
 msgstr ""
 
-#: src/curses_client.c:645
+#: src/curses_client.c:648
 #, c-format
 msgid "%s will now be known as %s."
 msgstr ""
 
-#: src/curses_client.c:669
+#: src/curses_client.c:672
 msgid "S U B W A Y"
 msgstr ""
 
-#: src/curses_client.c:712
+#: src/curses_client.c:715
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it."
 msgstr ""
 
-#: src/curses_client.c:734
+#: src/curses_client.c:737
 msgid "H I G H   S C O R E S"
 msgstr ""
 
-#: src/curses_client.c:790
+#: src/curses_client.c:793
 msgid "Will you B>uy, S>ell, or L>eave? "
 msgstr ""
 
-#: src/curses_client.c:795
+#: src/curses_client.c:798
 msgid "BSL"
 msgstr ""
 
-#: src/curses_client.c:800
+#: src/curses_client.c:803
 #, c-format
 msgid "You don't have any %s to sell!"
 msgstr ""
 
-#: src/curses_client.c:807 src/gtk_client.c:1081
+#: src/curses_client.c:810 src/gtk_client.c:1084
 #, c-format
 msgid "You'll need more %s to carry any more %s!"
 msgstr ""
 
-#: src/curses_client.c:829 src/gtk_client.c:1085
+#: src/curses_client.c:832 src/gtk_client.c:1088
 #, c-format
 msgid "You don't have enough space to carry that %s!"
 msgstr ""
 
-#: src/curses_client.c:837 src/gtk_client.c:1089
+#: src/curses_client.c:840 src/gtk_client.c:1092
 #, c-format
 msgid "You don't have enough cash to buy that %s!"
 msgstr ""
 
-#: src/curses_client.c:850 src/gtk_client.c:1093
+#: src/curses_client.c:853 src/gtk_client.c:1096
 msgid "You don't have any to sell!"
 msgstr ""
 
-#: src/curses_client.c:874
+#: src/curses_client.c:877
 msgid "How much money do you pay back? "
 msgstr ""
 
-#: src/curses_client.c:880 src/curses_client.c:910 src/gtk_client.c:1928
+#: src/curses_client.c:883 src/curses_client.c:913 src/gtk_client.c:1931
 msgid "You don't have that much money!"
 msgstr ""
 
-#: src/curses_client.c:900
+#: src/curses_client.c:903
 msgid "Do you want to D>eposit money, W>ithdraw money, or L>eave ? "
 msgstr ""
 
-#: src/curses_client.c:903
+#: src/curses_client.c:906
 msgid "DWL"
 msgstr ""
 
-#: src/curses_client.c:905
+#: src/curses_client.c:908
 msgid "How much money? "
 msgstr ""
 
-#: src/curses_client.c:913 src/gtk_client.c:1921
+#: src/curses_client.c:916 src/gtk_client.c:1924
 msgid "There isn't that much money in the bank..."
 msgstr ""
 
-#: src/curses_client.c:992
+#: src/curses_client.c:995
 msgid "Press any key..."
 msgstr ""
 
-#: src/curses_client.c:1123
+#: src/curses_client.c:1126
 msgid "Messages"
 msgstr ""
 
-#: src/curses_client.c:1130 src/gtk_client.c:1379
+#: src/curses_client.c:1133 src/gtk_client.c:1382
 msgid "Stats"
 msgstr ""
 
-#: src/curses_client.c:1133
+#: src/curses_client.c:1136
 #, c-format
 msgid "Cash %17s"
 msgstr ""
 
-#: src/curses_client.c:1140
+#: src/curses_client.c:1143
 #, c-format
 msgid "Health             %3d"
 msgstr ""
 
-#: src/curses_client.c:1142
+#: src/curses_client.c:1145
 #, c-format
 msgid "Bank %17s"
 msgstr ""
 
-#: src/curses_client.c:1146
+#: src/curses_client.c:1149
 #, c-format
 msgid "Debt %17s"
 msgstr ""
 
-#: src/curses_client.c:1150
+#: src/curses_client.c:1153
 #, c-format
 msgid "Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1152
+#: src/curses_client.c:1155
 #, c-format
 msgid "%s %3d  Space %6d"
 msgstr ""
 
-#: src/curses_client.c:1163
+#: src/curses_client.c:1166
 msgid "Trenchcoat"
 msgstr ""
 
-#: src/curses_client.c:1203
+#: src/curses_client.c:1206
 #, c-format
 msgid "Spy reports for %s"
 msgstr ""
 
-#: src/curses_client.c:1207 src/curses_client.c:1212
+#: src/curses_client.c:1210 src/curses_client.c:1215
 #, c-format
 msgid "%s..."
 msgstr ""
 
-#: src/curses_client.c:1233
+#: src/curses_client.c:1236
 msgid "No other players are currently logged on!"
 msgstr ""
 
-#: src/curses_client.c:1238
+#: src/curses_client.c:1241
 msgid "Players currently logged on:-"
 msgstr ""
 
-#: src/curses_client.c:1386
+#: src/curses_client.c:1389
 msgid "Hey dude, what's your name? "
 msgstr ""
 
-#: src/curses_client.c:1420
+#: src/curses_client.c:1423
 #, c-format
 msgid "Hey dude, the prices of %s here are:"
 msgstr ""
 
-#: src/curses_client.c:1432
+#: src/curses_client.c:1435
 msgid "Will you B>uy"
 msgstr ""
 
-#: src/curses_client.c:1433
+#: src/curses_client.c:1436
 msgid ", S>ell"
 msgstr ""
 
-#: src/curses_client.c:1434
+#: src/curses_client.c:1437
 msgid ", D>rop"
 msgstr ""
 
-#: src/curses_client.c:1435
+#: src/curses_client.c:1438
 msgid ", T>alk, P>age, L>ist"
 msgstr ""
 
-#: src/curses_client.c:1438
+#: src/curses_client.c:1441
 msgid ", G>ive"
 msgstr ""
 
-#: src/curses_client.c:1441
+#: src/curses_client.c:1444
 msgid ", F>ight"
 msgstr ""
 
-#: src/curses_client.c:1445
+#: src/curses_client.c:1448
 msgid ", J>et"
 msgstr ""
 
-#: src/curses_client.c:1447 src/curses_client.c:1462
+#: src/curses_client.c:1450 src/curses_client.c:1465
 msgid ", or Q>uit? "
 msgstr ""
 
-#: src/curses_client.c:1455
+#: src/curses_client.c:1458
 msgid "Do you "
 msgstr ""
 
-#: src/curses_client.c:1457
+#: src/curses_client.c:1460
 msgid "F>ight, "
 msgstr ""
 
-#: src/curses_client.c:1458
+#: src/curses_client.c:1461
 msgid "S>tand, "
 msgstr ""
 
-#: src/curses_client.c:1460
+#: src/curses_client.c:1463
 msgid "R>un, "
 msgstr ""
 
-#: src/curses_client.c:1461
+#: src/curses_client.c:1464
 msgid "D>eal "
 msgstr ""
 
-#: src/curses_client.c:1504
+#: src/curses_client.c:1507
 msgid "Connection to server lost! Reverting to single player mode"
 msgstr ""
 
-#: src/curses_client.c:1533
+#: src/curses_client.c:1536
 msgid "BSDTPLGFJQ"
 msgstr ""
 
-#: src/curses_client.c:1535
+#: src/curses_client.c:1538
 msgid "DRFSQ"
 msgstr ""
 
-#: src/curses_client.c:1563
+#: src/curses_client.c:1566
 msgid "List what? P>layers or S>cores? "
 msgstr ""
 
-#: src/curses_client.c:1564
+#: src/curses_client.c:1567
 msgid "PS"
 msgstr ""
 
-#: src/curses_client.c:1573
+#: src/curses_client.c:1576
 msgid "Whom do you want to page (talk privately to) ? "
 msgstr ""
 
-#: src/curses_client.c:1588
+#: src/curses_client.c:1591
 msgid "Talk: "
 msgstr ""
 
-#: src/curses_client.c:1673
+#: src/curses_client.c:1676
 msgid "Play again? "
 msgstr ""
 
-#: src/curses_client.c:1685
+#: src/curses_client.c:1688
 msgid ""
 "No curses client available - rebuild the binary passing the\n"
 "--enable-curses-client option to configure, or use a windowed\n"
@@ -1445,7 +1445,7 @@ msgstr ""
 msgid "Inventory"
 msgstr ""
 
-#: src/gtk_client.c:236 src/gtk_client.c:2164 src/gtk_client.c:2532
+#: src/gtk_client.c:236 src/gtk_client.c:2167 src/gtk_client.c:2535
 msgid "Close"
 msgstr ""
 
@@ -1453,204 +1453,204 @@ msgstr ""
 msgid "Connection to server lost - switching to single player mode"
 msgstr ""
 
-#: src/gtk_client.c:309
+#: src/gtk_client.c:311
 msgid "You have been pushed from the server."
 msgstr ""
 
-#: src/gtk_client.c:314
+#: src/gtk_client.c:316
 msgid "The server has terminated."
 msgstr ""
 
-#: src/gtk_client.c:354
+#: src/gtk_client.c:356
 #, c-format
 msgid "Jetting to %s"
 msgstr ""
 
-#: src/gtk_client.c:359
+#: src/gtk_client.c:362
 msgid "<main>/Errands/Spy"
 msgstr ""
 
-#: src/gtk_client.c:361
+#: src/gtk_client.c:364
 #, c-format
 msgid "_Spy\t(%s)"
 msgstr ""
 
-#: src/gtk_client.c:365
+#: src/gtk_client.c:368
 #, c-format
 msgid "_Tipoff\t(%s)"
 msgstr ""
 
-#: src/gtk_client.c:367
+#: src/gtk_client.c:370
 msgid "<main>/Errands/Tipoff"
 msgstr ""
 
-#: src/gtk_client.c:400
+#: src/gtk_client.c:403
 msgid "High Scores"
 msgstr ""
 
-#: src/gtk_client.c:434 src/gtk_client.c:1032 src/gtk_client.c:1492
-#: src/gtk_client.c:1837 src/gtk_client.c:2002 src/gtk_client.c:2281
-#: src/gtk_client.c:2439
+#: src/gtk_client.c:437 src/gtk_client.c:1035 src/gtk_client.c:1495
+#: src/gtk_client.c:1840 src/gtk_client.c:2005 src/gtk_client.c:2284
+#: src/gtk_client.c:2442
 msgid "OK"
 msgstr ""
 
-#: src/gtk_client.c:516
+#: src/gtk_client.c:519
 msgid "Fight"
 msgstr ""
 
-#: src/gtk_client.c:543
+#: src/gtk_client.c:546
 #, c-format
 msgid "_Deal %s"
 msgstr ""
 
-#: src/gtk_client.c:547 src/gtk_client.c:1125 src/gtk_client.c:1322
+#: src/gtk_client.c:550 src/gtk_client.c:1128 src/gtk_client.c:1325
 msgid "_Fight"
 msgstr ""
 
-#: src/gtk_client.c:550
+#: src/gtk_client.c:553
 msgid "_Stand"
 msgstr ""
 
-#: src/gtk_client.c:553 src/gtk_client.c:1124
+#: src/gtk_client.c:556 src/gtk_client.c:1127
 msgid "_Run"
 msgstr ""
 
-#: src/gtk_client.c:796
+#: src/gtk_client.c:799
 msgid "Jet to location"
 msgstr ""
 
-#: src/gtk_client.c:865
+#: src/gtk_client.c:868
 #, c-format
 msgid "at %s"
 msgstr ""
 
-#: src/gtk_client.c:870
+#: src/gtk_client.c:873
 #, c-format
 msgid "You are currently carrying %d %s"
 msgstr ""
 
-#: src/gtk_client.c:875
+#: src/gtk_client.c:878
 #, c-format
 msgid "Available space: %d"
 msgstr ""
 
-#: src/gtk_client.c:880
+#: src/gtk_client.c:883
 #, c-format
 msgid "You can afford %d"
 msgstr ""
 
-#: src/gtk_client.c:930 src/gtk_client.c:1061
+#: src/gtk_client.c:933 src/gtk_client.c:1064
 msgid "Buy"
 msgstr ""
 
-#: src/gtk_client.c:931 src/gtk_client.c:1062
+#: src/gtk_client.c:934 src/gtk_client.c:1065
 msgid "Sell"
 msgstr ""
 
-#: src/gtk_client.c:932 src/gtk_client.c:1063
+#: src/gtk_client.c:935 src/gtk_client.c:1066
 msgid "Drop"
 msgstr ""
 
-#: src/gtk_client.c:1020
+#: src/gtk_client.c:1023
 #, c-format
 msgid "%s how many?"
 msgstr ""
 
-#: src/gtk_client.c:1038 src/gtk_client.c:1837 src/gtk_client.c:2013
-#: src/gtk_client.c:2289
+#: src/gtk_client.c:1041 src/gtk_client.c:1840 src/gtk_client.c:2016
+#: src/gtk_client.c:2292
 msgid "Cancel"
 msgstr ""
 
-#: src/gtk_client.c:1077
+#: src/gtk_client.c:1080
 #, c-format
 msgid "You don't have any %s!"
 msgstr ""
 
-#: src/gtk_client.c:1124 src/gtk_client.c:1838
+#: src/gtk_client.c:1127 src/gtk_client.c:1841
 msgid "_Yes"
 msgstr ""
 
-#: src/gtk_client.c:1124 src/gtk_client.c:1838
+#: src/gtk_client.c:1127 src/gtk_client.c:1841
 msgid "_No"
 msgstr ""
 
-#: src/gtk_client.c:1125
+#: src/gtk_client.c:1128
 msgid "_Attack"
 msgstr ""
 
-#: src/gtk_client.c:1125
+#: src/gtk_client.c:1128
 msgid "_Evade"
 msgstr ""
 
-#: src/gtk_client.c:1143
+#: src/gtk_client.c:1146
 msgid "Question"
 msgstr ""
 
-#: src/gtk_client.c:1252
+#: src/gtk_client.c:1255
 msgid "<main>/Talk"
 msgstr ""
 
-#: src/gtk_client.c:1254
+#: src/gtk_client.c:1257
 msgid "<main>/List"
 msgstr ""
 
-#: src/gtk_client.c:1256
+#: src/gtk_client.c:1259
 msgid "<main>/Errands"
 msgstr ""
 
-#: src/gtk_client.c:1272
+#: src/gtk_client.c:1275
 msgid "Space"
 msgstr ""
 
-#: src/gtk_client.c:1277
+#: src/gtk_client.c:1280
 msgid "Cash"
 msgstr ""
 
-#: src/gtk_client.c:1282
+#: src/gtk_client.c:1285
 msgid "Debt"
 msgstr ""
 
-#: src/gtk_client.c:1287
+#: src/gtk_client.c:1290
 msgid "Bank"
 msgstr ""
 
-#: src/gtk_client.c:1302
+#: src/gtk_client.c:1305
 msgid "Health"
 msgstr ""
 
-#: src/gtk_client.c:1322
+#: src/gtk_client.c:1325
 msgid "_Jet!"
 msgstr ""
 
-#: src/gtk_client.c:1353
+#: src/gtk_client.c:1356
 msgid "dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1439
+#: src/gtk_client.c:1442
 msgid "Drug Dealing and Research"
 msgstr ""
 
-#: src/gtk_client.c:1440
+#: src/gtk_client.c:1443
 msgid "Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1441
+#: src/gtk_client.c:1444
 msgid "Extensive Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1443
+#: src/gtk_client.c:1446
 msgid "Constructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1445
+#: src/gtk_client.c:1448
 msgid "Unconstructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1449
+#: src/gtk_client.c:1452
 msgid "About dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1458
+#: src/gtk_client.c:1461
 msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "imaginary drug market.  dopewars is an All-American game which features\n"
@@ -1662,151 +1662,151 @@ msgid ""
 "have one month of game time to make your fortune.\n"
 msgstr ""
 
-#: src/gtk_client.c:1466
+#: src/gtk_client.c:1469
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
 
-#: src/gtk_client.c:1484
+#: src/gtk_client.c:1487
 msgid ""
 "\n"
 "For information on the command line options, type dopewars -h at your\n"
 "Unix prompt. This will display a help screen, listing the availableoptions."
 msgstr ""
 
-#: src/gtk_client.c:1522 src/gtk_client.c:1545
+#: src/gtk_client.c:1525 src/gtk_client.c:1548
 #, c-format
 msgid "Status: Could not connect (%s)"
 msgstr ""
 
-#: src/gtk_client.c:1533
+#: src/gtk_client.c:1536
 #, c-format
 msgid "Status: Attempting to contact %s..."
 msgstr ""
 
-#: src/gtk_client.c:1593
+#: src/gtk_client.c:1596
 #, c-format
 msgid "%d of %d"
 msgstr ""
 
-#: src/gtk_client.c:1657 src/gtk_client.c:1698 src/gtk_client.c:1739
+#: src/gtk_client.c:1660 src/gtk_client.c:1701 src/gtk_client.c:1742
 msgid "Server"
 msgstr ""
 
-#: src/gtk_client.c:1658 src/gtk_client.c:1713
+#: src/gtk_client.c:1661 src/gtk_client.c:1716
 msgid "Port"
 msgstr ""
 
-#: src/gtk_client.c:1659
+#: src/gtk_client.c:1662
 msgid "Version"
 msgstr ""
 
-#: src/gtk_client.c:1660
+#: src/gtk_client.c:1663
 msgid "Players"
 msgstr ""
 
-#: src/gtk_client.c:1661
+#: src/gtk_client.c:1664
 msgid "Comment"
 msgstr ""
 
-#: src/gtk_client.c:1674
+#: src/gtk_client.c:1677
 msgid "New Game"
 msgstr ""
 
-#: src/gtk_client.c:1683
+#: src/gtk_client.c:1686
 msgid "Hey dude, what's your _name?"
 msgstr ""
 
-#: src/gtk_client.c:1705
+#: src/gtk_client.c:1708
 msgid "Host name"
 msgstr ""
 
-#: src/gtk_client.c:1728 src/gtk_client.c:1791
+#: src/gtk_client.c:1731 src/gtk_client.c:1794
 msgid "_Connect"
 msgstr ""
 
-#: src/gtk_client.c:1741 src/gtk_client.c:1762
+#: src/gtk_client.c:1744 src/gtk_client.c:1765
 msgid "Single player"
 msgstr ""
 
-#: src/gtk_client.c:1747
+#: src/gtk_client.c:1750
 msgid "_Antique mode"
 msgstr ""
 
-#: src/gtk_client.c:1754
+#: src/gtk_client.c:1757
 msgid "_Start single-player game"
 msgstr ""
 
-#: src/gtk_client.c:1764 src/gtk_client.c:1802
+#: src/gtk_client.c:1767 src/gtk_client.c:1805
 msgid "Metaserver"
 msgstr ""
 
-#: src/gtk_client.c:1781
+#: src/gtk_client.c:1784
 msgid "_Update"
 msgstr ""
 
-#: src/gtk_client.c:1806
+#: src/gtk_client.c:1809
 msgid "Status: Waiting for user input"
 msgstr ""
 
-#: src/gtk_client.c:1959
+#: src/gtk_client.c:1962
 #, c-format
 msgid "Cash: %s"
 msgstr ""
 
-#: src/gtk_client.c:1966
+#: src/gtk_client.c:1969
 #, c-format
 msgid "Debt: %s"
 msgstr ""
 
-#: src/gtk_client.c:1969
+#: src/gtk_client.c:1972
 #, c-format
 msgid "Bank: %s"
 msgstr ""
 
-#: src/gtk_client.c:1977
+#: src/gtk_client.c:1980
 msgid "Pay back:"
 msgstr ""
 
-#: src/gtk_client.c:1980
+#: src/gtk_client.c:1983
 msgid "Deposit"
 msgstr ""
 
-#: src/gtk_client.c:1984
+#: src/gtk_client.c:1987
 msgid "Withdraw"
 msgstr ""
 
-#: src/gtk_client.c:2008
+#: src/gtk_client.c:2011
 msgid "Pay all"
 msgstr ""
 
-#: src/gtk_client.c:2030
+#: src/gtk_client.c:2033
 msgid "Player List"
 msgstr ""
 
-#: src/gtk_client.c:2119
+#: src/gtk_client.c:2122
 msgid "Talk to player(s)"
 msgstr ""
 
-#: src/gtk_client.c:2141
+#: src/gtk_client.c:2144
 msgid "Talk to all players"
 msgstr ""
 
-#: src/gtk_client.c:2145
+#: src/gtk_client.c:2148
 msgid "Message:-"
 msgstr ""
 
-#: src/gtk_client.c:2158
+#: src/gtk_client.c:2161
 msgid "Send"
 msgstr ""
 
-#: src/gtk_client.c:2251
+#: src/gtk_client.c:2254
 msgid "Spy On Player"
 msgstr ""
 
-#: src/gtk_client.c:2253
+#: src/gtk_client.c:2256
 #, c-format
 msgid ""
 "Please choose the player to spy on. Your %s will\n"
@@ -1816,11 +1816,11 @@ msgid ""
 "you, so any %s or %s that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2261
+#: src/gtk_client.c:2264
 msgid "Tip Off The Cops"
 msgstr ""
 
-#: src/gtk_client.c:2263
+#: src/gtk_client.c:2266
 #, c-format
 msgid ""
 "Please choose the player to tip off the cops to. Your %s will\n"
@@ -1829,71 +1829,71 @@ msgid ""
 "so any %s or %s that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2303
+#: src/gtk_client.c:2306
 #, c-format
 msgid "Sack %s"
 msgstr ""
 
-#: src/gtk_client.c:2304
+#: src/gtk_client.c:2307
 #, c-format
 msgid ""
 "Are you sure? (Any %s or %s carried\n"
 "by this %s may be lost!)"
 msgstr ""
 
-#: src/gtk_client.c:2325
+#: src/gtk_client.c:2328
 msgid "Name"
 msgstr ""
 
-#: src/gtk_client.c:2326
+#: src/gtk_client.c:2329
 msgid "Price"
 msgstr ""
 
-#: src/gtk_client.c:2327
+#: src/gtk_client.c:2330
 msgid "Number"
 msgstr ""
 
-#: src/gtk_client.c:2329
+#: src/gtk_client.c:2332
 msgid "_Buy ->"
 msgstr ""
 
-#: src/gtk_client.c:2330
+#: src/gtk_client.c:2333
 msgid "<- _Sell"
 msgstr ""
 
-#: src/gtk_client.c:2331
+#: src/gtk_client.c:2334
 msgid "_Drop <-"
-msgstr ""
-
-#: src/gtk_client.c:2336
-#, c-format
-msgid "%s here"
 msgstr ""
 
 #: src/gtk_client.c:2339
 #, c-format
+msgid "%s here"
+msgstr ""
+
+#: src/gtk_client.c:2342
+#, c-format
 msgid "%s carried"
 msgstr ""
 
-#: src/gtk_client.c:2415
+#: src/gtk_client.c:2418
 msgid "Change Name"
 msgstr ""
 
-#: src/gtk_client.c:2425
+#: src/gtk_client.c:2428
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it:-"
 msgstr ""
 
-#: src/gtk_client.c:2484
+#: src/gtk_client.c:2487
 msgid "Done"
 msgstr ""
 
-#: src/gtk_client.c:2518
+#: src/gtk_client.c:2521
 msgid "Spy reports"
 msgstr ""
 
-#: src/gtk_client.c:2589
+#: src/gtk_client.c:2592
 msgid ""
 "No GTK+ client available - rebuild the binary passing the\n"
 "--enable-gtk-client option to configure, or use the curses\n"
@@ -1956,79 +1956,79 @@ msgid ""
 "Should be from %s"
 msgstr ""
 
-#: src/serverside.c:270
+#: src/serverside.c:271
 #, c-format
 msgid "MaxClients (%d) exceeded - dropping connection"
 msgstr ""
 
-#: src/serverside.c:272
+#: src/serverside.c:273
 #, c-format
 msgid ""
 "Sorry, but this server has a limit of %d %s, which has been reached.^Please "
 "try connecting again later."
 msgstr ""
 
-#: src/serverside.c:274
+#: src/serverside.c:275
 msgid "player"
 msgstr ""
 
-#: src/serverside.c:274
+#: src/serverside.c:275
 msgid "players"
 msgstr ""
 
-#: src/serverside.c:283
+#: src/serverside.c:284
 #, c-format
 msgid "%s will now be known as %s"
 msgstr ""
 
-#: src/serverside.c:298
+#: src/serverside.c:299
 msgid "Your dealing time is up..."
 msgstr ""
 
-#: src/serverside.c:309
+#: src/serverside.c:310
 #, c-format
 msgid "%s: DENIED jet to %s"
 msgstr ""
 
-#: src/serverside.c:366
+#: src/serverside.c:367
 #, c-format
 msgid "%s now spying on %s"
 msgstr ""
 
-#: src/serverside.c:374
+#: src/serverside.c:375
 #, c-format
 msgid "%s spy on %s: DENIED"
 msgstr ""
 
-#: src/serverside.c:380
+#: src/serverside.c:381
 #, c-format
 msgid "%s tipped off the cops to %s"
 msgstr ""
 
-#: src/serverside.c:388
+#: src/serverside.c:389
 #, c-format
 msgid "%s tipoff about %s: DENIED"
 msgstr ""
 
-#: src/serverside.c:496
+#: src/serverside.c:497
 msgid "--More--"
 msgstr ""
 
-#: src/serverside.c:507
+#: src/serverside.c:508
 msgid "Pager exited abnormally - using stdout instead..."
 msgstr ""
 
-#: src/serverside.c:522
+#: src/serverside.c:523
 #, c-format
 msgid "Maintaining pid file %s"
 msgstr ""
 
-#: src/serverside.c:526
+#: src/serverside.c:527
 #, c-format
 msgid "Cannot create pid file %s"
 msgstr ""
 
-#: src/serverside.c:575
+#: src/serverside.c:576
 #, c-format
 msgid ""
 "Cannot open high score file %s.\n"
@@ -2036,144 +2036,144 @@ msgid ""
 "specify an alternate high score file with the -f command line option."
 msgstr ""
 
-#: src/serverside.c:612
+#: src/serverside.c:613
 #, c-format
 msgid ""
 "dopewars server version %s ready and waiting for connections\n"
 "on port %d. For assistance with server commands, enter the command \"help\"\n"
 msgstr ""
 
-#: src/serverside.c:629
+#: src/serverside.c:630
 msgid "Cannot install SIGUSR1 interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:635
+#: src/serverside.c:636
 msgid "Cannot install SIGINT interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:638
+#: src/serverside.c:639
 msgid "Cannot install SIGTERM interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:641
+#: src/serverside.c:642
 msgid "Cannot install SIGHUP interrupt handler!"
 msgstr ""
 
-#: src/serverside.c:646
+#: src/serverside.c:647
 msgid "Cannot install pipe handler!"
 msgstr ""
 
-#: src/serverside.c:669
+#: src/serverside.c:670
 msgid "Users currently logged on:-\n"
 msgstr ""
 
-#: src/serverside.c:674
+#: src/serverside.c:675
 msgid "No users currently logged on!"
 msgstr ""
 
-#: src/serverside.c:678
+#: src/serverside.c:679
 #, c-format
 msgid "Pushing %s"
 msgstr ""
 
-#: src/serverside.c:680 src/serverside.c:688
+#: src/serverside.c:681 src/serverside.c:689
 msgid "No such user!"
 msgstr ""
 
-#: src/serverside.c:684
+#: src/serverside.c:685
 #, c-format
 msgid "%s killed"
 msgstr ""
 
-#: src/serverside.c:690
+#: src/serverside.c:691
 msgid "Unknown command - try \"help\" for help..."
 msgstr ""
 
-#: src/serverside.c:707
+#: src/serverside.c:708
 #, c-format
 msgid "got connection from %s"
 msgstr ""
 
-#: src/serverside.c:723
+#: src/serverside.c:724
 #, c-format
 msgid "%s leaves the server!"
 msgstr ""
 
-#: src/serverside.c:791
+#: src/serverside.c:792
 msgid "Standard input closed."
 msgstr ""
 
-#: src/serverside.c:934
+#: src/serverside.c:935
 #, c-format
 msgid "Unable to read high score file %s"
 msgstr ""
 
-#: src/serverside.c:954
+#: src/serverside.c:955
 msgid "Congratulations! You made the high scores!"
 msgstr ""
 
-#: src/serverside.c:967
+#: src/serverside.c:968
 msgid "You didn't even make the high score table..."
 msgstr ""
 
-#: src/serverside.c:981
+#: src/serverside.c:982
 #, c-format
 msgid "Unable to write high score file %s"
 msgstr ""
 
-#: src/serverside.c:1000
+#: src/serverside.c:1001
 msgid "(R.I.P.)"
 msgstr ""
 
-#: src/serverside.c:1035
+#: src/serverside.c:1036
 #, c-format
 msgid "%s: Tipoff from %s"
 msgstr ""
 
-#: src/serverside.c:1052
+#: src/serverside.c:1053
 #, c-format
 msgid "One of your %s was spying for %s.^The spy %s!"
 msgstr ""
 
-#: src/serverside.c:1060
+#: src/serverside.c:1061
 #, c-format
 msgid "Your spy working with %s has been discovered!^The spy %s!"
 msgstr ""
 
-#: src/serverside.c:1083
+#: src/serverside.c:1084
 #, c-format
 msgid " The lady next to you on the subway said,^ \"%s\"%s"
 msgstr ""
 
-#: src/serverside.c:1086
+#: src/serverside.c:1087
 msgid "^    (at least, you -think- that's what she said)"
 msgstr ""
 
-#: src/serverside.c:1088
+#: src/serverside.c:1089
 #, c-format
 msgid " You hear someone playing %s"
 msgstr ""
 
-#: src/serverside.c:1097 src/serverside.c:1106 src/serverside.c:1115
-#: src/serverside.c:1124
+#: src/serverside.c:1098 src/serverside.c:1107 src/serverside.c:1116
+#: src/serverside.c:1125
 #, c-format
 msgid "YN^Would you like to visit %s?"
 msgstr ""
 
-#: src/serverside.c:1135
+#: src/serverside.c:1136
 #, c-format
 msgid "YN^^Would you like to hire %s %s for %s?"
 msgstr ""
 
-#: src/serverside.c:1136
+#: src/serverside.c:1137
 msgid "an"
 msgstr ""
 
-#: src/serverside.c:1136
+#: src/serverside.c:1137
 msgid "a"
 msgstr ""
 
-#: src/serverside.c:1148
+#: src/serverside.c:1149
 #, c-format
 msgid "AE^%s is already here!^Do you Attack, or Evade?"
 msgstr ""
@@ -2182,336 +2182,336 @@ msgstr ""
 #. The format string used for this purpose can be altered by
 #. passing non-NULL "LoneMessage" (for unaccompanied Officer
 #. Hardass) and/or "DeputyMessage" (for him with x deputies)
-#: src/serverside.c:1217
+#: src/serverside.c:1218
 #, c-format
 msgid "YN^Officer %s is chasing you!"
 msgstr ""
 
-#: src/serverside.c:1219
+#: src/serverside.c:1220
 #, c-format
 msgid "YN^Officer %s and %d of his deputies are chasing you!"
 msgstr ""
 
-#: src/serverside.c:1240
+#: src/serverside.c:1241
 msgid "^Do you run?"
 msgstr ""
 
-#: src/serverside.c:1243
+#: src/serverside.c:1244
 msgid "^Do you Run, or Fight?"
 msgstr ""
 
-#: src/serverside.c:1258
+#: src/serverside.c:1259
 #, c-format
 msgid "%s: tipoff by %s finished OK."
 msgstr ""
 
-#: src/serverside.c:1264
+#: src/serverside.c:1265
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who was shot dead"
 msgstr ""
 
-#: src/serverside.c:1268
+#: src/serverside.c:1269
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %s. "
 msgstr ""
 
-#: src/serverside.c:1305
+#: src/serverside.c:1306
 msgid "^You stand there like an idiot."
 msgstr ""
 
-#: src/serverside.c:1309
+#: src/serverside.c:1310
 msgid "^You lose him in the alleys."
 msgstr ""
 
-#: src/serverside.c:1311
+#: src/serverside.c:1312
 msgid "^You lose them in the alleys."
 msgstr ""
 
-#: src/serverside.c:1319
+#: src/serverside.c:1320
 msgid "^You can't shake him, man!"
 msgstr ""
 
-#: src/serverside.c:1321
+#: src/serverside.c:1322
 msgid "^You can't shake them, man!"
 msgstr ""
 
-#: src/serverside.c:1332
+#: src/serverside.c:1333
 #, c-format
 msgid "^You killed Officer %s! You find %s on his corpse!"
 msgstr ""
 
-#: src/serverside.c:1346
+#: src/serverside.c:1347
 #, c-format
 msgid "YN^^^^Do you pay a doctor %s to sew your %s up?"
 msgstr ""
 
-#: src/serverside.c:1350
+#: src/serverside.c:1351
 #, c-format
 msgid "YN^^^^Do you pay a doctor %s to sew you up?"
 msgstr ""
 
-#: src/serverside.c:1361
+#: src/serverside.c:1362
 msgid "^You got one, man!"
 msgstr ""
 
-#: src/serverside.c:1364
+#: src/serverside.c:1365
 msgid "^You missed!"
 msgstr ""
 
-#: src/serverside.c:1368
+#: src/serverside.c:1369
 msgid "^He's firing on you, man! "
 msgstr ""
 
-#: src/serverside.c:1370
+#: src/serverside.c:1371
 msgid "^They're firing on you, man! "
 msgstr ""
 
-#: src/serverside.c:1373
+#: src/serverside.c:1374
 msgid "You've been hit! "
 msgstr ""
 
-#: src/serverside.c:1380
+#: src/serverside.c:1381
 msgid "He wasted you, man! What a drag!"
 msgstr ""
 
-#: src/serverside.c:1382
+#: src/serverside.c:1383
 msgid "They wasted you, man! What a drag!"
 msgstr ""
 
-#: src/serverside.c:1390
+#: src/serverside.c:1391
 #, c-format
 msgid "You lost one of your %s!"
 msgstr ""
 
-#: src/serverside.c:1399
+#: src/serverside.c:1400
 msgid "He missed!"
 msgstr ""
 
-#: src/serverside.c:1401
+#: src/serverside.c:1402
 msgid "They missed!"
 msgstr ""
 
-#: src/serverside.c:1421
+#: src/serverside.c:1422
 msgid "You were mugged in the subway!"
 msgstr ""
 
-#: src/serverside.c:1432
+#: src/serverside.c:1433
 #, c-format
 msgid "You meet a friend! He gives you %d %s."
 msgstr ""
 
-#: src/serverside.c:1437
+#: src/serverside.c:1438
 #, c-format
 msgid "You meet a friend! You give him %d %s."
 msgstr ""
 
-#: src/serverside.c:1444
+#: src/serverside.c:1445
 msgid "Sanitized away a RandomOffer"
 msgstr ""
 
-#: src/serverside.c:1449
+#: src/serverside.c:1450
 #, c-format
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
 msgstr ""
 
-#: src/serverside.c:1463
+#: src/serverside.c:1464
 #, c-format
 msgid "You find %d %s on a dead dude in the subway!"
 msgstr ""
 
-#: src/serverside.c:1475
+#: src/serverside.c:1476
 #, c-format
 msgid "Your mama made brownies with some of your %s! They were great!"
 msgstr ""
 
-#: src/serverside.c:1483
+#: src/serverside.c:1484
 msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
 
-#: src/serverside.c:1490
+#: src/serverside.c:1491
 #, c-format
 msgid "You stopped to %s."
 msgstr ""
 
-#: src/serverside.c:1511
+#: src/serverside.c:1512
 #, c-format
 msgid "Would you like to buy a bigger trenchcoat for %s?"
 msgstr ""
 
-#: src/serverside.c:1516
+#: src/serverside.c:1517
 #, c-format
 msgid "YN^Hey dude! I'll help carry your %s for a mere %s. Yes or no?"
 msgstr ""
 
-#: src/serverside.c:1528
+#: src/serverside.c:1529
 #, c-format
 msgid "YN^Would you like to buy a %s for %s?"
 msgstr ""
 
-#: src/serverside.c:1629 src/serverside.c:1740
+#: src/serverside.c:1630 src/serverside.c:1741
 #, c-format
 msgid "%s: offer was on behalf of %s"
 msgstr ""
 
-#: src/serverside.c:1632
+#: src/serverside.c:1633
 #, c-format
 msgid "%s has accepted your %s!^Use the G key to contact your spy."
 msgstr ""
 
-#: src/serverside.c:1678
+#: src/serverside.c:1679
 msgid ""
 "You hallucinated for three days on the wildest trip you ever imagined!^Then "
 "you died because your brain disintegrated!"
 msgstr ""
 
-#: src/serverside.c:1717
+#: src/serverside.c:1718
 #, c-format
 msgid "Too late - %s has just left!"
 msgstr ""
 
-#: src/serverside.c:1743
+#: src/serverside.c:1744
 #, c-format
 msgid "%s has rejected your %s!"
 msgstr ""
 
-#: src/serverside.c:1778
+#: src/serverside.c:1779
 #, c-format
 msgid "%s has got away!"
 msgstr ""
 
-#: src/serverside.c:1819
+#: src/serverside.c:1820
 #, c-format
 msgid "%s has run off!"
 msgstr ""
 
-#: src/serverside.c:1831
+#: src/serverside.c:1832
 msgid "Coward! You successfully escaped from the fight."
 msgstr ""
 
-#: src/serverside.c:1887
+#: src/serverside.c:1888
 msgid "pitifully armed"
 msgstr ""
 
-#: src/serverside.c:1888
+#: src/serverside.c:1889
 msgid "lightly armed"
 msgstr ""
 
-#: src/serverside.c:1889
+#: src/serverside.c:1890
 msgid "moderately well armed"
 msgstr ""
 
-#: src/serverside.c:1890
+#: src/serverside.c:1891
 msgid "heavily armed"
 msgstr ""
 
-#: src/serverside.c:1891
+#: src/serverside.c:1892
 msgid "armed to the teeth"
 msgstr ""
 
-#: src/serverside.c:1892
+#: src/serverside.c:1893
 msgid " fires and "
 msgstr ""
 
-#: src/serverside.c:1893
+#: src/serverside.c:1894
 msgid " stands and takes it."
 msgstr ""
 
-#: src/serverside.c:1896
+#: src/serverside.c:1897
 #, c-format
 msgid "%s arrives, with %d %s, %s,^%s"
 msgstr ""
 
-#: src/serverside.c:1900
+#: src/serverside.c:1901
 #, c-format
 msgid "%s arrives, %s,^%s"
 msgstr ""
 
-#: src/serverside.c:1905
+#: src/serverside.c:1906
 #, c-format
 msgid "%s fires and "
 msgstr ""
 
-#: src/serverside.c:1907
+#: src/serverside.c:1908
 #, c-format
 msgid "%s stands and takes it."
 msgstr ""
 
-#: src/serverside.c:1919
+#: src/serverside.c:1920
 msgid "misses you!"
 msgstr ""
 
-#: src/serverside.c:1920
+#: src/serverside.c:1921
 #, c-format
 msgid "You failed to hit %s."
 msgstr ""
 
-#: src/serverside.c:1923
+#: src/serverside.c:1924
 msgid "You stand and take it."
 msgstr ""
 
-#: src/serverside.c:1927
+#: src/serverside.c:1928
 msgid "hits you, man!"
 msgstr ""
 
-#: src/serverside.c:1930
+#: src/serverside.c:1931
 msgid " You've been wasted! What a drag!"
 msgstr ""
 
-#: src/serverside.c:1931
+#: src/serverside.c:1932
 #, c-format
 msgid "You hit and killed %s"
 msgstr ""
 
-#: src/serverside.c:1946 src/serverside.c:1979
+#: src/serverside.c:1947 src/serverside.c:1980
 msgid ", and loot the body!"
 msgstr ""
 
-#: src/serverside.c:1955
+#: src/serverside.c:1956
 #, c-format
 msgid "^You lost a %s, man!"
 msgstr ""
 
-#: src/serverside.c:1960
+#: src/serverside.c:1961
 #, c-format
 msgid "You are paid a bounty of %s in reward for killing^one of %s's %s"
 msgstr ""
 
-#: src/serverside.c:1968
+#: src/serverside.c:1969
 #, c-format
 msgid "You killed one of %s's %s (%d left)"
 msgstr ""
 
-#: src/serverside.c:1986
+#: src/serverside.c:1987
 #, c-format
 msgid "You fire, and hit %s!"
 msgstr ""
 
-#: src/serverside.c:2025
+#: src/serverside.c:2026
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
 msgstr ""
 
-#: src/serverside.c:2027
+#: src/serverside.c:2028
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
 
-#: src/serverside.c:2182
+#: src/serverside.c:2183
 msgid "Player removed due to idle timeout"
 msgstr ""
 
-#: src/serverside.c:2192
+#: src/serverside.c:2193
 msgid "Player removed due to connect timeout"
 msgstr ""
 
-#: src/serverside.c:2198 src/serverside.c:2204
+#: src/serverside.c:2199 src/serverside.c:2205
 #, c-format
 msgid "%s fails to return fire..."
 msgstr ""
 
-#: src/message.c:427
+#: src/message.c:433
 #, c-format
 msgid ""
 "This server is version %s, while your client is version %s.\n"
@@ -2520,27 +2520,27 @@ msgid ""
 "for the latest version."
 msgstr ""
 
-#: src/message.c:566
+#: src/message.c:572
 msgid "Could not find host"
 msgstr ""
 
-#: src/message.c:567
+#: src/message.c:573
 msgid "Could not create network socket"
 msgstr ""
 
-#: src/message.c:568 src/message.c:601
+#: src/message.c:574 src/message.c:607
 msgid "Connection refused or no server present"
 msgstr ""
 
-#: src/message.c:746
+#: src/message.c:753
 msgid "Cannot locate metaserver"
 msgstr ""
 
-#: src/message.c:747
+#: src/message.c:754
 msgid "Cannot create socket"
 msgstr ""
 
-#: src/message.c:749
+#: src/message.c:756
 msgid "Metaserver not running HTTP or connection denied"
 msgstr ""
 

@@ -93,7 +93,7 @@ static void UpdateMenus();
 static void GetClientMessage(gpointer data,gint socket,
                              GdkInputCondition condition);
 static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
-static void HandleClientMessage(char *buf,Player *ReallyTo);
+static void HandleClientMessage(char *buf,Player *Play);
 static void PrepareHighScoreDialog();
 static void AddScoreToDialog(char *Data);
 static void CompleteHighScoreDialog();
@@ -259,7 +259,7 @@ void GetClientMessage(gpointer data,gint socket,
    if (condition&GDK_INPUT_READ) {
       if (ReadConnectionBufferFromWire(ClientData.Play)) {
          while ((pt=ReadFromConnectionBuffer(ClientData.Play))!=NULL) {
-            HandleClientMessage(pt,NULL); g_free(pt);
+            HandleClientMessage(pt,ClientData.Play); g_free(pt);
          }
       } else {
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
@@ -279,18 +279,20 @@ void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
    }
 }
 
-void HandleClientMessage(char *pt,Player *ReallyTo) {
+void HandleClientMessage(char *pt,Player *Play) {
    char *Data,Code,AICode,DisplayMode;
-   Player *From,*To,*Play;
+   Player *From,*tmp;
    gchar *text,*prstr;
    gboolean Handled;
    GtkWidget *MenuItem;
    GSList *list;
 
-   if (ProcessMessage(pt,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
+/* Ignore To: field (bin it in "tmp") as all messages should be for "Play" */
+   if (ProcessMessage(pt,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
       return;
    }
-   Handled=HandleGenericClientMessage(From,AICode,Code,To,Data,&DisplayMode);
+
+   Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
    switch(Code) {
       case C_STARTHISCORE:
          PrepareHighScoreDialog(); break;
@@ -307,12 +309,12 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
       case C_PUSH:
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
          g_warning(_("You have been pushed from the server."));
-         SwitchToSinglePlayer(To);
+         SwitchToSinglePlayer(Play);
          break;
       case C_QUIT:
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
          g_warning(_("The server has terminated."));
-         SwitchToSinglePlayer(To);
+         SwitchToSinglePlayer(Play);
          break;
       case C_NEWNAME:
          NewNameDialog(); break;
@@ -328,7 +330,7 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
       case C_MSGTO:
          text=g_strdup_printf("%s->%s: %s",GetPlayerName(From),
-                              GetPlayerName(To),Data);
+                              GetPlayerName(Play),Data);
          PrintMessage(text); g_free(text);
          break;
       case C_JOIN:
@@ -348,10 +350,11 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
       case C_SUBWAYFLASH:
          DisplayFightMessage(NULL);
          for (list=FirstClient;list;list=g_slist_next(list)) {
-            Play=(Player *)list->data;
-            Play->Flags &= ~FIGHTING;
+            tmp=(Player *)list->data;
+            tmp->Flags &= ~FIGHTING;
          }
-         text=g_strdup_printf(_("Jetting to %s"),Location[(int)To->IsAt].Name);
+         text=g_strdup_printf(_("Jetting to %s"),
+                              Location[(int)Play->IsAt].Name);
          PrintMessage(text); g_free(text);
          break;
       case C_ENDLIST:
@@ -370,18 +373,18 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,To);
-            UpdateStatus(To,TRUE);
+            ReceivePlayerData(Data,Play);
+            UpdateStatus(Play,TRUE);
          } else {
             ReceivePlayerData(Data,From);
             DisplaySpyReports(From);
          }
          break;
       case C_DRUGHERE:
-         UpdateInventory(&ClientData.Drug,To->Drugs,NumDrug,TRUE);
+         UpdateInventory(&ClientData.Drug,Play->Drugs,NumDrug,TRUE);
          gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
          if (IsShowingInventory) {
-            UpdateInventory(&ClientData.InvenDrug,To->Drugs,NumDrug,TRUE);
+            UpdateInventory(&ClientData.InvenDrug,Play->Drugs,NumDrug,TRUE);
          }
          break;
    }

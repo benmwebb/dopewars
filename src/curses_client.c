@@ -63,7 +63,7 @@ static void print_status(Player *Play,char DispDrug);
 static char *nice_input(char *prompt,int sy,int sx,char digitsonly,
                         char *displaystr);
 static Player *ListPlayers(Player *Play,char Select,char *Prompt);
-static void HandleClientMessage(char *buf,Player *ReallyTo);
+static void HandleClientMessage(char *buf,Player *Play);
 static void PrintMessage(char *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
@@ -565,28 +565,31 @@ static void change_name(Player *Play,char nullname) {
    g_free(NewName);
 }
 
-void HandleClientMessage(char *Message,Player *ReallyTo) {
-/* Given a message "Message" coming in on a socket which identifies it as   */
-/* "really" for player "ReallyTo", performs processing and reacts properly; */
-/* if a message indicates the end of the game, the global variable          */
-/* QuitRequest is set. The global variable DisplayMode may also be changed  */
-/* by this routine as a result of network traffic.                          */
+void HandleClientMessage(char *Message,Player *Play) {
+/* Given a message "Message" coming in for player "Play", performs          */
+/* processing and reacts properly; if a message indicates the end of the    */
+/* game, the global variable QuitRequest is set. The global variable        */
+/* DisplayMode may also be changed by this routine as a result of network   */
+/* traffic.                                                                 */
    char *pt,*Data,Code,*wrd;
    char AICode;
-   Player *From,*To,*tmp;
+   Player *From,*tmp;
    GSList *list;
    gchar *text;
    int i;
    gboolean Handled;
-   if (ProcessMessage(Message,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
+
+/* Ignore To: field (use tmp Player pointer for this) - all messages
+   will be for Player "Play" */
+   if (ProcessMessage(Message,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
       return;
    }
 
-   Handled=HandleGenericClientMessage(From,AICode,Code,To,Data,&DisplayMode);
+   Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
    switch(Code) {
       case C_ENDLIST:
          if (FirstClient && g_slist_next(FirstClient)) {
-            ListPlayers(To,FALSE,NULL);
+            ListPlayers(Play,FALSE,NULL);
          }
          break;
       case C_STARTHISCORE:
@@ -600,7 +603,7 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
             nice_wait();
             clear_screen();
             display_message("");
-            print_status(To,1);
+            print_status(Play,1);
             refresh();
          }
          break;
@@ -610,8 +613,8 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
          mvaddstr(22,0,_("You have been pushed from the server. "
                          "Reverting to single player mode."));
          nice_wait();
-         SwitchToSinglePlayer(To);
-         print_status(To,TRUE);
+         SwitchToSinglePlayer(Play);
+         print_status(Play,TRUE);
          break;
       case C_QUIT:
          attrset(TextAttr);
@@ -619,8 +622,8 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
          mvaddstr(22,0,
             _("The server has terminated. Reverting to single player mode."));
          nice_wait();
-         SwitchToSinglePlayer(To);
-         print_status(To,TRUE);
+         SwitchToSinglePlayer(Play);
+         print_status(Play,TRUE);
          break;
       case C_MSG:
          text=g_strdup_printf("%s: %s",GetPlayerName(From),Data);
@@ -628,7 +631,7 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
          break;
       case C_MSGTO:
          text=g_strdup_printf("%s->%s: %s",GetPlayerName(From),
-                              GetPlayerName(To),Data);
+                              GetPlayerName(Play),Data);
          display_message(text); g_free(text);
          break;
       case C_JOIN:
@@ -673,7 +676,7 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
             refresh();
             MicroSleep(100000);
          }
-         print_location(Location[(int)To->IsAt].Name);
+         print_location(Location[(int)Play->IsAt].Name);
          break;
       case C_QUESTION:
          pt=Data;
@@ -682,28 +685,28 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
          addch(' ');
          i=GetKey(wrd,wrd,FALSE,TRUE);
          wrd=g_strdup_printf("%c",i);
-         SendClientMessage(To,C_NONE,C_ANSWER,
-                           From==&Noone ? NULL : From,wrd,To);
+         SendClientMessage(Play,C_NONE,C_ANSWER,
+                           From==&Noone ? NULL : From,wrd,Play);
          g_free(wrd);
          break;
       case C_LOANSHARK:
-         LoanShark(To);
-         SendClientMessage(To,C_NONE,C_DONE,NULL,NULL,To);
+         LoanShark(Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
          break;
       case C_BANK:
-         Bank(To);
-         SendClientMessage(To,C_NONE,C_DONE,NULL,NULL,To);
+         Bank(Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
          break;
       case C_GUNSHOP:
-         GunShop(To);
-         SendClientMessage(To,C_NONE,C_DONE,NULL,NULL,To);
+         GunShop(Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,To);
-            print_status(To,1); refresh();
+            ReceivePlayerData(Data,Play);
+            print_status(Play,1); refresh();
          } else {
-            DisplaySpyReports(Data,From,To);
+            DisplaySpyReports(Data,From,Play);
          }
          break;
       case C_NEWNAME:
@@ -711,12 +714,12 @@ void HandleClientMessage(char *Message,Player *ReallyTo) {
          attrset(TextAttr);
          mvaddstr(22,0,_("Unfortunately, somebody else is already "
                          "using \"your\" name. Please change it."));
-         change_name(ReallyTo,1);
+         change_name(Play,1);
          break;
       default:
          if (!Handled) {
             text=g_strdup_printf("%s^%c^%s^%s",GetPlayerName(From),Code,
-                                 GetPlayerName(To),Data);
+                                 GetPlayerName(Play),Data);
             mvaddstr(22,0,text); g_free(text); nice_wait();
          }
          break;
