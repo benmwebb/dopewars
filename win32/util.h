@@ -1,6 +1,6 @@
 /************************************************************************
  * util.h         Shared functions for Win32 installer programs         *
- * Copyright (C)  2001-2003  Ben Webb                                   *
+ * Copyright (C)  2001-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

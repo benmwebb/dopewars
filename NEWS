@@ -1,3 +1,7 @@
+24th October 2004
+     dopewars-1.5.10 released. This is largely a bugfix release, fixing a
+server DOS and some minor bugs in the text-mode client.
+
 7th June 2003
      dopewars-1.5.9 released. This is largely a bugfix release, fixing a
 crash on pressing the "drop drugs" button, and adding minor improvements

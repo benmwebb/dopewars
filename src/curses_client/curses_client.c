@@ -1,6 +1,6 @@
 /************************************************************************
  * curses_client.c  dopewars client using the (n)curses console library *
- * Copyright (C)  1998-2003  Ben Webb                                   *
+ * Copyright (C)  1998-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
@@ -294,7 +294,7 @@ void display_intro(void)
                     "possible (and stay alive)!"));
   mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
-  g_string_sprintf(text, _("Version %-8s Copyright (C) 1998-2003  Ben Webb "
+  g_string_sprintf(text, _("Version %-8s Copyright (C) 1998-2004  Ben Webb "
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
