@@ -247,11 +247,11 @@ void gtk_clist_realize(GtkWidget *widget)
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   rcParent.left = rcParent.top = 0;
   rcParent.right = rcParent.bottom = 800;
-  scrollwin = myCreateWindow(WC_GTKCLISTHDR, NULL,
-                             WS_CHILD, 0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  scrollwin = myCreateWindow(WC_GTKCLISTHDR, NULL, WS_CHILD | WS_BORDER,
+                             0, 0, 0, 0, Parent, NULL, hInst, NULL);
   SetWindowLong(scrollwin, GWL_USERDATA, (LONG)widget);
   header = myCreateWindowEx(0, WC_HEADER, NULL,
-                            WS_CHILD | WS_BORDER | HDS_HORZ | WS_VISIBLE
+                            WS_CHILD | HDS_HORZ | WS_VISIBLE
                             | (GTK_CLIST(widget)->coldata[0].button_passive ?
                                0 : HDS_BUTTONS),
                             0, 0, 0, 0, scrollwin, NULL, hInst, NULL);
