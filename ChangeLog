@@ -1,4 +1,5 @@
 cvs
+    - Value of bought drugs now displayed in curses client
     - AI players now are at least partially functional
     - Fix for server segfault on invalid short network messages
     - dopewars no longer runs GTK+ setgid
