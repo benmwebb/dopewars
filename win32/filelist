@@ -46,6 +46,12 @@ dopewars.exe
 dopewars help.lnk
 index.html
 
+dopewars configuration file.lnk
+dopewars-config.txt
+
+dopewars example config.lnk
+example-cfg.txt
+
 
 [desktop]
 dopewars.lnk

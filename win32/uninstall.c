@@ -81,7 +81,7 @@ InstFiles *ReadFileList(HANDLE fin) {
 char *GetProduct(void) {
   char *product;
   product = strrchr(GetCommandLine(),' ');
-  if (product) return bstrdup(++product);
+  if (product && strlen(product+1)>0) return bstrdup(++product);
   else {
     DisplayError("This program should be called with a product ID",FALSE,TRUE);
     ExitProcess(1);
@@ -268,9 +268,15 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
 BOOL CALLBACK MainDlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam) {
   HANDLE hThread;
   DWORD threadID;
+  static BOOL startedun=FALSE;
   switch(msg) {
     case WM_INITDIALOG:
-      hThread = CreateThread(NULL,0,DoUninstall,NULL,0,&threadID);
+      return TRUE;
+    case WM_SHOWWINDOW:
+      if (wParam && !startedun) {
+        startedun=TRUE;
+        hThread = CreateThread(NULL,0,DoUninstall,NULL,0,&threadID);
+      }
       return TRUE;
     case WM_COMMAND:
       if (HIWORD(wParam)==BN_CLICKED && LOWORD(wParam)==BT_DELOK && lParam) {
