@@ -2047,6 +2047,7 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
   table = gtk_table_new(3, 6, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 3);
   gtk_table_set_col_spacings(GTK_TABLE(table), 3);
+  gtk_container_set_border_width(GTK_CONTAINER(table), 3);
 
   label = Status->Location = gtk_label_new(NULL);
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
@@ -2251,6 +2252,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   vbox = ClientData.vbox = gtk_vbox_new(FALSE, 5);
   frame = gtk_frame_new(_("Stats"));
+  gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
 
   table = CreateStatusWidgets(&ClientData.Status);
 
@@ -3009,7 +3011,8 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   else
     mini = 1;
   for (i = mini; i < 2; i++) {
-    gtk_container_set_border_width(GTK_CONTAINER(frame[i]), 5);
+    GtkWidget *hbox2 = gtk_hbox_new(TRUE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(frame[i]), 3);
 
     clist = gtk_scrolled_clist_new_with_titles(2, titles[i], &scrollwin);
     gtk_clist_set_column_auto_resize(GTK_CLIST(clist), 0, TRUE);
@@ -3017,7 +3020,9 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     gtk_clist_column_titles_passive(GTK_CLIST(clist));
     gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
     gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
-    gtk_container_add(GTK_CONTAINER(frame[i]), scrollwin);
+    gtk_box_pack_start(GTK_BOX(hbox2), scrollwin, TRUE, TRUE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(hbox2), 3);
+    gtk_container_add(GTK_CONTAINER(frame[i]), hbox2);
     if (i == 0) {
       gtk_clist_set_column_justification(GTK_CLIST(clist), 1,
                                          GTK_JUSTIFY_RIGHT);
@@ -3259,7 +3264,7 @@ void DisplaySpyReports(Player *Play)
        *)(gtk_object_get_data(GTK_OBJECT(dialog), "accel_group"));
   vbox = gtk_vbox_new(FALSE, 5);
   frame = gtk_frame_new("Stats");
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
+  gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
   table = CreateStatusWidgets(&Status);
   gtk_container_add(GTK_CONTAINER(frame), table);
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
