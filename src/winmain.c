@@ -59,6 +59,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
    gchar **split;
    int argc;
+   GetGroupIDs();
+   DropPrivileges();
 #ifdef ENABLE_NLS
    setlocale(LC_ALL,"");
    bindtextdomain(PACKAGE,LOCALEDIR);

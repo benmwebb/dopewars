@@ -875,7 +875,9 @@ void HighScoreTypeWrite(struct HISCORE *HiScore,FILE *fp) {
 gboolean CheckHighScoreFile() {
 /* Tests to see whether the high score file is is read-and-writable        */
    FILE *fp;
+   GoPrivileged();
    fp=fopen(HiScoreFile,"a+");
+   DropPrivileges();
    if (fp) {
       fclose(fp);
       return TRUE;
@@ -890,7 +892,9 @@ int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
    FILE *fp;
    memset(MultiScore,0,sizeof(struct HISCORE)*NUMHISCORE);
    memset(AntiqueScore,0,sizeof(struct HISCORE)*NUMHISCORE);
+   GoPrivileged();
    fp=fopen(HiScoreFile,"r");
+   DropPrivileges();
    if (fp) {
       HighScoreTypeRead(AntiqueScore,fp);
       HighScoreTypeRead(MultiScore,fp);
@@ -903,7 +907,9 @@ int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
 /* Writes out all the high scores from MultiScore and AntiqueScore; returns */
 /* 1 on success, 0 on failure.                                              */
    FILE *fp;
+   GoPrivileged();
    fp=fopen(HiScoreFile,"w");
+   DropPrivileges();
    if (fp) {
       HighScoreTypeWrite(AntiqueScore,fp);
       HighScoreTypeWrite(MultiScore,fp);
