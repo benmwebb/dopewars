@@ -83,8 +83,6 @@ static void gtk_radio_button_toggled(GtkRadioButton *radio_button,
 static void gtk_container_destroy(GtkWidget *widget);
 static void gtk_container_size_request(GtkWidget *widget,
                                        GtkRequisition *requisition);
-static void gtk_container_set_size(GtkWidget *widget,
-                                   GtkAllocation *allocation);
 static void gtk_container_show_all(GtkWidget *widget, gboolean hWndOnly);
 static void gtk_window_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
@@ -93,6 +91,8 @@ static void gtk_window_set_size(GtkWidget *widget,
 static void gtk_window_destroy(GtkWidget *widget);
 static void gtk_window_set_menu(GtkWindow *window, GtkMenuBar *menu_bar);
 static GtkWidget *gtk_window_get_menu_ID(GtkWindow *window, gint ID);
+static gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
+                                   LPARAM lParam);
 static void gtk_table_destroy(GtkWidget *widget);
 static void gtk_table_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
@@ -138,14 +138,6 @@ static void gtk_frame_set_size(GtkWidget *widget,
                                GtkAllocation *allocation);
 static void gtk_frame_destroy(GtkWidget *widget);
 static void gtk_frame_realize(GtkWidget *widget);
-static void gtk_clist_size_request(GtkWidget *widget,
-                                   GtkRequisition *requisition);
-static void gtk_clist_set_size(GtkWidget *widget,
-                               GtkAllocation *allocation);
-static void gtk_clist_realize(GtkWidget *widget);
-static void gtk_clist_show(GtkWidget *widget);
-static void gtk_clist_hide(GtkWidget *widget);
-static void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis);
 static void gtk_box_show_all(GtkWidget *widget, gboolean hWndOnly);
 static void gtk_table_show_all(GtkWidget *widget, gboolean hWndOnly);
 static void gtk_widget_show_all_full(GtkWidget *widget, gboolean hWndOnly);
@@ -224,17 +216,10 @@ static void gtk_option_menu_size_request(GtkWidget *widget,
 static void gtk_option_menu_set_size(GtkWidget *widget,
                                      GtkAllocation *allocation);
 static void gtk_option_menu_realize(GtkWidget *widget);
-static void gtk_clist_update_selection(GtkWidget *widget);
 static void gtk_button_set_text(GtkButton *button, gchar *text);
 static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text);
 static void gtk_editable_create(GtkWidget *widget);
 static void gtk_option_menu_update_selection(GtkWidget *widget);
-static void gtk_clist_update_widths(GtkCList *clist, gchar *text[]);
-static void gtk_clist_update_all_widths(GtkCList *clist);
-static void gtk_clist_do_auto_resize(GtkCList *clist);
-static void gtk_clist_set_column_width_full(GtkCList *clist, gint column,
-                                            gint width,
-                                            gboolean ResizeHeader);
 static void gtk_widget_set_focus(GtkWidget *widget);
 static void gtk_widget_lose_focus(GtkWidget *widget);
 static void gtk_window_update_focus(GtkWindow *window);
@@ -287,15 +272,15 @@ static GtkSignalType GtkObjectSignals[] = {
 };
 
 static GtkClass GtkObjectClass = {
-  "object", NULL, sizeof(GtkObject), GtkObjectSignals
+  "object", NULL, sizeof(GtkObject), GtkObjectSignals, NULL
 };
 
 static GtkClass GtkAdjustmentClass = {
-  "adjustment", &GtkObjectClass, sizeof(GtkAdjustment), NULL
+  "adjustment", &GtkObjectClass, sizeof(GtkAdjustment), NULL, NULL
 };
 
 static GtkClass GtkItemFactoryClass = {
-  "itemfactory", &GtkObjectClass, sizeof(GtkItemFactory), NULL
+  "itemfactory", &GtkObjectClass, sizeof(GtkItemFactory), NULL, NULL
 };
 
 static GtkSignalType GtkWidgetSignals[] = {
@@ -314,7 +299,7 @@ static GtkSignalType GtkWidgetSignals[] = {
 };
 
 static GtkClass GtkWidgetClass = {
-  "widget", &GtkObjectClass, sizeof(GtkWidget), GtkWidgetSignals
+  "widget", &GtkObjectClass, sizeof(GtkWidget), GtkWidgetSignals, NULL
 };
 
 static GtkSignalType GtkSeparatorSignals[] = {
@@ -324,7 +309,7 @@ static GtkSignalType GtkSeparatorSignals[] = {
 };
 
 static GtkClass GtkMiscClass = {
-  "misc", &GtkWidgetClass, sizeof(GtkMisc), NULL
+  "misc", &GtkWidgetClass, sizeof(GtkMisc), NULL, NULL
 };
 
 static GtkSignalType GtkProgressBarSignals[] = {
@@ -335,23 +320,23 @@ static GtkSignalType GtkProgressBarSignals[] = {
 
 static GtkClass GtkProgressBarClass = {
   "progressbar", &GtkWidgetClass, sizeof(GtkProgressBar),
-      GtkProgressBarSignals
+      GtkProgressBarSignals, NULL
 };
 
 static GtkClass GtkSeparatorClass = {
-  "separator", &GtkWidgetClass, sizeof(GtkSeparator), GtkSeparatorSignals
+  "separator", &GtkWidgetClass, sizeof(GtkSeparator), GtkSeparatorSignals, NULL
 };
 
 static GtkClass GtkHSeparatorClass = {
-  "hseparator", &GtkSeparatorClass, sizeof(GtkHSeparator), NULL
+  "hseparator", &GtkSeparatorClass, sizeof(GtkHSeparator), NULL, NULL
 };
 
 static GtkClass GtkVSeparatorClass = {
-  "vseparator", &GtkSeparatorClass, sizeof(GtkVSeparator), NULL
+  "vseparator", &GtkSeparatorClass, sizeof(GtkVSeparator), NULL, NULL
 };
 
 static GtkClass GtkMenuShellClass = {
-  "menushell", &GtkWidgetClass, sizeof(GtkMenuShell), NULL
+  "menushell", &GtkWidgetClass, sizeof(GtkMenuShell), NULL, NULL
 };
 
 static GtkSignalType GtkMenuBarSignals[] = {
@@ -360,7 +345,7 @@ static GtkSignalType GtkMenuBarSignals[] = {
 };
 
 static GtkClass GtkMenuBarClass = {
-  "menubar", &GtkMenuShellClass, sizeof(GtkMenuBar), GtkMenuBarSignals
+  "menubar", &GtkMenuShellClass, sizeof(GtkMenuBar), GtkMenuBarSignals, NULL
 };
 
 static GtkSignalType GtkMenuItemSignals[] = {
@@ -373,7 +358,7 @@ static GtkSignalType GtkMenuItemSignals[] = {
 };
 
 static GtkClass GtkMenuItemClass = {
-  "menuitem", &GtkWidgetClass, sizeof(GtkMenuItem), GtkMenuItemSignals
+  "menuitem", &GtkWidgetClass, sizeof(GtkMenuItem), GtkMenuItemSignals, NULL
 };
 
 static GtkSignalType GtkMenuSignals[] = {
@@ -382,7 +367,7 @@ static GtkSignalType GtkMenuSignals[] = {
 };
 
 static GtkClass GtkMenuClass = {
-  "menu", &GtkMenuShellClass, sizeof(GtkMenu), GtkMenuSignals
+  "menu", &GtkMenuShellClass, sizeof(GtkMenu), GtkMenuSignals, NULL
 };
 
 static GtkSignalType GtkEditableSignals[] = {
@@ -392,7 +377,7 @@ static GtkSignalType GtkEditableSignals[] = {
 };
 
 static GtkClass GtkEditableClass = {
-  "editable", &GtkWidgetClass, sizeof(GtkEditable), GtkEditableSignals
+  "editable", &GtkWidgetClass, sizeof(GtkEditable), GtkEditableSignals, NULL
 };
 
 static GtkSignalType GtkEntrySignals[] = {
@@ -403,7 +388,7 @@ static GtkSignalType GtkEntrySignals[] = {
 };
 
 static GtkClass GtkEntryClass = {
-  "entry", &GtkEditableClass, sizeof(GtkEntry), GtkEntrySignals
+  "entry", &GtkEditableClass, sizeof(GtkEntry), GtkEntrySignals, NULL
 };
 
 static GtkSignalType GtkSpinButtonSignals[] = {
@@ -417,7 +402,8 @@ static GtkSignalType GtkSpinButtonSignals[] = {
 };
 
 static GtkClass GtkSpinButtonClass = {
-  "spinbutton", &GtkEntryClass, sizeof(GtkSpinButton), GtkSpinButtonSignals
+  "spinbutton", &GtkEntryClass, sizeof(GtkSpinButton),
+  GtkSpinButtonSignals, NULL
 };
 
 static GtkSignalType GtkTextSignals[] = {
@@ -427,7 +413,7 @@ static GtkSignalType GtkTextSignals[] = {
 };
 
 static GtkClass GtkTextClass = {
-  "text", &GtkEditableClass, sizeof(GtkText), GtkTextSignals
+  "text", &GtkEditableClass, sizeof(GtkText), GtkTextSignals, NULL
 };
 
 static GtkSignalType GtkLabelSignals[] = {
@@ -440,7 +426,7 @@ static GtkSignalType GtkLabelSignals[] = {
 };
 
 static GtkClass GtkLabelClass = {
-  "label", &GtkWidgetClass, sizeof(GtkLabel), GtkLabelSignals
+  "label", &GtkWidgetClass, sizeof(GtkLabel), GtkLabelSignals, NULL
 };
 
 static GtkSignalType GtkUrlSignals[] = {
@@ -452,7 +438,7 @@ static GtkSignalType GtkUrlSignals[] = {
 };
 
 static GtkClass GtkUrlClass = {
-  "URL", &GtkLabelClass, sizeof(GtkUrl), GtkUrlSignals
+  "URL", &GtkLabelClass, sizeof(GtkUrl), GtkUrlSignals, NULL
 };
 
 static GtkSignalType GtkButtonSignals[] = {
@@ -465,7 +451,7 @@ static GtkSignalType GtkButtonSignals[] = {
 };
 
 static GtkClass GtkButtonClass = {
-  "button", &GtkWidgetClass, sizeof(GtkButton), GtkButtonSignals
+  "button", &GtkWidgetClass, sizeof(GtkButton), GtkButtonSignals, NULL
 };
 
 static GtkSignalType GtkOptionMenuSignals[] = {
@@ -477,7 +463,7 @@ static GtkSignalType GtkOptionMenuSignals[] = {
 
 static GtkClass GtkOptionMenuClass = {
   "optionmenu", &GtkButtonClass, sizeof(GtkOptionMenu),
-  GtkOptionMenuSignals
+  GtkOptionMenuSignals, NULL
 };
 
 static GtkSignalType GtkToggleButtonSignals[] = {
@@ -487,7 +473,7 @@ static GtkSignalType GtkToggleButtonSignals[] = {
 
 static GtkClass GtkToggleButtonClass = {
   "toggle", &GtkButtonClass, sizeof(GtkToggleButton),
-  GtkToggleButtonSignals
+  GtkToggleButtonSignals, NULL
 };
 
 static GtkSignalType GtkCheckButtonSignals[] = {
@@ -498,7 +484,7 @@ static GtkSignalType GtkCheckButtonSignals[] = {
 
 static GtkClass GtkCheckButtonClass = {
   "check", &GtkToggleButtonClass, sizeof(GtkCheckButton),
-  GtkCheckButtonSignals
+  GtkCheckButtonSignals, NULL
 };
 
 static GtkSignalType GtkRadioButtonSignals[] = {
@@ -509,7 +495,7 @@ static GtkSignalType GtkRadioButtonSignals[] = {
 
 static GtkClass GtkRadioButtonClass = {
   "radio", &GtkCheckButtonClass, sizeof(GtkRadioButton),
-  GtkRadioButtonSignals
+  GtkRadioButtonSignals, NULL
 };
 
 static GtkSignalType GtkContainerSignals[] = {
@@ -523,7 +509,7 @@ static GtkSignalType GtkContainerSignals[] = {
 };
 
 static GtkClass GtkContainerClass = {
-  "container", &GtkWidgetClass, sizeof(GtkContainer), GtkContainerSignals
+  "container", &GtkWidgetClass, sizeof(GtkContainer), GtkContainerSignals, NULL
 };
 
 static GtkSignalType GtkPanedSignals[] = {
@@ -533,7 +519,7 @@ static GtkSignalType GtkPanedSignals[] = {
 };
 
 static GtkClass GtkPanedClass = {
-  "paned", &GtkContainerClass, sizeof(GtkPaned), GtkPanedSignals
+  "paned", &GtkContainerClass, sizeof(GtkPaned), GtkPanedSignals, NULL
 };
 
 static GtkSignalType GtkVPanedSignals[] = {
@@ -544,7 +530,7 @@ static GtkSignalType GtkVPanedSignals[] = {
 };
 
 static GtkClass GtkVPanedClass = {
-  "vpaned", &GtkPanedClass, sizeof(GtkVPaned), GtkVPanedSignals
+  "vpaned", &GtkPanedClass, sizeof(GtkVPaned), GtkVPanedSignals, NULL
 };
 
 static GtkSignalType GtkHPanedSignals[] = {
@@ -555,7 +541,7 @@ static GtkSignalType GtkHPanedSignals[] = {
 };
 
 static GtkClass GtkHPanedClass = {
-  "hpaned", &GtkPanedClass, sizeof(GtkHPaned), GtkHPanedSignals
+  "hpaned", &GtkPanedClass, sizeof(GtkHPaned), GtkHPanedSignals, NULL
 };
 
 static GtkSignalType GtkBoxSignals[] = {
@@ -567,7 +553,7 @@ static GtkSignalType GtkBoxSignals[] = {
 };
 
 static GtkClass GtkBoxClass = {
-  "box", &GtkContainerClass, sizeof(GtkBox), GtkBoxSignals
+  "box", &GtkContainerClass, sizeof(GtkBox), GtkBoxSignals, NULL
 };
 
 static GtkSignalType GtkNotebookSignals[] = {
@@ -581,7 +567,7 @@ static GtkSignalType GtkNotebookSignals[] = {
 };
 
 static GtkClass GtkNotebookClass = {
-  "notebook", &GtkContainerClass, sizeof(GtkNotebook), GtkNotebookSignals
+  "notebook", &GtkContainerClass, sizeof(GtkNotebook), GtkNotebookSignals, NULL
 };
 
 static GtkSignalType GtkTableSignals[] = {
@@ -595,23 +581,7 @@ static GtkSignalType GtkTableSignals[] = {
 };
 
 static GtkClass GtkTableClass = {
-  "table", &GtkContainerClass, sizeof(GtkTable), GtkTableSignals
-};
-
-static GtkSignalType GtkCListSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_clist_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_clist_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_clist_realize},
-  {"click-column", gtk_marshal_VOID__GINT, NULL},
-  {"select_row", gtk_marshal_VOID__GINT_GINT_EVENT, NULL},
-  {"unselect_row", gtk_marshal_VOID__GINT_GINT_EVENT, NULL},
-  {"show", gtk_marshal_VOID__VOID, gtk_clist_show},
-  {"hide", gtk_marshal_VOID__VOID, gtk_clist_hide},
-  {"", NULL, NULL}
-};
-
-static GtkClass GtkCListClass = {
-  "clist", &GtkContainerClass, sizeof(GtkCList), GtkCListSignals
+  "table", &GtkContainerClass, sizeof(GtkTable), GtkTableSignals, NULL
 };
 
 static GtkSignalType GtkHBoxSignals[] = {
@@ -621,7 +591,7 @@ static GtkSignalType GtkHBoxSignals[] = {
 };
 
 static GtkClass GtkHBoxClass = {
-  "hbox", &GtkBoxClass, sizeof(GtkHBox), GtkHBoxSignals
+  "hbox", &GtkBoxClass, sizeof(GtkHBox), GtkHBoxSignals, NULL
 };
 
 static GtkSignalType GtkVBoxSignals[] = {
@@ -631,11 +601,11 @@ static GtkSignalType GtkVBoxSignals[] = {
 };
 
 static GtkClass GtkVBoxClass = {
-  "vbox", &GtkBoxClass, sizeof(GtkVBox), GtkVBoxSignals
+  "vbox", &GtkBoxClass, sizeof(GtkVBox), GtkVBoxSignals, NULL
 };
 
 static GtkClass GtkBinClass = {
-  "bin", &GtkContainerClass, sizeof(GtkBin), NULL
+  "bin", &GtkContainerClass, sizeof(GtkBin), NULL, NULL
 };
 
 static GtkSignalType GtkFrameSignals[] = {
@@ -647,7 +617,7 @@ static GtkSignalType GtkFrameSignals[] = {
 };
 
 static GtkClass GtkFrameClass = {
-  "frame", &GtkBinClass, sizeof(GtkFrame), GtkFrameSignals
+  "frame", &GtkBinClass, sizeof(GtkFrame), GtkFrameSignals, NULL
 };
 
 static GtkSignalType GtkWindowSignals[] = {
@@ -663,7 +633,8 @@ static GtkSignalType GtkWindowSignals[] = {
 };
 
 static GtkClass GtkWindowClass = {
-  "window", &GtkBinClass, sizeof(GtkWindow), GtkWindowSignals
+  "window", &GtkBinClass, sizeof(GtkWindow), GtkWindowSignals,
+  gtk_window_wndproc
 };
 
 const GtkType GTK_TYPE_WINDOW = &GtkWindowClass;
@@ -942,14 +913,63 @@ LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
+                            LPARAM lParam)
 {
-  GtkWidget *window, *widget;
-  GtkClass *klass;
   RECT rect;
   GtkAllocation alloc;
+  GtkWidget *menu;
   gboolean signal_return;
   GdkEvent event = 0;
+
+  switch(msg) {
+  case WM_SIZE:
+    GetWindowRect(widget->hWnd, &rect);
+    alloc.x = rect.left;
+    alloc.y = rect.top;
+    alloc.width = rect.right - rect.left;
+    alloc.height = rect.bottom - rect.top;
+    gtk_window_handle_user_size(GTK_WINDOW(widget), &alloc);
+    gtk_widget_set_size(widget, &alloc);
+    return FALSE;
+  case WM_GETMINMAXINFO:
+    gtk_window_handle_minmax_size(GTK_WINDOW(widget), (LPMINMAXINFO)lParam);
+    return FALSE;
+  case WM_ACTIVATE:
+  case WM_ACTIVATEAPP:
+    if ((msg == WM_ACTIVATE && LOWORD(wParam) != WA_INACTIVE)
+        || (msg == WM_ACTIVATEAPP && wParam)) {
+      if (GTK_WINDOW(widget)->focus) {
+        gtk_widget_set_focus(GTK_WINDOW(widget)->focus);
+      }
+      if (!GTK_WINDOW(widget)->focus) {
+        gtk_window_set_focus(GTK_WINDOW(widget));
+      }
+    } else if (msg == WM_ACTIVATE && LOWORD(wParam) == WA_INACTIVE) {
+      gtk_window_update_focus(GTK_WINDOW(widget));
+    }
+    return FALSE;
+  case WM_CLOSE:
+    gtk_signal_emit(GTK_OBJECT(widget), "delete_event",
+                    &event, &signal_return);
+    return FALSE;
+  case WM_COMMAND:
+    if (HIWORD(wParam) == 0 || HIWORD(wParam) == 1) {
+      menu = gtk_window_get_menu_ID(GTK_WINDOW(widget), LOWORD(wParam));
+      if (menu) {
+        gtk_signal_emit(GTK_OBJECT(menu), "activate");
+        return FALSE;
+      }
+    }
+    break;
+  }
+  return TRUE;
+}
+
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+{
+  GtkWidget *widget;
+  GtkClass *klass;
   LPMEASUREITEMSTRUCT lpmis;
   HDC hDC;
   TEXTMETRIC tm;
@@ -961,83 +981,19 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
       && CallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
     return TRUE;
 
-  switch (msg) {
-  case WM_SIZE:
-    window = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
-    GetWindowRect(hwnd, &rect);
-    alloc.x = rect.left;
-    alloc.y = rect.top;
-    alloc.width = rect.right - rect.left;
-    alloc.height = rect.bottom - rect.top;
-    gtk_window_handle_user_size(GTK_WINDOW(window), &alloc);
-    gtk_widget_set_size(window, &alloc);
-    break;
-  case WM_GETMINMAXINFO:
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
-    if (widget)
-      klass = GTK_OBJECT(widget)->klass;
-    else
-      klass = NULL;
-    if (klass == &GtkWindowClass) {
-      gtk_window_handle_minmax_size(GTK_WINDOW(widget),
-                                    (LPMINMAXINFO)lParam);
-    }
-    break;
-  case WM_ACTIVATE:
-  case WM_ACTIVATEAPP:
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
-    if (widget)
-      klass = GTK_OBJECT(widget)->klass;
-    else
-      klass = NULL;
-    if (klass == &GtkWindowClass) {
-      if ((msg == WM_ACTIVATE && LOWORD(wParam) != WA_INACTIVE)
-          || (msg == WM_ACTIVATEAPP && wParam)) {
-        if (GTK_WINDOW(widget)->focus) {
-          gtk_widget_set_focus(GTK_WINDOW(widget)->focus);
-        }
-        if (!GTK_WINDOW(widget)->focus) {
-          gtk_window_set_focus(GTK_WINDOW(widget));
-        }
-      } else if (msg == WM_ACTIVATE && LOWORD(wParam) == WA_INACTIVE) {
-        gtk_window_update_focus(GTK_WINDOW(widget));
-      }
-    }
-    break;
-  case WM_COMMAND:
-    widget = GTK_WIDGET(GetWindowLong((HWND)lParam, GWL_USERDATA));
-    if (widget)
-      klass = GTK_OBJECT(widget)->klass;
-    else
-      klass = NULL;
+  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+  if (widget && (klass = GTK_OBJECT(widget)->klass)
+      && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
+    return FALSE;
+  }
 
-    if (lParam && klass == &GtkCListClass
-        && HIWORD(wParam) == LBN_SELCHANGE) {
-      gtk_clist_update_selection(widget);
-    } else if (lParam && klass == &GtkOptionMenuClass &&
-               HIWORD(wParam) == CBN_SELENDOK) {
-      gtk_option_menu_update_selection(widget);
-    } else if (lParam && HIWORD(wParam) == BN_CLICKED) {
-      gtk_signal_emit(GTK_OBJECT(widget), "clicked");
-    } else if (HIWORD(wParam) == 0 || HIWORD(wParam) == 1) {
-      window = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
-      widget = gtk_window_get_menu_ID(GTK_WINDOW(window), LOWORD(wParam));
-      if (widget)
-        gtk_signal_emit(GTK_OBJECT(widget), "activate");
-    } else
-      return TRUE;
-    break;
-  case WM_CLOSE:
-    gtk_signal_emit(GTK_OBJECT(GetWindowLong(hwnd, GWL_USERDATA)),
-                    "delete_event", &event, &signal_return);
-    return TRUE;
-    break;
+  switch (msg) {
   case WM_DRAWITEM:
-    lpdis = (LPDRAWITEMSTRUCT) lParam;
-    if (lpdis) {
-      gtk_clist_draw_row(GTK_CLIST(GetWindowLong(lpdis->hwndItem,
-                                                 GWL_USERDATA)), lpdis);
-      return TRUE;
+    if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
+        && (widget = GTK_WIDGET(GetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
+        && (klass = GTK_OBJECT(widget)->klass)
+        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
+      return FALSE;
     }
     break;
   case WM_MEASUREITEM:
@@ -1051,26 +1007,36 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
       return TRUE;
     }
     break;
+  case WM_COMMAND:
+    widget = GTK_WIDGET(GetWindowLong((HWND)lParam, GWL_USERDATA));
+    klass = NULL;
+    if (widget && (klass = GTK_OBJECT(widget)->klass)
+        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
+      return FALSE;
+    }
+
+    if (lParam && klass == &GtkOptionMenuClass &&
+               HIWORD(wParam) == CBN_SELENDOK) {
+      gtk_option_menu_update_selection(widget);
+    } else if (lParam && HIWORD(wParam) == BN_CLICKED) {
+      gtk_signal_emit(GTK_OBJECT(widget), "clicked");
+    } else
+      return TRUE;
+    break;
   case WM_NOTIFY:
     phdr = (HD_NOTIFY FAR *)lParam;
     nmhdr = (NMHDR *)lParam;
     if (!nmhdr)
       break;
-    if (nmhdr->code == HDN_ENDTRACK) {
-      gtk_clist_set_column_width_full(GTK_CLIST
-                                      (GetWindowLong
-                                       (nmhdr->hwndFrom, GWL_USERDATA)),
-                                      phdr->iItem, phdr->pitem->cxy,
-                                      FALSE);
+
+    widget = GTK_WIDGET(GetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
+    if (widget && (klass = GTK_OBJECT(widget)->klass)
+        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
       return FALSE;
-    } else if (nmhdr->code == HDN_ITEMCLICK) {
-      gtk_signal_emit(GTK_OBJECT
-                      (GetWindowLong(nmhdr->hwndFrom, GWL_USERDATA)),
-                      "click-column", (gint)phdr->iItem);
-      return FALSE;
-    } else if (nmhdr->code == TCN_SELCHANGE) {
-      gtk_notebook_set_page(GTK_NOTEBOOK
-                            (GetWindowLong(nmhdr->hwndFrom, GWL_USERDATA)),
+    }
+
+    if (widget && nmhdr->code == TCN_SELCHANGE) {
+      gtk_notebook_set_page(GTK_NOTEBOOK(widget),
                             TabCtrl_GetCurSel(nmhdr->hwndFrom));
       return FALSE;
     }
@@ -1079,8 +1045,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     /* Ignore network messages if in recursive message loops, to avoid
      * dodgy race conditions */
     if (RecurseLevel <= 1) {
-      /* Make any error available by the usual WSAGetLastError() mechanism 
-       */
+      /* Make any error available by the usual WSAGetLastError() mechanism */
       WSASetLastError(WSAGETSELECTERROR(lParam));
       DispatchSocketEvent((SOCKET)wParam, WSAGETSELECTEVENT(lParam));
     }
@@ -1886,25 +1851,6 @@ GtkWidget *gtk_entry_new()
   return GTK_WIDGET(entry);
 }
 
-GtkWidget *gtk_clist_new(gint columns)
-{
-  GtkCList *clist;
-  int i;
-
-  clist = GTK_CLIST(GtkNewObject(&GtkCListClass));
-  clist->cols = columns;
-  clist->coldata = g_new0(GtkCListColumn, columns);
-  clist->rows = 0;
-  clist->rowdata = NULL;
-  for (i = 0; i < columns; i++) {
-    clist->coldata[i].width = 0;
-    clist->coldata[i].visible = TRUE;
-    clist->coldata[i].resizeable = TRUE;
-  }
-
-  return GTK_WIDGET(clist);
-}
-
 GSList *gtk_radio_button_group(GtkRadioButton *radio_button)
 {
   return radio_button->group;
@@ -2548,395 +2494,6 @@ void gtk_radio_button_destroy(GtkWidget *widget)
     radio = GTK_RADIO_BUTTON(listpt->data);
     radio->group = group;
   }
-}
-
-
-void gtk_clist_size_request(GtkWidget *widget, GtkRequisition *requisition)
-{
-  SIZE size;
-
-  if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
-    requisition->width = size.cx;
-    requisition->height = size.cy * 6 + 12;
-  }
-}
-
-void gtk_clist_set_size(GtkWidget *widget, GtkAllocation *allocation)
-{
-  GtkCList *clist = GTK_CLIST(widget);
-
-  gtk_container_set_size(widget, allocation);
-  if (clist->header) {
-    SetWindowPos(clist->header, HWND_TOP,
-                 allocation->x, allocation->y,
-                 allocation->width, clist->header_size, SWP_NOZORDER);
-    allocation->y += clist->header_size - 1;
-    allocation->height -= clist->header_size - 1;
-  }
-}
-
-void gtk_clist_realize(GtkWidget *widget)
-{
-  HWND Parent, header;
-  HD_LAYOUT hdl;
-  HD_ITEM hdi;
-  RECT rcParent;
-  WINDOWPOS wp;
-  GtkCList *clist = GTK_CLIST(widget);
-  GSList *rows;
-  GtkCListRow *row;
-  gint i;
-
-  gtk_container_realize(widget);
-  Parent = gtk_get_parent_hwnd(widget);
-  GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  rcParent.left = rcParent.top = 0;
-  rcParent.right = rcParent.bottom = 800;
-  header = CreateWindowEx(0, WC_HEADER, NULL,
-                          WS_CHILD | WS_BORDER | HDS_HORZ
-                          | (GTK_CLIST(widget)->coldata[0].button_passive ?
-                             0 : HDS_BUTTONS),
-                          0, 0, 0, 0, Parent, NULL, hInst, NULL);
-  SetWindowLong(header, GWL_USERDATA, (LONG)widget);
-  GTK_CLIST(widget)->header = header;
-  gtk_set_default_font(header);
-  hdl.prc = &rcParent;
-  hdl.pwpos = &wp;
-  SendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
-  clist->header_size = wp.cy;
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
-                                WS_CHILD | WS_TABSTOP | LBS_DISABLENOSCROLL
-                                | WS_VSCROLL | LBS_OWNERDRAWFIXED |
-                                LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
-                                hInst, NULL);
-  gtk_set_default_font(widget->hWnd);
-
-  gtk_clist_update_all_widths(clist);
-  for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
-    row = (GtkCListRow *)rows->data;
-    if (row)
-      SendMessage(widget->hWnd, LB_ADDSTRING, 0, (LPARAM)row->data);
-  }
-
-  for (i = 0; i < clist->cols; i++) {
-    hdi.mask = HDI_TEXT | HDI_FORMAT | HDI_WIDTH;
-    hdi.pszText = clist->coldata[i].title;
-    if (hdi.pszText) {
-      if (i == clist->cols - 1)
-        hdi.cxy = 9000;
-      else
-        hdi.cxy = clist->coldata[i].width;
-      hdi.cchTextMax = strlen(hdi.pszText);
-      hdi.fmt = HDF_LEFT | HDF_STRING;
-      SendMessage(header, HDM_INSERTITEM, i + 1, (LPARAM)&hdi);
-    }
-  }
-}
-
-void gtk_clist_show(GtkWidget *widget)
-{
-  if (GTK_WIDGET_REALIZED(widget)) {
-    ShowWindow(GTK_CLIST(widget)->header, SW_SHOWNORMAL);
-  }
-}
-
-void gtk_clist_hide(GtkWidget *widget)
-{
-  if (GTK_WIDGET_REALIZED(widget)) {
-    ShowWindow(GTK_CLIST(widget)->header, SW_HIDE);
-  }
-}
-
-void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
-{
-  HBRUSH bkgrnd;
-  COLORREF textcol, oldtextcol;
-  RECT rcCol;
-  gint i, CurrentX;
-  GtkCListRow *row;
-
-  if (lpdis->itemState & ODS_SELECTED) {
-    bkgrnd = (HBRUSH)(1 + COLOR_HIGHLIGHT);
-    textcol = (COLORREF)GetSysColor(COLOR_HIGHLIGHTTEXT);
-  } else {
-    bkgrnd = (HBRUSH)(1 + COLOR_WINDOW);
-    textcol = (COLORREF)GetSysColor(COLOR_WINDOWTEXT);
-  }
-  oldtextcol = SetTextColor(lpdis->hDC, textcol);
-  SetBkMode(lpdis->hDC, TRANSPARENT);
-  FillRect(lpdis->hDC, &lpdis->rcItem, bkgrnd);
-
-  if (lpdis->itemID >= 0 && lpdis->itemID < clist->rows) {
-    row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, lpdis->itemID);
-    CurrentX = lpdis->rcItem.left;
-    rcCol.top = lpdis->rcItem.top;
-    rcCol.bottom = lpdis->rcItem.bottom;
-    if (row->text)
-      for (i = 0; i < clist->cols; i++) {
-        rcCol.left = CurrentX + LISTITEMHPACK;
-        CurrentX += clist->coldata[i].width;
-        rcCol.right = CurrentX - LISTITEMHPACK;
-        if (rcCol.left > lpdis->rcItem.right)
-          rcCol.left = lpdis->rcItem.right;
-        if (rcCol.right > lpdis->rcItem.right)
-          rcCol.right = lpdis->rcItem.right;
-        if (i == clist->cols - 1)
-          rcCol.right = lpdis->rcItem.right;
-        if (row->text[i]) {
-          DrawText(lpdis->hDC, row->text[i], -1, &rcCol,
-                   DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
-        }
-      }
-  }
-
-  SetTextColor(lpdis->hDC, oldtextcol);
-  SetBkMode(lpdis->hDC, OPAQUE);
-  if (lpdis->itemState & ODS_FOCUS)
-    DrawFocusRect(lpdis->hDC, &lpdis->rcItem);
-}
-
-void gtk_clist_do_auto_resize(GtkCList *clist)
-{
-  gint i;
-
-  for (i = 0; i < clist->cols; i++)
-    if (clist->coldata[i].auto_resize) {
-      gtk_clist_set_column_width(clist, i, clist->coldata[i].width);
-    }
-}
-
-void gtk_clist_update_all_widths(GtkCList *clist)
-{
-  GSList *list;
-  GtkCListRow *row;
-  gint i;
-  SIZE size;
-  HWND header;
-
-  header = clist->header;
-  if (header)
-    for (i = 0; i < clist->cols; i++) {
-      if (GetTextSize(header, clist->coldata[i].title, &size, defFont) &&
-          clist->coldata[i].width < size.cx + 2 * LISTHEADERPACK) {
-        clist->coldata[i].width = size.cx + 2 * LISTHEADERPACK;
-      }
-    }
-
-  for (list = clist->rowdata; list; list = g_slist_next(list)) {
-    row = (GtkCListRow *)list->data;
-    if (row && row->text)
-      gtk_clist_update_widths(clist, row->text);
-  }
-}
-
-void gtk_clist_update_widths(GtkCList *clist, gchar *text[])
-{
-  gint i;
-  SIZE size;
-  HWND hWnd;
-
-  hWnd = GTK_WIDGET(clist)->hWnd;
-  if (!hWnd)
-    return;
-  for (i = 0; i < clist->cols; i++) {
-    if (clist->coldata[i].auto_resize
-        && GetTextSize(hWnd, text[i], &size, defFont)
-        && size.cx + 2 * LISTITEMHPACK > clist->coldata[i].width) {
-      clist->coldata[i].width = size.cx + 2 * LISTITEMHPACK;
-    }
-  }
-}
-
-gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[])
-{
-  GtkWidget *widget = GTK_WIDGET(clist);
-  HWND hWnd;
-  GtkCListRow *new_row;
-  gint i;
-
-  if (row < 0)
-    row = clist->rows;
-
-  new_row = g_new0(GtkCListRow, 1);
-  new_row->text = g_new0(gchar *, clist->cols);
-
-  for (i = 0; i < clist->cols; i++) {
-    new_row->text[i] = g_strdup(text[i]);
-  }
-  gtk_clist_update_widths(clist, new_row->text);
-  gtk_clist_do_auto_resize(clist);
-  clist->rowdata = g_slist_insert(clist->rowdata, (gpointer)new_row, row);
-  clist->rows = g_slist_length(clist->rowdata);
-
-  if (GTK_WIDGET_REALIZED(widget)) {
-    hWnd = widget->hWnd;
-    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, (LPARAM)NULL);
-  }
-
-  return row;
-}
-
-gint gtk_clist_set_text(GtkCList *clist, gint row, gint col, gchar *text)
-{
-  GtkCListRow *list_row;
-
-  if (row < 0 || row >= clist->rows || col < 0 || col >= clist->cols)
-    return -1;
-
-  list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
-  g_free(list_row->text[col]);
-  list_row->text[col] = g_strdup(text);
-
-  if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
-    HWND hWnd = GTK_WIDGET(clist)->hWnd;
-
-    InvalidateRect(hWnd, NULL, FALSE);
-    UpdateWindow(hWnd);
-  }
-  return row;
-}
-
-void gtk_clist_remove(GtkCList *clist, gint row)
-{
-  if (row >= 0 && row < clist->rows) {
-    GSList *dellink;
-    GtkCListRow *delrow;
-    int i;
-
-    gtk_clist_unselect_row(clist, row, 0);
-    dellink = g_slist_nth(clist->rowdata, row);
-    delrow = (GtkCListRow *)dellink->data;
-    for (i = 0; i < clist->cols; i++) {
-      g_free(delrow->text[i]);
-    }
-    g_free(delrow->text);
-    clist->rowdata = g_slist_remove_link(clist->rowdata, dellink);
-    g_free(dellink);
-
-    clist->rows = g_slist_length(clist->rowdata);
-
-    if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
-      HWND hWnd = GTK_WIDGET(clist)->hWnd;
-
-      SendMessage(hWnd, LB_DELETESTRING, (WPARAM)row, 0);
-    }
-  }
-}
-
-GtkWidget *gtk_clist_new_with_titles(gint columns, gchar *titles[])
-{
-  GtkWidget *widget;
-  GtkCList *clist;
-  gint i;
-
-  widget = gtk_clist_new(columns);
-  clist = GTK_CLIST(widget);
-  for (i = 0; i < clist->cols; i++) {
-    gtk_clist_set_column_title(clist, i, titles[i]);
-  }
-  return widget;
-}
-
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                              gchar *titles[],
-                                              GtkWidget **pack_widg)
-{
-  GtkWidget *widget;
-
-  widget = gtk_clist_new_with_titles(columns, titles);
-  *pack_widg = widget;
-  return widget;
-}
-
-gint gtk_clist_append(GtkCList *clist, gchar *text[])
-{
-  return gtk_clist_insert(clist, -1, text);
-}
-
-void gtk_clist_set_column_title(GtkCList *clist, gint column,
-                                const gchar *title)
-{
-  HWND hWnd;
-
-  if (column < 0 || column >= clist->cols)
-    return;
-  g_free(clist->coldata[column].title);
-  clist->coldata[column].title = g_strdup(title);
-  if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
-    hWnd = GTK_WIDGET(clist)->hWnd;
-    InvalidateRect(hWnd, NULL, FALSE);
-    UpdateWindow(hWnd);
-  }
-}
-
-void gtk_clist_column_title_passive(GtkCList *clist, gint column)
-{
-  if (column >= 0 && column < clist->cols)
-    clist->coldata[column].button_passive = TRUE;
-}
-
-void gtk_clist_column_titles_passive(GtkCList *clist)
-{
-  gint i;
-
-  for (i = 0; i < clist->cols; i++) {
-    gtk_clist_column_title_passive(clist, i);
-  }
-}
-
-void gtk_clist_column_title_active(GtkCList *clist, gint column)
-{
-  if (column >= 0 && column < clist->cols)
-    clist->coldata[column].button_passive = FALSE;
-}
-
-void gtk_clist_column_titles_active(GtkCList *clist)
-{
-  gint i;
-
-  for (i = 0; i < clist->cols; i++) {
-    gtk_clist_column_title_active(clist, i);
-  }
-}
-
-void gtk_clist_set_column_width(GtkCList *clist, gint column, gint width)
-{
-  gtk_clist_set_column_width_full(clist, column, width, TRUE);
-}
-
-void gtk_clist_set_column_width_full(GtkCList *clist, gint column,
-                                     gint width, gboolean ResizeHeader)
-{
-  HWND hWnd, header;
-  HD_ITEM hdi;
-
-  if (column < 0 || column >= clist->cols)
-    return;
-
-  clist->coldata[column].width = width;
-  if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
-    header = clist->header;
-    if (ResizeHeader && header) {
-      hdi.mask = HDI_WIDTH;
-      if (column == clist->cols - 1)
-        width = 9000;
-      hdi.cxy = width;
-      if (SendMessage(header, HDM_GETITEM, (WPARAM)column, (LPARAM)&hdi) &&
-          hdi.cxy != width) {
-        hdi.mask = HDI_WIDTH;
-        hdi.cxy = width;
-        SendMessage(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
-      }
-    }
-    hWnd = GTK_WIDGET(clist)->hWnd;
-    if (hWnd)
-      InvalidateRect(hWnd, NULL, FALSE);
-  }
-}
-
-void gtk_clist_set_selection_mode(GtkCList *clist, GtkSelectionMode mode)
-{
-  clist->mode = mode;
 }
 
 void gtk_container_show_all(GtkWidget *widget, gboolean hWndOnly)
@@ -5031,91 +4588,6 @@ void gtk_text_thaw(GtkText *text)
 {
 }
 
-static GtkCList *sorting_clist;
-static gint gtk_clist_sort_func(gconstpointer a, gconstpointer b)
-{
-  return (*sorting_clist->cmp_func) (sorting_clist, a, b);
-}
-
-void gtk_clist_sort(GtkCList *clist)
-{
-  HWND hWnd;
-  gint rowind;
-  GList *sel;
-  GSList *rowpt;
-
-  sorting_clist = clist;
-  if (clist && clist->cmp_func && clist->rows) {
-    /* Since the order of the list may change, we need to change the
-     * selection as well. Do this by converting the row indices into
-     * GSList pointers (which are invariant to the sort) and then convert
-     * back afterwards */
-    for (sel = clist->selection; sel; sel = g_list_next(sel)) {
-      rowind = GPOINTER_TO_INT(sel->data);
-      sel->data = (gpointer)g_slist_nth(clist->rowdata, rowind);
-    }
-    clist->rowdata = g_slist_sort(clist->rowdata, gtk_clist_sort_func);
-    for (sel = clist->selection; sel; sel = g_list_next(sel)) {
-      rowpt = (GSList *)(sel->data);
-      sel->data = GINT_TO_POINTER(g_slist_position(clist->rowdata, rowpt));
-    }
-    if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
-      hWnd = GTK_WIDGET(clist)->hWnd;
-      if (clist->mode == GTK_SELECTION_SINGLE) {
-        sel = clist->selection;
-        if (sel)
-          rowind = GPOINTER_TO_INT(sel->data);
-        else
-          rowind = -1;
-        SendMessage(hWnd, LB_SETCURSEL, (WPARAM)rowind, 0);
-      } else {
-        for (rowind = 0; rowind < clist->rows; rowind++) {
-          SendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)rowind);
-        }
-        for (sel = clist->selection; sel; sel = g_list_next(sel)) {
-          rowind = GPOINTER_TO_INT(sel->data);
-          SendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)rowind);
-        }
-      }
-      InvalidateRect(hWnd, NULL, FALSE);
-      UpdateWindow(hWnd);
-    }
-  }
-}
-
-void gtk_clist_freeze(GtkCList *clist)
-{
-}
-
-void gtk_clist_thaw(GtkCList *clist)
-{
-}
-
-void gtk_clist_clear(GtkCList *clist)
-{
-  GtkCListRow *row;
-  GSList *list;
-  gint i;
-  HWND hWnd;
-
-  for (list = clist->rowdata; list; list = g_slist_next(list)) {
-    row = (GtkCListRow *)list->data;
-    for (i = 0; i < clist->cols; i++) {
-      g_free(row->text[i]);
-    }
-    g_free(row);
-  }
-  g_slist_free(clist->rowdata);
-  clist->rowdata = NULL;
-  clist->rows = 0;
-
-  gtk_clist_update_all_widths(clist);
-  hWnd = GTK_WIDGET(clist)->hWnd;
-  if (hWnd) {
-    SendMessage(hWnd, LB_RESETCONTENT, 0, 0);
-  }
-}
-
 GtkWidget *gtk_option_menu_new()
 {
   GtkOptionMenu *option_menu;
@@ -5258,38 +4730,6 @@ void gtk_label_get(GtkLabel *label, gchar **str)
   *str = label->text;
 }
 
-void gtk_clist_set_row_data(GtkCList *clist, gint row, gpointer data)
-{
-  GtkCListRow *list_row;
-
-  if (row >= 0 && row < clist->rows) {
-    list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
-    if (list_row)
-      list_row->data = data;
-  }
-}
-
-gpointer gtk_clist_get_row_data(GtkCList *clist, gint row)
-{
-  GtkCListRow *list_row;
-
-  if (row >= 0 && row < clist->rows) {
-    list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
-    if (list_row)
-      return list_row->data;
-  }
-  return NULL;
-}
-
-void gtk_clist_set_auto_sort(GtkCList *clist, gboolean auto_sort)
-{
-  clist->auto_sort = auto_sort;
-}
-
-void gtk_clist_columns_autosize(GtkCList *clist)
-{
-}
-
 void gtk_text_set_point(GtkText *text, guint index)
 {
   gtk_editable_set_position(GTK_EDITABLE(text), index);
@@ -5299,95 +4739,6 @@ void gtk_widget_set_usize(GtkWidget *widget, gint width, gint height)
 {
   widget->usize.width = width;
   widget->usize.height = height;
-}
-
-void gtk_clist_select_row(GtkCList *clist, gint row, gint column)
-{
-  HWND hWnd;
-
-  hWnd = GTK_WIDGET(clist)->hWnd;
-  if (hWnd) {
-    if (clist->mode == GTK_SELECTION_SINGLE) {
-      SendMessage(hWnd, LB_SETCURSEL, (WPARAM)row, 0);
-    } else {
-      SendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)row);
-    }
-    gtk_clist_update_selection(GTK_WIDGET(clist));
-  }
-}
-
-void gtk_clist_unselect_row(GtkCList *clist, gint row, gint column)
-{
-  HWND hWnd;
-
-  hWnd = GTK_WIDGET(clist)->hWnd;
-  if (hWnd) {
-    if (clist->mode == GTK_SELECTION_SINGLE) {
-      SendMessage(hWnd, LB_SETCURSEL, (WPARAM)(-1), 0);
-    } else {
-      SendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)row);
-    }
-    gtk_clist_update_selection(GTK_WIDGET(clist));
-  }
-}
-
-GtkVisibility gtk_clist_row_is_visible(GtkCList *clist, gint row)
-{
-  return GTK_VISIBILITY_FULL;
-}
-
-void gtk_clist_moveto(GtkCList *clist, gint row, gint column,
-                      gfloat row_align, gfloat col_align)
-{
-}
-
-void gtk_clist_set_compare_func(GtkCList *clist,
-                                GtkCListCompareFunc cmp_func)
-{
-  if (clist)
-    clist->cmp_func = cmp_func;
-}
-
-void gtk_clist_set_column_auto_resize(GtkCList *clist, gint column,
-                                      gboolean auto_resize)
-{
-  if (clist && column >= 0 && column < clist->cols) {
-    clist->coldata[column].auto_resize = auto_resize;
-  }
-}
-
-void gtk_clist_update_selection(GtkWidget *widget)
-{
-  GtkCList *clist = GTK_CLIST(widget);
-  GList *oldsel, *selpt;
-  gint i;
-
-  oldsel = clist->selection;
-  clist->selection = NULL;
-  if (widget->hWnd) {
-    for (i = 0; i < clist->rows; i++) {
-      if (SendMessage(widget->hWnd, LB_GETSEL, (WPARAM)i, 0) > 0) {
-        clist->selection = g_list_append(clist->selection, GINT_TO_POINTER(i));
-      }
-    }
-
-    for (selpt = oldsel; selpt; selpt = g_list_next(selpt)) {
-      gint row = GPOINTER_TO_INT(selpt->data);
-
-      if (!g_list_find(clist->selection, GINT_TO_POINTER(row))) {
-        gtk_signal_emit(GTK_OBJECT(widget), "unselect_row", row, 0, NULL);
-      }
-    }
-
-    for (selpt = clist->selection; selpt; selpt = g_list_next(selpt)) {
-      gint row = GPOINTER_TO_INT(selpt->data);
-
-      if (!g_list_find(oldsel, GINT_TO_POINTER(row))) {
-        gtk_signal_emit(GTK_OBJECT(widget), "select_row", row, 0, NULL);
-      }
-    }
-  }
-  g_list_free(oldsel);
 }
 
 void gtk_editable_create(GtkWidget *widget)
@@ -5650,22 +5001,6 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
   gtk_box_pack_start(GTK_BOX(hbox), vscroll, FALSE, FALSE, 0);
   *pack_widg = hbox;
   return text;
-}
-
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                              gchar *titles[],
-                                              GtkWidget **pack_widg)
-{
-  GtkWidget *scrollwin, *clist;
-
-  clist = gtk_clist_new_with_titles(columns, titles);
-  scrollwin = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                 GTK_POLICY_AUTOMATIC,
-                                 GTK_POLICY_AUTOMATIC);
-  gtk_container_add(GTK_CONTAINER(scrollwin), clist);
-  *pack_widg = scrollwin;
-  return clist;
 }
 
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)

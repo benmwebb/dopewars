@@ -94,7 +94,7 @@ WNDRES = @WNDRES@
 localedir = @localedir@
 
 noinst_LIBRARIES = libgtkport.a
-libgtkport_a_SOURCES = gtkport.c gtkport.h
+libgtkport_a_SOURCES = gtkport.c gtkport.h clist.c clist.h
 INCLUDES = -I../../intl -I${srcdir} -I${srcdir}/.. -I../.. @GTK_CFLAGS@
 DEFS = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -106,7 +106,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libgtkport_a_LIBADD = 
-libgtkport_a_OBJECTS =  gtkport.o
+libgtkport_a_OBJECTS =  gtkport.o clist.o
 AR = ar
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -119,7 +119,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/gtkport.P
+DEP_FILES =  .deps/clist.P .deps/gtkport.P
 SOURCES = $(libgtkport_a_SOURCES)
 OBJECTS = $(libgtkport_a_OBJECTS)
 
