@@ -3719,6 +3719,9 @@ void gtk_spin_button_hide(GtkWidget *widget) {
    if (updown) ShowWindow(updown,SW_HIDE);
 }
 
+void gtk_spin_button_update(GtkSpinButton *spin_button) {
+}
+
 void gdk_input_remove(gint tag) {
    GSList *list;
    GdkInput *input;

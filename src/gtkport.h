@@ -671,6 +671,7 @@ gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button);
 void gtk_spin_button_set_value(GtkSpinButton *spin_button,gfloat value);
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
                                     GtkAdjustment *adjustment);
+void gtk_spin_button_update(GtkSpinButton *spin_button);
 void gtk_misc_set_alignment(GtkMisc *misc,gfloat xalign,gfloat yalign);
 GtkWidget *gtk_progress_bar_new();
 void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,

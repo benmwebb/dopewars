@@ -1211,6 +1211,7 @@ static void DealOKCallback(GtkWidget *widget,gpointer data) {
 
    spinner=DealDialog.amount;
 
+   gtk_spin_button_update(GTK_SPIN_BUTTON(spinner));
    amount=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinner));
 
    text=g_strdup_printf("drug^%d^%d",DealDialog.DrugInd,
