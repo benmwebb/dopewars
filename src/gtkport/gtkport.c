@@ -5055,6 +5055,19 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
   return text;
 }
 
+GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
+{
+  GtkWidget *textview, *scrollwin;
+
+  textview = gtk_text_view_new();
+  scrollwin = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_container_add(GTK_CONTAINER(scrollwin), textview);
+  *pack_widg = scrollwin;
+  return textview;
+}
+
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
 {
   gtk_main_quit();
