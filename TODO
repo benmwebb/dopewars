@@ -1,3 +1,5 @@
+- Add support for reading/writing multiple configuration files to GUI client's
+  Options dialog
 - Startscreen
 - Track down server memory corruption bug!
 - Implement server option to buy more than one bitch at a time in the Pub.
