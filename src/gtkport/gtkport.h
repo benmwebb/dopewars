@@ -101,6 +101,15 @@ typedef enum {
   GDK_INPUT_EXCEPTION = 1 << 2
 } GdkInputCondition;
 
+typedef enum
+{
+  GTK_SHADOW_NONE,
+  GTK_SHADOW_IN,
+  GTK_SHADOW_OUT,
+  GTK_SHADOW_ETCHED_IN,
+  GTK_SHADOW_ETCHED_OUT
+} GtkShadowType;
+
 #define GDK_KP_0 0xFFB0
 #define GDK_KP_1 0xFFB1
 #define GDK_KP_2 0xFFB2
@@ -573,6 +582,7 @@ GtkWidget *gtk_radio_button_new_with_label(GSList *group,
 GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
                                                        const gchar *label);
 GtkWidget *gtk_frame_new(const gchar *text);
+void gtk_frame_set_shadow_type (GtkFrame *frame, GtkShadowType type);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj);
 GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);

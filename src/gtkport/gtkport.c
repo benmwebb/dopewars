@@ -1571,6 +1571,10 @@ void gtk_frame_set_size(GtkWidget *widget, GtkAllocation *allocation)
   gtk_container_set_size(widget, &child_alloc);
 }
 
+void gtk_frame_set_shadow_type (GtkFrame *frame, GtkShadowType type)
+{
+}
+
 void gtk_container_size_request(GtkWidget *widget,
                                 GtkRequisition *requisition)
 {
