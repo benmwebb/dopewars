@@ -2183,8 +2183,15 @@ void SendEvent(Player *To)
       }
       break;
     case E_SAYING:
-      if (!Sanitized && (brandom(0, 100) < 15)) {
-        if (brandom(0, 100) < 50) {
+      if (!Sanitized && brandom(0, 100) < 15
+          && (NumSubway > 0 || NumPlaying > 0)) {
+        int subwaychance = 50;
+
+        if (NumSubway == 0)
+          subwaychance = 0;
+        if (NumPlaying == 0)
+          subwaychance = 100;
+        if (brandom(0, 100) < subwaychance) {
           text = g_strdup_printf(_("The lady next to you on the subway "
                                    "said,^ \"%s\"%s"),
                                  SubwaySaying[brandom(0, NumSubway)],
@@ -2970,7 +2977,7 @@ int RandomOffer(Player *To)
     SendQuestion(NULL, C_NONE, To, text->str);
     g_string_free(text, TRUE);
     return 1;
-  } else {
+  } else if (NumStoppedTo > 0) {
     g_string_sprintf(text, _("You stopped to %s."),
                      StoppedTo[brandom(0, NumStoppedTo)]);
     amount = brandom(1, 10);
