@@ -32,6 +32,7 @@
 #include <stdlib.h>
 
 #include "dopewars.h"
+#include "log.h"
 #include "nls.h"
 #include "tstring.h"
 #include "util.h"
