@@ -2832,6 +2832,7 @@ void InitConfiguration(struct CMDLINE *cmdline)
   }
   if (cmdline->logfile) {
     AssignName(&Log.File, cmdline->logfile);
+    OpenLog();
   }
   if (cmdline->setport) {
     Port = cmdline->port;
@@ -2956,6 +2957,9 @@ int main(int argc, char *argv[])
   WantUTF8Errors(FALSE);
   g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);
   cmdline = GeneralStartup(argc, argv);
+  if (cmdline->logfile) {
+    AssignName(&Log.File, cmdline->logfile);
+  }
   OpenLog();
   SoundInit();
   if (cmdline->version || cmdline->help) {

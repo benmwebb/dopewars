@@ -289,6 +289,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   get_cmdline(lpszCmdParam, &argc, &argv);
 
   cmdline = GeneralStartup(argc, argv);
+  if (cmdline->logfile) {
+    AssignName(&Log.File, cmdline->logfile);
+  }
   OpenLog();
   SoundInit();
   if (cmdline->version || cmdline->help) {
