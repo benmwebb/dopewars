@@ -1,4 +1,3 @@
-- More complete Options dialog
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
