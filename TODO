@@ -1,3 +1,4 @@
+- Fail nicely if NumLocation (etc.) is set to zero
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
