@@ -2225,7 +2225,8 @@ void SendEvent(Player *To)
       }
       break;
     case E_GUNSHOP:
-      if (To->IsAt + 1 == GunShopLoc && !Sanitized && !WantAntique) {
+      if (To->IsAt + 1 == GunShopLoc && !Sanitized && NumGun > 0
+          && !WantAntique) {
         text = dpg_strdup_printf(_("YN^Would you like to visit %tde?"),
                                  Names.GunShopName);
         SendQuestion(NULL, C_ASKGUNSHOP, To, text);
@@ -2257,9 +2258,9 @@ void SendEvent(Player *To)
     case E_ARRIVE:
       for (list = FirstServer; list; list = g_slist_next(list)) {
         Play = (Player *)list->data;
-        if (IsConnectedPlayer(Play) && Play != To &&
-            Play->IsAt == To->IsAt &&
-            Play->EventNum == E_NONE && TotalGunsCarried(To) > 0) {
+        if (IsConnectedPlayer(Play) && Play != To
+            && NumGun > 0 && Play->IsAt == To->IsAt
+            && Play->EventNum == E_NONE && TotalGunsCarried(To) > 0) {
           text = g_strdup_printf(_("%s^%s is already here!^"
                                    "Do you Attack, or Evade?"),
                                  attackquestiontr,
@@ -2311,7 +2312,7 @@ int SendCopOffer(Player *To, OfferForce Force)
     return (OfferObject(To, Force == FORCEBITCH));
   } else if (i < 50) {
     return (RandomOffer(To));
-  } else if (Sanitized || NumCop == 0) {
+  } else if (Sanitized || NumCop == 0 || NumGun == 0) {
     return 0;
   } else {
     CopsAttackPlayer(To);
@@ -2328,8 +2329,8 @@ void CopsAttackPlayer(Player *Play)
   Player *Cops;
   gint CopIndex, NumDeputy, GunIndex;
 
-  if (NumCop == 0) {
-    g_warning(_("No cops!"));
+  if (NumCop == 0 || NumGun == 0) {
+    g_warning(_("No cops or guns!"));
     return;
   }
 
@@ -2618,7 +2619,7 @@ static void CheckCopsIntervene(Player *Play)
   guint ArrayInd;
   Player *Defend;
 
-  if (!Play || !Play->FightArray || NumCop == 0)
+  if (!Play || !Play->FightArray || NumCop == 0 || NumGun == 0)
     return;                     /* Sanity check */
 
   if (!Play->Attacking)
@@ -3022,7 +3023,7 @@ int OfferObject(Player *To, gboolean ForceBitch)
     SendQuestion(NULL, C_ASKBITCH, To, text);
     g_free(text);
     return 1;
-  } else if (!Sanitized
+  } else if (!Sanitized && NumGun > 0
              && (TotalGunsCarried(To) < To->Bitches.Carried + 2)) {
     ObjNum = brandom(0, NumGun);
     To->Guns[ObjNum].Price = Gun[ObjNum].Price / 10;
@@ -3335,7 +3336,7 @@ void BuyObject(Player *From, char *data)
       From->Cash -= amount * From->Drugs[index].Price;
       SendPlayerData(From);
 
-      if (!Sanitized && NumCop > 0
+      if (!Sanitized && NumCop > 0 && NumGun > 0
           && (From->Drugs[index].Price == 0 &&
               brandom(0, 100) < Location[From->IsAt].PolicePresence)) {
         gchar *text;

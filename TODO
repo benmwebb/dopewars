@@ -1,7 +1,6 @@
 - Startscreen
 - Track down server memory corruption bug!
 - Implement server option to buy more than one bitch at a time in the Pub.
-- Fail nicely if NumLocation (etc.) is set to zero
 - Allow customisation of GtkTextView tag colours
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
   (should also enforce this for config file / server admin)
