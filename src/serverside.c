@@ -472,7 +472,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     } else if (i != Play->IsAt && (NumTurns == 0 || Play->Turn < NumTurns)
                && Play->EventNum == E_NONE && Play->Health > 0) {
       dopelog(4, "%s jets to %s", GetPlayerName(Play), Location[i].Name);
-      Play->IsAt = (char)i;
+      Play->IsAt = i;
       Play->Turn++;
       Play->Debt = (price_t)((float)Play->Debt * 1.1);
       Play->Bank = (price_t)((float)Play->Bank * 1.05);
@@ -2285,7 +2285,7 @@ int SendCopOffer(Player *To, OfferForce Force)
 
   /* The cops are more likely to attack in locations with higher police
    * presence ratings */
-  i = brandom(0, 80 + Location[(int)To->IsAt].PolicePresence);
+  i = brandom(0, 80 + Location[To->IsAt].PolicePresence);
 
   if (Force == FORCECOPS)
     i = 100;
@@ -2545,7 +2545,7 @@ void RunFromCombat(Player *Play, int ToLocation)
         Play->CopIndex--;
     }
     BackupAt = Play->IsAt;
-    Play->IsAt = (char)ToLocation;
+    Play->IsAt = ToLocation;
     WithdrawFromCombat(Play);
     Play->IsAt = BackupAt;
     Play->EventNum = Play->ResyncNum;
@@ -2605,7 +2605,7 @@ static void CheckCopsIntervene(Player *Play)
   if (!Play->Attacking)
     return;                     /* Cops don't attack "innocent victims" ;) */
 
-  if (brandom(0, 100) > Location[(int)Play->IsAt].PolicePresence) {
+  if (brandom(0, 100) > Location[Play->IsAt].PolicePresence) {
     return;                     /* The cops shouldn't _always_ attack
                                  * (unless P.P. == 100) */
   }
@@ -2844,10 +2844,8 @@ void WithdrawFromCombat(Player *Play)
         FirstServer = RemovePlayer(Defend, FirstServer);
       } else if (Defend->Health == 0) {
         FinishGame(Defend, _("You're dead! Game over."));
-      } else if (CanRunHere(Defend) &&
-                 brandom(0,
-                         100) >
-                 Location[(int)Defend->IsAt].PolicePresence) {
+      } else if (CanRunHere(Defend)
+                 && brandom(0, 100) > Location[Defend->IsAt].PolicePresence) {
         Defend->EventNum = E_DOCTOR;
         Defend->DocPrice = prandom(Bitch.MinPrice, Bitch.MaxPrice) *
             Defend->Health / 500;
@@ -3063,8 +3061,8 @@ static void GenerateDrugsHere(Player *To, enum DealType *Deal)
       NumEvents--;
     }
   }
-  NumRandom = brandom(Location[(int)To->IsAt].MinDrug,
-                      Location[(int)To->IsAt].MaxDrug);
+  NumRandom = brandom(Location[To->IsAt].MinDrug,
+                      Location[To->IsAt].MaxDrug);
   if (NumRandom > NumDrug)
     NumRandom = NumDrug;
 
@@ -3321,7 +3319,7 @@ void BuyObject(Player *From, char *data)
       if (!Sanitized && (From->Drugs[index].Price == 0 &&
                          brandom(0,
                                  100) <
-                         Location[(int)From->IsAt].PolicePresence)) {
+                         Location[From->IsAt].PolicePresence)) {
         SendPrintMessage(NULL, C_NONE, From,
                          _("The cops spot you dropping drugs!"));
         CopsAttackPlayer(From);

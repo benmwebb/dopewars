@@ -277,7 +277,7 @@ struct PLAYER_T {
   price_t Cash, Debt, Bank;
   int Health;
   int CoatSize;
-  char IsAt;
+  int IsAt;
   PlayerFlags Flags;
   gchar *Name;
   Inventory *Guns, *Drugs, Bitches;

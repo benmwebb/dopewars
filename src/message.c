@@ -1317,7 +1317,7 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
         if (!IsCop(Attacker) && brandom(0, 100) < 70
             && Attacker->IsAt >= 0) {
           g_string_sprintfa(text, _("%s has got away to %s!"), AttackName,
-                            Location[(int)Attacker->IsAt].Name);
+                            Location[Attacker->IsAt].Name);
         } else {
           g_string_sprintfa(text, _("%s has got away!"), AttackName);
         }

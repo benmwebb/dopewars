@@ -351,7 +351,7 @@ int HandleAIMessage(char *Message, Player *AIPlay)
     break;
   case C_SUBWAYFLASH:
     dpg_print(_("Jetting to %tde with %P cash and %P debt\n"),
-              Location[(int)AIPlay->IsAt].Name, AIPlay->Cash,
+              Location[AIPlay->IsAt].Name, AIPlay->Cash,
               AIPlay->Debt);
     /* Use bselect rather than sleep, as this is portable to Win32 */
     tv.tv_sec = AITurnPause;
@@ -602,7 +602,7 @@ void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
   case C_ASKLOAN:
     if (RealLoanShark == -1) {
       g_print(_("Loan shark located at %s\n"),
-              Location[(int)AIPlay->IsAt].Name);
+              Location[AIPlay->IsAt].Name);
     }
     RealLoanShark = AIPlay->IsAt;
     AISendAnswer(AIPlay, From, "Y");
@@ -610,14 +610,14 @@ void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
   case C_ASKGUNSHOP:
     if (RealGunShop == -1) {
       g_print(_("Gun shop located at %s\n"),
-              Location[(int)AIPlay->IsAt].Name);
+              Location[AIPlay->IsAt].Name);
     }
     RealGunShop = AIPlay->IsAt;
     AISendAnswer(AIPlay, From, "Y");
     break;
   case C_ASKPUB:
     if (RealPub == -1) {
-      g_print(_("Pub located at %s\n"), Location[(int)AIPlay->IsAt].Name);
+      g_print(_("Pub located at %s\n"), Location[AIPlay->IsAt].Name);
     }
     RealPub = AIPlay->IsAt;
     AISendAnswer(AIPlay, From, "Y");
@@ -632,7 +632,7 @@ void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
     break;
   case C_ASKBANK:
     if (RealBank == -1) {
-      g_print(_("Bank located at %s\n"), Location[(int)AIPlay->IsAt].Name);
+      g_print(_("Bank located at %s\n"), Location[AIPlay->IsAt].Name);
     }
     RealBank = AIPlay->IsAt;
     AISendAnswer(AIPlay, From, "N");
