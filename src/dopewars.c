@@ -1456,13 +1456,15 @@ void RemoveAllEntries(DopeList *List, Player *Play)
  * from 0 to 5 (0=vital, 2=normal, 5=maximum debugging output). This
  * is essentially just a wrapper around the GLib g_log function.
  */
-void dopelog(int loglevel, const gchar *format, ...)
+void dopelog(const int loglevel, const LogFlags flags,
+             const gchar *format, ...)
 {
   va_list args;
 
-  if (!Network)
-    return;                     /* Don't print server log messages when
-                                 * running standalone */
+  /* Don't print server log messages when running standalone */
+  if (flags & LF_SERVER && !Network)
+    return;
+
   va_start(args, format);
   g_logv(G_LOG_DOMAIN, 1 << (loglevel + G_LOG_LEVEL_USER_SHIFT), format,
          args);
@@ -2857,6 +2859,20 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 }
 #endif
 
+static void DefaultLogMessage(const gchar *log_domain,
+                              GLogLevelFlags log_level,
+                              const gchar *message, gpointer user_data)
+{
+  GString *text;
+
+  text = GetLogString(log_level, message);
+  if (text) {
+    g_string_append(text, "\n");
+    g_print(text->str);
+    g_string_free(text, TRUE);
+  }
+}
+
 /* 
  * Standard program entry - Win32 uses WinMain() instead, in winmain.c
  */
@@ -2868,9 +2884,10 @@ int main(int argc, char *argv[])
   textdomain(PACKAGE);
 #endif
   WantUTF8Errors(FALSE);
-  SoundInit();
+  g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);
   GeneralStartup(argc, argv);
   OpenLog();
+  SoundInit();
   if (WantVersion || WantHelp) {
     HandleHelpTexts();
   } else if (WantAdmin) {
