@@ -67,7 +67,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    SetupParameters();
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
-   while (split[argc]) argc++;
+   while (split[argc] && split[argc][0]) argc++;
    HandleCmdLine(argc,split);
    g_strfreev(split);
    if (WantVersion || WantHelp) {

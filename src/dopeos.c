@@ -30,7 +30,7 @@
 
 #include <conio.h>
 #ifdef GUI_CLIENT
-#include "gtk.h"
+#include "gtkport.h"
 #endif
 
 CHAR_INFO RealScreen[25][80],VirtualScreen[25][80];
