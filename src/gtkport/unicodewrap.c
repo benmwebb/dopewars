@@ -294,7 +294,7 @@ int myHeader_InsertItem(HWND hWnd, int index, const HD_ITEM *phdi)
       g_free(hdiw.pszText);
     }
   } else {
-    retval = (int)SendMessageA(hWnd, HDM_INSERTITEM, (WPARAM)index,
+    retval = (int)SendMessageA(hWnd, HDM_INSERTITEMA, (WPARAM)index,
                                (LPARAM)phdi);
   }
   return retval;
@@ -313,7 +313,7 @@ int myTabCtrl_InsertItem(HWND hWnd, int index, const TC_ITEM *pitem)
       g_free(tiew.pszText);
     }
   } else {
-    retval = (int)SendMessageA(hWnd, TCM_INSERTITEMW, (WPARAM)index,
+    retval = (int)SendMessageA(hWnd, TCM_INSERTITEMA, (WPARAM)index,
                                (LPARAM)pitem);
   }
   return retval;
