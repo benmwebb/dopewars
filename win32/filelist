@@ -33,11 +33,17 @@ index.html
 ../doc/help/server.html -> help\server.html
 ../../auxdope/dopewars-config.txt -> dopewars-config.txt
 ../src/dopewars.exe -> dopewars.exe
-example-cfg.txt
 ../../auxdope/iconv.dll -> iconv.dll
 ../../auxdope/libintl-1.dll -> libintl-1.dll
 ../../auxdope/libglib-2.0-0.dll -> libglib-2.0-0.dll
 readme.txt
+example-cfg.txt
+../po/pt_BR.gmo -> locale\pt_BR\LC_MESSAGES\dopewars.mo
+../po/fr.gmo -> locale\fr\LC_MESSAGES\dopewars.mo
+../po/de.gmo -> locale\de\LC_MESSAGES\dopewars.mo
+../po/pl.gmo -> locale\pl\LC_MESSAGES\dopewars.mo
+../po/nn.gmo -> locale\nn\LC_MESSAGES\dopewars.mo
+../po/es.gmo -> locale\es\LC_MESSAGES\dopewars.mo
 ../sounds/19.5degs/bye.wav -> sounds\19.5degs\bye.wav
 ../sounds/19.5degs/colt.wav -> sounds\19.5degs\colt.wav
 ../sounds/19.5degs/die.wav -> sounds\19.5degs\die.wav
@@ -50,12 +56,6 @@ readme.txt
 ../sounds/19.5degs/run.wav -> sounds\19.5degs\run.wav
 ../sounds/19.5degs/shotdown.wav -> sounds\19.5degs\shotdown.wav
 ../sounds/19.5degs/train.wav -> sounds\19.5degs\train.wav
-../po/pt_BR.gmo -> locale\pt_BR\LC_MESSAGES\dopewars.mo
-../po/fr.gmo -> locale\fr\LC_MESSAGES\dopewars.mo
-../po/de.gmo -> locale\de\LC_MESSAGES\dopewars.mo
-../po/pl.gmo -> locale\pl\LC_MESSAGES\dopewars.mo
-../po/nn.gmo -> locale\nn\LC_MESSAGES\dopewars.mo
-../po/es.gmo -> locale\es\LC_MESSAGES\dopewars.mo
 
 [extrafiles]
 dopewars-log.txt
