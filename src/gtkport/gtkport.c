@@ -5393,7 +5393,6 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin)
 {
   GtkWidget *label, *eventbox;
-  int i;
   gchar *pattern;
   GtkStyle *style;
   GdkColor color;
