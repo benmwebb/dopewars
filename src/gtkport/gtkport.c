@@ -1836,12 +1836,11 @@ GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj)
   return GTK_WIDGET(GtkNewObject(&GtkTextClass));
 }
 
-GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
-                                 GtkWidget **pack_widg)
+GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
 {
   GtkWidget *text;
 
-  text = gtk_text_new(hadj, vadj);
+  text = gtk_text_new(NULL, NULL);
   *pack_widg = text;
   return text;
 }
@@ -5118,24 +5117,6 @@ GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
   return text;
 }
 
-void TextViewAppend(GtkTextView *textview, const gchar *text,
-                    const gchar *tagname, gboolean scroll)
-{
-  gint editpos;
-
-  editpos = gtk_text_get_length(GTK_TEXT(textview));
-  gtk_editable_insert_text(GTK_EDITABLE(textview), text, strlen(text),
-                           &editpos);
-  if (scroll) {
-    gtk_editable_set_position(GTK_EDITABLE(textview), editpos);
-  }
-}
-
-void TextViewClear(GtkTextView *textview)
-{
-  gtk_editable_delete_text(GTK_EDITABLE(textview), 0, -1);
-}
-
 #endif
 
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
@@ -5345,3 +5326,23 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
 }
 
 #endif /* CYGWIN */
+
+#if CYGWIN || !HAVE_GLIB2
+void TextViewAppend(GtkTextView *textview, const gchar *text,
+                    const gchar *tagname, gboolean scroll)
+{
+  gint editpos;
+
+  editpos = gtk_text_get_length(GTK_TEXT(textview));
+  gtk_editable_insert_text(GTK_EDITABLE(textview), text, strlen(text),
+                           &editpos);
+  if (scroll) {
+    gtk_editable_set_position(GTK_EDITABLE(textview), editpos);
+  }
+}
+
+void TextViewClear(GtkTextView *textview)
+{
+  gtk_editable_delete_text(GTK_EDITABLE(textview), 0, -1);
+}
+#endif

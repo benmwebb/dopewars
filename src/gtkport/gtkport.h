@@ -792,12 +792,6 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define IDCANCEL  2
 #define IDYES     4
 #define IDNO      8
-
-#define gtk_text_view_set_editable(text, edit) gtk_text_set_editable(text, edit)
-#define gtk_text_view_set_wrap_mode(text, wrap) gtk_text_set_word_wrap(text, wrap)
-#define GTK_WRAP_WORD TRUE
-#define GTK_TEXT_VIEW(wid) GTK_TEXT(wid)
-#define GtkTextView GtkText
 #endif
 
 /* Other flags */
@@ -829,6 +823,12 @@ typedef enum
   GTK_MESSAGE_QUESTION,
   GTK_MESSAGE_ERROR
 } GtkMessageType;
+
+#define gtk_text_view_set_editable(text, edit) gtk_text_set_editable(text, edit)
+#define gtk_text_view_set_wrap_mode(text, wrap) gtk_text_set_word_wrap(text, wrap)
+#define GTK_WRAP_WORD TRUE
+#define GTK_TEXT_VIEW(wid) GTK_TEXT(wid)
+#define GtkTextView GtkText
 #endif
 
 /* Global functions */
