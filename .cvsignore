@@ -1,6 +1,10 @@
 core
 config.cache
+configure
+acinclude.m4
+aclocal.m4
 Makefile
+Makefile.in
 config.h
 config.log
 config.status
