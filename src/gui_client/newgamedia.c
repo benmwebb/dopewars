@@ -72,7 +72,7 @@ static gboolean GetStartGamePlayerName(gchar **PlayerName)
   else {
     GtkMessageBox(stgam.dialog,
                   _("You can't start the game without giving a name first!"),
-                  _("New Game"), MB_OK);
+                  _("New Game"), GTK_MESSAGE_WARNING, MB_OK);
     return FALSE;
   }
 }
