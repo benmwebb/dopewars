@@ -1,8 +1,13 @@
 [Desktop Entry]
 Name=dopewars
 Name[de]=Drogenkrieg
+Name[pl]=Wojny narkotykowe
 Comment=dopewars drug dealing game
+Comment[pl]=Gra polegajÄca na handlowaniu narkotykami
 Exec=dopewars
 Icon=dopewars-weed.png
-Terminal=0
+Terminal=false
 Type=Application
+Categories=Application;Game;ArcadeGame;
+Encoding=UTF-8
+# vi: encoding=utf-8
