@@ -375,10 +375,10 @@ struct GLOBALS Globals[] = {
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {&DebtInterest, NULL, NULL, NULL, NULL, "DebtInterest",
    N_("Daily interest rate on the loan shark debt"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+   NULL, NULL, 0, "", NULL, NULL, FALSE, -100},
   {&BankInterest, NULL, NULL, NULL, NULL, "BankInterest",
    N_("Daily interest rate on your bank balance"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+   NULL, NULL, 0, "", NULL, NULL, FALSE, -100},
   {NULL, NULL, NULL, &Names.LoanSharkName, NULL, "LoanSharkName",
    N_("Name of the loan shark"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Names.BankName, NULL, "BankName",
@@ -2072,9 +2072,20 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
     GlobalName = Globals[GlobalIndex].Name;
   }
   if (Globals[GlobalIndex].IntVal) {
+    gboolean minus = FALSE;
+
+    /* GScanner doesn't understand negative numbers, so we need to
+     * explicitly check for a prefixed minus sign */
     token = g_scanner_get_next_token(scanner);
+    if (token == '-') {
+      minus = TRUE;
+      token = g_scanner_get_next_token(scanner);
+    }
     if (token == G_TOKEN_INT) {
       IntVal = (int)scanner->value.v_int;
+      if (minus) {
+        IntVal = -IntVal;
+      }
       if (IntVal < Globals[GlobalIndex].MinVal) {
         g_scanner_warn(scanner, _("%s can be no smaller than %d - ignoring!"),
                        GlobalName, Globals[GlobalIndex].MinVal);
