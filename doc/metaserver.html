@@ -85,21 +85,21 @@ metaserver if you are using a web proxy; see the information
 
 <h3><a name="wrongip">But it's displaying the wrong name!</a></h3>
 <p>Once connected to the metaserver, you may find that it displays the IP
-address of your server and not its domain name. This is usually because your
-DNS is not set up to translate your IP into a domain name, and can be
-remedied by <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">mailing</a> the
-metaserver maintainer, who can add a suitable mapping for you.</p>
+address of your server and not its domain name, or that it gets the domain
+name wrong. This is usually because your DNS is not set up to translate
+your IP into a domain name, or because you have multiple domain names for
+the one IP, and can be remedied by specifying the hostname with the
+MetaServer.LocalName variable in your dopewars
+<a href="configfile.html">configuration file</a>. For security reasons,
+the metaserver will only accept this given name if it in turn maps to your
+IP address.</p>
 
-<p>On other occasions, the metaserver will display a domain name, but it'll
-be incorrect. This is usually because you are connecting via. a proxy, and
-the metaserver cannot determine your true IP address.</p>
-
-<p>In this case, you will need to override the hostname that the metaserver
-guesses for your machine with one you choose yourself. This is done by
-specifying the hostname with the MetaServer.LocalName variable in your dopewars
-<a href="configfile.html">configuration file</a>. In order to prevent abuse
-of this facility, you must obtain a password from the metaserver maintainer to
-authenticate your chosen hostname.
+<p>On other occasions, the metaserver will mistakenly display the name
+of your web proxy. In this case, you will need to override the hostname
+that the metaserver guesses for your machine with one you choose yourself.
+This is again done by specifying the hostname with the MetaServer.LocalName
+variable. In order to prevent abuse of this facility, you must obtain a
+password from the metaserver maintainer to authenticate your chosen hostname.
 <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">Email</a> the maintainer, giving
 the exact hostname you want to use (be aware that this is case-sensitive) and
 you will be given a password. Specify this password with the MetaServer.Password
@@ -111,10 +111,8 @@ add the following to the dopewars configuration file:-<br />
 <b>MetaServer.LocalName="dope-serv.com"<br />
 MetaServer.Password="Dope-Auth"</b></p>
 
-<p>Restart your dopewars server, or send it a SIGUSR1 signal, for the change to
-take effect. Bear in mind that if you make up a non-existent or invalid domain
-name, the metaserver will accept it, but the server will be removed from the
-metaserver's list when it is checked daily for service.</p>
+<p>Restart your dopewars server, or send it a SIGUSR1 signal, for changes
+to these variables to take effect.</p>
 
 <h3><a name="dynamicip">But my server has a dynamic IP...</a></h3>
 <p>Finally, your server's IP may be resolved happily, but you may have a
@@ -134,6 +132,6 @@ will automatically replace the "old" one.</p>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>17-06-2001</b></p>
+<p>Last update: <b>11-05-2002</b></p>
 </body>
 </html>
