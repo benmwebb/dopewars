@@ -763,6 +763,9 @@ static void JetCallback(GtkWidget *widget,gpointer data) {
                      text,ClientData.Play);
    g_free(text);
    gtk_widget_destroy(JetDialog);
+   if (Network) {
+      SetSocketWriteTest(ClientData.Play,TRUE);
+   }
 }
 
 void JetButtonPressed(GtkWidget *widget,gpointer data) {
@@ -781,6 +784,8 @@ void Jet() {
    guint AccelKey;
 
    accel_group=gtk_accel_group_new();
+
+   if (Network) gdk_input_remove(ClientData.GdkInputTag);
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_window_set_title(GTK_WINDOW(dialog),_("Jet to location"));
@@ -1100,6 +1105,9 @@ static void QuestionCallback(GtkWidget *widget,gpointer data) {
    SendClientMessage(ClientData.Play,C_NONE,C_ANSWER,To,text,ClientData.Play);
 
    gtk_widget_destroy(dialog);
+   if (Network) {
+      SetSocketWriteTest(ClientData.Play,TRUE);
+   }
 }
 
 void QuestionDialog(char *Data,Player *From) {
@@ -1121,6 +1129,7 @@ void QuestionDialog(char *Data,Player *From) {
 
    Responses=split[0]; LabelText=split[1];
 
+   if (Network) gdk_input_remove(ClientData.GdkInputTag);
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    accel_group=gtk_accel_group_new();
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
