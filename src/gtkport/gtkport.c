@@ -5039,21 +5039,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
   return AccelKey;
 }
 
-GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
-                                 GtkWidget **pack_widg)
-{
-  GtkWidget *hbox, *text, *vscroll;
-  GtkAdjustment *adj;
-
-  hbox = gtk_hbox_new(FALSE, 0);
-  adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0, 1.0, 10.0, 10.0);
-  text = gtk_text_new(NULL, adj);
-  gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, TRUE, 0);
-  vscroll = gtk_vscrollbar_new(adj);
-  gtk_box_pack_start(GTK_BOX(hbox), vscroll, FALSE, FALSE, 0);
-  *pack_widg = hbox;
-  return text;
-}
+#ifdef HAVE_GLIB2
 
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
 {
@@ -5092,6 +5078,50 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
     gtk_text_view_scroll_mark_onscreen(textview, insert);
   }
 }
+
+void TextViewClear(GtkTextView *textview)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
+
+  gtk_text_buffer_set_text(buffer, "", -1);
+}
+
+#else
+
+GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
+{
+  GtkWidget *hbox, *text, *vscroll;
+  GtkAdjustment *adj;
+
+  hbox = gtk_hbox_new(FALSE, 0);
+  adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0, 1.0, 10.0, 10.0);
+  text = gtk_text_new(NULL, adj);
+  gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, TRUE, 0);
+  vscroll = gtk_vscrollbar_new(adj);
+  gtk_box_pack_start(GTK_BOX(hbox), vscroll, FALSE, FALSE, 0);
+  *pack_widg = hbox;
+  return text;
+}
+
+void TextViewAppend(GtkTextView *textview, const gchar *text,
+                    const gchar *tagname, gboolean scroll)
+{
+  gint editpos;
+
+  editpos = gtk_text_get_length(GTK_TEXT(textview));
+  gtk_editable_insert_text(GTK_EDITABLE(textview), text, strlen(text),
+                           &editpos);
+  if (scroll) {
+    gtk_editable_set_position(GTK_EDITABLE(textview), editpos);
+  }
+}
+
+void TextViewClear(GtkTextView *textview)
+{
+  gtk_editable_delete_text(GTK_EDITABLE(textview), 0, -1);
+}
+
+#endif
 
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
 {
