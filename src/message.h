@@ -71,6 +71,7 @@
 #define C_TRADE        'o'
 #define C_CHANGEDISP   'p'
 #define C_NETMESSAGE   'q'
+#define C_ABILITIES    'r'
 
 #define C_NONE        'A'
 #define C_ASKLOAN     'B'
@@ -140,5 +141,9 @@ char *OpenMetaServerConnection(int *HttpSock);
 void CloseMetaServerConnection(int HttpSock);
 void ClearServerList();
 void ReadMetaServerData(int HttpSock);
+void InitAbilities(Player *Play);
+void SendAbilities(Player *Play);
+void ReceiveAbilities(Player *Play,gchar *Data);
+gboolean HaveAbility(Player *Play,gint Type);
 
 #endif

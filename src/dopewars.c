@@ -512,6 +512,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->ReadBuf.Data=NewPlayer->WriteBuf.Data=NULL;
    NewPlayer->ReadBuf.Length=NewPlayer->WriteBuf.Length=0;
    NewPlayer->ReadBuf.DataPresent=NewPlayer->WriteBuf.DataPresent=0;
+   InitAbilities(NewPlayer);
    if (Server) NewPlayer->fd=fd;
    return g_slist_append(First,(gpointer)NewPlayer);
 }

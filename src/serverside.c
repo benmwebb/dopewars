@@ -203,7 +203,7 @@ void HandleServerMessage(gchar *buf,Player *ReallyFrom) {
       return;
    }
    if (From!=ReallyFrom && (From!=&Noone ||
-       (Code!=C_NAME && Code!=C_NETMESSAGE))) {
+       (Code!=C_NAME && Code!=C_ABILITIES && Code!=C_NETMESSAGE))) {
        g_warning(_("Message is lying about its origin\n%s: %c: %s: %s\n"
                  "Should be from %s"),From ? GetPlayerName(From) : "",Code,
                  To ? GetPlayerName(To) : "",Data,
@@ -226,6 +226,9 @@ void HandleServerMessage(gchar *buf,Player *ReallyFrom) {
             ReallyFrom->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
          }
          break;
+      case C_ABILITIES:
+         ReceiveAbilities(ReallyFrom,Data);
+         break;
       case C_NAME:
          pt=GetPlayerByName(Data,FirstServer);
          if (pt && pt!=From) {
@@ -236,6 +239,7 @@ void HandleServerMessage(gchar *buf,Player *ReallyFrom) {
          } else if (((ReallyFrom && strlen(GetPlayerName(ReallyFrom))==0 &&
                      Network) || (!Network && From==&Noone)) && Data[0]) {
             if (CountPlayers(FirstServer)<MaxClients || !Network) { 
+               SendAbilities(ReallyFrom);
                SendInitialData(ReallyFrom);
                SendMiscData(ReallyFrom);
                if (!Network) {

@@ -72,6 +72,14 @@ typedef long long price_t;
 
 #define NMLEN 20
 
+#define A_PLAYERID      0
+#define A_NUM           1
+typedef struct ABILITIES {
+   gboolean Local[A_NUM];
+   gboolean Remote[A_NUM];
+   gboolean Shared[A_NUM];
+} Abilities;
+
 struct COPS {
    int EscapeProb,DeputyEscape,HitProb,DeputyHit,Damage,
        Toughness,DropProb;
@@ -291,6 +299,7 @@ struct PLAYER_T {
    DopeList SpyList,TipList;
    Player *OnBehalfOf,*Attacked;
    ConnBuf ReadBuf,WriteBuf;
+   Abilities Abil;
 };
 
 #define CM_SERVER 0

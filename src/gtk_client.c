@@ -1185,6 +1185,7 @@ void StartGame() {
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
    Play->fd=ClientSock;
+   SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
    SendClientMessage(NULL,C_NONE,C_NAME,NULL,ClientData.PlayerName,Play);
    InGame=TRUE;
@@ -1971,7 +1972,7 @@ void TransferDialog(gboolean Debt) {
    g_free(text); g_free(prstr);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,1,2);
 
-   gtk_object_set_data(GTK_OBJECT(dialog),"debt",(gpointer)Debt);
+   gtk_object_set_data(GTK_OBJECT(dialog),"debt",GINT_TO_POINTER(Debt));
    if (Debt) {
       label=gtk_label_new(_("Pay back:"));
       gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,2,4);

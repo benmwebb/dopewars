@@ -1394,6 +1394,7 @@ static void Curses_DoGame(Player *Play) {
    print_status(Play,TRUE);
    display_message("");
 
+   SendAbilities(Play);
    SetPlayerName(Play,buf);
    SendClientMessage(NULL,C_NONE,C_NAME,NULL,buf,Play);
    g_free(buf); g_free(OldName);

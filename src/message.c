@@ -143,6 +143,47 @@ void SendServerMessage(Player *From,char AICode,char Code,
    } else SendClientMessage(From,AICode,Code,To,Data,To);
 }
 
+void InitAbilities(Player *Play) {
+   int i;
+/* Clear all abilities */
+   for (i=0;i<A_NUM;i++) {
+      Play->Abil.Local[i]= FALSE;
+      Play->Abil.Remote[i]=FALSE;
+      Play->Abil.Shared[i]=FALSE;
+   }
+/* Set local abilities */
+   Play->Abil.Local[A_PLAYERID]=TRUE;
+   if (!Network) for (i=0;i<A_NUM;i++) {
+      Play->Abil.Remote[i]=Play->Abil.Shared[i]=Play->Abil.Local[i];
+   }
+}
+
+void SendAbilities(Player *Play) {
+   int i;
+   gchar Data[A_NUM+1];
+   if (!Network) return;
+   for (i=0;i<A_NUM;i++) Data[i]= (Play->Abil.Local[i] ? '1' : '0');
+   Data[A_NUM]='\0';
+   if (Server) SendServerMessage(NULL,C_NONE,C_ABILITIES,Play,Data);
+   else SendClientMessage(Play,C_NONE,C_ABILITIES,NULL,Data,Play);
+}
+
+void ReceiveAbilities(Player *Play,gchar *Data) {
+   int i,Length;
+   InitAbilities(Play);
+   if (!Network) return;
+   Length=MIN(strlen(Data),A_NUM);
+   for (i=0;i<Length;i++) {
+      Play->Abil.Remote[i]= (Data[i]=='1' ? TRUE : FALSE);
+      Play->Abil.Shared[i]= (Play->Abil.Remote[i] && Play->Abil.Local[i]);
+   }
+}
+
+gboolean HaveAbility(Player *Play,gint Type) {
+   if (Type<0 || Type>=A_NUM) return FALSE;
+   else return (Play->Abil.Shared[Type]=='1');
+}
+
 #if NETWORKING
 gchar *ReadFromConnectionBuffer(Player *Play) {
    ConnBuf *conn;
@@ -670,6 +711,8 @@ gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
          ReceiveMiscData(Data); break;
       case C_INIT:
          ReceiveInitialData(Data); break;
+      case C_ABILITIES:
+         ReceiveAbilities(To,Data); break;
       case C_LEAVE:
          if (From!=&Noone) FirstClient=RemovePlayer(From,FirstClient);
          break;

@@ -1,4 +1,6 @@
-- Fix GTK+ modal dialog behaviour (scrolling of messages, mouse grabbing)
+- Register abilities of both client and server to allow backwards-compatible
+  protocol extensions
+- Fix GTK+ modal dialog behaviour (mouse grabbing during fighting)
 - Revamp player-player fighting
 - Display purchase price of drugs?
 - Increase cops' toughness - they should kill a bitch in 50-70% of encounters
