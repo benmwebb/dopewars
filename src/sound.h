@@ -26,8 +26,19 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <glib.h>
+
+struct _SoundDriver {
+  gchar *name;
+  gboolean (*open) (void);
+  void (*close) (void);
+  void (*play) (const gchar *snd);
+};
+typedef struct _SoundDriver SoundDriver;
 
 void SoundInit(void);
+void SoundOpen(gchar *drivername);
 void SoundClose(void);
+void SoundPlay(const gchar *snd);
 
 #endif /* __DP_SOUND_H__ */
