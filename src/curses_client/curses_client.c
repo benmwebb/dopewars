@@ -40,6 +40,7 @@
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
+#include "sound.h"
 #include "tstring.h"
 
 static void PrepareHighScoreScreen(void);
@@ -1042,6 +1043,7 @@ void HandleClientMessage(char *Message, Player *Play)
       tmp = (Player *)list->data;
       tmp->Flags &= ~FIGHTING;
     }
+    SoundPlay(Sounds.Jet);
     for (i = 0; i < 4; i++) {
       print_location(_("S U B W A Y"));
       refresh();
@@ -2403,6 +2405,8 @@ void CursesLoop(void)
   g_log_set_handler(NULL,
                     LogMask() | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                     LogMessage, NULL);
+
+  SoundOpen(NULL);
 
   display_intro();
 
