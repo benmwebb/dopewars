@@ -26,6 +26,7 @@
 
 #ifndef CYGWIN
 #include <sys/types.h>          /* For pid_t (fork) */
+#include <sys/wait.h>           /* For wait */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>             /* For fork and execv */
 #endif
@@ -5275,6 +5276,7 @@ static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
 #ifdef HAVE_FORK
   gchar *bin, *target, *args[3];
   pid_t pid;
+  int status;
 
   target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
   bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
@@ -5283,11 +5285,19 @@ static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
     args[0] = bin;
     args[1] = target;
     args[2] = NULL;
+    /* Fork twice so that the spawned process gets init as its parent */
     pid = fork();
-    if (pid == 0) {
-      execv(bin, args);
-      g_print("dopewars: cannot execute %s\n", bin);
-      _exit(1);
+    if (pid > 0) {
+      waitpid(-1, &status, WNOHANG);
+    } else if (pid == 0) {
+      pid = fork();
+      if (pid == 0) {
+        execv(bin, args);
+        g_print("dopewars: cannot execute %s\n", bin);
+        exit(1);
+      } else {
+        exit(0);
+      }
     }
   }
 #endif
