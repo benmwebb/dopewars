@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>Internationalization</title>
 </head>
@@ -18,11 +21,12 @@ into each language beforehand, of course, and so native language speakers to
 carry out this task are always needed!</p>
 
 <ul>
-<li><a href="#running">Running dopewars with i18n support</a>
-<li><a href="#adding">Adding a new translation</a>
-<li><a href="#dopespec">dopewars specifics</a>
-<li><a href="#updating">Updating a translation for a new dopewars version</a>
-<li><a href="#current">Currently available translations</a>
+<li><a href="#running">Running dopewars with i18n support</a></li>
+<li><a href="#adding">Adding a new translation</a></li>
+<li><a href="#dopespec">dopewars specifics</a></li>
+<li><a href="#updating">Updating a translation for a new dopewars
+version</a></li>
+<li><a href="#current">Currently available translations</a></li>
 </ul>
 
 <h2><a name="running">Running dopewars with i18n support</a></h2>
@@ -39,15 +43,15 @@ automatically and talk to you in your native language. If this does not happen,
 the following are some possible explanations:-</p>
 <ul>
 <li>dopewars cannot find the locale-specific language file - by default, stored
-under /usr/local/share/locale/
-<li>Your language is not yet supported - why not add it yourself?
+under /usr/local/share/locale/</li>
+<li>Your language is not yet supported - why not add it yourself?</li>
 <li>Your system does not have locale support (at present i18n only functions
-properly on Unix systems - not Windows)
+properly on Unix systems - not Windows)</li>
 <li>You haven't set an environment variable to specify your locale (usually
 this is done automatically). For example, if you're using the <tt>bash</tt>
 shell and want a German translation, the command "<tt>export LANG=de_DE</tt>"
 should ensure that dopewars (and all other i18n-aware programs launched from
-this shell) will use the German language.
+this shell) will use the German language.</li>
 </ul>
 
 <h2><a name="adding">Adding a new translation</a></h2>
@@ -75,15 +79,15 @@ character. These are used in the program code for substituting numbers and
 other pieces of text into the string - these substitutions are are performed
 using variables which are specified in the <b>same order</b> as the %
 characters in the format string. For example, the following format string
-substitutes in a string (%s) and an integer number (%d):-<br>
-<tt>"String '%s' has %d characters"</tt><br>
+substitutes in a string (%s) and an integer number (%d):-<br />
+<tt>"String '%s' has %d characters"</tt><br />
 The string and number are specified in order in the code. This is problematic
 if your translation changes the order - for example, a valid German translation
-of the string would be<br>
-<tt>"%d Zeichen lang ist die Zeichenkette '%s'"</tt><br>
+of the string would be<br />
+<tt>"%d Zeichen lang ist die Zeichenkette '%s'"</tt><br />
 Now the number and string are specified in the wrong order, and this will
-probably crash the program on running! To fix this, use the special notation<br>
-<tt>"%2$d Zeichen lang ist die Zeichenkette '%1$s'"</tt><br>
+probably crash the program on running! To fix this, use the special notation<br />
+<tt>"%2$d Zeichen lang ist die Zeichenkette '%1$s'"</tt><br />
 (i.e. replace <b>%x</b> with <b>%n$x</b> where <b>n</b> is the index that the
 format specifier "should" have, starting from 1.)</p>
 
@@ -93,7 +97,7 @@ format specifier "should" have, starting from 1.)</p>
 you are allowed to press in reply are stored in a string. This should be
 translated to suitable keys in your language, in the <b>same</b> order as 
 the original - e.g. "<tt>YN</tt>" (for Yes/No) could be translated in German
-to "<tt>JN</tt>" (for Ja/Nein).<p>
+to "<tt>JN</tt>" (for Ja/Nein).<p /></li>
 
 <li>When a dopewars server asks a client a question, the valid replies are
 sent at the start of the message, followed by a "<tt>^</tt>" character. These
@@ -101,7 +105,7 @@ replies define the dopewars protocol, and so should <b>not</b> be
 translated - they will prevent clients and servers from talking to each other
 properly. So for example, the string "<tt>YN^Would you like to visit %s?</tt>"
 should be translated as you wish, but with the "<tt>YN^</tt>" at the start
-left unchanged.<p>
+left unchanged.<p /></li>
 
 <li>The <tt>%txx</tt> notation is used for "translated strings". This notation
 is exactly equivalent to the standard C "<tt>%s</tt>" notation for a string,
@@ -111,14 +115,14 @@ follows the <tt>%t</tt> is used to select an "alternative form" of the word
 on whether the word is the subject or the object of the sentence. You are
 free to translate <tt>%txx</tt> to use the most appropriate form of the word.
 If you wish to capitalise the first letter of the word (as used in English for
-titles, etc.) then use "<tt>%T</tt>" rather than "<tt>%t</tt>".<p>
+titles, etc.) then use "<tt>%T</tt>" rather than "<tt>%t</tt>".<p />
 
 <p>Obviously dopewars cannot guess what your "alternative forms" are; you must
 specify them yourself. Essentially, when setting a string in a dopewars
 configuration file (or the defaults, which are set in dopewars.c) alternative
 forms can be added by alternating two-letter codes and alternative forms after
-the original word, separating them by _ (underline) symbols. For example,<br>
-<tt>Names.Bitch = "bitch_no_bitcho_ac_bitche"</tt><br>
+the original word, separating them by _ (underline) symbols. For example,<br />
+<tt>Names.Bitch = "bitch_no_bitcho_ac_bitche"</tt><br />
 specifies two alternative forms for "bitch", identified by the "<tt>no</tt>"
 and "<tt>ac</tt>" codes. You can then use "bitcho" anywhere that "bitch" is
 normally used by translating the relevant string as "<tt>%tno</tt>" (and to
@@ -135,6 +139,7 @@ by means of the %/.../ notation. Everything between the two / characters is
 not printed. This is used to "qualify" some strings for translation, and the
 %/.../ can be left out of the translated string if desired (the comment does
 not need to be translated).</p>
+</li>
 
 </ul>
 
@@ -147,12 +152,12 @@ translation, "<tt>make</tt>" the new version of dopewars. This will create
 a <tt>dopewars.pot</tt> file listing the strings that need translating. Change
 into the <tt>po/</tt> subdirectory, and create a new translation file from
 your "old" translation file (we'll assume it's called <tt>de.po</tt>) and
-<tt>dopewars.pot</tt> with the <tt>msgmerge</tt> command:-<br>
-<tt>msgmerge -o newfile de.po dopewars.pot</tt><br>
+<tt>dopewars.pot</tt> with the <tt>msgmerge</tt> command:-<br />
+<tt>msgmerge -o newfile de.po dopewars.pot</tt><br />
 Examine this new file <tt>newfile</tt> for translations that need updating
 (a search for "fuzzy" should find most of them) and then overwrite your old
-translation with the new one:<br>
-<tt>mv newfile de.po</tt><br>
+translation with the new one:<br />
+<tt>mv newfile de.po</tt><br />
 Rebuild and reinstall dopewars, and the new translations should become
 available. Again, it is deeply appreciated if such updated files are
 contributed to the main dopewars distribution!</p>
@@ -161,34 +166,40 @@ contributed to the main dopewars distribution!</p>
 
 <ul>
 <li>French (<tt>fr.po</tt>)
-<ul>
-<li>Maintained by: <a href="mailto:triton@madchat.org">leonard</a>
-<li>Version required: <b>1.5.2</b> or later
-</ul>
+   <ul>
+   <li>Maintained by: <a href="mailto:triton@madchat.org">leonard</a></li>
+   <li>Version required: <b>1.5.2</b> or later</li>
+   </ul>
+</li>
 
 <li>German (<tt>de.po</tt>)
-<ul>
-<li>Maintained by: <a href="mailto:tobi@radical-linux.de">Tobias Mathes</a>
-<li>Version required: <b>1.5.0</b> or later
-</ul>
+   <ul>
+   <li>Maintained by: <a href="mailto:tobi@radical-linux.de">Tobias
+       Mathes</a></li>
+   <li>Version required: <b>1.5.0</b> or later</li>
+   </ul>
+</li>
 
 <li>Polish (<tt>pl.po</tt>)
-<ul>
-<li>Maintained by: <a href="mailto:jeszua@panda.bg.univ.gda.pl">Slawomir
-Molenda</a>
-<li>Version required: <b>1.5.0</b> or later
-</ul>
+   <ul>
+   <li>Maintained by: <a href="mailto:jeszua@panda.bg.univ.gda.pl">Slawomir
+       Molenda</a></li>
+   <li>Version required: <b>1.5.0</b> or later</li>
+   </ul>
+</li>
 
 <li>Portuguese (Brazil) (<tt>pt_BR.po</tt>)
-<ul>
-<li>Maintained by: <a href="mailto:hugo@netdados.com.br">Hugo Cisneiros</a>
-<li>Version required: <b>1.5.0</b> or later
-</ul>
+   <ul>
+   <li>Maintained by: <a href="mailto:hugo@netdados.com.br">Hugo
+       Cisneiros</a></li>
+   <li>Version required: <b>1.5.0</b> or later</li>
+   </ul>
+</li>
 </ul>
 
-<hr>
+<hr />
 <ul>
-<li><a href="index.html">Main index</a>
+<li><a href="index.html">Main index</a></li>
 </ul>
 <p>Last update: <b>16-10-2001</b></p>
 

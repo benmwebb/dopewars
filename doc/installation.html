@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>Obtaining and installing dopewars</title>
 </head>
@@ -29,10 +32,10 @@ equivalent, such as ncurses or cur_colr) for the text-mode client, and the
 <a href="http://www.gtk.org/">GTK+</a> libraries for the graphical client.</p>
 
 <ul>
-<li><a href="#win32">Windows installation</a>
-<li><a href="#rpmbinary">RPM binary installation</a>
-<li><a href="#rpmsource">RPM source installation</a>
-<li><a href="#tarball">Tarball installation</a>
+<li><a href="#win32">Windows installation</a></li>
+<li><a href="#rpmbinary">RPM binary installation</a></li>
+<li><a href="#rpmsource">RPM source installation</a></li>
+<li><a href="#tarball">Tarball installation</a></li>
 </ul>
 
 <h2><a name="win32">Windows installation</a></h2>
@@ -44,7 +47,7 @@ or save it to somewhere obvious like the Desktop and then double-click on its
 icon later). This should install all relevant files, and set up Start Menu
 icons, etc. If, however, you wish to build the program from the source code,
 see the <a href="#tarball">tarball installation</a> section below, and also
-see the <a href="windows.html">Windows page</a>.
+see the <a href="windows.html">Windows page</a>.</p>
 
 <h2><a name="rpmbinary">RPM binary installation</a></h2>
 <p>The binary RPMs are built for Compaq (formerly DEC) Alpha systems running
@@ -60,17 +63,17 @@ Alpha</a> or
 <a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2-1.i386.rpm">
 i386 (Intel)</a> RPM with your web browser. (If your browser is incorrectly set
 up, it may try and display the file, in which case tell it explicitly to save
-the file - Shift+Mouse button 1 in Netscape.)
+the file - Shift+Mouse button 1 in Netscape.)</li>
 
 <li>Become root on your Unix box (if you cannot become root, then you will
 probably not be able to use RPM installation, depending on how "rpm" is set
-up).
+up).</li>
 
 <li>Change to the directory containing the dopewars rpm, and install it with
-the command<br>
-<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt><br>
+the command<br />
+<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt><br />
 (where <b><i>xxx</i></b> is i386 or alpha). This will replace any
-already-installed earlier version.
+already-installed earlier version.</li>
 </ol>
 
 <h2><a name="rpmsource">RPM source installation</a></h2>
@@ -82,20 +85,20 @@ building the binaries from it on your system.</p>
 <ol>
 <li>Download the
 <a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2-1.src.rpm">
-source code RPM</a>.
+source code RPM</a>.</li>
 
-<li>Become root and change to the directory containing the new rpm.
+<li>Become root and change to the directory containing the new rpm.</li>
 
-<li>Build a binary rpm with the command<br>
-<tt><b>rpm --rebuild dopewars-1.5.2-1.src.rpm</b></tt>
+<li>Build a binary rpm with the command<br />
+<tt><b>rpm --rebuild dopewars-1.5.2-1.src.rpm</b></tt></li>
 
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 <i>xxx</i> is your machine type - for example, "i386" on Intel machines,
-"alpha" on Alphas)
+"alpha" on Alphas)</li>
 
-<li>Install the binary rpm with the command<br>
-<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt>
+<li>Install the binary rpm with the command<br />
+<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt></li>
 </ol>
 
 <h2><a name="tarball">Tarball installation</a></h2>
@@ -116,39 +119,39 @@ Unix <a href="http://www.gtk.org/download/">here</a> or for Windows
 <ol>
 <li>Download the
 <a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2.tar.gz">
-source code tarball</a>.
+source code tarball</a>.</li>
 
 <li>Change to the directory containing the tarball and extract the contents
-with the command <br>
-<tt><b>tar -xvzf dopewars-1.5.2.tar.gz</b></tt><br>
-(or similar).
+with the command <br />
+<tt><b>tar -xvzf dopewars-1.5.2.tar.gz</b></tt><br />
+(or similar).</li>
 
 <li>Change into the dopewars-1.5.2 directory, and read all the important
-documentation in there ;)
+documentation in there ;)</li>
 
-<li>Build the binary with the commands<br>
-<tt><b>./configure</b><br>
-<b>make</b></tt>
+<li>Build the binary with the commands<br />
+<tt><b>./configure</b><br />
+<b>make</b></tt></li>
 
-<li>Become root and install the dopewars files with<br>
-<tt><b>make install</b></tt><br>
-The configure script will test your system and set up dopewars so that it
+<li>Become root and install the dopewars files with<br />
+<tt><b>make install</b></tt><br />
+<p>The configure script will test your system and set up dopewars so that it
 should compile cleanly. If you are running the Cygwin tools under Microsoft
 Windows, the script should detect this and allow you to build a native
 Windows binary; this will then run on any Win32 system, even one without Cygwin
 installed. The configure script supports a number of configurable options; for
-more details, read the INSTALL file in the dopewars-1.5.2 directory.<p>
+more details, read the INSTALL file in the dopewars-1.5.2 directory.</p>
 
-If you cannot become root, run the configure script specifying directories for
-which you have write access for both the dopewars binary and high score file
-with a command such as<br>
+<p>If you cannot become root, run the configure script specifying directories
+for which you have write access for both the dopewars binary and high score file
+with a command such as<br />
 <tt><b>./configure --bindir=/home/user/dopewars
---datadir=/home/user/dopewars</b></tt>
+--datadir=/home/user/dopewars</b></tt></p></li>
 </ol>
 
-<hr>
+<hr />
 <ul>
-<li><a href="index.html">Main index</a>
+<li><a href="index.html">Main index</a></li>
 </ul>
 <p>Last update: <b>14-10-2001</b></p>
 </body>

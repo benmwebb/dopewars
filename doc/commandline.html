@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>dopewars command line options</title>
 </head>
@@ -10,8 +13,8 @@
 <h1>dopewars command line options</h1>
 
 <p>Once you have <a href="installation.html">installed</a> dopewars, you should
-be able to run the binary just by typing<br>
-<tt><b>dopewars</b></tt><br>
+be able to run the binary just by typing<br />
+<tt><b>dopewars</b></tt><br />
 (unless you have installed the binary in a directory which is not in your
 path, in which case precede it with the path). Run without any options,
 the dopewars binary runs as a dopewars client.</p>
@@ -23,42 +26,42 @@ command line options can be used to override some of these settings (also see
 the <b>-g</b> option below).</p>
 
 <p>For a brief description of the command line options, specify the option
-<b>-h</b> with the command<br>
-<tt><b>dopewars -h</b></tt><br>
+<b>-h</b> with the command<br />
+<tt><b>dopewars -h</b></tt><br />
 A list of the other command line options is presented below.</p>
 
 <dl>
-<dt><b>-b</b>
+<dt><b>-b</b></dt>
 <dd>"Black and white". This tells the dopewars client (if that is what
 you're running) not to use coloured text (by default, colour is used if the
-terminal and curses support it).
+terminal and curses support it).</dd>
 
-<dt><a name="singleplayer"><b>-n</b></a>
+<dt><a name="singleplayer"><b>-n</b></a></dt>
 <dd>If running the client, run in single-player mode. Don't try to connect
-to any available dopewars servers.
+to any available dopewars servers.</dd>
 
-<dt><a name="antique"><b>-a</b></a>
+<dt><a name="antique"><b>-a</b></a></dt>
 <dd>Puts the client into "antique" mode; dopewars is derived from the
 earlier game for MS-DOS of the same name, which in turn was based on
 "Drug Wars" by John E. Dell. "Antique" mode aims to follow the behaviour
 of the MS-DOS dopewars closely, and consequently this entails single-player
-mode also.
+mode also.</dd>
 
-<dt><a name="hiscore"><b>-f <i>file</i></b></a>
+<dt><a name="hiscore"><b>-f <i>file</i></b></a></dt>
 <dd>Specifies the path and name of the file used to store the dopewars
 high scores in; this can alternatively be specified in the configuration file
 with the <a href="configfile.html#HiScoreFile">HiScoreFile=<i>file</i></a>
-option.
+option.</dd>
 
-<dt><a name="server"><b>-o <i>addr</i></b></a>
+<dt><a name="server"><b>-o <i>addr</i></b></a></dt>
 <dd>Gives the name of the machine running a dopewars server, in human
 readable (e.g. "nowhere.com") or dotted quad (e.g. 127.0.0.1) form. When the
 client is started, if not in single-player mode, it automatically attempts to
 connect to this server for a multiplayer game. This can also be specified with
 the <a href="configfile.html#Server">Server=<i>addr</i></a> configuration file
-option.
+option.</dd>
 
-<dt><a name="port"><b>-p <i>port</i></b></a>
+<dt><a name="port"><b>-p <i>port</i></b></a></dt>
 <dd>Specifies the numeric port number which the server uses. This is usually
 7902, but some servers may use other port numbers to avoid conflicts with
 other services running on the machine. If you are running the dopewars client,
@@ -66,9 +69,10 @@ it will search for a server on this port; if you are running the server, it
 will bind to this port and wait for connections from clients (the clients
 must also be instructed to use this port, of course). This is equivalent to
 setting the port number with the
-<a href="configfile.html#Port">Port=<i>port</i></a> configuration file option.
+<a href="configfile.html#Port">Port=<i>port</i></a> configuration file
+option.</dd>
 
-<dt><b>-s</b>
+<dt><b>-s</b></dt>
 <dd>Runs the <a href="server.html">dopewars server</a>. This mediates
 multiplayer games of dopewars, and keeps track of high scores. Any player
 wishing to join the game hosted
@@ -77,9 +81,9 @@ port number which you have chosen, and can then interact with other players
 who have done the same thing. By default, a dopewars server will report its
 status to the <a href="metaserver.html">metaserver</a>, unless it is set
 otherwise in the <a href="configfile.html#MetaServerActive">configuration
-file</a>.
+file</a>.</dd>
 
-<dt><a name="privateserver"><b>-S</b></a>
+<dt><a name="privateserver"><b>-S</b></a></dt>
 <dd>Also runs a dopewars server, but in this case <b>does not</b> report its
 status to the metaserver. This does not stop clients from connecting to your
 server, of course (unless it is behind a firewall, or the
@@ -87,62 +91,62 @@ server, of course (unless it is behind a firewall, or the
 but it makes it harder to find. The connection to the
 <a href="metaserver.html">metaserver</a> can also be disabled by adding
 <a href="configfile.html#MetaServerActive">MetaServer.Active=FALSE</a> to the
-configuration files.
+configuration files.</dd>
 
-<dt><b>-g <i>file</i></b>
+<dt><b>-g <i>file</i></b></dt>
 <dd>Instructs dopewars to read setup information from the
 <a href="configfile.html">configuration file</a> named by <b><i>file</i></b>.
 This file is read immediately - i.e. at the point at which the -g option is
 encountered - and so these settings will override any set in the default
 configuration files or by previous command line options. Command line options
 occurring <b>after</b> the -g option, or for that matter further -g options,
-that change these same settings, will then override them.
+that change these same settings, will then override them.</dd>
 
-<dt><b>-r <i>file</i></b>
+<dt><b>-r <i>file</i></b></dt>
 <dd>Maintains a pid file with the specified name while the server is running.
 The file is a one-line text file, containing the process ID of the dopewars
-server process, and is deleted when the server quits.
+server process, and is deleted when the server quits.</dd>
 
-<dt><a name="computer"><b>-c</b></a>
+<dt><a name="computer"><b>-c</b></a></dt>
 <dd>Runs a computerised player. This will connect to the specifed dopewars
 server and join in the multiplayer game going on there. When the player
 finishes the game (or is eliminated by the other players or the server) the
-program finishes.
+program finishes.</dd>
 
-<dt><a name="gui-client"><b>-w</b></a>
+<dt><a name="gui-client"><b>-w</b></a></dt>
 <dd>If running a dopewars client, then this forces the use of a graphical
 user interface. Under Microsoft Windows, this is an "ordinary" window, while
 under Unix, this uses GTK+. If a suitable environment is not present (e.g.
 the binary was compiled without graphical support, or - in the case of GTK+ -
 you are not running X) then dopewars will quit with an error. By default,
 if neither -w or -t are specified, then a graphical user interface will be
-used where available, falling back to a text-mode client in case of error.
+used where available, falling back to a text-mode client in case of error.</dd>
 
-<dt><a name="text-client"><b>-t</b></a>
+<dt><a name="text-client"><b>-t</b></a></dt>
 <dd>When running a dopewars client, forces the use of a text-mode (curses
-or console mode) interface, even if graphics are available.
+or console mode) interface, even if graphics are available.</dd>
 
-<dt><b>-C <i>file</i></b></a>
+<dt><b>-C <i>file</i></b></dt>
 <dd>Converts a high score file from an older version of dopewars to the format
 used by the current version. The old high score file is replaced with a new
 file, and a backup copy of the old file is made. This conversion process is
 necessary since older versions of dopewars did not identify the high score
 files properly, so they cannot be automatically converted. (Such automatic
 conversion would also pose a security risk if the dopewars binary is running
-setgid.)
+setgid.)</dd>
 
-<dt><b>-h</b>
+<dt><b>-h</b></dt>
 <dd>Displays a brief description of the available command line options, and
-contact details.
+contact details.</dd>
 
-<dt><b>-v</b>
-<dd>Displays the current dopewars version number, and then exits.
+<dt><b>-v</b></dt>
+<dd>Displays the current dopewars version number, and then exits.</dd>
 
 </dl>
 
-<hr>
+<hr />
 <ul>
-<li><a href="index.html">Main index</a>
+<li><a href="index.html">Main index</a></li>
 </ul>
 <p>Last update: <b>24-09-2001</b></p>
 </body>

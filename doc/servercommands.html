@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>Interactive server commands</title>
 </head>
@@ -19,41 +22,43 @@ by typing the name of the variable by itself. For example, entering
 server sends to the <a href="metaserver.html">metaserver</a>.</p>
 
 <dl>
-<dt><b>help</b>
+<dt><b>help</b></dt>
 <dd>Displays a help screen, listing valid server commands and the variables
-which can be set in <a href="configfile.html">configuration files</a>.
+which can be set in <a href="configfile.html">configuration files</a>.</dd>
 
-<dt><b>list</b>
+<dt><b>list</b></dt>
 <dd>Lists the given names of all the players currently logged on to the
-server.
+server.</dd>
 
-<dt><b>push <i>Bert</i></b>
+<dt><b>push <i>Bert</i></b></dt>
 <dd>Politely asks the player with the given name <i>Bert</i> to leave the
 server - i.e. sends a message to the client, which should then finish off
-and break the connection at the far end.
+and break the connection at the far end.</dd>
 
-<dt><b>kill <i>Bert</i></b>
+<dt><b>kill <i>Bert</i></b></dt>
 <dd>Abruptly breaks the connection to the player with given name <i>Bert</i>.
 This is necessary if, for example, the client refuses to acknowledge a
-"push" message.
+"push" message.</dd>
 
-<dt><b>msg:<i>Hi all!</i></b>
+<dt><b>msg:<i>Hi all!</i></b></dt>
 <dd>Broadcasts the message <i>Hi all!</i> to all players currently connected
-to this server.
+to this server.</dd>
 
-<dt><b>quit</b>
+<dt><b>quit</b></dt>
 <dd>Politely quit, by asking all clients to leave, and then terminating once
 they have done so. An "impolite" quit, which is necessary if the clients fail
 to respond to this message, is performed on receipt of a SIGINT or SIGTERM
-signal (i.e. pressing Ctrl-C or killing the process with the "kill" command).
+signal (i.e. pressing Ctrl-C or killing the process with the "kill"
+command).</dd>
 </dl>
 
-<hr>
+<hr />
 <ul>
 <li><a href="index.html">Main index</a>
-<ul>
-<li><a href="server.html">Setting up and running a dopewars server</a>
-</ul>
+   <ul>
+   <li><a href="server.html">Setting up and running a dopewars server</a></li>
+   </ul>
+</li>
 </ul>
 <p>Last update: <b>13-05-2001</b></p>
 </body>

@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>dopewars configuration files</title>
 </head>
@@ -18,11 +21,11 @@ location settings <i>Port</i> and <i>Server</i> are still useful).</p>
 
 <p>The order of making dopewars settings is as follows:-</p>
 <ol>
-<li>The global configuration file (if present) <b>/etc/dopewars</b>
-<li>The user-specific file (if present) <b>~/.dopewars</b>
+<li>The global configuration file (if present) <b>/etc/dopewars</b></li>
+<li>The user-specific file (if present) <b>~/.dopewars</b></li>
 <li><i>(Windows only)</i> The file <b>dopewars-config.txt</b> in the current
-directory
-<li>Options specified on the <a href="commandline.html">command line</a>
+directory</li>
+<li>Options specified on the <a href="commandline.html">command line</a></li>
 </ol>
 
 <p>Settings in a configuration file can set numbers, booleans, strings or
@@ -58,24 +61,25 @@ generally reproduce the default behaviour; obviously you are free to replace
 the parts in italics to customise your own server and client.</p>
 
 <ul>
-<li><a href="#fileloc">General configuration: file and server locations</a>
-<li><a href="#metaserver">Metaserver configuration</a>
-<li><a href="#places">Basic configuration: places in the game</a>
-<li><a href="#drugs">Basic configuration: drug prices</a>
-<li><a href="#combat">Basic configuration: guns and fighting</a>
-<li><a href="#advanced">Advanced configuration</a>
+<li><a href="#fileloc">General configuration: file and server
+locations</a></li>
+<li><a href="#metaserver">Metaserver configuration</a></li>
+<li><a href="#places">Basic configuration: places in the game</a></li>
+<li><a href="#drugs">Basic configuration: drug prices</a></li>
+<li><a href="#combat">Basic configuration: guns and fighting</a></li>
+<li><a href="#advanced">Advanced configuration</a></li>
 </ul>
 
 <h2><a name="fileloc">General configuration: file and server locations</a></h2>
 
 <dl>
-<dt><a name="Port"><b>Port=<i>7902</i></b></a>
+<dt><a name="Port"><b>Port=<i>7902</i></b></a></dt>
 <dd>Tells the dopewars client to look for a server on port <i>7902</i>, and
 tells the dopewars server to bind to port <i>7902</i> and wait for connections.
 This can be overridden with the -p <a href="commandline.html#port">
-command line option</a>.
+command line option</a>.</dd>
 
-<dt><a name="Server"><b>Server=<i>"localhost"</i></b></a>
+<dt><a name="Server"><b>Server=<i>"localhost"</i></b></a></dt>
 <dd>Tells the dopewars client to look for a server at the address
 <i>localhost</i>. Dotted quad (e.g. 127.0.0.1) addresses may also be used here.
 If this variable is set to one of the three "special" names
@@ -85,108 +89,109 @@ list the servers available at the metaserver, prompt the user to enter a
 server name and port, or play in single player mode, respectively.
 This option can be overridden with the -o <a href="commandline.html#server">
 command line option</a> (but be sure to protect the brackets from the shell
-if you use one of the "special" names).
+if you use one of the "special" names).</dd>
 
-<dt><b>Socks.Active=<i>FALSE</i></b></a>
+<dt><b>Socks.Active=<i>FALSE</i></b></dt>
 <dd>Instructs the dopewars client to connect directly to the given server,
 without using an intermediate SOCKS server. If this is set to TRUE, all
 connections go via. the SOCKS server. By default, SOCKS is not used for
 metaserver communications - see the MetaServer.UseSocks variable. N.B. You
 cannot run a dopewars server behind a SOCKS server, due to limitations in
-the SOCKS protocol.
+the SOCKS protocol.</dd>
 
-<dt><b>Socks.NumUID=<i>FALSE</i></b></a>
+<dt><b>Socks.NumUID=<i>FALSE</i></b></dt>
 <dd>When connecting to a SOCKS version 4 server, the protocol demands that
 the name of the current user be sent for simple authentication; the SOCKS
 server then queries identd on your machine to check if you are who you say
 you are. dopewars complies with this requirement if this variable is set to
 FALSE. However, some Unix implementations of identd send numeric user IDs
 rather than user names; dopewars will do the same if you set this variable 
-to TRUE. (N.B. Not supported on Windows systems.)
+to TRUE. (N.B. Not supported on Windows systems.)</dd>
 
-<dt><b>Socks.User=<i>"fred"</i></b></a>
+<dt><b>Socks.User=<i>"fred"</i></b></dt>
 <dd>Overrides the username detection (discussed above) completely, and instead
 sends the user name <i>"fred"</i> to a SOCKS4 server. If this is set to the
-blank string ("") - the default - this does not happen.
+blank string ("") - the default - this does not happen.</dd>
 
-<dt><b>Socks.Name=<i>"socks"</i></b></a>
+<dt><b>Socks.Name=<i>"socks"</i></b></dt>
 <dd>If using SOCKS, sets the hostname of the SOCKS server to connect to to
-be <i>"socks"</i>.
+be <i>"socks"</i>.</dd>
 
-<dt><b>Socks.Port=<i>1080</i></b></a>
-<dd>Connects to the SOCKS server on TCP port <i>1080</i>.
+<dt><b>Socks.Port=<i>1080</i></b></dt>
+<dd>Connects to the SOCKS server on TCP port <i>1080</i>.</dd>
 
-<dt><b>Socks.Version=<i>4</i></b></a>
+<dt><b>Socks.Version=<i>4</i></b></dt>
 <dd>Uses SOCKS version <i>4</i>. Version 5 is also supported; SOCKS5 servers
-support username/password authentication, unlike SOCKS4.
+support username/password authentication, unlike SOCKS4.</dd>
 
-<dt><b>Socks.Auth.User=<i>""</i></b></a>
+<dt><b>Socks.Auth.User=<i>""</i></b></dt>
 <dd>If using SOCKS5 with user/password authentication, with the server or AI
 player (which can both run unattended) then setting this variable to something
 other than "" will enable them to authenticate themselves with the SOCKS
 server, provided Socks.Auth.Password is also set. (The game clients prompt
-the user for a username and password on each connect instead.)
+the user for a username and password on each connect instead.)</dd>
 
-<dt><b>Socks.Auth.Password=<i>""</i></b></a>
-<dd>The corresponding password for Socks.Auth.User, above.
+<dt><b>Socks.Auth.Password=<i>""</i></b></dt>
+<dd>The corresponding password for Socks.Auth.User, above.</dd>
 
 <dt><a name="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
+</dt>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
 to store high scores. This can be overridden with the -f
-<a href="commandline.html#hiscore">command line option</a>.
+<a href="commandline.html#hiscore">command line option</a>.</dd>
 
-<dt><b>Pager=<i>"more"</i></b>
+<dt><b>Pager=<i>"more"</i></b></dt>
 <dd>Sets the pager used to display multi-page output in an interactive server
-to <i>more</i>. ("less" is a popular alternative)
+to <i>more</i>. ("less" is a popular alternative)</dd>
 
-<dt><b>ConfigVerbose=<i>FALSE</i></b>
+<dt><b>ConfigVerbose=<i>FALSE</i></b></dt>
 <dd>Prints extra feedback information when processing the config. file if set
 to TRUE; this only takes affect, of course, after the ConfigVerbose variable is
-set, and then remains in force until it is reset again.
+set, and then remains in force until it is reset again.</dd>
 </dl>
 
 <h2><a name="metaserver">Metaserver configuration</a></h2>
 <dl>
-<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>TRUE</i></b></a>
+<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>TRUE</i></b></a></dt>
 <dd>Tells the dopewars server to report its status to the
 <a href="metaserver.html">metaserver</a>. If <i>TRUE</i>
 is replaced by <i>FALSE</i> the server will not report to the metaserver.
 This setting, if set to TRUE, can be overridden by the -S
-<a href="commandline.html#privateserver">command line option</a>.
+<a href="commandline.html#privateserver">command line option</a>.</dd>
 
-<dt><b>MetaServer.Name=<i>"dopewars.sourceforge.net"</i></b>
+<dt><b>MetaServer.Name=<i>"dopewars.sourceforge.net"</i></b></dt>
 <dd>Tells dopewars that the metaserver is located at
 <i>dopewars.sourceforge.net</i>. See the
 <a href="metaserver.html">metaserver</a> page, and below, for information
-about connecting to the dopewars metaserver via. a proxy web server.
+about connecting to the dopewars metaserver via. a proxy web server.</dd>
 
-<dt><b>MetaServer.Port=<i>80</i></b>
+<dt><b>MetaServer.Port=<i>80</i></b></dt>
 <dd>Instructs dopewars that the metaserver can be found on TCP port
 <i>80</i>. This is the standard HTTP port for Web access. (You shouldn't need
-to change this, even if you connect via. a proxy.)
+to change this, even if you connect via. a proxy.)</dd>
 
-<dt><b>MetaServer.ProxyName=<i>"proxy.com"</i></b>
+<dt><b>MetaServer.ProxyName=<i>"proxy.com"</i></b></dt>
 <dd>Sends all requests to the metaserver via. the web proxy at <i>proxy.com</i>.
 If this is set to a blank string (the default) then the connection to the
-metaserver is made directly.
+metaserver is made directly.</dd>
 
-<dt><b>MetaServer.ProxyPort=<i>8080</i></b>
+<dt><b>MetaServer.ProxyPort=<i>8080</i></b></dt>
 <dd>Connects to the web proxy on port <i>8080</i>. (It then connects to the
 metaserver on the port specified by MetaServer.Port.) This variable is ignored
-if MetaServer.ProxyName is blank.
+if MetaServer.ProxyName is blank.</dd>
 
-<dt><b>MetaServer.Path=<i>"/metaserver.php"</i></b>
+<dt><b>MetaServer.Path=<i>"/metaserver.php"</i></b></dt>
 <dd>Tells dopewars that the PHP script on the metaserver, for server
 registration (server mode) or listing the available servers (client mode) is
-<i>/metaserver.php</i>.
+<i>/metaserver.php</i>.</dd>
 
 <dt><a name="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
-server"</i></b></a>
+server"</i></b></a></dt>
 <dd>Sets the comment for your server, which appears on the list of servers
-maintained by the metaserver, to <i>dopewars server</i>.
+maintained by the metaserver, to <i>dopewars server</i>.</dd>
 
-<dt><b>MetaServer.LocalName=<i>"dope-serv.com"</i></b>
+<dt><b>MetaServer.LocalName=<i>"dope-serv.com"</i></b></dt>
 <dd>Tells the metaserver that the preferred hostname of your dopewars server
 machine is <i>dope-serv.com</i>. By default, the metaserver tries to ascertain
 your domain name from the connection, and this can fail if you connect via.
@@ -195,380 +200,389 @@ domain name. You must also set MetaServer.Password to the password given to
 you by the <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">metaserver
 maintainer</a> for this to work. A blank LocalName can also be used with a
 suitable password to identify "your" server, even if its IP changes.
-See the <a href="metaserver.html">metaserver page</a> for more details.
+See the <a href="metaserver.html">metaserver page</a> for more details.</dd>
 
-<dt><b>MetaServer.Password=<i>"auth"</i></b>
+<dt><b>MetaServer.Password=<i>"auth"</i></b></dt>
 <dd>Uses the password <i>auth</i> to authenticate your dopewars server's
-hostname (see MetaServer.LocalName above) with the metaserver.
+hostname (see MetaServer.LocalName above) with the metaserver.</dd>
 
-<dt><b>MetaServer.UseSocks=<i>FALSE</i></b>
+<dt><b>MetaServer.UseSocks=<i>FALSE</i></b></dt>
 <dd>Even if "Socks.Active" is TRUE, do not use SOCKS for metaserver
-communication - connect directly to the metaserver or proxy.
+communication - connect directly to the metaserver or proxy.</dd>
 
-<dt><b>MetaServer.Auth.User=<i>""</i></b></a>
+<dt><b>MetaServer.Auth.User=<i>""</i></b></dt>
 <dd>If the metaserver webpage is on a restricted access server (i.e. it
 requires HTTP Basic authentication), and you wish to connect with the server
 or AI player (which can both run unattended) then setting this variable to
 something other than "" will enable them to authenticate themselves,
 provided MetaServer.Auth.Password is also set. (The game clients prompt
-the user for a username and password on each connect instead.)
+the user for a username and password on each connect instead.)</dd>
 
-<dt><b>MetaServer.Auth.Password=<i>""</i></b></a>
-<dd>The corresponding password for MetaServer.Auth.User, above.
+<dt><b>MetaServer.Auth.Password=<i>""</i></b></dt>
+<dd>The corresponding password for MetaServer.Auth.User, above.</dd>
 
-<dt><b>MetaServer.Proxy.User=<i>""</i></b></a>
+<dt><b>MetaServer.Proxy.User=<i>""</i></b></dt>
 <dd>In a similar way to MetaServer.Auth.User, above, this enables a dopewars
-server or AI player to authenticate itself with a web proxy.
+server or AI player to authenticate itself with a web proxy.</dd>
 
-<dt><b>MetaServer.Proxy.Password=<i>""</i></b></a>
-<dd>The corresponding password for MetaServer.Proxy.User, above.
+<dt><b>MetaServer.Proxy.Password=<i>""</i></b></dt>
+<dd>The corresponding password for MetaServer.Proxy.User, above.</dd>
 
 </dl>
 
 <h2><a name="places">Basic configuration: places in the game</a></h2>
 
 <dl>
-<dt><b>NumLocation=<i>8</i></b>
+<dt><b>NumLocation=<i>8</i></b></dt>
 <dd>Sets the number of locations in the game to <i>8</i>. Note that if too
 many locations are specified, the client may not be able to display them
-all!
+all!</dd>
 
-<dt><b>Location[<i>4</i>].Name=<i>"Manhattan"</i></b>
+<dt><b>Location[<i>4</i>].Name=<i>"Manhattan"</i></b></dt>
 <dd>Sets the name of the <i>4th</i> location in the game to <i>Manhattan</i>.
 The index within the square brackets can range from 1 to whatever
-NumLocation is set to above, or an error will be reported.
+NumLocation is set to above, or an error will be reported.</dd>
 
-<dt><b>Location[<i>4</i>].PolicePresence=<i>90</i></b>
+<dt><b>Location[<i>4</i>].PolicePresence=<i>90</i></b></dt>
 <dd>Sets the police presence in the <i>4th</i> location to <i>90%</i>. This
 affects how likely it is for the police to attack players at each location
-when arriving, dropping drugs, or attacking other players.
+when arriving, dropping drugs, or attacking other players.</dd>
 
-<dt><b>Location[<i>4</i>].MinDrug=<i>4</i></b>
+<dt><b>Location[<i>4</i>].MinDrug=<i>4</i></b></dt>
 <dd>Sets the minimum possible number of different drugs that will be on sale
-to players in location number <i>4</i> to <i>4</i>.
+to players in location number <i>4</i> to <i>4</i>.</dd>
 
-<dt><b>Location[<i>4</i>].MaxDrug=<i>10</i></b>
+<dt><b>Location[<i>4</i>].MaxDrug=<i>10</i></b></dt>
 <dd>Sets the maximum possible number of different drugs that will be on sale
-to players in location number <i>4</i> to <i>10</i>.
+to players in location number <i>4</i> to <i>10</i>.</dd>
 
-<dt><b>LoanShark=<i>1</i></b>
+<dt><b>LoanShark=<i>1</i></b></dt>
 <dd>Makes the loan shark pop up when players visit location number <i>1</i>.
 To stop the loan shark from appearing at all (making it rather difficult to
 pay off debts) set this number to something which is not a valid location,
-such as 0 (zero).
+such as 0 (zero).</dd>
 
-<dt><b>Bank=<i>1</i></b>
-<dd>Makes the bank appear when a player visits location <i>1</i> (the Bronx).
+<dt><b>Bank=<i>1</i></b></dt>
+<dd>Makes the bank appear when a player visits location <i>1</i> (the
+Bronx).</dd>
 
-<dt><b>GunShop=<i>2</i></b>
+<dt><b>GunShop=<i>2</i></b></dt>
 <dd>Players can visit the gun shop in location number <i>2</i> (the
-Ghetto).
+Ghetto).</dd>
 
-<dt><b>RoughPub=<i>2</i></b>
+<dt><b>RoughPub=<i>2</i></b></dt>
 <dd>Players can visit the rough pub to hire bitches in location number
-<i>2</i>.
+<i>2</i>.</dd>
 
-<dt><b>LoanSharkName=<i>"the Loan Shark"</i></b>
-<dd>The loan shark is known by the name <i>"the Loan Shark"</i> during the game.
+<dt><b>LoanSharkName=<i>"the Loan Shark"</i></b></dt>
+<dd>The loan shark is known by the name <i>"the Loan Shark"</i> during the
+game.</dd>
 
-<dt><b>BankName=<i>"the bank"</i></b>
-<dd>The bank is known by the name <i>"the bank"</i> during the game.
+<dt><b>BankName=<i>"the bank"</i></b></dt>
+<dd>The bank is known by the name <i>"the bank"</i> during the game.</dd>
 
-<dt><b>GunShopName=<i>"Dan's House of Guns"</i></b>
+<dt><b>GunShopName=<i>"Dan's House of Guns"</i></b></dt>
 <dd>The gun shop is known by the name <i>"Dan's House of Guns"</i> during
-the game.
+the game.</dd>
 
-<dt><b>RoughPubName=<i>"the pub"</i></b>
-<dd>The pub is known by the name <i>"the pub"</i> during the game.
+<dt><b>RoughPubName=<i>"the pub"</i></b></dt>
+<dd>The pub is known by the name <i>"the pub"</i> during the game.</dd>
 </dl>
 
 <h2><a name="drugs">Basic configuration: drug prices</a></h2>
 <dl>
-<dt><b>NumDrug=<i>12</i></b>
-<dd>Sets there to be <i>12</i> different types of drug in the game.
+<dt><b>NumDrug=<i>12</i></b></dt>
+<dd>Sets there to be <i>12</i> different types of drug in the game.</dd>
 
-<dt><b>Drug[<i>6</i>].Name=<i>"MDA"</i></b>
-<dd>Sets the name of the <i>6th</i> drug to be <i>MDA</i>.
+<dt><b>Drug[<i>6</i>].Name=<i>"MDA"</i></b></dt>
+<dd>Sets the name of the <i>6th</i> drug to be <i>MDA</i>.</dd>
 
-<dt><b>Drug[<i>6</i>].MinPrice=<i>1500</i></b>
+<dt><b>Drug[<i>6</i>].MinPrice=<i>1500</i></b></dt>
 <dd>Sets the usual minimum price of the <i>6th</i> drug (in the absence of
-"special events" such as drug busts) to be <i>$1,500</i>.
+"special events" such as drug busts) to be <i>$1,500</i>.</dd>
 
-<dt><b>Drug[<i>6</i>].MaxPrice=<i>4400</i></b>
-<dd>Sets the usual maximum price of drug number <i>6</i> to be <i>$4,400</i>.
+<dt><b>Drug[<i>6</i>].MaxPrice=<i>4400</i></b></dt>
+<dd>Sets the usual maximum price of drug number <i>6</i> to be
+<i>$4,400</i>.</dd>
 
-<dt><b>Drug[<i>1</i>].Cheap=<i>TRUE</i></b>
+<dt><b>Drug[<i>1</i>].Cheap=<i>TRUE</i></b></dt>
 <dd>Tells dopewars that drug <i>1</i> (by default, Acid) can occasionally
-be especially cheap (if this is set to FALSE, this does not happen).
+be especially cheap (if this is set to FALSE, this does not happen).</dd>
 
 <dt><b>Drug[<i>1</i>].CheapStr=<i>"The market is flooded with cheap
-home-made acid!"</i></b>
+home-made acid!"</i></b></dt>
 <dd>Sets the message to display to alert players that drug number <i>1</i>
-is especially cheap.
+is especially cheap.</dd>
 
-<dt><b>Drugs.CheapDivide=<i>4</i></b>
+<dt><b>Drugs.CheapDivide=<i>4</i></b></dt>
 <dd>Tells dopewars that whenever a drug is "specially" cheap, divide the 
 normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
-<i>4</i>.
+<i>4</i>.</dd>
 
-<dt><b>Drug[<i>4</i>].Expensive=<i>TRUE</i></b>
+<dt><b>Drug[<i>4</i>].Expensive=<i>TRUE</i></b></dt>
 <dd>Tells dopewars that drug <i>4</i> (normally Heroin) can occasionally be
-particuarly expensive (FALSE cancels this).
+particuarly expensive (FALSE cancels this).</dd>
 
 <dt><b>Drugs.ExpensiveStr1=<i>"Cops made a big %tde bust! Prices are
-outrageous!"</i></b>
+outrageous!"</i></b></dt>
 <dd>Sets the string that is displayed when <b>any</b> drug is particularly
 expensive. This is similar to a standard C-style format string - i.e. the
 %tde is replaced by the name of the drug which is expensive. (See the
 <a href="i18n.html">Internationalization page</a> for further information
-on this notation.) This string is displayed 50% of the time for expensive drugs.
+on this notation.) This string is displayed 50% of the time for expensive
+drugs.</dd>
 
 <dt><b>Drugs.ExpensiveStr2=<i>"Addicts are buying %tde at ridiculous
-prices!"</i></b>
+prices!"</i></b></dt>
 <dd>Sets the string which is used for expensive drugs the other 50% of the 
-time.
+time.</dd>
 
-<dt><b>Drugs.ExpensiveMultiply=<i>4</i></b>
+<dt><b>Drugs.ExpensiveMultiply=<i>4</i></b></dt>
 <dd>Tells dopewars that whenever a drug is "specially" expensive, multiply the
 normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
-<i>4</i>.
+<i>4</i>.</dd>
 </dl>
 
 <h2><a name="combat">Basic configuration: guns and fighting</a></h2>
 <dl>
-<dt><b>NumGun=<i>4</i></b>
+<dt><b>NumGun=<i>4</i></b></dt>
 <dd>Configures the game to have <i>4</i> guns available to players at the
-gun shop.
+gun shop.</dd>
 
-<dt><b>Gun[<i>3</i>].Name=<i>"Ruger"</i></b>
-<dd>Sets the name of the <i>3rd</i> gun to <i>Ruger</i>.
+<dt><b>Gun[<i>3</i>].Name=<i>"Ruger"</i></b></dt>
+<dd>Sets the name of the <i>3rd</i> gun to <i>Ruger</i>.</dd>
 
-<dt><b>Gun[<i>3</i>].Price=<i>2900</i></b>
+<dt><b>Gun[<i>3</i>].Price=<i>2900</i></b></dt>
 <dd>Sets the price in the gun shop of the <i>3rd</i> gun to <i>$2,900</i>.
 Guns offered "on the street" (i.e. by random events) will be priced at 10%
-of the value set here.
+of the value set here.</dd>
 
-<dt><b>Gun[<i>3</i>].Space=<i>4</i></b>
+<dt><b>Gun[<i>3</i>].Space=<i>4</i></b></dt>
 <dd>Tells dopewars that gun number <i>3</i> uses <i>4</i> spaces in the 
-inventory - i.e. carrying one of these guns uses the same spaces as 4 drugs.
+inventory - i.e. carrying one of these guns uses the same spaces as 4
+drugs.</dd>
 
-<dt><b>Gun[<i>3</i>].Damage=<i>4</i></b>
-<dd>Defines gun number <i>3</i> to do up to <i>4</i> points of damage.
+<dt><b>Gun[<i>3</i>].Damage=<i>4</i></b></dt>
+<dd>Defines gun number <i>3</i> to do up to <i>4</i> points of damage.</dd>
 
-<dt><b>PlayerArmour=<i>100</i></b>
+<dt><b>PlayerArmour=<i>100</i></b></dt>
 <dd>Sets the percentage armour rating of each player to <i>100</i> - this
 defines the amount of health that you lose when you are successfully hit.
 If 100, you lose the same number of health points as the gun's damage.
 If more than 100, you lose fewer health points, and if less than 100, you lose
 <b>more</b> health points than the gun's damage. This rating applies only
-when you have no bitches.
+when you have no bitches.</dd>
 
-<dt><b>BitchArmour=<i>50</i></b>
-<dd>Sets the percentage armour rating of each bitch to <i>50</i>.
+<dt><b>BitchArmour=<i>50</i></b></dt>
+<dd>Sets the percentage armour rating of each bitch to <i>50</i>.</dd>
 
-<dt><b>NumCop=<i>3</i></b>
+<dt><b>NumCop=<i>3</i></b></dt>
 <dd>Configures the game to have <i>3</i> cops. If you kill the first one, you
 will later be attacked by the second one, and so on. (The last cop is 'undead'
-and will return even if you kill him.)
+and will return even if you kill him.)</dd>
 
-<dt><b>Cop[<i>1</i>].Name=<i>Officer Hardass</i></b>
-<dd>Names the first cop to attack you <i>"Officer Hardass"</i>.
+<dt><b>Cop[<i>1</i>].Name=<i>Officer Hardass</i></b></dt>
+<dd>Names the first cop to attack you <i>"Officer Hardass"</i>.</dd>
 
-<dt><b>Cop[<i>1</i>].DeputyName=<i>deputy</i></b>
-<dd>Names a solitary deputy accompanying the first cop <i>"deputy"</i>.
+<dt><b>Cop[<i>1</i>].DeputyName=<i>deputy</i></b></dt>
+<dd>Names a solitary deputy accompanying the first cop <i>"deputy"</i>.</dd>
 
-<dt><b>Cop[<i>1</i>].DeputiesName=<i>deputies</i></b>
-<dd>Names more than one deputy accompanying the first cop <i>"deputies"</i>.
+<dt><b>Cop[<i>1</i>].DeputiesName=<i>deputies</i></b></dt>
+<dd>Names more than one deputy accompanying the first cop
+<i>"deputies"</i>.</dd>
 
-<dt><b>Cop[<i>1</i>].Armour=<i>4</i></b>
-<dd>Sets the armour rating of the first cop to <i>4%</i>.
+<dt><b>Cop[<i>1</i>].Armour=<i>4</i></b></dt>
+<dd>Sets the armour rating of the first cop to <i>4%</i>.</dd>
 
-<dt><b>Cop[<i>1</i>].DeputyArmour=<i>3</i></b>
-<dd>Sets the armour rating of the first cop's deputies to <i>3%</i>.
+<dt><b>Cop[<i>1</i>].DeputyArmour=<i>3</i></b></dt>
+<dd>Sets the armour rating of the first cop's deputies to <i>3%</i>.</dd>
 
-<dt><b>Cop[<i>1</i>].AttackPenalty=<i>30</i></b>
+<dt><b>Cop[<i>1</i>].AttackPenalty=<i>30</i></b></dt>
 <dd>When attacking another player, whether you successfully hit them depends
 on whether your attack rating is greater than their defence rating, which are
 generally numbers between 0 and 100 (think of them as percentages). This
-penalises the first cop (and his deputies) by <i>30%</i> when attacking you.
+penalises the first cop (and his deputies) by <i>30%</i> when attacking
+you.</dd>
 
-<dt><b>Cop[<i>1</i>].DefendPenalty=<i>30</i></b>
+<dt><b>Cop[<i>1</i>].DefendPenalty=<i>30</i></b></dt>
 <dd>Penalises the first cop (and his deputies) by <i>30%</i> when defending
-against a player.
+against a player.</dd>
 
-<dt><b>Cop[<i>1</i>].MinDeputies=<i>2</i></b>
-<dd>The first cop will be accompanied by a minimum of <i>2</i> deputies.
+<dt><b>Cop[<i>1</i>].MinDeputies=<i>2</i></b></dt>
+<dd>The first cop will be accompanied by a minimum of <i>2</i> deputies.</dd>
 
-<dt><b>Cop[<i>1</i>].MaxDeputies=<i>8</i></b>
-<dd>The first cop will be accompanied by a maximum of <i>8</i> deputies.
+<dt><b>Cop[<i>1</i>].MaxDeputies=<i>8</i></b></dt>
+<dd>The first cop will be accompanied by a maximum of <i>8</i> deputies.</dd>
 
-<dt><b>Cop[<i>1</i>].GunIndex=<i>0</i></b>
+<dt><b>Cop[<i>1</i>].GunIndex=<i>0</i></b></dt>
 <dd>The first cop, and his deputies, will carry gun number <i>0</i>
-(zero-based).
+(zero-based).</dd>
 
-<dt><b>Cop[<i>1</i>].CopGun=<i>1</i></b>
-<dd>The first cop will carry <i>1</i> gun.
+<dt><b>Cop[<i>1</i>].CopGun=<i>1</i></b></dt>
+<dd>The first cop will carry <i>1</i> gun.</dd>
 
-<dt><b>Cop[<i>1</i>].DeputyGun=<i>1</i></b>
-<dd>The first cop's deputies will each carry <i>1</i> gun.
+<dt><b>Cop[<i>1</i>].DeputyGun=<i>1</i></b></dt>
+<dd>The first cop's deputies will each carry <i>1</i> gun.</dd>
 </dl>
 
 <h2><a name="advanced">Advanced configuration</a></h2>
 <dl>
-<dt><b>LogLevel=<i>2</i></b>
+<dt><b>LogLevel=<i>2</i></b></dt>
 <dd>Most server log messages are given a priority level, from 0 (most urgent)
 to 5 (most verbose). This setting instructs the server only to log messages
-from level 0 up to <i>2</i>, inclusive.
+from level 0 up to <i>2</i>, inclusive.</dd>
 
-<dt><b>LogTimestamp=<i>"[%H:%M:%S] "</i></b>
+<dt><b>LogTimestamp=<i>"[%H:%M:%S] "</i></b></dt>
 <dd>Prefixes all log messages with a timestamp of the form (e.g.)
 <i>[16:34:49]</i>. This is a string which is passed as input to the
 <tt>strftime(3)</tt> function. If this is set to a blank string, then no
-timestamp is added to log messages.
+timestamp is added to log messages.</dd>
 
-<dt><b>NumTurns=<i>31</i></b>
+<dt><b>NumTurns=<i>31</i></b></dt>
 <dd>Defines the game to end after <i>31</i> "days" or turns. If this is set
-to 0 (zero) the game never ends for a player, unless they quit or are killed.
+to 0 (zero) the game never ends for a player, unless they quit or are
+killed.</dd>
 
-<dt><b>Sanitized=<i>FALSE</i></b>
+<dt><b>Sanitized=<i>FALSE</i></b></dt>
 <dd>If set to TRUE, this "sanitizes" the game by removing all drug references
 from the random events. To completely remove drug references, of course, you
-must also alter the drug names above.
+must also alter the drug names above.</dd>
 
-<dt><b>DrugSortMethod=<i>1</i></b>
+<dt><b>DrugSortMethod=<i>1</i></b></dt>
 <dd>Tells the dopewars client how to sort the names of available drugs at
 each location for display. The default, <i>1</i>, sorts them in alphabetical
 order by their names. The choices are as follows:-
 <ul>
-<li><b>1</b>. Sort in forward alphabetical order by name
-<li><b>2</b>. Sort in reverse alphabetical order by name
-<li><b>3</b>. Sort in order of current price, cheapest first
-<li><b>4</b>. Sort in order of current price, most expensive first
+<li><b>1</b>. Sort in forward alphabetical order by name</li>
+<li><b>2</b>. Sort in reverse alphabetical order by name</li>
+<li><b>3</b>. Sort in order of current price, cheapest first</li>
+<li><b>4</b>. Sort in order of current price, most expensive first</li>
 </ul>
+</dd>
 
-<dt><b>FightTimeout=<i>5</i></b>
+<dt><b>FightTimeout=<i>5</i></b></dt>
 <dd>If a player in a firefight with another player fails to fire back
 within <i>5</i> seconds, lets his/her enemy have another shot. If this
 is set to 0 (zero) timeouts are disabled, and players may take as long
-as they like to fire back.
+as they like to fire back.</dd>
 
-<dt><b>IdleTimeout=<i>14400</i></b>
+<dt><b>IdleTimeout=<i>14400</i></b></dt>
 <dd>If a connected player in a game does nothing to interact with the
-server for <i>14400</i> seconds, he/she will be automatically disconnected.
+server for <i>14400</i> seconds, he/she will be automatically disconnected.</dd>
 
-<dt><b>ConnectTimeout=<i>300</i></b>
+<dt><b>ConnectTimeout=<i>300</i></b></dt>
 <dd>If a player takes more than <i>300</i> seconds to complete the process
 of connecting or disconnecting to the server, the server will sever the
-connection.
+connection.</dd>
 
-<dt><a name="MaxClients"><b>MaxClients=<i>20</i></b></a>
+<dt><a name="MaxClients"><b>MaxClients=<i>20</i></b></a></dt>
 <dd>Prevents more than <i>20</i> clients from connecting to the server at
-any one time.
+any one time.</dd>
 
-<dt><a name="AITurnPause"><b>AITurnPause=<i>5</i></b></a>
+<dt><a name="AITurnPause"><b>AITurnPause=<i>5</i></b></a></dt>
 <dd>Makes computer-controlled client players run from this machine (not
 necessarily AI players that connect to a server run on this machine) wait
 <i>5</i> seconds between moving from location to location - i.e. a turn
-takes at least 5 seconds.
+takes at least 5 seconds.</dd>
 
-<dt><b>StartCash=<i>2000</i></b>
-<dd>Each player will start the game with <i>$2,000</i> in cash.
+<dt><b>StartCash=<i>2000</i></b></dt>
+<dd>Each player will start the game with <i>$2,000</i> in cash.</dd>
 
-<dt><b>StartDebt=<i>5000</i></b>
+<dt><b>StartDebt=<i>5000</i></b></dt>
 <dd>Each player will start the game with a debt to the loan shark of
-<i>$5,000</i>.
+<i>$5,000</i>.</dd>
 
-<dt><b>Names.Bitch=<i>"bitch"</i></b>
+<dt><b>Names.Bitch=<i>"bitch"</i></b></dt>
 <dd>Sets the word used to describe a single "bitch" in the game. Bitch, gun
 and drug names are automatically capitalised where necessary by the dopewars
-code.
+code.</dd>
 
-<dt><b>Names.Bitches=<i>"bitches"</i></b>
-<dd>Sets the word used to describe two or more "bitches".
+<dt><b>Names.Bitches=<i>"bitches"</i></b></dt>
+<dd>Sets the word used to describe two or more "bitches".</dd>
 
-<dt><b>Names.Gun=<i>"gun"</i></b>
+<dt><b>Names.Gun=<i>"gun"</i></b></dt>
 <dd>Sets the word used to describe a single "gun" (for example, it could be
-replaced by "knife").
+replaced by "knife").</dd>
 
-<dt><b>Names.Guns=<i>"guns"</i></b>
-<dd>Sets the word used to describe two or more "guns".
+<dt><b>Names.Guns=<i>"guns"</i></b></dt>
+<dd>Sets the word used to describe two or more "guns".</dd>
 
-<dt><b>Names.Drug=<i>"drug"</i></b>
+<dt><b>Names.Drug=<i>"drug"</i></b></dt>
 <dd>Sets the word used to describe a single "drug" (for example, it could be
-replaced by "candy bar" or something similarly innocuous).
+replaced by "candy bar" or something similarly innocuous).</dd>
 
-<dt><b>Names.Drugs=<i>"drugs"</i></b>
-<dd>Sets the word used to describe two or more "drugs".
+<dt><b>Names.Drugs=<i>"drugs"</i></b></dt>
+<dd>Sets the word used to describe two or more "drugs".</dd>
 
-<dt><b>Names.Month=<i>"12-"</i></b>
+<dt><b>Names.Month=<i>"12-"</i></b></dt>
 <dd>Sets the text which is displayed on the client's screen to the immediate
 left of the current turn (by default, a "turn" is a day, and so this part
-is the month, in displaying the date in MM-DD-YYYY format)
+is the month, in displaying the date in MM-DD-YYYY format)</dd>
 
-<dt><b>Names.Year=<i>"-1984"</i></b>
+<dt><b>Names.Year=<i>"-1984"</i></b></dt>
 <dd>Sets the text displayed to the immediate right of the current turn (by
-default, the year).
+default, the year).</dd>
 
-<dt><b>Prices.Spy=<i>20000</i></b>
+<dt><b>Prices.Spy=<i>20000</i></b></dt>
 <dd>Sets the price to pay a bitch to spy on another player to be
-<i>$20,000</i>.
+<i>$20,000</i>.</dd>
 
-<dt><b>Prices.Tipoff=<i>10000</i></b>
+<dt><b>Prices.Tipoff=<i>10000</i></b></dt>
 <dd>Sets the price to pay a bitch to tip off the cops to another player to be
-<i>$10,000</i>.
+<i>$10,000</i>.</dd>
 
-<dt><b>Bitch.MinPrice=<i>50000</i></b>
+<dt><b>Bitch.MinPrice=<i>50000</i></b></dt>
 <dd>Sets the minimum price for a bitch at the Rough Pub to be <i>$50,000</i>.
 Note that prices for bitches "on the street" (i.e. those that are offered
 by random events) are produced by dividing the normal bitch price
-distribution by 10.
+distribution by 10.</dd>
 
-<dt><b>Bitch.MaxPrice=<i>150000</i></b>
-<dd>Sets the maximum price for a bitch to <i>$150,000</i>.
+<dt><b>Bitch.MaxPrice=<i>150000</i></b></dt>
+<dd>Sets the maximum price for a bitch to <i>$150,000</i>.</dd>
 
 <dt><b>SubwaySaying= <i>{ "First saying", "Second saying",
-"Third saying" }</i></b>
+"Third saying" }</i></b></dt>
 <dd>Sets the list of things which the lady you sometimes meet on the subway 
 says to you; one of <i>"First saying"</i>, <i>"Second saying"</i> and
 <i>"Third saying"</i> will be displayed each time. Any previous sayings will
 be erased. Note that individual sayings can be overwritten by appending an
 array suffix to the variable name - for example, to replace
 <i>"Third saying"</i> with <i>"3rd saying"</i> the following command would
-suffice:-<br>
-<b>SubwaySaying[3]="3rd saying"</b>
+suffice:-<br />
+<b>SubwaySaying[3]="3rd saying"</b></dd>
 
-<dt><b>NumSubwaySaying=<i>5</i></b>
+<dt><b>NumSubwaySaying=<i>5</i></b></dt>
 <dd>Sets there to be <i>5</i> distinct things that the lady on the subway
 says to you. If this number is greater than the old number of sayings, the
 newly added sayings will be blank; if it is smaller, the sayings that are now
-beyond the end of the list will be deleted.
+beyond the end of the list will be deleted.</dd>
 
-<dt><b>Playing= <i>{ "Song 1", "Song 2", "Song 3" }</i></b>
+<dt><b>Playing= <i>{ "Song 1", "Song 2", "Song 3" }</i></b></dt>
 <dd>Sets the list of things which you can sometimes hear playing while
 jetting; one of <i>"Song 1"</i>, <i>"Song 2"</i> or <i>"Song 3"</i> will be
-displayed. See the help for <b>SubwaySaying</b> for more details.
+displayed. See the help for <b>SubwaySaying</b> for more details.</dd>
 
-<dt><b>NumPlaying=<i>4</i></b>
+<dt><b>NumPlaying=<i>4</i></b></dt>
 <dd>Sets there to be <i>4</i> distinct things which you can sometimes hear
-playing.
+playing.</dd>
 
 <dt><b>StoppedTo= <i>{ "have a beer", "smoke a joint", "smoke a cigar",
-"smoke a Djarum", "smoke a cigarette" }</i></b>
+"smoke a Djarum", "smoke a cigarette" }</i></b></dt>
 <dd>Sets the list of things which you sometimes stop to do while jetting;
-see <b>SubwaySaying</b> for more details.
+see <b>SubwaySaying</b> for more details.</dd>
 
-<dt><b>NumStoppedTo=<i>5</i></b>
-<dd>Sets there to be <i>5</i> distinct things which you can stop to do.
+<dt><b>NumStoppedTo=<i>5</i></b></dt>
+<dd>Sets there to be <i>5</i> distinct things which you can stop to do.</dd>
 
-<dt><b>DrugValue=<i>TRUE</i></b>
+<dt><b>DrugValue=<i>TRUE</i></b></dt>
 <dd>If TRUE, then the server will keep track of the price you paid for
-any drugs, and clients will display this information if available.
+any drugs, and clients will display this information if available.</dd>
 
 </dl>
 
-<hr>
+<hr />
 <ul>
-<li><a href="index.html">Main index</a>
+<li><a href="index.html">Main index</a></li>
 </ul>
 <p>Last update: <b>16-10-2001</b></p>
 </body>

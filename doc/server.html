@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>Setting up and running a dopewars server</title>
 </head>
@@ -28,9 +31,9 @@ home city rather than New York. Any players that then connect to your
 customised server will play this customised game.</p>
 
 <ul>
-<li><a href="#interactive">Running an interactive server</a>
-<li><a href="#noninteractive">Non-interactive servers</a>
-<li><a href="#metaserver">Private and public: the dopewars metaserver</a>
+<li><a href="#interactive">Running an interactive server</a></li>
+<li><a href="#noninteractive">Non-interactive servers</a></li>
+<li><a href="#metaserver">Private and public: the dopewars metaserver</a></li>
 </ul>
 
 <h2><a name="interactive">Running an interactive server</a></h2>
@@ -51,8 +54,8 @@ and so will want a non-interactive server. This will sit in the background
 and quietly deal with dopewars games without disturbing you, the user. To
 "persuade" the server to be non-interactive, you must redirect standard
 input and output, and use your shell's job control to put it in the background,
-with a command similar to the following:-<br>
-<b>dopewars -s < /dev/null >> /var/log/dopewars.log &</b><br>
+with a command similar to the following:-<br />
+<b>dopewars -s &lt; /dev/null &gt;&gt; /var/log/dopewars.log &amp;</b><br />
 (this writes server output to the logfile <i>/var/log/dopewars.log</i>.
 Alternatively you can redirect this output to <i>/dev/null</i>.)</p>
 
@@ -84,9 +87,9 @@ metaserver, or it may register your server with an incorrect name. For
 information on getting round these difficulties, see the
 <a href="metaserver.html">metaserver</a> page.</p>
 
-<hr>
+<hr />
 <ul>
-<li><a href="index.html">Main index</a>
+<li><a href="index.html">Main index</a></li>
 </ul>
 <p>Last update: <b>17-06-2001</b></p>
 </body>
