@@ -1,3 +1,7 @@
+- Scrollbar in curses client "Messages" box
+- Better use of screen space in curses client for large xterms etc.
+- Preserve chat messages at end of game (so they aren't lost when looking at
+  the high score list) ?
 - Price history graph and/or more sensible price fluctuations
 - Network installer for Win32 version, so that we don't have to distribute
   megabytes of DLLs, sounds and translations if the user doesn't want them
