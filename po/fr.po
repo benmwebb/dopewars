@@ -1660,11 +1660,11 @@ msgid "/_Game"
 msgstr "/_Jeu"
 
 #: src/gtk_client.c:147
-msgid "/Game/_New"
-msgstr "/Jeu/_Nouveau"
+msgid "/Game/_New..."
+msgstr "/Jeu/_Nouveau..."
 
 #: src/gtk_client.c:148
-msgid "/Game/_Quit"
+msgid "/Game/_Quit..."
 msgstr "/Jeu/_Quitter"
 
 #: src/gtk_client.c:149
@@ -1672,56 +1672,56 @@ msgid "/_Talk"
 msgstr "/_Parler"
 
 #: src/gtk_client.c:150
-msgid "/Talk/To _All"
-msgstr "/Parler/A _Tous"
+msgid "/Talk/To _All..."
+msgstr "/Parler/A _Tous..."
 
 #: src/gtk_client.c:151
-msgid "/Talk/To _Player"
-msgstr "/Parler/A _joueur"
+msgid "/Talk/To _Player..."
+msgstr "/Parler/A _joueur..."
 
 #: src/gtk_client.c:152
 msgid "/_List"
 msgstr "/_Liste"
 
 #: src/gtk_client.c:153
-msgid "/List/_Players"
-msgstr "/Liste/_Joueurs"
+msgid "/List/_Players..."
+msgstr "/Liste/_Joueurs..."
 
 #: src/gtk_client.c:154
-msgid "/List/_Scores"
-msgstr "/Liste/_Scores"
+msgid "/List/_Scores..."
+msgstr "/Liste/_Scores..."
 
 #: src/gtk_client.c:155
-msgid "/List/_Inventory"
-msgstr "/Liste/_Inventaire"
+msgid "/List/_Inventory..."
+msgstr "/Liste/_Inventaire..."
 
 #: src/gtk_client.c:156
 msgid "/_Errands"
 msgstr "/_Taches"
 
 #: src/gtk_client.c:157
-msgid "/Errands/_Spy"
-msgstr "/Taches/_Espionner"
+msgid "/Errands/_Spy..."
+msgstr "/Taches/_Espionner..."
 
 #: src/gtk_client.c:158
-msgid "/Errands/_Tipoff"
-msgstr "/Taches/_Balancer"
+msgid "/Errands/_Tipoff..."
+msgstr "/Taches/_Balancer..."
 
 #: src/gtk_client.c:159
-msgid "/Errands/Sack _Bitch"
-msgstr "/Taches/Balancer _Salope"
+msgid "/Errands/Sack _Bitch..."
+msgstr "/Taches/Balancer _Salope..."
 
 #: src/gtk_client.c:160
-msgid "/Errands/_Get spy reports"
-msgstr "/Taches/_Rapports des espions"
+msgid "/Errands/_Get spy reports..."
+msgstr "/Taches/_Rapports des espions..."
 
 #: src/gtk_client.c:161
 msgid "/_Help"
 msgstr "/_Aide"
 
 #: src/gtk_client.c:162
-msgid "/Help/_About"
-msgstr "/Aide/_A propos"
+msgid "/Help/_About..."
+msgstr "/Aide/_A propos..."
 
 #. Titles of the message boxes for warnings and errors
 #: src/gtk_client.c:174

@@ -74,9 +74,9 @@ struct ClientDataStruct {
 static struct ClientDataStruct ClientData;
 static gboolean InGame=FALSE;
 
-#ifdef NETWORKING
+/*#ifdef NETWORKING
 static gboolean MetaServerRead=FALSE;
-#endif
+#endif*/
 
 static GtkWidget *FightDialog=NULL,*SpyReportsDialog;
 static gboolean IsShowingPlayerList=FALSE,IsShowingTalkList=FALSE,
@@ -144,22 +144,22 @@ static void DisplaySpyReports(Player *Play);
 static GtkItemFactoryEntry menu_items[] = {
 /* The names of the the menus and their items in the GTK+ client */
    { N_("/_Game"),NULL,NULL,0,"<Branch>" },
-   { N_("/Game/_New"),"<control>N",NewGame,0,NULL },
-   { N_("/Game/_Quit"),"<control>Q",QuitGame,0,NULL },
+   { N_("/Game/_New..."),"<control>N",NewGame,0,NULL },
+   { N_("/Game/_Quit..."),"<control>Q",QuitGame,0,NULL },
    { N_("/_Talk"),NULL,NULL,0,"<Branch>" },
-   { N_("/Talk/To _All"),NULL,TalkToAll,0,NULL },
-   { N_("/Talk/To _Player"),NULL,TalkToPlayers,0,NULL },
+   { N_("/Talk/To _All..."),NULL,TalkToAll,0,NULL },
+   { N_("/Talk/To _Player..."),NULL,TalkToPlayers,0,NULL },
    { N_("/_List"),NULL,NULL,0,"<Branch>" },
-   { N_("/List/_Players"),NULL,ListPlayers,0,NULL },
-   { N_("/List/_Scores"),NULL,ListScores,0,NULL },
-   { N_("/List/_Inventory"),NULL,ListInventory,0,NULL },
+   { N_("/List/_Players..."),NULL,ListPlayers,0,NULL },
+   { N_("/List/_Scores..."),NULL,ListScores,0,NULL },
+   { N_("/List/_Inventory..."),NULL,ListInventory,0,NULL },
    { N_("/_Errands"),NULL,NULL,0,"<Branch>" },
-   { N_("/Errands/_Spy"),NULL,SpyOnPlayer,0,NULL },
-   { N_("/Errands/_Tipoff"),NULL,TipOff,0,NULL },
-   { N_("/Errands/Sack _Bitch"),NULL,SackBitch,0,NULL },
-   { N_("/Errands/_Get spy reports"),NULL,GetSpyReports,0,NULL },
+   { N_("/Errands/_Spy..."),NULL,SpyOnPlayer,0,NULL },
+   { N_("/Errands/_Tipoff..."),NULL,TipOff,0,NULL },
+   { N_("/Errands/Sack _Bitch..."),NULL,SackBitch,0,NULL },
+   { N_("/Errands/_Get spy reports..."),NULL,GetSpyReports,0,NULL },
    { N_("/_Help"),NULL,NULL,0,"<LastBranch>" },
-   { N_("/Help/_About"),"F1",display_intro,0,NULL }
+   { N_("/Help/_About..."),"F1",display_intro,0,NULL }
 };
 
 static gchar *MenuTranslate(const gchar *path,gpointer func_data) {
@@ -282,6 +282,7 @@ void GetClientMessage(gpointer data,gint socket,
          g_warning(_("Connection to server lost - switching to "
                    "single player mode"));
          SwitchToSinglePlayer(ClientData.Play);
+         UpdateMenus();
       }
    }
 }
@@ -327,12 +328,14 @@ void HandleClientMessage(char *pt,Player *Play) {
 /* The server admin has asked us to leave - so warn the user, and do so */
          g_warning(_("You have been pushed from the server."));
          SwitchToSinglePlayer(Play);
+         UpdateMenus();
          break;
       case C_QUIT:
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
 /* The server has sent us notice that it is shutting down */
          g_warning(_("The server has terminated."));
          SwitchToSinglePlayer(Play);
+         UpdateMenus();
          break;
       case C_NEWNAME:
          NewNameDialog(); break;
@@ -381,7 +384,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          break;
       case C_ENDLIST:
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Spy");
+                                              "<main>/Errands/Spy...");
 
 /* Text to update the Errands/Spy menu item with the price for spying */
          text=dpg_strdup_printf(_("_Spy\t(%P)"),Prices.Spy);
@@ -391,7 +394,7 @@ void HandleClientMessage(char *pt,Player *Play) {
 /* Text to update the Errands/Tipoff menu item with the price for a tipoff */
          text=dpg_strdup_printf(_("_Tipoff\t(%P)"),Prices.Tipoff);
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Tipoff");
+                                              "<main>/Errands/Tipoff...");
          SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
          if (FirstClient->next) ListPlayers(NULL,NULL);
@@ -1597,17 +1600,17 @@ void UpdateMenus() {
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                             "<main>/List"),InGame);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                            "<main>/List/Players"),InGame && Network);
+                            "<main>/List/Players..."),InGame && Network);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                             "<main>/Errands"),InGame);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                            "<main>/Errands/Spy"),InGame && MultiPlayer);
+                            "<main>/Errands/Spy..."),InGame && MultiPlayer);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                            "<main>/Errands/Tipoff"),InGame && MultiPlayer);
+                            "<main>/Errands/Tipoff..."),InGame && MultiPlayer);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                            "<main>/Errands/Sack Bitch"),Bitches>0);
+                            "<main>/Errands/Sack Bitch..."),Bitches>0);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                            "<main>/Errands/Get spy reports"),
+                            "<main>/Errands/Get spy reports..."),
                             InGame && MultiPlayer);
 }
 
@@ -1881,7 +1884,8 @@ _("\nFor information on the command line options, type dopewars -h at your\n"
 
 struct StartGameStruct {
    GtkWidget *dialog,*name,*hostname,*port,*antique,*status,*metaserv;
-   gint ConnectTag;
+   gint ConnectTag,MetaTag;
+   HttpConnection *MetaConn;
 };
 
 #ifdef NETWORKING
@@ -1976,11 +1980,47 @@ static void FillMetaServerList(struct StartGameStruct *widgets) {
    gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
+static void HandleMetaSock(gpointer data,gint socket,
+                           GdkInputCondition condition) {
+   struct StartGameStruct *widgets;
+   gboolean DoneOK;
+
+   widgets=(struct StartGameStruct *)data;
+   if (!widgets->MetaConn) return;
+
+   if (NetBufHandleNetwork(&widgets->MetaConn->NetBuf,condition&GDK_INPUT_READ,
+                           condition&GDK_INPUT_WRITE,&DoneOK)) {
+      while (HandleWaitingMetaServerData(widgets->MetaConn)) {}
+   }
+   if (!DoneOK) {
+      g_print("Metaserver communicated closed\n");
+      gdk_input_remove(widgets->MetaTag);
+      CloseHttpConnection(widgets->MetaConn);
+      widgets->MetaTag=0; widgets->MetaConn=NULL;
+      FillMetaServerList(widgets);
+   }
+}
+
 static void UpdateMetaServerList(GtkWidget *widget,
                                  struct StartGameStruct *widgets) {
-   char *MetaError;
-   int HttpSock;
-   MetaError=OpenMetaServerConnection(&HttpSock);
+/* char *MetaError;
+   int HttpSock;*/
+
+   if (widgets->MetaTag) {
+      gdk_input_remove(widgets->MetaTag);
+      CloseHttpConnection(widgets->MetaConn);
+      widgets->MetaTag=0; widgets->MetaConn=NULL;
+   }
+
+   widgets->MetaConn = OpenMetaHttpConnection();
+
+   if (widgets->MetaConn) {
+      widgets->MetaTag = gdk_input_add(widgets->MetaConn->NetBuf.fd,
+                                       GDK_INPUT_READ|GDK_INPUT_WRITE,
+                                       HandleMetaSock,(gpointer)widgets);
+   }
+
+/* MetaError=OpenMetaServerConnection(&HttpSock);
 
    if (MetaError) {
       return;
@@ -1988,7 +2028,7 @@ static void UpdateMetaServerList(GtkWidget *widget,
    ReadMetaServerData(HttpSock);
    CloseMetaServerConnection(HttpSock);
    MetaServerRead=TRUE;
-   FillMetaServerList(widgets);
+   FillMetaServerList(widgets);*/
 }
 
 static void MetaServerConnect(GtkWidget *widget,
@@ -2028,10 +2068,15 @@ static void StartSinglePlayer(GtkWidget *widget,
 static void CloseNewGameDia(GtkWidget *widget,
                             struct StartGameStruct *widgets) {
 #ifdef NETWORKING
-   if (widgets->ConnectTag!=0) {
+   if (widgets->ConnectTag) {
       gdk_input_remove(widgets->ConnectTag);
       CloseSocket(ClientSock);
       widgets->ConnectTag=0;
+   }
+   if (widgets->MetaTag) {
+      gdk_input_remove(widgets->MetaTag);
+      CloseHttpConnection(widgets->MetaConn);
+      widgets->MetaTag=0; widgets->MetaConn=NULL;
    }
 #endif
 }
@@ -2056,6 +2101,8 @@ void NewGameDialog() {
 #endif /* NETWORKING */
 
    widgets.ConnectTag=0;
+   widgets.MetaTag=0; widgets.MetaConn=NULL;
+
    widgets.dialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
                       GTK_SIGNAL_FUNC(CloseNewGameDia),

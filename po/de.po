@@ -1654,68 +1654,68 @@ msgid "/_Game"
 msgstr "/_Spiel"
 
 #: src/gtk_client.c:147
-msgid "/Game/_New"
-msgstr "/Spiel/_Neu"
+msgid "/Game/_New..."
+msgstr "/Spiel/_Neu..."
 
 #: src/gtk_client.c:148
-msgid "/Game/_Quit"
-msgstr "/Spiel/_Ende"
+msgid "/Game/_Quit..."
+msgstr "/Spiel/_Ende..."
 
 #: src/gtk_client.c:149
 msgid "/_Talk"
 msgstr "/_Mitteilung"
 
 #: src/gtk_client.c:150
-msgid "/Talk/To _All"
-msgstr "/Mitteilung/An _Alle"
+msgid "/Talk/To _All..."
+msgstr "/Mitteilung/An _Alle..."
 
 #: src/gtk_client.c:151
-msgid "/Talk/To _Player"
-msgstr "/Mitteilung/An _Spieler"
+msgid "/Talk/To _Player..."
+msgstr "/Mitteilung/An _Spieler..."
 
 #: src/gtk_client.c:152
 msgid "/_List"
 msgstr "/_Anzeigen"
 
 #: src/gtk_client.c:153
-msgid "/List/_Players"
-msgstr "/Anzeigen/der _Spieler"
+msgid "/List/_Players..."
+msgstr "/Anzeigen/der _Spieler..."
 
 #: src/gtk_client.c:154
-msgid "/List/_Scores"
-msgstr "/Anzeigen/der _Punkte"
+msgid "/List/_Scores..."
+msgstr "/Anzeigen/der _Punkte..."
 
 #: src/gtk_client.c:155
-msgid "/List/_Inventory"
-msgstr "/Anzeigen/des _Inventars"
+msgid "/List/_Inventory..."
+msgstr "/Anzeigen/des _Inventars..."
 
 #: src/gtk_client.c:156
 msgid "/_Errands"
 msgstr "/_Aktionen"
 
 #: src/gtk_client.c:157
-msgid "/Errands/_Spy"
-msgstr "/Aktionen/_Spionieren"
+msgid "/Errands/_Spy..."
+msgstr "/Aktionen/_Spionieren..."
 
 #: src/gtk_client.c:158
-msgid "/Errands/_Tipoff"
-msgstr "/Aktionen/_Verpfeifen"
+msgid "/Errands/_Tipoff..."
+msgstr "/Aktionen/_Verpfeifen..."
 
 #: src/gtk_client.c:159
-msgid "/Errands/Sack _Bitch"
-msgstr "/Aktionen/Töte _Hure"
+msgid "/Errands/Sack _Bitch..."
+msgstr "/Aktionen/Töte _Hure..."
 
 #: src/gtk_client.c:160
-msgid "/Errands/_Get spy reports"
-msgstr "/Aktionen/_Lese Spionagereport"
+msgid "/Errands/_Get spy reports..."
+msgstr "/Aktionen/_Lese Spionagereport..."
 
 #: src/gtk_client.c:161
 msgid "/_Help"
 msgstr "/_Hilfe"
 
 #: src/gtk_client.c:162
-msgid "/Help/_About"
-msgstr "/Hilfe/_Ueber"
+msgid "/Help/_About..."
+msgstr "/Hilfe/_Ueber..."
 
 #. Titles of the message boxes for warnings and errors
 #: src/gtk_client.c:174
