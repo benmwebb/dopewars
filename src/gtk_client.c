@@ -97,7 +97,7 @@ static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
 static void HandleClientMessage(char *buf,Player *Play);
 static void PrepareHighScoreDialog();
 static void AddScoreToDialog(char *Data);
-static void CompleteHighScoreDialog();
+static void CompleteHighScoreDialog(gboolean AtEnd);
 static void PrintMessage(char *Data);
 static void DisplayFightMessage(char *Data);
 static GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status);
@@ -300,8 +300,7 @@ void HandleClientMessage(char *pt,Player *Play) {
       case C_HISCORE:
          AddScoreToDialog(Data); break;
       case C_ENDHISCORE:
-         CompleteHighScoreDialog();
-         if (strcmp(Data,"end")==0) EndGame();
+         CompleteHighScoreDialog((strcmp(Data,"end")==0));
          break;
       case C_PRINTMESSAGE:
          PrintMessage(Data);
@@ -371,6 +370,7 @@ void HandleClientMessage(char *pt,Player *Play) {
                                               "<main>/Errands/Tipoff");
          gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
          g_free(text);
+         if (FirstClient->next) ListPlayers(NULL,NULL);
          break;
       case C_UPDATE:
          if (From==&Noone) {
@@ -431,13 +431,24 @@ void AddScoreToDialog(char *Data) {
    gtk_widget_show(label);
 }
 
-void CompleteHighScoreDialog() {
+static void EndHighScore(GtkWidget *widget) {
+   gtk_widget_destroy(widget);
+   EndGame();
+}
+
+void CompleteHighScoreDialog(gboolean AtEnd) {
    GtkWidget *OKButton,*dialog;
    dialog=HiScoreDialog.dialog;
    OKButton=gtk_button_new_with_label(_("OK"));
-   gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
-                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                             (gpointer)dialog);
+   if (AtEnd) {
+      gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
+                                GTK_SIGNAL_FUNC(EndHighScore),
+                                (gpointer)dialog);
+   } else {
+      gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
+                                GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                                (gpointer)dialog);
+   }
    gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox),OKButton,TRUE,TRUE,0);
  
    GTK_WIDGET_SET_FLAGS(OKButton,GTK_CAN_DEFAULT);
