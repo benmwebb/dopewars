@@ -54,6 +54,17 @@ typedef enum {
    GDK_INPUT_EXCEPTION = 1 << 2
 } GdkInputCondition;
 
+#define GDK_KP_0 0xFFB0
+#define GDK_KP_1 0xFFB1
+#define GDK_KP_2 0xFFB2
+#define GDK_KP_3 0xFFB3
+#define GDK_KP_4 0xFFB4
+#define GDK_KP_5 0xFFB5
+#define GDK_KP_6 0xFFB6
+#define GDK_KP_7 0xFFB7
+#define GDK_KP_8 0xFFB8
+#define GDK_KP_9 0xFFB9
+
 typedef gint (*GtkFunction)(gpointer data);
 typedef void (*GdkInputFunction)(gpointer data,gint source,
                                  GdkInputCondition condition);

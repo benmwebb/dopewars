@@ -1082,6 +1082,11 @@ void Jet() {
 /* Display of locations in 'Jet' window (%tde="The Bronx" etc. by default) */
          name=dpg_strdup_printf(_("_%c. %tde"),AccelChar,Location[i].Name);
          SetAccelerator(button,name,button,"clicked",accel_group);
+/* Add keypad shortcuts as well */
+         if (i<9) {
+            gtk_widget_add_accelerator(button,"clicked",accel_group,GDK_KP_1+i,
+                              0,GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+          }
          g_free(name);
       }
       gtk_widget_set_sensitive(button,i != ClientData.Play->IsAt);
