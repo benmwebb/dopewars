@@ -945,7 +945,8 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
                "you turn on your computer, see the \"Services\" application\n"
                "from Control Panel. You can also run an interactive server "
                "by using\nthe \"dopewars server\" shortcut from the desktop "
-               "and/or Start Menu.", "Service Installed", MB_OK);
+               "and/or Start Menu.", "Service Installed",
+               MB_ICONINFORMATION | MB_OK);
   }
 
   CoInitialize(NULL);
