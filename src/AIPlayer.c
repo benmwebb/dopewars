@@ -397,7 +397,7 @@ void AIDealDrugs(Player *AIPlay) {
    MinProfit--;
    for (i=0;i<NumDrug;i++) if (Profit[i]<0) Profit[i]=MinProfit-Profit[i];
    LastHighest=-1;
-   while (1) {
+   do {
       MaxProfit=MinProfit;
       Highest=-1;
       for (i=0;i<NumDrug;i++) {
@@ -408,34 +408,35 @@ void AIDealDrugs(Player *AIPlay) {
          }
       }
       LastHighest=Highest;
-      if (Highest==-1) break;
-      Num=AIPlay->Drugs[Highest].Carried;
-      if (MaxProfit>0 && Num>0) {
-         dpg_print(_("Selling %d %tde at %P\n"),Num,Drug[Highest].Name,
-                   AIPlay->Drugs[Highest].Price);
-         AIPlay->CoatSize+=Num;
-         AIPlay->Cash+=Num*AIPlay->Drugs[Highest].Price;
-         text=g_strdup_printf("drug^%d^%d",Highest,-Num);
-         SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
-         g_free(text);
+      if (Highest>=0) {
+        Num=AIPlay->Drugs[Highest].Carried;
+        if (MaxProfit>0 && Num>0) {
+           dpg_print(_("Selling %d %tde at %P\n"),Num,Drug[Highest].Name,
+                     AIPlay->Drugs[Highest].Price);
+           AIPlay->CoatSize+=Num;
+           AIPlay->Cash+=Num*AIPlay->Drugs[Highest].Price;
+           text=g_strdup_printf("drug^%d^%d",Highest,-Num);
+           SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
+           g_free(text);
+        }
+        if (AIPlay->Drugs[Highest].Price != 0 &&
+            AIPlay->CoatSize>SPACERESERVE) {
+           Num=AIPlay->Cash/AIPlay->Drugs[Highest].Price;
+           if (Num>AIPlay->CoatSize-SPACERESERVE) {
+              Num=AIPlay->CoatSize-SPACERESERVE;
+           }
+           if (MaxProfit<0 && Num>0) {
+              dpg_print(_("Buying %d %tde at %P\n"),Num,Drug[Highest].Name,
+                        AIPlay->Drugs[Highest].Price);
+              text=g_strdup_printf("drug^%d^%d",Highest,Num);
+              AIPlay->CoatSize-=Num;
+              AIPlay->Cash-=Num*AIPlay->Drugs[Highest].Price;
+              SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
+              g_free(text);
+           }
+        }
       }
-      if (AIPlay->Drugs[Highest].Price != 0 &&
-          AIPlay->CoatSize>SPACERESERVE) {
-         Num=AIPlay->Cash/AIPlay->Drugs[Highest].Price;
-         if (Num>AIPlay->CoatSize-SPACERESERVE) {
-            Num=AIPlay->CoatSize-SPACERESERVE;
-         }
-         if (MaxProfit<0 && Num>0) {
-            dpg_print(_("Buying %d %tde at %P\n"),Num,Drug[Highest].Name,
-                      AIPlay->Drugs[Highest].Price);
-            text=g_strdup_printf("drug^%d^%d",Highest,Num);
-            AIPlay->CoatSize-=Num;
-            AIPlay->Cash-=Num*AIPlay->Drugs[Highest].Price;
-            SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
-            g_free(text);
-         }
-      }
-   }
+   } while (Highest>=0);
    g_free(Profit);
 }
 

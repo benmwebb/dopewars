@@ -788,33 +788,35 @@ Player *GetPlayerByName(char *Name,GSList *First) {
 
 price_t strtoprice(char *buf) {
 /* Forms a price based on the string representation in "buf"  */
-   guint i,buflen,FracNum;
-   char digit,suffix;
-   gboolean minus,InFrac;
-   price_t val=0;
-   minus=FALSE;
-   InFrac=FALSE;
-   if (!buf || !buf[0]) return 0;
-   buflen=strlen(buf);
-   suffix=buf[buflen-1];
-   suffix=toupper(suffix);
-   if (suffix=='M') FracNum=6;
-   else if (suffix=='K') FracNum=3;
-   else FracNum=0;
-   for (i=0;i<buflen;i++) {
-      digit=buf[i];
-      if (digit=='.' || digit==',') {
-         InFrac=TRUE;
-      } else if (digit>='0' && digit<='9') {
-         if (InFrac && FracNum<=0) break;
-         else if (InFrac) FracNum--;
-         val*=10;
-         val+=(digit-'0');
-      } else if (digit=='-') minus=TRUE;
-   }
-   for (i=0;i<FracNum;i++) val*=10;
-   if (minus) val=-val;
-   return val;
+  guint i,buflen,FracNum;
+  gchar digit,suffix;
+  gboolean minus,InFrac;
+  price_t val=0;
+
+  minus=FALSE;
+  if (!buf || !buf[0]) return 0;
+
+  buflen=strlen(buf);
+  suffix=buf[buflen-1];
+  suffix=toupper(suffix);
+  if (suffix=='M') FracNum=6;
+  else if (suffix=='K') FracNum=3;
+  else FracNum=0;
+
+  for (i=0,InFrac=FALSE;i<buflen && (!InFrac || FracNum>0);i++) {
+    digit=buf[i];
+    if (digit=='.' || digit==',') {
+      InFrac=TRUE;
+    } else if (digit>='0' && digit<='9') {
+      if (InFrac) FracNum--;
+      val*=10;
+      val+=(digit-'0');
+    } else if (digit=='-') minus=TRUE;
+  }
+
+  for (i=0;i<FracNum;i++) val*=10;
+  if (minus) val=-val;
+  return val;
 }
 
 gchar *pricetostr(price_t price) {
@@ -899,19 +901,20 @@ int read_string(FILE *fp,char **buf) {
 /* Reads a NULL-terminated string into the buffer "buf" from file "fp".  */
 /* buf is sized to hold the string; this is a dynamic string and must be */
 /* freed by the calling routine. Returns 0 on success, EOF on failure.   */
-   int c;
-   GString *text;
-   text=g_string_new("");
-   c=0;
-   while (1) {
-      c=fgetc(fp);
-      if (c==EOF || c==0) break;
-      else { g_string_append_c(text,(char)c); }
-   }
-   *buf=text->str;
-   /* Free the GString, but not the actual data text->str */
-   g_string_free(text,FALSE);
-   if (c==EOF) return EOF; else return 0;
+  int c;
+  GString *text;
+
+  text=g_string_new("");
+  do {
+   c=fgetc(fp);
+   if (c!=EOF && c!=0) g_string_append_c(text,(char)c);
+  } while (c!=EOF && c!=0);
+
+  *buf=text->str;
+
+  /* Free the GString, but not the actual data text->str */
+  g_string_free(text,FALSE);
+  if (c==EOF) return EOF; else return 0;
 }
 
 void ClearInventory(Inventory *Guns,Inventory *Drugs) {
@@ -1119,12 +1122,11 @@ void RemoveListPlayer(DopeList *List,Player *Play) {
 void RemoveAllEntries(DopeList *List,Player *Play) {
 /* Similar to RemoveListPlayer, except that if the list contains "Play"     */
 /* more than once, all the matching entries are removed, not just the first */
-   int i=0;
-   while (1) {
-      i=GetListEntry(List,Play);
-      if (i==-1) break;
-      RemoveListEntry(List,i);
-   }
+  int i;
+  do {
+    i=GetListEntry(List,Play);
+    if (i>=0) RemoveListEntry(List,i);
+  } while (i>=0);
 }
 
 void dopelog(int loglevel,const gchar *format,...) {
@@ -1678,22 +1680,17 @@ gboolean SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                                   NULL,NULL,FALSE); return FALSE;
          }
          NewNum=0;
-         while(1) {
+         do {
             token=g_scanner_get_next_token(scanner);
-            tmpstr=NULL;
             if (token==G_TOKEN_STRING) {
-               tmpstr=g_strdup(scanner->value.v_string);
-            } else if (token==G_TOKEN_RIGHT_CURLY) {
-               break;
-            } else if (token==G_TOKEN_COMMA) {
-            } else {
+              tmpstr=g_strdup(scanner->value.v_string);
+              NewNum++; StartList=g_slist_append(StartList,tmpstr);
+            } else if (token!=G_TOKEN_RIGHT_CURLY &&
+                       token!=G_TOKEN_COMMA) {
                g_scanner_unexp_token(scanner,G_TOKEN_STRING,NULL,NULL,
                                      NULL,NULL,FALSE); return FALSE;
             }
-            if (tmpstr) {
-               NewNum++; StartList=g_slist_append(StartList,tmpstr);
-            }
-         }
+         } while (token!=G_TOKEN_RIGHT_CURLY);
          (*Globals[GlobalIndex].ResizeFunc)(NewNum);
          NewNum=0;
          for (list=StartList;list;NewNum++,list=g_slist_next(list)) {
@@ -1894,13 +1891,12 @@ void HandleCmdLine(int argc,char *argv[]) {
    };
 #endif
 
-   while (1) {
+   do {
 #ifdef HAVE_GETOPT_LONG
       c=getopt_long(argc,argv,options,long_options,NULL);
 #else
       c=getopt(argc,argv,options);
 #endif
-      if (c==-1) break;
       switch(c) {
          case 'n': WantNetwork=FALSE; break;
          case 'b': WantColour=FALSE; break;
@@ -1921,7 +1917,7 @@ void HandleCmdLine(int argc,char *argv[]) {
          case 't': WantedClient=CLIENT_CURSES; break;
          case 'C': AssignName(&ConvertFile,optarg); WantConvert=TRUE; break;
       }
-   }
+   } while (c!=-1);
 }
 
 int GeneralStartup(int argc,char *argv[]) {

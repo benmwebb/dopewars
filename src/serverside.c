@@ -68,13 +68,18 @@ char *Discover[NUMDISCOVER] = {
    N_("escaped"), N_("defected"), N_("was shot")
 };
 
-/* If we haven't talked to the metaserver for 3 hours, then remind it that */
-/* we still exist, so we don't get wiped from the list of active servers   */
+/* The two keys that are valid answers to the Attack/Evade question. If
+   you wish to translate them, do so in the same order as they given here.
+   You will also need to translate the answers given by the clients. */
+static char *attackquestiontr = N_("AE");
+
+/* If we haven't talked to the metaserver for 3 hours, then remind it that
+   we still exist, so we don't get wiped from the list of active servers */
 #define METAUPDATETIME  (10800)
 
-/* Don't report players logging in/out to the metaserver more frequently */
-/* than once every minute (so as not to overload the metaserver, or slow */
-/* down our own server).                                                 */
+/* Don't report players logging in/out to the metaserver more frequently
+   than once every minute (so as not to overload the metaserver, or slow
+   down our own server). */
 #define METAMINTIME (60)
 
 int TerminateRequest,ReregisterRequest;

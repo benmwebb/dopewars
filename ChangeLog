@@ -1,4 +1,10 @@
-1.5.1   16-10-2001
+cvs
+    - Keyboard shortcuts for menu items in Windows client
+    - Default buttons for Windows client, bank bug (hopefully) fixed
+    - RPM build/make install can now be run as non-superuser
+    - Code cleanups
+
+1.5.2   16-10-2001
     - Slightly easier-to-use "run from fight" Jet dialog (avoids the crazy
       "windows pop up faster than you can close them" syndrome)
     - Support for HTTP proxies and authentication

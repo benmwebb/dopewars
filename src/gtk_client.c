@@ -25,6 +25,7 @@
 #ifdef GUI_CLIENT
 
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 
 #include "dopeos.h"
@@ -1147,24 +1148,26 @@ void UpdateInventory(struct InventoryWidgets *Inven,
 }
 
 static void JetCallback(GtkWidget *widget,gpointer data) {
-   int NewLocation;
-   gchar *text;
-   GtkWidget *JetDialog;
+  int NewLocation;
+  gchar *text;
+  GtkWidget *JetDialog;
 
-   JetDialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget),"dialog"));
-   NewLocation = GPOINTER_TO_INT(data);
-   gtk_widget_destroy(JetDialog);
-   text=g_strdup_printf("%d",NewLocation);
-   SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,text);
-   g_free(text);
+  JetDialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget),"dialog"));
+  NewLocation = GPOINTER_TO_INT(data);
+  gtk_widget_destroy(JetDialog);
+  text=g_strdup_printf("%d",NewLocation);
+  SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,text);
+  g_free(text);
 }
 
 void JetButtonPressed(GtkWidget *widget,gpointer data) {
-   if (ClientData.Play->Flags & FIGHTING) {
-      DisplayFightMessage(NULL);
-   } else {
-      Jet(NULL);
-   }
+  if (InGame) {
+    if (ClientData.Play->Flags & FIGHTING) {
+       DisplayFightMessage(NULL);
+    } else {
+       Jet(NULL);
+    }
+  }
 }
 
 void Jet(GtkWidget *parent) {
@@ -1532,69 +1535,77 @@ static void QuestionCallback(GtkWidget *widget,gpointer data) {
 }
 
 void QuestionDialog(char *Data,Player *From) {
-   GtkWidget *dialog,*label,*vbox,*hsep,*hbbox,*button;
-   GtkAccelGroup *accel_group;
-   gchar *Responses,**split,*LabelText;
+  GtkWidget *dialog,*label,*vbox,*hsep,*hbbox,*button;
+  GtkAccelGroup *accel_group;
+  gchar *Responses,**split,*LabelText,*trword,*underline;
 
 /* Button titles that correspond to the single-keypress options provided
    by the curses client (e.g. _Yes corresponds to 'Y' etc.) */
-   gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
-                      N_("_Fight"), N_("_Attack"), N_("_Evade") };
-   gint numWords = sizeof(Words) / sizeof(Words[0]);
-   gint i,Answer;
+  gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
+                     N_("_Fight"), N_("_Attack"), N_("_Evade") };
+  gint numWords = sizeof(Words) / sizeof(Words[0]);
+  gint i,j;
 
-   split=g_strsplit(Data,"^",1);
-   if (!split[0] || !split[1]) {
-      g_warning("Bad QUESTION message %s",Data); return;
-   }
+  split=g_strsplit(Data,"^",1);
+  if (!split[0] || !split[1]) {
+    g_warning("Bad QUESTION message %s",Data); return;
+  }
 
-   g_strdelimit(split[1],"^",'\n');
+  g_strdelimit(split[1],"^",'\n');
 
-   Responses=split[0]; LabelText=split[1];
+  Responses=split[0]; LabelText=split[1];
 
-   dialog=gtk_window_new(GTK_WINDOW_DIALOG);
-   accel_group=gtk_accel_group_new();
-   gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
-                      GTK_SIGNAL_FUNC(DisallowDelete),NULL);
-   gtk_object_set_data(GTK_OBJECT(dialog),"From",(gpointer)From);
+  dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+  accel_group=gtk_accel_group_new();
+  gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
+                     GTK_SIGNAL_FUNC(DisallowDelete),NULL);
+  gtk_object_set_data(GTK_OBJECT(dialog),"From",(gpointer)From);
 
 /* Title of the 'ask player a question' dialog */
-   gtk_window_set_title(GTK_WINDOW(dialog),_("Question"));
+  gtk_window_set_title(GTK_WINDOW(dialog),_("Question"));
 
-   gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
-   gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
-   gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
-   gtk_window_set_transient_for(GTK_WINDOW(dialog),
-                                GTK_WINDOW(ClientData.window));
+  gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
+  gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
+  gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
+  gtk_window_set_transient_for(GTK_WINDOW(dialog),
+                               GTK_WINDOW(ClientData.window));
 
-   vbox=gtk_vbox_new(FALSE,7);
-   while (*LabelText=='\n') LabelText++;
-   label=gtk_label_new(LabelText);
-   gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
+  vbox=gtk_vbox_new(FALSE,7);
+  while (*LabelText=='\n') LabelText++;
+  label=gtk_label_new(LabelText);
+  gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
-   hsep=gtk_hseparator_new();
-   gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
+  hsep=gtk_hseparator_new();
+  gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
 
-   hbbox=gtk_hbutton_box_new();
+  hbbox=gtk_hbutton_box_new();
 
-   for (i=0;i<numWords;i++) {
-      Answer=(gint)Words[i][0];
-      if (Answer=='_' && strlen(Words[i])>=2) Answer=(gint)Words[i][1];
-      if (strchr(Responses,Answer)) {
-         button=gtk_button_new_with_label("");
-         SetAccelerator(button,_(Words[i]),button,"clicked",accel_group);
-         gtk_object_set_data(GTK_OBJECT(button),"dialog",(gpointer)dialog);
-         gtk_signal_connect(GTK_OBJECT(button),"clicked",
-                            GTK_SIGNAL_FUNC(QuestionCallback),
-                            GINT_TO_POINTER(Answer));
-         gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+  for (i=0;i<strlen(Responses);i++) {
+    for (j=0,trword=NULL;j<numWords && !trword;j++) {
+      underline = strchr(Words[j],'_');
+      if (underline && toupper(underline[1])==Responses[i]) {
+        trword = _(Words[j]);
       }
-   }
-   gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
-   gtk_container_add(GTK_CONTAINER(dialog),vbox);
-   gtk_widget_show_all(dialog);
-   
-   g_strfreev(split);
+    }
+    button=gtk_button_new_with_label("");
+    if (trword) {
+      SetAccelerator(button,trword,button,"clicked",accel_group);
+    } else {
+      trword = g_strdup_printf("_%c",Responses[i]);
+      SetAccelerator(button,trword,button,"clicked",accel_group);
+      g_free(trword);
+    }
+    gtk_object_set_data(GTK_OBJECT(button),"dialog",(gpointer)dialog);
+    gtk_signal_connect(GTK_OBJECT(button),"clicked",
+                       GTK_SIGNAL_FUNC(QuestionCallback),
+                       GINT_TO_POINTER((gint)Responses[i]));
+    gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+  }
+  gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
+  gtk_container_add(GTK_CONTAINER(dialog),vbox);
+  gtk_widget_show_all(dialog);
+  
+  g_strfreev(split);
 }
 
 void StartGame(void) {

@@ -224,19 +224,16 @@ void standout() {}
 void standend() {}
 
 gboolean IsKeyPressed() {
-   INPUT_RECORD ConsoleIn;
-   DWORD NumConsoleIn;
-   while (PeekConsoleInput(hIn,&ConsoleIn,1,&NumConsoleIn)) {
-      if (NumConsoleIn==1) {
-         if (ConsoleIn.EventType==KEY_EVENT &&
-             ConsoleIn.Event.KeyEvent.bKeyDown) {
-            return TRUE;
-         } else {
-            ReadConsoleInput(hIn,&ConsoleIn,1,&NumConsoleIn);
-         }
-      } else break;
-   }
-   return FALSE;
+  INPUT_RECORD ConsoleIn;
+  DWORD NumConsoleIn;
+  while (PeekConsoleInput(hIn,&ConsoleIn,1,&NumConsoleIn) && NumConsoleIn==1) {
+    if (ConsoleIn.EventType==KEY_EVENT && ConsoleIn.Event.KeyEvent.bKeyDown) {
+      return TRUE;
+    } else {
+      ReadConsoleInput(hIn,&ConsoleIn,1,&NumConsoleIn);
+    }
+  }
+  return FALSE;
 }
 
 int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfds,

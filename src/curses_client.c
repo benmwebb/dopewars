@@ -438,29 +438,25 @@ static gboolean DoConnect(Player *Play,GString *errstr) {
     doneOK=FALSE;
   } else {
     SetNetworkBufferUserPasswdFunc(netbuf,SocksAuthFunc,NULL);
-    if (netbuf->status!=NBS_CONNECTED) {
+    while (netbuf->status!=NBS_CONNECTED) {
       DisplayConnectStatus(netbuf,oldstatus,oldsocks);
-      do {
-        FD_ZERO(&readfds); FD_ZERO(&writefds);
-        FD_SET(0,&readfds); maxsock=1;
-        SetSelectForNetworkBuffer(netbuf,&readfds,&writefds,NULL,&maxsock);
-        if (bselect(maxsock,&readfds,&writefds,NULL,NULL)==-1) {
-           if (errno==EINTR) { CheckForResize(Play); continue; }
-           perror("bselect"); exit(1);
-        }
-        if (FD_ISSET(0,&readfds)) {
-          /* So that Ctrl-L works */
-          c = getch();
+      oldstatus = netbuf->status;
+      oldsocks  = netbuf->sockstat;
+      FD_ZERO(&readfds); FD_ZERO(&writefds);
+      FD_SET(0,&readfds); maxsock=1;
+      SetSelectForNetworkBuffer(netbuf,&readfds,&writefds,NULL,&maxsock);
+      if (bselect(maxsock,&readfds,&writefds,NULL,NULL)==-1) {
+        if (errno==EINTR) { CheckForResize(Play); continue; }
+        perror("bselect"); exit(1);
+      }
+      if (FD_ISSET(0,&readfds)) {
+        /* So that Ctrl-L works */
+        c = getch();
 #ifndef CYGWIN
-          if (c=='\f') wrefresh(curscr);
+        if (c=='\f') wrefresh(curscr);
 #endif
-        }
-        oldstatus = netbuf->status;
-        oldsocks  = netbuf->sockstat;
-        RespondToSelect(netbuf,&readfds,&writefds,NULL,&doneOK);
-        if (netbuf->status==NBS_CONNECTED) break;
-        DisplayConnectStatus(netbuf,oldstatus,oldsocks);
-      } while (doneOK);
+      }
+      RespondToSelect(netbuf,&readfds,&writefds,NULL,&doneOK);
     }
   }
 
@@ -552,7 +548,7 @@ static gboolean ConnectToServer(Player *Play) {
 }
 #endif /* NETWORKING */
 
-static int jet(Player *Play,gboolean AllowReturn) {
+static gboolean jet(Player *Play,gboolean AllowReturn) {
 /* Displays the list of locations and prompts the user to select one. */
 /* If "AllowReturn" is TRUE, then if the current location is selected */
 /* simply drop back to the main game loop, otherwise send a request   */
@@ -560,86 +556,82 @@ static int jet(Player *Play,gboolean AllowReturn) {
 /* choose a new location to move to. The active client player is      */
 /* passed in "Play"                                                   */
 /* N.B. May set the global variable DisplayMode                       */
-/* Returns: 1 if the user chose to jet to a new location,             */
-/*          0 if the action was cancelled instead.                    */
-   int i,c;
-   char text[80];
-   attrset(TextAttr);
-   clear_bottom();
-   for (i=0;i<NumLocation;i++) {
-      sprintf(text,"%d. %s",i+1,Location[i].Name);
-      mvaddstr(17+i/3,(i%3)*20+12,text);
-   }
-   attrset(PromptAttr);
+/* Returns: TRUE if the user chose to jet to a new location,          */
+/*          FALSE if the action was cancelled instead.                */
+  int i,c;
+  char text[80];
+  attrset(TextAttr);
+  clear_bottom();
+  for (i=0;i<NumLocation;i++) {
+    sprintf(text,"%d. %s",i+1,Location[i].Name);
+    mvaddstr(17+i/3,(i%3)*20+12,text);
+  }
+  attrset(PromptAttr);
 
 /* Prompt when the player chooses to "jet" to a new location */
    mvaddstr(22,22,_("Where to, dude ? "));
-   attrset(TextAttr);
-   curs_set(1);
-   while (1) {
-      c=bgetch();
-      if (c>='1' && c<'1'+NumLocation) {
-         addstr(Location[c-'1'].Name);
-         if (Play->IsAt != c-'1') {
-            curs_set(0);
-            sprintf(text,"%d",c-'1');
-            DisplayMode=DM_NONE;
-            SendClientMessage(Play,C_NONE,C_REQUESTJET,NULL,text);
-            return 1;
-         }
-      }
-      if (AllowReturn) break;
-   }
-   curs_set(0);
-   return 0;
+  attrset(TextAttr);
+  curs_set(1);
+  do {
+    c=bgetch();
+    if (c>='1' && c<'1'+NumLocation) {
+      addstr(Location[c-'1'].Name);
+      if (Play->IsAt != c-'1') {
+        sprintf(text,"%d",c-'1');
+        DisplayMode=DM_NONE;
+        SendClientMessage(Play,C_NONE,C_REQUESTJET,NULL,text);
+      } else c=0;
+    } else c=0;
+  } while (c==0 && !AllowReturn);
+
+  curs_set(0);
+  return (c!=0);
 }
 
 static void DropDrugs(Player *Play) {
 /* Prompts the user "Play" to drop some of the currently carried drugs  */
-   int i,c,NumDrugs;
-   GString *text;
-   gchar *buf;
+  int i,c,num,NumDrugs;
+  GString *text;
+  gchar *buf;
 
-   attrset(TextAttr);
-   clear_bottom();
-   text=g_string_new("");
-   dpg_string_sprintf(text,
+  attrset(TextAttr);
+  clear_bottom();
+  text=g_string_new("");
+  dpg_string_sprintf(text,
 /* List of drugs that you can drop (%tde = "drugs" by default) */
-            _("You can\'t get any cash for the following carried %tde :"),
-            Names.Drugs);
-   mvaddstr(16,1,text->str);
-   NumDrugs=0;
-   for (i=0;i<NumDrug;i++) {
-      if (Play->Drugs[i].Carried>0 && Play->Drugs[i].Price==0) {
-         g_string_sprintf(text,"%c. %-10s %-8d",NumDrugs+'A',Drug[i].Name,
-                              Play->Drugs[i].Carried);
-         mvaddstr(17+NumDrugs/3,(NumDrugs%3)*25+4,text->str);
-         NumDrugs++;
+           _("You can\'t get any cash for the following carried %tde :"),
+           Names.Drugs);
+  mvaddstr(16,1,text->str);
+  NumDrugs=0;
+  for (i=0;i<NumDrug;i++) {
+    if (Play->Drugs[i].Carried>0 && Play->Drugs[i].Price==0) {
+      g_string_sprintf(text,"%c. %-10s %-8d",NumDrugs+'A',Drug[i].Name,
+                       Play->Drugs[i].Carried);
+      mvaddstr(17+NumDrugs/3,(NumDrugs%3)*25+4,text->str);
+      NumDrugs++;
+    }
+  }
+  attrset(PromptAttr);
+  mvaddstr(22,20,_("What do you want to drop? "));
+  curs_set(1);
+  attrset(TextAttr);
+  c=bgetch();
+  c=toupper(c);
+  for (i=0;c>='A' && c<'A'+NumDrugs && i<NumDrug;i++) {
+    if (Play->Drugs[i].Carried>0 && Play->Drugs[i].Price==0) {
+      c--;
+      if (c<'A') {
+        addstr(Drug[i].Name);
+        buf=nice_input(_("How many do you drop? "),23,8,TRUE,NULL,'\0');
+        num=atoi(buf); g_free(buf);
+        if (num>0) {
+          g_string_sprintf(text,"drug^%d^%d",i,-num);
+          SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text->str);
+        }
       }
-   }
-   attrset(PromptAttr);
-   mvaddstr(22,20,_("What do you want to drop? "));
-   curs_set(1);
-   attrset(TextAttr);
-   c=bgetch();
-   c=toupper(c);
-   if (c>='A' && c<'A'+NumDrugs) {
-      for (i=0;i<NumDrug;i++) if (Play->Drugs[i].Carried>0 &&
-                                  Play->Drugs[i].Price==0) {
-         c--;
-         if (c<'A') {
-            addstr(Drug[i].Name);
-            buf=nice_input(_("How many do you drop? "),23,8,TRUE,NULL,'\0');
-            c=atoi(buf); g_free(buf);
-            if (c>0) {
-               g_string_sprintf(text,"drug^%d^%d",i,-c);
-               SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text->str);
-            }
-            break;
-         }
-      }
-   }
-   g_string_free(text,TRUE);
+    }
+  }
+  g_string_free(text,TRUE);
 }
 
 static void DealDrugs(Player *Play,gboolean Buy) {
@@ -648,63 +640,61 @@ static void DealDrugs(Player *Play,gboolean Buy) {
 /* is displayed, and on receiving the selection, the user is prompted   */
 /* for the number of drugs desired. Finally a message is sent to the    */
 /* server to buy or sell the required quantity.                         */
-   int i,c,NumDrugsHere;
-   gchar *text,*input;
-   int DrugNum,CanCarry,CanAfford;
+  int i,c,NumDrugsHere;
+  gchar *text,*input;
+  int DrugNum,CanCarry,CanAfford;
 
-   NumDrugsHere=0;
-   for (c=0;c<NumDrug;c++) if (Play->Drugs[c].Price>0) NumDrugsHere++;
+  NumDrugsHere=0;
+  for (c=0;c<NumDrug;c++) if (Play->Drugs[c].Price>0) NumDrugsHere++;
 
-   clear_line(22);
-   attrset(PromptAttr);
-   if (Buy) {
+  clear_line(22);
+  attrset(PromptAttr);
+  if (Buy) {
 /* Buy and sell prompts for dealing drugs or guns */
-      mvaddstr(22,20,_("What do you wish to buy? "));
-   } else {
-      mvaddstr(22,20,_("What do you wish to sell? "));
-   }
-   curs_set(1);
-   attrset(TextAttr);
-   c=bgetch();
-   c=toupper(c);
-   if (c>='A' && c<'A'+NumDrugsHere) {
-      DrugNum=-1;
-      for (i=0;i<NumDrug;i++) {
-         DrugNum=GetNextDrugIndex(DrugNum,Play);
-         if (--c<'A') break;
-      }
-      addstr(Drug[DrugNum].Name);
-      CanCarry=Play->CoatSize;
-      CanAfford=Play->Cash/Play->Drugs[DrugNum].Price;
+    mvaddstr(22,20,_("What do you wish to buy? "));
+  } else {
+    mvaddstr(22,20,_("What do you wish to sell? "));
+  }
+  curs_set(1);
+  attrset(TextAttr);
+  c=bgetch();
+  c=toupper(c);
+  if (c>='A' && c<'A'+NumDrugsHere) {
+    DrugNum=-1;
+    c-='A';
+    for (i=0;i<=c;i++) DrugNum=GetNextDrugIndex(DrugNum,Play);
+    addstr(Drug[DrugNum].Name);
+    CanCarry=Play->CoatSize;
+    CanAfford=Play->Cash/Play->Drugs[DrugNum].Price;
 
-      if (Buy) {
+    if (Buy) {
 /* Display of number of drugs you could buy and/or carry, when buying drugs */
-         text=g_strdup_printf(_("You can afford %d, and can carry %d. "),
-                              CanAfford,CanCarry);
-         mvaddstr(23,2,text);
-         input=nice_input(_("How many do you buy? "),23,2+strlen(text),
-                          TRUE,NULL,'\0');
-         c=atoi(input); g_free(input); g_free(text);
-         if (c>=0) {
-            text=g_strdup_printf("drug^%d^%d",DrugNum,c);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
-            g_free(text);
-         }
-      } else {
-/* Display of number of drugs you have, when selling drugs */
-         text=g_strdup_printf(_("You have %d. "),Play->Drugs[DrugNum].Carried);
-         mvaddstr(23,2,text);
-         input=nice_input(_("How many do you sell? "),23,2+strlen(text),
-                          TRUE,NULL,'\0');
-         c=atoi(input); g_free(input); g_free(text);
-         if (c>=0) {
-            text=g_strdup_printf("drug^%d^%d",DrugNum,-c);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
-            g_free(text);
-         }
+      text=g_strdup_printf(_("You can afford %d, and can carry %d. "),
+                           CanAfford,CanCarry);
+      mvaddstr(23,2,text);
+      input=nice_input(_("How many do you buy? "),23,2+strlen(text),
+                       TRUE,NULL,'\0');
+      c=atoi(input); g_free(input); g_free(text);
+      if (c>=0) {
+        text=g_strdup_printf("drug^%d^%d",DrugNum,c);
+        SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
+        g_free(text);
       }
-   }
-   curs_set(0);
+    } else {
+/* Display of number of drugs you have, when selling drugs */
+      text=g_strdup_printf(_("You have %d. "),Play->Drugs[DrugNum].Carried);
+      mvaddstr(23,2,text);
+      input=nice_input(_("How many do you sell? "),23,2+strlen(text),
+                       TRUE,NULL,'\0');
+      c=atoi(input); g_free(input); g_free(text);
+      if (c>=0) {
+        text=g_strdup_printf("drug^%d^%d",DrugNum,-c);
+        SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
+        g_free(text);
+      }
+    }
+  }
+  curs_set(0);
 }
 
 static void GiveErrand(Player *Play) {
@@ -992,203 +982,217 @@ void PrintHighScore(char *Data) {
 void PrintMessage(const gchar *text) {
 /* Prints a message "text" received via. a "printmessage" message in the */
 /* bottom part of the screen.                                            */
-   guint i,line;
-   attrset(TextAttr);
-   clear_line(16);
-   for (i=0;i<strlen(text);i++) {
-      if (text[i]!='^' || text[i]=='\n') {
-         clear_exceptfor(i+1);
-         break;
+  guint i,line;
+
+  attrset(TextAttr);
+  clear_line(16);
+
+  line=1;
+  for (i=0;i<strlen(text) && (text[i]=='^' || text[i]=='\n');i++) line++;
+  clear_exceptfor(line);
+
+  line=17; move(line,1);
+  for (i=0;i<strlen(text);i++) {
+    if (text[i]=='^' || text[i]=='\n') {
+      line++; move(line,1);
+    } else if (text[i]!='\r') addch((guchar)text[i]);
+  }
+}
+
+static void SellGun(Player *Play) {
+  gchar *text;
+  gint gunind;
+
+  clear_line(22);
+  if (TotalGunsCarried(Play)==0) {
+/* Error - player tried to sell guns that he/she doesn't have
+   (%tde="guns" by default) */
+    text=dpg_strdup_printf(_("You don't have any %tde to sell!"),
+                           Names.Guns);
+    mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
+    nice_wait();
+    clear_line(23);
+  } else {
+    attrset(PromptAttr);
+    mvaddstr(22,20,_("What do you wish to sell? "));
+    curs_set(1);
+    attrset(TextAttr);
+    gunind=bgetch(); gunind=toupper(gunind);
+    if (gunind>='A' && gunind<'A'+NumGun) {
+      gunind-='A';
+      addstr(Gun[gunind].Name);
+      if (Play->Guns[gunind].Carried == 0) {
+        clear_line(22);
+/* Error - player tried to sell some guns that he/she doesn't have */
+        mvaddstr(22,10,_("You don't have any to sell!"));
+        nice_wait(); clear_line(23);
+      } else {
+        Play->Cash += Gun[gunind].Price;
+        Play->CoatSize += Gun[gunind].Space;
+        Play->Guns[gunind].Carried--;
+        text=g_strdup_printf("gun^%d^-1",gunind);
+        SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
+        g_free(text);
+        print_status(Play,FALSE);
       }
-   }
-   line=17; move(line,1);
-   for (i=0;i<strlen(text);i++) {
-      if (text[i]=='^' || text[i]=='\n') {
-         line++; move(line,1);
-      } else if (text[i]!='\r') addch((guchar)text[i]);
-   }
+    }
+  }
+}
+
+static void BuyGun(Player *Play) {
+  gchar *text;
+  gint gunind;
+
+  clear_line(22);
+  if (TotalGunsCarried(Play)>=Play->Bitches.Carried+2) {
+    text=dpg_strdup_printf(
+/* Error - player tried to buy more guns than his/her bitches can carry
+   (1st %tde="bitches", 2nd %tde="guns" by default) */
+              _("You'll need more %tde to carry any more %tde!"),
+              Names.Bitches,Names.Guns);
+    mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
+    nice_wait();
+    clear_line(23);
+  } else {
+    attrset(PromptAttr);
+    mvaddstr(22,20,_("What do you wish to buy? "));
+    curs_set(1);
+    attrset(TextAttr);
+    gunind=bgetch(); gunind=toupper(gunind);
+    if (gunind>='A' && gunind<'A'+NumGun) {
+      gunind-='A';
+      addstr(Gun[gunind].Name);
+      if (Gun[gunind].Space > Play->CoatSize) {
+        clear_line(22);
+/* Error - player tried to buy a gun that he/she doesn't have space for
+   (%tde="gun" by default) */
+        text=dpg_strdup_printf(_("You don't have enough space to "
+                               "carry that %tde!"),Names.Gun);
+        mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
+        nice_wait();
+        clear_line(23);
+      } else if (Gun[gunind].Price > Play->Cash) {
+        clear_line(22);
+/* Error - player tried to buy a gun that he/she can't afford
+   (%tde="gun" by default) */
+        text=dpg_strdup_printf(_("You don't have enough cash to buy "
+                               "that %tde!"),Names.Gun);
+        mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
+        nice_wait();
+        clear_line(23);
+      } else {
+        Play->Cash -= Gun[gunind].Price;
+        Play->CoatSize -= Gun[gunind].Space;
+        Play->Guns[gunind].Carried++;
+        text=g_strdup_printf("gun^%d^1",gunind);
+        SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
+        g_free(text);
+        print_status(Play,FALSE);
+      }
+    }
+  }
 }
 
 void GunShop(Player *Play) {
 /* Allows player "Play" to buy and sell guns interactively. Passes the */
 /* decisions on to the server for sanity checking and implementation.  */
-   int i,c,c2;
-   gchar *text;
+  int i,action;
+  gchar *text;
 
-   print_status(Play,FALSE);
-   attrset(TextAttr);
-   clear_bottom();
-   for (i=0;i<NumGun;i++) {
-      text=dpg_strdup_printf("%c. %-22tde %12P",'A'+i,Gun[i].Name,
-                             Gun[i].Price);
-      mvaddstr(17+i/2,(i%2)*40+1,text); g_free(text);
-   }
-   while (1) {
+  print_status(Play,FALSE);
+  attrset(TextAttr);
+  clear_bottom();
+  for (i=0;i<NumGun;i++) {
+    text=dpg_strdup_printf("%c. %-22tde %12P",'A'+i,Gun[i].Name,Gun[i].Price);
+    mvaddstr(17+i/2,(i%2)*40+1,text); g_free(text);
+  }
+  do {
 /* Prompt for actions in the gun shop */
-      text=_("Will you B>uy, S>ell, or L>eave? ");
-      attrset(PromptAttr);
-      clear_line(22);
-      mvaddstr(22,40-strlen(text)/2,text);
-      attrset(TextAttr);
+    text=_("Will you B>uy, S>ell, or L>eave? ");
+    attrset(PromptAttr);
+    clear_line(22);
+    mvaddstr(22,40-strlen(text)/2,text);
+    attrset(TextAttr);
 
 /* Translate these three keys in line with the above options, keeping the
    order (B>uy, S>ell, L>eave) the same - you can change the wording of
    the prompt, but if you change the order in this key list, the keys will
    do the wrong things! */
-      c=GetKey(_("BSL"),"BSL",FALSE,FALSE,FALSE);
-      if (c=='L') break;
-      if (c=='S' || c=='B') {
-         clear_line(22);
-         if (c=='S' && TotalGunsCarried(Play)==0) {
-/* Error - player tried to sell guns that he/she doesn't have
-   (%tde="guns" by default) */
-            text=dpg_strdup_printf(_("You don't have any %tde to sell!"),
-                                   Names.Guns);
-            mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
-            nice_wait();
-            clear_line(23);
-            continue;
-         } else if (c=='B' && TotalGunsCarried(Play)>=Play->Bitches.Carried+2) {
-            text=dpg_strdup_printf(
-/* Error - player tried to buy more guns than his/her bitches can carry
-   (1st %tde="bitches", 2nd %tde="guns" by default) */
-                        _("You'll need more %tde to carry any more %tde!"),
-                        Names.Bitches,Names.Guns);
-            mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
-            nice_wait();
-            clear_line(23);
-            continue;
-         }
-         attrset(PromptAttr);
-         if (c=='B') {
-            mvaddstr(22,20,_("What do you wish to buy? "));
-         } else {
-            mvaddstr(22,20,_("What do you wish to sell? "));
-         }
-         curs_set(1);
-         attrset(TextAttr);
-         c2=bgetch(); c2=toupper(c2);
-         if (c2>='A' && c2<'A'+NumGun) {
-            c2-='A';
-            addstr(Gun[c2].Name);
-            if (c=='B') {
-               if (Gun[c2].Space > Play->CoatSize) {
-                  clear_line(22);
-/* Error - player tried to buy a gun that he/she doesn't have space for
-   (%tde="gun" by default) */
-                  text=dpg_strdup_printf(_("You don't have enough space to "
-                                         "carry that %tde!"),Names.Gun);
-                  mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
-                  nice_wait();
-                  clear_line(23);
-                  continue;
-               } else if (Gun[c2].Price > Play->Cash) {
-                  clear_line(22);
-/* Error - player tried to buy a gun that he/she can't afford
-   (%tde="gun" by default) */
-                  text=dpg_strdup_printf(_("You don't have enough cash to buy "
-                                         "that %tde!"),Names.Gun);
-                  mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
-                  nice_wait();
-                  clear_line(23);
-                  continue;
-               }
-               Play->Cash -= Gun[c2].Price;
-               Play->CoatSize -= Gun[c2].Space;
-               Play->Guns[c2].Carried++;
-            } else if (c=='S') {
-               if (Play->Guns[c2].Carried == 0) {
-                  clear_line(22);
-/* Error - player tried to sell some guns that he/she doesn't have */
-                  mvaddstr(22,10,_("You don't have any to sell!"));
-                  nice_wait(); clear_line(23); continue;
-               }
-               Play->Cash += Gun[c2].Price;
-               Play->CoatSize += Gun[c2].Space;
-               Play->Guns[c2].Carried--;
-            }
-            text=g_strdup_printf("gun^%d^%d",c2,c=='B' ? 1 : -1);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
-            g_free(text);
-            print_status(Play,FALSE);
-         }
-      }
-   }
-   print_status(Play,TRUE);
+    action=GetKey(_("BSL"),"BSL",FALSE,FALSE,FALSE);
+    if (action=='S') SellGun(Play);
+    else if (action=='B') BuyGun(Play);
+  } while (action!='L');
+  print_status(Play,TRUE);
 }
 
 void LoanShark(Player *Play) {
 /* Allows player "Play" to pay off loans interactively. */
-   gchar *text,*prstr;
-   price_t money;
-   while (1) {
-      clear_bottom();
-      attrset(PromptAttr);
+  gchar *text,*prstr;
+  price_t money;
+  do {
+    clear_bottom();
+    attrset(PromptAttr);
 
 /* Prompt for paying back loans from the loan shark */
-      text=nice_input(_("How much money do you pay back? "),19,1,
-                      TRUE,NULL,'\0');
-      attrset(TextAttr);
-      money=strtoprice(text); g_free(text);
-      if (money<0) money=0;
-      if (money>Play->Debt) money=Play->Debt;
-      if (money>Play->Cash) {
+    text=nice_input(_("How much money do you pay back? "),19,1,TRUE,NULL,'\0');
+    attrset(TextAttr);
+    money=strtoprice(text); g_free(text);
+    if (money<0) money=0;
+    if (money>Play->Debt) money=Play->Debt;
+    if (money>Play->Cash) {
 /* Error - player doesn't have enough money to pay back the loan */
-         mvaddstr(20,1,_("You don't have that much money!"));
-         nice_wait();
-      } else {
-         SendClientMessage(Play,C_NONE,C_PAYLOAN,NULL,
-                           (prstr=pricetostr(money)));
-         g_free(prstr);
-         break;
-      }
-   }
+      mvaddstr(20,1,_("You don't have that much money!"));
+      nice_wait();
+    } else {
+      SendClientMessage(Play,C_NONE,C_PAYLOAN,NULL,(prstr=pricetostr(money)));
+      g_free(prstr);
+      money=0;
+    }
+  } while (money!=0);
 }
 
 void Bank(Player *Play) {
 /* Allows player "Play" to pay in or withdraw money from the bank */
 /* interactively.                                                 */
-   gchar *text,*prstr;
-   price_t money;
-   int c;
-   while (1) {
-      clear_bottom();
-      attrset(PromptAttr);
+  gchar *text,*prstr;
+  price_t money=0;
+  int action;
+
+  do {
+    clear_bottom();
+    attrset(PromptAttr);
 /* Prompt for dealing with the bank in the curses client */
-      mvaddstr(18,1,_("Do you want to D>eposit money, W>ithdraw money, "
-                      "or L>eave ? "));
-      attrset(TextAttr);
+    mvaddstr(18,1,_("Do you want to D>eposit money, W>ithdraw money, "
+                    "or L>eave ? "));
+    attrset(TextAttr);
 
 /* Make sure you keep the order the same if you translate these keys!
    (D>eposit, W>ithdraw, L>eave) */
-      c=GetKey(_("DWL"),"DWL",FALSE,FALSE,FALSE);
+    action=GetKey(_("DWL"),"DWL",FALSE,FALSE,FALSE);
 
-      if (c=='L') return;
-
+    if (action=='D' || action=='W') {
 /* Prompt for putting money in or taking money out of the bank */
       text=nice_input(_("How much money? "),19,1,TRUE,NULL,'\0');
 
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
-      if (c=='W') money=-money;
+      if (action=='W') money=-money;
       if (money>Play->Cash) {
 /* Error - player has tried to put more money into the bank than he/she has */
-         mvaddstr(20,1,_("You don't have that much money!"));
-         nice_wait();
+        mvaddstr(20,1,_("You don't have that much money!"));
+        nice_wait();
       } else if (-money > Play->Bank) {
 /* Error - player has tried to withdraw more money from the bank than there
    is in the account */
-         mvaddstr(20,1,_("There isn't that much money in the bank..."));
-         nice_wait();
-      } else if (money==0) {
-         break;
-      } else {
-         SendClientMessage(Play,C_NONE,C_DEPOSIT,NULL,
-                           (prstr=pricetostr(money)));
-         g_free(prstr);
-         break;
+        mvaddstr(20,1,_("There isn't that much money in the bank..."));
+        nice_wait();
+      } else if (money!=0) {
+        SendClientMessage(Play,C_NONE,C_DEPOSIT,NULL,(prstr=pricetostr(money)));
+        g_free(prstr);
+        money=0;
       }
-   }
+    }
+  } while (action!='L' && money!=0);
 }
 
 int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
@@ -1204,53 +1208,52 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
 /* the prompt. If "ExpandOut" is also TRUE, the full words for    */
 /* the commands, rather than just their first letters, are        */
 /* displayed.                                                     */
-   int ch;
-   guint AllowInd,WordInd,i;
+  int ch;
+  guint AllowInd,WordInd,i;
 
 /* Expansions of the single-letter keypresses for the benefit of the user.
    i.e. "Yes" is printed for the key "Y" etc. You should indicate to the
-   user which letter in the word corresponds to the keypress, by
-   capitalising it or similar. */
-   gchar *Words[] = { N_("Yes"), N_("No"), N_("Run"),
-                      N_("Fight"), N_("Attack"), N_("Evade") };
-   guint numWords = sizeof(Words) / sizeof(Words[0]);
-   gchar *trWord;
+  user which letter in the word corresponds to the keypress, by
+  capitalising it or similar. */
+  gchar *Words[] = { N_("Y:Yes"), N_("N:No"), N_("R:Run"),
+                     N_("F:Fight"), N_("A:Attack"), N_("E:Evade") };
+  guint numWords = sizeof(Words) / sizeof(Words[0]);
+  gchar *trWord;
 
-   curs_set(1);
-   ch='\0';
+  curs_set(1);
+  ch='\0';
 
-   if (!allowed || strlen(allowed)==0) return 0;
+  if (!allowed || strlen(allowed)==0) return 0;
 
-   if (PrintAllowed) {
-      addch('[' | TextAttr);
-      for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
-         if (AllowInd>0) addch('/' | TextAttr);
-         for (WordInd=0;WordInd<numWords;WordInd++) {
-            if (ExpandOut && orig_allowed[AllowInd]==Words[WordInd][0]) {
-               trWord=_(Words[WordInd]);
-               for (i=0;i<strlen(trWord);i++) {
-                  addch((guchar)trWord[i] | TextAttr);
-               }
-               break;
-            }
-         }
-         if (WordInd>=numWords) addch((guchar)allowed[AllowInd] | TextAttr);
+  if (PrintAllowed) {
+    addch('[' | TextAttr);
+    for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
+      if (AllowInd>0) addch('/' | TextAttr);
+      WordInd=0;
+      while (WordInd<numWords &&
+             orig_allowed[AllowInd]!=Words[WordInd][0]) WordInd++;
+
+      if (ExpandOut && WordInd<numWords) {
+        trWord=_(Words[WordInd]);
+        for (i=2;i<strlen(trWord);i++) addch((guchar)trWord[i] | TextAttr);
+      } else addch((guchar)allowed[AllowInd] | TextAttr);
+    }
+    addch(']' | TextAttr);
+    addch(' ' | TextAttr);
+  }
+
+  do {
+    ch=bgetch(); ch=toupper(ch);
+    for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
+      if (allowed[AllowInd]==ch) {
+        addch((guint)ch | TextAttr);
+        curs_set(0); return orig_allowed[AllowInd];
       }
-      addch(']' | TextAttr);
-      addch(' ' | TextAttr);
-   }
-   while (1) {
-      ch=bgetch(); ch=toupper(ch);
-      for (AllowInd=0;AllowInd<strlen(allowed);AllowInd++) {
-         if (allowed[AllowInd]==ch) {
-            addch((guint)ch | TextAttr);
-            curs_set(0); return orig_allowed[AllowInd];
-         }
-      }
-      if (AllowOther) break;
-   }
-   curs_set(0);
-   return 0;
+    }
+  } while (!AllowOther);
+
+  curs_set(0);
+  return 0;
 }
 
 void clear_line(int line) {
@@ -1299,48 +1302,40 @@ void DisplayFightMessage(Player *Play,char *text) {
 /* If "text" is a blank string, redisplays the message area             */
 /* Messages are displayed from lines 16 to 20; line 22 is used for      */
 /* the prompt for the user                                              */
-   static char Messages[5][79];
-   static int x,y;
-   char *textpt;
-   int i;
-   gchar *AttackName,*DefendName,*BitchName;
-   int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
-   gboolean Loot;
+  static char Messages[5][79];
+  static int x,y;
+  gchar *textpt;
+  gchar *AttackName,*DefendName,*BitchName;
+  gint i,DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
+  gboolean Loot;
 
-   if (text==NULL) {
-      x=0; y=15;
-      for (i=0;i<5;i++) Messages[i][0]='\0';
-      return;
-   }
-   if (!text[0]) {
-      attrset(TextAttr);
-      clear_bottom();
-      for (i=16;i<=20;i++) {
-         mvaddstr(i,1,Messages[i-16]);
-      }
-   } else {
-      if (HaveAbility(Play,A_NEWFIGHT)) {
-         ReceiveFightMessage(text,&AttackName,&DefendName,&DefendHealth,
-                             &DefendBitches,&BitchName,&BitchesKilled,
-                             &ArmPercent,
-                             &fp,&RunHere,&Loot,&CanFire,&textpt);
-      } else {
-         textpt=text;
-         if (Play->Flags&FIGHTING) fp=F_MSG;
-         else fp=F_LASTLEAVE;
-         CanFire = (Play->Flags&CANSHOOT);
-         RunHere=FALSE;
-      }
-      while(textpt[0]) {
-         if (y==20) for (i=0;i<4;i++) {
-            strcpy(Messages[i],Messages[i+1]);
-         }
-         if (y<20) y++;
-         strncpy(Messages[y-16],textpt,78); Messages[y-16][78]='\0';
-         if (strlen(textpt)<=78) break;
-         textpt+=78;
-      }
-   }
+  if (text==NULL) {
+    x=0; y=15;
+    for (i=0;i<5;i++) Messages[i][0]='\0';
+  } else if (!text[0]) {
+    attrset(TextAttr);
+    clear_bottom();
+    for (i=16;i<=20;i++) mvaddstr(i,1,Messages[i-16]);
+  } else {
+    if (HaveAbility(Play,A_NEWFIGHT)) {
+      ReceiveFightMessage(text,&AttackName,&DefendName,&DefendHealth,
+                          &DefendBitches,&BitchName,&BitchesKilled,
+                          &ArmPercent,&fp,&RunHere,&Loot,&CanFire,&textpt);
+    } else {
+      textpt=text;
+      if (Play->Flags&FIGHTING) fp=F_MSG;
+      else fp=F_LASTLEAVE;
+      CanFire = (Play->Flags&CANSHOOT);
+      RunHere=FALSE;
+    }
+    while(textpt[0]) {
+      if (y<20) y++;
+      else for (i=0;i<4;i++) strcpy(Messages[i],Messages[i+1]);
+
+      strncpy(Messages[y-16],textpt,78); Messages[y-16][78]='\0';
+      textpt += MIN(strlen(textpt),78);
+    }
+  }
 }
 
 void display_message(char *buf) {
@@ -1348,42 +1343,39 @@ void display_message(char *buf) {
 /* 10 to 14) scrolling previous messages up                      */
 /* If "buf" is NULL, clears the message area                     */
 /* If "buf" is a blank string, redisplays the message area       */
-   guint x,y;
-   guint wid;
-   static char Messages[5][200];
-   char *bufpt;
+  guint x,y;
+  guint wid;
+  static gchar Messages[5][200];
+  gchar *bufpt;
 
-   if (Width<=4) return;
+  if (Width<=4) return;
 
-   wid = Width-4 < 200 ? Width-4 : 200;
-   if (!buf) {
-      for (y=0;y<5;y++) {
-         memset(Messages[y],' ',200);
-         if (Network) {
-            mvaddch(y+10,0,' ' | TextAttr);
-            addch(ACS_VLINE | StatsAttr);
-            for (x=0;x<wid;x++) {
-               addch(' ' | StatsAttr);
-            }
-            addch(ACS_VLINE | StatsAttr);
-            addch(' ' | TextAttr);
-         }
+  wid = MIN(Width-4,200);
+
+  if (!buf) {
+    for (y=0;y<5;y++) {
+      memset(Messages[y],' ',200);
+      if (Network) {
+        mvaddch(y+10,0,' ' | TextAttr);
+        addch(ACS_VLINE | StatsAttr);
+        for (x=0;x<wid;x++) addch(' ' | StatsAttr);
+        addch(ACS_VLINE | StatsAttr);
+        addch(' ' | TextAttr);
       }
-      return;
-   }
-   if (!Network) return;
-   bufpt=buf;
-   while (bufpt[0]!=0) {
+    }
+  } else if (Network) {
+    bufpt=buf;
+    while (bufpt[0]!=0) {
       memmove(Messages[0],Messages[1],200*4);
       memset(Messages[4],' ',200);
       memcpy(Messages[4],bufpt,strlen(bufpt)>wid ? wid : strlen(bufpt));
-      if (strlen(bufpt)<=wid) break;
-      bufpt+=wid;
-   }
-   for (y=0;y<5;y++) for (x=0;x<wid;x++) {
+      bufpt += MIN(strlen(bufpt),wid);
+    }
+    for (y=0;y<5;y++) for (x=0;x<wid;x++) {
       mvaddch(y+10,x+2,(guchar)Messages[y][x] | StatsAttr);
-   }
-   refresh();
+    }
+    refresh();
+  }
 }
 
 void print_location(char *text) {
@@ -1630,68 +1622,69 @@ char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
 /* If "displaystr" is non-NULL, it is taken as a default response.      */
 /* If "passwdchar" is non-zero, it is displayed instead of the user's   */
 /* keypresses (e.g. for entering passwords)                             */
-   int i,c,x;
-   gboolean DecimalPoint,Suffix;
-   GString *text;
-   gchar *ReturnString;
-   DecimalPoint=Suffix=FALSE;
-   x=sx;
-   move(sy,x);
-   if (prompt) {
-      attrset(PromptAttr);
-      addstr(prompt);
-      x+=strlen(prompt);
-   }
-   attrset(TextAttr);
-   if (displaystr) {
-      if (passwdchar) {
-        for (i=strlen(displaystr);i;i--) addch((guint)passwdchar);
-      } else {
-        addstr(displaystr);
+  int i,c,x;
+  gboolean DecimalPoint,Suffix;
+  GString *text;
+  gchar *ReturnString;
+  DecimalPoint=Suffix=FALSE;
+
+  x=sx;
+  move(sy,x);
+  if (prompt) {
+    attrset(PromptAttr);
+    addstr(prompt);
+    x+=strlen(prompt);
+  }
+  attrset(TextAttr);
+  if (displaystr) {
+    if (passwdchar) {
+      for (i=strlen(displaystr);i;i--) addch((guint)passwdchar);
+    } else {
+      addstr(displaystr);
+    }
+    i=strlen(displaystr);
+    text=g_string_new(displaystr);
+  } else {
+    i=0;
+    text=g_string_new("");
+  }
+
+  curs_set(1);
+  do {
+    move(sy+(x+i)/Width,(x+i)%Width);
+    c=bgetch();
+    if ((c==8 || c==KEY_BACKSPACE || c==127) && i>0) {
+      move(sy+(x+i-1)/Width,(x+i-1)%Width);
+      addch(' ');
+      i--;
+      if (DecimalPoint && text->str[i]=='.') DecimalPoint=FALSE;
+      if (Suffix) Suffix=FALSE;
+      g_string_truncate(text,i);
+    } else if (!Suffix) {
+      if ((digitsonly && c>='0' && c<='9') ||
+          (!digitsonly && c>=32 && c!='^' && c<127)) {
+        g_string_append_c(text,c);
+        i++;
+        addch((guint)passwdchar ? passwdchar : c);
+      } else if (digitsonly && (c=='.' || c==',') && !DecimalPoint) {
+        g_string_append_c(text,'.');
+        i++;
+        addch((guint)passwdchar ? passwdchar : c);
+        DecimalPoint=TRUE;
+      } else if (digitsonly && (c=='M' || c=='m' || c=='k' || c=='K')
+                 && !Suffix) {
+        g_string_append_c(text,c);
+        i++;
+        addch((guint)passwdchar ? passwdchar : c);
+        Suffix=TRUE;
       }
-      i=strlen(displaystr);
-      text=g_string_new(displaystr);
-   } else {
-      i=0;
-      text=g_string_new("");
-   }
-   curs_set(1);
-   while(1) {
-      move(sy+(x+i)/Width,(x+i)%Width);
-      c=bgetch();
-      if (c==KEY_ENTER || c=='\n') {
-         break;
-      } else if ((c==8 || c==KEY_BACKSPACE || c==127) && i>0) {
-         move(sy+(x+i-1)/Width,(x+i-1)%Width);
-         addch(' ');
-         i--;
-         if (DecimalPoint && text->str[i]=='.') DecimalPoint=FALSE;
-         if (Suffix) Suffix=FALSE;
-         g_string_truncate(text,i);
-      } else if (!Suffix) {
-         if ((digitsonly && c>='0' && c<='9') ||
-                 (!digitsonly && c>=32 && c!='^' && c<127)) {
-            g_string_append_c(text,c);
-            i++;
-            addch((guint)passwdchar ? passwdchar : c);
-         } else if (digitsonly && (c=='.' || c==',') && !DecimalPoint) {
-            g_string_append_c(text,'.');
-            addch((guint)passwdchar ? passwdchar : c);
-            DecimalPoint=TRUE;
-         } else if (digitsonly && (c=='M' || c=='m' || c=='k' || c=='K')
-                    && !Suffix) {
-            g_string_append_c(text,c);
-            i++;
-            addch((guint)passwdchar ? passwdchar : c);
-            Suffix=TRUE;
-         }
-      }
-   }
-   curs_set(0);
-   move(sy,x);
-   ReturnString=text->str;
-   g_string_free(text,FALSE); /* Leave the buffer to return */
-   return ReturnString;
+    }
+  } while (c!='\n' && c!=KEY_ENTER);
+  curs_set(0);
+  move(sy,x);
+  ReturnString=text->str;
+  g_string_free(text,FALSE); /* Leave the buffer to return */
+  return ReturnString;
 }
 
 static void Curses_DoGame(Player *Play) {
@@ -1779,9 +1772,9 @@ static void Curses_DoGame(Player *Play) {
             dpg_string_sprintf(text,_("Hey dude, the prices of %tde here are:"),
                                Names.Drugs);
             mvaddstr(16,1,text->str);
-            i=-1;
-            for (c=0;c<NumDrugsHere;c++) {
-               if ((i=GetNextDrugIndex(i,Play))==-1) break;
+            for (c=0,i=GetNextDrugIndex(-1,Play);
+                 c<NumDrugsHere && i!=-1;
+                 c++,i=GetNextDrugIndex(i,Play)) {
 /* List of individual drug names for selection (%tde="Opium" etc. by default) */
                dpg_string_sprintf(text,_("%c. %-10tde %8P"),'A'+c,Drug[i].Name,
                                   Play->Drugs[i].Price);

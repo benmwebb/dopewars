@@ -1559,28 +1559,32 @@ msgstr "Ein Bänker spricht: \"Soviel Geld haben Sie nicht.\""
 #. user which letter in the word corresponds to the keypress, by
 #. capitalising it or similar.
 #: src/curses_client.c:1212
-msgid "Yes"
-msgstr "Ja"
+msgid "Y:Yes"
+msgstr "J:Ja"
 
 #: src/curses_client.c:1212
-msgid "No"
-msgstr "Nein"
+msgid "N:No"
+msgstr "N:Nein"
 
 #: src/curses_client.c:1212
-msgid "Run"
-msgstr "Rennen"
+msgid "R:Run"
+msgstr "R:Rennen"
 
-#: src/curses_client.c:1213 src/gtk_client.c:737
+#: src/curses_client.c:1213
+msgid "F:Fight"
+msgstr "K:K"
+
+# src/gtk_client.c:737
 msgid "Fight"
 msgstr "K"
 
 #: src/curses_client.c:1213
-msgid "Attack"
-msgstr "Angriff"
+msgid "A:Attack"
+msgstr "A:Angriff"
 
 #: src/curses_client.c:1213
-msgid "Evade"
-msgstr "Verschwinden"
+msgid "E:Evade"
+msgstr "V:Verschwinden"
 
 #: src/curses_client.c:1286
 msgid "Press any key..."

@@ -1565,28 +1565,32 @@ msgstr "Não há todo este dinheiro no banco..."
 #. user which letter in the word corresponds to the keypress, by
 #. capitalising it or similar.
 #: src/curses_client.c:1212
-msgid "Yes"
-msgstr "Sim"
+msgid "Y:Yes"
+msgstr "S:Sim"
 
 #: src/curses_client.c:1212
-msgid "No"
-msgstr "Não"
+msgid "N:No"
+msgstr "N:Não"
 
 #: src/curses_client.c:1212
-msgid "Run"
-msgstr "Correr"
+msgid "R:Run"
+msgstr "C:Correr"
 
-#: src/curses_client.c:1213 src/gtk_client.c:737
+#: src/curses_client.c:1213
+msgid "F:Fight"
+msgstr "L:Lutar"
+
+#: src/gtk_client.c:737
 msgid "Fight"
 msgstr "Lutar"
 
 #: src/curses_client.c:1213
-msgid "Attack"
-msgstr "Atacar"
+msgid "A:Attack"
+msgstr "A:Atacar"
 
 #: src/curses_client.c:1213
-msgid "Evade"
-msgstr "Evacuar"
+msgid "E:Evade"
+msgstr "E:Evacuar"
 
 #: src/curses_client.c:1286
 msgid "Press any key..."
