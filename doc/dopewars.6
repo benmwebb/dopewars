@@ -6,61 +6,68 @@ dopewars \- drug dealing game
 .I "[OPTIONS] ..."
 .SH "DESCRIPTION"
 .B dopewars
-is a ncurses-based drug dealing game based in New York, with you as
+is a ncurses- and GTK- based drug dealing game based in New York, with you as
 the drug dealer striving to become filthy rich. It supports network
 play and single-player games.
 .SH OPTIONS
 Valid commandline options:
 .TP
-.B \-b
+\fB\-b\fR, \fB\-\-nocolor\fR, \fB\-\-nocolour\fR
 "black and white", i.e. do not use pretty colours
 .TP
-.B \-n
+\fB\-n\fR, \fB\-\-single\-player\fR
 Do not connect to any available dopewars servers
 .TP
-.B \-a
-Antique dopewars, stick as close as possible to the functionality of the
+\fB\-a\fR, \fB\-\-antique\fR
+Antique dopewars; stick as close as possible to the functionality of the
 original version.
 .TP
-.B \-f file
+\fB\-f\fR, \fB\-\-scorefile\fR=\fIFILE\fR
 Specify a file to use as high score table (defaults to /var/games/dopewars/dopewars.sco)
 .TP
-.B \-o addr
+\fB\-o\fR, \fB\-\-hostname\fR=\fIADDR\fR
 Specify a multiplayer hostname
 .TP
-.B \-s
-Run in server mode. If you want a non-interactive server, use the command:
-dopewars -s < /dev/null >>logfile &
+\fB\-s\fR, \fB\-\-public\-server\fR
+Run in server mode. (Note: see the \fB\-A\fR option for configuring a server
+once it's running.)
 .TP
-.B \-S
+\fB\-S\fR, \fB\-\-private\-server\fR
 Run as a "private" server (do not report to the metaserver)
 .TP
-.B \-p port
+\fB\-p\fR, \fB\-\-port\fR=\fIPORT\fR
 Specify the network port to use
 .TP
-.B \-g file
+\fB\-g\fR, \fB\-\-config\-file\fR=\fIFILE\fR
 Specify the pathname of a dopewars configuration file
 .TP
-.B \-r file
+\fB\-r\fR, \fB\-\-pidfile\fR=\fIFILE\fR
 Specify the pathname of a PID file to maintain while running as a server
 .TP
-.B \-c
+\fB\-l\fR, \fB\-\-logfile\fR=\fIFILE\fR
+Write log messages to the given file (rather than standard output)
+.TP
+\fB\-A\fR, \fB\-\-admin\fR
+Connect to a server running on localhost, for administration
+.TP
+\fB\-c\fR, \fB\-\-ai\-player\fR
 Create and run a computer player
 .TP
-.B \-w
+\fB\-w\fR, \fB\-\-windowed\-client\fR
 Force the use of a graphical client (GTK+ or Win32)
 .TP
-.B \-t
+\fB\-t\fR, \fB\-\-text\-client\fR
 Force the use of a text-mode (curses) client (by default, a windowed client
 is used when possible)
 .TP
-.B \-C file
+\fB\-C\fR, \fB\-\-convert\fR=\fIFILE\fR
 Convert a high score file used by dopewars-1.5.1 or earlier to the format
 used by more recent versions
-.B \-h
+.TP
+\fB\-h\fR, \fB\-\-help\fR
 Display a help screen
 .TP
-.B \-v
+\fB\-v\fR, \fB\-\-version\fR
 Output version information and exit.
 .SH AUTHOR
 This manual page was written by Leon Breedt <ljb@debian.org>,
