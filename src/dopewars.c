@@ -18,6 +18,8 @@
 /* Foundation, Inc., 59 Temple Place - Suite 330, Boston,               */
 /*                   MA  02111-1307, USA.                               */
 
+#define _GNU_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -30,6 +32,9 @@
 #include <ctype.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_GETOPT_LONG
+#include <getopt.h>
 #endif
 #include <string.h>
 #include <errno.h>
@@ -1692,7 +1697,43 @@ void HandleHelpTexts() {
    if (!WantHelp) return;
 
    g_print(
-/* Usage information, printed when the user runs "dopewars -h" */
+#ifdef HAVE_GETOPT_LONG
+/* Usage information, printed when the user runs "dopewars -h" (version
+   with support for GNU long options) */
+_("Usage: dopewars [OPTION]...\n\
+Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
+  -b, --no-color,         \"black and white\" - i.e. do not use pretty colours\n\
+      --no-colour           (by default colours are used where available)\n\
+  -n, --single-player     be boring and don't connect to any available dopewars\n\
+                            servers (i.e. single player mode)\n\
+  -a, --antique           \"antique\" dopewars - keep as closely to the original\n\
+                            version as possible (no networking)\n\
+  -f, --scorefile=FILE    specify a file to use as the high score table (by\n\
+                            default %s/dopewars.sco is used)\n\
+  -o, --hostname=ADDR     specify a hostname where the server for multiplayer\n\
+                            dopewars can be found\n\
+  -s, --public-server     run in server mode (note: for a \"non-interactive\"\n\
+                            server, simply run as\n\
+                            dopewars -s < /dev/null >> logfile & )\n\
+  -S, --private-server    run a \"private\" server (do not notify the metaserver)\n\
+  -p, --port=PORT         specify the network port to use (default: 7902)\n\
+  -g, --config-file=FILE  specify the pathname of a dopewars configuration file.\n\
+                            This file is read immediately when the -g option\n\
+                            is encountered\n\
+  -r, --pidfile=FILE      maintain pid file \"file\" while running the server\n\
+  -c, --ai-player         create and run a computer player\n\
+  -w, --windowed-client   force the use of a graphical (windowed)\n\
+                            client (GTK+ or Win32)\n\
+  -t, --text-client       force the use of a text-mode client (curses) (by\n\
+                            default, a windowed client is used when possible)\n\
+  -C, --convert=FILE      convert an \"old format\" score file to the new format\n\
+  -h, --help              display this help information\n\
+  -v, --version           output version information and exit\n\n\
+dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
+Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
+#else
+/* Usage information, printed when the user runs "dopewars -h" (short
+   options only version) */
 _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -b       \"black and white\" - i.e. do not use pretty colours\n\
@@ -1721,13 +1762,41 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -v       output version information and exit\n\n\
 dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
+#endif
 }
 
 void HandleCmdLine(int argc,char *argv[]) {
    int c;
+   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:";
+#ifdef HAVE_GETOPT_LONG
+   static const struct option long_options[] = {
+      { "no-color", no_argument, NULL, 'b' },
+      { "no-colour", no_argument, NULL, 'b' },
+      { "single-player", no_argument, NULL, 'n' },
+      { "antique", no_argument, NULL, 'a' },
+      { "scorefile", required_argument, NULL, 'f' },
+      { "hostname", required_argument, NULL, 'o' },
+      { "public-server", no_argument, NULL, 's' },
+      { "private-server", no_argument, NULL, 'S' },
+      { "port", required_argument, NULL, 'p' },
+      { "configfile", required_argument, NULL, 'g' },
+      { "pidfile", required_argument, NULL, 'r' },
+      { "ai-player", no_argument, NULL, 'c' },
+      { "windowed-client", no_argument, NULL, 'w' },
+      { "text-client", no_argument, NULL, 't' },
+      { "convert", required_argument, NULL, 'C' },
+      { "help", no_argument, NULL, 'h' },
+      { "version", no_argument, NULL, 'v' },
+      { 0, 0, 0, 0 }
+   };
+#endif
 
    while (1) {
-      c=getopt(argc,argv,"anbchvf:o:sSp:g:r:wtC:");
+#ifdef HAVE_GETOPT_LONG
+      c=getopt_long(argc,argv,options,long_options,NULL);
+#else
+      c=getopt(argc,argv,options);
+#endif
       if (c==-1) break;
       switch(c) {
          case 'n': WantNetwork=FALSE; break;
