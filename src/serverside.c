@@ -1548,7 +1548,8 @@ static void HighScoreWriteHeader(FILE *fp) {
 void ConvertHighScoreFile(void) {
 /* Converts an old format high score file to the new format. */
    FILE *old,*backup;
-   gchar *BackupFile,ch;
+   gchar *BackupFile;
+   int ch;
    char *OldError=NULL,*BackupError=NULL;
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
 
