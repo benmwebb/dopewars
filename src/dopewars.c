@@ -1924,6 +1924,76 @@ gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,
   return FALSE;
 }
 
+/*
+ * Writes a single configuration file variable (identified by GlobalIndex
+ * and StructIndex) to the specified file, in a format suitable for reading
+ * back in (via. ParseNextConfig and friends).
+ */
+static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
+{
+  gchar *GlobalName;
+
+  if (Globals[GlobalIndex].NameStruct[0]) {
+    GlobalName =
+        g_strdup_printf("%s[%d].%s", Globals[GlobalIndex].NameStruct,
+                        StructIndex, Globals[GlobalIndex].Name);
+  } else {
+    GlobalName = Globals[GlobalIndex].Name;
+  }
+
+  if (Globals[GlobalIndex].IntVal) {
+    fprintf(fp, "%s = %d\n", GlobalName,
+            *((int *)GetGlobalPointer(GlobalIndex, StructIndex)));
+  } else if (Globals[GlobalIndex].BoolVal) {
+    fprintf(fp, "%s = %s\n", GlobalName,
+            *((gboolean *)GetGlobalPointer(GlobalIndex, StructIndex)) ?
+                                           _("TRUE") : _("FALSE"));
+  } else if (Globals[GlobalIndex].PriceVal) {
+    gchar *prstr = pricetostr(*((price_t *)GetGlobalPointer(GlobalIndex,
+                                                            StructIndex)));
+
+    fprintf(fp, "%s = %s\n", GlobalName, prstr);
+    g_free(prstr);
+  } else if (Globals[GlobalIndex].StringVal) {
+    fprintf(fp, "%s = \"%s\"\n", GlobalName,
+            *((gchar **)GetGlobalPointer(GlobalIndex, StructIndex)));
+  } else if (Globals[GlobalIndex].StringList) {
+    int i;
+
+    fprintf(fp, "%s = { ", GlobalName);
+    for (i = 0; i < *Globals[GlobalIndex].MaxIndex; i++) {
+      if (i > 0)
+        fprintf(fp, ", ");
+      fprintf(fp, "\"%s\"", (*Globals[GlobalIndex].StringList)[i]);
+    }
+    fprintf(fp, " }\n");
+  }
+
+  if (Globals[GlobalIndex].NameStruct[0])
+    g_free(GlobalName);
+}
+
+/*
+ * Writes all of the configuration file variables that have changed
+ * (together with their values) to standard output.
+ */
+void WriteConfigFile(void)
+{
+  int i, j;
+
+  for (i = 0; i < NUMGLOB; i++) {
+    if (Globals[i].Modified) {
+      if (Globals[i].NameStruct[0]) {
+        for (j = 1; j <= *Globals[i].MaxIndex; j++) {
+          WriteConfigValue(stdout, i, j);
+        }
+      } else {
+        WriteConfigValue(stdout, i, 0);
+      }
+    }
+  }
+}
+
 void PrintConfigValue(int GlobalIndex, int StructIndex,
                       gboolean IndexGiven, GScanner *scanner)
 {
