@@ -1,3 +1,4 @@
+- Make Windows installer deal with old installed versions properly
 - Make server run as an NT Service
 - Configuration file editor thingy in the client?
 - Make minimize-to-systray code a) more robust and b) configurable

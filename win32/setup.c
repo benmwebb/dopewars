@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <zlib.h>
+#include "zlib/zlib.h"
 #include <shlobj.h>
 
 #include "contid.h"
@@ -42,6 +42,50 @@ HINSTANCE hInst=NULL;
 
 DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
+
+void InstallService(void) {
+  SC_HANDLE scManager,scService;
+  HKEY key;
+  bstr *str;
+  static char keyprefix[] = "SYSTEM\\ControlSet001\\Services\\";
+
+  static char servicename[] = "dopewars-server";
+  static char servicedisp[] = "dopewars server";
+  static char serviceexe[] = "dopewars.exe -N";
+  static char servicedesc[] = "Server for the drug-dealing game \"dopewars\"";
+
+  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
+
+  if (!scManager) {
+    DisplayError("Cannot connect to service manager",TRUE,FALSE);
+    return;
+  }
+
+  str = bstr_new();
+  bstr_assign(str,idata->installdir);
+  bstr_appendpath(str,serviceexe);
+
+  scService = CreateService(scManager,servicename,servicedisp,
+                            SERVICE_ALL_ACCESS,SERVICE_WIN32_OWN_PROCESS,
+                            SERVICE_DEMAND_START,SERVICE_ERROR_NORMAL,
+                            str->text,NULL,NULL,NULL,NULL,NULL);
+  if (!scService) {
+    DisplayError("Cannot create service",TRUE,FALSE);
+    bstr_free(str,TRUE);
+    return;
+  }
+
+  bstr_assign(str,keyprefix);
+  bstr_append(str,servicename);
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,str->text,0,KEY_WRITE,&key)
+      ==ERROR_SUCCESS) {
+    RegSetValueEx(key,"Description",0,REG_SZ,servicedesc,strlen(servicedesc));
+    RegCloseKey(key);
+  }
+
+  CloseServiceHandle(scService);
+  CloseServiceHandle(scManager);
+}
 
 BOOL CheckCreateDir(void) {
 /* Checks that the install directory exists, and creates it if it does not.
@@ -309,11 +353,12 @@ char *GetFirstFile(InstFiles *filelist,DWORD totalsize) {
 
 BOOL OpenNextOutput(HANDLE *fout,InstFiles *filelist,InstFiles **listpt,
                     DWORD *fileleft,HANDLE logf) {
+  char *filename,*sep;
   bstr *str;
   DWORD bytes_written;
 
   if (*fout) CloseHandle(*fout);
-  *fout = NULL;
+  *fout = INVALID_HANDLE_VALUE;
 
   str=bstr_new();
 
@@ -332,21 +377,32 @@ BOOL OpenNextOutput(HANDLE *fout,InstFiles *filelist,InstFiles **listpt,
   } else *listpt = filelist;
 
   if (*listpt) {
-    *fout = CreateFile((*listpt)->filename,GENERIC_WRITE,0,NULL,
-                       CREATE_ALWAYS,0,NULL);
+    filename = (*listpt)->filename;
+    sep = strrchr(filename,'\\');
+    if (sep) {
+      *sep = '\0';
+      CreateWholeDirectory(filename);
+      *sep = '\\';
+    }
+    *fout = CreateFile(filename,GENERIC_WRITE,0,NULL,CREATE_ALWAYS,0,NULL);
     *fileleft = (*listpt)->filesize;
     bstr_assign(str,"Installing file: ");
-    bstr_append(str,(*listpt)->filename);
+    bstr_append(str,filename);
     bstr_append(str," (size ");
     bstr_append_long(str,(*listpt)->filesize);
     bstr_append(str,")");
     SendDlgItemMessage(mainDlg[DL_DOINSTALL],ST_FILELIST,
                        WM_SETTEXT,0,(LPARAM)str->text);
+    if (*fout==INVALID_HANDLE_VALUE) {
+      bstr_assign(str,"Cannot create file ");
+      bstr_append(str,filename);
+      DisplayError(str->text,TRUE,FALSE);
+    }
   }
 
   bstr_free(str,TRUE);
 
-  return (*fout!=NULL);
+  return (*fout!=INVALID_HANDLE_VALUE);
 }
 
 HRESULT CreateLink(LPCSTR origPath,LPSTR linkArgs,LPSTR workDir,
@@ -408,15 +464,6 @@ void CreateLinks(char *linkdir,InstLink *linkpt) {
 
     CreateLink(origfile->text,linkpt->args,idata->installdir,
                linkpath->text,NULL);
-
-/*bstr_append_c(origfile,',');
-bstr_append(origfile,linkpt->args);
-bstr_append_c(origfile,',');
-bstr_append(origfile,idata->installdir);
-bstr_append_c(origfile,',');
-bstr_append(origfile,linkpath->text);
-bstr_append(origfile,", NULL");
-MessageBox(NULL,origfile->text,NULL,MB_OK);*/
   }
 }
 
@@ -539,7 +586,7 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
     printf("Write error\n");
   }
 
-  fout = NULL;
+  fout = INVALID_HANDLE_VALUE;
   listpt=NULL;
   OpenNextOutput(&fout,idata->instfiles,&listpt,&fileleft,logf);
 
@@ -570,7 +617,7 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
         if (!OpenNextOutput(&fout,idata->instfiles,&listpt,
                             &fileleft,logf)) break;
       }
-      if (!fout) break;
+      if (fout==INVALID_HANDLE_VALUE) break;
       if (count && !WriteFile(fout,z.next_out,count,&bytes_written,NULL)) {
         printf("Write error\n");
       }
@@ -591,6 +638,8 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
   bfree(outbuf);
 
   WriteFileList(logf,idata->extrafiles);
+
+  InstallService();
 
   CoInitialize(NULL);
   SetupShortcuts(logf);

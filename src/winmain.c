@@ -167,9 +167,13 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    LogFileStart();
    g_set_print_handler(LogFilePrintFunc);
 
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
-                     G_LOG_LEVEL_CRITICAL,
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE,
                      ServerLogMessage,NULL);
+
+   if (!is_service) {
+     g_log_set_handler(NULL,G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL,
+                       LogMessage,NULL);
+   }
 
 #ifdef ENABLE_NLS
    winlocale=GetWindowsLocale();

@@ -396,23 +396,26 @@ BOOL CreateWholeDirectory(char *path) {
   /* \\machine\share notation */
   if (strlen(path)>2 && path[0]=='\\' && path[1]=='\\') {
     pt=&path[2]; /* Skip initial "\\" */
+    while (*pt && *pt!='\\') pt++;  /* Skip the machine name */
+  /* X: notation */
+  } else if (strlen(path)>2 && path[1]==':') {
+    pt=&path[2]; /* Skip the X: part */
   } else {
     pt=path;
   }
 
-  while (*pt && *pt!='\\') pt++;  /* Skip the first (root) '\' */
 
   while (*pt) {
     pt++;
     if (*pt=='\\') {
       *pt='\0';
-      if (!CreateDirectory(path,NULL)) {
+      if (!CreateDirectory(path,NULL) && GetLastError()!=ERROR_ALREADY_EXISTS) {
         *pt='\\'; return FALSE;
       }
       *pt='\\';
     }
   }
-  return CreateDirectory(path,NULL);
+  return (CreateDirectory(path,NULL) || GetLastError()==ERROR_ALREADY_EXISTS);
 }
 
 BOOL RemoveWholeDirectory(char *path) {

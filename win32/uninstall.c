@@ -30,6 +30,35 @@ HINSTANCE hInst;
 HWND mainDlg;
 char *product;
 
+void RemoveService(void) {
+  SC_HANDLE scManager,scService;
+  SERVICE_STATUS status;
+  static char servicename[] = "dopewars-server";
+
+  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
+
+  if (!scManager) {
+    DisplayError("Cannot connect to service manager",TRUE,FALSE);
+    return;
+  }
+
+  scService = OpenService(scManager,servicename,DELETE|SERVICE_STOP);
+  if (!scService) {
+    DisplayError("Cannot open service",TRUE,FALSE);
+  } else {
+    if (!ControlService(scService,SERVICE_CONTROL_STOP,&status) &&
+        GetLastError()!=ERROR_SERVICE_NOT_ACTIVE) {
+      DisplayError("Cannot stop service",TRUE,FALSE);
+    }
+    if (!DeleteService(scService)) {
+      DisplayError("Cannot delete service",TRUE,FALSE);
+    }
+    CloseServiceHandle(scService);
+  }
+
+  CloseServiceHandle(scManager);
+}
+
 char *read_line0(HANDLE hin) {
   char *buf;
   int bufsize=32,strind=0;
@@ -157,12 +186,20 @@ InstData *ReadInstData(HANDLE fin,char *product,char *installdir) {
 
 void DeleteFileList(InstFiles *listpt) {
   bstr *str;
+  char *sep;
+
   str=bstr_new();
   for (;listpt;listpt=listpt->next) {
     bstr_assign(str,"Deleting file: ");
     bstr_append(str,listpt->filename);
     SendDlgItemMessage(mainDlg,ST_DELSTAT,WM_SETTEXT,0,(LPARAM)str->text);
     DeleteFile(listpt->filename);
+    sep = strrchr(listpt->filename,'\\');
+    if (sep) {
+      *sep = '\0';
+      RemoveWholeDirectory(listpt->filename);
+      *sep = '\\';
+    }
   }
   bstr_free(str,TRUE);
 }
@@ -235,6 +272,9 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
   if (fin) {
     idata = ReadInstData(fin,product,installdir);
     CloseHandle(fin);
+
+    RemoveService();
+
     DeleteFile("install.log");
     DeleteFileList(idata->instfiles);
     DeleteFileList(idata->extrafiles);

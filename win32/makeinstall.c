@@ -20,7 +20,7 @@
 
 #include <windows.h>
 #include <stdio.h>
-#include <zlib.h>
+#include "zlib/zlib.h"
 #include "util.h"
 
 char *read_line(HANDLE hin) {
@@ -57,12 +57,12 @@ InstData *ReadInstallData() {
   int i;
   enum {
     S_PRODUCT=0,S_INSTDIR,S_INSTALL,S_EXTRA,S_STARTMENUDIR,
-    S_STARTMENU,S_DESKTOP,
+    S_STARTMENU,S_DESKTOP,S_NTSERVICE,
     S_NONE
   } section=S_NONE;
   char *titles[S_NONE] = {
     "[product]","[instdir]", "[install]","[extrafiles]","[startmenudir]",
-    "[startmenu]","[desktop]"
+    "[startmenu]","[desktop]","[NT Service]"
   };
 
   idata = bmalloc(sizeof(InstData));
@@ -72,7 +72,7 @@ InstData *ReadInstallData() {
 
   fin = CreateFile("filelist",GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
 
-  if (fin) {
+  if (fin!=INVALID_HANDLE_VALUE) {
     while (1) {
       line=read_line(fin);
       if (!line) break;
@@ -130,14 +130,21 @@ printf("desktop entry = %s/%s/%s\n",line,line2,line3);
 #define COMPRESSION Z_BEST_COMPRESSION
 
 void OpenNextFile(InstFiles *filelist,InstFiles **listpt,HANDLE *fin) {
+  char *filename,*sep;
   if (*fin) CloseHandle(*fin);
   *fin=NULL;
 
   if (!*listpt) *listpt = filelist;
   else *listpt = (*listpt)->next;
 
-  if (*listpt) *fin = CreateFile((*listpt)->filename,GENERIC_READ,0,NULL,
-                                 OPEN_EXISTING,0,NULL);
+  if (*listpt) {
+    filename = (*listpt)->filename;
+    sep = strstr(filename," -> ");
+    if (sep) *sep='\0';
+    *fin = CreateFile(filename,GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
+    if (sep) strcpy(filename,sep+4);
+    if (*fin==INVALID_HANDLE_VALUE) printf("Cannot open file: %s\n",filename);
+  }
 }
 
 int main() {
@@ -169,9 +176,9 @@ int main() {
   filept=NULL;
   fin=NULL;
   OpenNextFile(idata->instfiles,&filept,&fin);
-  if (!fin) { printf("Cannot open file\n"); return 1; }
+  if (fin==INVALID_HANDLE_VALUE) { return 1; }
 
-  while (fin) {
+  while (fin!=INVALID_HANDLE_VALUE) {
     if (z.avail_in==0) {
       z.next_in = inbuf;
       bytes_read=0;
@@ -210,7 +217,7 @@ int main() {
 
   fout = CreateFile("manifest",GENERIC_WRITE,0,NULL,
                     CREATE_ALWAYS,0,NULL);
-  if (!fout) printf("Cannot create file list\n");
+  if (fout==INVALID_HANDLE_VALUE) printf("Cannot create file list\n");
 
   str=bstr_new();
   bstr_setlength(str,0);

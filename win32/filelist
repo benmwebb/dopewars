@@ -11,37 +11,38 @@ Server for the drug-dealing game "dopewars"
 dopewars.exe -N
 
 [install]
-licence.txt
-aiplayer.html
-clientplay.html
-commandline.html
-configfile.html
-credits.html
-developer.html
-i18n.html
-index.html
-installation.html
-metaserver.html
-server.html
-servercommands.html
-windows.html
-dopewars-config.txt
-dopewars.exe
-example-cfg.txt
-glib-1.3.dll
-readme.txt
+../../auxdope/licence.txt -> licence.txt
 uninstall.exe
-locale/de/LC_MESSAGES/dopewars.mo
-locale/pl/LC_MESSAGES/dopewars.mo
-locale/pt_BR/LC_MESSAGES/dopewars.mo
-locale/fr/LC_MESSAGES/dopewars.mo
+../doc/aiplayer.html -> aiplayer.html
+../doc/clientplay.html -> clientplay.html
+../doc/commandline.html -> commandline.html
+../doc/configfile.html -> configfile.html
+../doc/credits.html -> credits.html
+../doc/developer.html -> developer.html
+../doc/i18n.html -> i18n.html
+../doc/index.html -> index.html
+../doc/installation.html -> installation.html
+../doc/metaserver.html -> metaserver.html
+../doc/protocol.html -> protocol.html
+../doc/server.html -> server.html
+../doc/servercommands.html -> servercommands.html
+../doc/windows.html -> windows.html
+../../auxdope/dopewars-config.txt -> dopewars-config.txt
+../src/dopewars.exe -> dopewars.exe
+../../auxdope/example-cfg.txt -> example-cfg.txt
+../../auxdope/glib-1.3.dll -> glib-1.3.dll
+../../auxdope/readme.txt -> readme.txt
+../po/fr.gmo -> locale\fr\LC_MESSAGES\dopewars.mo
+../po/de.gmo -> locale\de\LC_MESSAGES\dopewars.mo
+../po/pl.gmo -> locale\pl\LC_MESSAGES\dopewars.mo
+../po/pt_BR.gmo -> locale\pt_BR\LC_MESSAGES\dopewars.mo
 
 [extrafiles]
 dopewars-log.txt
 dopewars.sco
 
 [startmenudir]
-dopewars-1.5.2
+dopewars-1.5.3
 
 [startmenu]
 dopewars.lnk
