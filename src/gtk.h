@@ -21,6 +21,13 @@ typedef enum {
 } GtkVisibility;
 
 typedef enum {
+   GTK_PROGRESS_LEFT_TO_RIGHT,
+   GTK_PROGRESS_RIGHT_TO_LEFT,
+   GTK_PROGRESS_BOTTOM_TO_TOP,
+   GTK_PROGRESS_TOP_TO_BOTTOM
+} GtkProgressBarOrientation;
+
+typedef enum {
    GTK_EXPAND = 1 << 0,
    GTK_SHRINK = 1 << 1,
    GTK_FILL   = 1 << 2
@@ -74,6 +81,8 @@ typedef struct _GtkMenuItem GtkMenuItem;
 typedef struct _GtkMenu GtkMenu;
 typedef struct _GtkAdjustment GtkAdjustment;
 typedef struct _GtkSeparator GtkSeparator;
+typedef struct _GtkMisc GtkMisc;
+typedef struct _GtkProgressBar GtkProgressBar;
 typedef struct _GtkHSeparator GtkHSeparator;
 typedef struct _GtkVSeparator GtkVSeparator;
 typedef struct _GtkAccelGroup GtkAccelGroup;
@@ -128,7 +137,18 @@ struct _GtkWidget {
    HWND hWnd;
    GtkRequisition requisition;
    GtkAllocation allocation;
+   GtkRequisition usize;
    GtkWidget *parent;
+};
+
+struct _GtkMisc {
+   GtkWidget widget;
+};
+
+struct _GtkProgressBar {
+   GtkWidget widget;
+   GtkProgressBarOrientation orient;
+   gfloat position;
 };
 
 struct _GtkSeparator {
@@ -429,6 +449,8 @@ struct _GtkTableRowCol {
 #define GTK_MENU_BAR(obj) ((GtkMenuBar *)(obj))
 #define GTK_MENU_ITEM(obj) ((GtkMenuItem *)(obj))
 #define GTK_MENU(obj) ((GtkMenu *)(obj))
+#define GTK_MISC(obj) ((GtkMisc *)(obj))
+#define GTK_PROGRESS_BAR(obj) ((GtkProgressBar *)(obj))
 #define GTK_SIGNAL_FUNC(f) ((GtkSignalFunc) f)
 
 #define GTK_OBJECT_FLAGS(obj) (GTK_OBJECT(obj)->flags)
@@ -473,6 +495,7 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
                                  GtkWidget **pack_widg);
 GtkWidget *gtk_entry_new();
 GtkWidget *gtk_table_new(guint rows,guint cols,gboolean homogeneous);
+void gtk_table_resize(GtkTable *table,guint rows,guint cols);
 GtkItemFactory *gtk_item_factory_new(GtkType container_type,
                                      const gchar *path,
                                      GtkAccelGroup *accel_group);
@@ -617,6 +640,7 @@ void gtk_option_menu_set_menu(GtkOptionMenu *option_menu,GtkWidget *menu);
 void gtk_option_menu_set_history(GtkOptionMenu *option_menu,guint index);
 void gtk_label_set_text(GtkLabel *label,const gchar *str);
 guint gtk_label_parse_uline(GtkLabel *label,const gchar *str);
+void gtk_label_get(GtkLabel *label,gchar **str);
 void gtk_clist_set_row_data(GtkCList *clist,gint row,gpointer data);
 gpointer gtk_clist_get_row_data(GtkCList *clist,gint row);
 void gtk_clist_set_auto_sort(GtkCList *clist,gboolean auto_sort);
@@ -634,6 +658,11 @@ gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button);
 void gtk_spin_button_set_value(GtkSpinButton *spin_button,gfloat value);
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
                                     GtkAdjustment *adjustment);
+void gtk_misc_set_alignment(GtkMisc *misc,gfloat xalign,gfloat yalign);
+GtkWidget *gtk_progress_bar_new();
+void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
+                                      GtkProgressBarOrientation orientation);
+void gtk_progress_bar_update(GtkProgressBar *pbar,gfloat percentage);
 
 extern long AsyncSocketError;
 

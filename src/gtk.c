@@ -180,6 +180,9 @@ static void gtk_window_handle_auto_size(GtkWindow *window,
                                         GtkAllocation *allocation);
 static void gtk_window_set_initial_position(GtkWindow *window,
                                             GtkAllocation *allocation);
+static void gtk_progress_bar_size_request(GtkWidget *widget,
+                                          GtkRequisition *requisition);
+static void gtk_progress_bar_realize(GtkWidget *widget);
 
 typedef struct _GdkInput GdkInput;
 
@@ -237,6 +240,20 @@ static GtkSignalType GtkSeparatorSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_separator_size_request },
    { "realize",gtk_marshal_VOID__VOID,gtk_separator_realize },
    { "",NULL,NULL }
+};
+
+static GtkClass GtkMiscClass = {
+   "misc",&GtkWidgetClass,sizeof(GtkMisc),NULL
+};
+
+static GtkSignalType GtkProgressBarSignals[] = {
+   { "size_request",gtk_marshal_VOID__GPOIN,gtk_progress_bar_size_request },
+   { "realize",gtk_marshal_VOID__VOID,gtk_progress_bar_realize },
+   { "",NULL,NULL }
+};
+
+static GtkClass GtkProgressBarClass = {
+   "progressbar",&GtkWidgetClass,sizeof(GtkProgressBar),GtkProgressBarSignals
 };
 
 static GtkClass GtkSeparatorClass = {
@@ -1037,6 +1054,8 @@ void gtk_widget_realize(GtkWidget *widget) {
 
 void gtk_widget_create(GtkWidget *widget) {
    GTK_WIDGET_SET_FLAGS(widget,GTK_SENSITIVE);
+   widget->usize.width=0;
+   widget->usize.height=0;
 }
 
 void gtk_widget_destroy(GtkWidget *widget) {
@@ -1071,6 +1090,10 @@ void gtk_widget_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    if (GTK_WIDGET_VISIBLE(widget)) {
       gtk_signal_emit(GTK_OBJECT(widget),"size_request",requisition);
    }
+   if (requisition->width < widget->usize.width)
+      requisition->width = widget->usize.width;
+   if (requisition->height < widget->usize.height)
+      requisition->height = widget->usize.height;
    if (requisition->width != widget->requisition.width ||
        requisition->height != widget->requisition.height) {
       memcpy(&widget->requisition,requisition,sizeof(GtkRequisition));
@@ -2437,6 +2460,26 @@ GtkWidget *gtk_table_new(guint rows,guint cols,gboolean homogeneous) {
    table->cols = g_new0(GtkTableRowCol,cols);
 
    return GTK_WIDGET(table);
+}
+
+void gtk_table_resize(GtkTable *table,guint rows,guint cols) {
+   gint i;
+   table->rows = g_realloc(table->rows,sizeof(GtkTableRowCol)*rows);
+   table->cols = g_realloc(table->cols,sizeof(GtkTableRowCol)*cols);
+
+   for (i=table->nrows;i<rows;i++) {
+      table->rows[i].requisition=0;
+      table->rows[i].allocation=0;
+      table->rows[i].spacing=table->row_spacing;
+   }
+   for (i=table->ncols;i<cols;i++) {
+      table->cols[i].requisition=0;
+      table->cols[i].allocation=0;
+      table->cols[i].spacing=table->column_spacing;
+   }
+   table->nrows = rows;
+   table->ncols = cols;
+   gtk_widget_update(GTK_WIDGET(table),FALSE);
 }
 
 void gtk_table_attach_defaults(GtkTable *table,GtkWidget *widget,
@@ -3928,6 +3971,10 @@ guint gtk_label_parse_uline(GtkLabel *label,const gchar *str) {
    return 0;
 }
 
+void gtk_label_get(GtkLabel *label,gchar **str) {
+   *str = label->text;
+}
+
 void gtk_clist_set_row_data(GtkCList *clist,gint row,gpointer data) {
    GtkCListRow *list_row;
    if (row>=0 && row<g_slist_length(clist->rows)) {
@@ -3957,6 +4004,8 @@ void gtk_text_set_point(GtkText *text,guint index) {
 }
 
 void gtk_widget_set_usize(GtkWidget *widget,gint width,gint height) {
+   widget->usize.width = width;
+   widget->usize.height = height;
 }
 
 void gtk_clist_select_row(GtkCList *clist,gint row,gint column) {
@@ -4070,4 +4119,58 @@ void gtk_paned_set_position(GtkPaned *paned,gint position) {
    paned->handle_pos=position;
    memcpy(&allocation,&paned->true_alloc,sizeof(GtkAllocation));
    gtk_widget_set_size(GTK_WIDGET(paned),&allocation);
+}
+
+void gtk_misc_set_alignment(GtkMisc *misc,gfloat xalign,gfloat yalign) {
+}
+
+GtkWidget *gtk_progress_bar_new() {
+   GtkProgressBar *prog;
+
+   prog=GTK_PROGRESS_BAR(GtkNewObject(&GtkProgressBarClass));
+   prog->orient=GTK_PROGRESS_LEFT_TO_RIGHT;
+   prog->position=0;
+
+   return GTK_WIDGET(prog);
+}
+
+void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
+                                      GtkProgressBarOrientation orientation) {
+   pbar->orient=orientation;
+}
+
+void gtk_progress_bar_update(GtkProgressBar *pbar,gfloat percentage) {
+   GtkWidget *widget;
+
+   widget=GTK_WIDGET(pbar);
+   pbar->position = percentage;
+   if (GTK_WIDGET_REALIZED(widget)) {
+      SendMessage(widget->hWnd,PBM_SETPOS,(WPARAM)(10000.0*pbar->position),0);
+   }
+}
+
+void gtk_progress_bar_size_request(GtkWidget *widget,
+                                   GtkRequisition *requisition) {
+   SIZE size;
+
+   if (GetTextSize(widget->hWnd,"Sample",&size)) {
+      requisition->width = size.cx;
+      requisition->height = size.cy;
+   }
+}
+
+void gtk_progress_bar_realize(GtkWidget *widget) {
+   HWND Parent;
+   GtkProgressBar *prog;
+
+   prog=GTK_PROGRESS_BAR(widget);
+   Parent=gtk_get_parent_hwnd(widget);
+   widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,PROGRESS_CLASS,"",
+                            WS_CHILD,
+                            widget->allocation.x,widget->allocation.y,
+                            widget->allocation.width,widget->allocation.height,
+                            Parent,NULL,hInst,NULL);
+   gtk_set_default_font(widget->hWnd);
+   SendMessage(widget->hWnd,PBM_SETRANGE,0,MAKELPARAM(0,10000));
+   SendMessage(widget->hWnd,PBM_SETPOS,(WPARAM)(10000.0*prog->position),0);
 }
