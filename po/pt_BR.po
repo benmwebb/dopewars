@@ -613,7 +613,7 @@ msgstr "Ludes"
 
 #: src/dopewars.c:440
 msgid "Rival drug dealers raided a pharmacy and are selling cheap ludes!"
-msgstr "Comerciantes de drogas rivais arrumaram uma farmácia e estão vendendo ludes baratos!"
+msgstr "Comerciantes de drogas rivais arrumaram uma farmácia e estão vendendo ludes ba- ratos!"
 
 #: src/dopewars.c:441
 msgid "MDA"
@@ -915,17 +915,18 @@ msgstr "comprar, vender, e tentar se safar dos policiais!"
 msgid ""
 "The first thing you need to do is pay off your debt to the Loan Shark. After"
 msgstr ""
-"A primeira coisa que você irá precisar fazer é pagar seu débito com o Argeota. Depois"
+"A primeira coisa que você irá precisar fazer é pagar seu débito com o Argeota."
+
 
 #: src/curses_client.c:158
 msgid ""
 "that, your goal is to make as much money as possible (and stay alive)! You"
 msgstr ""
-"disso, seu objetivo é ganhar o máximo de dinheiro possível (e ficar vivo)! Você"
+"Depois disso, seu objetivo é ganhar o máximo de dinheiro possível (e ficar"
 
 #: src/curses_client.c:160
 msgid "have one month of game time to make your fortune."
-msgstr "tem um mês de tempo de jogo para fazer sua fortuna."
+msgstr "vivo)! Você tem um mês de tempo de jogo para fazer sua fortuna."
 
 #: src/curses_client.c:162
 msgid "Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
@@ -1051,7 +1052,7 @@ msgstr "Não foi possível iniciar o dopewars em multiplayer"
 
 #: src/curses_client.c:326
 msgid "Will you... C>onnect to a different host and/or port"
-msgstr "Você ira... C>onectar em um diferente host e porta"
+msgstr "Você irá... C>onectar em um diferente host e porta"
 
 #: src/curses_client.c:328
 msgid "            L>ist the servers on the metaserver, and select one"
@@ -1117,7 +1118,7 @@ msgstr "Quantos você vai vender? "
 
 #: src/curses_client.c:513
 msgid "Choose an errand to give one of your %tde..."
-msgstr "Escolha um trabalho para dar a um de seus %tde..."
+msgstr "Escolha um trabalho para dar a uma de suas %tde..."
 
 #: src/curses_client.c:519
 msgid "   S>py on another dealer                  (cost: %P)"
@@ -1129,7 +1130,7 @@ msgstr "   A>trair policiais para outro traficante  (custo: %P)"
 
 #: src/curses_client.c:526
 msgid "   G>et stuffed"
-msgstr "   U>sar algo"
+msgstr "   D>espedir"
 
 #: src/curses_client.c:529
 msgid "or C>ontact your spies and receive reports"
@@ -1141,7 +1142,7 @@ msgstr "ou N>enhum trabalho ? "
 
 #: src/curses_client.c:534
 msgid "STGCN"
-msgstr "EAUCN"
+msgstr "EADCN"
 
 #: src/curses_client.c:537
 msgid "Whom do you want to spy on? "
@@ -1153,7 +1154,7 @@ msgstr "Quem você quer que os policiais sejam atraídos? "
 
 #: src/curses_client.c:547
 msgid " Are you sure? "
-msgstr "Você tem certeza? "
+msgstr " Você tem certeza? "
 
 #: src/curses_client.c:548 src/curses_client.c:566 src/curses_client.c:1724
 msgid "YN"
@@ -1295,7 +1296,7 @@ msgstr "Estatísticas"
 
 #: src/curses_client.c:1180
 msgid "Cash %17P"
-msgstr "Dinheiro %17P"
+msgstr "Dinheiro %13P"
 
 #: src/curses_client.c:1184
 #, c-format
@@ -1304,11 +1305,11 @@ msgstr "Pontos de vida     %3d"
 
 #: src/curses_client.c:1186
 msgid "Bank %17P"
-msgstr "Banco %17P"
+msgstr "Banco %16P"
 
 #: src/curses_client.c:1189
 msgid "Debt %17P"
-msgstr "Débito %17P"
+msgstr "Débito %15P"
 
 #: src/curses_client.c:1192
 #, c-format
@@ -1418,7 +1419,7 @@ msgstr "CVLFPJDLIS"
 
 #: src/curses_client.c:1577
 msgid "DRFSQ"
-msgstr "LFCTS"
+msgstr "TCLFS"
 
 #: src/curses_client.c:1605
 msgid "List what? P>layers or S>cores? "
