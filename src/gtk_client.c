@@ -2565,7 +2565,7 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
   } else if (!Debt && withdraw && money>ClientData.Play->Bank) {
     GtkMessageBox(dialog,_("There isn't that much money available..."),
                   title,MB_OK);
-  } else if (money>ClientData.Play->Cash) {
+  } else if (!withdraw && money>ClientData.Play->Cash) {
     GtkMessageBox(dialog,_("You don't have that much money!"),
                   title,MB_OK);
   } else {
