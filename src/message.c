@@ -994,7 +994,31 @@ void SendFightLeave(Player *Play,gboolean FightOver) {
 }
 
 void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
-                         int *BitchesKilled,gchar *FightPoint,gboolean *Loot) {
+                         int *DefendHealth,int *DefendBitches,
+                         int *BitchesKilled,int *ArmPercent,
+                         gchar *FightPoint,gboolean *CanRunHere,
+                         gboolean *Loot,gboolean *CanFire,gchar **Message) {
+   gchar *pt,*Flags;
+
+   pt=Data;
+   *AttackName=GetNextWord(&pt,"");
+   *DefendName=GetNextWord(&pt,"");
+   *DefendHealth=GetNextInt(&pt,0);
+   *DefendBitches=GetNextInt(&pt,0);
+   *BitchesKilled=GetNextInt(&pt,0);
+   *ArmPercent=GetNextInt(&pt,0);
+
+   Flags=GetNextWord(&pt,NULL);
+   if (Flags && strlen(Flags)>=4) {
+      *FightPoint=Flags[0];
+      *CanRunHere=(Flags[1]=='1');
+      *Loot=(Flags[2]=='1');
+      *CanFire=(Flags[3]=='1');
+   } else {
+      *FightPoint=F_MSG;
+      *CanRunHere=*Loot=*CanFire=FALSE;
+   }
+   *Message=pt;
 }
 
 void SendFightMessage(Player *Attacker,Player *Defender,
@@ -1030,7 +1054,7 @@ void SendFightMessage(Player *Attacker,Player *Defender,
                           BitchesKilled,ArmPercent,
                           FightPoint,CanRunHere(To) ? '1' : '0',
                           Loot ? '1' : '0',
-                          FightPoint!=F_ARRIVED &&
+                          FightPoint!=F_ARRIVED && FightPoint!=F_LASTLEAVE &&
                                  CanPlayerFire(To) ? '1' : '0');
       }
       if (Msg) {
@@ -1060,6 +1084,15 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         gchar FightPoint,gboolean Loot) {
    gchar *Armament,*DefendName,*AttackName;
    int Health,Bitches;
+   gchar *BitchName,*BitchesName;
+
+   if (Defender && Defender->IsCop) {
+      BitchName=Cop[Defender->IsCop-1].DeputyName;
+      BitchesName=Cop[Defender->IsCop-1].DeputiesName;
+   } else {
+      BitchName=Names.Bitch;
+      BitchesName=Names.Bitches;
+   }
 
    AttackName = (!Attacker || Attacker==To ? "" : GetPlayerName(Attacker));
    DefendName = (!Defender || Defender==To ? "" : GetPlayerName(Defender));
@@ -1075,7 +1108,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                                    _("armed to the teeth");
          if (DefendName[0]) {
             dpg_string_sprintfa(text,_("%s arrives with %d %tde, %s!"),
-                                DefendName,Bitches,Names.Bitches,Armament);
+                                DefendName,Bitches,BitchesName,Armament);
          }
          break;
       case F_STAND:
@@ -1117,7 +1150,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                                  AttackName,DefendName);
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,_("%s shoots at %s and kills a %tde!"),
-                                   AttackName,DefendName,Names.Bitch);
+                                   AttackName,DefendName,BitchName);
              } else {
                g_string_sprintfa(text,_("%s shoots at %s."),
                                  AttackName,DefendName);
@@ -1129,7 +1162,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,
                                    _("%s shoots at you... and kills a %tde!"),
-                                   AttackName,Names.Bitch);
+                                   AttackName,BitchName);
             } else {
                g_string_sprintfa(text,_("%s hits you, man!"),AttackName);
             }
@@ -1138,7 +1171,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                g_string_sprintfa(text,_("You killed %s!"),DefendName);
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,_("You hit %s, and killed a %tde!"),
-                                   DefendName,Names.Bitch);
+                                   DefendName,BitchName);
             } else {
                g_string_sprintfa(text,_("You hit %s!"),DefendName);
             }

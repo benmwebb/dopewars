@@ -112,7 +112,7 @@ struct BITCH {
 extern int ClientSock,ListenSock;
 extern char Network,Client,Server,NotifyMetaServer,AIPlayer;
 extern int Port,Sanitized,DrugValue;
-extern int NumLocation,NumGun,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
+extern int NumLocation,NumGun,NumCop,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
 extern gchar *HiScoreFile,*ServerName,*Pager;
 extern char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
 extern char WantedClient;
@@ -146,6 +146,7 @@ extern int NumTurns;
 
 #define NUMDRUG      12
 #define NUMGUN       4
+#define NUMCOP       2
 #define NUMLOCATION  8
 
 #define ESCAPE  0
@@ -209,6 +210,11 @@ extern int NumTurns;
 #define E_FIGHTASK   122
 #define E_DOCTOR     123
 #define E_MAXOOS     124
+
+struct COP {
+   gchar *Name,*DeputyName,*DeputiesName;
+};
+extern struct COP DefaultCop[NUMCOP],*Cop;
 
 struct GUN {
    gchar *Name;
@@ -292,7 +298,7 @@ struct PLAYER_T {
    ConnBuf ReadBuf,WriteBuf;
    Abilities Abil;
    GPtrArray *FightArray;
-   gboolean IsCop;
+   gint IsCop;
 };
 
 #define CM_SERVER 0
@@ -361,6 +367,7 @@ gchar *pricetostr(price_t price);
 gchar *FormatPrice(price_t price);
 char IsInventoryClear(Inventory *Guns,Inventory *Drugs);
 void ResizeLocations(int NewNum);
+void ResizeCops(int NewNum);
 void ResizeGuns(int NewNum);
 void ResizeDrugs(int NewNum);
 void ResizeSubway(int NewNum);
@@ -370,6 +377,7 @@ void AssignName(gchar **dest,gchar *src);
 void CopyNames(struct NAMES *dest,struct NAMES *src);
 void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src);
 void CopyLocation(struct LOCATION *dest,struct LOCATION *src);
+void CopyCop(struct COP *dest,struct COP *src);
 void CopyGun(struct GUN *dest,struct GUN *src);
 void CopyDrug(struct DRUG *dest,struct DRUG *src);
 void CopyDrugs(struct DRUGS *dest,struct DRUGS *src);

@@ -167,7 +167,10 @@ void SendOldCanFireMessage(Player *To,GString *text);
 void SendOldFightPrint(Player *To,GString *text,gboolean FightOver);
 void SendFightLeave(Player *Play,gboolean FightOver);
 void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
-                         int *BitchesKilled,gchar *FightPoint,gboolean *Loot);
+                         int *DefendHealth,int *DefendBitches,
+                         int *BitchesKilled,int *ArmPercent,
+                         gchar *FightPoint,gboolean *CanRunHere,
+                         gboolean *Loot,gboolean *CanFire,gchar **Message);
 void SendFightMessage(Player *Attacker,Player *Defender,
                       int BitchesKilled,gchar FightPoint,
                       gboolean Loot,gboolean Broadcast,gchar *Msg);

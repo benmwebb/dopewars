@@ -56,7 +56,8 @@ int Port=7902,Sanitized=0,ConfigVerbose=0,DrugValue;
 char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL;
 char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
 char WantedClient;
-int NumLocation=0,NumGun=0,NumDrug=0,NumSubway=0,NumPlaying=0,NumStoppedTo=0;
+int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
+    NumPlaying=0,NumStoppedTo=0;
 Player Noone;
 int LoanSharkLoc=DEFLOANSHARK,BankLoc=DEFBANK,GunShopLoc=DEFGUNSHOP,
     RoughPubLoc=DEFROUGHPUB;
@@ -102,6 +103,7 @@ GScannerConfig ScannerConfig = {
 struct LOCATION StaticLocation,*Location=NULL;
 struct DRUG StaticDrug,*Drug=NULL;
 struct GUN StaticGun,*Gun=NULL;
+struct COP *Cop=NULL;
 struct COPS Cops = { 70,2,65,2,5,2,30 };
 struct NAMES Names = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
                        NULL,NULL,NULL,NULL };
@@ -391,6 +393,11 @@ char *DefaultStoppedTo[NUMSTOPPEDTO] = {
    N_("smoke a cigar"),
    N_("smoke a Djarum"),
    N_("smoke a cigarette")
+};
+
+struct COP DefaultCop[NUMCOP] = {
+   { N_("Officer Hardass"),N_("deputy"),N_("deputies") },
+   { N_("Officer Bob"),N_("deputy"),N_("deputies") }
 };
 
 struct GUN DefaultGun[NUMGUN] = {
@@ -985,6 +992,25 @@ void ResizeLocations(int NewNum) {
    NumLocation=NewNum;
 }
 
+void ResizeCops(int NewNum) {
+   int i;
+   if (NewNum<NumCop) for (i=NewNum;i<NumCop;i++) {
+      g_free(Cop[i].Name);
+      g_free(Cop[i].DeputyName);
+      g_free(Cop[i].DeputiesName);
+   }
+   Cop=g_realloc(Cop,sizeof(struct COP)*NewNum);
+   if (NewNum>NumCop) {
+      memset(&Cop[NumCop],0,(NewNum-NumCop)*sizeof(struct COP));
+      for (i=NumCop;i<NewNum;i++) {
+         Cop[i].Name=g_strdup("");
+         Cop[i].DeputyName=g_strdup("");
+         Cop[i].DeputiesName=g_strdup("");
+      }
+   }
+   NumCop=NewNum;
+}
+
 void ResizeGuns(int NewNum) {
    int i;
    if (NewNum<NumGun) for (i=NewNum;i<NumGun;i++) {
@@ -1089,6 +1115,12 @@ void CopyLocation(struct LOCATION *dest,struct LOCATION *src) {
    AssignName(&dest->Name,_(src->Name));
    dest->PolicePresence=src->PolicePresence;
    dest->MinDrug=src->MinDrug; dest->MaxDrug=src->MaxDrug;
+}
+
+void CopyCop(struct COP *dest,struct COP *src) {
+   AssignName(&dest->Name,_(src->Name));
+   AssignName(&dest->DeputyName,_(src->DeputyName));
+   AssignName(&dest->DeputiesName,_(src->DeputiesName));
 }
 
 void CopyGun(struct GUN *dest,struct GUN *src) {
@@ -1420,6 +1452,8 @@ void SetupParameters() {
 
    ResizeLocations(NUMLOCATION);
    for (i=0;i<NumLocation;i++) CopyLocation(&Location[i],&DefaultLocation[i]);
+   ResizeCops(NUMCOP);
+   for (i=0;i<NumCop;i++) CopyCop(&Cop[i],&DefaultCop[i]);
    ResizeGuns(NUMGUN);
    for (i=0;i<NumGun;i++) CopyGun(&Gun[i],&DefaultGun[i]);
    ResizeDrugs(NUMDRUG);

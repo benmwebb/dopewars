@@ -467,24 +467,29 @@ void PrintMessage(char *text) {
 static void FightCallback(GtkWidget *widget,gpointer data) {
    gint Answer;
    Player *Play;
-   gchar *text;
+   gchar text[4];
+   GtkWidget *window;
+   gpointer CanRunHere=NULL;
+
+   window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+   if (window) CanRunHere=gtk_object_get_data(GTK_OBJECT(window),"CanRunHere");
+
    Answer=GPOINTER_TO_INT(data);
    Play=ClientData.Play;
    switch(Answer) {
       case 'D':
          gtk_widget_hide(FightDialog); break;
       case 'R':
-         gtk_widget_hide(FightDialog);
-         Jet(); break;
-      case 'F': case 'S':
-         if (Play->Flags&CANSHOOT &&
-             ((Answer=='F' && TotalGunsCarried(Play)>0) ||
-              (Answer=='S' && TotalGunsCarried(Play)==0))) {
-            Play->Flags &= ~CANSHOOT;
-            text=g_strdup_printf("%c",Answer);
-            SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,text);
-            g_free(text);
+         if (CanRunHere) {
+            SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,"R");
+         } else {
+            gtk_widget_hide(FightDialog);
+            Jet();
          }
+         break;
+      case 'F': case 'S':
+         text[0]=Answer; text[1]='\0';
+         SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,text);
          break;
    }
 }
@@ -569,6 +574,9 @@ void DisplayFightMessage(char *Data) {
    gint EditPos;
    GtkWidget *Fight,*Stand,*Run,*Text;
    char cr[] = "\n";
+   gchar *AttackName,*DefendName,FightPoint,*Message;
+   int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
+   gboolean CanRunHere,Loot,CanFire;
 
    if (!Data) {
       if (FightDialog) {
@@ -590,18 +598,32 @@ void DisplayFightMessage(char *Data) {
 
    Play=ClientData.Play;
 
-   g_strdelimit(Data,"^",'\n');
-   if (strlen(Data)>0) {
+   if (HaveAbility(Play,A_NEWFIGHT)) {
+      ReceiveFightMessage(Data,&AttackName,&DefendName,&DefendHealth,
+                          &DefendBitches,&BitchesKilled,&ArmPercent,
+                          &FightPoint,&CanRunHere,&Loot,&CanFire,&Message);
+   } else {
+      Message=Data;
+      if (Play->Flags&FIGHTING) FightPoint=F_MSG; else FightPoint=F_LASTLEAVE;
+      CanFire = (Play->Flags&CANSHOOT);
+      CanRunHere=FALSE;
+   }
+   gtk_object_set_data(GTK_OBJECT(FightDialog),"CanRunHere",
+                       GINT_TO_POINTER(CanRunHere));
+
+   g_strdelimit(Message,"^",'\n');
+   if (strlen(Message)>0) {
       EditPos=gtk_text_get_length(GTK_TEXT(Text));
-      gtk_editable_insert_text(GTK_EDITABLE(Text),Data,strlen(Data),&EditPos);
+      gtk_editable_insert_text(GTK_EDITABLE(Text),Message,
+                               strlen(Message),&EditPos);
       gtk_editable_insert_text(GTK_EDITABLE(Text),cr,strlen(cr),&EditPos);
    }
 
-   if (Play->Flags&CANSHOOT && TotalGunsCarried(Play)>0)
+   if (CanFire && TotalGunsCarried(Play)>0)
       gtk_widget_show(Fight); else gtk_widget_hide(Fight);
-   if (Play->Flags&CANSHOOT && TotalGunsCarried(Play)==0)
+   if (CanFire && TotalGunsCarried(Play)==0)
       gtk_widget_show(Stand); else gtk_widget_hide(Stand);
-   if (Play->Flags&FIGHTING)
+   if (FightPoint!=F_LASTLEAVE)
       gtk_widget_show(Run); else gtk_widget_hide(Run);
 }
 

@@ -348,7 +348,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          BuyObject(Play,Data);
          break;
       case C_FIGHTACT:
-         if (Data[0]=='F') Fire(Play); else RunFromCombat(Play);
+         if (Data[0]=='R') RunFromCombat(Play); else Fire(Play);
          break;
       case C_ANSWER:
          HandleAnswer(Play,To,Data);
@@ -1184,10 +1184,13 @@ int SendCopOffer(Player *To,char Force) {
 void CopsAttackPlayer(Player *Play) {
 /* Has the cops attack player "Play"                                */
    Player *Cops;
+   gint CopIndex;
+
+   CopIndex=brandom(1,NumCop+1);
    Cops=g_new(Player,1);
    FirstServer=AddPlayer(0,Cops,FirstServer);
-   SetPlayerName(Cops,"Officer Hardass");
-   Cops->IsCop=TRUE;
+   SetPlayerName(Cops,Cop[CopIndex-1].Name);
+   Cops->IsCop=CopIndex;
    Cops->Cash=Cops->Debt=0;
 
    Cops->Bitches.Carried=10;
@@ -1337,6 +1340,8 @@ void RunFromCombat(Player *Play) {
 /* Withdraws player "Play" from combat, and levies any penalties on */
 /* the player for this cowardly act, if applicable                  */
    int EscapeProb,RandNum;
+
+   if (!Play || !Play->FightArray) return;
 
    EscapeProb=50;
    RandNum=brandom(0,100);
