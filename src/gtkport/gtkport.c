@@ -999,7 +999,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       if (GTK_OBJECT(widget)->klass == &GtkLabelClass) {
         SetBkMode(hDC, TRANSPARENT);
         *dodef = FALSE;
-        return GetStockObject(NULL_BRUSH);
+        return (gboolean)GetStockObject(NULL_BRUSH);
       }
     }
     break;
