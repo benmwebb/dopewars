@@ -2198,11 +2198,17 @@ void gtk_hbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   gint spacing = GTK_BOX(widget)->spacing, numchildren = 0;
   gint maxreq = 0;
   gboolean homogeneous = GTK_BOX(widget)->homogeneous;
+  gboolean first = TRUE;
 
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
     if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+      if (first) {
+        first = FALSE;
+      } else {
+        requisition->width += spacing;
+      }
       child_req = &child->widget->requisition;
       if (homogeneous) {
         numchildren++;
@@ -2211,8 +2217,6 @@ void gtk_hbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
       } else {
         requisition->width += child_req->width;
       }
-      if (g_list_next(children))
-        requisition->width += spacing;
       if (child_req->height > requisition->height)
         requisition->height = child_req->height;
     }
@@ -2232,11 +2236,18 @@ void gtk_vbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   gint spacing = GTK_BOX(widget)->spacing, numchildren = 0;
   gint maxreq = 0;
   gboolean homogeneous = GTK_BOX(widget)->homogeneous;
+  gboolean first = TRUE;
 
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
     if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+      if (first) {
+        first = FALSE;
+      } else {
+        requisition->height += spacing;
+      }
+      child_req = &child->widget->requisition;
       child_req = &child->widget->requisition;
       if (homogeneous) {
         numchildren++;
@@ -2245,8 +2256,6 @@ void gtk_vbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
       } else {
         requisition->height += child_req->height;
       }
-      if (g_list_next(children))
-        requisition->height += spacing;
       if (child_req->width > requisition->width)
         requisition->width = child_req->width;
     }
@@ -2301,8 +2310,7 @@ static void gtk_box_size_child(GtkBox *box, GtkBoxChild *child,
     *size = requisition;
     *curpos += requisition;
   }
-  if (g_list_next(listpt))
-    *curpos += box->spacing;
+  *curpos += box->spacing;
   if (TooSmall) {
     if (*pos >= maxpos) {
       *pos = *size = 0;
@@ -2921,15 +2929,83 @@ void gtk_table_destroy(GtkWidget *widget)
   g_list_free(GTK_TABLE(widget)->children);
 }
 
-void gtk_table_size_request(GtkWidget *widget, GtkRequisition *requisition)
+static void gtk_table_get_size_children(GtkTable *table,
+                                        GtkAttachOptions colopts,
+                                        GtkAttachOptions *cols)
 {
   GList *children;
-  GtkTableChild *child;
-  GtkWidget *child_wid;
-  GtkRequisition child_req;
+
+  for (children = table->children; children;
+       children = g_list_next(children)) {
+    GtkRequisition child_req;
+    GtkWidget *child_wid;
+    int i;
+    GtkTableChild *child = (GtkTableChild *)(children->data);
+
+    if (!child)
+      continue;
+    if (colopts) {
+      if (child->xoptions & colopts) {
+        for (i = child->left_attach; i < child->right_attach; i++) {
+          cols[i] = colopts;
+        }
+      } else {
+        continue;
+      }
+    } else if (child->xoptions & GTK_SHRINK) {
+      continue;
+    }
+    child_wid = child->widget;
+    if (child_wid && child->left_attach < child->right_attach
+        && child->top_attach < child->bottom_attach
+        && GTK_WIDGET_VISIBLE(child_wid)) {
+      child_req.width = child_wid->requisition.width;
+      child_req.height = child_wid->requisition.height;
+      child_req.height /= (child->bottom_attach - child->top_attach);
+      if (colopts) {
+        child_req.width /= (child->right_attach - child->left_attach);
+        for (i = child->left_attach; i < child->right_attach; i++) {
+          if (child_req.width > table->cols[i].requisition)
+            table->cols[i].requisition = child_req.width;
+        }
+      } else {
+        for (i = child->left_attach; i < child->right_attach; i++) {
+          child_req.width -= table->cols[i].requisition;
+        }
+        if (child_req.width > 0) {
+          int nexpand = 0, ntotal = child->right_attach - child->left_attach;
+          for (i = child->left_attach; i < child->right_attach; i++) {
+            if (cols[i] == 0) {
+              nexpand++;
+            }
+          }
+          if (nexpand) {
+            for (i = child->left_attach; i < child->right_attach; i++) {
+              if (cols[i] == 0) {
+                table->cols[i].requisition += child_req.width / nexpand;
+              }
+            }
+          } else {
+            for (i = child->left_attach; i < child->right_attach; i++) {
+              table->cols[i].requisition += child_req.width / ntotal;
+            }
+          }
+        }
+      }
+      for (i = child->top_attach; i < child->bottom_attach; i++) {
+        if (child_req.height > table->rows[i].requisition)
+          table->rows[i].requisition = child_req.height;
+      }
+    }
+  }
+}
+
+void gtk_table_size_request(GtkWidget *widget, GtkRequisition *requisition)
+{
   GtkTable *table;
   gint16 MaxReq;
   int i;
+  GtkAttachOptions *cols;
 
   table = GTK_TABLE(widget);
   for (i = 0; i < table->ncols; i++)
@@ -2938,29 +3014,12 @@ void gtk_table_size_request(GtkWidget *widget, GtkRequisition *requisition)
     table->rows[i].requisition = 0;
 
   gtk_container_size_request(widget, requisition);
-  for (children = table->children; children;
-       children = g_list_next(children)) {
-    child = (GtkTableChild *)(children->data);
-    if (!child)
-      continue;
-    child_wid = child->widget;
-    if (child_wid && child->left_attach < child->right_attach &&
-        child->top_attach < child->bottom_attach &&
-        GTK_WIDGET_VISIBLE(child_wid)) {
-      child_req.width = child_wid->requisition.width;
-      child_req.height = child_wid->requisition.height;
-      child_req.width /= (child->right_attach - child->left_attach);
-      child_req.height /= (child->bottom_attach - child->top_attach);
-      for (i = child->left_attach; i < child->right_attach; i++) {
-        if (child_req.width > table->cols[i].requisition)
-          table->cols[i].requisition = child_req.width;
-      }
-      for (i = child->top_attach; i < child->bottom_attach; i++) {
-        if (child_req.height > table->rows[i].requisition)
-          table->rows[i].requisition = child_req.height;
-      }
-    }
+  cols = g_new0(GtkAttachOptions, table->ncols);
+  if (!table->homogeneous) {
+    gtk_table_get_size_children(table, GTK_SHRINK, cols);
   }
+  gtk_table_get_size_children(table, 0, cols);
+  g_free(cols);
 
   if (table->homogeneous) {
     MaxReq = 0;
