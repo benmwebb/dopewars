@@ -11,7 +11,10 @@
 
 #define WM_SOCKETDATA (WM_USER+100)
 
-static const gchar *WC_GTKSEP = "WC_GTKSEP";
+static const gchar *WC_GTKSEP    = "WC_GTKSEP";
+static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
+static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
+static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 
 static BOOL GetTextSize(HWND hWnd,char *text,LPSIZE lpSize);
 static void gtk_button_size_request(GtkWidget *widget,
@@ -576,6 +579,45 @@ static void DispatchSocketEvent(SOCKET sock,long event) {
    }
 }
 
+LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
+   PAINTSTRUCT ps;
+   HPEN oldpen,dkpen,ltpen;
+   RECT rect;
+   HDC hDC;
+   if (msg==WM_PAINT) {
+      if (GetUpdateRect(hwnd,NULL,TRUE)) {
+         BeginPaint(hwnd,&ps);
+         GetClientRect(hwnd,&rect);
+         hDC=ps.hdc;
+         ltpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DHILIGHT));
+         dkpen=CreatePen(PS_SOLID,0,(COLORREF)GetSysColor(COLOR_3DSHADOW));
+
+         if (rect.right > rect.bottom) {
+            oldpen=SelectObject(hDC,ltpen);
+            MoveToEx(hDC,rect.left,rect.top,NULL);
+            LineTo(hDC,rect.right,rect.top);
+
+            SelectObject(hDC,dkpen);
+            MoveToEx(hDC,rect.left,rect.bottom-1,NULL);
+            LineTo(hDC,rect.right,rect.bottom-1);
+         } else {
+            oldpen=SelectObject(hDC,ltpen);
+            MoveToEx(hDC,rect.left,rect.top,NULL);
+            LineTo(hDC,rect.left,rect.bottom);
+
+            SelectObject(hDC,ltpen);
+            MoveToEx(hDC,rect.right-1,rect.top,NULL);
+            LineTo(hDC,rect.right-1,rect.bottom);
+         }
+
+         SelectObject(hDC,oldpen);
+         DeleteObject(ltpen); DeleteObject(dkpen);
+         EndPaint(hwnd,&ps);
+      }
+      return TRUE;
+   } else return DefWindowProc(hwnd,msg,wParam,lParam);
+}
+
 LRESULT CALLBACK GtkSepProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    PAINTSTRUCT ps;
    HPEN oldpen,dkpen,ltpen;
@@ -738,19 +780,55 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
       wc.lpszMenuName	= NULL;
       wc.lpszClassName	= "mainwin";
       RegisterClass(&wc);
-   }
 
-   wc.style		= CS_HREDRAW|CS_VREDRAW;
-   wc.lpfnWndProc	= GtkSepProc;
-   wc.cbClsExtra	= 0;
-   wc.cbWndExtra	= 0;
-   wc.hInstance		= hInstance;
-   wc.hIcon		= NULL;
-   wc.hCursor		= LoadCursor(NULL,IDC_ARROW);
-   wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
-   wc.lpszMenuName	= NULL;
-   wc.lpszClassName	= WC_GTKSEP;
-   RegisterClass(&wc);
+      wc.style		= CS_HREDRAW|CS_VREDRAW;
+      wc.lpfnWndProc	= MainWndProc;
+      wc.cbClsExtra	= 0;
+      wc.cbWndExtra	= 0;
+      wc.hInstance	= hInstance;
+      wc.hIcon		= NULL;
+      wc.hCursor	= LoadCursor(NULL,IDC_ARROW);
+      wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
+      wc.lpszMenuName	= NULL;
+      wc.lpszClassName	= WC_GTKDIALOG;
+      RegisterClass(&wc);
+
+      wc.style		= CS_HREDRAW|CS_VREDRAW;
+      wc.lpfnWndProc	= GtkPanedProc;
+      wc.cbClsExtra	= 0;
+      wc.cbWndExtra	= 0;
+      wc.hInstance	= hInstance;
+      wc.hIcon		= NULL;
+      wc.hCursor	= LoadCursor(NULL,IDC_SIZEWE);
+      wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
+      wc.lpszMenuName	= NULL;
+      wc.lpszClassName	= WC_GTKHPANED;
+      RegisterClass(&wc);
+
+      wc.style		= CS_HREDRAW|CS_VREDRAW;
+      wc.lpfnWndProc	= GtkPanedProc;
+      wc.cbClsExtra	= 0;
+      wc.cbWndExtra	= 0;
+      wc.hInstance	= hInstance;
+      wc.hIcon		= NULL;
+      wc.hCursor	= LoadCursor(NULL,IDC_SIZENS);
+      wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
+      wc.lpszMenuName	= NULL;
+      wc.lpszClassName	= WC_GTKVPANED;
+      RegisterClass(&wc);
+
+      wc.style		= CS_HREDRAW|CS_VREDRAW;
+      wc.lpfnWndProc	= GtkSepProc;
+      wc.cbClsExtra	= 0;
+      wc.cbWndExtra	= 0;
+      wc.hInstance	= hInstance;
+      wc.hIcon		= NULL;
+      wc.hCursor	= LoadCursor(NULL,IDC_ARROW);
+      wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
+      wc.lpszMenuName	= NULL;
+      wc.lpszClassName	= WC_GTKSEP;
+      RegisterClass(&wc);
+   }
 
    InitCommonControls();
 }
@@ -1672,14 +1750,16 @@ void gtk_window_realize(GtkWidget *widget) {
    GtkWindow *win=GTK_WINDOW(widget);
    HWND Parent;
    Parent=gtk_get_parent_hwnd(widget->parent);
-   widget->hWnd = CreateWindow("mainwin",win->title,
-                     win->type == GTK_WINDOW_TOPLEVEL ?
-                        WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX :
+   if (win->type==GTK_WINDOW_TOPLEVEL) {
+      widget->hWnd = CreateWindow("mainwin",win->title,
+                        WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX,
+                        CW_USEDEFAULT,0,0,0,Parent,NULL,hInst,NULL);
+      if (!TopLevel) TopLevel=widget->hWnd;
+   } else {
+      widget->hWnd = CreateWindow(WC_GTKDIALOG,win->title,
                         WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX,
-                     CW_USEDEFAULT,0,
-                     widget->allocation.width,widget->allocation.height,
-                     Parent,NULL,hInst,NULL);
-   if (win->type==GTK_WINDOW_TOPLEVEL && !TopLevel) TopLevel=widget->hWnd;
+                        CW_USEDEFAULT,0,0,0,Parent,NULL,hInst,NULL);
+   }
    WindowList=g_slist_append(WindowList,(gpointer)win);
    gtk_set_default_font(widget->hWnd);
 /* g_print("Window window %p created\n",widget->hWnd);*/
@@ -1991,7 +2071,7 @@ void gtk_clist_update_widths(GtkCList *clist,gchar *text[]) {
    hWnd=GTK_WIDGET(clist)->hWnd;
    if (!hWnd) return;
    for (i=0;i<clist->ncols;i++) {
-      if (GetTextSize(hWnd,text[i],&size) &&
+      if (clist->cols[i].auto_resize && GetTextSize(hWnd,text[i],&size) &&
           size.cx+2*LISTITEMHPACK > clist->cols[i].width) {
          clist->cols[i].width = size.cx+2*LISTITEMHPACK;
       }
@@ -3346,7 +3426,7 @@ void gdk_input_remove(gint tag) {
       input=(GdkInput *)list->data;
       if (input->source==tag) {
          WSAAsyncSelect(input->source,TopLevel,0,0);
-         g_slist_remove(GdkInputs,input);
+         GdkInputs=g_slist_remove(GdkInputs,input);
          g_free(input);
          break;
       }
@@ -3356,14 +3436,15 @@ void gdk_input_remove(gint tag) {
 gint gdk_input_add(gint source,GdkInputCondition condition,
                    GdkInputFunction function,gpointer data) {
    GdkInput *input;
+   int rc;
    input=g_new(GdkInput,1);
    input->source=source;
    input->condition=condition;
    input->function=function;
    input->data=data;
-   WSAAsyncSelect(source,TopLevel,WM_SOCKETDATA,
+   rc=WSAAsyncSelect(source,TopLevel,WM_SOCKETDATA,
                   (condition&GDK_INPUT_READ ? FD_READ : 0) |
-                  (condition&GDK_INPUT_WRITE ? FD_WRITE : 0));
+                  (condition&GDK_INPUT_WRITE ? FD_WRITE|FD_CONNECT : 0));
    GdkInputs=g_slist_append(GdkInputs,input);
    return source;
 }
@@ -3450,11 +3531,17 @@ void gtk_widget_remove_accelerator(GtkWidget *widget,
 }
 
 GtkWidget *gtk_vpaned_new() {
-   return GTK_WIDGET(GtkNewObject(&GtkVPanedClass));
+   GtkVPaned *vpaned;
+   vpaned=GTK_VPANED(GtkNewObject(&GtkVPanedClass));
+   GTK_PANED(vpaned)->handle_size=5;
+   return GTK_WIDGET(vpaned);
 }
 
 GtkWidget *gtk_hpaned_new() {
-   return GTK_WIDGET(GtkNewObject(&GtkHPanedClass));
+   GtkHPaned *hpaned;
+   hpaned=GTK_HPANED(GtkNewObject(&GtkHPanedClass));
+   GTK_PANED(hpaned)->handle_size=5;
+   return GTK_WIDGET(hpaned);
 }
 
 static void gtk_paned_pack(GtkPaned *paned,gint pos,GtkWidget *child,
@@ -3507,11 +3594,19 @@ void gtk_paned_realize(GtkWidget *widget) {
 }
 
 void gtk_vpaned_realize(GtkWidget *widget) {
+   HWND Parent;
    gtk_paned_realize(widget);
+   Parent=gtk_get_parent_hwnd(widget);
+   widget->hWnd = CreateWindow(WC_GTKVPANED,"",WS_CHILD,
+                               0,0,0,0,Parent,NULL,hInst,NULL);
 }
 
 void gtk_hpaned_realize(GtkWidget *widget) {
+   HWND Parent;
    gtk_paned_realize(widget);
+   Parent=gtk_get_parent_hwnd(widget);
+   widget->hWnd = CreateWindow(WC_GTKHPANED,"",WS_CHILD,
+                               0,0,0,0,Parent,NULL,hInst,NULL);
 }
 
 void gtk_vpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
@@ -3523,6 +3618,7 @@ void gtk_vpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
          requisition->width = paned->children[i].widget->requisition.width;
       requisition->height += paned->children[i].widget->requisition.height;
    }
+   requisition->height += paned->handle_size;
 }
 
 void gtk_hpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
@@ -3534,6 +3630,7 @@ void gtk_hpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
          requisition->height = paned->children[i].widget->requisition.height;
       requisition->width += paned->children[i].widget->requisition.width;
    }
+   requisition->width += paned->handle_size;
 }
 
 void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
@@ -3545,11 +3642,14 @@ void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    for (i=0;i<2;i++) if (paned->children[i].widget) numchildren++;
    if (numchildren==0) return;
    child_alloc.width=allocation->width;
-   child_alloc.height=allocation->height/numchildren;
+   child_alloc.height=(allocation->height-paned->handle_size)/numchildren;
    for (i=0;i<2;i++) if (paned->children[i].widget) {
       gtk_widget_set_size(paned->children[i].widget,&child_alloc);
-      child_alloc.y+=allocation->height/numchildren;
+      child_alloc.y+=(allocation->height-paned->handle_size)/numchildren+
+                     paned->handle_size;
    }
+   allocation->y += (allocation->height-paned->handle_size)/numchildren;
+   allocation->height = paned->handle_size;
 }
 
 void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
@@ -3561,11 +3661,14 @@ void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    for (i=0;i<2;i++) if (paned->children[i].widget) numchildren++;
    if (numchildren==0) return;
    child_alloc.height=allocation->height;
-   child_alloc.width=allocation->width/numchildren;
+   child_alloc.width=(allocation->width-paned->handle_size)/numchildren;
    for (i=0;i<2;i++) if (paned->children[i].widget) {
       gtk_widget_set_size(paned->children[i].widget,&child_alloc);
-      child_alloc.x+=allocation->width/numchildren;
+      child_alloc.x+=(allocation->width-paned->handle_size)/numchildren+
+                     paned->handle_size;
    }
+   allocation->x += (allocation->width-paned->handle_size)/numchildren;
+   allocation->width = paned->handle_size;
 }
 
 void gtk_text_set_editable(GtkText *text,gboolean is_editable) {
