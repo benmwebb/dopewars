@@ -2352,12 +2352,6 @@ void SetupParameters(void)
     AssignName(&StoppedTo[i], _(DefaultStoppedTo[i]));
   }
 
-  /* FIXME: this is a bit risky; we haven't dropped privileges yet,
-   * so 1. we may be able to read files here that the user shouldn't
-   * have access to and 2. a bug in the configuration parsing code
-   * could result in a compromise. BUT we don't know where the high
-   * score file is until the config files have been parsed. */
-
   /* Now read in the global configuration file */
   conf = GetGlobalConfigFile();
   if (conf) {
