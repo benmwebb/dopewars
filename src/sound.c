@@ -25,6 +25,7 @@
 #endif
 
 #include "sound_esd.h"
+#include "sound_winmm.h"
 
 static SoundDriver *driver = NULL;
 
@@ -32,6 +33,9 @@ void SoundInit(void)
 {
 #ifdef HAVE_ESD
   driver = SoundInit_ESD();
+#endif
+#ifdef HAVE_WINMM
+  driver = SoundInit_WinMM();
 #endif
 }
 
