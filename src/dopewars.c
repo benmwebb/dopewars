@@ -93,7 +93,7 @@ gboolean MinToSysTray = TRUE;
 gboolean Daemonize = TRUE;
 #endif
 
-#define SNDPATH "sounds/19.5degs/"
+#define SNDPATH "sounds\\19.5degs\\"
 
 gchar *WebBrowser = NULL;
 gint ConfigErrors = 0;
