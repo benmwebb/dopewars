@@ -738,7 +738,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   notebook = gtk_notebook_new();
 
-  table = gtk_table_new(7, 3, FALSE);
+  table = gtk_table_new(8, 3, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
@@ -787,6 +787,14 @@ void OptDialog(GtkWidget *widget, gpointer data)
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("Names.Bitches");
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 6, 7);
+
+#ifndef CYGWIN
+  label = gtk_label_new(_("Web browser"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 7, 8,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("WebBrowser");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 7, 8);
+#endif
 
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("General"));
