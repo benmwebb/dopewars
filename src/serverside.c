@@ -1780,8 +1780,10 @@ void HighScoreTypeWrite(struct HISCORE *HiScore, FILE *fp)
  */
 void CloseHighScoreFile()
 {
-  if (ScoreFP)
+  if (ScoreFP) {
     fclose(ScoreFP);
+  }
+  ScoreFP = NULL;
 }
 
 /* 
@@ -1846,9 +1848,6 @@ void ConvertHighScoreFile(void)
   int ch;
   gchar *OldError = NULL, *BackupError = NULL;
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
-
-  /* The user running dopewars must be allowed to mess with the score file */
-  DropPrivileges();
 
   BackupFile = g_strdup_printf("%s.bak", ConvertFile);
 
@@ -1922,7 +1921,7 @@ void ConvertHighScoreFile(void)
 
 /* State, set by OpenHighScoreFile, and later used by
  * CheckHighScoreFileConfig */
-static gboolean NewFile;
+static gboolean EmptyFile;
 static int OpenError;
 
 /* 
@@ -1930,22 +1929,31 @@ static int OpenError;
  */
 void OpenHighScoreFile(void)
 {
-  NewFile = FALSE;
-  OpenError = 0;
-
-  if (ScoreFP)
+  if (ScoreFP) {
     return;                     /* If already opened, then we're done */
+  }
+
+  EmptyFile = FALSE;
+  OpenError = 0;
 
   /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
   ScoreFP = fopen(HiScoreFile, "r+");
   if (!ScoreFP) {
     ScoreFP = fopen(HiScoreFile, "w+");
-    if (!ScoreFP)
+    if (!ScoreFP) {
       OpenError = errno;
-    NewFile = TRUE;
+    }
+    EmptyFile = TRUE;
   }
 
-  DropPrivileges();
+  /* Check for a 0-byte score file */
+  if (ScoreFP && !EmptyFile) {
+    rewind(ScoreFP);
+    if (fgetc(ScoreFP) == EOF) {
+      EmptyFile = TRUE;
+    }
+    rewind(ScoreFP);
+  }
 }
 
 /* 
@@ -1968,7 +1976,7 @@ gboolean CheckHighScoreFileConfig(void)
     return FALSE;
   }
 
-  if (NewFile) {
+  if (EmptyFile) {
     HighScoreWriteHeader(ScoreFP);
     fflush(ScoreFP);
   } else if (!HighScoreReadHeader(ScoreFP, NULL)) {

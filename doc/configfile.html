@@ -145,7 +145,10 @@ the user for a username and password on each connect instead.)</dd>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
 to store high scores. This can be overridden with the -f
-<a href="commandline.html#hiscore">command line option</a>.</dd>
+<a href="commandline.html#hiscore">command line option</a>.
+(N.B. This option cannot be used to get dopewars to open a high
+score file with privilege when running setuid/setgid; all privileges are
+dropped by this point for security.)</dd>
 
 <dt><b>MinToSysTray=<i>TRUE</i></b></dt>
 <dd>Rather than behaving as a normal window, the dopewars server window adds

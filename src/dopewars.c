@@ -2415,10 +2415,8 @@ void SetupParameters(void)
   Currency.Prefix = TRUE;
 
   /* Set hard-coded default values */
-  g_free(HiScoreFile);
   g_free(ServerName);
   g_free(ServerMOTD);
-  HiScoreFile = g_strdup_printf("%s/dopewars.sco", DATADIR);
   ServerName = g_strdup("localhost");
   ServerMOTD = g_strdup("");
   g_free(WebBrowser);
@@ -2693,15 +2691,30 @@ void HandleCmdLine(int argc, char *argv[])
  */
 void GeneralStartup(int argc, char *argv[])
 {
+  gchar *priv_hiscore;
+
+  /* First, open the hard-coded high score file with possibly
+   * elevated privileges */
+  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DATADIR);
+  HiScoreFile = g_strdup(priv_hiscore);
+  OpenHighScoreFile();
+  DropPrivileges();
+
   ConfigErrors = 0;
   SetupParameters();
   HandleCmdLine(argc, argv);
 
   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
-    OpenHighScoreFile();
+    /* Open a user-specified high score file with no privileges, if one
+     * was given */
+    if (strcmp(priv_hiscore, HiScoreFile) != 0) {
+      CloseHighScoreFile();
+      OpenHighScoreFile();
+    }
   } else {
-    DropPrivileges();
+    CloseHighScoreFile();
   }
+  g_free(priv_hiscore);
 }
 
 /*

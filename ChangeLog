@@ -12,6 +12,11 @@ cvs
     - configure should now work properly if GLib 2.0 is installed but
       GTK2.0 is not
     - Norwegian Nynorsk translation added by Åsmund
+    - If dopewars is run setuid/setgid, it will now only use this privilege
+      to open the default (hard-coded) high score file; it will not open
+      a user-specified high score file with privilege
+    - It is no longer necessary to run "dopewars -C" on a zero-byte high
+      score file; it will be converted automatically
 
 1.5.6   29-04-2002
     - Bug fix: the server will only let you pay back loans or deal with the

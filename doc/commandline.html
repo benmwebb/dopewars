@@ -55,7 +55,9 @@ mode also.</dd>
 <dd>Specifies the path and name of the file used to store the dopewars
 high scores in; this can alternatively be specified in the configuration file
 with the <a href="configfile.html#HiScoreFile">HiScoreFile=<i>file</i></a>
-option.</dd>
+option. (N.B. This option cannot be used to get dopewars to open a high
+score file with privilege when running setuid/setgid; all privileges are
+dropped by this point for security.)</dd>
 
 <dt><a name="server"><b>-o <i>addr</i></b>, <b>--hostname=<i>addr</i></b>
 </a></dt>
@@ -159,6 +161,6 @@ contact details.</dd>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>04-02-2002</b></p>
+<p>Last update: <b>23-06-2002</b></p>
 </body>
 </html>
