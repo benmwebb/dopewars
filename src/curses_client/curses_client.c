@@ -2448,6 +2448,7 @@ void CursesLoop(struct CMDLINE *cmdline)
                     LogMessage, NULL);
 
   SoundOpen(cmdline->plugin);
+  SoundEnable(UseSounds);
 
   display_intro();
 

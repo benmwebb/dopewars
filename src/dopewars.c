@@ -68,7 +68,7 @@
 #endif
 
 int ClientSock, ListenSock;
-gboolean Network, Client, Server, WantAntique = FALSE;
+gboolean Network, Client, Server, WantAntique = FALSE, UseSounds = TRUE;
 
 /* 
  * dopewars acting as standalone TCP server:
@@ -397,6 +397,9 @@ struct GLOBALS Globals[] = {
    N_("Name of the gun shop"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Names.RoughPubName, NULL, "RoughPubName",
    N_("Name of the pub"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, &UseSounds, NULL, NULL, NULL, "UseSounds",
+   N_("TRUE if sounds should be enabled"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.FightHit, NULL, "Sounds.FightHit",
    N_("Sound file played for a gun \"hit\""), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0},

@@ -97,6 +97,7 @@ static void QuitGame(GtkWidget *widget, gpointer data);
 static void DestroyGtk(GtkWidget *widget, gpointer data);
 static void NewGame(GtkWidget *widget, gpointer data);
 static void AbandonGame(GtkWidget *widget, gpointer data);
+static void ToggleSound(GtkWidget *widget, gpointer data);
 static void ListScores(GtkWidget *widget, gpointer data);
 static void ListInventory(GtkWidget *widget, gpointer data);
 static void EndGame(void);
@@ -159,6 +160,7 @@ static GtkItemFactoryEntry menu_items[] = {
   {N_("/Game/_New..."), "<control>N", NewGame, 0, NULL},
   {N_("/Game/_Abandon..."), "<control>A", AbandonGame, 0, NULL},
   {N_("/Game/_Options..."), "<control>O", OptDialog, 0, NULL},
+  {N_("/Game/Enable _sound"), NULL, ToggleSound, 0, "<CheckItem>"},
   {N_("/Game/_Quit..."), "<control>Q", QuitGame, 0, NULL},
   {N_("/_Talk"), NULL, NULL, 0, "<Branch>"},
   {N_("/Talk/To _All..."), NULL, TalkToAll, 0, NULL},
@@ -266,6 +268,20 @@ void AbandonGame(GtkWidget *widget, gpointer data)
                               _("Abandon game"), GTK_MESSAGE_QUESTION,
                               MB_YESNO) == IDYES) {
     EndGame();
+  }
+}
+
+void ToggleSound(GtkWidget *widget, gpointer data)
+{
+  gboolean enable;
+
+  widget = gtk_item_factory_get_widget(ClientData.Menu,
+                                       "<main>/Game/Enable sound");
+  if (widget) {
+    enable = GTK_CHECK_MENU_ITEM(widget)->active;
+    SoundEnable(enable);
+  } else {
+    g_print("widget is NULL\n");
   }
 }
 
@@ -2148,7 +2164,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
 {
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
-      *vpaned, *button, *clist;
+      *vpaned, *button, *clist, *widget;
   GtkAccelGroup *accel_group;
   GtkItemFactory *item_factory;
   gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
@@ -2225,6 +2241,10 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_box_pack_start(GTK_BOX(vbox2), menubar, FALSE, FALSE, 0);
   gtk_widget_show_all(menubar);
   UpdateMenus();
+  SoundEnable(UseSounds);
+  widget = gtk_item_factory_get_widget(ClientData.Menu,
+                                       "<main>/Game/Enable sound");
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), UseSounds);
 
   vbox = ClientData.vbox = gtk_vbox_new(FALSE, 5);
   frame = gtk_frame_new(_("Stats"));
