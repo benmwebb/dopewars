@@ -98,7 +98,7 @@ static void PrintMessage(char *Data);
 static void DisplayFightMessage(char *Data);
 static GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status);
 static void DisplayStats(Player *Play,struct StatusWidgets *Status);
-static void UpdateStatus(Player *Play,gboolean DisplayDrugs);
+static void UpdateStatus(Player *Play);
 static void SetJetButtonTitle(GtkAccelGroup *accel_group);
 static void UpdateInventory(struct InventoryWidgets *Inven,
                             Inventory *Objects,int NumObjects,
@@ -272,6 +272,7 @@ void GetClientMessage(gpointer data,gint socket,
       if (!ReadOK) {
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
          if (InGame) {
+/* The network connection to the server was dropped unexpectedly */
             g_warning(_("Connection to server lost - switching to "
                       "single player mode"));
             SwitchToSinglePlayer(ClientData.Play);
@@ -317,11 +318,13 @@ void HandleClientMessage(char *pt,Player *Play) {
          DisplayFightMessage(Data); break;
       case C_PUSH:
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
+/* The server admin has asked us to leave - so warn the user, and do so */
          g_warning(_("You have been pushed from the server."));
          SwitchToSinglePlayer(Play);
          break;
       case C_QUIT:
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
+/* The server has sent us notice that it is shutting down */
          g_warning(_("The server has terminated."));
          SwitchToSinglePlayer(Play);
          break;
@@ -391,7 +394,7 @@ void HandleClientMessage(char *pt,Player *Play) {
       case C_UPDATE:
          if (From==&Noone) {
             ReceivePlayerData(Play,Data,Play);
-            UpdateStatus(Play,TRUE);
+            UpdateStatus(Play);
          } else {
             ReceivePlayerData(Play,Data,From);
             DisplaySpyReports(From);
@@ -413,10 +416,14 @@ struct HiScoreDiaStruct {
 static struct HiScoreDiaStruct HiScoreDialog;
 
 void PrepareHighScoreDialog() {
+/* Creates an empty dialog to display high scores */
    GtkWidget *dialog,*vbox,*hsep,*table;
 
    HiScoreDialog.dialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+
+/* Title of the GTK+ high score dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("High Scores"));
+
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
@@ -435,6 +442,9 @@ void PrepareHighScoreDialog() {
 }
 
 void AddScoreToDialog(char *Data) {
+/* Adds a single high score (coded in "Data", which is the information */
+/* received in the relevant network message) to the dialog created by  */
+/* PrepareHighScoreDialog(), above.                                    */
    GtkWidget *label;
    char *cp;
    gchar **spl1,**spl2;
@@ -515,11 +525,16 @@ void AddScoreToDialog(char *Data) {
 }
 
 static void EndHighScore(GtkWidget *widget) {
-/* gtk_widget_destroy(widget);*/
+/* If the high scores are being displayed at the end of the game,     */
+/* this function is used to end the game when the high score dialog's */
+/* "OK" button is pressed.                                            */
    EndGame();
 }
 
 void CompleteHighScoreDialog(gboolean AtEnd) {
+/* Called when all high scores have been received. Finishes off the   */
+/* high score dialog by adding an "OK" button. If the game has ended, */
+/* then "AtEnd" is TRUE, and clicking this button will end the game.  */
    GtkWidget *OKButton,*dialog;
    dialog=HiScoreDialog.dialog;
 
@@ -541,6 +556,9 @@ void CompleteHighScoreDialog(gboolean AtEnd) {
 }
 
 void PrintMessage(char *text) {
+/* Prints an information message in the display area of the GTK+ client. */
+/* This area is used for displaying drug busts, messages from other      */
+/* players, etc. The message is passed in as the string "text".          */
    gint EditPos;
    char *cr="\n";
    GtkEditable *messages;
@@ -560,6 +578,8 @@ void PrintMessage(char *text) {
 }
 
 static void FightCallback(GtkWidget *widget,gpointer data) {
+/* Called when one of the action buttons in the Fight dialog is clicked.   */
+/* "data" specifies which button (Deal Drugs/Run/Fight/Stand) was pressed. */
    gint Answer;
    Player *Play;
    gchar text[4];
@@ -591,6 +611,10 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
 
 static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
                                  GtkBox *box,gint Answer) {
+/* Adds an action button to the hbox at the base of the Fight dialog. */
+/* The button's caption is given by "Text", and the keyboard shortcut */
+/* (if any) is added to "accel_group". "Answer" gives the identifier  */
+/* passed to FightCallback, above.                                    */
    GtkWidget *button;
    button=gtk_button_new_with_label("");
    SetAccelerator(button,Text,button,"clicked",accel_group);
@@ -601,11 +625,17 @@ static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
    return button;
 }
 
+/* Data used to keep track of the widgets giving the information about a
+   player/cop involved in a fight */
 struct combatant {
    GtkWidget *name,*bitches,*healthprog,*healthlabel;
 };
 
 static void CreateFightDialog() {
+/* Creates an empty Fight dialog. Usually this only needs to be done once, */
+/* as when the user "closes" it, it is only hidden, ready to be reshown    */
+/* later. Buttons for all actions are added here, and are hidden/shown     */
+/* as necessary.                                                           */
    GtkWidget *dialog,*vbox,*button,*hbox,*hbbox,*hsep,*text,*table;
    GtkAccelGroup *accel_group;
    GArray *combatants;
@@ -686,6 +716,9 @@ static void CreateFightDialog() {
 
 static void UpdateCombatant(gchar *DefendName,int DefendBitches,
                             gchar *BitchName,int DefendHealth) {
+/* Updates the display of information for a player/cop in the Fight dialog. */
+/* If the player's name (DefendName) already exists, updates the display of */
+/* total health and number of bitches - otherwise, adds a new entry.        */
    gint i,RowIndex;
    gchar *name;
    struct combatant *compt;
@@ -765,6 +798,7 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
 }
 
 static void FreeCombatants() {
+/* Cleans up the list of all players/cops involved in a fight. */
    GArray *combatants;
    combatants=(GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
                                             "combatants");
@@ -774,6 +808,11 @@ static void FreeCombatants() {
 }
 
 void DisplayFightMessage(char *Data) {
+/* Given the network message "Data" concerning some happening during */
+/* combat, extracts the relevant data and updates the Fight dialog,  */
+/* creating and/or showing it if necessary.                          */
+/* If "Data" is NULL, then closes the dialog. If "Data" is a blank   */
+/* string, then just shows the dialog, displaying no new messages.   */
    Player *Play;
    gint EditPos;
    GtkAccelGroup *accel_group;
@@ -848,6 +887,10 @@ void DisplayFightMessage(char *Data) {
 }
 
 void DisplayStats(Player *Play,struct StatusWidgets *Status) {
+/* Updates the display of pertinent data about player "Play" (location, */
+/* health, etc. in the status widgets given by "Status". This can point */
+/* to the widgets at the top of the main window, or those in a Spy      */
+/* Reports dialog.                                                      */
    gchar *prstr;
    GString *text;
 
@@ -899,7 +942,10 @@ void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    g_string_free(text,TRUE);
 }
 
-void UpdateStatus(Player *Play,gboolean DisplayDrugs) {
+void UpdateStatus(Player *Play) {
+/* Updates all of the player status in response to a message from the */
+/* server. This includes the main window display, the gun shop (if    */
+/* displayed) and the inventory (if displayed).                       */
    GtkAccelGroup *accel_group;
    DisplayStats(Play,&ClientData.Status);
    UpdateInventory(&ClientData.Drug,ClientData.Play->Drugs,NumDrug,TRUE);
@@ -1281,6 +1327,7 @@ void DealDrugs(GtkWidget *widget,gpointer data) {
    }
    hbox=gtk_hbox_new(FALSE,7);
    if (data==BT_BUY) {
+/* Prompts for action in the "deal drugs" dialog */
       g_string_sprintf(text,_("Buy how many?"));
    } else if (data==BT_SELL) {
       g_string_sprintf(text,_("Sell how many?"));
@@ -1344,7 +1391,7 @@ void DealGuns(GtkWidget *widget,gpointer data) {
    } else return;
 
    
-/* Title of 'gun shop' dialog (%tde="guns" by default) */
+/* Title of 'gun shop' dialog (%tde="guns" by default) "Buy/Sell/Drop Guns" */
    if (data==BT_BUY) Title=dpg_strdup_printf(_("Buy %tde"),Names.Guns);
    else if (data==BT_SELL) Title=dpg_strdup_printf(_("Sell %tde"),Names.Guns);
    else Title=dpg_strdup_printf(_("Drop %tde"),Names.Guns);
@@ -2031,7 +2078,10 @@ void NewGameDialog() {
    table=gtk_table_new(2,2,FALSE);
    gtk_table_set_row_spacings(GTK_TABLE(table),4);
    gtk_table_set_col_spacings(GTK_TABLE(table),4);
+
+/* Prompt for hostname to connect to in GTK+ new game dialog */
    label=gtk_label_new(_("Host name"));
+
    gtk_table_attach(GTK_TABLE(table),label,0,1,0,1,
                     GTK_SHRINK,GTK_SHRINK,0,0);
    entry=widgets.hostname=gtk_entry_new();
@@ -2088,8 +2138,11 @@ void NewGameDialog() {
    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.antique),WantAntique);
    gtk_box_pack_start(GTK_BOX(vbox2),widgets.antique,FALSE,FALSE,0);
    button=gtk_button_new_with_label("");
+
+/* Button to start a new single-player (standalone, non-network) game */
    SetAccelerator(button,_("_Start single-player game"),button,
                   "clicked",accel_group);
+
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(StartSinglePlayer),
                       (gpointer)&widgets);
@@ -2097,6 +2150,8 @@ void NewGameDialog() {
    gtk_container_add(GTK_CONTAINER(frame),vbox2);
    label=gtk_label_new(_("Single player"));
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
+
+/* Title of Metaserver frame in New Game dialog */
    frame=gtk_frame_new(_("Metaserver"));
    gtk_container_set_border_width(GTK_CONTAINER(frame),4);
 
@@ -2138,6 +2193,7 @@ void NewGameDialog() {
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
    gtk_box_pack_start(GTK_BOX(vbox),notebook,TRUE,TRUE,0);
 
+/* Caption of status label in New Game dialog before anything has happened */
    label=widgets.status=gtk_label_new(_("Status: Waiting for user input"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
@@ -2251,13 +2307,17 @@ void TransferDialog(gboolean Debt) {
 
    gtk_object_set_data(GTK_OBJECT(dialog),"debt",GINT_TO_POINTER(Debt));
    if (Debt) {
+/* Prompt for paying back a loan */
       label=gtk_label_new(_("Pay back:"));
       gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,2,4);
    } else {
+/* Radio button selected if you want to pay money into the bank */
       radio=gtk_radio_button_new_with_label(NULL,_("Deposit"));
       gtk_object_set_data(GTK_OBJECT(dialog),"deposit",radio);
       group=gtk_radio_button_group(GTK_RADIO_BUTTON(radio));
       gtk_table_attach_defaults(GTK_TABLE(table),radio,0,1,2,3);
+
+/* Radio button selected if you want to withdraw money from the bank */
       radio=gtk_radio_button_new_with_label(group,_("Withdraw"));
       gtk_table_attach_defaults(GTK_TABLE(table),radio,0,1,3,4);
    }
@@ -2282,6 +2342,7 @@ void TransferDialog(gboolean Debt) {
    gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
 
    if (Debt && ClientData.Play->Cash>=ClientData.Play->Debt) {
+/* Button to pay back the entire loan/debt */
       button=gtk_button_new_with_label(_("Pay all"));
       gtk_signal_connect(GTK_OBJECT(button),"clicked",
                          GTK_SIGNAL_FUNC(TransferPayAll),dialog);
@@ -2306,7 +2367,10 @@ void ListPlayers(GtkWidget *widget,gpointer data) {
 
    if (IsShowingPlayerList) return;
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+
+/* Title of player list dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("Player List"));
+
    gtk_window_set_default_size(GTK_WINDOW(dialog),200,180);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
 
@@ -2329,7 +2393,7 @@ void ListPlayers(GtkWidget *widget,gpointer data) {
    hsep=gtk_hseparator_new();
    gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
 
-   button=gtk_button_new_with_label("OK");
+   button=gtk_button_new_with_label(_("OK"));
    gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
                              GTK_SIGNAL_FUNC(gtk_widget_destroy),
                              (gpointer)dialog);
@@ -2394,7 +2458,10 @@ void TalkDialog(gboolean TalkToAll) {
 
    if (IsShowingTalkList) return;
    dialog=TalkData.dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+
+/* Title of talk dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("Talk to player(s)"));
+
    gtk_window_set_default_size(GTK_WINDOW(dialog),200,190);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
 
@@ -2416,11 +2483,15 @@ void TalkDialog(gboolean TalkToAll) {
    gtk_box_pack_start(GTK_BOX(vbox),clist,TRUE,TRUE,0);
 
    checkbutton=TalkData.checkbutton=
+/* Checkbutton set if you want to talk to all players */
                gtk_check_button_new_with_label(_("Talk to all players"));
+
    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton),TalkToAll);
    gtk_box_pack_start(GTK_BOX(vbox),checkbutton,FALSE,FALSE,0);
 
+/* Prompt for you to enter the message to be sent to other players */
    label=gtk_label_new(_("Message:-"));
+
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
    entry=TalkData.entry=gtk_entry_new();
@@ -2433,7 +2504,10 @@ void TalkDialog(gboolean TalkToAll) {
    gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
 
    hbbox=gtk_hbutton_box_new();
+
+/* Button to send a message to other players */
    button=gtk_button_new_with_label(_("Send"));
+
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(TalkSend),
                       (gpointer)&TalkData);
@@ -2524,8 +2598,12 @@ void ErrandDialog(gint ErrandType) {
    vbox=gtk_vbox_new(FALSE,7);
 
    if (ErrandType==ET_SPY) {
+/* Title of dialog to select a player to spy on */
       gtk_window_set_title(GTK_WINDOW(dialog),_("Spy On Player"));
+
       text=dpg_strdup_printf(
+/* Informative text for "spy on player" dialog. (%tde = "bitch", "bitch",
+   "guns", "drugs", respectively, by default) */
 _("Please choose the player to spy on. Your %tde will\n"
 "then offer his services to the player, and if successful,\n"
 "you will be able to view the player's stats with the\n"
@@ -2534,8 +2612,13 @@ _("Please choose the player to spy on. Your %tde will\n"
 Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
       label=gtk_label_new(text); g_free(text);
    } else {
+
+/* Title of dialog to select a player to tip the cops off to */
       gtk_window_set_title(GTK_WINDOW(dialog),_("Tip Off The Cops"));
+
       text=dpg_strdup_printf(
+/* Informative text for "tip off cops" dialog. (%tde = "bitch", "bitch",
+   "guns", "drugs", respectively, by default) */
 _("Please choose the player to tip off the cops to. Your %tde will\n"
 "help the cops to attack that player, and then report back to you\n"
 "on the encounter. Remember that the %tde will leave you temporarily,\n"
@@ -2575,10 +2658,16 @@ Names.Bitch,Names.Bitch,Names.Guns,Names.Drugs);
 
 void SackBitch(GtkWidget *widget,gpointer data) {
    char *title,*text;
+
+/* Title of dialog to sack a bitch (%Tde = "Bitch" by default) */
    title=dpg_strdup_printf(_("Sack %Tde"),Names.Bitch);
+
+/* Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
+   "bitch", respectively, by default) */
    text=dpg_strdup_printf(_("Are you sure? (Any %tde or %tde carried\n"
                           "by this %tde may be lost!)"),Names.Guns,
                           Names.Drugs,Names.Bitch);
+
    if (GtkMessageBox(ClientData.window,text,title,MB_YESNO)==IDYES) {
       SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
@@ -2595,10 +2684,12 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
    gchar *button_text[3];
    gpointer button_type[3]  = { BT_BUY, BT_SELL, BT_DROP };
 
+/* Column titles for display of drugs/guns carried or available for purchase */
    titles[0][0]=titles[1][0]=_("Name");
    titles[0][1]=_("Price");
    titles[1][1]=_("Number");
 
+/* Button titles for buying/selling/dropping guns or drugs */
    button_text[0]=_("_Buy ->");
    button_text[1]=_("<- _Sell");
    button_text[2]=_("_Drop <-");
@@ -2606,10 +2697,16 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
    text=g_string_new("");
 
    if (CreateHere) {
+/* Title of the display of available drugs/guns (%Tde = "Guns" or "Drugs"
+   by default) */
       dpg_string_sprintf(text,_("%Tde here"),Objects);
       widgets->HereFrame=frame[0]=gtk_frame_new(text->str);
    }
+
+/* Title of the display of carried drugs/guns (%Tde = "Guns" or "Drugs"
+   by default) */
    dpg_string_sprintf(text,_("%Tde carried"),Objects);
+
    widgets->CarriedFrame=frame[1]=gtk_frame_new(text->str);
 
    widgets->HereList=widgets->CarriedList=NULL;
@@ -2679,7 +2776,10 @@ void NewNameDialog() {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
+
+/* Title of dialog for changing a player's name */
    gtk_window_set_title(GTK_WINDOW(window),_("Change Name"));
+
    gtk_window_set_modal(GTK_WINDOW(window),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(window),
                                 GTK_WINDOW(ClientData.window));
@@ -2689,6 +2789,7 @@ void NewNameDialog() {
 
    vbox=gtk_vbox_new(FALSE,7);
 
+/* Informational text to prompt the player to change his/her name */
    label=gtk_label_new(_("Unfortunately, somebody else is already "
                        "using \"your\" name. Please change it:-"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
@@ -2753,7 +2854,9 @@ void GunShopDialog() {
    hsep=gtk_hseparator_new();
    gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
 
+/* Button to finish buying/selling guns in the gun shop */
    button=gtk_button_new_with_label(_("Done"));
+
    gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
                              GTK_SIGNAL_FUNC(gtk_widget_destroy),
                              (gpointer)window);
@@ -2786,7 +2889,10 @@ static void CreateSpyReports() {
    accel_group=gtk_accel_group_new();
    gtk_object_set_data(GTK_OBJECT(window),"accel_group",accel_group);
    gtk_window_add_accel_group(GTK_WINDOW(window),accel_group);
+
+/* Title of window to display reports from spies with other players */
    gtk_window_set_title(GTK_WINDOW(window),_("Spy reports"));
+
    gtk_window_set_modal(GTK_WINDOW(window),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(window),
                                 GTK_WINDOW(ClientData.window));
@@ -2852,6 +2958,8 @@ void DisplaySpyReports(Player *Play) {
 
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    if (!ReturnOnFail) {
+/* Error message displayed if the user tries to run the graphical client
+   when none is compiled into the dopewars binary. */
       g_print(_("No graphical client available - rebuild the binary\n"
               "passing the --enable-gui-client option to configure, or\n"
               "use the curses client (if available) instead!\n"));

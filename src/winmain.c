@@ -106,6 +106,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    while (split[argc] && split[argc][0]) argc++;
    LogFileStart();
    g_set_print_handler(LogFilePrintFunc);
+
+/* Informational comment placed at the start of the Windows log file
+   (this is used for messages printed during processing of the config
+   files - under Unix these are just printed to stdout) */
    g_print(_("# This is the dopewars startup log, containing any\n"
              "# informative messages resulting from configuration\n"
              "# file processing and the like.\n\n"));
@@ -133,7 +137,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 #endif
          } else if (AIPlayer) {
             AllocConsole();
+
+/* Title of the Windows window used for AI player output */
             SetConsoleTitle(_("dopewars AI"));
+
             g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                               ServerLogMessage,NULL);
             g_set_print_handler(ServerPrintFunc);

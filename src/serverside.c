@@ -76,6 +76,7 @@ static FILE *ScoreFP=NULL;
 char *PidFile;
 
 static char HelpText[] = { 
+/* Help on various general server commands */
  N_("dopewars server version %s commands and settings\n\n"
     "help                       Displays this help screen\n"
     "list                       Lists all players logged on\n"
@@ -108,6 +109,8 @@ int SendToMetaServer(char Up,int MetaSock,char *data,
                    (struct sockaddr *)MetaAddr,sizeof(struct sockaddr));
    g_string_free(text,TRUE);
    if (numbytes==-1) {
+/* Warning message displayed if data was not properly sent over the
+   network to the metaserver */
       g_warning(_("cannot send data to metaserver\n"));
       return 0;
    }
@@ -130,16 +133,21 @@ void RegisterWithMetaServer(char Up,char SendData) {
    int i;
    if (!MetaServer.Active || !NotifyMetaServer) return;
    if (SendData) {
+/* Message displayed when high scores (etc.) are sent to the metaserver */
       g_message(_("Sending data to metaserver at %s\n"),MetaServer.Name);
    } else {
+/* Message displayed when the metaserver is only told whether our server
+   is up or down */
       g_message(_("Notifying metaserver at %s\n"),MetaServer.Name);
    }
    if ((he=gethostbyname(MetaServer.Name))==NULL) {
+/* Warning message displayed if we cannot do a DNS lookup for the metaserver */
       g_warning(_("cannot locate metaserver\n"));
       return;
    }
    MetaSock=socket(AF_INET,SOCK_DGRAM,0);
    if (MetaSock==-1) {
+/* Warning message displayed if the socket() call failed for any reason */
       g_warning(_("cannot create socket for metaserver communication\n"));
       return;
    }
@@ -175,6 +183,8 @@ void RegisterWithMetaServer(char Up,char SendData) {
             g_free(MultiScore[i].Name); g_free(MultiScore[i].Time);
             g_free(AntiqueScore[i].Name); g_free(AntiqueScore[i].Time);
          }
+/* Warning message displayed if we failed to read the data from the
+   high score file */
       } else { g_warning(_("cannot read high score file\n")); }
    }
    CloseSocket(MetaSock);
@@ -274,15 +284,18 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SendPlayerData(Play);
                SendEvent(Play);
             } else {
+/* Message displayed in the server when too many players try to connect */
                g_message(_("MaxClients (%d) exceeded - dropping connection"),
                          MaxClients);
                if (MaxClients==1) {
                   text=g_strdup_printf(
+/* Message sent to a player if the server is full */
                        _("Sorry, but this server has a limit of 1 "
                          "player, which has been reached.^"
                          "Please try connecting again later."));
                } else {
                   text=g_strdup_printf(
+/* Message sent to a player if the server is full */
                        _("Sorry, but this server has a limit of %d "
                          "players, which has been reached.^"
                          "Please try connecting again later."),MaxClients);
@@ -296,6 +309,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                }
             }
          } else {
+/* A player changed their name during the game (unusual, and not really
+   properly supported anyway) - notify all players of the change */
             g_message(_("%s will now be known as %s"),GetPlayerName(Play),Data);
             BroadcastToClients(C_NONE,C_RENAME,Data,Play,Play);
             SetPlayerName(Play,Data);
@@ -311,6 +326,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
             else RunFromCombat(Play,i);
          }
          if (NumTurns>0 && Play->Turn>=NumTurns && Play->EventNum!=E_FINISH) {
+/* Message displayed when a player reaches their maximum number of turns */
             FinishGame(Play,_("Your dealing time is up..."));
          } else if (i!=Play->IsAt && (NumTurns==0 || Play->Turn<NumTurns) && 
                     Play->EventNum==E_NONE && Play->Health>0) {
@@ -322,6 +338,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
             Play->EventNum=E_SUBWAY;
             SendEvent(Play);
          } else {
+/* A player has tried to jet to a new location, but we don't allow them to.
+   (e.g. they're still fighting someone, or they're supposed to be dead) */
             g_warning(_("%s: DENIED jet to %s"),GetPlayerName(Play),
                                                 Location[i].Name);
          }
@@ -611,6 +629,7 @@ void StartServer() {
       perror("bind socket"); exit(1);
    }
 
+/* Initial startup message for the server */
    g_print(_("dopewars server version %s ready and waiting for connections\n"
              "on port %d. For assistance with server commands, enter the "
              "command \"help\"\n"),VERSION,Port);
@@ -628,6 +647,7 @@ void StartServer() {
    sact.sa_flags=0;
    sigemptyset(&sact.sa_mask);
    if (sigaction(SIGUSR1,&sact,NULL)==-1) {
+/* Warning messages displayed if we fail to trap various signals */
       g_warning(_("Cannot install SIGUSR1 interrupt handler!"));
    }
    sact.sa_handler=BreakHandle;
@@ -970,7 +990,10 @@ void GuiServerLoop() {
    gtk_signal_connect(GTK_OBJECT(window),"delete_event",
                       GTK_SIGNAL_FUNC(GuiRequestDelete),NULL);
    gtk_window_set_default_size(GTK_WINDOW(window),500,250);
+
+/* Title of dopewars server window (if used) */
    gtk_window_set_title(GTK_WINDOW(window),_("dopewars server"));
+
    gtk_container_set_border_width(GTK_CONTAINER(window),7);
 
    vbox=gtk_vbox_new(FALSE,7);

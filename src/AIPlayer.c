@@ -475,6 +475,7 @@ void AIHandleQuestion(char *Data,char AICode,Player *AIPlay,Player *From) {
 void AISendRandomMessage(Player *AIPlay) {
 /* Sends a random message to all other dopewars players */
    char *RandomInsult[5]= {
+/* Random messages to send from the AI player to other players */
       N_("Call yourselves drug dealers?"),
       N_("A trained monkey could do better..."),
       N_("Think you\'re hard enough to deal with the likes of me?"),
@@ -487,6 +488,8 @@ void AISendRandomMessage(Player *AIPlay) {
 #else /* NETWORKING */
 
 void AIPlayerLoop() {
+/* Whoops - the user asked that we run an AI player, but the binary was
+   built without that compiled in. */
    g_print(_("This binary has been compiled without networking support, and "
              "thus cannot act as an AI player.\nRecompile passing "
              "--enable-networking to the configure script."));
