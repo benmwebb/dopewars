@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars 1.4.8-devel\n"
-"POT-Creation-Date: 2000-09-14 20:19+0200\n"
+"POT-Creation-Date: 2000-09-14 23:22+0100\n"
 "PO-Revision-Date: 2000-09-12 20:30+0100\n"
 "Last-Translator: Tobias Mathes <tobi@ideenpark.de>\n"
 "Language-Team: GERMAN <DE@li.org>\n"
@@ -1031,7 +1031,7 @@ msgstr " oder moechtest Du A>bhauen "
 msgid "CLQP"
 msgstr "VLAS"
 
-#: src/curses_client.c:371 src/gtk_client.c:804
+#: src/curses_client.c:371 src/gtk_client.c:809
 msgid "Where to, dude ? "
 msgstr "Wohin, kleiner ? "
 
@@ -1138,12 +1138,12 @@ msgid "The server has terminated. Reverting to single player mode."
 msgstr ""
 "Verbindung zu Server unterbrochen! Kehre zurueck in Einzelspieler-Modus"
 
-#: src/curses_client.c:649 src/gtk_client.c:335 src/serverside.c:258
+#: src/curses_client.c:649 src/gtk_client.c:340 src/serverside.c:258
 #, c-format
 msgid "%s joins the game!"
 msgstr "%s betritt das Spiel!"
 
-#: src/curses_client.c:654 src/gtk_client.c:341
+#: src/curses_client.c:654 src/gtk_client.c:346
 #, c-format
 msgid "%s has left the game."
 msgstr "%s hat das Spiel verlassen"
@@ -1180,22 +1180,22 @@ msgstr "KVA"
 msgid "You don't have any %s to sell!"
 msgstr "Du hast keine %s zum verkaufen!"
 
-#: src/curses_client.c:820 src/gtk_client.c:1079
+#: src/curses_client.c:820 src/gtk_client.c:1084
 #, c-format
 msgid "You'll need more %s to carry any more %s!"
 msgstr "Du brauchst mehr %s Platz um noch was zu tragen %s!"
 
-#: src/curses_client.c:842 src/gtk_client.c:1083
+#: src/curses_client.c:842 src/gtk_client.c:1088
 #, c-format
 msgid "You don't have enough space to carry that %s!"
 msgstr "Du hast nicht genug Platz um %s zu tragen!"
 
-#: src/curses_client.c:850 src/gtk_client.c:1087
+#: src/curses_client.c:850 src/gtk_client.c:1092
 #, c-format
 msgid "You don't have enough cash to buy that %s!"
 msgstr "Du hast nicht genug Kohle fuer %s!"
 
-#: src/curses_client.c:863 src/gtk_client.c:1091
+#: src/curses_client.c:863 src/gtk_client.c:1096
 msgid "You don't have any to sell!"
 msgstr "Du hast nix zum verkaufen!"
 
@@ -1203,7 +1203,7 @@ msgstr "Du hast nix zum verkaufen!"
 msgid "How much money do you pay back? "
 msgstr "Wieviel Geld moechtest Du dem Kredithai geben? "
 
-#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1924
+#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1925
 msgid "You don't have that much money!"
 msgstr "Soviel Kohle hast Du nicht!"
 
@@ -1219,7 +1219,7 @@ msgstr "EAV"
 msgid "How much money? "
 msgstr "Wieviel Kohle? "
 
-#: src/curses_client.c:926 src/gtk_client.c:1917
+#: src/curses_client.c:926 src/gtk_client.c:1918
 msgid "There isn't that much money in the bank..."
 msgstr "Ein Baenker spricht: \"Soviel Geld haben Sie nicht.\""
 
@@ -1231,7 +1231,7 @@ msgstr "Drueck mal ne Taste..."
 msgid "Messages"
 msgstr "Nachrichten"
 
-#: src/curses_client.c:1143 src/gtk_client.c:1376
+#: src/curses_client.c:1143 src/gtk_client.c:1377
 msgid "Stats"
 msgstr "Statistik"
 
@@ -1402,7 +1402,7 @@ msgstr "/Spiel/_Ende"
 
 #: src/gtk_client.c:144
 msgid "/_Talk"
-msgstr "/_Sprechen"
+msgstr "/_Mitteilung"
 
 #: src/gtk_client.c:145
 msgid "/Talk/To _All"
@@ -1456,237 +1456,216 @@ msgstr "/_Hilfe"
 msgid "/Help/_About"
 msgstr "/Hilfe/_Ueber"
 
-#: src/gtk_client.c:162
+#: src/gtk_client.c:167
 msgid "Warning"
 msgstr "Warnung"
 
-#: src/gtk_client.c:162
+#: src/gtk_client.c:167
 msgid "Message"
 msgstr "Nachricht"
 
-#: src/gtk_client.c:168 src/gtk_client.c:179
+#: src/gtk_client.c:173 src/gtk_client.c:184
 msgid "Quit Game"
 msgstr "Verlasse Spiel"
 
-#: src/gtk_client.c:168 src/gtk_client.c:180 src/gtk_client.c:187
+#: src/gtk_client.c:173 src/gtk_client.c:185 src/gtk_client.c:192
 msgid "Abandon current game?"
 msgstr "Willst du das aktuelle Spiel abbrechen?"
 
-#: src/gtk_client.c:186
+#: src/gtk_client.c:191
 msgid "Start new game"
 msgstr "Starte neues Spiel"
 
-#: src/gtk_client.c:207
+#: src/gtk_client.c:212
 msgid "Inventory"
 msgstr "Inventar"
 
-#: src/gtk_client.c:235 src/gtk_client.c:2159 src/gtk_client.c:2523
+#: src/gtk_client.c:240 src/gtk_client.c:2160 src/gtk_client.c:2524
 msgid "Close"
 msgstr "Schliesse"
 
-#: src/gtk_client.c:265
+#: src/gtk_client.c:270
 msgid "Connection to server lost - switching to single player mode"
 msgstr "Verbindung zu Server verloren - wechsele in Einzelspieler-Modus"
 
-#: src/gtk_client.c:309
+#: src/gtk_client.c:314
 msgid "You have been pushed from the server."
 msgstr "Du wurdest vom Server geworfen."
 
-#: src/gtk_client.c:314
+#: src/gtk_client.c:319
 msgid "The server has terminated."
 msgstr "Der server wurde beendet."
 
-#: src/gtk_client.c:354
+#: src/gtk_client.c:359
 #, c-format
 msgid "Jetting to %s"
 msgstr "Reise zu %s"
 
-#: src/gtk_client.c:360
-msgid "<main>/Errands/Spy"
-msgstr "<main>/Aktionen/Spion"
-
-#: src/gtk_client.c:362
+#: src/gtk_client.c:367
 #, c-format
 msgid "_Spy\t(%s)"
 msgstr "_Spion\t(%s)"
 
-#: src/gtk_client.c:366
+#: src/gtk_client.c:371
 #, c-format
 msgid "_Tipoff\t(%s)"
 msgstr "_Verpfeife\t(%s)"
 
-#: src/gtk_client.c:368
-msgid "<main>/Errands/Tipoff"
-msgstr "<main>/Aktionen/Verpfeife"
-
-#: src/gtk_client.c:400
+#: src/gtk_client.c:405
 msgid "High Scores"
 msgstr "Bestenliste"
 
-#: src/gtk_client.c:434 src/gtk_client.c:1030 src/gtk_client.c:1489
-#: src/gtk_client.c:1834 src/gtk_client.c:1998 src/gtk_client.c:2274
-#: src/gtk_client.c:2431
+#: src/gtk_client.c:439 src/gtk_client.c:1035 src/gtk_client.c:1490
+#: src/gtk_client.c:1835 src/gtk_client.c:1999 src/gtk_client.c:2275
+#: src/gtk_client.c:2432
 msgid "OK"
 msgstr "OK"
 
-#: src/gtk_client.c:516
+#: src/gtk_client.c:521
 msgid "Fight"
 msgstr "Fighten"
 
-#: src/gtk_client.c:543
+#: src/gtk_client.c:548
 #, c-format
 msgid "_Deal %s"
 msgstr "_Dealen %s"
 
-#: src/gtk_client.c:547 src/gtk_client.c:1122 src/gtk_client.c:1319
+#: src/gtk_client.c:552 src/gtk_client.c:1127 src/gtk_client.c:1324
 msgid "_Fight"
 msgstr "_Fighten"
 
-#: src/gtk_client.c:550
+#: src/gtk_client.c:555
 msgid "_Stand"
 msgstr "_Stehen bleiben"
 
-#: src/gtk_client.c:553 src/gtk_client.c:1121
+#: src/gtk_client.c:558 src/gtk_client.c:1126
 msgid "_Run"
 msgstr "_Rennen"
 
-#: src/gtk_client.c:795
+#: src/gtk_client.c:800
 msgid "Jet to location"
 msgstr "Reise zu Ort"
 
-#: src/gtk_client.c:864
+#: src/gtk_client.c:869
 #, c-format
 msgid "at %s"
 msgstr ""
 
-#: src/gtk_client.c:869
+#: src/gtk_client.c:874
 #, c-format
 msgid "You are currently carrying %d %s"
 msgstr ""
 
-#: src/gtk_client.c:874
+#: src/gtk_client.c:879
 #, c-format
 msgid "Available space: %d"
 msgstr "Verfuegbarer Platz:"
 
-#: src/gtk_client.c:879
+#: src/gtk_client.c:884
 #, c-format
 msgid "You can afford %d"
 msgstr "Du kannst %d kaufen"
 
-#: src/gtk_client.c:928 src/gtk_client.c:1059
+#: src/gtk_client.c:933 src/gtk_client.c:1064
 msgid "Buy"
 msgstr "Kaufen"
 
-#: src/gtk_client.c:929 src/gtk_client.c:1060
+#: src/gtk_client.c:934 src/gtk_client.c:1065
 msgid "Sell"
 msgstr "Verkaufen"
 
-#: src/gtk_client.c:930 src/gtk_client.c:1061
+#: src/gtk_client.c:935 src/gtk_client.c:1066
 msgid "Drop"
 msgstr "Wegwerfen"
 
-#: src/gtk_client.c:1018
+#: src/gtk_client.c:1023
 #, c-format
 msgid "%s how many?"
 msgstr "%s wieviel?"
 
-#: src/gtk_client.c:1036 src/gtk_client.c:1834 src/gtk_client.c:2009
-#: src/gtk_client.c:2282
+#: src/gtk_client.c:1041 src/gtk_client.c:1835 src/gtk_client.c:2010
+#: src/gtk_client.c:2283
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/gtk_client.c:1075
+#: src/gtk_client.c:1080
 #, c-format
 msgid "You don't have any %s!"
 msgstr "Du hast kein %s!"
 
-#: src/gtk_client.c:1121 src/gtk_client.c:1835
+#: src/gtk_client.c:1126 src/gtk_client.c:1836
 msgid "_Yes"
 msgstr "_Ja"
 
-#: src/gtk_client.c:1121 src/gtk_client.c:1835
+#: src/gtk_client.c:1126 src/gtk_client.c:1836
 msgid "_No"
 msgstr "_Nein"
 
-#: src/gtk_client.c:1122
+#: src/gtk_client.c:1127
 msgid "_Attack"
 msgstr "_Angriff"
 
-#: src/gtk_client.c:1122
+#: src/gtk_client.c:1127
 msgid "_Evade"
 msgstr "_Verschwinden"
 
-#: src/gtk_client.c:1140
+#: src/gtk_client.c:1145
 msgid "Question"
 msgstr "Frage"
 
-#: src/gtk_client.c:1249
-msgid "<main>/Talk"
-msgstr "<main>/Mitteilung"
-
-#: src/gtk_client.c:1251
-msgid "<main>/List"
-msgstr "<main>/Anzeigen"
-
-#: src/gtk_client.c:1253
-msgid "<main>/Errands"
-msgstr "<main>/Aktionen"
-
-#: src/gtk_client.c:1269
-#, fuzzy
-msgid "Space"
-msgstr "Platz %6d"
-
 #: src/gtk_client.c:1274
+msgid "Space"
+msgstr "Platz"
+
+#: src/gtk_client.c:1279
 msgid "Cash"
 msgstr "Bargeld"
 
-#: src/gtk_client.c:1279
+#: src/gtk_client.c:1284
 msgid "Debt"
 msgstr "Schulden"
 
-#: src/gtk_client.c:1284
+#: src/gtk_client.c:1289
 msgid "Bank"
 msgstr "Konto"
 
-#: src/gtk_client.c:1299
+#: src/gtk_client.c:1304
 msgid "Health"
 msgstr "Gesundheit"
 
-#: src/gtk_client.c:1319
+#: src/gtk_client.c:1324
 msgid "_Jet!"
 msgstr "_Reisen!"
 
-#: src/gtk_client.c:1350
+#: src/gtk_client.c:1354
 msgid "dopewars"
 msgstr "Drogenkrieg"
 
-#: src/gtk_client.c:1436
+#: src/gtk_client.c:1437
 msgid "Drug Dealing and Research"
 msgstr "Drogen Handel und Research"
 
-#: src/gtk_client.c:1437
+#: src/gtk_client.c:1438
 msgid "Play Testing"
 msgstr "Spiel Testing"
 
-#: src/gtk_client.c:1438
+#: src/gtk_client.c:1439
 msgid "Extensive Play Testing"
 msgstr "Intensives Spiel Testing"
 
-#: src/gtk_client.c:1440
+#: src/gtk_client.c:1441
 msgid "Constructive Criticism"
 msgstr "Konstruktive Kritik"
 
-#: src/gtk_client.c:1442
+#: src/gtk_client.c:1443
 msgid "Unconstructive Criticism"
 msgstr "Unkonstruktive Kritik"
 
-#: src/gtk_client.c:1446
+#: src/gtk_client.c:1447
 msgid "About dopewars"
 msgstr "Ueber Drogenkrieg"
 
-#: src/gtk_client.c:1455
+#: src/gtk_client.c:1456
 msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "imaginary drug market.  dopewars is an All-American game which features\n"
@@ -1698,7 +1677,7 @@ msgid ""
 "have one month of game time to make your fortune.\n"
 msgstr ""
 
-#: src/gtk_client.c:1463
+#: src/gtk_client.c:1464
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
@@ -1710,7 +1689,7 @@ msgstr ""
 "\n"
 "drogenkrieg ist veroeffentlicht worden unter der GNU General Public Licence\n"
 
-#: src/gtk_client.c:1481
+#: src/gtk_client.c:1482
 msgid ""
 "\n"
 "For information on the command line options, type dopewars -h at your\n"
@@ -1720,137 +1699,137 @@ msgstr ""
 "Fuer Informationen ueber Kommando Optionen, tippe dopewars -h in deiner \n"
 "UNIX shell ein. Es wird dann die Hilfe-Uebersicht angezeigt."
 
-#: src/gtk_client.c:1519 src/gtk_client.c:1542
+#: src/gtk_client.c:1520 src/gtk_client.c:1543
 #, c-format
 msgid "Status: Could not connect (%s)"
 msgstr "Status: Kann keine Verbing mit (%s) herstellen"
 
-#: src/gtk_client.c:1530
-#, fuzzy, c-format
+#: src/gtk_client.c:1531
+#, c-format
 msgid "Status: Attempting to contact %s..."
-msgstr "Status: Versuche Server zu kontaktieren..."
+msgstr ""
 
-#: src/gtk_client.c:1590
+#: src/gtk_client.c:1591
 #, c-format
 msgid "%d of %d"
 msgstr "%d von %d"
 
-#: src/gtk_client.c:1654 src/gtk_client.c:1695 src/gtk_client.c:1736
+#: src/gtk_client.c:1655 src/gtk_client.c:1696 src/gtk_client.c:1737
 msgid "Server"
 msgstr "Server"
 
-#: src/gtk_client.c:1655 src/gtk_client.c:1710
+#: src/gtk_client.c:1656 src/gtk_client.c:1711
 msgid "Port"
 msgstr "Port"
 
-#: src/gtk_client.c:1656
+#: src/gtk_client.c:1657
 msgid "Version"
 msgstr "Version"
 
-#: src/gtk_client.c:1657
+#: src/gtk_client.c:1658
 msgid "Players"
 msgstr "Spieler"
 
-#: src/gtk_client.c:1658
+#: src/gtk_client.c:1659
 msgid "Comment"
 msgstr "Kommentar"
 
-#: src/gtk_client.c:1671
+#: src/gtk_client.c:1672
 msgid "New Game"
 msgstr "Neues Spiel"
 
-#: src/gtk_client.c:1680
+#: src/gtk_client.c:1681
 msgid "Hey dude, what's your _name?"
 msgstr "Hey kleiner, wie heisst Du? "
 
-#: src/gtk_client.c:1702
+#: src/gtk_client.c:1703
 msgid "Host name"
 msgstr "Rechnername"
 
-#: src/gtk_client.c:1725 src/gtk_client.c:1788
+#: src/gtk_client.c:1726 src/gtk_client.c:1789
 msgid "_Connect"
 msgstr "_Verbinde"
 
-#: src/gtk_client.c:1738 src/gtk_client.c:1759
+#: src/gtk_client.c:1739 src/gtk_client.c:1760
 msgid "Single player"
 msgstr "Einzelspieler"
 
-#: src/gtk_client.c:1744
+#: src/gtk_client.c:1745
 msgid "_Antique mode"
 msgstr "_Antiker Modus"
 
-#: src/gtk_client.c:1751
+#: src/gtk_client.c:1752
 msgid "_Start single-player game"
 msgstr "_Starte Einzelspieler Spiel"
 
-#: src/gtk_client.c:1761 src/gtk_client.c:1799
+#: src/gtk_client.c:1762 src/gtk_client.c:1800
 msgid "Metaserver"
 msgstr "MetaServer"
 
-#: src/gtk_client.c:1778
+#: src/gtk_client.c:1779
 msgid "_Update"
 msgstr "_Aktualisieren"
 
-#: src/gtk_client.c:1803
+#: src/gtk_client.c:1804
 msgid "Status: Waiting for user input"
 msgstr "Status: Warte auf Benutzereingabe"
 
-#: src/gtk_client.c:1955
+#: src/gtk_client.c:1956
 #, c-format
 msgid "Cash: %s"
 msgstr "Bargeld: %s"
 
-#: src/gtk_client.c:1962
+#: src/gtk_client.c:1963
 #, c-format
 msgid "Debt: %s"
 msgstr "Schulden: %s"
 
-#: src/gtk_client.c:1965
+#: src/gtk_client.c:1966
 #, c-format
 msgid "Bank: %s"
 msgstr "Konto: %s"
 
-#: src/gtk_client.c:1973
+#: src/gtk_client.c:1974
 msgid "Pay back:"
 msgstr "Zurueckzahlen:"
 
-#: src/gtk_client.c:1976
+#: src/gtk_client.c:1977
 msgid "Deposit"
 msgstr "Einzahlen"
 
-#: src/gtk_client.c:1980
+#: src/gtk_client.c:1981
 msgid "Withdraw"
 msgstr "Abheben"
 
-#: src/gtk_client.c:2004
+#: src/gtk_client.c:2005
 msgid "Pay all"
 msgstr "Bezahle alles"
 
-#: src/gtk_client.c:2026
+#: src/gtk_client.c:2027
 msgid "Player List"
 msgstr "Spieler Liste"
 
-#: src/gtk_client.c:2114
+#: src/gtk_client.c:2115
 msgid "Talk to player(s)"
 msgstr "Rede mit Spieler(n)"
 
-#: src/gtk_client.c:2136
+#: src/gtk_client.c:2137
 msgid "Talk to all players"
 msgstr "Rede mit allen Spielern"
 
-#: src/gtk_client.c:2140
+#: src/gtk_client.c:2141
 msgid "Message:-"
 msgstr "Nachricht:-"
 
-#: src/gtk_client.c:2153
+#: src/gtk_client.c:2154
 msgid "Send"
 msgstr "Sende"
 
-#: src/gtk_client.c:2244
+#: src/gtk_client.c:2245
 msgid "Spy On Player"
 msgstr "Spioniere anderen Spieler aus"
 
-#: src/gtk_client.c:2246
+#: src/gtk_client.c:2247
 #, c-format
 msgid ""
 "Please choose the player to spy on. Your %s will\n"
@@ -1860,16 +1839,16 @@ msgid ""
 "you, so any %s or %s that he's carrying may be lost!"
 msgstr ""
 "Bitte waehle einen Spieler aus den Du ausspionieren moechtest.\n"
-"Deine %s wird dann dem anderen Spieler ihre Dienste anbieten,\n" 
+"Deine %s wird dann dem anderen Spieler ihre Dienste anbieten,\n"
 "und wenn sie erfolgreich ist, kannst du Dir die Statistik deines\n"
 "Kontrahenten im \"Spion Report\" Menu anschauen\n"
 "Aber Vorsicht %s wird dich verlassen und  %s oder %s mitnehmen."
 
-#: src/gtk_client.c:2254
+#: src/gtk_client.c:2255
 msgid "Tip Off The Cops"
 msgstr "Gib den Bullen einen Tipp"
 
-#: src/gtk_client.c:2256
+#: src/gtk_client.c:2257
 #, c-format
 msgid ""
 "Please choose the player to tip off the cops to. Your %s will\n"
@@ -1881,12 +1860,12 @@ msgstr ""
 "Deine %s wird der Polizei helfen Deinen Kontrahenten zu finden,\n"
 "aber keine Angst sie wird nach getaner Arbeit zurueckkehren."
 
-#: src/gtk_client.c:2296
+#: src/gtk_client.c:2297
 #, c-format
 msgid "Sack %s"
 msgstr ""
 
-#: src/gtk_client.c:2297
+#: src/gtk_client.c:2298
 #, c-format
 msgid ""
 "Are you sure? (Any %s or %s carried\n"
@@ -1895,59 +1874,59 @@ msgstr ""
 "Bist Du sicher? (Alles %s oder %s getragenes\n"
 "%s geht verloren!)"
 
-#: src/gtk_client.c:2317
+#: src/gtk_client.c:2318
 msgid "Name"
 msgstr "Name"
 
-#: src/gtk_client.c:2318
+#: src/gtk_client.c:2319
 msgid "Price"
 msgstr "Preis"
 
-#: src/gtk_client.c:2319
+#: src/gtk_client.c:2320
 msgid "Number"
 msgstr "Anzahl"
 
-#: src/gtk_client.c:2321
+#: src/gtk_client.c:2322
 msgid "_Buy ->"
 msgstr "_Kaufen ->"
 
-#: src/gtk_client.c:2322
+#: src/gtk_client.c:2323
 msgid "<- _Sell"
 msgstr "<- _Verkaufen"
 
-#: src/gtk_client.c:2323
+#: src/gtk_client.c:2324
 msgid "_Drop <-"
 msgstr "_Wegwerfen <-"
 
-#: src/gtk_client.c:2328
+#: src/gtk_client.c:2329
 #, c-format
 msgid "%s here"
 msgstr "%s hier"
 
-#: src/gtk_client.c:2331
+#: src/gtk_client.c:2332
 #, c-format
 msgid "%s carried"
 msgstr "%s dabei"
 
-#: src/gtk_client.c:2407
+#: src/gtk_client.c:2408
 msgid "Change Name"
 msgstr "Aendere Name"
 
-#: src/gtk_client.c:2417
+#: src/gtk_client.c:2418
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it:-"
 msgstr "Naja, jemand anders benutzt \"Deinen\" Namen."
 
-#: src/gtk_client.c:2476
+#: src/gtk_client.c:2477
 msgid "Done"
 msgstr "Fertig"
 
-#: src/gtk_client.c:2509
+#: src/gtk_client.c:2510
 msgid "Spy reports"
 msgstr "Spion meldet"
 
-#: src/gtk_client.c:2580
+#: src/gtk_client.c:2581
 msgid ""
 "No GTK+ client available - rebuild the binary passing the\n"
 "--enable-gtk-client option to configure, or use the curses\n"
@@ -2028,20 +2007,19 @@ msgid "MaxClients (%d) exceeded - dropping connection"
 msgstr "MaxKlients (%d) erreicht - verwerfe Verbindung"
 
 #: src/serverside.c:272
-#, fuzzy
 msgid ""
 "Sorry, but this server has a limit of 1 player, which has been "
 "reached.^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier duerfen max. %d %s spielen.^Bitte versuchs spaeter nochmal."
+"Sorry, aber hier duerfen max. 1 spiele.^Bitte versuchs spaeter nochmal."
 
 #: src/serverside.c:277
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Sorry, but this server has a limit of %d players, which has been "
 "reached.^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier duerfen max. %d %s spielen.^Bitte versuchs spaeter nochmal."
+"Sorry, aber hier duerfen max. %d spielen.^Bitte versuchs spaeter nochmal."
 
 #: src/serverside.c:290
 #, c-format
@@ -2557,7 +2535,8 @@ msgstr "^Du hast eine %s verloren, Kleiner!"
 #: src/serverside.c:1967
 #, c-format
 msgid "You are paid a bounty of %s in reward for killing^one of %s's %s"
-msgstr "Du bekommst eine Belohnung in Hoehe von %s ^fuer den Mord an einer %s von %s"
+msgstr ""
+"Du bekommst eine Belohnung in Hoehe von %s ^fuer den Mord an einer %s von %s"
 
 #: src/serverside.c:1975
 #, c-format
@@ -2576,7 +2555,8 @@ msgstr "YN^Polizeibeamter %%s trifft dich du verlierst %s!"
 #: src/serverside.c:2035
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
-msgstr "YN^Polizeibeamter %%s und seine Kollege %%d treffen dich du verlierst %s!"
+msgstr ""
+"YN^Polizeibeamter %%s und seine Kollege %%d treffen dich du verlierst %s!"
 
 #: src/serverside.c:2190
 msgid "Player removed due to idle timeout"
@@ -2634,7 +2614,7 @@ msgid "AI Player started; attempting to contact server at %s:%d..."
 msgstr "KI Spieler gestartet; erstelle Verbindung zu Server %s auf port %d ..."
 
 #: src/AIPlayer.c:61
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Could not connect to dopewars server\n"
 "(%s)\n"
@@ -2764,24 +2744,3 @@ msgstr ""
 "Dieses Programm wurde Netzwerkunterstuetzung kompiliert \n"
 " und kann dadurch nicht als KI Spieler eingesetzt werden.\n"
 "Recompile passing --enable-networking to the configure script."
-
-#~ msgid "Space: %d"
-#~ msgstr "Platz: %d"
-
-#~ msgid "player"
-#~ msgstr "Spieler"
-
-#~ msgid "players"
-#~ msgstr "Spieler"
-
-#~ msgid "him"
-#~ msgstr "sein"
-
-#~ msgid "them"
-#~ msgstr "ihnen"
-
-#~ msgid "He's"
-#~ msgstr "Er ist"
-
-#~ msgid "They're"
-#~ msgstr "Sie sind"

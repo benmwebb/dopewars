@@ -157,6 +157,11 @@ static GtkItemFactoryEntry menu_items[] = {
    { N_("/Help/_About"),"F1",display_intro,0,NULL }
 };
 
+static gchar *MenuTranslate(const gchar *path,gpointer func_data) {
+/* Translate menu items, using gettext */
+   return _(path);
+}
+
 static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                        const gchar *message,gpointer user_data) {
    MessageBox(NULL,log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
@@ -357,7 +362,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          break;
       case C_ENDLIST:
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
-                                              _("<main>/Errands/Spy"));
+                                              "<main>/Errands/Spy");
          prstr=FormatPrice(Prices.Spy);
          text=g_strdup_printf(_("_Spy\t(%s)"),prstr);
          gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
@@ -365,7 +370,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          prstr=FormatPrice(Prices.Tipoff);
          text=g_strdup_printf(_("_Tipoff\t(%s)"),prstr);
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
-                                              _("<main>/Errands/Tipoff"));
+                                              "<main>/Errands/Tipoff");
          gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
          g_free(text); g_free(prstr);
          break;
@@ -1246,11 +1251,11 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
 
 void UpdateMenus() {
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   _("<main>/Talk")),InGame);
+                                                   "<main>/Talk"),InGame);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   _("<main>/List")),InGame);
+                                                   "<main>/List"),InGame);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   _("<main>/Errands")),InGame);
+                                                   "<main>/Errands"),InGame);
 }
 
 GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status) {
@@ -1329,7 +1334,6 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    GtkItemFactory *item_factory;
    GtkAdjustment *adj;
    gchar *buf;
-   int i;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
    if (ReturnOnFail && !gtk_init_check(argc,argv)) return FALSE;
@@ -1358,10 +1362,7 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    gtk_object_set_data(GTK_OBJECT(window),"accel_group",accel_group);
    item_factory = ClientData.Menu = gtk_item_factory_new(GTK_TYPE_MENU_BAR,
                                                          "<main>",accel_group);
-   /* Translate the paths of the menu items, in place */
-   for (i=0;i<nmenu_items;i++) {
-      menu_items[i].path=_(menu_items[i].path);
-   }
+   gtk_item_factory_set_translate_func(item_factory,MenuTranslate,NULL,NULL);
 
    gtk_item_factory_create_items(item_factory,nmenu_items,menu_items,NULL);
    gtk_window_add_accel_group(GTK_WINDOW(window),accel_group);
