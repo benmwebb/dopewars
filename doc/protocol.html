@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
 <title>The dopewars network protocol</title>
@@ -20,7 +20,7 @@
 <li><a href="#refclient">Client to server message reference</a></li>
 </ul>
 
-<h2><a name="syntax">Syntax used in this document</a></h2>
+<h2><a id="syntax">Syntax used in this document</a></h2>
 
 <dl>
 <dt><tt>(runhere)</tt></dt>
@@ -40,7 +40,7 @@ binary representation, but as a string - i.e. "100" takes 3 characters
 <p>Anything else should be taken as literal characters, which should appear in
 the message exactly as printed here.</p>
 
-<h2><a name="format">General message format</a></h2>
+<h2><a id="format">General message format</a></h2>
 
 <p>dopewars clients communicate with the dopewars server by means of a TCP/IP
 connection. Messages are sent in plain text, are of variable length, and
@@ -85,7 +85,7 @@ C_PRINTMESSAGE)</p>
 
 <p>For the AI codes, see the AICode type in src/message.h</p>
 
-<p><a name="oldprotocol">N.B. Older versions of dopewars used a less
+<p><a id="oldprotocol">N.B. Older versions of dopewars used a less
 sophisticated protocol:-</a></p>
 
 <dl>
@@ -99,7 +99,7 @@ often be left blank. This old protocol is used if the
 
 <p>e.g. "Fred^Bert^AFHello player"</p>
 
-<h2><a name="startgame">Starting a game from the client</a></h2>
+<h2><a id="startgame">Starting a game from the client</a></h2>
 
 <p>To start a game, the client must first notify the server of the protocol
 it can support (with the <a href="#abilities">C_ABILITIES</a> message) and
@@ -111,7 +111,7 @@ will default to using this protocol, for backwards compatibility. After sending
 these two messages, the game is run mainly by the server; the client should
 listen for incoming messages, and respond appropriately.</p>
 
-<h2><a name="refserver">Server to client message reference</a></h2>
+<h2><a id="refserver">Server to client message reference</a></h2>
 
 <p>The messages listed below may be sent from a dopewars server to the client.
 Most of these messages require some kind of processing to be done, and may
@@ -396,11 +396,11 @@ now<br />
 <b>Answer required:</b> yes, depending on the message contents: usually a
 C_REQUESTJET or C_FIGHTACT message<p /></dd>
 
-<dt><a name="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
+<dt><a id="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
 <dd>Negotiates protocol extensions between client and server<br />
 <tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)(donefight)</tt>
 
-<p><a name="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather
+<p><a id="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather
 than player names to identify players in network messages ('0' otherwise). It is
 strongly recommended that this new protocol be used, as the old protocol is
 difficult to properly support, and is deprecated. However, the new protocol is
@@ -412,21 +412,21 @@ succeeding messages sent before the server sends C_ABILITIES back, must be
 sent using the old protocol. "Old" servers will ignore the C_ABILITIES
 message.) Ability name in dopewars code: <b>A_PLAYERID</b></p>
 
-<p><a name="drugvalue"><tt>drugvalue</tt></a> = '1' if the server should keep
+<p><a id="drugvalue"><tt>drugvalue</tt></a> = '1' if the server should keep
 track of how much players paid for their drugs, so that they can see whether
 they're getting a good deal when they come to sell them ('0' otherwise).
 Ability name in dopewars code: <b>A_DRUGVALUE</b></p>
 
-<p><a name="newfight"><tt>newfight</tt></a> = '1' if we use the "new" fighting
+<p><a id="newfight"><tt>newfight</tt></a> = '1' if we use the "new" fighting
 interface (documented here). Highly recommended. Ability name in dopewars
 code: <b>A_NEWFIGHT</b></p>
 
-<p><a name="tstring"><tt>tstring</tt></a> = '1' if names of drugs etc. should be
+<p><a id="tstring"><tt>tstring</tt></a> = '1' if names of drugs etc. should be
 sent in the <a href="i18n.html">translated string</a> (tstring) notation;
 only necessary if you are supporting non-English languages. Ability name
 in dopewars code: <b>A_TSTRING</b></p>
 
-<p><a name="donefight"><tt>donefight</tt></a> = '1' if, when a fight finishes,
+<p><a id="donefight"><tt>donefight</tt></a> = '1' if, when a fight finishes,
 the client is expected to send a C_DONE message to instruct the server to
 move on. (This is to allow the user to close the fight dialog before any
 new dialogs pop up.) Ability name in dopewars code: <b>A_DONEFIGHT</b></p>
@@ -443,7 +443,7 @@ e.g. "^^Ar10100" (N.B. the double ^ is a feature of the "old" protocol)</dd>
 
 </dl>
 
-<h2><a name="refclient">Client to server message reference</a></h2>
+<h2><a id="refclient">Client to server message reference</a></h2>
 
 <p>The messages are below are typically sent from the client to the server. Note
 that players do not communicate directly between each other, but always via.
@@ -499,7 +499,7 @@ e.g. "^AXY"<p /></dd>
 to withdraw<br />
 e.g. "^AY10000"<p /></dd>
 
-<dt><a name="name"><b>C_NAME</b></a> ('<tt>c</tt>')</dt>
+<dt><a id="name"><b>C_NAME</b></a> ('<tt>c</tt>')</dt>
 <dd>Sent by the client to register the player name with the server<br />
 <tt>data</tt> = the player's name<br />
 N.B. this is always sent at the start of the game, in which case the old
@@ -574,7 +574,9 @@ e.g.<br />
   </ul>
 </li>
 </ul>
-<p>Last update: <b>29-04-2002</b></p>
-
+<p>
+  Last update: <b>15-07-2002</b><br />
+  Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+</p>
 </body>
 </html>

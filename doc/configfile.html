@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
 <title>dopewars configuration files</title>
@@ -70,16 +70,16 @@ locations</a></li>
 <li><a href="#advanced">Advanced configuration</a></li>
 </ul>
 
-<h2><a name="fileloc">General configuration: file and server locations</a></h2>
+<h2><a id="fileloc">General configuration: file and server locations</a></h2>
 
 <dl>
-<dt><a name="Port"><b>Port=<i>7902</i></b></a></dt>
+<dt><a id="Port"><b>Port=<i>7902</i></b></a></dt>
 <dd>Tells the dopewars client to look for a server on port <i>7902</i>, and
 tells the dopewars server to bind to port <i>7902</i> and wait for connections.
 This can be overridden with the -p <a href="commandline.html#port">
 command line option</a>.</dd>
 
-<dt><a name="Server"><b>Server=<i>"localhost"</i></b></a></dt>
+<dt><a id="Server"><b>Server=<i>"localhost"</i></b></a></dt>
 <dd>Tells the dopewars client to look for a server at the address
 <i>localhost</i>. Dotted quad (e.g. 127.0.0.1) addresses may also be used here.
 If this variable is set to one of the three "special" names
@@ -140,7 +140,7 @@ the user for a username and password on each connect instead.)</dd>
 <dt><b>Socks.Auth.Password=<i>""</i></b></dt>
 <dd>The corresponding password for Socks.Auth.User, above.</dd>
 
-<dt><a name="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
+<dt><a id="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
 </dt>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
@@ -175,9 +175,9 @@ to TRUE; this only takes effect, of course, after the ConfigVerbose variable is
 set, and then remains in force until it is reset again.</dd>
 </dl>
 
-<h2><a name="metaserver">Metaserver configuration</a></h2>
+<h2><a id="metaserver">Metaserver configuration</a></h2>
 <dl>
-<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>TRUE</i></b></a></dt>
+<dt><a id="MetaServerActive"><b>MetaServer.Active=<i>TRUE</i></b></a></dt>
 <dd>Tells the dopewars server to report its status to the
 <a href="metaserver.html">metaserver</a>. If <i>TRUE</i>
 is replaced by <i>FALSE</i> the server will not report to the metaserver.
@@ -210,7 +210,7 @@ if MetaServer.ProxyName is blank.</dd>
 registration (server mode) or listing the available servers (client mode) is
 <i>/metaserver.php</i>.</dd>
 
-<dt><a name="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
+<dt><a id="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
 server"</i></b></a></dt>
 <dd>Sets the comment for your server, which appears on the list of servers
 maintained by the metaserver, to <i>dopewars server</i>.</dd>
@@ -254,7 +254,7 @@ server or AI player to authenticate itself with a web proxy.</dd>
 
 </dl>
 
-<h2><a name="places">Basic configuration: places in the game</a></h2>
+<h2><a id="places">Basic configuration: places in the game</a></h2>
 
 <dl>
 <dt><b>NumLocation=<i>8</i></b></dt>
@@ -313,7 +313,7 @@ the game.</dd>
 <dd>The pub is known by the name <i>"the pub"</i> during the game.</dd>
 </dl>
 
-<h2><a name="drugs">Basic configuration: drug prices</a></h2>
+<h2><a id="drugs">Basic configuration: drug prices</a></h2>
 <dl>
 <dt><b>NumDrug=<i>12</i></b></dt>
 <dd>Sets there to be <i>12</i> different types of drug in the game.</dd>
@@ -367,7 +367,7 @@ normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 <i>4</i>.</dd>
 </dl>
 
-<h2><a name="combat">Basic configuration: guns and fighting</a></h2>
+<h2><a id="combat">Basic configuration: guns and fighting</a></h2>
 <dl>
 <dt><b>NumGun=<i>4</i></b></dt>
 <dd>Configures the game to have <i>4</i> guns available to players at the
@@ -452,7 +452,7 @@ against a player.</dd>
 <dd>The first cop's deputies will each carry <i>1</i> gun.</dd>
 </dl>
 
-<h2><a name="advanced">Advanced configuration</a></h2>
+<h2><a id="advanced">Advanced configuration</a></h2>
 <dl>
 <dt><b>Currrency.Symbol=<i>$</i></b></dt>
 <dd>Uses the dollar (<i>$</i>) symbol to display all prices of drugs, guns,
@@ -515,11 +515,11 @@ server for <i>14400</i> seconds, he/she will be automatically disconnected.</dd>
 of connecting or disconnecting to the server, the server will sever the
 connection.</dd>
 
-<dt><a name="MaxClients"><b>MaxClients=<i>20</i></b></a></dt>
+<dt><a id="MaxClients"><b>MaxClients=<i>20</i></b></a></dt>
 <dd>Prevents more than <i>20</i> clients from connecting to the server at
 any one time.</dd>
 
-<dt><a name="AITurnPause"><b>AITurnPause=<i>5</i></b></a></dt>
+<dt><a id="AITurnPause"><b>AITurnPause=<i>5</i></b></a></dt>
 <dd>Makes computer-controlled client players run from this machine (not
 necessarily AI players that connect to a server run on this machine) wait
 <i>5</i> seconds between moving from location to location - i.e. a turn
@@ -634,6 +634,9 @@ can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>25-06-2002</b></p>
+<p>
+  Last update: <b>15-07-2002</b><br />
+  Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+</p>
 </body>
 </html>

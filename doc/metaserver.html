@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
 <title>The dopewars metaserver</title>
@@ -31,19 +31,19 @@ pick the game that most suits them. This is the function of the dopewars
 </li>
 </ul>
 
-<h2><a name="location">Metaserver location</a></h2>
+<h2><a id="location">Metaserver location</a></h2>
 <p>The metaserver is a <a href="http://www.php.net/">PHP</a> script which lives
 at <a href="http://sourceforge.net/">SourceForge</a>. It is accessed by both
 dopewars servers and clients via. TCP connection to port 80, by standard
 HTTP.</p>
 
-<h2><a name="oldmeta">The "old" metaserver</a></h2>
+<h2><a id="oldmeta">The "old" metaserver</a></h2>
 <p>Versions of dopewars prior to 1.5.1 used a different metaserver system,
 which is now deprecated. Although the old system will continue to run for some
 time, it will eventually be discontinued, so it is recommended that dopewars
 servers and clients are upgraded to the latest version.</p>
 
-<h2><a name="client">Using the metaserver from the client</a></h2>
+<h2><a id="client">Using the metaserver from the client</a></h2>
 <p>Players who want to use the metaserver to list the currently available
 servers should go to
 <a href="http://dopewars.sourceforge.net/metaserver.php?getlist=2">this
@@ -65,7 +65,7 @@ configuration file</a>:-<br />
 <b>MetaServer.ProxyName="proxy.com"<br />
 MetaServer.ProxyPort=8080</b></p>
 
-<h2><a name="server">Using the metaserver from the server</a></h2>
+<h2><a id="server">Using the metaserver from the server</a></h2>
 <p>People running servers who <b>do not</b> want their details listed by the
 metaserver should disable the metaserver comunication of the server with
 the <a href="configfile.html#MetaServerActive">MetaServer.Active=0</a>
@@ -83,7 +83,7 @@ game. See the <a href="server.html">server page</a> for more details.</p>
 metaserver if you are using a web proxy; see the information
 <a href="#client">above</a> for fixing this problem.</p>
 
-<h3><a name="wrongip">But it's displaying the wrong name!</a></h3>
+<h3><a id="wrongip">But it's displaying the wrong name!</a></h3>
 <p>Once connected to the metaserver, you may find that it displays the IP
 address of your server and not its domain name, or that it gets the domain
 name wrong. This is usually because your DNS is not set up to translate
@@ -114,7 +114,7 @@ MetaServer.Password="Dope-Auth"</b></p>
 <p>Restart your dopewars server, or send it a SIGUSR1 signal, for changes
 to these variables to take effect.</p>
 
-<h3><a name="dynamicip">But my server has a dynamic IP...</a></h3>
+<h3><a id="dynamicip">But my server has a dynamic IP...</a></h3>
 <p>Finally, your server's IP may be resolved happily, but you may have a
 connection to the internet which assigns you a dynamic IP. Consider what
 happens if your connection is broken before the dopewars server exits; the
@@ -132,6 +132,9 @@ will automatically replace the "old" one.</p>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>11-05-2002</b></p>
+<p>
+  Last update: <b>15-07-2002</b><br />
+  Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+</p>
 </body>
 </html>

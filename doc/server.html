@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
- "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
 <head>
 <title>Setting up and running a dopewars server</title>
@@ -37,7 +37,7 @@ customised server will play this customised game.</p>
 <li><a href="#metaserver">Private and public: the dopewars metaserver</a></li>
 </ul>
 
-<h2><a name="server">Running a server</a></h2>
+<h2><a id="server">Running a server</a></h2>
 
 <p>All the code for the dopewars server is included in the same binary as the
 standard client. To run the binary in server mode, specify the <b>-s</b> or
@@ -48,7 +48,7 @@ a line for entering <a href="servercommands.html">server commands</a> is used
 (an "interactive" server) while on Unix systems a text-mode server that
 accepts no input ("noninteractive") is used.</p>
 
-<h2><a name="interact">Interacting with the text-mode server</a></h2>
+<h2><a id="interact">Interacting with the text-mode server</a></h2>
 
 <p>Once started, the text-mode server does not accept commands directly. This
 is problematic if you want to adjust settings, eject players, etc. To send
@@ -60,7 +60,7 @@ communication.) Also, by default the text-mode server sends its log output to
 standard output; you may wish to instead log to a file with the <b>-l</b>
 option.</p>
 
-<h2><a name="ntservice">Running as an NT service</a></h2>
+<h2><a id="ntservice">Running as an NT service</a></h2>
 
 <p>On Windows systems, the graphical server has one major drawback; it can
 only run while you are logged on. As soon as you log out, the server is
@@ -72,7 +72,7 @@ server in this configuration is that server commands cannot be issued once
 the server is running. This limitation should be fixed in a future release
 of dopewars.</p>
 
-<h2><a name="metaserver">Private and public: the dopewars metaserver</a></h2>
+<h2><a id="metaserver">Private and public: the dopewars metaserver</a></h2>
 
 <p>By default, a server reports its status to the dopewars
 <a href="metaserver.html">metaserver</a>. It does this on startup and
@@ -104,6 +104,9 @@ information on getting round these difficulties, see the
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>03-02-2002</b></p>
+<p>
+  Last update: <b>15-07-2002</b><br />
+  Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
+</p>
 </body>
 </html>
