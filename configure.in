@@ -101,6 +101,9 @@ if test "$CYGWIN" = "yes" ; then
    if test "$GUI_SERVER" = "probe"; then
      GUI_SERVER="yes"
    fi
+
+   dnl Read high score files, docs and locale files from current directory
+   datadir="."
 else
    AC_MSG_RESULT([Configuring for Unix binary])
 
