@@ -1690,7 +1690,7 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
 #ifdef CYGWIN
-   win32_init(hInstance,hPrevInstance);
+   win32_init(hInstance,hPrevInstance,"mainicon");
 #else
    gtk_set_locale();
    if (ReturnOnFail && !gtk_init_check(argc,argv)) return FALSE;

@@ -581,7 +581,7 @@ guint gtk_signal_connect(GtkObject *object,const gchar *name,
 guint gtk_signal_connect_object(GtkObject *object,const gchar *name,
                                 GtkSignalFunc func,GtkObject *slot_object);
 void gtk_signal_emit(GtkObject *object,const gchar *name, ...);
-void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance);
+void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon);
 void gtk_menu_shell_insert(GtkMenuShell *menu_shell,GtkWidget *child,
                            gint position);
 void gtk_menu_shell_append(GtkMenuShell *menu_shell,GtkWidget *child);

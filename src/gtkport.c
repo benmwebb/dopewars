@@ -977,7 +977,7 @@ LRESULT APIENTRY TextWndProc(HWND hwnd,UINT msg,WPARAM wParam,
    return CallWindowProc(wpOrigTextProc,hwnd,msg,wParam,lParam);
 }
 
-void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
+void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    WNDCLASS wc;
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
@@ -989,7 +989,11 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
       wc.cbClsExtra	= 0;
       wc.cbWndExtra	= 0;
       wc.hInstance	= hInstance;
-      wc.hIcon		= LoadIcon(NULL,IDI_APPLICATION);
+      if (MainIcon) {
+        wc.hIcon	= LoadIcon(hInstance,MainIcon);
+      } else {
+        wc.hIcon	= LoadIcon(NULL,IDI_APPLICATION);
+      }
       wc.hCursor	= LoadCursor(NULL,IDC_ARROW);
       wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
       wc.lpszMenuName	= NULL;

@@ -53,6 +53,10 @@ if test "$CYGWIN" = "yes" ; then
    dnl Glib stuff
    LDFLAGS="$LDFLAGS -lglib-1.3"
 
+   dnl We need to compile and then link in the Windows resources
+   WNDRES="dopewars.res"
+   AC_SUBST(WNDRES)
+
    dnl Use graphical server by default
    GUI_SERVER="yes"
 else
