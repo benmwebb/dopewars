@@ -43,5 +43,6 @@ gboolean GtkLoop(int *argc, char **argv[],
 
 void GuiStartGame(void);
 GtkWidget *my_hbbox_new(void);
+void my_set_dialog_position(GtkWindow *dialog);
 
 #endif
