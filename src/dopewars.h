@@ -83,6 +83,7 @@ struct METASERVER {
    gchar *ProxyName;
    unsigned ProxyPort;
    gchar *Path,*LocalName,*Password,*Comment;
+   gboolean UseSocks;
 };
 
 struct PRICES {

@@ -311,6 +311,7 @@ gboolean OpenMetaHttpConnection(HttpConnection **conn) {
                            MetaServer.Path,METAVERSION);
    retval = OpenHttpConnection(conn,MetaServer.Name,MetaServer.Port,
                                MetaServer.ProxyName,MetaServer.ProxyPort,
+                               UseSocks && MetaServer.UseSocks ? &Socks : NULL,
                                "GET",query,NULL,NULL);
    g_free(query);
    return retval;

@@ -937,13 +937,14 @@ static gboolean StartHttpConnect(HttpConnection *conn) {
 
 gboolean OpenHttpConnection(HttpConnection **connpt,gchar *HostName,
                             unsigned Port,gchar *Proxy,unsigned ProxyPort,
+                            SocksServer *socks,
                             gchar *Method,gchar *Query,
                             gchar *Headers,gchar *Body) {
    HttpConnection *conn;
    g_assert(HostName && Method && Query && connpt);
 
    conn=g_new0(HttpConnection,1);
-   InitNetworkBuffer(&conn->NetBuf,'\n','\r',NULL);
+   InitNetworkBuffer(&conn->NetBuf,'\n','\r',socks);
    conn->HostName=g_strdup(HostName);
    if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
    conn->Method=g_strdup(Method);

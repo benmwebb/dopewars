@@ -172,6 +172,7 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
 
 gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             unsigned Port,gchar *Proxy,unsigned ProxyPort,
+                            SocksServer *socks,
                             gchar *Method,gchar *Query,
                             gchar *Headers,gchar *Body);
 void CloseHttpConnection(HttpConnection *conn);

@@ -219,6 +219,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    
    retval=OpenHttpConnection(&MetaConn,MetaServer.Name,MetaServer.Port,
                              MetaServer.ProxyName,MetaServer.ProxyPort,
+                             UseSocks && MetaServer.UseSocks ? &Socks : NULL,
                              "POST",MetaServer.Path,headers->str,body->str);
    g_string_free(headers,TRUE);
    g_string_free(body,TRUE);

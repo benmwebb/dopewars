@@ -158,11 +158,12 @@ struct BITCH Bitch = {
    50000,150000
 };
 
-struct METASERVER MetaServer = { FALSE,NULL,0,NULL,0,NULL,NULL,NULL,NULL };
+struct METASERVER MetaServer = { FALSE,NULL,0,NULL,0,NULL,NULL,NULL,
+                                 NULL,FALSE };
 
 struct METASERVER DefaultMetaServer = {
    TRUE,"dopewars.sourceforge.net",80,"",8080,"/metaserver.php",
-   "","","dopewars server"
+   "","","dopewars server", FALSE
 };
 
 SocksServer Socks = { NULL,0,0 };
@@ -223,6 +224,9 @@ struct GLOBALS Globals[] = {
    { NULL,NULL,NULL,&MetaServer.Comment,NULL,"MetaServer.Comment",
      N_("Server description, reported to the metaserver"),NULL,NULL,0,"",NULL,
      NULL },
+   { NULL,&MetaServer.UseSocks,NULL,NULL,NULL,"MetaServer.UseSocks",
+     N_("TRUE if SOCKS should be used for metaserver communication"),
+     NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,NULL,&Pager,NULL,"Pager",
      N_("Program used to display multi-page output"),NULL,NULL,0,"",NULL,NULL },
    { &NumTurns,NULL,NULL,NULL,NULL,"NumTurns",
@@ -1240,6 +1244,7 @@ void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src) {
    dest->Active=src->Active;
    dest->Port=src->Port;
    dest->ProxyPort=src->ProxyPort;
+   dest->UseSocks=src->UseSocks;
    AssignName(&dest->Name,src->Name);
    AssignName(&dest->ProxyName,src->ProxyName);
    AssignName(&dest->Path,src->Path);

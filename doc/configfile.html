@@ -87,6 +87,25 @@ This option can be overridden with the -o <a href="commandline.html#server">
 command line option</a> (but be sure to protect the brackets from the shell
 if you use one of the "special" names).
 
+<dt><b>Socks.Active=<i>FALSE</i></b></a>
+<dd>Instructs the dopewars client to connect directly to the given server,
+without using an intermediate SOCKS server. If this is set to TRUE, all
+connections go via. the SOCKS server. By default, SOCKS is not used for
+metaserver communications - see the MetaServer.UseSocks variable. N.B. You
+cannot run a dopewars server behind a SOCKS server, due to limitations in
+the SOCKS protocol.
+
+<dt><b>Socks.Name=<i>socks</i></b></a>
+<dd>If using SOCKS, sets the hostname of the SOCKS server to connect to to
+be <i>"socks"</i>.
+
+<dt><b>Socks.Port=<i>1080</i></b></a>
+<dd>Connects to the SOCKS server on TCP port <i>1080</i>.
+
+<dt><b>Socks.Version=<i>4</i></b></a>
+<dd>Uses SOCKS version <i>4</i>. Version 5 is also supported; SOCKS5 servers
+support username/password authentication, unlike SOCKS4.
+
 <dt><a name="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
@@ -157,6 +176,11 @@ See the <a href="metaserver.html">metaserver page</a> for more details.
 <dt><b>MetaServer.Password=<i>"auth"</i></b>
 <dd>Uses the password <i>auth</i> to authenticate your dopewars server's
 hostname (see MetaServer.LocalName above) with the metaserver.
+
+<dt><b>MetaServer.UseSocks=<i>FALSE</i></b>
+<dd>Even if "Socks.Active" is TRUE, do not use SOCKS for metaserver
+communication - connect directly to the metaserver or proxy.
+
 </dl>
 
 <h2><a name="places">Basic configuration: places in the game</a></h2>
