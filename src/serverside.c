@@ -1163,6 +1163,47 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
    return TRUE; /* Never allow automatic deletion - we handle it manually */
 }
 
+#ifdef CYGWIN
+static HWND mainhwnd=NULL;
+
+static LRESULT CALLBACK GuiServerWndProc(HWND hwnd,UINT msg,WPARAM wparam,
+                                         LPARAM lparam) {
+  if (hwnd==mainhwnd) switch(msg) {
+    case MYWM_TASKBAR:
+      if ((UINT)lparam==WM_LBUTTONDOWN) ShowWindow(mainhwnd,SW_SHOW);
+      break;
+    case WM_SYSCOMMAND:
+      if (wparam==SC_MINIMIZE) {
+        ShowWindow(mainhwnd,SW_HIDE); return TRUE;
+      }
+      break;
+  }
+  return FALSE;
+}
+
+static void SetupTaskBarIcon(GtkWidget *widget) {
+  NOTIFYICONDATA nid;
+
+  nid.cbSize = sizeof(NOTIFYICONDATA);
+  nid.uID = 1000;
+  if (widget && !widget->hWnd) return;
+  if (!widget && !mainhwnd) return;
+
+  if (widget) mainhwnd = widget->hWnd;
+  nid.hWnd = mainhwnd;
+  if (widget) {
+    nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    nid.uCallbackMessage = MYWM_TASKBAR;
+    nid.hIcon = mainIcon;
+    strcpy(nid.szTip,"dopewars server - running");
+    Shell_NotifyIcon(NIM_ADD,&nid);
+    SetCustomWndProc(GuiServerWndProc);
+  } else {
+    Shell_NotifyIcon(NIM_DELETE,&nid);
+  }
+}
+#endif /* CYGWIN */
+
 void GuiServerLoop() {
    GtkWidget *window,*text,*hbox,*vbox,*entry,*label;
    GtkAdjustment *adj;
@@ -1202,7 +1243,13 @@ void GuiServerLoop() {
    StartServer();
 
    ListenTag=gdk_input_add(ListenSock,GDK_INPUT_READ,GuiNewConnect,NULL);
+#ifdef CYGWIN
+   SetupTaskBarIcon(window);
+#endif
    gtk_main();
+#ifdef CYGWIN
+   SetupTaskBarIcon(NULL);
+#endif
 }
 #endif /* GUI_SERVER */
 
