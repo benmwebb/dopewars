@@ -170,6 +170,7 @@ else
    if test "$ESD" = "yes"; then
      SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
      SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
+     AC_SUBST(ESD_LIBS)
      AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
    fi
 
@@ -184,7 +185,9 @@ else
      if test "$libs" = "yes"; then
        if test "$headers" = "yes"; then
          SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
-         SOUND_LIBS="$SOUND_LIBS $SDL_LIBS -lSDL_mixer"
+         SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+         SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
+         AC_SUBST(SDL_LIBS)
          AC_DEFINE(HAVE_SDL_MIXER, 1, [Do we have the SDL_mixer sound library?])
        fi
      fi
@@ -250,6 +253,26 @@ AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork)
+
+dnl Enable plugins only if we can find the dlopen function, and
+dnl the user does not disable them
+AC_ARG_ENABLE(plugins,
+[  --enable-plugins        use dynamically-loaded sound modules],
+[ plugins="$enableval" ],[ plugins="probe" ])
+
+if test "$plugins" != "no" ; then
+  AC_SEARCH_LIBS(dlopen, dl)
+  AC_CHECK_FUNC(dlopen, [plugins="yes"], [plugins="no"])
+fi
+
+if test "$plugins" = "yes" ; then
+  AC_DEFINE(PLUGINS, 1, [Define if using dynamically-loaded sound modules])
+else
+  PLUGOBJS="plugins/sound_sdl.o plugins/sound_esd.o plugins/sound_winmm.o"
+  AC_SUBST(PLUGOBJS)
+  PLUGLIBS="$SOUND_LIBS"
+  AC_SUBST(PLUGLIBS)
+fi
 
 dnl Enable networking by default under Win32, but on Unix systems
 dnl make it dependent on the availability of select and socket
