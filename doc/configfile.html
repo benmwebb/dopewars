@@ -273,14 +273,15 @@ normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 <dd>Tells dopewars that drug <i>4</i> (normally Heroin) can occasionally be
 particuarly expensive (FALSE cancels this).
 
-<dt><b>Drugs.ExpensiveStr1=<i>"Cops made a big %s bust! Prices are
+<dt><b>Drugs.ExpensiveStr1=<i>"Cops made a big %tde bust! Prices are
 outrageous!"</i></b>
 <dd>Sets the string that is displayed when <b>any</b> drug is particularly
-expensive. This is a standard C-style format string - i.e. the %s is
-replaced by the name of the drug which is expensive. This string is
-displayed 50% of the time for expensive drugs.
+expensive. This is similar to a standard C-style format string - i.e. the
+%tde is replaced by the name of the drug which is expensive. (See the
+<a href="i18n.html">Internationalization page</a> for further information
+on this notation.) This string is displayed 50% of the time for expensive drugs.
 
-<dt><b>Drugs.ExpensiveStr2=<i>"Addicts are buying %s at ridiculous
+<dt><b>Drugs.ExpensiveStr2=<i>"Addicts are buying %tde at ridiculous
 prices!"</i></b>
 <dd>Sets the string which is used for expensive drugs the other 50% of the 
 time.
