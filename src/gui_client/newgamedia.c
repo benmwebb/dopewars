@@ -469,8 +469,8 @@ void NewGameDialog(Player *play)
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = stgam.name = gtk_entry_new();
-  gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey, 0,
-                             GTK_ACCEL_VISIBLE);
+  gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey,
+                             GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(stgam.play));
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
