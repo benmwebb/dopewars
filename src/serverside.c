@@ -2337,8 +2337,7 @@ void SendEvent(Player *To)
       }
       break;
     case E_GUNSHOP:
-      if (To->IsAt + 1 == GunShopLoc && !Sanitized && NumGun > 0
-          && !WantAntique) {
+      if (To->IsAt + 1 == GunShopLoc && !Sanitized && NumGun > 0) {
         text = dpg_strdup_printf(_("YN^Would you like to visit %tde?"),
                                  Names.GunShopName);
         SendQuestion(NULL, C_ASKGUNSHOP, To, text);
@@ -2347,7 +2346,7 @@ void SendEvent(Player *To)
       }
       break;
     case E_ROUGHPUB:
-      if (To->IsAt + 1 == RoughPubLoc && !WantAntique) {
+      if (To->IsAt + 1 == RoughPubLoc) {
         text = dpg_strdup_printf(_("YN^Would you like to visit %tde?"),
                                  Names.RoughPubName);
         SendQuestion(NULL, C_ASKPUB, To, text);
@@ -2356,7 +2355,7 @@ void SendEvent(Player *To)
       }
       break;
     case E_HIREBITCH:
-      if (To->IsAt + 1 == RoughPubLoc && !WantAntique) {
+      if (To->IsAt + 1 == RoughPubLoc) {
         To->Bitches.Price = prandom(Bitch.MinPrice, Bitch.MaxPrice);
         text =
             dpg_strdup_printf(_

@@ -72,6 +72,7 @@ struct ClientDataStruct {
   struct InventoryWidgets Drug, Gun, InvenDrug, InvenGun;
   GtkWidget *JetButton, *vbox, *PlayerList, *TalkList;
   guint JetAccel;
+  struct CMDLINE *cmdline;
 };
 
 struct DealDiaStruct {
@@ -1916,6 +1917,10 @@ void GuiStartGame(void)
 {
   Player *Play = ClientData.Play;
 
+  if (!Network) {
+    ClientData.cmdline->antique = WantAntique;
+    InitConfiguration(ClientData.cmdline);
+  }
   StripTerminators(GetPlayerName(Play));
   InitAbilities(Play);
   SendAbilities(Play);
@@ -2165,6 +2170,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   WantUTF8Errors(TRUE);
 #endif
   InitConfiguration(cmdline);
+  ClientData.cmdline = cmdline;
 
   /* Set up message handlers */
   ClientMessageHandlerPt = HandleClientMessage;

@@ -100,9 +100,7 @@ int NumLocation = 0, NumGun = 0, NumCop = 0, NumDrug = 0, NumSubway = 0;
 int NumPlaying = 0, NumStoppedTo = 0;
 int DebtInterest = 10, BankInterest = 5;
 Player Noone;
-int LoanSharkLoc = DEFLOANSHARK, BankLoc = DEFBANK, GunShopLoc =
-    DEFGUNSHOP;
-int RoughPubLoc = DEFROUGHPUB;
+int LoanSharkLoc, BankLoc, GunShopLoc, RoughPubLoc;
 int DrugSortMethod = DS_ATOZ;
 int FightTimeout = 5, IdleTimeout = 14400, ConnectTimeout = 300;
 int MaxClients = 20, AITurnPause = 5;
@@ -2359,15 +2357,14 @@ gchar *GetLocalConfigFile(void)
  * hard-coded internal values, and then processes the global and
  * user-specific configuration files.
  */
-static void SetupParameters(GSList *extraconfigs)
+static void SetupParameters(GSList *extraconfigs, gboolean antique)
 {
   gchar *conf;
   GSList *list;
-  int i;
+  int i, defloc;
 
   DrugValue = TRUE;
   Sanitized = ConfigVerbose = FALSE;
-  Server = Client = Network = FALSE;
 
   g_free(Currency.Symbol);
   /* The currency symbol */
@@ -2387,6 +2384,15 @@ static void SetupParameters(GSList *extraconfigs)
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
 
+  LoanSharkLoc = DEFLOANSHARK;
+  BankLoc = DEFBANK;
+  if (antique) {
+    GunShopLoc = RoughPubLoc = 0;
+  } else {
+    GunShopLoc = DEFGUNSHOP;
+    RoughPubLoc = DEFROUGHPUB;
+  }
+
   CopyNames(&Names, &DefaultNames);
   CopyDrugs(&Drugs, &DefaultDrugs);
 
@@ -2405,7 +2411,12 @@ static void SetupParameters(GSList *extraconfigs)
   UseSocks = FALSE;
 #endif
 
-  ResizeLocations(sizeof(DefaultLocation) / sizeof(DefaultLocation[0]));
+  defloc = sizeof(DefaultLocation) / sizeof(DefaultLocation[0]);
+  g_assert(defloc >= 6);
+  if (antique) {
+    defloc = 6;
+  }
+  ResizeLocations(defloc);
   for (i = 0; i < NumLocation; i++)
     CopyLocation(&Location[i], &DefaultLocation[i]);
   ResizeCops(sizeof(DefaultCop) / sizeof(DefaultCop[0]));
@@ -2726,6 +2737,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
   srand((unsigned)time(NULL));
   Noone.Name = g_strdup("Noone");
+  Server = Client = Network = FALSE;
 
   return ParseCmdLine(argc, argv);
 }
@@ -2733,7 +2745,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
 void InitConfiguration(struct CMDLINE *cmdline)
 {
   ConfigErrors = 0;
-  SetupParameters(cmdline->configs);
+  SetupParameters(cmdline->configs, cmdline->antique);
 
   if (cmdline->scorefile) {
     AssignName(&HiScoreFile, cmdline->scorefile);
