@@ -38,6 +38,18 @@ example-cfg.txt
 ../../auxdope/libintl-1.dll -> libintl-1.dll
 ../../auxdope/libglib-2.0-0.dll -> libglib-2.0-0.dll
 readme.txt
+../sounds/19.5degs/bye.wav -> sounds\19.5degs\bye.wav
+../sounds/19.5degs/colt.wav -> sounds\19.5degs\colt.wav
+../sounds/19.5degs/die.wav -> sounds\19.5degs\die.wav
+../sounds/19.5degs/gun.wav -> sounds\19.5degs\gun.wav
+../sounds/19.5degs/jet.wav -> sounds\19.5degs\jet.wav
+../sounds/19.5degs/losebitch.wav -> sounds\19.5degs\losebitch.wav
+../sounds/19.5degs/message.wav -> sounds\19.5degs\message.wav
+../sounds/19.5degs/murmur.wav -> sounds\19.5degs\murmur.wav
+../sounds/19.5degs/punch.wav -> sounds\19.5degs\punch.wav
+../sounds/19.5degs/run.wav -> sounds\19.5degs\run.wav
+../sounds/19.5degs/shotdown.wav -> sounds\19.5degs\shotdown.wav
+../sounds/19.5degs/train.wav -> sounds\19.5degs\train.wav
 ../po/pt_BR.gmo -> locale\pt_BR\LC_MESSAGES\dopewars.mo
 ../po/fr.gmo -> locale\fr\LC_MESSAGES\dopewars.mo
 ../po/de.gmo -> locale\de\LC_MESSAGES\dopewars.mo
