@@ -2044,7 +2044,7 @@ msgstr "CPTHJLMEDS"
 #. * Q>uit)
 #: src/curses_client/curses_client.c:2286
 msgid "DRFSQ"
-msgstr "LECPS"
+msgstr "PCLES"
 
 #: src/curses_client/curses_client.c:2317
 msgid "List what? P>layers or S>cores? "
