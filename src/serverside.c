@@ -664,7 +664,7 @@ gboolean HandleServerCommand(char *string) {
             g_print(_("Users currently logged on:-\n"));
             for (list=FirstServer;list;list=g_slist_next(list)) {
                tmp=(Player *)list->data;
-               g_print("%s\n",GetPlayerName(tmp));
+               if (!tmp->IsCop) g_print("%s\n",GetPlayerName(tmp));
             }
          } else g_message(_("No users currently logged on!"));
       } else if (strncasecmp(string,"push ",5)==0) {

@@ -1200,6 +1200,7 @@ void StartGame() {
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
    Play->fd=ClientSock;
+   InitAbilities(Play);
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
    SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);

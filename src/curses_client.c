@@ -1421,6 +1421,7 @@ static void Curses_DoGame(Player *Play) {
    display_message("");
 
    InitAbilities(Play);
+   SetAbility(Play,A_NEWFIGHT,FALSE);
    SendAbilities(Play);
    SetPlayerName(Play,buf);
    SendNullClientMessage(Play,C_NONE,C_NAME,NULL,buf);

@@ -209,9 +209,14 @@ void InitAbilities(Player *Play) {
       Play->Abil.Remote[i]=FALSE;
       Play->Abil.Shared[i]=FALSE;
    }
-/* Set local abilities */
+/* Set local abilities; abilities that are client-dependent
+   (e.g. A_NEWFIGHT) can be overridden by individual clients if required,
+   by calling SetAbility, prior to calling SendAbilities */
+
    Play->Abil.Local[A_PLAYERID]=TRUE;
+   Play->Abil.Local[A_NEWFIGHT]=TRUE;
    Play->Abil.Local[A_DRUGVALUE]=(DrugValue ? TRUE : FALSE);
+
    if (!Network) for (i=0;i<A_NUM;i++) {
       Play->Abil.Remote[i]=Play->Abil.Shared[i]=Play->Abil.Local[i];
    }
@@ -249,6 +254,18 @@ void CombineAbilities(Player *Play) {
    int i;
    for (i=0;i<A_NUM;i++) {
       Play->Abil.Shared[i]= (Play->Abil.Remote[i] && Play->Abil.Local[i]);
+   }
+}
+
+void SetAbility(Player *Play,gint Type,gboolean Set) {
+/* Sets ability "Type" of player "Play", and also sets shared abilities if  */
+/* networking is not active (the local server should support all abilities  */
+/* that the client uses). Call this function prior to calling SendAbilities */
+/* so that the ability is recognised properly when networking _is_ active   */
+   if (Type<0 || Type>=A_NUM) return;
+   Play->Abil.Local[Type]=Set;
+   if (!Network) {
+      Play->Abil.Remote[Type]=Play->Abil.Shared[Type]=Play->Abil.Local[Type];
    }
 }
 
@@ -769,7 +786,7 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
    gchar *pt,*buf;
    guint ID;
 
-   if (!First || !Play) return;
+   if (!First || !Play) return -1;
 
    *AICode=*Code=C_NONE;
    *Other=&Noone;

@@ -160,6 +160,7 @@ void InitAbilities(Player *Play);
 void SendAbilities(Player *Play);
 void ReceiveAbilities(Player *Play,gchar *Data);
 void CombineAbilities(Player *Play);
+void SetAbility(Player *Play,gint Type,gboolean Set);
 gboolean HaveAbility(Player *Play,gint Type);
 void SendFightReload(Player *To);
 void SendOldCanFireMessage(Player *To,GString *text);
