@@ -29,10 +29,22 @@ equivalent, such as ncurses or cur_colr) for the text-mode client, and the
 <a href="http://www.gtk.org/">GTK+</a> libraries for the graphical client.</p>
 
 <ul>
+<li><a href="#win32">Windows installation</a>
 <li><a href="#rpmbinary">RPM binary installation</a>
 <li><a href="#rpmsource">RPM source installation</a>
 <li><a href="#tarball">Tarball installation</a>
 </ul>
+
+<h2><a name="win32">Windows installation</a></h2>
+<p>The easiest way to install the Windows version is to download the Windows
+installer program from the
+<a href="http://dopewars.sourceforge.net/download.html">download page</a>, and
+run it (either instruct your web browser to "run from the current location",
+or save it to somewhere obvious like the Desktop and then double-click on its
+icon later). This should install all relevant files, and set up Start Menu
+icons, etc. If, however, you wish to build the program from the source code,
+see the <a href="#tarball">tarball installation</a> section below, and also
+see the <a href="windows.html">Windows page</a>.
 
 <h2><a name="rpmbinary">RPM binary installation</a></h2>
 <p>The binary RPMs are built for Compaq (formerly DEC) Alpha systems running
@@ -43,9 +55,9 @@ faults due to library conflicts.</p>
 
 <ol>
 <li>Download the 
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.1-1.alpha.rpm">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2-1.alpha.rpm">
 Alpha</a> or 
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.1-1.i386.rpm">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2-1.i386.rpm">
 i386 (Intel)</a> RPM with your web browser. (If your browser is incorrectly set
 up, it may try and display the file, in which case tell it explicitly to save
 the file - Shift+Mouse button 1 in Netscape.)
@@ -56,7 +68,7 @@ up).
 
 <li>Change to the directory containing the dopewars rpm, and install it with
 the command<br>
-<tt><b>rpm -Uvh dopewars-1.5.1-1.<i>xxx</i>.rpm</b></tt><br>
+<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt><br>
 (where <b><i>xxx</i></b> is i386 or alpha). This will replace any
 already-installed earlier version.
 </ol>
@@ -69,13 +81,13 @@ building the binaries from it on your system.</p>
 
 <ol>
 <li>Download the
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.1-1.src.rpm">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2-1.src.rpm">
 source code RPM</a>.
 
 <li>Become root and change to the directory containing the new rpm.
 
 <li>Build a binary rpm with the command<br>
-<tt><b>rpm --rebuild dopewars-1.5.1-1.src.rpm</b></tt>
+<tt><b>rpm --rebuild dopewars-1.5.2-1.src.rpm</b></tt>
 
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
@@ -83,7 +95,7 @@ the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 "alpha" on Alphas)
 
 <li>Install the binary rpm with the command<br>
-<tt><b>rpm -Uvh dopewars-1.5.1-1.<i>xxx</i>.rpm</b></tt>
+<tt><b>rpm -Uvh dopewars-1.5.2-1.<i>xxx</i>.rpm</b></tt>
 </ol>
 
 <h2><a name="tarball">Tarball installation</a></h2>
@@ -103,15 +115,15 @@ Unix <a href="http://www.gtk.org/download/">here</a> or for Windows
 
 <ol>
 <li>Download the
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.1.tar.gz">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.2.tar.gz">
 source code tarball</a>.
 
 <li>Change to the directory containing the tarball and extract the contents
 with the command <br>
-<tt><b>tar -xvzf dopewars-1.5.1.tar.gz</b></tt><br>
+<tt><b>tar -xvzf dopewars-1.5.2.tar.gz</b></tt><br>
 (or similar).
 
-<li>Change into the dopewars-1.5.1 directory, and read all the important
+<li>Change into the dopewars-1.5.2 directory, and read all the important
 documentation in there ;)
 
 <li>Build the binary with the commands<br>
@@ -125,7 +137,7 @@ should compile cleanly. If you are running the Cygwin tools under Microsoft
 Windows, the script should detect this and allow you to build a native
 Windows binary; this will then run on any Win32 system, even one without Cygwin
 installed. The configure script supports a number of configurable options; for
-more details, read the INSTALL file in the dopewars-1.5.1 directory.<p>
+more details, read the INSTALL file in the dopewars-1.5.2 directory.<p>
 
 If you cannot become root, run the configure script specifying directories for
 which you have write access for both the dopewars binary and high score file
@@ -138,6 +150,6 @@ with a command such as<br>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>18-06-2001</b></p>
+<p>Last update: <b>14-10-2001</b></p>
 </body>
 </html>

@@ -1,4 +1,6 @@
 cvs
+    - Slightly easier-to-use "run from fight" Jet dialog (avoids the crazy
+      "windows pop up faster than you can close them" syndrome)
     - Support for HTTP proxies and authentication
     - SOCKS4 and SOCKS5 (user/password) support
     - French translation added by leonard

@@ -95,7 +95,21 @@ metaserver communications - see the MetaServer.UseSocks variable. N.B. You
 cannot run a dopewars server behind a SOCKS server, due to limitations in
 the SOCKS protocol.
 
-<dt><b>Socks.Name=<i>socks</i></b></a>
+<dt><b>Socks.NumUID=<i>FALSE</i></b></a>
+<dd>When connecting to a SOCKS version 4 server, the protocol demands that
+the name of the current user be sent for simple authentication; the SOCKS
+server then queries identd on your machine to check if you are who you say
+you are. dopewars complies with this requirement if this variable is set to
+FALSE. However, some Unix implementations of identd send numeric user IDs
+rather than user names; dopewars will do the same if you set this variable 
+to TRUE. (N.B. Not supported on Windows systems.)
+
+<dt><b>Socks.User=<i>"fred"</i></b></a>
+<dd>Overrides the username detection (discussed above) completely, and instead
+sends the user name <i>"fred"</i> to a SOCKS4 server. If this is set to the
+blank string ("") - the default - this does not happen.
+
+<dt><b>Socks.Name=<i>"socks"</i></b></a>
 <dd>If using SOCKS, sets the hostname of the SOCKS server to connect to to
 be <i>"socks"</i>.
 

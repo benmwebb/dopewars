@@ -1,8 +1,36 @@
+PREREQUISITES
+
+dopewars _requires_ the GLib library for compilation, even when not using
+the GTK+ client. Other libraries may be required for additional features:-
+
+Windows:
+   - Get Cygwin from http://sourceware.cygnus.com/cygwin/. It should be
+     possible to build dopewars with C compilers other than Cygwin, but
+     this is not supported.
+   - Get GLib from http://user.sgic.fi/~tml/gimp/win32/. The various header
+     files need to be placed in /usr/include/mingw32/ of your Cygwin
+     installation, while the GLib DLL eventually needs to be placed either
+     in the same directory as the dopewars binary, or your Windows directory.
+     Later versions of GLib depend on IConv, so also install this if required.
+
+Unix/Linux:
+   - Get GLib from http://www.gtk.org/
+   - For the GTK+ client, GTK+ libraries are needed, also from
+     http://www.gtk.org/. To actually compile dopewars, you'll probably need
+     your distribution's "gtk-devel" package.
+   - For the curses client, curses, ncurses or libcurses_color libraries
+     and headers are required.
+
+INSTALLATION
+
 dopewars installation should require no more than the following:-
 
 	./configure
 	make
 	make install
+
+(If you also wish to build the Windows installer program, see the instructions
+in the win32/ subdirectory of the dopewars source code distribution.)
 
 The configure script checks to see if your system is a "normal" Unix or the
 Unix-under-Win32 "Cygwin" environment. On a Cygwin system, the default is to
@@ -63,6 +91,11 @@ if you have ncurses (or similar) installed.
 	Use a (very basic) graphical interface to the dopewars server. If not
 specified, this is enabled under Windows and disabled under Unix (where a
 simple text-mode server is used instead).
+
+--enable-strict
+	If using gcc to compile dopewars (recommended) then this turns on
+extra warning messages (useful for debugging, etc.) Unfortunately a lot of
+these warnings can be safely ignored, so this is not the default.
 
 
 Basic Installation
