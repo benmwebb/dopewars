@@ -11,7 +11,7 @@ msgstr ""
 "Last-Translator: Slawomir Molenda <jeszua@panda.bg.univ.gda.pl>\n"
 "Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: src/dopewars.c:108
@@ -1119,7 +1119,7 @@ msgstr "Jeste¶ pewien? "
 
 #: src/curses_client.c:544 src/curses_client.c:562 src/curses_client.c:1691
 msgid "YN"
-msgstr "TN"
+msgstr "YN"
 
 #: src/curses_client.c:560
 msgid "Are you sure you want to quit? "
@@ -1533,15 +1533,15 @@ msgstr "_Diluj %s"
 
 #: src/gtk_client.c:552 src/gtk_client.c:1127 src/gtk_client.c:1324
 msgid "_Fight"
-msgstr "_Atakuj"
+msgstr "_Atakujesz"
 
 #: src/gtk_client.c:555
 msgid "_Stand"
-msgstr "_Stój"
+msgstr "_Stoisz"
 
 #: src/gtk_client.c:558 src/gtk_client.c:1126
 msgid "_Run"
-msgstr "_Uciekaj"
+msgstr "_Uciekasz"
 
 #: src/gtk_client.c:800
 msgid "Jet to location"
@@ -1555,7 +1555,7 @@ msgstr "za %s"
 #: src/gtk_client.c:874
 #, c-format
 msgid "You are currently carrying %d %s"
-msgstr "%2$s: Na stanie %1$d"
+msgstr "Masz teraz %d %s"
 
 #: src/gtk_client.c:879
 #, c-format
@@ -1582,7 +1582,7 @@ msgstr "Zostaw"
 #: src/gtk_client.c:1023
 #, c-format
 msgid "%s how many?"
-msgstr "Ile chcesz kupiæ?"
+msgstr "Ile chcesz %siæ?"
 
 #: src/gtk_client.c:1041 src/gtk_client.c:1835 src/gtk_client.c:2010
 #: src/gtk_client.c:2283
@@ -1875,7 +1875,7 @@ msgid ""
 "Are you sure? (Any %s or %s carried\n"
 "by this %s may be lost!)"
 msgstr "Jeste¶ pewien? (%s albo %s niesiona\n"
-"przez t± %s mog± byæ utracone!)"
+"przez tê %s mog± byæ utracone!)"
 
 #: src/gtk_client.c:2318
 msgid "Name"
@@ -2206,12 +2206,12 @@ msgstr " S³yszysz jak kto¶ puszcza %s"
 #: src/serverside.c:1130
 #, c-format
 msgid "YN^Would you like to visit %s?"
-msgstr "TN^Chcia³by¶ odwiedziæ %s?"
+msgstr "YN^Chcia³by¶ odwiedziæ %s?"
 
 #: src/serverside.c:1141
 #, c-format
 msgid "YN^^Would you like to hire %s %s for %s?"
-msgstr "TN^^Chcia³by¶ wynaj±æ %s %s za %s?"
+msgstr "YN^^Chcia³by¶ wynaj±æ %s %s za %s?"
 
 #: src/serverside.c:1142
 msgid "an"
@@ -2233,12 +2233,12 @@ msgstr "AE^%s ju¿ tu jest!^A>takujesz czy E>wakuujesz siê?"
 #: src/serverside.c:1223
 #, c-format
 msgid "YN^Officer %s is chasing you!"
-msgstr "TN^Gliniarz %s zatrzymuje ciê!"
+msgstr "YN^Gliniarz %s zatrzymuje ciê!"
 
 #: src/serverside.c:1225
 #, c-format
 msgid "YN^Officer %s and %d of his deputies are chasing you!"
-msgstr "TN^Oficer %s i inni mundurowi w ilo¶ci %d zatrzymuj± ciê!"
+msgstr "YN^Oficer %s i inni mundurowi w ilo¶ci %d zatrzymuj± ciê!"
 
 #: src/serverside.c:1246
 msgid "^Do you run?"
@@ -2246,7 +2246,7 @@ msgstr "^Uciekasz?"
 
 #: src/serverside.c:1249
 msgid "^Do you Run, or Fight?"
-msgstr "^U>ciekasz czy A>takujesz?"
+msgstr "^Uciekasz czy Atakujesz?"
 
 #: src/serverside.c:1264
 #, c-format
@@ -2270,17 +2270,17 @@ msgstr "^Stoisz tam jak idiota."
 #: src/serverside.c:1315
 #, fuzzy
 msgid "^You lose him in the alleys."
-msgstr "^Uda³o ci siê zgubiæ %s w ciemnych alejkach."
+msgstr "^Uda³o ci siê go zgubiæ w ciemnych alejkach."
 
 #: src/serverside.c:1317
 #, fuzzy
 msgid "^You lose them in the alleys."
-msgstr "^Uda³o ci siê ich zgubiæ w alejkach"
+msgstr "^Uda³o ci siê ich zgubiæ w alejkach."
 
 #: src/serverside.c:1325
 #, fuzzy
 msgid "^You can't shake him, man!"
-msgstr "^Nie mo¿esz zgubiæ %s, dresie!"
+msgstr "^Nie mo¿esz go zgubiæ, dresie!"
 
 #: src/serverside.c:1327
 #, fuzzy
@@ -2295,12 +2295,12 @@ msgstr "^Zabi³e¶ oficera %s! Znalaz³e¶ %s przy trupie!"
 #: src/serverside.c:1352
 #, c-format
 msgid "YN^^^^Do you pay a doctor %s to sew your %s up?"
-msgstr "TN^^^^P³acisz doktorowi %s, ¿eby pozszywa³ twoje %s?"
+msgstr "YN^^^^P³acisz doktorowi %s, ¿eby pozszywa³ twoje %s?"
 
 #: src/serverside.c:1356
 #, c-format
 msgid "YN^^^^Do you pay a doctor %s to sew you up?"
-msgstr "TN^^^^P³acisz doktorowi %s, ¿eby ciê pozszywa³?"
+msgstr "YN^^^^P³acisz doktorowi %s, ¿eby ciê pozszywa³?"
 
 #: src/serverside.c:1368
 msgid "^You got one, man!"
@@ -2372,7 +2372,7 @@ msgstr "Wy³±czono RandomOffer"
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
 msgstr ""
-"Policyjne psy skoczy³y ci do gard³a %d! Upu¶ci³e¶ trochê %s! Ale rozpierdol "
+"Policyjne psy skoczy³y ci do gard³a %d! Upu¶ci³e¶ jakie¶ %s! Ale rozpierdol!"
 "dresie!"
 
 #: src/serverside.c:1470
@@ -2390,13 +2390,13 @@ msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
-"TN^Znalaz³e¶ trochê ziela, które pachnie tak ¶wie¿o!^Dobrze wygl±da! "
+"YN^Znalaz³e¶ trochê ziela, które pachnie tak ¶wie¿o!^Dobrze wygl±da! "
 "Zapalisz? "
 
 #: src/serverside.c:1497
 #, c-format
 msgid "You stopped to %s."
-msgstr "Zatrzymujesz siê przy %s."
+msgstr "Zatrzymujesz siê i %s."
 
 #: src/serverside.c:1518
 #, c-format
@@ -2406,12 +2406,12 @@ msgstr "Chcia³byæ kupiæ wiêkszy p³aszcz za %s?"
 #: src/serverside.c:1523
 #, c-format
 msgid "YN^Hey dude! I'll help carry your %s for a mere %s. Yes or no?"
-msgstr "TN^Hej kole¶! Pomogê ci ponie¶æ %s za jedyne %s. Zgadzasz siê?"
+msgstr "YN^Hej kole¶! Pomogê ci ponie¶æ %s za jedyne %s. Zgadzasz siê?"
 
 #: src/serverside.c:1535
 #, c-format
 msgid "YN^Would you like to buy a %s for %s?"
-msgstr "TN^Chcia³by¶ kupiæ %s za %s?"
+msgstr "YN^Chcia³by¶ kupiæ %s za %s?"
 
 #: src/serverside.c:1636 src/serverside.c:1747
 #, c-format
@@ -2445,7 +2445,7 @@ msgstr "%s odmówi³ %s"
 #: src/serverside.c:1785
 #, c-format
 msgid "%s has got away!"
-msgstr ""
+msgstr "%s zwia³!"
 
 #: src/serverside.c:1826
 #, c-format
@@ -2556,13 +2556,13 @@ msgstr "Grzejesz i trafiasz %s!"
 
 #: src/serverside.c:2033
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
-msgstr "TN^Oficer %%s zauwa¿y³ jak upuszczasz %s i ³apie ciê!"
+msgstr "YN^Oficer %%s zauwa¿y³ jak upuszczasz %s i ³apie ciê!"
 
 #: src/serverside.c:2035
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
-"TN^Oficer %%S i %%d jeden z jego psów zauwa¿yli jak upuszczasz %s i ³api± "
+"YN^Oficer %%s i %%d jeden z jego psów zauwa¿yli jak upuszczasz %s i ³api± "
 "ciê!"
 
 #: src/serverside.c:2190
