@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-10-08 16:52+0100\n"
+"POT-Creation-Date: 2000-10-21 18:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2173,103 +2173,103 @@ msgstr ""
 msgid "AE^%s is already here!^Do you Attack, or Evade?"
 msgstr ""
 
-#: src/serverside.c:1464
+#: src/serverside.c:1487
 msgid "You were mugged in the subway!"
 msgstr ""
 
-#: src/serverside.c:1475
+#: src/serverside.c:1498
 #, c-format
 msgid "You meet a friend! He gives you %d %s."
 msgstr ""
 
-#: src/serverside.c:1480
+#: src/serverside.c:1503
 #, c-format
 msgid "You meet a friend! You give him %d %s."
 msgstr ""
 
-#: src/serverside.c:1489
+#: src/serverside.c:1512
 msgid "Sanitized away a RandomOffer"
 msgstr ""
 
-#: src/serverside.c:1494
+#: src/serverside.c:1517
 #, c-format
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
 msgstr ""
 
-#: src/serverside.c:1510
+#: src/serverside.c:1533
 #, c-format
 msgid "You find %d %s on a dead dude in the subway!"
 msgstr ""
 
-#: src/serverside.c:1522
+#: src/serverside.c:1545
 #, c-format
 msgid "Your mama made brownies with some of your %s! They were great!"
 msgstr ""
 
-#: src/serverside.c:1532
+#: src/serverside.c:1555
 msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
 
-#: src/serverside.c:1539
+#: src/serverside.c:1562
 #, c-format
 msgid "You stopped to %s."
 msgstr ""
 
-#: src/serverside.c:1560
+#: src/serverside.c:1583
 msgid "Would you like to buy a bigger trenchcoat for %P?"
 msgstr ""
 
-#: src/serverside.c:1565
+#: src/serverside.c:1588
 msgid "YN^Hey dude! I'll help carry your %tde for a mere %P. Yes or no?"
 msgstr ""
 
-#: src/serverside.c:1575
+#: src/serverside.c:1598
 msgid "YN^Would you like to buy a %tde for %P?"
 msgstr ""
 
-#: src/serverside.c:1679 src/serverside.c:1772
+#: src/serverside.c:1702 src/serverside.c:1795
 #, c-format
 msgid "%s: offer was on behalf of %s"
 msgstr ""
 
-#: src/serverside.c:1682
+#: src/serverside.c:1705
 #, c-format
 msgid "%s has accepted your %s!^Use the G key to contact your spy."
 msgstr ""
 
-#: src/serverside.c:1728
+#: src/serverside.c:1751
 msgid ""
 "You hallucinated for three days on the wildest trip you ever imagined!^Then "
 "you died because your brain disintegrated!"
 msgstr ""
 
-#: src/serverside.c:1752
+#: src/serverside.c:1775
 #, c-format
 msgid "Too late - %s has just left!"
 msgstr ""
 
-#: src/serverside.c:1775
+#: src/serverside.c:1798
 #, c-format
 msgid "%s has rejected your %s!"
 msgstr ""
 
-#: src/serverside.c:1818
+#: src/serverside.c:1841
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
 msgstr ""
 
-#: src/serverside.c:1820
+#: src/serverside.c:1843
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
 
-#: src/serverside.c:1979
+#: src/serverside.c:2002
 msgid "Player removed due to idle timeout"
 msgstr ""
 
-#: src/serverside.c:1989
+#: src/serverside.c:2012
 msgid "Player removed due to connect timeout"
 msgstr ""
 

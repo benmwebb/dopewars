@@ -1348,6 +1348,28 @@ void RunFromCombat(Player *Play) {
    }
 }
 
+void CheckForKilledPlayers(Player *Play) {
+   Player *Defend;
+   int ArrayInd;
+   GPtrArray *KilledPlayers;
+
+   KilledPlayers=g_ptr_array_new();
+   for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+      Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+
+      if (Defend && Defend!=Play && IsOpponent(Play,Defend) &&
+          Defend->Health==0) {
+         g_ptr_array_add(KilledPlayers,(gpointer)Defend);
+      }
+   }
+   for (ArrayInd=0;ArrayInd<KilledPlayers->len;ArrayInd++) {
+      Defend=(Player *)g_ptr_array_index(KilledPlayers,ArrayInd);
+      WithdrawFromCombat(Defend);
+   }
+
+   g_ptr_array_free(KilledPlayers,FALSE);
+}
+
 void Fire(Player *Play) {
 /* Fires all weapons of player "Play" at all opponents, and resets  */
 /* the fight timeout (the reload time)                              */
@@ -1383,6 +1405,7 @@ void Fire(Player *Play) {
          SendFightMessage(Play,Defend,BitchesKilled,FightPoint,Loot,TRUE,NULL);
       }
    }
+   CheckForKilledPlayers(Play);
    DoReturnFire(Play);
 }
 
