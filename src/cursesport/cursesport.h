@@ -77,9 +77,9 @@ void curs_set(BOOL visible);
 void endwin(void);
 void move(int y, int x);
 void attrset(WORD newAttr);
-void addstr(char *str);
+void addstr(const char *str);
 void addch(int ch);
-void mvaddstr(int x, int y, char *str);
+void mvaddstr(int x, int y, const char *str);
 void mvaddch(int x, int y, int ch);
 
 #define erase() clear_screen()

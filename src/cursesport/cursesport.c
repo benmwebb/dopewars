@@ -182,7 +182,7 @@ void attrset(WORD newAttr)
   CurAttr = newAttr;
 }
 
-void addstr(char *str)
+void addstr(const char *str)
 {
   int i;
 
@@ -208,7 +208,7 @@ void addch(int ch)
   }
 }
 
-void mvaddstr(int y, int x, char *str)
+void mvaddstr(int y, int x, const char *str)
 {
   move(y, x);
   addstr(str);
