@@ -692,6 +692,8 @@ void gtk_set_default_font(HWND hWnd);
 HWND gtk_get_parent_hwnd(GtkWidget *widget);
 GtkStyle *gtk_style_new(void);
 void gtk_widget_set_style(GtkWidget *widget, GtkStyle *style);
+void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint);
+void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position);
 
 /* Functions for handling emitted signals */
 void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,

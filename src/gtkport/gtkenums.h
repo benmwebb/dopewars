@@ -110,6 +110,23 @@ typedef enum {
   GTK_IS_DEFAULT  = 1 << 14
 } GtkWidgetFlags;
 
+typedef enum
+{
+  GDK_WINDOW_TYPE_HINT_NORMAL,
+  GDK_WINDOW_TYPE_HINT_DIALOG,
+  GDK_WINDOW_TYPE_HINT_MENU,
+  GDK_WINDOW_TYPE_HINT_TOOLBAR
+} GdkWindowTypeHint;
+
+typedef enum
+{
+  GTK_WIN_POS_NONE,
+  GTK_WIN_POS_CENTER,
+  GTK_WIN_POS_MOUSE,
+  GTK_WIN_POS_CENTER_ALWAYS,
+  GTK_WIN_POS_CENTER_ON_PARENT
+} GtkWindowPosition;
+
 #endif /* CYGWIN */
 
 #endif /* __GTKENUMS_H__ */

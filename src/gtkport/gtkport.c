@@ -5408,6 +5408,17 @@ void gtk_hbutton_box_set_spacing_default(gint spacing)
   hbbox_spacing = spacing;
 }
 
+/*
+ * Win32 doesn't use a window manager, so this is just a placeholder.
+ */
+void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint)
+{
+}
+
+void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position)
+{
+}
+
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title)
 {
