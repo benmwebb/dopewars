@@ -254,7 +254,9 @@ static char *SelectServerFromMetaServer(Player *Play) {
       if (FD_ISSET(0,&readfds)) {
         /* So that Ctrl-L works */
         c = getch();
+#ifndef CYGWIN
         if (c=='\f') wrefresh(curscr);
+#endif
       }
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
          while (HandleWaitingMetaServerData(MetaConn,&ServerList)) {}
