@@ -32,6 +32,6 @@ all-local: ${PLUGINS}
 install-exec-am:
 	${mkinstalldirs} ${PLUGINDIR}
 	for plug in ${PLUGINS}; do \
-	  ${INSTALL} ${srcdir}/$${plug} ${PLUGINDIR}; \
+	  ${INSTALL} $${plug} ${PLUGINDIR}; \
 	done
 endif
