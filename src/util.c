@@ -201,12 +201,11 @@ static int DoLock(FILE * fp, int l_type)
   lk.l_whence = lk.l_start = lk.l_len = 0;
   lk.l_pid = 0;
 
-  while (1) {
-    if (fcntl(fileno(fp), F_SETLKW, &lk) == 0)
+  do {
+    if (fcntl(fileno(fp), F_SETLKW, &lk) == 0) {
       return 0;
-    else if (errno != EINTR)
-      return 1;
-  }
+    }
+  } while (errno == EINTR);
   return 1;
 }
 
@@ -222,7 +221,7 @@ int WriteLock(FILE * fp)
 
 void ReleaseLock(FILE * fp)
 {
-  DoLock(fp, F_UNLCK);
+  (void)DoLock(fp, F_UNLCK);
 }
 
 #endif /* CYGWIN */
