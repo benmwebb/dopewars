@@ -231,7 +231,7 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    gint index;
    fd_set readfds,writefds;
    int maxsock;
-   gboolean DoneOK,authOK;
+   gboolean DoneOK;
    HttpConnection *MetaConn;
 
    attrset(TextAttr);
@@ -240,8 +240,8 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    refresh();
 
    if (OpenMetaHttpConnection(&MetaConn)) {
-      SetHttpAuthFunc(MetaConn,HttpAuthFunc,&authOK);
-      SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf,SocksAuthFunc,&authOK);
+      SetHttpAuthFunc(MetaConn,HttpAuthFunc,NULL);
+      SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf,SocksAuthFunc,NULL);
    } else {
       g_string_assign_error(errstr,MetaConn->NetBuf.error);
       CloseHttpConnection(MetaConn);
@@ -266,11 +266,10 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
         if (c=='\f') wrefresh(curscr);
 #endif
       }
-      authOK=TRUE; /* Gets set to FALSE if authentication fails */
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
          while (HandleWaitingMetaServerData(MetaConn,&ServerList,&DoneOK)) {}
       }
-      if ((!DoneOK || !authOK) && HandleHttpCompletion(MetaConn)) {
+      if (!DoneOK && HandleHttpCompletion(MetaConn)) {
          if (IsHttpError(MetaConn)) {
             g_string_assign_error(errstr,MetaConn->NetBuf.error);
             CloseHttpConnection(MetaConn);
@@ -381,10 +380,7 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,
 
 void HttpAuthFunc(HttpConnection *conn,gboolean proxyauth,
                   gchar *realm,gpointer data) {
-  gchar *text,*user,*password;
-  gboolean *authOK;
-
-  authOK = (gboolean *)data;
+  gchar *text,*user,*password=NULL;
 
   attrset(TextAttr);
   clear_bottom();
@@ -395,29 +391,32 @@ void HttpAuthFunc(HttpConnection *conn,gboolean proxyauth,
     text = g_strdup_printf(_("Authentication required for realm %s"),realm);
   }
   mvaddstr(17,1,text);
+  mvaddstr(18,1,_("(Enter a blank username to cancel)"));
   g_free(text);
   
-  user=nice_input(_("User name: "),18,1,FALSE,NULL,'\0');
-  password=nice_input(_("Password: "),19,1,FALSE,NULL,'*');
+  user=nice_input(_("User name: "),19,1,FALSE,NULL,'\0');
+  if (user && user[0]) {
+    password=nice_input(_("Password: "),20,1,FALSE,NULL,'*');
+  }
 
-  *authOK = SetHttpAuthentication(conn,proxyauth,user,password);
+  SetHttpAuthentication(conn,proxyauth,user,password);
   g_free(user); g_free(password);
 }
 
 void SocksAuthFunc(NetworkBuffer *netbuf,gpointer data) {
-  gchar *user,*password;
-  gboolean *authOK;
-
-  authOK = (gboolean *)data;
+  gchar *user,*password=NULL;
 
   attrset(TextAttr);
   clear_bottom();
-  mvaddstr(17,1,_("SOCKS authentication required"));
+  mvaddstr(17,1,
+       _("SOCKS authentication required (enter a blank username to cancel)"));
   
   user=nice_input(_("User name: "),18,1,FALSE,NULL,'\0');
-  password=nice_input(_("Password: "),19,1,FALSE,NULL,'*');
+  if (user && user[0]) {
+    password=nice_input(_("Password: "),19,1,FALSE,NULL,'*');
+  }
 
-  *authOK = SendSocks5UserPasswd(netbuf,user,password);
+  SendSocks5UserPasswd(netbuf,user,password);
   g_free(user); g_free(password);
 }
 
@@ -425,7 +424,7 @@ static gboolean DoConnect(Player *Play,GString *errstr) {
   NetworkBuffer *netbuf;
   fd_set readfds,writefds;
   int maxsock,c;
-  gboolean doneOK=TRUE,authOK=TRUE;
+  gboolean doneOK=TRUE;
   NBStatus oldstatus;
   NBSocksStatus oldsocks;
 
@@ -436,7 +435,7 @@ static gboolean DoConnect(Player *Play,GString *errstr) {
   if (!StartNetworkBufferConnect(netbuf,ServerName,Port)) {
     doneOK=FALSE;
   } else {
-    SetNetworkBufferUserPasswdFunc(netbuf,SocksAuthFunc,&authOK);
+    SetNetworkBufferUserPasswdFunc(netbuf,SocksAuthFunc,NULL);
     if (netbuf->status!=NBS_CONNECTED) {
       DisplayConnectStatus(netbuf,oldstatus,oldsocks);
       do {
@@ -456,16 +455,15 @@ static gboolean DoConnect(Player *Play,GString *errstr) {
         }
         oldstatus = netbuf->status;
         oldsocks  = netbuf->sockstat;
-        authOK=TRUE;
         RespondToSelect(netbuf,&readfds,&writefds,NULL,&doneOK);
         if (netbuf->status==NBS_CONNECTED) break;
         DisplayConnectStatus(netbuf,oldstatus,oldsocks);
-      } while (doneOK && authOK);
+      } while (doneOK);
     }
   }
 
-  if (!doneOK || !authOK) g_string_assign_error(errstr,netbuf->error);
-  return (doneOK && authOK);
+  if (!doneOK) g_string_assign_error(errstr,netbuf->error);
+  return doneOK;
 }
 
 static gboolean ConnectToServer(Player *Play) {

@@ -63,22 +63,25 @@ typedef struct _ConnBuf {
 
 typedef struct _NetworkBuffer NetworkBuffer;
 
-typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
+typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                           gboolean CallNow);
 
 typedef void (*NBUserPasswd)(NetworkBuffer *NetBuf,gpointer data);
 
 /* Information about a SOCKS server */
 typedef struct _SocksServer {
-   gchar *name;     /* hostname */
-   unsigned port;   /* port number */
-   int version;     /* desired protocol version (usually 4 or 5) */
-   gboolean numuid; /* if TRUE, send numeric user IDs rather than names */
-   char *user;      /* if not blank, override the username with this */
+   gchar *name;         /* hostname */
+   unsigned port;       /* port number */
+   int version;         /* desired protocol version (usually 4 or 5) */
+   gboolean numuid;     /* if TRUE, send numeric user IDs rather than names */
+   char *user;          /* if not blank, override the username with this */
+   gchar *authuser;     /* if set, the username for SOCKS5 auth */
+   gchar *authpassword; /* if set, the password for SOCKS5 auth */
 } SocksServer;
 
 /* The status of a network buffer */
 typedef enum {
-   NBS_PRECONNECT,    /* Socket is not connected */
+   NBS_PRECONNECT,    /* Socket is not yet connected */
    NBS_SOCKSCONNECT,  /* A CONNECT request is being sent to a SOCKS server */
    NBS_CONNECTED      /* Socket is connected */
 } NBStatus;
@@ -94,8 +97,7 @@ typedef enum {
 struct _NetworkBuffer {
    int fd;                  /* File descriptor of the socket */
    gint InputTag;           /* Identifier for gdk_input routines */
-   NBCallBack CallBack;     /* Function called when the socket read- or
-                               write-able status changes */
+   NBCallBack CallBack;     /* Function called when the socket status changes */
    gpointer CallBackData;   /* Data accessible to the callback function */
    char Terminator;         /* Character that separates messages */
    char StripChar;          /* Char that should be removed from messages */
@@ -179,8 +181,7 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data);
 gint CountWaitingMessages(NetworkBuffer *NetBuf);
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
-gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
-                              gchar *password);
+void SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,gchar *password);
 gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes);
 gchar *PeekWaitingData(NetworkBuffer *NetBuf,int numbytes);
 gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes,LastError **error);
@@ -194,8 +195,8 @@ gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             gchar *Headers,gchar *Body);
 void CloseHttpConnection(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
-gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
-                               gchar *user,gchar *password);
+void SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
+                           gchar *user,gchar *password);
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data);
 gboolean HandleHttpCompletion(HttpConnection *conn);
 gboolean IsHttpError(HttpConnection *conn);

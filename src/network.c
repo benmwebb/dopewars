@@ -125,20 +125,20 @@ void SetBlocking(int sock,gboolean blocking) {
 
 static gboolean FinishConnect(int fd,LastError **error);
 
-static void NetBufCallBack(NetworkBuffer *NetBuf) {
+static void NetBufCallBack(NetworkBuffer *NetBuf,gboolean CallNow) {
    if (NetBuf && NetBuf->CallBack) {
       (*NetBuf->CallBack)(NetBuf,NetBuf->status!=NBS_PRECONNECT,
                           (NetBuf->status==NBS_CONNECTED &&
                            NetBuf->WriteBuf.DataPresent) ||
                           (NetBuf->status==NBS_SOCKSCONNECT &&
                            NetBuf->negbuf.DataPresent) ||
-                          NetBuf->WaitConnect);
+                          NetBuf->WaitConnect,CallNow);
    }
 }
 
 static void NetBufCallBackStop(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) {
-      (*NetBuf->CallBack)(NetBuf,FALSE,FALSE);
+      (*NetBuf->CallBack)(NetBuf,FALSE,FALSE,FALSE);
    }
 }
 
@@ -181,7 +181,7 @@ void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
    NetBufCallBackStop(NetBuf);
    NetBuf->CallBack=CallBack;
    NetBuf->CallBackData=CallBackData;
-   NetBufCallBack(NetBuf);
+   NetBufCallBack(NetBuf,FALSE);
 }
 
 void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
@@ -238,7 +238,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
 
 /* Notify the owner if necessary to check for the connection completing
    and/or for data to be writeable */
-    NetBufCallBack(NetBuf);
+    NetBufCallBack(NetBuf,FALSE);
 
     return TRUE;
   } else {
@@ -401,22 +401,23 @@ static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
    }
 }
 
-gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
-                              gchar *password) {
+void SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,gchar *password) {
    gchar *addpt;
    guint addlen;
    ConnBuf *conn;
 
    if (!user || !password || !user[0] || !password[0]) {
       SetError(&NetBuf->error,&ETSocks,SEC_USERCANCEL,NULL);
-      return FALSE;
+      NetBufCallBack(NetBuf,TRUE);
+      return;
    }
    conn=&NetBuf->negbuf;
    addlen = 3 + strlen(user) + strlen(password);
    addpt = ExpandWriteBuffer(conn,addlen,&NetBuf->error);
    if (!addpt || strlen(user)>255 || strlen(password)>255) {
       SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF,NULL);
-      return FALSE;
+      NetBufCallBack(NetBuf,TRUE);
+      return;
    }
    addpt[0] = 1;  /* Subnegotiation version code */
    addpt[1] = strlen(user);
@@ -425,8 +426,6 @@ gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
    strcpy(&addpt[3+strlen(user)],password);
 
    CommitWriteBuffer(NetBuf,conn,addpt,addlen);
-
-   return TRUE;
 }
 
 static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
@@ -520,7 +519,7 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
                else g_print("FQDN\n");*/
                   NetBuf->status = NBS_CONNECTED;
                   g_free(data);
-                  NetBufCallBack(NetBuf); /* status has changed */
+                  NetBufCallBack(NetBuf,FALSE); /* status has changed */
                }
             }
          }
@@ -535,7 +534,7 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
          } else {
             if (data[1]==90) {
                NetBuf->status = NBS_CONNECTED;
-               NetBufCallBack(NetBuf); /* status has changed */
+               NetBufCallBack(NetBuf,FALSE); /* status has changed */
                retval=TRUE;
             } else if (data[1]>=SEC_REJECT && data[1]<=SEC_IDMISMATCH) {
                SetError(&NetBuf->error,&ETSocks,data[1],NULL);
@@ -561,7 +560,7 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
    gboolean retval;
    *ReadOK=*WriteOK=*ErrorOK=TRUE;
 
-   if (ErrorReady) *ErrorOK=FALSE;
+   if (ErrorReady || NetBuf->error) *ErrorOK=FALSE;
    else if (NetBuf->WaitConnect) {
       if (WriteReady) {
          retval=FinishConnect(NetBuf->fd,&NetBuf->error);
@@ -587,7 +586,10 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
          *ReadOK=ReadDataFromWire(NetBuf);
          if (NetBuf->ReadBuf.DataPresent>0 &&
              NetBuf->status==NBS_SOCKSCONNECT) {
-            if (!HandleSocksReply(NetBuf)) *ErrorOK=FALSE;
+            if (!HandleSocksReply(NetBuf)
+                || NetBuf->error) { /* From SendSocks5UserPasswd, possibly */
+              *ErrorOK=FALSE;
+            }
          }
          if (NetBuf->ReadBuf.DataPresent>0 &&
              NetBuf->status!=NBS_SOCKSCONNECT) {
@@ -605,7 +607,7 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
    } else if (ConnectDone) {
 /* If we just connected, then no need to listen for write-ready status
    any more */
-      NetBufCallBack(NetBuf);
+      NetBufCallBack(NetBuf,FALSE);
    } else if (WriteReady && 
               ((NetBuf->status==NBS_CONNECTED &&
                 NetBuf->WriteBuf.DataPresent==0) ||
@@ -613,7 +615,7 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
                 NetBuf->negbuf.DataPresent==0))) {
 /* If we wrote out everything, then tell the owner so that the socket no
    longer needs to be checked for write-ready status */
-      NetBufCallBack(NetBuf);
+      NetBufCallBack(NetBuf,FALSE);
    }
 
    return DataWaiting;
@@ -787,7 +789,7 @@ void CommitWriteBuffer(NetworkBuffer *NetBuf,ConnBuf *conn,
 
 /* If the buffer was empty before, we may need to tell the owner to check
    the socket for write-ready status */
-   if (NetBuf && addpt==conn->Data) NetBufCallBack(NetBuf);
+   if (NetBuf && addpt==conn->Data) NetBufCallBack(NetBuf,FALSE);
 }
 
 void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data) {
@@ -1065,8 +1067,8 @@ void CloseHttpConnection(HttpConnection *conn) {
    g_free(conn);
 }
 
-gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
-                               gchar *user,gchar *password) {
+void SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
+                           gchar *user,gchar *password) {
    gchar **ptuser,**ptpassword;
    g_assert(conn);
    if (proxy) {
@@ -1082,8 +1084,9 @@ gboolean SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
       *ptuser = *ptpassword = NULL;
    }
    conn->waitinput=FALSE;
-   if (conn->Status==HS_WAITCOMPLETE) return !HandleHttpCompletion(conn);
-   else return TRUE;
+   if (conn->Status==HS_WAITCOMPLETE) {
+     NetBufCallBack(&conn->NetBuf,TRUE);
+   }
 }
 
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data) {
@@ -1158,7 +1161,7 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     if (g_strcasecmp(split[0],"Location:")==0 &&
         (conn->StatusCode==HEC_MOVETEMP || conn->StatusCode==HEC_MOVEPERM)) {
       if (ParseHtmlLocation(split[1],&host,&port,&query)) {
-        g_print("Redirect to %s:%u%s\n",host,port,query);
+        g_print("FIXME: Redirect to %s:%u%s\n",host,port,query);
         g_free(conn->RedirHost); g_free(conn->RedirQuery);
         conn->RedirHost=host; conn->RedirQuery=query;
         conn->RedirPort=port;

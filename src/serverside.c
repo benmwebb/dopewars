@@ -135,7 +135,7 @@ static gboolean HighScoreWrite(FILE *fp,struct HISCORE *MultiScore,
 static void GuiHandleMeta(gpointer data,gint socket,
                           GdkInputCondition condition);
 static void MetaSocketStatus(NetworkBuffer *NetBuf,
-                             gboolean Read,gboolean Write);
+                             gboolean Read,gboolean Write,gboolean CallNow);
 #endif
 
 #ifdef NETWORKING
@@ -148,6 +148,37 @@ static gboolean MetaConnectError(HttpConnection *conn) {
            MetaServer.Name,MetaServer.Port,errstr->str);
    g_string_free(errstr,TRUE);
    return TRUE;
+}
+
+static void ServerHttpAuth(HttpConnection *conn,gboolean proxyauth,
+                           gchar *realm,gpointer data) {
+  gchar *user=NULL,*password=NULL;
+  if (proxyauth) {
+    if (MetaServer.proxyuser[0] && MetaServer.proxypassword[0]) {
+      user = MetaServer.proxyuser; password = MetaServer.proxypassword;
+      dopelog(3,_("Using MetaServer.Proxy.User and MetaServer.Proxy.Password "
+                  "for HTTP proxy authentication"));
+    } else {
+      dopelog(0,_("Unable to authenticate with HTTP proxy; please set "
+              "MetaServer.Proxy.User and MetaServer.Proxy.Password variables"));
+    }
+  } else {
+    if (MetaServer.authuser[0] && MetaServer.authpassword[0]) {
+      user = MetaServer.authuser; password = MetaServer.authpassword;
+      dopelog(3,_("Using MetaServer.Auth.User and MetaServer.Auth.Password "
+                  "for HTTP authentication"));
+    } else {
+      dopelog(0,_("Unable to authenticate with HTTP server; please set "
+              "MetaServer.Auth.User and MetaServer.Auth.Password variables"));
+    }
+  }
+  SetHttpAuthentication(conn,proxyauth,user,password);
+}
+
+static void ServerNetBufAuth(NetworkBuffer *netbuf,gpointer data) {
+  dopelog(3,_("Using Socks.Auth.User and Socks.Auth.Password "
+              "for SOCKS5 authentication"));
+  SendSocks5UserPasswd(netbuf,Socks.authuser,Socks.authpassword);
 }
 #endif
 
@@ -233,6 +264,12 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
       MetaConnectError(MetaConn);
       CloseHttpConnection(MetaConn); MetaConn=NULL;
       return;
+   }
+   SetHttpAuthFunc(MetaConn,ServerHttpAuth,NULL);
+
+   if (Socks.authuser && Socks.authuser[0] &&
+       Socks.authpassword && Socks.authpassword[0]) {
+      SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf,ServerNetBufAuth,NULL);
    }
 #ifdef GUI_SERVER
    SetNetworkBufferCallBack(&MetaConn->NetBuf,MetaSocketStatus,NULL);
@@ -1083,7 +1120,8 @@ void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
    }
 }
 
-void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                      gboolean CallNow) {
    if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
    NetBuf->InputTag=0;
    if (Read || Write) {
@@ -1092,6 +1130,7 @@ void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
                                      (Write ? GDK_INPUT_WRITE : 0),
                                      GuiHandleMeta,NetBuf->CallBackData);
    }
+   if (CallNow) GuiHandleMeta(NetBuf->CallBackData,NetBuf->fd,0);
 }
 
 static void GuiNewConnect(gpointer data,gint socket,

@@ -110,6 +110,12 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,NBStatus oldstatus,
   }
 }
 
+static void NetBufAuth(NetworkBuffer *netbuf,gpointer data) {
+  g_print(_("Using Socks.Auth.User and Socks.Auth.Password "
+            "for SOCKS5 authentication\n"));
+  SendSocks5UserPasswd(netbuf,Socks.authuser,Socks.authpassword);
+}
+
 void AIPlayerLoop() {
 /* Main loop for AI players. Connects to server, plays game, */
 /* and then disconnects.                                     */
@@ -138,10 +144,13 @@ void AIPlayerLoop() {
 
    if (!StartNetworkBufferConnect(netbuf,ServerName,Port)) {
      AIConnectFailed(netbuf); return;
-   } else if (netbuf->status==NBS_CONNECTED) {
-     AIStartGame(AIPlay);
    } else {
-     DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+     SetNetworkBufferUserPasswdFunc(netbuf,NetBufAuth,NULL);
+     if (netbuf->status==NBS_CONNECTED) {
+       AIStartGame(AIPlay);
+     } else {
+       DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+     }
    }
 
    while (1) {
@@ -301,12 +310,12 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          }
          break;
       case C_SUBWAYFLASH:
+         dpg_print(_("Jetting to %tde with %P cash and %P debt\n"),
+                Location[(int)AIPlay->IsAt].Name,AIPlay->Cash,AIPlay->Debt);
          /* Use bselect rather than sleep, as this is portable to Win32 */
          tv.tv_sec=AITurnPause;
          tv.tv_usec=0;
          bselect(0,NULL,NULL,NULL,&tv);
-         dpg_print(_("Jetting to %tde with %P cash and %P debt\n"),
-                Location[(int)AIPlay->IsAt].Name,AIPlay->Cash,AIPlay->Debt);
          if (brandom(0,100)<10) AISendRandomMessage(AIPlay);
          break;
       case C_UPDATE:

@@ -86,6 +86,7 @@ struct METASERVER {
    unsigned ProxyPort;
    gchar *Path,*LocalName,*Password,*Comment;
    gboolean UseSocks;
+   gchar *authuser,*authpassword,*proxyuser,*proxypassword;
 };
 #endif
 

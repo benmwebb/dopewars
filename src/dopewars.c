@@ -160,14 +160,14 @@ struct BITCH Bitch = {
 
 #ifdef NETWORKING
 struct METASERVER MetaServer = { FALSE,NULL,0,NULL,0,NULL,NULL,NULL,
-                                 NULL,FALSE };
+                                 NULL,FALSE,NULL,NULL,NULL,NULL };
 
 struct METASERVER DefaultMetaServer = {
    TRUE,"dopewars.sourceforge.net",80,"",8080,"/metaserver.php",
-   "","","dopewars server", FALSE
+   "","","dopewars server", FALSE, "", "", "", ""
 };
 
-SocksServer Socks = { NULL,0,0,FALSE,NULL };
+SocksServer Socks = { NULL,0,0,FALSE,NULL,NULL,NULL };
 gboolean UseSocks;
 #endif
 
@@ -209,6 +209,12 @@ struct GLOBALS Globals[] = {
    { &Socks.version,NULL,NULL,NULL,NULL,"Socks.Version",
      N_("The version of the SOCKS protocol to use (4 or 5)"),
      NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&Socks.authuser,NULL,"Socks.Auth.User",
+     N_("Username for SOCKS5 authentication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&Socks.authpassword,NULL,"Socks.Auth.Password",
+     N_("Password for SOCKS5 authentication"),
+     NULL,NULL,0,"",NULL,NULL },
    { NULL,&MetaServer.Active,NULL,NULL,NULL,"MetaServer.Active",
      N_("TRUE if server should report to a metaserver"),
      NULL,NULL,0,"",NULL,NULL },
@@ -237,6 +243,19 @@ struct GLOBALS Globals[] = {
      NULL },
    { NULL,&MetaServer.UseSocks,NULL,NULL,NULL,"MetaServer.UseSocks",
      N_("If TRUE, use SOCKS for metaserver communication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&MetaServer.authuser,NULL,"MetaServer.Auth.User",
+     N_("Username for HTTP Basic authentication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&MetaServer.authpassword,NULL,"MetaServer.Auth.Password",
+     N_("Password for HTTP Basic authentication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&MetaServer.proxyuser,NULL,"MetaServer.Proxy.User",
+     N_("Username for HTTP Basic proxy authentication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,NULL,&MetaServer.proxypassword,NULL,
+     "MetaServer.Proxy.Password",
+     N_("Password for HTTP Basic proxy authentication"),
      NULL,NULL,0,"",NULL,NULL },
 #endif
    { NULL,NULL,NULL,&Pager,NULL,"Pager",
@@ -1264,6 +1283,10 @@ void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src) {
    AssignName(&dest->LocalName,src->LocalName);
    AssignName(&dest->Password,src->Password);
    AssignName(&dest->Comment,src->Comment);
+   AssignName(&dest->authuser,src->authuser);
+   AssignName(&dest->authpassword,src->authpassword);
+   AssignName(&dest->proxyuser,src->proxyuser);
+   AssignName(&dest->proxypassword,src->proxypassword);
 }
 #endif
 
@@ -1726,8 +1749,10 @@ void SetupParameters() {
    AssignName(&Socks.name,"socks");
    Socks.port = 1080;
    Socks.version = 4;
-   Socks.user = NULL;
+   Socks.user = g_strdup("");
    Socks.numuid = FALSE;
+   Socks.authuser = g_strdup("");
+   Socks.authpassword = g_strdup("");
    UseSocks = FALSE;
 #endif
 

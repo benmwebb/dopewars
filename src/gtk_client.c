@@ -107,9 +107,10 @@ static void MetaSocksAuthDialog(NetworkBuffer *netbuf,gpointer data);
 static void SocksAuthDialog(NetworkBuffer *netbuf,gpointer data);
 static void GetClientMessage(gpointer data,gint socket,
                              GdkInputCondition condition);
-static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
+static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                         gboolean CallNow);
 static void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,
-                             gboolean Write);
+                             gboolean Write,gboolean CallNow);
 static void FinishServerConnect(struct StartGameStruct *widgets,
                                 gboolean ConnectOK);
 
@@ -330,7 +331,8 @@ void GetClientMessage(gpointer data,gint socket,
    }
 }
 
-void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                  gboolean CallNow) {
    if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
    NetBuf->InputTag=0;
    if (Read || Write) {
@@ -339,6 +341,7 @@ void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
                                      (Write ? GDK_INPUT_WRITE : 0),
                                      GetClientMessage,NetBuf->CallBackData);
    }
+   if (CallNow) GetClientMessage(NetBuf->CallBackData,NetBuf->fd,0);
 }
 #endif /* NETWORKING */
 
@@ -2030,7 +2033,7 @@ static void DoConnect(struct StartGameStruct *widgets) {
    oldsocks = NetBuf->sockstat;
    if (StartNetworkBufferConnect(NetBuf,ServerName,Port)) {
       DisplayConnectStatus(widgets,FALSE,oldstatus,oldsocks);
-      SetNetworkBufferUserPasswdFunc(NetBuf,SocksAuthDialog,(gpointer)widgets);
+      SetNetworkBufferUserPasswdFunc(NetBuf,SocksAuthDialog,NULL);
       SetNetworkBufferCallBack(NetBuf,SocketStatus,(gpointer)widgets);
    } else {
       ConnectError(widgets,FALSE);
@@ -2175,7 +2178,8 @@ static void HandleMetaSock(gpointer data,gint socket,
    }
 }
 
-void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                      gboolean CallNow) {
    if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
    NetBuf->InputTag=0;
    if (Read || Write) {
@@ -2184,6 +2188,7 @@ void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
                                      (Write ? GDK_INPUT_WRITE : 0),
                                      HandleMetaSock,NetBuf->CallBackData);
    }
+   if (CallNow) HandleMetaSock(NetBuf->CallBackData,NetBuf->fd,0);
 }
 
 static void UpdateMetaServerList(GtkWidget *widget,
@@ -2206,9 +2211,9 @@ static void UpdateMetaServerList(GtkWidget *widget,
 
    if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
-      SetHttpAuthFunc(widgets->MetaConn,AuthDialog,(gpointer)widgets);
+      SetHttpAuthFunc(widgets->MetaConn,AuthDialog,NULL);
       SetNetworkBufferUserPasswdFunc(&widgets->MetaConn->NetBuf,
-                                     MetaSocksAuthDialog,(gpointer)widgets);
+                                     MetaSocksAuthDialog,NULL);
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
    } else {
@@ -3226,34 +3231,22 @@ static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
    GtkWidget *userentry,*passwdentry;
    gchar *username=NULL,*password=NULL;
    gpointer proxy,authok;
-   struct StartGameStruct *widgets;
    HttpConnection *conn;
-   NBStatus oldstatus;
-   NBSocksStatus oldsocks;
 
    authok = gtk_object_get_data(GTK_OBJECT(window),"authok");
    proxy = gtk_object_get_data(GTK_OBJECT(window),"proxy");
    userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
    passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
                                                   "password");
-   widgets = (struct StartGameStruct *)gtk_object_get_data(GTK_OBJECT(window),
-                                                           "widgets");
    conn = (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),"httpconn");
-   g_assert(userentry && passwdentry && conn && widgets);
+   g_assert(userentry && passwdentry && conn);
 
    if (authok) {
      username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
      password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
    }
 
-   oldstatus = widgets->MetaConn->NetBuf.status;
-   oldsocks = widgets->MetaConn->NetBuf.sockstat;
-
-   if (!SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password)) {
-      MetaDone(widgets);
-   } else {
-      DisplayConnectStatus(widgets,TRUE,oldstatus,oldsocks);
-   }
+   SetHttpAuthentication(conn,GPOINTER_TO_INT(proxy),username,password);
 
    g_free(username); g_free(password);
 }
@@ -3261,16 +3254,12 @@ static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
 void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm,
                 gpointer data) {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
-   struct StartGameStruct *widgets;
-
-   widgets = (struct StartGameStruct *)data;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(window),"destroy",
                       GTK_SIGNAL_FUNC(DestroyAuthDialog),NULL);
    gtk_object_set_data(GTK_OBJECT(window),"proxy",GINT_TO_POINTER(proxy));
    gtk_object_set_data(GTK_OBJECT(window),"httpconn",(gpointer)conn);
-   gtk_object_set_data(GTK_OBJECT(window),"widgets",(gpointer)widgets);
 
    if (proxy) {
       gtk_window_set_title(GTK_WINDOW(window),
@@ -3352,9 +3341,6 @@ static void DestroySocksAuth(GtkWidget *window,gpointer data) {
    gchar *username=NULL,*password=NULL;
    gpointer authok,meta;
    NetworkBuffer *netbuf;
-   struct StartGameStruct *widgets;
-   NBStatus oldstatus;
-   NBSocksStatus oldsocks;
 
    authok = gtk_object_get_data(GTK_OBJECT(window),"authok");
    meta = gtk_object_get_data(GTK_OBJECT(window),"meta");
@@ -3362,8 +3348,6 @@ static void DestroySocksAuth(GtkWidget *window,gpointer data) {
    passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
                                                   "password");
    netbuf = (NetworkBuffer *)gtk_object_get_data(GTK_OBJECT(window),"netbuf");
-   widgets = (struct StartGameStruct *)gtk_object_get_data(GTK_OBJECT(window),
-                                                           "widgets");
 
    g_assert(userentry && passwdentry && netbuf);
 
@@ -3372,29 +3356,19 @@ static void DestroySocksAuth(GtkWidget *window,gpointer data) {
      password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
    }
 
-   oldstatus = netbuf->status;
-   oldsocks = netbuf->sockstat;
-   if (!SendSocks5UserPasswd(netbuf,username,password)) {
-     if (meta) MetaDone(widgets); else ConnectError(widgets,FALSE);
-   } else {
-     DisplayConnectStatus(widgets,GPOINTER_TO_INT(meta),oldstatus,oldsocks);
-   }
+   SendSocks5UserPasswd(netbuf,username,password);
    g_free(username); g_free(password);
 }
 
 static void RealSocksAuthDialog(NetworkBuffer *netbuf,gboolean meta,
                                 gpointer data) {
    GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
-   struct StartGameStruct *widgets;
-
-   widgets = (struct StartGameStruct *)data;
 
    window=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(window),"destroy",
                       GTK_SIGNAL_FUNC(DestroySocksAuth),NULL);
    gtk_object_set_data(GTK_OBJECT(window),"netbuf",(gpointer)netbuf);
    gtk_object_set_data(GTK_OBJECT(window),"meta",GINT_TO_POINTER(meta));
-   gtk_object_set_data(GTK_OBJECT(window),"widgets",(gpointer)widgets);
 
 /* Title of dialog for authenticating with a SOCKS server */
    gtk_window_set_title(GTK_WINDOW(window),_("SOCKS Authentication Required"));

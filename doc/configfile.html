@@ -120,6 +120,16 @@ be <i>"socks"</i>.
 <dd>Uses SOCKS version <i>4</i>. Version 5 is also supported; SOCKS5 servers
 support username/password authentication, unlike SOCKS4.
 
+<dt><b>Socks.Auth.User=<i>""</i></b></a>
+<dd>If using SOCKS5 with user/password authentication, with the server or AI
+player (which can both run unattended) then setting this variable to something
+other than "" will enable them to authenticate themselves with the SOCKS
+server, provided Socks.Auth.Password is also set. (The game clients prompt
+the user for a username and password on each connect instead.)
+
+<dt><b>Socks.Auth.Password=<i>""</i></b></a>
+<dd>The corresponding password for Socks.Auth.User, above.
+
 <dt><a name="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
@@ -152,7 +162,7 @@ This setting, if set to TRUE, can be overridden by the -S
 about connecting to the dopewars metaserver via. a proxy web server.
 
 <dt><b>MetaServer.Port=<i>80</i></b>
-<dd>Instructs dopewarsclient that the metaserver can be found on TCP port
+<dd>Instructs dopewars that the metaserver can be found on TCP port
 <i>80</i>. This is the standard HTTP port for Web access. (You shouldn't need
 to change this, even if you connect via. a proxy.)
 
@@ -194,6 +204,24 @@ hostname (see MetaServer.LocalName above) with the metaserver.
 <dt><b>MetaServer.UseSocks=<i>FALSE</i></b>
 <dd>Even if "Socks.Active" is TRUE, do not use SOCKS for metaserver
 communication - connect directly to the metaserver or proxy.
+
+<dt><b>MetaServer.Auth.User=<i>""</i></b></a>
+<dd>If the metaserver webpage is on a restricted access server (i.e. it
+requires HTTP Basic authentication), and you wish to connect with the server
+or AI player (which can both run unattended) then setting this variable to
+something other than "" will enable them to authenticate themselves,
+provided MetaServer.Auth.Password is also set. (The game clients prompt
+the user for a username and password on each connect instead.)
+
+<dt><b>MetaServer.Auth.Password=<i>""</i></b></a>
+<dd>The corresponding password for MetaServer.Auth.User, above.
+
+<dt><b>MetaServer.Proxy.User=<i>""</i></b></a>
+<dd>In a similar way to MetaServer.Auth.User, above, this enables a dopewars
+server or AI player to authenticate itself with a web proxy.
+
+<dt><b>MetaServer.Proxy.Password=<i>""</i></b></a>
+<dd>The corresponding password for MetaServer.Proxy.User, above.
 
 </dl>
 
@@ -542,6 +570,6 @@ any drugs, and clients will display this information if available.
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>23-09-2001</b></p>
+<p>Last update: <b>16-10-2001</b></p>
 </body>
 </html>
