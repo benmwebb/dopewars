@@ -25,11 +25,11 @@
 #endif
 
 #include <glib.h>
+#include <string.h>
 
 #ifdef PLUGINS
 #include <sys/types.h>
 #include <dirent.h>
-#include <string.h>
 #include <dlfcn.h>
 #else
 #include "plugins/sound_sdl.h"
