@@ -220,12 +220,15 @@ static char *SelectServerFromMetaServer(void) {
 /* server/port pairs, one of which the user should select.       */
 /* Returns a pointer to a static string containing an error      */
 /* message if the connection failed, otherwise NULL.             */
-   char *MetaError;
-   int HttpSock,c;
+   int c;
    GSList *ListPt;
    ServerData *ThisServer;
    GString *text;
    gint index;
+   fd_set readfds,writefds;
+   int maxsock;
+   gboolean DoneOK=TRUE;
+   HttpConnection *MetaConn;
    static char NoServers[] = N_("No servers listed on metaserver");
 
    attrset(TextAttr);
@@ -233,16 +236,34 @@ static char *SelectServerFromMetaServer(void) {
    mvaddstr(17,1,_("Please wait... attempting to contact metaserver..."));
    refresh();
 
-   MetaError=OpenMetaServerConnection(&HttpSock);
-   if (MetaError) return MetaError;
+   MetaConn = OpenMetaHttpConnection();
 
-   clear_line(17);
+   if (!MetaConn) return "Cannot connect";
+
+   ClearServerList();
+
+   while(DoneOK) {
+      FD_ZERO(&readfds); FD_ZERO(&writefds);
+      FD_SET(0,&readfds); maxsock=1;
+      SetSelectForNetworkBuffer(&MetaConn->NetBuf,&readfds,&writefds,
+                                NULL,&maxsock);
+      if (bselect(maxsock,&readfds,&writefds,NULL,NULL)==-1) {
+         if (errno==EINTR) { /*CheckForResize(Play);*/ continue; }
+         perror("bselect"); exit(1);
+      }
+      if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
+         while (HandleWaitingMetaServerData(MetaConn)) {}
+      }
+      if (!DoneOK) {
+         g_print("Metaserver communication closed");
+      }
+   }
+   CloseHttpConnection(MetaConn);
+
+/* clear_line(17);
    mvaddstr(17,1,
           _("Connection to metaserver established. Obtaining server list..."));
-   refresh();
-
-   ReadMetaServerData(HttpSock);
-   CloseMetaServerConnection(HttpSock);
+   refresh();*/
 
    text=g_string_new("");
 

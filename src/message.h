@@ -133,8 +133,7 @@ HttpConnection *OpenMetaHttpConnection(void);
 void CloseHttpConnection(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
 gboolean HandleWaitingMetaServerData(HttpConnection *conn);
-
-gchar *bgets(int fd);
+void ClearServerList(void);
 #endif /* NETWORKING */
 
 extern GSList *FirstClient;
@@ -168,12 +167,6 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,AICode *AI,
 void ReceiveDrugsHere(char *text,Player *To);
 gboolean HandleGenericClientMessage(Player *From,AICode AI,MsgCode Code,
                                Player *To,char *Data,DispMode *DisplayMode);
-#ifdef NETWORKING
-char *OpenMetaServerConnection(int *HttpSock);
-void CloseMetaServerConnection(int HttpSock);
-void ClearServerList(void);
-void ReadMetaServerData(int HttpSock);
-#endif
 void InitAbilities(Player *Play);
 void SendAbilities(Player *Play);
 void ReceiveAbilities(Player *Play,gchar *Data);

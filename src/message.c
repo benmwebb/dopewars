@@ -774,36 +774,14 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn) {
    return TRUE;
 }
 
-gchar *bgets(int fd) {
-/* Drop-in substitute for fgets; reads a newline-terminated string from  */
-/* file descriptor fd, into a dynamically-allocated buffer. Returns a    */
-/* pointer to the buffer, or NULL if an error occurred. It is the user's */
-/* responsibility to g_free the pointer when it is no longer needed.     */
-/* Used for non-blocking read from TCP sockets.                          */
-/* N.B. The terminating newline is _not_ returned in the string.         */
-   ssize_t len;
-   unsigned TotalLen=0;
-   GString *text;
-   gchar *buffer;
-   char tmp[10];
-   text=g_string_new(NULL);
-   for (;;) {
-      len=recv(fd,tmp,1,0);
-      if (len==SOCKET_ERROR) { g_string_free(text,TRUE); return NULL; }
-      if (len==0) { g_string_free(text,TRUE); return NULL; }
-      if (tmp[0]=='\n') {
-         buffer=text->str;
-         g_string_free(text,FALSE);  /* Just free the g_string, not the data */
-         return buffer;
-      } else {
-         g_string_append_c(text,tmp[0]);
-         TotalLen++;
-         /* Test to make sure dodgy clients don't eat all of our nice memory */
-         if (TotalLen > 64000) {
-            g_warning("Abnormally large packet");
-            g_string_free(text,TRUE); return NULL;
-         }
-      }
+void ClearServerList() {
+   ServerData *ThisServer;
+   while (ServerList) {
+      ThisServer=(ServerData *)(ServerList->data);
+      g_free(ThisServer->Name); g_free(ThisServer->Comment);
+      g_free(ThisServer->Version); g_free(ThisServer->Update);
+      g_free(ThisServer->UpSince); g_free(ThisServer);
+      ServerList=g_slist_remove(ServerList,ThisServer);
    }
 }
 #endif /* NETWORKING */
@@ -1354,92 +1332,6 @@ gboolean HandleGenericClientMessage(Player *From,AICode AI,MsgCode Code,
    }
    return TRUE;
 }
-
-#ifdef NETWORKING
-char *OpenMetaServerConnection(int *HttpSock) {
-   static char NoHost[] = N_("Cannot locate metaserver");
-   static char NoSocket[] = N_("Cannot create socket");
-   static char NoService[] =
-                    N_("Metaserver not running HTTP or connection denied");
-   struct sockaddr_in HttpAddr;
-   struct hostent *he;
-   gchar *MetaName;
-   int MetaPort;
-
-/* If a proxy is defined, connect to that. Otherwise, connect to the
-   metaserver directly */ 
-   if (MetaServer.ProxyName[0]) {
-      MetaName=MetaServer.ProxyName; MetaPort=MetaServer.ProxyPort;
-   } else {
-      MetaName=MetaServer.Name; MetaPort=MetaServer.Port;
-   }
-
-   if ((he=gethostbyname(MetaName))==NULL) return NoHost;
-   if ((*HttpSock=socket(AF_INET,SOCK_STREAM,0))==-1) return NoSocket;
-   HttpAddr.sin_family=AF_INET;
-   HttpAddr.sin_port=htons(MetaPort);
-   HttpAddr.sin_addr=*((struct in_addr *)he->h_addr);
-   memset(HttpAddr.sin_zero,0,sizeof(HttpAddr.sin_zero));
-   if (connect(*HttpSock,(struct sockaddr *)&HttpAddr,
-       sizeof(struct sockaddr))==SOCKET_ERROR) {
-      CloseSocket(*HttpSock);
-      return NoService;
-   }
-   return NULL;
-}
-
-void CloseMetaServerConnection(int HttpSock) {
-   CloseSocket(HttpSock);
-}
-
-void ClearServerList() {
-   ServerData *ThisServer;
-   while (ServerList) {
-      ThisServer=(ServerData *)(ServerList->data);
-      g_free(ThisServer->Name); g_free(ThisServer->Comment);
-      g_free(ThisServer->Version); g_free(ThisServer->Update);
-      g_free(ThisServer->UpSince); g_free(ThisServer);
-      ServerList=g_slist_remove(ServerList,ThisServer);
-   }
-}
-
-void ReadMetaServerData(int HttpSock) {
-   gchar *buf;
-   ServerData *NewServer;
-   gboolean HeaderDone;
-
-   ClearServerList();
-   buf=g_strdup_printf("GET %s?output=text&getlist=%d HTTP/1.1\n"
-                       "Host: %s:%d\n\n",MetaServer.Path,METAVERSION,
-                       MetaServer.Name,MetaServer.Port);
-   send(HttpSock,buf,strlen(buf),0);
-   g_free(buf);
-   HeaderDone=FALSE;
-
-   while ((buf=bgets(HttpSock))) {
-      if (HeaderDone) {
-         NewServer=g_new0(ServerData,1);
-         NewServer->Name=buf;
-         buf=bgets(HttpSock);
-         NewServer->Port=atoi(buf); g_free(buf);
-         NewServer->Version=bgets(HttpSock);
-         buf=bgets(HttpSock);
-         if (buf[0]) NewServer->CurPlayers=atoi(buf);
-         else NewServer->CurPlayers=-1;
-         g_free(buf);
-         buf=bgets(HttpSock);
-         NewServer->MaxPlayers=atoi(buf); g_free(buf);
-         NewServer->Update=bgets(HttpSock);
-         NewServer->Comment=bgets(HttpSock);
-         NewServer->UpSince=bgets(HttpSock);
-         ServerList=g_slist_append(ServerList,NewServer);
-      } else {
-         if (strncmp(buf,"MetaServer:",11)==0) HeaderDone=TRUE;
-         g_free(buf);
-      }
-   }
-}
-#endif /* NETWORKING */
 
 void SendFightReload(Player *To) {
    SendFightMessage(To,NULL,0,F_RELOAD,(price_t)0,FALSE,NULL);
