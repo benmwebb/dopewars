@@ -3036,9 +3036,15 @@ void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
     }
     for (i = child->left_attach; i < child->right_attach; i++) {
       child_alloc.width += table->cols[i].allocation;
+      if (i < child->right_attach - 1) {
+        child_alloc.width += table->cols[i].spacing;
+      }
     }
     for (i = child->top_attach; i < child->bottom_attach; i++) {
       child_alloc.height += table->rows[i].allocation;
+      if (i < child->bottom_attach - 1) {
+        child_alloc.height += table->rows[i].spacing;
+      }
     }
     gtk_widget_set_size(child->widget, &child_alloc);
   }
