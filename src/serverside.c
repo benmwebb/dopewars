@@ -842,7 +842,7 @@ static gboolean StartServer(void)
   setvbuf(stdout, (char *)NULL, _IOLBF, 0);
 #endif
 
-  Network = TRUE;
+  Network = Server = TRUE;
   FirstServer = NULL;
   ClientMessageHandlerPt = NULL;
   ListenSock = CreateTCPSocket(&sockerr);
