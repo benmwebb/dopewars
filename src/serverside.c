@@ -1736,10 +1736,17 @@ void CloseHighScoreFile()
 void DropPrivileges()
 {
 #ifndef CYGWIN
-  /* Ignore the error if we've ended up with (gid == egid) anyway */
-  if (setregid(getgid(), getgid()) != 0
-      && (getgid() != getegid())) {
+  /* Ignore the return from setregid; we'll check it ourselves to be sure
+   * (this avoids problems when running under fakeroot) */
+  setregid(getgid(), getgid());
+  if (getgid() != getegid()) {
     perror("setregid");
+    exit(1);
+  }
+
+  setreuid(getuid(), getuid());
+  if (getuid() != geteuid()) {
+    perror("setreuid");
     exit(1);
   }
 #endif
