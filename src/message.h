@@ -134,8 +134,8 @@ HttpConnection *OpenMetaHttpConnection(void);
 void CloseHttpConnection(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn);
 gboolean HandleHttpCompletion(HttpConnection *conn);
-gboolean HandleWaitingMetaServerData(HttpConnection *conn);
-void ClearServerList(void);
+gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt);
+void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
 
 extern GSList *FirstClient;

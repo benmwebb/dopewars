@@ -300,6 +300,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
    NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
    NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
    NetBuf->WaitConnect=FALSE;
+   NetBuf->Error=0;
 }
 
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
@@ -603,7 +604,7 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
 /* TRUE on success, or FALSE if the buffer's maximum length is        */
 /* reached, or the remote end has closed the connection.              */
    ConnBuf *conn;
-   int CurrentPosition,BytesSent;
+   int CurrentPosition,BytesSent,Error;
    conn=&NetBuf->WriteBuf;
    if (!conn->Data || !conn->DataPresent) return TRUE;
    if (conn->Length==MAXWRITEBUF) return FALSE;
@@ -612,10 +613,13 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
       BytesSent=send(NetBuf->fd,&conn->Data[CurrentPosition],
                      conn->DataPresent-CurrentPosition,0);
       if (BytesSent==SOCKET_ERROR) {
+         Error=GetSocketError();
 #ifdef CYGWIN
-         if (GetSocketError()==WSAEWOULDBLOCK) break; else return FALSE;
+         if (Error==WSAEWOULDBLOCK) break;
+         else { NetBuf->Error=Error; return FALSE; }
 #else
-         if (GetSocketError()==EAGAIN) break; else return FALSE;
+         if (Error==EAGAIN) break;
+         else if (Error!=EINTR) { NetBuf->Error=Error; return FALSE; }
 #endif
       } else {
          CurrentPosition+=BytesSent;
@@ -783,7 +787,7 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    return TRUE;
 }
 
-gboolean HandleWaitingMetaServerData(HttpConnection *conn) {
+gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
    gchar *msg;
    ServerData *NewServer;
 
@@ -807,7 +811,7 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn) {
       NewServer->Update=ReadHttpResponse(conn);
       NewServer->Comment=ReadHttpResponse(conn);
       NewServer->UpSince=ReadHttpResponse(conn);
-      ServerList=g_slist_append(ServerList,NewServer);
+      *listpt=g_slist_append(*listpt,NewServer);
    } else if (conn->Status==HS_READSEPARATOR) {
       /* This should be the first line of the body, the "MetaServer:" line */
       msg=ReadHttpResponse(conn);
@@ -824,14 +828,14 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn) {
    return TRUE;
 }
 
-void ClearServerList() {
+void ClearServerList(GSList **listpt) {
    ServerData *ThisServer;
-   while (ServerList) {
-      ThisServer=(ServerData *)(ServerList->data);
+   while (*listpt) {
+      ThisServer=(ServerData *)((*listpt)->data);
       g_free(ThisServer->Name); g_free(ThisServer->Comment);
       g_free(ThisServer->Version); g_free(ThisServer->Update);
       g_free(ThisServer->UpSince); g_free(ThisServer);
-      ServerList=g_slist_remove(ServerList,ThisServer);
+      *listpt=g_slist_remove(*listpt,ThisServer);
    }
 }
 #endif /* NETWORKING */

@@ -73,10 +73,6 @@ struct ClientDataStruct {
 static struct ClientDataStruct ClientData;
 static gboolean InGame=FALSE;
 
-/*#ifdef NETWORKING
-static gboolean MetaServerRead=FALSE;
-#endif*/
-
 static GtkWidget *FightDialog=NULL,*SpyReportsDialog;
 static gboolean IsShowingPlayerList=FALSE,IsShowingTalkList=FALSE,
                 IsShowingInventory=FALSE,IsShowingGunShop=FALSE;
@@ -98,6 +94,9 @@ static void GetClientMessage(gpointer data,gint socket,
 static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 static void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,
                              gboolean Write);
+
+/* List of servers on the metaserver */
+static GSList *MetaList=NULL;
 #endif
 
 static void HandleClientMessage(char *buf,Player *Play);
@@ -1905,6 +1904,7 @@ struct StartGameStruct {
 #ifdef NETWORKING
    gint ConnectTag;
    HttpConnection *MetaConn;
+   GSList *NewMetaList;
 #endif
 };
 
@@ -1976,7 +1976,8 @@ static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
    DoConnect(widgets);
 }
 
-static void FillMetaServerList(struct StartGameStruct *widgets) {
+static void FillMetaServerList(struct StartGameStruct *widgets,
+                               gboolean UseNewList) {
    GtkWidget *metaserv;
    ServerData *ThisServer;
    gchar *titles[5];
@@ -1987,8 +1988,13 @@ static void FillMetaServerList(struct StartGameStruct *widgets) {
    gtk_clist_freeze(GTK_CLIST(metaserv));
    gtk_clist_clear(GTK_CLIST(metaserv));
 
+   if (UseNewList && widgets->NewMetaList) {
+     ClearServerList(&MetaList);
+     MetaList=widgets->NewMetaList;
+     widgets->NewMetaList=NULL;
+   }
 
-   for (ListPt=ServerList;ListPt;ListPt=g_slist_next(ListPt)) {
+   for (ListPt=MetaList;ListPt;ListPt=g_slist_next(ListPt)) {
       ThisServer=(ServerData *)(ListPt->data);
       titles[0]=ThisServer->Name;
       titles[1]=g_strdup_printf("%d",ThisServer->Port);
@@ -2021,13 +2027,14 @@ static void HandleMetaSock(gpointer data,gint socket,
 
    if (NetBufHandleNetwork(&widgets->MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
-      while (HandleWaitingMetaServerData(widgets->MetaConn)) {}
+      while (HandleWaitingMetaServerData(widgets->MetaConn,
+                                         &widgets->NewMetaList)) {}
    }
    if (!DoneOK) {
-      g_print("Metaserver communicated closed\n");
+      g_print("Metaserver communication closed\n");
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
-      FillMetaServerList(widgets);
+      FillMetaServerList(widgets,TRUE);
    }
 }
 
@@ -2049,13 +2056,12 @@ static void UpdateMetaServerList(GtkWidget *widget,
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
    }
+   ClearServerList(&widgets->NewMetaList);
 
    widgets->MetaConn = OpenMetaHttpConnection();
 
    if (widgets->MetaConn) {
       metaserv=widgets->metaserv;
-      gtk_clist_clear(GTK_CLIST(metaserv));
-      ClearServerList();
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
    }
@@ -2105,6 +2111,7 @@ static void CloseNewGameDia(GtkWidget *widget,
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
    }
+   ClearServerList(&widgets->NewMetaList);
 #endif
 }
 
@@ -2140,6 +2147,7 @@ void NewGameDialog(void) {
 
    widgets.ConnectTag=0;
    widgets.MetaConn=NULL;
+   widgets.NewMetaList=NULL;
 
 #endif /* NETWORKING */
 
@@ -2324,7 +2332,7 @@ void NewGameDialog(void) {
    if (UpdateMeta) {
       UpdateMetaServerList(NULL,&widgets);
    } else {
-      FillMetaServerList(&widgets);
+      FillMetaServerList(&widgets,FALSE);
    }
 #endif
 

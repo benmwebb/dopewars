@@ -240,7 +240,7 @@ static char *SelectServerFromMetaServer(Player *Play) {
 
    if (!MetaConn) return "Cannot connect";
 
-   ClearServerList();
+   ClearServerList(&ServerList);
 
    while(DoneOK) {
       FD_ZERO(&readfds); FD_ZERO(&writefds);
@@ -257,7 +257,7 @@ static char *SelectServerFromMetaServer(Player *Play) {
         if (c=='\f') wrefresh(curscr);
       }
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
-         while (HandleWaitingMetaServerData(MetaConn)) {}
+         while (HandleWaitingMetaServerData(MetaConn,&ServerList)) {}
       }
       if (!DoneOK) {
          g_print("Metaserver communication closed");
