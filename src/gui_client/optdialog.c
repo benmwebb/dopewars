@@ -107,6 +107,12 @@ static void SaveConfigWidget(struct GLOBALS *gvar, struct ConfigWidget *cwid,
 
       intpt = GetGlobalInt(cwid->globind, structind);
       newset = atoi(text);
+      if (newset < gvar->MinVal) {
+        newset = gvar->MinVal;
+      }
+      if (gvar->MaxVal > gvar->MinVal && newset > gvar->MaxVal) {
+        newset = gvar->MaxVal;
+      }
       changed = (*intpt != newset);
       *intpt = newset;
     } else if (gvar->PriceVal) {
@@ -243,9 +249,20 @@ static GtkWidget *NewConfigEntry(gchar *name)
   if (gvar->StringVal) {
     gtk_entry_set_text(GTK_ENTRY(entry), *gvar->StringVal);
   } else if (gvar->IntVal) {
-    tmpstr = g_strdup_printf("%d", *gvar->IntVal);
-    gtk_entry_set_text(GTK_ENTRY(entry), tmpstr);
-    g_free(tmpstr);
+    if (gvar->MaxVal > gvar->MinVal) {
+      GtkAdjustment *spin_adj;
+
+      gtk_widget_destroy(entry);
+      spin_adj = (GtkAdjustment *)gtk_adjustment_new(*gvar->IntVal,
+                                                     gvar->MinVal,
+                                                     gvar->MaxVal,
+                                                     1.0, 10.0, 10.0);
+      entry = gtk_spin_button_new(spin_adj, 1.0, 0);
+    } else {
+      tmpstr = g_strdup_printf("%d", *gvar->IntVal);
+      gtk_entry_set_text(GTK_ENTRY(entry), tmpstr);
+      g_free(tmpstr);
+    }
   } else if (gvar->PriceVal) {
     tmpstr = pricetostr(*gvar->PriceVal);
     gtk_entry_set_text(GTK_ENTRY(entry), tmpstr);
@@ -279,7 +296,14 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     label = gtk_label_new(_(member->label));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1,
                      GTK_SHRINK, GTK_SHRINK, 0, 0);
-    entry = gtk_entry_new();
+    if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
+      GtkAdjustment *spin_adj = (GtkAdjustment *)
+          gtk_adjustment_new(gvar->MinVal, gvar->MinVal, gvar->MaxVal,
+                             1.0, 10.0, 10.0);
+      entry = gtk_spin_button_new(spin_adj, 1.0, 0);
+    } else {
+      entry = gtk_entry_new();
+    }
     gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
     AddConfigWidget(entry, ind);
   }

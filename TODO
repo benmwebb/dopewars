@@ -14,8 +14,6 @@
 - Track down server memory corruption bug!
 - Implement server option to buy more than one bitch at a time in the Pub.
 - Allow customisation of GtkTextView tag colours
-- Impose sensible limits on numbers in Options dialog (e.g. percentages)
-  (should also enforce this for config file / server admin)
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
 - Fix problem with dialogs popping up while menus are open

@@ -3,6 +3,8 @@ cvs
       by the cops
     - Some problems with the curses client missing screen resize events fixed
     - Logging to a file should now work properly again
+    - Minimum and maximum limits on all relevant integer configuration
+      file variables are now imposed for sanity
 
 1.5.9   07-06-2003
     - The messages window in the curses client can now be scrolled with the
