@@ -1862,11 +1862,11 @@ void print_status(Player *Play, gboolean DispDrug)
     for (i = 0; i < Width - 4; i++)
       addch(ACS_HLINE);
     addch(ACS_RTEE);
+    mvaddch(9, Width / 2, ACS_BTEE);
 
     /* Title of the "Messages" window in the curses client */
-    mvaddstr(9, 15, _("Messages (-/+ scrolls up/down)"));
+    mvaddstr(9, 9, _("Messages (-/+ scrolls up/down)"));
 
-    mvaddch(9, Width / 2, ACS_BTEE);
     mvaddch(15, 1, ACS_LLCORNER);
     for (i = 0; i < Width - 4; i++)
       addch(ACS_HLINE);
