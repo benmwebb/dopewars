@@ -1967,6 +1967,47 @@ gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,
 }
 
 /*
+ * Prints the given string to a file, converting control characters
+ * and escaping other special characters.
+ */
+static void PrintEscaped(FILE *fp, gchar *str)
+{
+  int i;
+
+  for (i = 0; i < strlen(str); i++) {
+    switch(str[i]) {
+    case '"':
+    case '\'':
+    case '\\':
+      fputc('\\', fp);
+      fputc(str[i], fp);
+      break;
+    case '\n':
+      fputs("\\n", fp);
+      break;
+    case '\t':
+      fputs("\\t", fp);
+      break;
+    case '\r':
+      fputs("\\r", fp);
+      break;
+    case '\b':
+      fputs("\\b", fp);
+      break;
+    case '\f':
+      fputs("\\f", fp);
+      break;
+    default:
+      if (isprint(str[i])) {
+        fputc(str[i], fp);
+      } else {
+        fprintf(fp, "\\%o", str[i]);
+      }
+    }
+  }
+}
+
+/*
  * Writes a single configuration file variable (identified by GlobalIndex
  * and StructIndex) to the specified file, in a format suitable for reading
  * back in (via. ParseNextConfig and friends).
@@ -1996,8 +2037,9 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
     fprintf(fp, "%s = %s\n", GlobalName, prstr);
     g_free(prstr);
   } else if (Globals[GlobalIndex].StringVal) {
-    fprintf(fp, "%s = \"%s\"\n", GlobalName,
-            *GetGlobalString(GlobalIndex, StructIndex));
+    fprintf(fp, "%s = \"", GlobalName);
+    PrintEscaped(fp, *GetGlobalString(GlobalIndex, StructIndex));
+    fprintf(fp, "\"\n");
   } else if (Globals[GlobalIndex].StringList) {
     int i;
 
@@ -2005,7 +2047,9 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
     for (i = 0; i < *Globals[GlobalIndex].MaxIndex; i++) {
       if (i > 0)
         fprintf(fp, ", ");
-      fprintf(fp, "\"%s\"", (*Globals[GlobalIndex].StringList)[i]);
+      fputc('"', fp);
+      PrintEscaped(fp, (*Globals[GlobalIndex].StringList)[i]);
+      fputc('"', fp);
     }
     fprintf(fp, " }\n");
   }
