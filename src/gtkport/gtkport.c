@@ -5003,6 +5003,38 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
   return text;
 }
 
+#ifdef HAVE_GTK2
+
+gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
+                   const gchar *Title, gint Options)
+{
+  GtkWidget *dialog;
+  gboolean immreturn;
+  gint retval;
+  GtkButtonsType buttons = GTK_BUTTONS_NONE;
+
+  immreturn = (Options & MB_IMMRETURN);
+  if (Options & MB_CANCEL) buttons = GTK_BUTTONS_OK_CANCEL;
+  else if (Options & MB_OK) buttons = GTK_BUTTONS_OK;
+  else if (Options & MB_YESNO) buttons = GTK_BUTTONS_YES_NO;
+
+  dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
+                                  immreturn ? 0 : GTK_DIALOG_MODAL,
+                                  GTK_MESSAGE_INFO,
+                                  buttons, Text);
+  if (Title) gtk_window_set_title(GTK_WINDOW(dialog), Title);
+
+  if (immreturn) {
+    return GTK_RESPONSE_NONE;
+  } else {
+    retval = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+    return retval;
+  }
+}
+
+#else
+
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
 {
   gtk_main_quit();
@@ -5081,6 +5113,8 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
     gtk_main();
   return retval;
 }
+
+#endif
 
 static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
 {
