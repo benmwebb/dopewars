@@ -1,13 +1,13 @@
-This is dopewars 1.5.3, a game simulating the life of a drug dealer in 
+This is dopewars 1.5.4, a game simulating the life of a drug dealer in 
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.5.3 servers should handle clients as old as version 1.4.3 with
+dopewars 1.5.4 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.5.3!
+recommended that both clients and servers are upgraded to 1.5.4!
 
 INSTALLATION
 
@@ -17,10 +17,10 @@ Either...
    
 Or...
 
-2. Get the tarball dopewars-1.5.3.tar.gz from the same URL
-   Extract it via. tar -xvzf dopewars-1.5.3.tar.gz
+2. Get the tarball dopewars-1.5.4.tar.gz from the same URL
+   Extract it via. tar -xvzf dopewars-1.5.4.tar.gz
    Follow the instructions in the INSTALL file in the newly-created
-      dopewars-1.5.3 directory
+      dopewars-1.5.4 directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
@@ -75,7 +75,9 @@ global file /etc/dopewars is read first, and can then be overridden by the local
 settings in ~/.dopewars. All of the settings here can also be set on the command
 line of an interactive dopewars server when no players are logged on. See the
 file "example-cfg" for an example configuration file, and for a brief
-explanation of each option, type "help" in an interactive server.
+explanation of each option, type "help" in an interactive server. A subset of
+the configuration options can also be tweaked via. the "Options" menu item
+in the GTK+/Win32 client.
 
 PLAYING
 
