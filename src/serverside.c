@@ -140,7 +140,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 /* recently. If networking is disabled, this function does nothing.  */
 #if NETWORKING
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
-   GString *text;
+   GString *text,*query;
    gchar *prstr;
    gchar *MetaName;
    int MetaPort;
@@ -173,10 +173,11 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    } else return;
    MetaPlayerPending=FALSE;
    text=g_string_new("");
+   query=g_string_new("");
 
-   g_string_sprintf(text,"GET %s?output=text&",MetaServer.Path);
+   g_string_assign(query,"output=text&");
 
-   g_string_sprintfa(text,"up=%d&port=%d&version=%s&players=%d"
+   g_string_sprintfa(query,"up=%d&port=%d&version=%s&players=%d"
                      "&maxplay=%d&comment=%s",
                      Up ? 1 : 0,Port,VERSION,CountPlayers(FirstServer),
                      MaxClients,MetaServer.Comment);
@@ -185,7 +186,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
       for (i=0;i<NUMHISCORE;i++) {
          if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-            g_string_sprintfa(text,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
+            g_string_sprintfa(query,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
                               i,MultiScore[i].Name,i,MultiScore[i].Time,
                               i,MultiScore[i].Dead ? "dead" : "alive",
                               i,prstr=FormatPrice(MultiScore[i].Money));
@@ -194,10 +195,18 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
       }
    }
 
-   g_string_sprintfa(text," HTTP/1.1");
+   g_string_sprintf(text,"POST %s HTTP/1.1",MetaServer.Path);
    QueueMessageForSend(&MetaNetBuf,text->str);
-   g_string_sprintf(text,"Host: %s:%d\n",MetaServer.Name,MetaServer.Port);
+   g_string_sprintf(text,"Host: %s:%d",MetaServer.Name,MetaServer.Port);
    QueueMessageForSend(&MetaNetBuf,text->str);
+   QueueMessageForSend(&MetaNetBuf,
+                       "Content-Type: application/x-www-form-urlencoded");
+   g_string_sprintf(text,"Content-Length: %d\n",strlen(query->str));
+   QueueMessageForSend(&MetaNetBuf,text->str);
+
+   QueueMessageForSend(&MetaNetBuf,query->str);
+
+   g_string_free(query,TRUE);
    g_string_free(text,TRUE);
    
    MetaUpdateTimeout=time(NULL)+METAUPDATETIME;
