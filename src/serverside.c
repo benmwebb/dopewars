@@ -3020,60 +3020,22 @@ int OfferObject(Player *To, gboolean ForceBitch)
   return 0;
 }
 
-/* 
- * Sends details of drug prices to player "To". If "DisplayBusts"
- * is TRUE, also regenerates drug prices and sends details of
- * special events such as drug busts.
- */
-void SendDrugsHere(Player *To, gboolean DisplayBusts)
-{
-  int i;
-  gchar *Deal, *prstr;
-  GString *text;
-  gboolean First;
-
-  Deal = g_malloc0(NumDrug);
-  if (DisplayBusts)
-    GenerateDrugsHere(To, Deal);
-
-  text = g_string_new(NULL);
-  First = TRUE;
-  if (DisplayBusts)
-    for (i = 0; i < NumDrug; i++)
-      if (Deal[i]) {
-        if (!First)
-          g_string_append_c(text, '^');
-        if (Drug[i].Expensive) {
-          dpg_string_sprintfa(text, Deal[i] == 1 ? Drugs.ExpensiveStr1 :
-                              Drugs.ExpensiveStr2, Drug[i].Name);
-        } else if (Drug[i].Cheap) {
-          g_string_append(text, Drug[i].CheapStr);
-        }
-        First = FALSE;
-      }
-  if (!First)
-    SendPrintMessage(NULL, C_NONE, To, text->str);
-  g_string_truncate(text, 0);
-  for (i = 0; i < NumDrug; i++) {
-    g_string_sprintfa(text, "%s^",
-                      (prstr = pricetostr(To->Drugs[i].Price)));
-    g_free(prstr);
-  }
-  SendServerMessage(NULL, C_NONE, C_DRUGHERE, To, text->str);
-  g_string_free(text, TRUE);
-}
+/* Whether a particular drug is especially cheap or expensive */
+enum DealType {
+  DT_NORMAL, DT_CHEAP, DT_EXPENSIVE
+};
 
 /* 
  * Generates drug prices and drug busts etc. for player "To"
- * "Deal" is an array of chars of size NumDrug.
+ * "Deal" is an array of size NumDrug.
  */
-void GenerateDrugsHere(Player *To, gchar *Deal)
+static void GenerateDrugsHere(Player *To, enum DealType *Deal)
 {
   int NumEvents, NumDrugs, NumRandom, i;
 
   for (i = 0; i < NumDrug; i++) {
     To->Drugs[i].Price = 0;
-    Deal[i] = 0;
+    Deal[i] = DT_NORMAL;
   }
   NumEvents = 0;
   if (brandom(0, 100) < 70)
@@ -3085,16 +3047,16 @@ void GenerateDrugsHere(Player *To, gchar *Deal)
   NumDrugs = 0;
   while (NumEvents > 0) {
     i = brandom(0, NumDrug);
-    if (Deal[i] != 0)
+    if (Deal[i] != DT_NORMAL)
       continue;
     if (Drug[i].Expensive && (!Drug[i].Cheap || brandom(0, 100) < 50)) {
-      Deal[i] = brandom(1, 3);
+      Deal[i] = DT_EXPENSIVE;
       To->Drugs[i].Price = prandom(Drug[i].MinPrice, Drug[i].MaxPrice)
           * Drugs.ExpensiveMultiply;
       NumDrugs++;
       NumEvents--;
     } else if (Drug[i].Cheap) {
-      Deal[i] = 1;
+      Deal[i] = DT_CHEAP;
       To->Drugs[i].Price = prandom(Drug[i].MinPrice, Drug[i].MaxPrice)
           / Drugs.CheapDivide;
       NumDrugs++;
@@ -3114,6 +3076,55 @@ void GenerateDrugsHere(Player *To, gchar *Deal)
       NumDrugs--;
     }
   }
+}
+
+/* 
+ * Sends details of drug prices to player "To". If "DisplayBusts"
+ * is TRUE, also regenerates drug prices and sends details of
+ * special events such as drug busts.
+ */
+void SendDrugsHere(Player *To, gboolean DisplayBusts)
+{
+  int i;
+  enum DealType *Deal = NULL;
+  gchar *prstr;
+  GString *text;
+  gboolean First;
+
+  Deal = g_new0(enum DealType, NumDrug);
+  if (DisplayBusts)
+    GenerateDrugsHere(To, Deal);
+
+  text = g_string_new(NULL);
+  First = TRUE;
+  if (DisplayBusts) {
+    for (i = 0; i < NumDrug; i++) {
+      if (Deal[i] != DT_NORMAL) {
+        if (!First)
+          g_string_append_c(text, '^');
+        if (Deal[i] == DT_CHEAP) {
+          g_string_append(text, Drug[i].CheapStr);
+        } else {
+          dpg_string_sprintfa(text, brandom(0, 100) < 50
+                              ? Drugs.ExpensiveStr1 : Drugs.ExpensiveStr2,
+                              Drug[i].Name);
+        }
+        First = FALSE;
+      }
+    }
+  }
+  g_free(Deal);
+
+  if (!First)
+    SendPrintMessage(NULL, C_NONE, To, text->str);
+  g_string_truncate(text, 0);
+  for (i = 0; i < NumDrug; i++) {
+    g_string_sprintfa(text, "%s^",
+                      (prstr = pricetostr(To->Drugs[i].Price)));
+    g_free(prstr);
+  }
+  SendServerMessage(NULL, C_NONE, C_DRUGHERE, To, text->str);
+  g_string_free(text, TRUE);
 }
 
 /* 
