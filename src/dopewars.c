@@ -2887,7 +2887,7 @@ static void ServerLogMessage(const gchar *log_domain,
  * Stub function to report an error if the Curses client is requested and
  * it isn't compiled in.
  */
-void CursesLoop(void)
+void CursesLoop(struct CMDLINE *cmdline)
 {
   g_print(_("No curses client available - rebuild the binary passing the\n"
             "--enable-curses-client option to configure, or use a windowed\n"
@@ -2902,9 +2902,10 @@ void CursesLoop(void)
  */
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 gboolean ReturnOnFail)
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #else
-gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
+gboolean GtkLoop(int *argc, char **argv[], struct CMDLINE *cmdline,
+                 gboolean ReturnOnFail)
 #endif
 {
   if (!ReturnOnFail) {

@@ -456,15 +456,16 @@ gchar *GetGlobalConfigFile(void);
 gchar *GetLocalConfigFile(void);
 
 #ifndef CURSES_CLIENT
-void CursesLoop(void);
+void CursesLoop(struct CMDLINE *cmdline);
 #endif
 
 #ifndef GUI_CLIENT
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 gboolean ReturnOnFail);
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail);
 #else
-gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
+gboolean GtkLoop(int *argc, char **argv[], struct CMDLINE *cmdline,
+                 gboolean ReturnOnFail);
 #endif
 #endif
 
