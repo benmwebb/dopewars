@@ -391,6 +391,7 @@ install-data-local:
 	@chgrp games ${SCORE} || chgrp wheel ${SCORE} || \
 	  echo "Unable to change group ownership of the high score file"
 	chmod 0660 ${SCORE}
+	src/dopewars -C ${SCORE}
 	${mkinstalldirs} ${DESKTOPDIR}
 	${INSTALL} -m 0644 ${DESKTOP} ${DESKTOPDIR}
 
