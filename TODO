@@ -1,8 +1,9 @@
-- Replace nasty GtkText widget with the official approved GTK+2 widget
-  (GtkTextView). Use the new tag support to colourise different kinds of
-  messages in the main window.
+- Fix "glitch"; if attacked while dealing drugs, and you escape to a different
+  location, the transaction can still be completed.
+- Startscreen
 - Implement server option to buy more than one bitch at a time in the Pub.
 - Fail nicely if NumLocation (etc.) is set to zero
+- Allow customisation of GtkTextView tag colours
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
   (should also enforce this for config file / server admin)
 - Admin of running NT Service servers
