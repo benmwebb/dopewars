@@ -86,8 +86,7 @@ typedef struct ABILITIES {
 
 struct NAMES {
    gchar *Bitch,*Bitches,*Gun,*Guns,*Drug,*Drugs,*Month,*Year,
-         *Officer,*ReserveOfficer,*LoanSharkName,*BankName,
-         *GunShopName,*RoughPubName;
+         *LoanSharkName,*BankName,*GunShopName,*RoughPubName;
 };
 
 struct METASERVER {
@@ -321,7 +320,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 88
+#define NUMGLOB 86
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;

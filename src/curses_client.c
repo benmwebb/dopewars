@@ -142,6 +142,7 @@ void display_intro() {
    clear_screen();
    attrset(TitleAttr);
 
+/* Curses client introduction screen */
    text=g_string_new(_("D O P E W A R S"));
    mvaddstr(1,(Width-text->len)/2,text->str);
 
@@ -194,6 +195,7 @@ static void SelectServerManually() {
    attrset(TextAttr);
    clear_bottom();
    mvaddstr(17,1,
+/* Prompts for hostname and port when selecting a server manually */
             _("Please enter the hostname and port of a dopewars server:-"));
    text=nice_input(_("Hostname: "),18,1,0,ServerName);
    AssignName(&ServerName,text); g_free(text);
@@ -239,6 +241,7 @@ static char *SelectServerFromMetaServer() {
       ThisServer=(ServerData *)(ListPt->data);
       attrset(TextAttr);
       clear_bottom();
+/* Printout of metaserver information in curses client */
       g_string_sprintf(text,_("Server : %s"),ThisServer->Name);
       mvaddstr(17,1,text->str);
       g_string_sprintf(text,_("Port   : %d"),ThisServer->Port);
@@ -260,6 +263,10 @@ static char *SelectServerFromMetaServer() {
       attrset(PromptAttr);
       mvaddstr(23,1,
                _("N>ext server; P>revious server; S>elect this server... "));
+
+/* The three keys that are valid responses to the previous question - if you
+   translate them, keep the keys in the same order (N>ext, P>revious, S>elect)
+   as they are here, otherwise they'll do the wrong things. */
       c=GetKey(_("NPS"),"NPS",FALSE,FALSE,FALSE);
       switch(c) {
          case 'S': AssignName(&ServerName,ThisServer->Name);
@@ -313,9 +320,12 @@ static char ConnectToServer(Player *Play) {
       if (pt || MetaError) {
          clear_line(17);
          if (MetaError) {
+/* Display of an error while contacting the metaserver */
             text=g_strdup_printf(_("Error: %s"),_(MetaError));
             mvaddstr(17,1,text); g_free(text);
          } else {
+/* Display of an error message while trying to contact a dopewars server
+   (the error message itself is displayed on the next screen line) */
             mvaddstr(16,1,_("Could not start multiplayer dopewars"));
             text=g_strdup_printf("   (%s)",_(pt));
             mvaddstr(17,1,text); g_free(text);
@@ -334,6 +344,9 @@ static char ConnectToServer(Player *Play) {
                   _("                   dopewars -s < /dev/null & )"));
          mvaddstr(22,1,_("         or P>lay single-player ? "));
          attrset(TextAttr);
+
+/* Translate these 4 keys in line with the above options, keeping the order
+   the same (C>onnect, L>ist, Q>uit, P>lay single-player) */
          c=GetKey(_("CLQP"),"CLQP",FALSE,FALSE,FALSE);
          switch(c) {
             case 'Q': return FALSE;
@@ -371,6 +384,8 @@ static int jet(Player *Play,char AllowReturn) {
       mvaddstr(17+i/3,(i%3)*20+12,text);
    }
    attrset(PromptAttr);
+
+/* Prompt when the player chooses to "jet" to a new location */
    mvaddstr(22,22,_("Where to, dude ? "));
    attrset(TextAttr);
    curs_set(1);
@@ -402,6 +417,7 @@ static void DropDrugs(Player *Play) {
    clear_bottom();
    text=g_string_new("");
    dpg_string_sprintf(text,
+/* List of drugs that you can drop (%tde = "drugs" by default) */
             _("You can\'t get any cash for the following carried %tde :"),
             Names.Drugs);
    mvaddstr(16,1,text->str);
@@ -455,6 +471,7 @@ static void DealDrugs(Player *Play,char Buy) {
    clear_line(22);
    attrset(PromptAttr);
    if (Buy) {
+/* Buy and sell prompts for dealing drugs or guns */
       mvaddstr(22,20,_("What do you wish to buy? "));
    } else {
       mvaddstr(22,20,_("What do you wish to sell? "));
@@ -474,6 +491,7 @@ static void DealDrugs(Player *Play,char Buy) {
       CanAfford=Play->Cash/Play->Drugs[DrugNum].Price;
 
       if (Buy) {
+/* Display of number of drugs you could buy and/or carry, when buying drugs */
          text=g_strdup_printf(_("You can afford %d, and can carry %d. "),
                               CanAfford,CanCarry);
          mvaddstr(23,2,text);
@@ -485,6 +503,7 @@ static void DealDrugs(Player *Play,char Buy) {
             g_free(text);
          }
       } else {
+/* Display of number of drugs you have, when selling drugs */
          text=g_strdup_printf(_("You have %d. "),Play->Drugs[DrugNum].Carried);
          mvaddstr(23,2,text);
          input=nice_input(_("How many do you sell? "),23,2+strlen(text),1,NULL);
@@ -510,6 +529,9 @@ static void GiveErrand(Player *Play) {
    attrset(TextAttr);
    clear_bottom();
    y=17;
+
+/* Prompt for sending your bitches out to spy etc. (%tde = "bitches"
+   by default) */
    dpg_string_sprintf(text,_("Choose an errand to give one of your %tde..."),
                       Names.Bitches);
    mvaddstr(y++,1,text->str);
@@ -531,7 +553,11 @@ static void GiveErrand(Player *Play) {
    mvaddstr(y++,2,_("or N>o errand ? "));
    curs_set(1);
    attrset(TextAttr);
+
+/* Translate these 5 keys to match the above options, keeping the original
+   order the same (S>py, T>ip off, G>et stuffed, C>ontact spy, N>o errand) */
    c=GetKey(_("STGCN"),"STGCN",TRUE,FALSE,FALSE);
+
    if (Play->Bitches.Carried>0 || c=='C') switch (c) {
       case 'S':
          To=ListPlayers(Play,TRUE,_("Whom do you want to spy on? "));
@@ -544,8 +570,13 @@ static void GiveErrand(Player *Play) {
          break;
       case 'G':
          attrset(PromptAttr);
+/* Prompt for confirmation of sacking a bitch */
          addstr(_(" Are you sure? "));
+
+/* The two keys that are valid for answering Yes/No - if you translate them,
+   keep them in the same order - i.e. "Yes" before "No" */
          c=GetKey(_("YN"),"YN",FALSE,TRUE,FALSE);
+
          if (c=='Y') SendClientMessage(Play,C_NONE,C_SACKBITCH,NULL,NULL);
          break;
       case 'C':
@@ -569,7 +600,10 @@ static int want_to_quit() {
 static void change_name(Player *Play,char nullname) {
 /* Prompts the user to change his or her name, and notifies the server */
    gchar *NewName;
+
+/* Prompt for player to change his/her name */
    NewName=nice_input(_("New name: "),23,0,0,NULL);
+
    if (NewName[0]) {
       if (nullname) {
          SendNullClientMessage(Play,C_NONE,C_NAME,NULL,NewName);
@@ -660,6 +694,7 @@ void HandleClientMessage(char *Message,Player *Play) {
          }
          break;
       case C_RENAME:
+/* Displayed when a player changes his/her name */
          text=g_strdup_printf(_("%s will now be known as %s."),
                               GetPlayerName(From),Data);
          SetPlayerName(From,Data);
@@ -799,16 +834,24 @@ void GunShop(Player *Play) {
       mvaddstr(17+i/2,(i%2)*40+1,text); g_free(text);
    }
    while (1) {
+/* Prompt for actions in the gun shop */
       text=_("Will you B>uy, S>ell, or L>eave? ");
       attrset(PromptAttr);
       clear_line(22);
       mvaddstr(22,40-strlen(text)/2,text);
       attrset(TextAttr);
+
+/* Translate these three keys in line with the above options, keeping the
+   order (B>uy, S>ell, L>eave) the same - you can change the wording of
+   the prompt, but if you change the order in this key list, the keys will
+   do the wrong things! */
       c=GetKey(_("BSL"),"BSL",FALSE,FALSE,FALSE);
       if (c=='L') break;
       if (c=='S' || c=='B') {
          clear_line(22);
          if (c=='S' && TotalGunsCarried(Play)==0) {
+/* Error - player tried to sell guns that he/she doesn't have
+   (%tde="guns" by default) */
             text=dpg_strdup_printf(_("You don't have any %tde to sell!"),
                                    Names.Guns);
             mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
@@ -817,6 +860,8 @@ void GunShop(Player *Play) {
             continue;
          } else if (c=='B' && TotalGunsCarried(Play)>=Play->Bitches.Carried+2) {
             text=dpg_strdup_printf(
+/* Error - player tried to buy more guns than his/her bitches can carry
+   (1st %tde="bitches", 2nd %tde="guns" by default) */
                         _("You'll need more %tde to carry any more %tde!"),
                         Names.Bitches,Names.Guns);
             mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
@@ -839,6 +884,8 @@ void GunShop(Player *Play) {
             if (c=='B') {
                if (Gun[c2].Space > Play->CoatSize) {
                   clear_line(22);
+/* Error - player tried to buy a gun that he/she doesn't have space for
+   (%tde="gun" by default) */
                   text=dpg_strdup_printf(_("You don't have enough space to "
                                          "carry that %tde!"),Names.Gun);
                   mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
@@ -847,6 +894,8 @@ void GunShop(Player *Play) {
                   continue;
                } else if (Gun[c2].Price > Play->Cash) {
                   clear_line(22);
+/* Error - player tried to buy a gun that he/she can't afford
+   (%tde="gun" by default) */
                   text=dpg_strdup_printf(_("You don't have enough cash to buy "
                                          "that %tde!"),Names.Gun);
                   mvaddstr(22,(Width-strlen(text))/2,text); g_free(text);
@@ -860,6 +909,7 @@ void GunShop(Player *Play) {
             } else if (c=='S') {
                if (Play->Guns[c2].Carried == 0) {
                   clear_line(22);
+/* Error - player tried to sell some guns that he/she doesn't have */
                   mvaddstr(22,10,_("You don't have any to sell!"));
                   nice_wait(); clear_line(23); continue;
                }
@@ -884,12 +934,15 @@ void LoanShark(Player *Play) {
    while (1) {
       clear_bottom();
       attrset(PromptAttr);
+
+/* Prompt for paying back loans from the loan shark */
       text=nice_input(_("How much money do you pay back? "),19,1,1,NULL);
       attrset(TextAttr);
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
       if (money>Play->Debt) money=Play->Debt;
       if (money>Play->Cash) {
+/* Error - player doesn't have enough money to pay back the loan */
          mvaddstr(20,1,_("You don't have that much money!"));
          nice_wait();
       } else {
@@ -910,19 +963,30 @@ void Bank(Player *Play) {
    while (1) {
       clear_bottom();
       attrset(PromptAttr);
+/* Prompt for dealing with the bank in the curses client */
       mvaddstr(18,1,_("Do you want to D>eposit money, W>ithdraw money, "
                       "or L>eave ? "));
       attrset(TextAttr);
+
+/* Make sure you keep the order the same if you translate these keys!
+   (D>eposit, W>ithdraw, L>eave) */
       c=GetKey(_("DWL"),"DWL",FALSE,FALSE,FALSE);
+
       if (c=='L') return;
+
+/* Prompt for putting money in or taking money out of the bank */
       text=nice_input(_("How much money? "),19,1,1,NULL);
+
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
       if (c=='W') money=-money;
       if (money>Play->Cash) {
+/* Error - player has tried to put more money into the bank than he/she has */
          mvaddstr(20,1,_("You don't have that much money!"));
          nice_wait();
       } else if (-money > Play->Bank) {
+/* Error - player has tried to withdraw more money from the bank than there
+   is in the account */
          mvaddstr(20,1,_("There isn't that much money in the bank..."));
          nice_wait();
       } else if (money==0) {
@@ -950,6 +1014,11 @@ int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
 /* the commands, rather than just their first letters, are        */
 /* displayed.                                                     */
    int i,j,k,c;
+
+/* Expansions of the single-letter keypresses for the benefit of the user.
+   i.e. "Yes" is printed for the key "Y" etc. You should indicate to the
+   user which letter in the word corresponds to the keypress, by
+   capitalising it or similar. */
    gchar *Words[] = { N_("Yes"), N_("No"), N_("Run"),
                       N_("Fight"), N_("Attack"), N_("Evade") };
    gint numWords = sizeof(Words) / sizeof(Words[0]);
@@ -1168,30 +1237,49 @@ void print_status(Player *Play,char DispDrug) {
       mvaddch(9,1,ACS_LTEE);
       for (i=0;i<Width-4;i++) addch(ACS_HLINE);
       addch(ACS_RTEE);
+
+/* Title of the "Messages" window in the curses client */
       mvaddstr(9,15,_("Messages"));
+
       mvaddch(9,Width/2,ACS_BTEE);
       mvaddch(15,1,ACS_LLCORNER);
       for (i=0;i<Width-4;i++) addch(ACS_HLINE);
       addch(ACS_LRCORNER);
    }
 
+/* Title of the "Stats" window in the curses client */
    mvaddstr(1,Width/4-2,_("Stats"));
 
    attrset(StatsAttr);
+
+/* Display of the player's cash in the stats window (careful to keep the
+   formatting if you change the length of the "Cash" word) */
    dpg_string_sprintf(text,_("Cash %17P"),Play->Cash);
    mvaddstr(3,9,text->str);
-   dpg_string_sprintf(text,"%-19Tde%3d",Names.Guns,TotalGunsCarried(Play));
+
+/* Display of the total number of guns carried (%Tde="Guns" by default) */
+   dpg_string_sprintf(text,_("%-19Tde%3d"),Names.Guns,TotalGunsCarried(Play));
    mvaddstr(Network ? 4 : 5,9,text->str);
+
+/* Display of the player's health */
    g_string_sprintf(text,_("Health             %3d"),Play->Health);
    mvaddstr(Network ? 5 : 7,9,text->str);
+
+/* Display of the player's bank balance */
    dpg_string_sprintf(text,_("Bank %17P"),Play->Bank);
    mvaddstr(Network ? 6 : 9,9,text->str);
+
    if (Play->Debt>0) attrset(DebtAttr);
+/* Display of the player's debt */
    dpg_string_sprintf(text,_("Debt %17P"),Play->Debt);
    mvaddstr(Network ? 7 : 11,9,text->str);
    attrset(TitleAttr);
+
+/* Display of the player's trenchcoat size (antique mode only) */
    if (WantAntique) g_string_sprintf(text,_("Space %6d"),Play->CoatSize);
    else {
+/* Display of the player's number of bitches, and available space
+   (%Tde="Bitches" by default) */
       dpg_string_sprintf(text,_("%Tde %3d  Space %6d"),Names.Bitches,
                          Play->Bitches.Carried,Play->CoatSize);
    }
@@ -1201,28 +1289,35 @@ void print_status(Player *Play,char DispDrug) {
 
    c=0;
    if (DispDrug) {
+/* Title of the "trenchcoat" window (antique mode only) */
       if (WantAntique) mvaddstr(1,Width*3/4-5,_("Trenchcoat"));
       else {
+/* Title of the "drugs" window (the only important bit in this string is the
+   "%Tde" which is "Drugs" by default) */
          tstring_fmt(&tfmt,&tstr,_("**Stats: Drugs** %Tde"),Names.Drugs);
          mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
          tstring_free(tfmt,tstr);
       }
       for (i=0;i<NumDrug;i++) {
          if (Play->Drugs[i].Carried>0) {
-            g_string_sprintf(text,"%-7s  %3d",Drug[i].Name,
-                             Play->Drugs[i].Carried);
+/* Display of carried drugs (%tde="Opium", etc. by default) */
+            dpg_string_sprintf(text,_("%-7tde  %3d"),Drug[i].Name,
+                               Play->Drugs[i].Carried);
             mvaddstr(3+c/2,Width/2+3+(c%2)*17,text->str);
             c++;
          }
       }
    } else {
+/* Title of the "guns" window (the only important bit in this string is the
+   "%Tde" which is "Guns" by default) */
       tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
       mvaddstr(1,Width*3/4-strlen(tstr[0])/2,tstr[0]);
       tstring_free(tfmt,tstr);
       for (i=0;i<NumGun;i++) {
          if (Play->Guns[i].Carried>0) {
-            g_string_sprintf(text,"%-22s %3d",Gun[i].Name,
-                             Play->Guns[i].Carried);
+/* Display of carried guns (%tde="Baretta", etc. by default) */
+            dpg_string_sprintf(text,_("%-22tde %3d"),Gun[i].Name,
+                               Play->Guns[i].Carried);
             mvaddstr(3+c,Width/2+3,text->str);
             c++;
          }
@@ -1411,7 +1506,7 @@ static void Curses_DoGame(Player *Play) {
    sact.sa_flags=0;
    sigemptyset(&sact.sa_mask);
    if (sigaction(SIGWINCH,&sact,NULL)==-1) {
-      g_warning("Cannot install SIGWINCH handler!\n");
+      g_warning(_("Cannot install SIGWINCH interrupt handler!"));
    }
    OldName=g_strdup(GetPlayerName(Play));
    attrset(TextAttr); clear_screen();
@@ -1459,17 +1554,20 @@ static void Curses_DoGame(Player *Play) {
             NumDrugsHere=0;
             for (i=0;i<NumDrug;i++) if (Play->Drugs[i].Price>0) NumDrugsHere++;
             clear_bottom();
+/* Display of drug prices (%tde="drugs" by default) */
             dpg_string_sprintf(text,_("Hey dude, the prices of %tde here are:"),
                                Names.Drugs);
             mvaddstr(16,1,text->str);
             i=-1;
             for (c=0;c<NumDrugsHere;c++) {
                if ((i=GetNextDrugIndex(i,Play))==-1) break;
-               dpg_string_sprintf(text,"%c. %-10tde %8P",'A'+c,Drug[i].Name,
+/* List of individual drug names for selection (%tde="Opium" etc. by default) */
+               dpg_string_sprintf(text,_("%c. %-10tde %8P"),'A'+c,Drug[i].Name,
                                   Play->Drugs[i].Price);
                mvaddstr(17+c/3,(c%3)*25+4,text->str);
             }
             attrset(PromptAttr);
+/* Prompts for "normal" actions in curses client */
             g_string_assign(text,_("Will you B>uy"));
             if (IsCarrying) g_string_append(text,_(", S>ell"));
             if (HaveWorthless && !WantAntique) g_string_append(text,_(", D>rop"));
@@ -1493,6 +1591,7 @@ static void Curses_DoGame(Player *Play) {
          case DM_FIGHT:
             DisplayFightMessage(Play,"");
             attrset(PromptAttr);
+/* Prompts for actions during fights in curses client */
             g_string_assign(text,_("Do you "));
             if (CanFire) {
                if (TotalGunsCarried(Play)>0) {
@@ -1503,6 +1602,7 @@ static void Curses_DoGame(Player *Play) {
             }
             if (FightPoint!=F_LASTLEAVE) g_string_append(text,_("R>un, "));
             if (!RunHere || FightPoint==F_LASTLEAVE)
+/* (%tde = "drugs" by default here) */
                dpg_string_sprintfa(text,_("D>eal %tde, "),Names.Drugs);
             g_string_append(text,_("or Q>uit? "));
             mvaddstr(22,40-strlen(text->str)/2,text->str);
@@ -1577,9 +1677,16 @@ static void Curses_DoGame(Player *Play) {
       }
 #endif /* NETWORKING */
          if (DisplayMode==DM_STREET) {
+/* N.B. You must keep the order of these keys the same as the original
+   when you translate (B>uy, S>ell, D>rop, T>alk, P>age, L>ist, G>ive errand,
+   F>ight, J>et, Q>uit) */
             c=GetKey(_("BSDTPLGFJQ"),"BSDTPLGFJQ",TRUE,FALSE,FALSE);
+
          } else if (DisplayMode==DM_FIGHT) {
+/* N.B. You must keep the order of these keys the same as the original
+   when you translate (D>eal drugs, R>un, F>ight, S>tand, Q>uit) */
             c=GetKey(_("DRFSQ"),"DRFSQ",TRUE,FALSE,FALSE);
+
          } else c=0;
 #if ! (NETWORKING || HAVE_SELECT)
          CheckForResize(Play);
@@ -1608,6 +1715,7 @@ static void Curses_DoGame(Player *Play) {
             } else if (c=='L' && Network) {
                attrset(PromptAttr);
                mvaddstr(23,20,_("List what? P>layers or S>cores? "));
+/* P>layers, S>cores */
                i=GetKey(_("PS"),"PS",TRUE,FALSE,FALSE);
                if (i=='P') {
                   ListPlayers(Play,FALSE,NULL);
@@ -1620,7 +1728,8 @@ static void Curses_DoGame(Player *Play) {
                    _("Whom do you want to page (talk privately to) ? "));
                if (tmp) {
                   attrset(TextAttr); clear_line(22);
-                  TalkMsg=nice_input("Talk: ",22,0,0,NULL);
+/* Prompt for sending player-player messages */
+                  TalkMsg=nice_input(_("Talk: "),22,0,0,NULL);
                   if (TalkMsg[0]) {
                      SendClientMessage(Play,C_NONE,C_MSGTO,tmp,TalkMsg);
                      buf=g_strdup_printf("%s->%s: %s",GetPlayerName(Play),

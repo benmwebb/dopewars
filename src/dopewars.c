@@ -104,30 +104,61 @@ struct LOCATION StaticLocation,*Location=NULL;
 struct DRUG StaticDrug,*Drug=NULL;
 struct GUN StaticGun,*Gun=NULL;
 struct COP StaticCop,*Cop=NULL;
-struct NAMES Names = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+struct NAMES Names = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
                        NULL,NULL,NULL,NULL };
+
+/* N.B. The slightly over-enthusiastic comments here are for the benefit
+   of translators ;) */
 struct NAMES DefaultNames = {
-   N_("bitch"),N_("bitches"),N_("gun"),N_("guns"),N_("drug"),N_("drugs"),
-   N_("12-"),N_("-1984"),
-   N_("Hardass"),N_("Bob"),N_("the Loan Shark"),N_("the Bank"),
+/* Name of a single bitch - if you need to use different words for "bitch"
+   depending on where in the sentence it occurs (e.g. subject or object)
+   then read doc/i18n.html about the %tde (etc.) notation. N.B. This
+   notation can be used for most of the translatable strings in dopewars. */
+   N_("bitch"),
+/* Word used for two or more bitches */
+   N_("bitches"),
+/* Word used for a single gun */
+   N_("gun"),
+/* Word used for two or more guns */
+   N_("guns"),
+/* Word used for a single drug */
+   N_("drug"),
+/* Word used for two or more drugs */
+   N_("drugs"),
+/* Text that is printed before the turn number. In US mm-dd-yyyy date
+   notation, with MaxTurns at 31 or less, this works out as the month -
+   i.e. December in this case */
+   N_("12-"),
+/* Text that is printed _after_ the turn number (the year, in US notation) */
+   N_("-1984"),
+/* Names of the loan shark, the bank, the gun shop, and the pub, respectively */
+   N_("the Loan Shark"),N_("the Bank"),
    N_("Dan\'s House of Guns"),N_("the pub")
 };
+
 struct PRICES Prices = {
    20000,10000
 };
+
 struct BITCH Bitch = {
    50000,150000
 };
+
 struct METASERVER MetaServer = { 0,0,0,NULL,NULL,NULL,NULL,NULL };
+
 struct METASERVER DefaultMetaServer = {
    1,80,7802,"bellatrix.pcl.ox.ac.uk","/~ben/cgi-bin/server.pl","","",
    "dopewars server"
 };
+
 int NumTurns=31;
 
 int PlayerArmour=100,BitchArmour=50;
 
 struct GLOBALS Globals[NUMGLOB] = {
+/* The following strings are the helptexts for all the options that can be
+   set in a dopewars configuration file, or in the server. See
+   doc/configfile.html for more detailed explanations. */
    { &Port,NULL,NULL,NULL,"Port",N_("Network port to connect to"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&HiScoreFile,NULL,"HiScoreFile",
@@ -350,10 +381,6 @@ struct GLOBALS Globals[NUMGLOB] = {
    { NULL,NULL,&Names.Year,NULL,"Names.Year",
      N_("Text appended to the turn number (i.e. the year)"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL, &Names.Officer,NULL,"Names.Officer",
-     N_("Name of the police officer"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL, &Names.ReserveOfficer,NULL,"Names.ReserveOfficer",
-     N_("Name of the reserve police officer"),NULL,NULL,0,"",NULL,NULL },
    { NULL,&Prices.Spy,NULL,NULL,"Prices.Spy",
      N_("Cost for a bitch to spy on the enemy"),
      NULL,NULL,0,"",NULL,NULL },
@@ -387,10 +414,16 @@ struct GLOBALS Globals[NUMGLOB] = {
 };
 
 char *Discover[NUMDISCOVER] = {
-   N_("escaped"), N_("defected"), N_("was shot") };
+/* Things that can "happen" to your spies - look for strings containing
+   "The spy %s!" to see how these strings are used. */
+   N_("escaped"), N_("defected"), N_("was shot")
+};
 
 char **Playing=NULL;
 char *DefaultPlaying[NUMPLAYING] = {
+/* Default list of songs that you can hear playing (N.B. this can be
+   overridden in the configuration file with the "Playing" variable) - 
+   look for "You hear someone playing %s" to see how these are used. */
    N_("`Are you Experienced` by Jimi Hendrix"),
    N_("`Cheeba Cheeba` by Tone Loc"),
    N_("`Comin` in to Los Angeles` by Arlo Guthrie"),
@@ -413,6 +446,10 @@ char *DefaultPlaying[NUMPLAYING] = {
 
 char **StoppedTo=NULL;
 char *DefaultStoppedTo[NUMSTOPPEDTO] = {
+/* Default list of things which you can "stop to do" (random events that
+   cost you a little money). These can be overridden with the "StoppedTo"
+   variable in the configuration file. See the later string
+   "You stopped to %s." to see how these strings are used. */
    N_("have a beer"),
    N_("smoke a joint"),
    N_("smoke a cigar"),
@@ -421,12 +458,19 @@ char *DefaultStoppedTo[NUMSTOPPEDTO] = {
 };
 
 struct COP DefaultCop[NUMCOP] = {
-   { N_("Officer Hardass"),N_("deputy"),N_("deputies"),4,3,30,30,2,8,0,1,1 },
+/* Name of the first police officer to attack you */
+   { N_("Officer Hardass"),
+/* Name of a single deputy of the first police officer */
+     N_("deputy"),
+/* Word used for more than one deputy of the first police officer */
+     N_("deputies"),4,3,30,30,2,8,0,1,1 },
+/* Ditto, for the other police officers */
    { N_("Officer Bob"),N_("deputy"),N_("deputies"),15,4,30,20,4,10,0,2,1 },
    { N_("Agent Smith"),N_("cop"),N_("cops"),50,6,20,20,6,18,1,3,2 }
 };
 
 struct GUN DefaultGun[NUMGUN] = {
+/* The names of the default guns */
    { N_("Baretta"),3000,4,5 },
    { N_(".38 Special"),3500,4,9 },
    { N_("Ruger"),2900,4,4 },
@@ -434,6 +478,7 @@ struct GUN DefaultGun[NUMGUN] = {
 };
 
 struct LOCATION DefaultLocation[NUMLOCATION] = {
+/* The names of the default locations */
    { N_("Bronx"),10,NUMDRUG/2+1,NUMDRUG },
    { N_("Ghetto"),5,NUMDRUG/2+2,NUMDRUG },
    { N_("Central Park"),15,NUMDRUG/2,NUMDRUG },
@@ -445,6 +490,8 @@ struct LOCATION DefaultLocation[NUMLOCATION] = {
 };
 
 struct DRUG DefaultDrug[NUMDRUG] = {
+/* The names of the default drugs, and the messages displayed when they are
+   specially cheap or expensive */
    { N_("Acid"),1000,4400,1,0,
      N_("The market is flooded with cheap home-made acid!") },
    { N_("Cocaine"),15000,29000,0,1,"" },
@@ -464,12 +511,16 @@ Weed prices have bottomed out!") }
 
 struct DRUGS Drugs = { NULL,NULL,0,0 };
 struct DRUGS DefaultDrugs = {
-   N_("Cops made a big %s bust! Prices are outrageous!"),
-   N_("Addicts are buying %s at ridiculous prices!"),
+/* Messages displayed for drug busts, etc. */
+   N_("Cops made a big %tde bust! Prices are outrageous!"),
+   N_("Addicts are buying %tde at ridiculous prices!"),
    4,4 };
 
 char **SubwaySaying=NULL;
 char *DefaultSubwaySaying[NUMSUBWAY] = {
+/* Default list of things which the "lady on the subway" can tell you (N.B.
+   can be overridden with the "SubwaySaying" config. file variable). Look
+   for "the lady next to you" to see how these strings are used. */
    N_("Wouldn\'t it be funny if everyone suddenly quacked at once?"),
    N_("The Pope was once Jewish, you know"),
    N_("I\'ll bet you have some really interesting dreams"),
@@ -1121,8 +1172,6 @@ void CopyNames(struct NAMES *dest,struct NAMES *src) {
    AssignName(&dest->Drugs,_(src->Drugs));
    AssignName(&dest->Month,_(src->Month));
    AssignName(&dest->Year,_(src->Year));
-   AssignName(&dest->Officer,_(src->Officer));
-   AssignName(&dest->ReserveOfficer,_(src->ReserveOfficer));
    AssignName(&dest->LoanSharkName,_(src->LoanSharkName));
    AssignName(&dest->BankName,_(src->BankName));
    AssignName(&dest->GunShopName,_(src->GunShopName));
@@ -1315,6 +1364,8 @@ gboolean CheckMaxIndex(GScanner *scanner,int GlobalIndex,int StructIndex,
        StructIndex <= *(Globals[GlobalIndex].MaxIndex))) {
       return TRUE;
    }
+/* Error message displayed when you try to set, for example, Drug[10].Name
+   when NumDrug<10 (%s="Drug" and %d=10 in this example) */
    g_scanner_error(scanner,_("Index into %s array should be between 1 and %d"),
                    (Globals[GlobalIndex].NameStruct &&
                     Globals[GlobalIndex].NameStruct[0]) ?
@@ -1334,19 +1385,27 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                                  StructIndex,Globals[GlobalIndex].Name);
    } else GlobalName=Globals[GlobalIndex].Name;
    if (Globals[GlobalIndex].IntVal) {
+/* Display of a numeric config. file variable - e.g. "NumDrug is 6" */
       g_print(_("%s is %d\n"),GlobalName,
               *((int *)GetGlobalPointer(GlobalIndex,StructIndex)));
    } else if (Globals[GlobalIndex].PriceVal) {
+/* Display of a price config. file variable - e.g. "Bitch.MinPrice is $200" */
       dpg_print(_("%s is %P\n"),GlobalName,
                 *((price_t *)GetGlobalPointer(GlobalIndex,StructIndex)));
    } else if (Globals[GlobalIndex].StringVal) {
+/* Display of a string config. file variable - e.g.
+   "LoanSharkName is \"the loan shark\"" */
       g_print(_("%s is \"%s\"\n"),GlobalName,
               *((gchar **)GetGlobalPointer(GlobalIndex,StructIndex)));
    } else if (Globals[GlobalIndex].StringList) {
       if (IndexGiven) {
+/* Display of an indexed string list config. file variable - e.g.
+   "StoppedTo[1] is have a beer" */
          g_print(_("%s[%d] is %s\n"),GlobalName,StructIndex,
                  (*(Globals[GlobalIndex].StringList))[StructIndex-1]);
       } else {
+/* Display of the first part of an entire string list config. file variable -
+   e.g. "StoppedTo is { " (followed by "have a beer", "smoke a joint" etc.) */
          g_print(_("%s is { "),GlobalName);
          if (Globals[GlobalIndex].MaxIndex) {
             for (i=0;i<*(Globals[GlobalIndex].MaxIndex);i++) {
@@ -1378,6 +1437,8 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
          IntVal=(int)scanner->value.v_int;
          if (Globals[GlobalIndex].ResizeFunc) {
             (*(Globals[GlobalIndex].ResizeFunc))(IntVal);
+/* Displayed, for example, when you set NumDrug=10 to allow Drug[10].Name
+   etc. to be set */
             g_print(_("Resized structure list to %d elements\n"),IntVal);
             for (list=FirstClient;list;list=g_slist_next(list)) {
                tmp=(Player *)list->data;
@@ -1539,6 +1600,7 @@ void HandleHelpTexts() {
    if (!WantHelp) return;
 
    g_print(
+/* Usage information, printed when the user runs "dopewars -h" */
 _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -b       \"black and white\" - i.e. do not use pretty colours\n\

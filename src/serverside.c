@@ -1655,13 +1655,13 @@ int RandomOffer(Player *To) {
       }
       if (ind==-1) {
          ind=brandom(0,NumDrug);
-         g_string_sprintf(text,
-            _("You meet a friend! He gives you %d %s."),amount,Drug[ind].Name);
+         dpg_string_sprintf(text,_("You meet a friend! He gives you %d %tde."),
+                            amount,Drug[ind].Name);
          To->Drugs[ind].Carried+=amount;
          To->CoatSize-=amount;
       } else {
-         g_string_sprintf(text,
-             _("You meet a friend! You give him %d %s."),amount,Drug[ind].Name);
+         dpg_string_sprintf(text,_("You meet a friend! You give him %d %tde."),
+                            amount,Drug[ind].Name);
          To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
                     (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
          To->Drugs[ind].Carried-=amount;
@@ -1675,9 +1675,9 @@ int RandomOffer(Player *To) {
       amount=brandom(3,7);
       ind=IsCarryingRandom(To,amount);
       if (ind!=-1) {
-         g_string_sprintf(text,_("Police dogs chase you for %d blocks! "
-                          "You dropped some %s! That's a drag, man!"),
-                          brandom(3,7),Names.Drugs);
+         dpg_string_sprintf(text,_("Police dogs chase you for %d blocks! "
+                            "You dropped some %tde! That's a drag, man!"),
+                            brandom(3,7),Names.Drugs);
          To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
                     (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
          To->Drugs[ind].Carried-=amount;
@@ -1690,9 +1690,9 @@ int RandomOffer(Player *To) {
          if (amount>To->CoatSize) {
             g_string_free(text,TRUE); return 0;
          }
-         g_string_sprintf(text,
-                          _("You find %d %s on a dead dude in the subway!"),
-                          amount,Drug[ind].Name);
+         dpg_string_sprintf(text,
+                            _("You find %d %tde on a dead dude in the subway!"),
+                            amount,Drug[ind].Name);
          To->Drugs[ind].Carried+=amount;
          To->CoatSize-=amount;
          SendPlayerData(To);
@@ -1703,8 +1703,9 @@ int RandomOffer(Player *To) {
             WEED : HASHISH;
       amount=brandom(2,6);
       if (amount>To->Drugs[ind].Carried) amount=To->Drugs[ind].Carried;
-      g_string_sprintf(text,_("Your mama made brownies with some of your %s! "
-                       "They were great!"),Drug[ind].Name);
+      dpg_string_sprintf(text,
+                         _("Your mama made brownies with some of your %tde! "
+                         "They were great!"),Drug[ind].Name);
       To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
                  (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
       To->Drugs[ind].Carried-=amount;
@@ -1770,7 +1771,7 @@ void SendDrugsHere(Player *To,char DisplayBusts) {
 /* is TRUE, also regenerates drug prices and sends details of       */
 /* special events such as drug busts                                */
    int i;
-   gchar *Deal,*prstr;
+   gchar *Deal;
    GString *text;
    gboolean First;
 
@@ -1782,9 +1783,8 @@ void SendDrugsHere(Player *To,char DisplayBusts) {
    if (DisplayBusts) for (i=0;i<NumDrug;i++) if (Deal[i]) {
       if (!First) g_string_append_c(text,'^');
       if (Drug[i].Expensive) {
-         g_string_sprintfa(text,Deal[i]==1 ? Drugs.ExpensiveStr1 :
-                                             Drugs.ExpensiveStr2,
-                                Drug[i].Name);
+         dpg_string_sprintfa(text,Deal[i]==1 ? Drugs.ExpensiveStr1 :
+                                  Drugs.ExpensiveStr2,Drug[i].Name);
       } else if (Drug[i].Cheap) {
          g_string_append(text,Drug[i].CheapStr);
       } 
@@ -1793,8 +1793,7 @@ void SendDrugsHere(Player *To,char DisplayBusts) {
    if (!First) SendPrintMessage(NULL,C_NONE,To,text->str);
    g_string_truncate(text,0);
    for (i=0;i<NumDrug;i++) {
-      g_string_sprintfa(text,"%s^",(prstr=pricetostr(To->Drugs[i].Price)));
-      g_free(prstr);
+      dpg_string_sprintfa(text,"%P^",To->Drugs[i].Price);
    }
    SendServerMessage(NULL,C_NONE,C_DRUGHERE,To,text->str);
    g_string_free(text,TRUE);
@@ -1863,9 +1862,9 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             g_message(_("%s: offer was on behalf of %s"),GetPlayerName(From),
                    GetPlayerName(From->OnBehalfOf));
             if (From->Bitches.Price) {
-               text=g_strdup_printf(_("%s has accepted your %s!"
-                                    "^Use the G key to contact your spy."),
-                                    GetPlayerName(From),Names.Bitch);
+               text=dpg_strdup_printf(_("%s has accepted your %tde!"
+                                      "^Use the G key to contact your spy."),
+                                      GetPlayerName(From),Names.Bitch);
                From->OnBehalfOf->Flags |= SPYINGON;
                SendPlayerData(From->OnBehalfOf);
                SendPrintMessage(NULL,C_NONE,From->OnBehalfOf,text);
