@@ -5119,6 +5119,16 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   return OldGtkMessageBox(parent, Text, Title, Options);
 }
 
+GtkWidget *gtk_button_new_from_stock(const gchar *label)
+{
+  GtkWidget *button;
+
+/*button = gtk_button_new_with_label("");
+  SetAccelerator(button, label, button, "clicked", accel_group, TRUE);*/
+  button = gtk_button_new_with_label(label);
+  return button;
+}
+
 #endif
 
 static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
