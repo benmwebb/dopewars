@@ -334,6 +334,9 @@ int HandleAIMessage(char *Message, Player *AIPlay)
     break;
   case C_PRINTMESSAGE:
     PrintAIMessage(Data);
+    if (AICode == C_MISSFIGHT || strncmp(Data, "Too late", 8) == 0) {
+      AIJet(AIPlay);
+    }
     break;
   case C_MSG:
     g_print("%s: %s\n", GetPlayerName(From), Data);

@@ -3367,7 +3367,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
       } else {
         text = g_strdup_printf(_("Too late - %s has just left!"),
                                GetPlayerName(Defender));
-        SendPrintMessage(NULL, C_NONE, From, text);
+        SendPrintMessage(NULL, C_MISSFIGHT, From, text);
         g_free(text);
         From->EventNum++;
         SendEvent(From);
