@@ -56,8 +56,8 @@ version_check ()
   pkg_version=`$PACKAGE --version|head -n 1|sed 's/^[a-zA-z\.\ ()]*//;s/^.* //'`
   debug "pkg_version $pkg_version"
   pkg_major=`echo $pkg_version | cut -d. -f1`
-  pkg_minor=`echo $pkg_version | cut -d. -f2 | cut -d- -f1`
-  pkg_micro=`echo $pkg_version | cut -d. -f3`
+  pkg_minor=`echo $pkg_version | sed s/[-,a-z,A-Z].*// | cut -d. -f2`
+  pkg_micro=`echo $pkg_version | sed s/[-,a-z,A-Z].*// | cut -d. -f3`
   test -z "$pkg_minor" && pkg_minor=0
   test -z "$pkg_micro" && pkg_micro=0
 
