@@ -157,7 +157,7 @@ struct _GtkSignalType {
 };
 
 typedef gboolean (*GtkWndProc) (GtkWidget *widget, UINT msg,
-                                WPARAM wParam, LPARAM lParam);
+                                WPARAM wParam, LPARAM lParam, gboolean *dodef);
 
 struct _GtkClass {
   gchar *Name;

@@ -89,7 +89,7 @@ static void gtk_window_destroy(GtkWidget *widget);
 static void gtk_window_set_menu(GtkWindow *window, GtkMenuBar *menu_bar);
 static GtkWidget *gtk_window_get_menu_ID(GtkWindow *window, gint ID);
 static gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
-                                   LPARAM lParam);
+                                   LPARAM lParam, gboolean *dodef);
 static void gtk_table_destroy(GtkWidget *widget);
 static void gtk_table_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
@@ -885,7 +885,7 @@ LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
 }
 
 gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
-                            LPARAM lParam)
+                            LPARAM lParam, gboolean *dodef)
 {
   RECT rect;
   GtkAllocation alloc;
@@ -925,6 +925,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
   case WM_CLOSE:
     gtk_signal_emit(GTK_OBJECT(widget), "delete_event",
                     &event, &signal_return);
+    *dodef = FALSE;
     return TRUE;
   case WM_COMMAND:
     if (HIWORD(wParam) == 0 || HIWORD(wParam) == 1) {
@@ -936,10 +937,12 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     }
     break;
   }
-  return TRUE;
+
+  return FALSE;
 }
 
-static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                             gboolean *dodef)
 {
   GtkWidget *widget;
   GtkClass *klass;
@@ -949,6 +952,9 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   LPDRAWITEMSTRUCT lpdis;
   HD_NOTIFY FAR *phdr;
   NMHDR *nmhdr;
+  gboolean retval = FALSE;
+
+  *dodef = TRUE;
 
   if (customWndProc
       && CallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
@@ -956,8 +962,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
   widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
   if (widget && (klass = GTK_OBJECT(widget)->klass)
-      && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
-    return FALSE;
+      && klass->wndproc) {
+    retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
   }
 
   switch (msg) {
@@ -965,8 +971,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
         && (widget = GTK_WIDGET(GetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
         && (klass = GTK_OBJECT(widget)->klass)
-        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
-      return FALSE;
+        && klass->wndproc) {
+      retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
     break;
   case WM_MEASUREITEM:
@@ -984,8 +990,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     widget = GTK_WIDGET(GetWindowLong((HWND)lParam, GWL_USERDATA));
     klass = NULL;
     if (widget && (klass = GTK_OBJECT(widget)->klass)
-        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
-      return FALSE;
+        && klass->wndproc) {
+      retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
 
     if (lParam && klass == &GtkOptionMenuClass &&
@@ -1004,8 +1010,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     widget = GTK_WIDGET(GetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
     if (widget && (klass = GTK_OBJECT(widget)->klass)
-        && klass->wndproc && !klass->wndproc(widget, msg, wParam, lParam)) {
-      return FALSE;
+        && klass->wndproc) {
+      retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
 
     if (widget && nmhdr->code == TCN_SELCHANGE) {
@@ -1027,24 +1033,30 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     DispatchTimeoutEvent((UINT)wParam);
     return FALSE;
   }
-  return FALSE;
+
+  return retval;
 }
 
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-  if (!HandleWinMessage(hwnd, msg, wParam, lParam)) {
+  gboolean retval, dodef = TRUE;
+
+  retval = HandleWinMessage(hwnd, msg, wParam, lParam, &dodef);
+  if (dodef) {
     return DefWindowProc(hwnd, msg, wParam, lParam);
   } else {
-    return TRUE;
+    return retval;
   }
 }
 
 BOOL APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+  gboolean dodef;
+
   if (msg == WM_INITDIALOG) {
     return TRUE;
   } else {
-    return HandleWinMessage(hwnd, msg, wParam, lParam);
+    return HandleWinMessage(hwnd, msg, wParam, lParam, &dodef);
   }
 }
 

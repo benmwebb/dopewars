@@ -1,4 +1,7 @@
 cvs
+    - Incorrect handling of WM_CLOSE under Win32 fixed
+
+1.5.4   03-03-2002
     - Basic configuration file editor added to GTK+ client
     - Annoying flashing on closure of modal windows in Win32 fixed
     - Win32 client now uses "proper" dialog boxes (i.e. without a window menu)

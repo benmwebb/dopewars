@@ -39,7 +39,7 @@ static void gtk_clist_size_request(GtkWidget *widget,
 static void gtk_clist_set_size(GtkWidget *widget,
                                GtkAllocation *allocation);
 static gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
-                                  LPARAM lParam);
+                                  LPARAM lParam, gboolean *dodef);
 static void gtk_clist_realize(GtkWidget *widget);
 static void gtk_clist_show(GtkWidget *widget);
 static void gtk_clist_hide(GtkWidget *widget);
@@ -70,7 +70,7 @@ static GtkClass GtkCListClass = {
 };
 
 gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
-                           LPARAM lParam)
+                           LPARAM lParam, gboolean *dodef)
 {
   LPDRAWITEMSTRUCT lpdis;
   HD_NOTIFY FAR *phdr;
@@ -103,7 +103,8 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     }
     break;
   }
-  return TRUE;
+
+  return FALSE;
 }
 
 void gtk_clist_set_size(GtkWidget *widget, GtkAllocation *allocation)
