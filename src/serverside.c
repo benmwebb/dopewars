@@ -1304,9 +1304,13 @@ void HandleDamage(Player *Defend,Player *Attack,int Damage,
    } else {
       Defend->Health-=Damage;
    }
+   if (IsCop(Attack)) {   /* Don't let cops loot players */
+      ClearInventory(Guns,Drugs);
+   } else {
+      TruncateInventoryFor(Guns,Drugs,Attack);
+   }
    SendPlayerData(Defend);
    if (Bounty<0) Bounty=0;
-   TruncateInventoryFor(Guns,Drugs,Attack);
    if (!IsInventoryClear(Guns,Drugs)) {
       AddInventory(Attack->Guns,Guns,NumGun);
       AddInventory(Attack->Drugs,Drugs,NumDrug);
