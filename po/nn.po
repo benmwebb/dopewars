@@ -1206,7 +1206,7 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
+"Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
 "  -h, --help              vis denne hjelpeteksten\n"
 "  -v, --version           vis versjonsinformasjon og avslutt\n"
@@ -1284,7 +1284,7 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
+"Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
 "  -h,      vis denne hjelpeteksten\n"
 "  -v,      vis versjonsinformasjon og avslutt\n"
@@ -1365,8 +1365,8 @@ msgstr "Du har ein månad i speletid på å skapa formuen din."
 #: src/curses_client/curses_client.c:297
 #, c-format
 msgid ""
-"Version %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Versjon %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+"Version %-8s Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net"
+msgstr "Versjon %-8s Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net"
 
 #: src/curses_client/curses_client.c:300
 msgid "dopewars is released under the GNU General Public Licence"
@@ -2508,10 +2508,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2410
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb benwebb@users.sf.net\n"
 "dopewars er tilgjengeleg under GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog

@@ -2,7 +2,7 @@ Summary:       Drug dealing game
 Name:          @PACKAGE@
 Version:       @VERSION@
 Release:       1
-Vendor:        Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+Vendor:        Ben Webb <benwebb@users.sf.net>
 URL:           http://dopewars.sourceforge.net/
 License:       GPL
 Group:         Amusements/Games
@@ -83,27 +83,27 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
-* Mon Oct 21 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Mon Oct 21 2002 Ben Webb <benwebb@users.sf.net>
 - Dependency on SDL-devel added to properly build SDL plugin
 
-* Fri Oct 18 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Fri Oct 18 2002 Ben Webb <benwebb@users.sf.net>
 - ESD plugin incorporated into main package
 - Sound files added to distribution
 
-* Fri Jun 21 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Fri Jun 21 2002 Ben Webb <benwebb@users.sf.net>
 - Description typos corrected
 - A lot of hardcoded texts replaced with %{name} etc.
 - Redundant make arguments removed
 
-* Mon May 13 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Mon May 13 2002 Ben Webb <benwebb@users.sf.net>
 - SDL and ESD plugin subpackages added
 
-* Sun Feb 03 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Sun Feb 03 2002 Ben Webb <benwebb@users.sf.net>
 - Use of %attr tidied up
 - Rebuild with new version
 
-* Wed Oct 17 2001 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Wed Oct 17 2001 Ben Webb <benwebb@users.sf.net>
 - Added in %attrs to allow building by non-root users
 
-* Wed Sep 26 2001 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+* Wed Sep 26 2001 Ben Webb <benwebb@users.sf.net>
 - Added support for a buildroot

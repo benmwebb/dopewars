@@ -1,7 +1,7 @@
 /************************************************************************
  * guifunc.c      GUI-specific shared functions for installer           *
- * Copyright (C)  2001-2002  Ben Webb                                   *
- *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ * Copyright (C)  2001-2003  Ben Webb                                   *
+ *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *

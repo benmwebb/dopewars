@@ -1,7 +1,7 @@
 /************************************************************************
  * gtk_client.c   dopewars client using the GTK+ toolkit                *
  * Copyright (C)  1998-2003  Ben Webb                                   *
- *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
@@ -2433,7 +2433,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   /* Version and copyright notice in GTK+ 'about' dialog */
   VersionStr = g_strdup_printf(_("Version %s     "
                                  "Copyright (C) 1998-2003  "
-                                 "Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+                                 "Ben Webb benwebb@users.sf.net\n"
                                  "dopewars is released under the "
                                  "GNU General Public Licence\n"), VERSION);
   label = gtk_label_new(VersionStr);

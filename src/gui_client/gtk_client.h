@@ -1,7 +1,7 @@
 /************************************************************************
  * gtk_client.h   dopewars client using the GTK+ toolkit                *
  * Copyright (C)  1998-2003  Ben Webb                                   *
- *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *

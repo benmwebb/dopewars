@@ -1,7 +1,7 @@
 /************************************************************************
  * gtkenums.h     Enumerated types for gtkport code                     *
  * Copyright (C)  2002-2003  Ben Webb                                   *
- *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *

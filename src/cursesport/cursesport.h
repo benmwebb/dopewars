@@ -2,7 +2,7 @@
  * cursesport.h   Portability functions to enable curses applications   *
  *                     to be built on Win32 systems                     *
  * Copyright (C)  1998-2003  Ben Webb                                   *
- *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
@@ -89,6 +89,7 @@ void standend(void);
 void endwin(void);
 
 #else /* Definitions for Unix build */
+#include <errno.h>
 
 /* Include a suitable curses-type library */
 #if HAVE_LIBNCURSES
