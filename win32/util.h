@@ -61,5 +61,8 @@ void FreeFileList(InstFiles *filelist,BOOL freepts);
 void FreeInstData(InstData *idata,BOOL freepts);
 void WriteLinkList(HANDLE fout,InstLink *listpt);
 void WriteFileList(HANDLE fout,InstFiles *listpt);
+char *GetStartMenuTopDir(void);
 char *GetStartMenuDir(InstData *idata);
 char *GetDesktopDir(void);
+BOOL CreateWholeDirectory(char *path);
+BOOL RemoveWholeDirectory(char *path);

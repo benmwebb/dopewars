@@ -150,12 +150,17 @@ void DeleteFileList(InstFiles *listpt) {
 void DeleteLinkList(char *dir,InstLink *listpt) {
   bstr *str;
   str=bstr_new();
-  SetCurrentDirectory(dir);
-  for (;listpt;listpt=listpt->next) {
-    bstr_assign(str,"Deleting link: ");
-    bstr_append(str,listpt->linkfile);
-    SendDlgItemMessage(mainDlg,ST_DELSTAT,WM_SETTEXT,0,(LPARAM)str->text);
-    DeleteFile(listpt->linkfile);
+  if (SetCurrentDirectory(dir)) {
+    for (;listpt;listpt=listpt->next) {
+      bstr_assign(str,"Deleting shortcut: ");
+      bstr_append(str,listpt->linkfile);
+      SendDlgItemMessage(mainDlg,ST_DELSTAT,WM_SETTEXT,0,(LPARAM)str->text);
+      DeleteFile(listpt->linkfile);
+    }
+  } else {
+    bstr_assign(str,"Could not find shortcut directory ");
+    bstr_append(str,dir);
+    DisplayError(str->text,TRUE,FALSE);
   }
   bstr_free(str,TRUE);
 }
@@ -197,7 +202,14 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
 
   installdir=GetInstallDir(product);
 
-  SetCurrentDirectory(installdir);
+  if (!SetCurrentDirectory(installdir)) {
+    str=bstr_new();
+    bstr_assign(str,"Could not access install directory ");
+    bstr_append(str,installdir);
+    DisplayError(str->text,TRUE,TRUE);
+/* Pointless to try to free the bstr, since DisplayError ends the process */
+  }
+
   fin = CreateFile("install.log",GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
 
   if (fin) {
@@ -216,10 +228,22 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
 
     SetCurrentDirectory(desktop); /* Just make sure we're not in the install
                                      directory any more */
-    RemoveDirectory(installdir);
-    RemoveDirectory(startmenu);
 
     str=bstr_new();
+    if (!RemoveWholeDirectory(installdir)) {
+      bstr_assign(str,"Could not remove install directory:\n");
+      bstr_append(str,installdir);
+      bstr_append(str,"\nYou may wish to manually remove it later.");
+      DisplayError(str->text,FALSE,FALSE);
+    }
+
+    if (!RemoveWholeDirectory(startmenu)) {
+      bstr_assign(str,"Could not remove Start Menu directory:\n");
+      bstr_append(str,startmenu);
+      bstr_append(str,"\nYou may wish to manually remove it later.");
+      DisplayError(str->text,FALSE,FALSE);
+    }
+
     bstr_assign(str,UninstallKey);
     bstr_appendpath(str,product);
     RegDeleteKey(HKEY_LOCAL_MACHINE,str->text);
@@ -229,9 +253,15 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
     FreeInstData(idata,TRUE);
   } else {
     bfree(product); bfree(installdir); /* Normally FreeInstData frees these */
+    str=bstr_new();
+    bstr_assign(str,"Could not read install.log from ");
+    bstr_append(str,installdir);
+    DisplayError(str->text,TRUE,TRUE);
+/* Pointless to try to free the bstr, since DisplayError ends the process */
   }
   ShowWindow(GetDlgItem(mainDlg,ST_DELDONE),SW_SHOW);
   EnableWindow(GetDlgItem(mainDlg,BT_DELOK),TRUE);
+  SetFocus(GetDlgItem(mainDlg,BT_DELOK));
   return 0;
 }
 

@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <string.h>
+#include <shlobj.h>
 #include "util.h"
 
 const char *UninstallKey=
@@ -192,8 +193,9 @@ void DisplayError(const char *errtext,BOOL addsyserr,BOOL fatal) {
   bstr_assign(str,errtext);
 
   if (addsyserr) {
+    bstr_append(str,"; ");
     bstr_append_long(str,syserr);
-    bstr_append_c(str,' ');
+    bstr_append(str,": ");
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
                   NULL,syserr,MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
                   (LPTSTR)&lpMsgBuf,0,NULL);
@@ -330,13 +332,42 @@ void WriteFileList(HANDLE fout,InstFiles *listpt) {
   bstr_free(str,TRUE);
 }
 
+static char *GetSpecialDir(int dirtype) {
+  LPITEMIDLIST pidl;
+  LPMALLOC pmalloc;
+  char szDir[MAX_PATH];
+  BOOL doneOK=FALSE;
+
+  if (SUCCEEDED(SHGetMalloc(&pmalloc))) {
+    if (SUCCEEDED(SHGetSpecialFolderLocation(NULL,dirtype,&pidl))) {
+      if (SHGetPathFromIDList(pidl,szDir)) doneOK=TRUE;
+      pmalloc->lpVtbl->Free(pmalloc,pidl);
+    }
+    pmalloc->lpVtbl->Release(pmalloc);
+  }
+  return (doneOK ? bstrdup(szDir) : NULL);
+}
+
+char *GetStartMenuTopDir(void) {
+  return GetSpecialDir(CSIDL_STARTMENU);
+}
+
+char *GetDesktopDir(void) {
+  return GetSpecialDir(CSIDL_DESKTOPDIRECTORY);
+}
+
 char *GetStartMenuDir(InstData *idata) {
   bstr *str;
-  char *retval;
+  char *topdir,*retval;
+
+  topdir=GetStartMenuTopDir();
 
   str = bstr_new();
-  bstr_assign_windir(str);
-  bstr_appendpath(str,"Start Menu\\Programs");
+  
+  bstr_assign(str,topdir);
+  bfree(topdir);
+
+  bstr_appendpath(str,"Programs");
   bstr_appendpath(str,idata->startmenudir);
 
   retval = str->text;
@@ -344,15 +375,47 @@ char *GetStartMenuDir(InstData *idata) {
   return retval;
 }
 
-char *GetDesktopDir(void) {
-  bstr *str;
-  char *retval;
+BOOL CreateWholeDirectory(char *path) {
+  char *pt;
+  if (!path) return FALSE;
 
-  str = bstr_new();
-  bstr_assign_windir(str);
-  bstr_appendpath(str,"Desktop");
+/* We may as well try the easy way first */
+  if (CreateDirectory(path,NULL)) return TRUE;
 
-  retval = str->text;
-  bstr_free(str,FALSE);
-  return retval;
+  /* \\machine\share notation */
+  if (strlen(path)>2 && path[0]=='\\' && path[1]=='\\') {
+    pt=&path[2]; /* Skip initial "\\" */
+  } else {
+    pt=path;
+  }
+
+  while (*pt && *pt!='\\') pt++;  /* Skip the first (root) '\' */
+
+  while (*pt) {
+    pt++;
+    if (*pt=='\\') {
+      *pt='\0';
+      if (!CreateDirectory(path,NULL)) {
+        *pt='\\'; return FALSE;
+      }
+      *pt='\\';
+    }
+  }
+  return CreateDirectory(path,NULL);
+}
+
+BOOL RemoveWholeDirectory(char *path) {
+  char *pt;
+  BOOL retval;
+  if (!path || !RemoveDirectory(path)) return FALSE;
+
+  for (pt=&path[strlen(path)-2];pt>path;pt--) {
+    if (*pt=='\\') {
+      *pt='\0';
+      retval=RemoveDirectory(path);
+      *pt='\\';
+      if (!retval) break;
+    }
+  }
+  return TRUE;
 }

@@ -20,6 +20,27 @@ DialogType CurrentDialog;
 HINSTANCE hInst=NULL;
 
 DWORD WINAPI DoInstall(LPVOID lpParam);
+static void GetWinText(char **text,HWND hWnd);
+
+BOOL CheckCreateDir(void) {
+  char *instdir;
+  GetWinText(&idata->installdir,GetDlgItem(mainDlg[DL_INSTALLDIR],ED_INSTDIR));
+  instdir=idata->installdir;
+  if (SetCurrentDirectory(instdir)) {
+    return TRUE;
+  } else {
+    if (MessageBox(mainDlg[CurrentDialog],
+                   "The install directory does not exist.\n"
+                   "Create it?","Install Directory",MB_YESNO)==IDYES) {
+      if (CreateWholeDirectory(instdir)) {
+        return TRUE;
+      } else {
+        DisplayError("Could not create directory",FALSE,FALSE);
+      }
+    }
+    return FALSE;
+  }
+}
 
 void ShowNewDialog(DialogType NewDialog) {
   RECT DeskRect,OurRect;
@@ -28,6 +49,10 @@ void ShowNewDialog(DialogType NewDialog) {
   HANDLE hThread;
   DWORD threadID;
   if (NewDialog<0 || NewDialog>=DL_NUM) return;
+
+  if (NewDialog > CurrentDialog && CurrentDialog==DL_INSTALLDIR) {
+    if (!CheckCreateDir()) return;
+  }
 
   hWnd=mainDlg[NewDialog];
   if (GetWindowRect(hWnd,&OurRect) &&
@@ -46,44 +71,38 @@ void ShowNewDialog(DialogType NewDialog) {
   }
 }
 
+int CALLBACK BrowseCallback(HWND hwnd,UINT msg,LPARAM lParam,LPARAM lpData) {
+  switch(msg) {
+    case BFFM_INITIALIZED:
+      SendMessage(hwnd,BFFM_SETSELECTION,TRUE,(LPARAM)idata->installdir);
+      break;
+  }
+  return 0;
+}
+
 void SelectInstDir(HWND parent) {
   BROWSEINFO bi = { 0 };
   TCHAR path[MAX_PATH];
   LPITEMIDLIST pidl;
   IMalloc *imalloc=0;
 
-  bi.lpszTitle = "Pick a directory";
-  bi.pszDisplayName = path;
-  bi.ulFlags = BIF_STATUSTEXT|BIF_RETURNONLYFSDIRS|BIF_DONTGOBELOWDOMAIN;
-  pidl = SHBrowseForFolder(&bi);
-  if (pidl) {
-    if (SUCCEEDED(SHGetMalloc(&imalloc))) {
-//    imalloc->free(pidl); imalloc->release();
+  if (SUCCEEDED(SHGetMalloc(&imalloc))) {
+    bi.lpszTitle = "Pick a directory";
+    bi.pszDisplayName = path;
+    bi.ulFlags = BIF_STATUSTEXT|BIF_RETURNONLYFSDIRS;
+    bi.lpfn = BrowseCallback;
+    pidl = SHBrowseForFolder(&bi);
+    if (pidl) {
+      if (SHGetPathFromIDList(pidl,path)) {
+        bfree(idata->installdir);
+        idata->installdir = bstrdup(path);
+        SendDlgItemMessage(mainDlg[DL_INSTALLDIR],ED_INSTDIR,WM_SETTEXT,
+                           0,(LPARAM)idata->installdir);
+      }
+      imalloc->lpVtbl->Free(imalloc,pidl);
     }
+    imalloc->lpVtbl->Release(imalloc);
   }
-/*OPENFILENAME ofn;
-  char lpstrFile[200]="";
-
-  ofn.lStructSize = sizeof(OPENFILENAME);
-  ofn.hwndOwner = parent;
-  ofn.hInstance = hInst;
-  ofn.lpstrFilter = NULL;
-  ofn.lpstrCustomFilter = NULL;
-  ofn.nMaxCustFilter = 0;
-  ofn.nFilterIndex = 0;
-  ofn.lpstrFile = lpstrFile;
-  ofn.nMaxFile = 200;
-  ofn.lpstrFileTitle = NULL;
-  ofn.nMaxFileTitle = 0;
-  ofn.lpstrInitialDir = NULL;
-  ofn.lpstrTitle = NULL;
-  ofn.Flags = OFN_HIDEREADONLY;
-  ofn.lpstrDefExt = NULL;
-  ofn.lCustData = 0;
-  ofn.lpfnHook = NULL;
-  ofn.lpTemplateName = NULL;
-
-  GetOpenFileName(&ofn);*/
 }
 
 void ConditionalExit(HWND hWnd) {
@@ -490,8 +509,10 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   GetWinText(&idata->startmenudir,GetDlgItem(mainDlg[DL_SHORTCUTS],ED_FOLDER));
 
-  CreateDirectory(idata->installdir,NULL);
-  SetCurrentDirectory(idata->installdir);
+  if (!SetCurrentDirectory(idata->installdir)) {
+    DisplayError("Cannot access install directory",TRUE,TRUE);
+  }
+
   logf = CreateFile("install.log",GENERIC_WRITE,0,NULL,
                     CREATE_ALWAYS,0,NULL);
 
@@ -564,6 +585,7 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_COMPLETE),SW_SHOW);
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_EXIT),SW_SHOW);
+  EnableWindow(GetDlgItem(mainDlg[DL_DOINSTALL],BT_FINISH),TRUE);
   return 0;
 }
 
@@ -571,6 +593,7 @@ void FillFolderList(void) {
   HANDLE findfile;
   WIN32_FIND_DATA finddata;
   bstr *str;
+  char *startdir;
   HWND folderlist;
 
   folderlist = GetDlgItem(mainDlg[DL_SHORTCUTS],LB_FOLDLIST);
@@ -578,22 +601,29 @@ void FillFolderList(void) {
 
   str=bstr_new();
 
-  bstr_assign_windir(str);
-  bstr_appendpath(str,"Start Menu\\Programs\\*");
+  startdir=GetStartMenuTopDir();
+  bstr_assign(str,startdir);
+  bfree(startdir);
+  bstr_appendpath(str,"Programs\\*");
+//MessageBox(NULL,str->text,NULL,MB_OK);
 
+//MessageBox(NULL,"Finding first file",NULL,MB_OK);
   findfile = FindFirstFile(str->text,&finddata);
-  if (findfile) {
+  if (findfile!=INVALID_HANDLE_VALUE) {
     while(1) {
+//MessageBox(NULL,finddata.cFileName,NULL,MB_OK);
       if (finddata.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY &&
           strcmp(finddata.cFileName,".")!=0 &&
           strcmp(finddata.cFileName,"..")!=0) {
         SendMessage(folderlist,LB_ADDSTRING,0,(LPARAM)finddata.cFileName);
       }
+//MessageBox(NULL,"Finding next file",NULL,MB_OK);
       if (!FindNextFile(findfile,&finddata)) break;
     }
     FindClose(findfile);
   }
   bstr_free(str,TRUE);
+//MessageBox(NULL,"Find done",NULL,MB_OK);
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
@@ -607,14 +637,18 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
   hInst = hInstance;
 
+//MessageBox(NULL,"Registering class",NULL,MB_OK);
   if (!hPrevInstance) RegisterSepClass(hInstance);
 
+//MessageBox(NULL,"Creating dialogs",NULL,MB_OK);
   for (i=0;i<DL_NUM;i++) {
     mainDlg[i] = CreateDialog(hInst,MAKEINTRESOURCE(i+1),NULL,MainDlgProc);
   }
 
   CheckDlgButton(mainDlg[DL_SHORTCUTS],CB_DESKTOP,BST_CHECKED);
+  EnableWindow(GetDlgItem(mainDlg[DL_DOINSTALL],BT_FINISH),FALSE);
 
+//MessageBox(NULL,"Filling folder list",NULL,MB_OK);
   FillFolderList();
 
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_COMPLETE),SW_HIDE);
@@ -624,7 +658,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
   SendDlgItemMessage(mainDlg[DL_SHORTCUTS],ED_FOLDER,WM_SETTEXT,
                      0,(LPARAM)idata->startmenudir);
-  SendDlgItemMessage(mainDlg[DL_INSTALLDIR],ST_INSTDIR,WM_SETTEXT,
+  SendDlgItemMessage(mainDlg[DL_INSTALLDIR],ED_INSTDIR,WM_SETTEXT,
                      0,(LPARAM)idata->installdir);
   
   licence=GetFirstFile(idata->instfiles,idata->totalsize);

@@ -33,10 +33,10 @@ BEGIN
 	PUSHBUTTON "Cancel", BT_CANCEL, 191, 143, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 	LTEXT "dopewars will be installed into the directory given below.", -1, 22, 14, 195, 9, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "To install in this directory, select ""Next"".", -1, 22, 33, 195, 9, WS_CHILD | WS_VISIBLE | WS_GROUP
-	LTEXT "To install in a different directory, select ""Browse"" and select the desired location.", -1, 22, 51, 195, 18, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "To install in a different directory, enter the new directory into the box below, using the ""Browse"" button if necessary.", -1, 22, 51, 195, 35, WS_CHILD | WS_VISIBLE | WS_GROUP
 	GROUPBOX "Destination directory", 105, 22, 84, 195, 35, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-	LTEXT "", ST_INSTDIR, 28, 100, 142, 8, WS_CHILD | WS_VISIBLE | WS_GROUP
-	PUSHBUTTON "B&rowse...", BT_BROWSE, 171, 98, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	CONTROL "", ED_INSTDIR, "EDIT", ES_LEFT | ES_AUTOHSCROLL | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_TABSTOP, 27, 99, 142, 10
+	PUSHBUTTON "B&rowse...", BT_BROWSE, 173, 98, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 END
 
 

@@ -10,7 +10,7 @@
 #define ED_FOLDER   210
 #define LB_FOLDLIST 211
 #define CB_DESKTOP  212
-#define ST_INSTDIR  213
+#define ED_INSTDIR  213
 #define ST_DELSTAT  214
 #define ST_DELDONE  215
 #define BT_DELOK    216
