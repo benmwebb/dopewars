@@ -29,6 +29,7 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <glib.h>
