@@ -171,8 +171,8 @@ void AssignNextWord(gchar **Data,gchar **Dest);
 int GetNextInt(gchar **Data,int Default);
 price_t GetNextPrice(gchar **Data,price_t Default);
 char *SetupNetwork(gboolean NonBlocking);
-char *FinishSetupNetwork();
-void ShutdownNetwork();
+char *FinishSetupNetwork(void);
+void ShutdownNetwork(void);
 void SwitchToSinglePlayer(Player *Play);
 int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
                    char *Code,char **Data,GSList *First);
@@ -182,7 +182,7 @@ gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
 #ifdef NETWORKING
 char *OpenMetaServerConnection(int *HttpSock);
 void CloseMetaServerConnection(int HttpSock);
-void ClearServerList();
+void ClearServerList(void);
 void ReadMetaServerData(int HttpSock);
 #endif
 void InitAbilities(Player *Play);

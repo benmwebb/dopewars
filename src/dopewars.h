@@ -412,8 +412,8 @@ char StartsWithVowel(char *string);
 char *GetPlayerName(Player *Play);
 void SetPlayerName(Player *Play,char *Name);
 void HandleCmdLine(int argc,char *argv[]);
-void SetupParameters();
-void HandleHelpTexts();
+void SetupParameters(void);
+void HandleHelpTexts(void);
 int GeneralStartup(int argc,char *argv[]);
 void ReadConfigFile(char *FileName);
 gboolean ParseNextConfig(GScanner *scanner);
@@ -425,6 +425,6 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                     GScanner *scanner);
 gboolean IsCop(Player *Play);
 void dopelog(int loglevel,const gchar *format,...);
-GLogLevelFlags LogMask();
+GLogLevelFlags LogMask(void);
 GString *GetLogString(GLogLevelFlags log_level,const gchar *message);
 #endif

@@ -26,7 +26,7 @@
 #include <config.h>
 #endif
 
-void AIPlayerLoop();
+void AIPlayerLoop(void);
 
 #if NETWORKING
 int HandleAIMessage(char *Message,Player *AIPlay);

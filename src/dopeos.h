@@ -173,7 +173,7 @@ extern int Width,Depth;
 #define DebtAttr     (COLOR_PAIR(6))
 
 #ifdef CURSES_CLIENT
-int bgetch();
+int bgetch(void);
 #else
 /* When not using curses, fall back to stdio's getchar() function */
 #define bgetch getchar
@@ -183,9 +183,9 @@ int bgetch();
 
 #if NETWORKING
 #define CloseSocket(sock) close(sock)
-int GetSocketError();
-void StartNetworking();
-void StopNetworking();
+int GetSocketError(void);
+void StartNetworking(void);
+void StopNetworking(void);
 void SetReuse(int sock);
 #endif /* NETWORKING */
 

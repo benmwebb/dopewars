@@ -38,14 +38,14 @@
 extern GSList *FirstServer;
 extern char *PidFile;
 
-void CleanUpServer();
-void BreakHandle();
+void CleanUpServer(void);
+void BreakHandle(int sig);
 void ClientLeftServer(Player *Play);
-void StartServer();
-void StopServer();
+void StartServer(void);
+void StopServer(void);
 void HandleServerCommand(char *string);
-Player *HandleNewConnection();
-void ServerLoop();
+Player *HandleNewConnection(void);
+void ServerLoop(void);
 void HandleServerPlayer(Player *Play);
 void HandleServerMessage(gchar *buf,Player *ReallyFrom);
 void FinishGame(Player *Play,char *Message);
@@ -65,8 +65,8 @@ void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
 int GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
-int InitHighScoreFile();
-void CloseHighScoreFile();
+int InitHighScoreFile(void);
+void CloseHighScoreFile(void);
 int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore);
 void CopsAttackPlayer(Player *Play);
 void AttackPlayer(Player *Play,Player *Attacked);
@@ -78,7 +78,7 @@ gboolean CanPlayerFire(Player *Play);
 gboolean CanRunHere(Player *Play);
 Player *GetNextShooter(Player *Play);
 #ifdef GUI_SERVER
-void GuiServerLoop();
+void GuiServerLoop(void);
 #endif
 
 #endif
