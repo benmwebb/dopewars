@@ -1,3 +1,4 @@
+- Option to let the cops search/fine you rather than shooting at them
 - Limit rate of server connections to combat DOS attacks / players trying
   to get a good starting day?
 - Add support for reading/writing multiple configuration files to GUI client's
