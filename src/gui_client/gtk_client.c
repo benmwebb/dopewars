@@ -1846,19 +1846,29 @@ void QuestionDialog(char *Data, Player *From)
   hbbox = my_hbbox_new();
 
   for (i = 0; i < strlen(Responses); i++) {
-    for (j = 0, trword = NULL; j < numWords && !trword; j++) {
-      underline = strchr(Words[j], '_');
-      if (underline && toupper(underline[1]) == Responses[i]) {
-        trword = _(Words[j]);
+    switch (Responses[i]) {
+    case 'Y':
+      button = gtk_button_new_from_stock(GTK_STOCK_YES);
+      break;
+    case 'N':
+      button = gtk_button_new_from_stock(GTK_STOCK_NO);
+      break;
+    default:
+      for (j = 0, trword = NULL; j < numWords && !trword; j++) {
+        underline = strchr(Words[j], '_');
+        if (underline && toupper(underline[1]) == Responses[i]) {
+          trword = _(Words[j]);
+        }
       }
-    }
-    button = gtk_button_new_with_label("");
-    if (trword) {
-      SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
-    } else {
-      trword = g_strdup_printf("_%c", Responses[i]);
-      SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
-      g_free(trword);
+      button = gtk_button_new_with_label("");
+      if (trword) {
+        SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
+      } else {
+        trword = g_strdup_printf("_%c", Responses[i]);
+        SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
+        g_free(trword);
+      }
+      break;
     }
     gtk_object_set_data(GTK_OBJECT(button), "dialog", (gpointer)dialog);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
