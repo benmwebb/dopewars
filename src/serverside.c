@@ -1898,79 +1898,69 @@ static void HighScoreWriteHeader(FILE *fp)
  */
 void ConvertHighScoreFile(const gchar *convertfile)
 {
-  FILE *old, *backup;
+  FILE *old;
   gchar *BackupFile;
   int ch;
-  gchar *OldError = NULL, *BackupError = NULL;
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
 
   BackupFile = g_strdup_printf("%s.bak", convertfile);
 
   old = fopen(convertfile, "r+");
-  if (!old) {
-    OldError = ErrStrFromErrno(errno);
-  }
-
-  backup = fopen(BackupFile, "w");
-  if (!backup) {
-    BackupError = ErrStrFromErrno(errno);
-  }
-
-  if (old && backup) {
-
-    /* First, make sure that the "old" file doesn't have a valid "new"
-     * header */
+  if (old) {
+    gboolean empty;
+    /* Only convert if the file is not empty, and does not have a header */
     rewind(old);
-    if (HighScoreReadHeader(old, NULL)) {
-      /* Do nothing, except close the open files */
-      fclose(old);
-      fclose(backup);
-    } else {
-      /* Make a backup of the old file */
-      ftruncate(fileno(backup), 0);
-      rewind(backup);
-      rewind(old);
-      while (1) {
-        ch = fgetc(old);
-        if (ch == EOF) {
-          break;
-	} else {
-          fputc(ch, backup);
-	}
-      }
-      fclose(backup);
-
-      /* Read in the scores without the header, and then write out with
-       * the header */
-      if (!HighScoreRead(old, MultiScore, AntiqueScore, FALSE)) {
-        g_log(NULL, G_LOG_LEVEL_CRITICAL,
-              _("Error reading scores from %s."), convertfile);
-      } else {
-        ftruncate(fileno(old), 0);
+    empty = (fgetc(old) == EOF);
+    rewind(old);
+    if (!empty && !HighScoreReadHeader(old, NULL)) {
+      FILE *backup = fopen(BackupFile, "w");
+      if (backup) {
+        /* Make a backup of the old file */
+        ftruncate(fileno(backup), 0);
+        rewind(backup);
         rewind(old);
-        if (HighScoreWrite(old, MultiScore, AntiqueScore)) {
-          g_message(_("The high score file %s has been converted to the "
-                      "new format.\nA backup of the old file has been "
-                      "created as %s.\n"), convertfile, BackupFile);
+        while (1) {
+          ch = fgetc(old);
+          if (ch == EOF) {
+            break;
+	  } else {
+            fputc(ch, backup);
+          }
         }
+        fclose(backup);
+
+        /* Read in the scores without the header, and then write out with
+         * the header */
+        if (!HighScoreRead(old, MultiScore, AntiqueScore, FALSE)) {
+          g_log(NULL, G_LOG_LEVEL_CRITICAL,
+                _("Error reading scores from %s."), convertfile);
+        } else {
+          ftruncate(fileno(old), 0);
+          rewind(old);
+          if (HighScoreWrite(old, MultiScore, AntiqueScore)) {
+            g_message(_("The high score file %s has been converted to the "
+                        "new format.\nA backup of the old file has been "
+                        "created as %s.\n"), convertfile, BackupFile);
+          }
+        }
+      } else {
+        gchar *errmsg = ErrStrFromErrno(errno);
+        g_log(NULL, G_LOG_LEVEL_CRITICAL,
+              _("Cannot create backup (%s) of the\nhigh score file: %s."),
+              BackupFile, errmsg);
+        g_free(errmsg);
       }
-      fclose(old);
     }
+    fclose(old);
   } else {
-    if (!old) {
-      g_log(NULL, G_LOG_LEVEL_CRITICAL,
-            _("Cannot open high score file %s: %s."),
-            convertfile, OldError);
-    } else if (!backup) {
-      g_log(NULL, G_LOG_LEVEL_CRITICAL,
-            _("Cannot create backup (%s) of the\nhigh score file: %s."),
-            BackupFile, BackupError);
-    }
+    gchar *errmsg = ErrStrFromErrno(errno);
+    g_log(NULL, G_LOG_LEVEL_CRITICAL,
+          _("Cannot open high score file %s: %s."),
+          convertfile, errmsg);
+    g_free(errmsg);
   }
 
   g_free(BackupFile);
-  g_free(OldError);
-  g_free(BackupError);
 }
 
 /* State, set by OpenHighScoreFile, and later used by

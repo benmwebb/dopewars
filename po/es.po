@@ -11,7 +11,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Dopewars CVS-20020726\n"
-"POT-Creation-Date: 2002-10-19 02:24+0100\n"
+"POT-Creation-Date: 2002-10-21 12:11+0100\n"
 "PO-Revision-Date: 2002-08-01 10:10CET\n"
 "Last-Translator: Quique <quique@sindominio.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -3511,12 +3511,12 @@ msgstr "No se ha podido iniciar el Servicio NT"
 msgid "Command:"
 msgstr "Orden:"
 
-#: src/serverside.c:1947
+#: src/serverside.c:1936
 #, c-format
 msgid "Error reading scores from %s."
 msgstr "No se ha podido leer la tabla de puntuaciones del fichero %s"
 
-#: src/serverside.c:1952
+#: src/serverside.c:1941
 #, c-format
 msgid ""
 "The high score file %s has been converted to the new format.\n"
@@ -3526,12 +3526,7 @@ msgstr ""
 "al nuevo formato. Se ha creado una copia de respaldo del\n"
 "fichero antiguo, que se ha llamado %s.\n"
 
-#: src/serverside.c:1962
-#, c-format
-msgid "Cannot open high score file %s: %s."
-msgstr "No se ha podido abrir el fichero de puntuaciones %s: %s."
-
-#: src/serverside.c:1966
+#: src/serverside.c:1949
 #, c-format
 msgid ""
 "Cannot create backup (%s) of the\n"
@@ -3540,7 +3535,12 @@ msgstr ""
 "No se ha podido crear la copia de respaldo(%s) del\n"
 "fichero de máximas puntuaciones %s."
 
-#: src/serverside.c:2024
+#: src/serverside.c:1958
+#, c-format
+msgid "Cannot open high score file %s: %s."
+msgstr "No se ha podido abrir el fichero de puntuaciones %s: %s."
+
+#: src/serverside.c:2014
 #, c-format
 msgid ""
 "Cannot open high score file %s.\n"
@@ -3553,7 +3553,7 @@ msgstr ""
 "a este fichero o directorio, o bien indica otro fichero de\n"
 "puntuaciones con la opción -f en la línea de órdenes."
 
-#: src/serverside.c:2038
+#: src/serverside.c:2028
 #, c-format
 msgid ""
 "%s does not appear to be a valid\n"
@@ -3568,7 +3568,7 @@ msgstr ""
 "formato ejecutando la orden «dopewars -C %s» en la\n"
 "línea de órdenes."
 
-#: src/serverside.c:2048
+#: src/serverside.c:2038
 msgid ""
 "Errors were encountered during the reading of the configuration file.\n"
 "As as result, some settings may not work as expected. Please consult the\n"
@@ -3579,7 +3579,7 @@ msgstr ""
 "la manera esperada. Puedes consultar el fichero «dopewars-log.txt»\n"
 "para conocer los detalles."
 
-#: src/serverside.c:2053
+#: src/serverside.c:2043
 msgid ""
 "Errors were encountered during the reading of the configuration\n"
 "file. As a result, some settings may not work as expected. Please see the\n"
@@ -3590,141 +3590,141 @@ msgstr ""
 "de la manera esperada. Puedes mirar los mensajes en la\n"
 "salida estándar para conocer más detalles."
 
-#: src/serverside.c:2126
+#: src/serverside.c:2116
 #, c-format
 msgid "Unable to read high score file %s"
 msgstr "No se puede leer el fichero de máximas puntuaciones %s."
 
-#: src/serverside.c:2152
+#: src/serverside.c:2142
 msgid "Congratulations! You made the high scores!"
 msgstr "¡Enhorabuena! ¡Has conseguido una de las máximas puntuaciones!"
 
-#: src/serverside.c:2165
+#: src/serverside.c:2155
 msgid "You didn't even make the high score table..."
 msgstr "Ni siquiera has conseguido entrar en la tabla de puntuaciones..."
 
-#: src/serverside.c:2186
+#: src/serverside.c:2176
 #, c-format
 msgid "Unable to write high score file %s"
 msgstr "No se ha podido escribir en el fichero de puntuaciones %s"
 
-#: src/serverside.c:2213
+#: src/serverside.c:2203
 msgid "(R.I.P.)"
 msgstr "(R.I.P.)"
 
-#: src/serverside.c:2256
+#: src/serverside.c:2246
 #, c-format
 msgid "%s: Tipoff from %s"
 msgstr "%s: Chivatazo de %s"
 
-#: src/serverside.c:2264
+#: src/serverside.c:2254
 #, c-format
 msgid "%s: Spy offered by %s"
 msgstr "%s: Oferta de espionaje de %s"
 
-#: src/serverside.c:2278
+#: src/serverside.c:2268
 #, c-format
 msgid "One of your %tde was spying for %s.^The spy %s!"
 msgstr "Una de tus %tde estaba espiando para %s. ^¡La espía %s!"
 
-#: src/serverside.c:2287
+#: src/serverside.c:2277
 #, c-format
 msgid "Your spy working with %s has been discovered!^The spy %s!"
 msgstr "¡Tu espía trabajando con %s ha sido descubierta!^¡La espía %s!"
 
-#: src/serverside.c:2321
+#: src/serverside.c:2311
 #, c-format
 msgid "The lady next to you on the subway said,^ \"%s\"%s"
 msgstr "La chavala que está junto a ti en el metro dice:^ «%s»%s"
 
-#: src/serverside.c:2325
+#: src/serverside.c:2315
 msgid "^    (at least, you -think- that's what she said)"
 msgstr "^    (al menos, eso es lo que *piensas* que ha dicho)"
 
-#: src/serverside.c:2328
+#: src/serverside.c:2318
 #, c-format
 msgid "You hear someone playing %s"
 msgstr "Oyes a alguien poner %s"
 
-#: src/serverside.c:2337 src/serverside.c:2346 src/serverside.c:2355
-#: src/serverside.c:2364
+#: src/serverside.c:2327 src/serverside.c:2336 src/serverside.c:2345
+#: src/serverside.c:2354
 #, fuzzy, c-format
 msgid "YN^Would you like to visit %tde?"
 msgstr "YN^¿Quieres visitar %tal?"
 
-#: src/serverside.c:2376
+#: src/serverside.c:2366
 msgid "YN^^Would you like to hire a %tde for %P?"
 msgstr "YN^^¿Quieres contratar a una %tde por %P?"
 
-#: src/serverside.c:2389
+#: src/serverside.c:2379
 #, c-format
 msgid "%s^%s is already here!^Do you Attack, or Evade?"
 msgstr "%s^¡%s ya está aquí!^¿Quieres Atacar o Huir?"
 
-#: src/serverside.c:2458
+#: src/serverside.c:2448
 msgid "No cops or guns!"
 msgstr "¡No hay armas ni maderos!"
 
-#: src/serverside.c:2464
+#: src/serverside.c:2454
 msgid "Cops cannot attack other cops!"
 msgstr "¡Los maderos no pueden atacar a otros maderos!"
 
-#: src/serverside.c:2506
+#: src/serverside.c:2496
 msgid "Players are already in a fight!"
 msgstr "¡Los jugadores ya están en una pelea!"
 
-#: src/serverside.c:2508
+#: src/serverside.c:2498
 msgid "Players are already in separate fights!"
 msgstr "¡Los jugadores ya están en sus propias peleas!"
 
-#: src/serverside.c:2513
+#: src/serverside.c:2503
 msgid "Cannot start fight - no guns to use!"
 msgstr "No se puede empezar el enfrentamiento - ¡no hay ningún arma que usar!"
 
-#: src/serverside.c:2742 src/serverside.c:3005
+#: src/serverside.c:2732 src/serverside.c:2995
 msgid "You're dead! Game over."
 msgstr "Estás criando malvas. Sayonara, baby."
 
-#: src/serverside.c:2937
+#: src/serverside.c:2927
 #, c-format
 msgid "%s: tipoff by %s finished OK."
 msgstr "%s: el chivatazo de %s acabó bien."
 
-#: src/serverside.c:2943
+#: src/serverside.c:2933
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who was shot dead!"
 msgstr "Siguiendo tu chivatazo, la bofia va a por %s, ¡le disparan y la palma!"
 
-#: src/serverside.c:2947
+#: src/serverside.c:2937
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %tde. "
 msgstr "Siguiendo tu chivatazo, la pasma va a por %s, que escapa con %d %tde. "
 
-#: src/serverside.c:3013
+#: src/serverside.c:3003
 msgid "YN^Do you pay a doctor %P to sew you up?"
 msgstr "YN^¿Quieres pagar %P a un médico para que te cure?"
 
-#: src/serverside.c:3042
+#: src/serverside.c:3032
 msgid "You were mugged in the subway!"
 msgstr "¡Te atracan en el metro!"
 
-#: src/serverside.c:3054
+#: src/serverside.c:3044
 #, c-format
 msgid "You meet a friend! He gives you %d %tde."
 msgstr "¡Te encuentras con un amigo! Te da %d %tde."
 
-#: src/serverside.c:3060
+#: src/serverside.c:3050
 #, c-format
 msgid "You meet a friend! You give him %d %tde."
 msgstr "¡Te encuentras con un amigo! Le das %d %tde."
 
 #. Debugging message: we would normally have a random drug-related
 #. * event here, but "Sanitized" mode is turned on
-#: src/serverside.c:3073
+#: src/serverside.c:3063
 msgid "Sanitized away a RandomOffer"
 msgstr "Pasando de una oferta aleatoria"
 
-#: src/serverside.c:3078
+#: src/serverside.c:3068
 #, c-format
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %tde! That's a drag, "
@@ -3733,17 +3733,17 @@ msgstr ""
 "¡Los perros de la bofia te persiguen durante %d manzanas! ¡Pierdes algo de %"
 "tde! Vaya mierda, macho."
 
-#: src/serverside.c:3095
+#: src/serverside.c:3085
 #, c-format
 msgid "You find %d %tde on a dead dude in the subway!"
 msgstr "Encuentras %d %tde en el cuerpo de un tío tirado en el metro!"
 
-#: src/serverside.c:3110
+#: src/serverside.c:3100
 #, c-format
 msgid "Your mama made brownies with some of your %tde! They were great!"
 msgstr "¡Tu mami ha hecho galletas con algo de tu %tde! ¡Estaban geniales!"
 
-#: src/serverside.c:3120
+#: src/serverside.c:3110
 msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
@@ -3751,34 +3751,34 @@ msgstr ""
 "YN^¡Aquí hay algo de maría que huele a herbicida!^¡Tiene buena pinta! "
 "^¿Quieres fumarla? "
 
-#: src/serverside.c:3127
+#: src/serverside.c:3117
 #, c-format
 msgid "You stopped to %s."
 msgstr "Te has parado para %s."
 
-#: src/serverside.c:3152
+#: src/serverside.c:3142
 msgid "YN^Would you like to buy a bigger trenchcoat for %P?"
 msgstr "YN^¿Quieres comprar una gabardina más grande por %P?"
 
-#: src/serverside.c:3159
+#: src/serverside.c:3149
 msgid "YN^Hey dude! I'll help carry your %tde for a mere %P. Yes or no?"
 msgstr "YN^¡Eh, tío! Te ayudo a llevar tus %tde por sólo %P. ¿Sí o no?"
 
-#: src/serverside.c:3172
+#: src/serverside.c:3162
 msgid "YN^Would you like to buy a %tde for %P?"
 msgstr "YN^¿Quieres comprar un %tde por %P?"
 
-#: src/serverside.c:3315 src/serverside.c:3425
+#: src/serverside.c:3305 src/serverside.c:3415
 #, c-format
 msgid "%s: offer was on behalf of %s"
 msgstr "%s: la oferta era en nombre de %s"
 
-#: src/serverside.c:3318
+#: src/serverside.c:3308
 #, c-format
 msgid "%s has accepted your %tde!^Use the G key to contact your spy."
 msgstr "¡%s ha aceptado tu %tde!^Usa la tecla G para contactar con tu espía."
 
-#: src/serverside.c:3370
+#: src/serverside.c:3360
 msgid ""
 "You hallucinated for three days on the wildest trip you ever imagined!^Then "
 "you died because your brain disintegrated!"
@@ -3786,34 +3786,34 @@ msgstr ""
 "¡Estuviste flipando durante tres días en el cuelgue más salvaje que hayas "
 "imaginado nunca!^Y entonces la palmaste debido a que tu cerebro se derritió."
 
-#: src/serverside.c:3396
+#: src/serverside.c:3386
 #, c-format
 msgid "Too late - %s has just left!"
 msgstr "Demasiado tarde. %s se acaba de ir."
 
-#: src/serverside.c:3428
+#: src/serverside.c:3418
 #, c-format
 msgid "%s has rejected your %tde!"
 msgstr "¡%s ha rechazado tu %tde!"
 
-#: src/serverside.c:3483
+#: src/serverside.c:3473
 #, c-format
 msgid "The cops spot you dropping %tde!"
 msgstr "¡La bofia te ve tirando %tde!"
 
-#: src/serverside.c:3716
+#: src/serverside.c:3706
 msgid "Sending pending updates to the metaserver..."
 msgstr "Enviando actualizaciones pendientes al metaservidor..."
 
-#: src/serverside.c:3721
+#: src/serverside.c:3711
 msgid "Sending reminder message to the metaserver..."
 msgstr "Enviando mensaje recordatorio al metaservidor..."
 
-#: src/serverside.c:3730
+#: src/serverside.c:3720
 msgid "Player removed due to idle timeout"
 msgstr "Jugador eliminado: demasiado tiempo inactivo"
 
-#: src/serverside.c:3743
+#: src/serverside.c:3733
 msgid "Player removed due to connect timeout"
 msgstr "Jugador eliminado debido a que se agotó el tiempo para la conexión"
 
