@@ -77,10 +77,10 @@ static void PrintEscaped(FILE *fp, gchar *str)
 }
 
 /*
- *  * Writes a single configuration file variable (identified by GlobalIndex
- *   * and StructIndex) to the specified file, in a format suitable for reading
- *    * back in (via. ParseNextConfig and friends).
- *     */
+ * Writes a single configuration file variable (identified by GlobalIndex
+ * and StructIndex) to the specified file, in a format suitable for reading
+ * back in (via. ParseNextConfig and friends).
+ */
 static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
 {
   gchar *GlobalName;
