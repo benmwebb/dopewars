@@ -571,7 +571,7 @@ void PrintMessage(char *text) {
    while (*text=='\n') text++;
    gtk_editable_insert_text(messages,text,strlen(text),&EditPos);
    if (text[strlen(text)-1]!='\n') {
-      gtk_editable_insert_text(messages,cr,1,&EditPos);
+      gtk_editable_insert_text(messages,cr,strlen(cr),&EditPos);
    }
    gtk_text_thaw(GTK_TEXT(messages));
    gtk_editable_set_position(messages,EditPos);

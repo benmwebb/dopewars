@@ -1082,7 +1082,9 @@ int InitHighScoreFile() {
 
    if (ScoreFP) return 0;  /* If already opened, then we're done */
 
-   ScoreFP=fopen(HiScoreFile,"a+");
+   /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
+   ScoreFP=fopen(HiScoreFile,"r+");
+   if (!ScoreFP) ScoreFP=fopen(HiScoreFile,"w+");
 
 #ifndef CYGWIN
    if (setregid(getgid(),getgid())!=0) perror("setregid");
@@ -1121,6 +1123,7 @@ int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
       HighScoreTypeWrite(AntiqueScore,ScoreFP);
       HighScoreTypeWrite(MultiScore,ScoreFP);
       ReleaseLock(ScoreFP);
+      fflush(ScoreFP);
    } else return 0;
    return 1;
 }

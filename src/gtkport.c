@@ -89,6 +89,7 @@ static void gtk_container_destroy(GtkWidget *widget);
 static void gtk_container_size_request(GtkWidget *widget,
                                        GtkRequisition *requisition);
 static void gtk_container_set_size(GtkWidget *widget,GtkAllocation *allocation);
+static void gtk_container_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_window_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
 static void gtk_window_set_size(GtkWidget *widget,GtkAllocation *allocation);
@@ -139,7 +140,6 @@ static void gtk_clist_realize(GtkWidget *widget);
 static void gtk_clist_show(GtkWidget *widget);
 static void gtk_clist_hide(GtkWidget *widget);
 static void gtk_clist_draw_row(GtkCList *clist,LPDRAWITEMSTRUCT lpdis);
-static void gtk_container_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_box_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_table_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_widget_show_all_full(GtkWidget *widget,gboolean hWndOnly);
@@ -166,6 +166,9 @@ static void gtk_marshal_VOID__BOOL(GtkObject *object,GSList *actions,
 static void gtk_marshal_VOID__GPOIN(GtkObject *object,GSList *actions,
                                     GtkSignalFunc default_action,
                                     va_list args);
+static void gtk_marshal_VOID__GINT(GtkObject *object,GSList *actions,
+                                   GtkSignalFunc default_action,
+                                   va_list args);
 static void gtk_menu_bar_realize(GtkWidget *widget);
 static void gtk_menu_item_realize(GtkWidget *widget);
 static void gtk_menu_item_enable(GtkWidget *widget);
@@ -561,7 +564,7 @@ static GtkSignalType GtkCListSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_clist_size_request },
    { "set_size",gtk_marshal_VOID__GPOIN,gtk_clist_set_size },
    { "realize",gtk_marshal_VOID__VOID,gtk_clist_realize },
-   { "click-column",gtk_marshal_VOID__GPOIN,NULL },
+   { "click-column",gtk_marshal_VOID__GINT,NULL },
    { "show",gtk_marshal_VOID__VOID,gtk_clist_show },
    { "hide",gtk_marshal_VOID__VOID,gtk_clist_hide },
    { "",NULL,NULL }
@@ -634,7 +637,7 @@ static GSList *GtkTimeouts=NULL;
 static HWND TopLevel=NULL;
 long AsyncSocketError=0;
 
-static WNDPROC wpOrigEntryProc;
+static WNDPROC wpOrigEntryProc,wpOrigTextProc;
 
 static void gtk_set_default_font(HWND hWnd) {
    SendMessage(hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(FALSE,0));
@@ -680,11 +683,54 @@ static void DispatchTimeoutEvent(UINT id) {
    }
 }
 
+static void UpdatePanedGhostRect(GtkPaned *paned,RECT *OldRect,RECT *NewRect,
+                                 gint x,gint y) {
+   HWND hWnd,parent;
+   RECT rect,clrect;
+   POINT MouseCoord;
+   HDC hDC;
+   GtkWidget *widget=GTK_WIDGET(paned);
+
+   if (!OldRect && !NewRect) return;
+   parent=gtk_get_parent_hwnd(widget);
+   hWnd=widget->hWnd;
+   if (!parent || !hWnd) return;
+
+   MouseCoord.x=x;
+   MouseCoord.y=y;
+   MapWindowPoints(hWnd,parent,&MouseCoord,1);
+
+   rect.left=paned->true_alloc.x;
+   rect.top=paned->true_alloc.y;
+   GetClientRect(hWnd,&clrect);
+   if (clrect.right > clrect.bottom) {
+      rect.right=paned->true_alloc.x+paned->true_alloc.width;
+      rect.bottom=MouseCoord.y;
+   } else {
+      rect.bottom=paned->true_alloc.y+paned->true_alloc.height;
+      rect.right=MouseCoord.x;
+   }
+
+   if (OldRect && NewRect && OldRect->right==rect.right &&
+       OldRect->bottom==rect.bottom) return;
+
+   hDC=GetDC(parent);
+
+   if (OldRect) DrawFocusRect(hDC,OldRect);
+   if (NewRect) {
+      CopyRect(NewRect,&rect);
+      DrawFocusRect(hDC,NewRect);
+   }
+   ReleaseDC(parent,hDC);
+}
+
 LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    PAINTSTRUCT ps;
    HPEN oldpen,dkpen,ltpen;
    RECT rect;
+   static RECT GhostRect;
    HDC hDC;
+   HWND parent;
    gint newpos;
    GtkPaned *paned;
    paned=GTK_PANED(GetWindowLong(hwnd,GWL_USERDATA));
@@ -724,14 +770,20 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          if (!paned) break;
          SetCapture(hwnd);
          paned->Tracking=TRUE;
+         UpdatePanedGhostRect(paned,NULL,&GhostRect,
+                              LOWORD(lParam),HIWORD(lParam));
          return TRUE;
       case WM_MOUSEMOVE:
          if (!paned||!paned->Tracking) break;
+         UpdatePanedGhostRect(paned,&GhostRect,&GhostRect,
+                              LOWORD(lParam),HIWORD(lParam));
          return TRUE;
       case WM_LBUTTONUP:
          if (!paned||!paned->Tracking) break;
          ReleaseCapture();
          paned->Tracking=FALSE;
+         UpdatePanedGhostRect(paned,&GhostRect,NULL,
+                              LOWORD(lParam),HIWORD(lParam));
          GetClientRect(hwnd,&rect);
          if (rect.right > rect.bottom) {
             newpos=((gint16)HIWORD(lParam)+GTK_WIDGET(paned)->allocation.y-
@@ -872,10 +924,15 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          phdr=(HD_NOTIFY FAR *)lParam;
          nmhdr=(NMHDR *)lParam;
          if (!nmhdr) break;
-         if (nmhdr->code==HDN_ITEMCHANGED) {
+         if (nmhdr->code==HDN_ENDTRACK) {
             gtk_clist_set_column_width_full(
                     GTK_CLIST(GetWindowLong(nmhdr->hwndFrom,GWL_USERDATA)),
                     phdr->iItem,phdr->pitem->cxy,FALSE);
+            return FALSE;
+         } else if (nmhdr->code==HDN_ITEMCLICK) {
+            gtk_signal_emit(
+                    GTK_OBJECT(GetWindowLong(nmhdr->hwndFrom,GWL_USERDATA)),
+                    "click-column",(gint)phdr->iItem);
             return FALSE;
          } else if (nmhdr->code==TCN_SELCHANGE) {
             gtk_notebook_set_page(
@@ -907,6 +964,18 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd,UINT msg,WPARAM wParam,
       return FALSE;
    }
    return CallWindowProc(wpOrigEntryProc,hwnd,msg,wParam,lParam);
+}
+
+LRESULT APIENTRY TextWndProc(HWND hwnd,UINT msg,WPARAM wParam,
+                             LPARAM lParam) {
+   GtkWidget *widget;
+   if (msg==WM_GETDLGCODE) {
+      widget=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
+      if (!GTK_EDITABLE(widget)->is_editable) {
+         return DLGC_HASSETSEL|DLGC_WANTARROWS;
+      }
+   }
+   return CallWindowProc(wpOrigTextProc,hwnd,msg,wParam,lParam);
 }
 
 void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
@@ -1558,26 +1627,28 @@ void gtk_editable_insert_text(GtkEditable *editable,const gchar *new_text,
    GtkWidget *widget=GTK_WIDGET(editable);
    HWND hWnd;
    gint i;
+   GString *newstr;
 
    gtk_editable_sync_text(editable);
-   g_string_insert(editable->text,*position,new_text);
-   for (i=*position;i<*position+strlen(new_text);i++) {
-      if (editable->text->str[i]=='\r' &&
-          editable->text->str[i+1]=='\n') {
-         i++;
-      } else if (editable->text->str[i]=='\n') {
-         g_string_insert_c(editable->text,i,'\r');
-         i++;
-         (*position)++;
+
+   /* Convert Unix-style lone '\n' to Windows-style '\r\n' */
+   newstr=g_string_new("");
+   for (i=0;i<new_text_length && new_text[i];i++) {
+      if (new_text[i]=='\n' && (i==0 || new_text[i-1]!='\r')) {
+         g_string_append_c(newstr,'\r');
       }
+      g_string_append_c(newstr,new_text[i]);
    }
+   g_string_insert(editable->text,*position,newstr->str);
 
    hWnd=widget->hWnd;
    if (hWnd) {
-      SendMessage(hWnd,WM_SETTEXT,0,(LPARAM)editable->text->str);
-      *position+=strlen(new_text);
+      SendMessage(hWnd,EM_SETSEL,(WPARAM)*position,(LPARAM)*position);
+      SendMessage(hWnd,EM_REPLACESEL,(WPARAM)FALSE,(LPARAM)newstr->str);
+      *position+=newstr->len;
       gtk_editable_set_position(editable,*position);
    }
+   g_string_free(newstr,TRUE);
 }
 
 void gtk_editable_delete_text(GtkEditable *editable,
@@ -1623,9 +1694,8 @@ void gtk_editable_set_position(GtkEditable *editable,gint position) {
    HWND hWnd;
    if (!GTK_WIDGET_REALIZED(widget)) return;
    hWnd=widget->hWnd;
-   SendMessage(hWnd,EM_SETSEL,(WPARAM)-1,(LPARAM)position);
+   SendMessage(hWnd,EM_SETSEL,(WPARAM)position,(LPARAM)position);
    SendMessage(hWnd,EM_SCROLLCARET,0,0);
-   SendMessage(hWnd,EM_LINESCROLL,0,(LPARAM)1000);
 }
 
 gint gtk_editable_get_position(GtkEditable *editable) {
@@ -1988,13 +2058,21 @@ void gtk_entry_realize(GtkWidget *widget) {
 
 void gtk_text_realize(GtkWidget *widget) {
    HWND Parent;
+   gboolean editable;
+
    Parent=gtk_get_parent_hwnd(widget);
+   editable=GTK_EDITABLE(widget)->is_editable;
    GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT","",
-                            WS_CHILD|WS_TABSTOP|
+                            WS_CHILD|(editable ? WS_TABSTOP : 0)|
                             ES_MULTILINE|ES_WANTRETURN|WS_VSCROLL|
                             (GTK_TEXT(widget)->word_wrap ? 0 : ES_AUTOHSCROLL),
                             0,0,0,0,Parent,NULL,hInst,NULL);
+/* Subclass the window (we assume that all multiline edit boxes have the same
+   window procedure) */
+   wpOrigTextProc = (WNDPROC) SetWindowLong(widget->hWnd,
+                                            GWL_WNDPROC,
+                                            (LONG)TextWndProc);
    gtk_set_default_font(widget->hWnd);
    gtk_editable_set_editable(GTK_EDITABLE(widget),
                              GTK_EDITABLE(widget)->is_editable);
@@ -2125,7 +2203,7 @@ void gtk_clist_realize(GtkWidget *widget) {
 /* g_print("Header %p, size %d\n",header,wp.cy);*/
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"LISTBOX","",
                                  WS_CHILD|WS_TABSTOP|LBS_DISABLENOSCROLL|
-                                 WS_VSCROLL|LBS_USETABSTOPS|
+                                 WS_VSCROLL|
                                  LBS_OWNERDRAWFIXED|LBS_NOTIFY,
                                  0,0,0,0,Parent,NULL,hInst,NULL);
    gtk_set_default_font(widget->hWnd);
@@ -2140,12 +2218,14 @@ void gtk_clist_realize(GtkWidget *widget) {
       hdi.mask = HDI_TEXT|HDI_FORMAT|HDI_WIDTH;
       hdi.pszText=clist->cols[i].title;
       if (hdi.pszText) {
-         hdi.cxy=clist->cols[i].width;
+         if (i==clist->ncols-1) hdi.cxy=9000;
+         else hdi.cxy=clist->cols[i].width;
          hdi.cchTextMax=strlen(hdi.pszText);
          hdi.fmt = HDF_LEFT|HDF_STRING;
          SendMessage(header,HDM_INSERTITEM,i+1,(LPARAM)&hdi);
       }
    }
+
 }
 
 void gtk_clist_show(GtkWidget *widget) {
@@ -2189,6 +2269,7 @@ void gtk_clist_draw_row(GtkCList *clist,LPDRAWITEMSTRUCT lpdis) {
          rcCol.right=CurrentX-LISTITEMHPACK;
          if (rcCol.left > lpdis->rcItem.right) rcCol.left=lpdis->rcItem.right;
          if (rcCol.right > lpdis->rcItem.right) rcCol.right=lpdis->rcItem.right;
+         if (i==clist->ncols-1) rcCol.right=lpdis->rcItem.right;
          if (row->text[i]) DrawText(lpdis->hDC,row->text[i],-1,&rcCol,
                                     DT_LEFT|DT_SINGLELINE|DT_VCENTER);
       }
@@ -2260,7 +2341,7 @@ gint gtk_clist_insert(GtkCList *clist,gint row,gchar *text[]) {
 
    if (GTK_WIDGET_REALIZED(widget)) {
       hWnd=widget->hWnd;
-      SendMessage(hWnd,LB_INSERTSTRING,(WPARAM)row,(LPARAM)new_row->data);
+      SendMessage(hWnd,LB_INSERTSTRING,(WPARAM)row,(LPARAM)NULL);
    }
 
    return row;
@@ -2344,6 +2425,7 @@ void gtk_clist_set_column_width_full(GtkCList *clist,gint column,gint width,
       header=clist->header;
       if (ResizeHeader && header) {
          hdi.mask=HDI_WIDTH;
+         if (column==clist->ncols-1) width=9000;
          hdi.cxy=width;
          if (SendMessage(header,HDM_GETITEM,(WPARAM)column,(LPARAM)&hdi) &&
              hdi.cxy!=width) {
@@ -2919,6 +3001,24 @@ void gtk_marshal_VOID__VOID(GtkObject *object,GSList *actions,
       actions=g_slist_next(actions);
    }
    if (default_action) (*default_action)(object);
+}
+
+void gtk_marshal_VOID__GINT(GtkObject *object,GSList *actions,
+                            GtkSignalFunc default_action,
+                            va_list args) {
+   gint arg1;
+   GtkSignal *signal;
+
+   arg1=va_arg(args,gint);
+
+   while (actions) {
+      signal=(GtkSignal*)actions->data;
+      if (signal->slot_object) {
+         (*signal->func)(signal->slot_object,arg1);
+      } else (*signal->func)(object,arg1,signal->func_data);
+      actions=g_slist_next(actions);
+   }
+   if (default_action) (*default_action)(object,arg1);
 }
 
 void gtk_marshal_VOID__GPOIN(GtkObject *object,GSList *actions,
@@ -3923,7 +4023,51 @@ void gtk_text_freeze(GtkText *text) {
 void gtk_text_thaw(GtkText *text) {
 }
 
+static GtkCList *sorting_clist;
+static gint gtk_clist_sort_func(gconstpointer a,gconstpointer b) {
+   return (*sorting_clist->cmp_func)(sorting_clist,a,b);
+}
+
 void gtk_clist_sort(GtkCList *clist) {
+   HWND hWnd;
+   gint rowind;
+   GList *sel;
+   GSList *rowpt;
+
+   sorting_clist=clist;
+   if (clist && clist->cmp_func && clist->rows) {
+/* Since the order of the list may change, we need to change the selection
+   as well. Do this by converting the row indices into GSList pointers (which
+   are invariant to the sort) and then convert back afterwards */
+      for (sel=clist->selection;sel;sel=g_list_next(sel)) {
+         rowind=GPOINTER_TO_INT(sel->data);
+         sel->data=(gpointer)g_slist_nth(clist->rows,rowind);
+      }
+      clist->rows=g_slist_sort(clist->rows,gtk_clist_sort_func);
+      for (sel=clist->selection;sel;sel=g_list_next(sel)) {
+         rowpt=(GSList *)(sel->data);
+         sel->data=GINT_TO_POINTER(g_slist_position(clist->rows,rowpt));
+      }
+      if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
+         hWnd=GTK_WIDGET(clist)->hWnd;
+         if (clist->mode==GTK_SELECTION_SINGLE) {
+            sel=clist->selection;
+            if (sel) rowind=GPOINTER_TO_INT(sel->data);
+            else rowind=-1;
+            SendMessage(hWnd,LB_SETCURSEL,(WPARAM)rowind,0);
+         } else {
+            for (rowind=0;rowind<g_slist_length(clist->rows);rowind++) {
+               SendMessage(hWnd,LB_SETSEL,(WPARAM)FALSE,(LPARAM)rowind);
+            }
+            for (sel=clist->selection;sel;sel=g_list_next(sel)) {
+               rowind=GPOINTER_TO_INT(sel->data);
+               SendMessage(hWnd,LB_SETSEL,(WPARAM)TRUE,(LPARAM)rowind);
+            }
+         }
+         InvalidateRect(hWnd,NULL,FALSE);
+         UpdateWindow(hWnd);
+      }
+   }
 }
 
 void gtk_clist_freeze(GtkCList *clist) {
@@ -4126,6 +4270,7 @@ void gtk_clist_moveto(GtkCList *clist,gint row,gint column,
 }
 
 void gtk_clist_set_compare_func(GtkCList *clist,GtkCListCompareFunc cmp_func) {
+   if (clist) clist->cmp_func = cmp_func;
 }
 
 void gtk_clist_set_column_auto_resize(GtkCList *clist,gint column,

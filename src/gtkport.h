@@ -355,6 +355,7 @@ struct _GtkCList {
    GtkCListColumn *cols;
    GList *selection;
    GtkSelectionMode mode;
+   GtkCListCompareFunc cmp_func;
    gint auto_sort : 1;
 };
 
