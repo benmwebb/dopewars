@@ -2145,7 +2145,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 
   hbox = gtk_hbox_new(FALSE, 7);
   CreateInventory(hbox, Names.Drugs, accel_group, TRUE, TRUE,
-                  &ClientData.Drug, DealDrugs);
+                  &ClientData.Drug, GTK_SIGNAL_FUNC(DealDrugs));
   clist = ClientData.Drug.HereList;
   gtk_clist_column_titles_active(GTK_CLIST(clist));
   gtk_clist_set_compare_func(GTK_CLIST(clist), DrugSortFunc);
@@ -3011,15 +3011,14 @@ void GunShopDialog(void)
 
   hbox = gtk_hbox_new(FALSE, 7);
   CreateInventory(hbox, Names.Guns, accel_group, TRUE, TRUE,
-                  &ClientData.Gun, DealGuns);
+                  &ClientData.Gun, GTK_SIGNAL_FUNC(DealGuns));
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  /* Button to finish buying/selling guns in the gun shop */
-  button = gtk_button_new_with_label(_("Done"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
 
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
