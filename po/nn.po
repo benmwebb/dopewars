@@ -18,7 +18,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nn_new\n"
-"POT-Creation-Date: 2003-08-31 16:25+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-10-24 23:58-0700\n"
 "PO-Revision-Date: 2003-08-31 22:58+0200\n"
 "Last-Translator: Åsmund Skjæveland <aasmunds@fys.uio.no>\n"
 "Language-Team: Norsk nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -339,7 +340,8 @@ msgstr "Lyd som blir spelt når ei av horene dine blir drepen"
 
 #: src/dopewars.c:430
 msgid "Sound file played when another player or cop is killed"
-msgstr "Lyd som blir spelt når ein annan spelar eller ei politimann blir drepen"
+msgstr ""
+"Lyd som blir spelt når ein annan spelar eller ei politimann blir drepen"
 
 #: src/dopewars.c:433
 msgid "Sound file played when you are killed"
@@ -825,7 +827,8 @@ msgid "Weed"
 msgstr "Jazztobakk"
 
 #: src/dopewars.c:746
-msgid "Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+msgid ""
+"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr "Columbiansk lasteskip lurte kystvakta! Jazztobakkprisen stuper!"
 
 #. The names of the default locations
@@ -955,7 +958,8 @@ msgstr "Ein dag utan dop er som ei natt"
 #: src/dopewars.c:798
 #, no-c-format
 msgid "We only use 20% of our brains, so why not burn out the other 80%"
-msgstr "Me bruker berre 20% av hjernane våre, så kvifor ikkje øydeleggja resten"
+msgstr ""
+"Me bruker berre 20% av hjernane våre, så kvifor ikkje øydeleggja resten"
 
 #: src/dopewars.c:799
 msgid "I'm soliciting contributions for Zombies for Christ"
@@ -1300,7 +1304,7 @@ msgstr ""
 "GPL\n"
 "Rapportér feil til forfattaren på ben@bellatrix.pcl.ac.uk\n"
 
-#: src/dopewars.c:2915
+#: src/dopewars.c:2917
 msgid ""
 "No curses client available - rebuild the binary passing the\n"
 "--enable-curses-client option to configure, or use a windowed\n"
@@ -1310,7 +1314,7 @@ msgstr ""
 "på nytt, med valet --enable-curses-client til configure,\n"
 "eller bruk ein grafisk klient (viss tilgjengeleg) i staden.\n"
 
-#: src/dopewars.c:2935
+#: src/dopewars.c:2937
 msgid ""
 "No graphical client available - rebuild the binary\n"
 "passing the --enable-gui-client option to configure, or\n"
@@ -1321,7 +1325,17 @@ msgstr ""
 "configure, eller bruk tekstmodus-klienten (viss\n"
 "tilgjengeleg) i staden.\n"
 
-#: src/dopewars.c:2996 src/winmain.c:337
+#: src/dopewars.c:2984
+#, fuzzy
+msgid ""
+"This binary has been compiled without networking support, and thus cannot "
+"run\n"
+"in admin mode. Recompile passing --enable-networking to the configure "
+"script.\n"
+msgstr ""
+""
+
+#: src/dopewars.c:3005 src/winmain.c:337
 msgid ""
 "This binary has been compiled without networking support, and thus cannot "
 "run\n"
@@ -1342,7 +1356,8 @@ msgid "D O P E W A R S"
 msgstr "D O P E W A R S"
 
 #: src/curses_client/curses_client.c:285
-msgid "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
+msgid ""
+"Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
 msgstr "dopewars er tufta på Drug Wars av John E. Dell, og er ei simulering"
 
 #: src/curses_client/curses_client.c:287
@@ -1354,7 +1369,8 @@ msgid "buying, selling, and trying to get past the cops!"
 msgstr "og selja narkotika. Ikkje lat politiet ta deg!"
 
 #: src/curses_client/curses_client.c:291
-msgid "The first thing you need to do is pay off your debt to the Loan Shark. After"
+msgid ""
+"The first thing you need to do is pay off your debt to the Loan Shark. After"
 msgstr "Det fyrste du må gjera er å betala gjelda di til lånehaien."
 
 #: src/curses_client/curses_client.c:293
@@ -1409,8 +1425,10 @@ msgid "For information on the command line options, type dopewars -h at your"
 msgstr "For informasjon om kommandolinevala, skriv dopewars -h på"
 
 #: src/curses_client/curses_client.c:321
-msgid "Unix prompt. This will display a help screen, listing the available options."
-msgstr "Unix-kommandolina. Det viser ein hjelpetekst med dei tilgjengelege vala."
+msgid ""
+"Unix prompt. This will display a help screen, listing the available options."
+msgstr ""
+"Unix-kommandolina. Det viser ein hjelpetekst med dei tilgjengelege vala."
 
 #. Prompts for hostname and port when selecting a server
 #. * manually
@@ -1543,7 +1561,8 @@ msgid "            L>ist the servers on the metaserver, and select one"
 msgstr "       L>ista tenarane på metatenaren, og velga ein"
 
 #: src/curses_client/curses_client.c:703
-msgid "            Q>uit (where you can start a server by typing \"dopewars -s\")"
+msgid ""
+"            Q>uit (where you can start a server by typing \"dopewars -s\")"
 msgstr "       A>vslutta (du kan starta ein tenar med «dopewars -s»)"
 
 #: src/curses_client/curses_client.c:705
@@ -1563,6 +1582,7 @@ msgid "%d. %tde"
 msgstr "%d. %tde"
 
 #. Prompt when the player chooses to "jet" to a new location
+#. Prompt in 'Jet' dialog
 #: src/curses_client/curses_client.c:810 src/gui_client/gtk_client.c:1463
 msgid "Where to, dude ? "
 msgstr "Kor til, kompis? "
@@ -1777,6 +1797,8 @@ msgid "How much money do you pay back? "
 msgstr "Kor mykje pengar vil du betala tilbake?"
 
 #. Error - player doesn't have enough money to pay back the loan
+#. Error - player has tried to put more money into the bank than
+#. * he/she has
 #: src/curses_client/curses_client.c:1501
 #: src/curses_client/curses_client.c:1547 src/gui_client/gtk_client.c:2549
 msgid "You don't have that much money!"
@@ -2989,6 +3011,7 @@ msgid "Status: Could not connect (%s)"
 msgstr "Status: Kunne ikkje kopla til (%s)"
 
 #. Message displayed during the attempted connect to a dopewars server
+#. Message displayed during the attempted connect to the metaserver
 #: src/gui_client/newgamedia.c:144 src/gui_client/newgamedia.c:364
 #, c-format
 msgid "Status: Attempting to contact %s..."
@@ -3242,7 +3265,8 @@ msgid "Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication"
 msgstr "Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering"
 
 #: src/serverside.c:241
-msgid "Attempt to connect to metaserver too frequently - waiting for next timeout"
+msgid ""
+"Attempt to connect to metaserver too frequently - waiting for next timeout"
 msgstr "Prøver for ofte å kopla til metatenaren - venter på neste tidsavbrot"
 
 #: src/serverside.c:301
@@ -3370,7 +3394,8 @@ msgstr "Kan ikkje lytta til nettverkssokkel. Avbryt."
 
 #: src/serverside.c:886
 #, c-format
-msgid "dopewars server version %s ready and waiting for connections on port %d."
+msgid ""
+"dopewars server version %s ready and waiting for connections on port %d."
 msgstr "dopewars-tenar versjon %s er klar og ventar på samband på port %d."
 
 #. Warning messages displayed if we fail to trap various signals
@@ -3451,7 +3476,8 @@ msgstr ""
 
 #: src/serverside.c:1276
 #, c-format
-msgid "dopewars server version %s ready for admin commands; try \"help\" for help"
+msgid ""
+"dopewars server version %s ready for admin commands; try \"help\" for help"
 msgstr ""
 "dopewars-tenar versjon %s er klar til å ta imot admin-kommandoar, prøv "
 "«help» for å få hjelp"
@@ -3674,7 +3700,8 @@ msgstr "Ut frå tipset ditt gjekk politiet mot %s, som vart skoten og drepen!"
 #: src/serverside.c:2937
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %tde. "
-msgstr "Ut frå tipset ditt rykka politiet ut mot %s, som kom seg unna med %d %tde."
+msgstr ""
+"Ut frå tipset ditt rykka politiet ut mot %s, som kom seg unna med %d %tde."
 
 #: src/serverside.c:3003
 msgid "YN^Do you pay a doctor %P to sew you up?"
@@ -3705,7 +3732,8 @@ msgstr "Luka vekk eit RandomOffer"
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %tde! That's a drag, "
 "man!"
-msgstr "Politihundar jagar deg %d kvartal! Du mista litt %tde. Det er hardt, mann."
+msgstr ""
+"Politihundar jagar deg %d kvartal! Du mista litt %tde. Det er hardt, mann."
 
 #: src/serverside.c:3085
 #, c-format
@@ -4260,8 +4288,10 @@ msgid "Asking SOCKS for connect to %s...\n"
 msgstr "Ber SOCKS om samband til %s...\n"
 
 #: src/AIPlayer.c:126
-msgid "Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication\n"
-msgstr "Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering\n"
+msgid ""
+"Using Socks.Auth.User and Socks.Auth.Password for SOCKS5 authentication\n"
+msgstr ""
+"Bruker Socks.Auth.User og Socks.Auth.Password til SOCKS5-autentisering\n"
 
 #: src/AIPlayer.c:153
 #, c-format
@@ -4390,4 +4420,3 @@ msgid ""
 msgstr ""
 "Ugyldig modul «%s» vald.\n"
 "(%s tilgjengeleg, brukar «%s» no.)"
-
