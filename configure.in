@@ -12,7 +12,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 
 dnl Do i18n stuff
-ALL_LINGUAS="de"
+ALL_LINGUAS="de pl"
 AM_GNU_GETTEXT
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl  $LIBS"

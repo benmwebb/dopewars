@@ -1,0 +1,2669 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2000-09-08 00:09+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/dopewars.c:108
+msgid "bitch"
+msgstr "dziwka"
+
+#: src/dopewars.c:108
+msgid "bitches"
+msgstr "dziwki"
+
+#: src/dopewars.c:108
+msgid "gun"
+msgstr "broñ"
+
+#: src/dopewars.c:108
+msgid "guns"
+msgstr "broñ"
+
+#: src/dopewars.c:108
+msgid "drug"
+msgstr "drag"
+
+#: src/dopewars.c:108
+msgid "drugs"
+msgstr "dragi"
+
+#: src/dopewars.c:109
+msgid "12-"
+msgstr "12-"
+
+#: src/dopewars.c:109
+msgid "-1984"
+msgstr "-1984"
+
+#: src/dopewars.c:110
+msgid "Hardass"
+msgstr "But"
+
+#: src/dopewars.c:110
+msgid "Bob"
+msgstr "Romek"
+
+#: src/dopewars.c:110
+msgid "the Loan Shark"
+msgstr "siedziba Z³otych Pasów"
+
+#: src/dopewars.c:110
+msgid "the Bank"
+msgstr "bank"
+
+#: src/dopewars.c:111
+msgid "Dan's House of Guns"
+msgstr "ruski bazar z broni±"
+
+#: src/dopewars.c:111
+msgid "the pub"
+msgstr "dyskoteka"
+
+#: src/dopewars.c:127
+msgid "Network port to connect to"
+msgstr "Port do po³±czenia"
+
+#: src/dopewars.c:130
+msgid "Name of the high score file"
+msgstr "Nazwa pliku z najlepszymi wynikami"
+
+#: src/dopewars.c:131
+msgid "Name of the server to connect to"
+msgstr "Nazwa serwera do po³±czenia siê"
+
+#: src/dopewars.c:134
+msgid "Non-zero if server should report to a metaserver"
+msgstr "Niezerowa warto¶æ je¿eli serwer ma siê kontaktowaæ z metaserwerem"
+
+#: src/dopewars.c:137
+msgid "Port for metaserver communication (client)"
+msgstr "Port do komunikacji z metaserwerem (klient)"
+
+#: src/dopewars.c:140
+msgid "Port for metaserver communication (server)"
+msgstr "Port do komunikacji z metaserwerwm (serwer)"
+
+#: src/dopewars.c:143
+msgid "Metaserver name to report server details to"
+msgstr "Nazwa metaserwera do wysy³ania szczegó³ów o serwerze"
+
+#: src/dopewars.c:146
+msgid "Path of the CGI script on the metaserver (client)"
+msgstr "¦cie¿ka do skryptu CGI na metaserwerze (klient)"
+
+#: src/dopewars.c:149
+msgid "Preferred hostname of your server machine"
+msgstr "Preferowana nazwa hosta twojego serwera"
+
+#: src/dopewars.c:151
+msgid "Authentication for LocalName with the metaserver"
+msgstr "Autentyfikacja dla LocalName z metaserwerem"
+
+#: src/dopewars.c:154
+msgid "Server description, reported to the metaserver"
+msgstr "Opis serwera, zg³aszany do metaserwera"
+
+#: src/dopewars.c:157
+msgid "Program used to display multi-page output"
+msgstr "Program do wy¶wietlania wyj¶cia wielostronicowego"
+
+#: src/dopewars.c:159
+msgid "No. of game turns (if 0, game never ends)"
+msgstr "Ilo¶æ tur (je¿eli 0, brak ograniczeñ)"
+
+#: src/dopewars.c:161
+msgid "Random events are sanitized"
+msgstr "Losowe zdarzenia umiarkowane"
+
+#: src/dopewars.c:164
+msgid "Be verbose in processing config file"
+msgstr "Tryb ¶ledzenia dla pliku konfiguracji"
+
+#: src/dopewars.c:166
+msgid "Number of locations in the game"
+msgstr "Ilo¶æ miejsc w grze"
+
+#: src/dopewars.c:169
+msgid "Number of guns in the game"
+msgstr "Ilo¶æ broni w grze"
+
+#: src/dopewars.c:171
+msgid "Number of drugs in the game"
+msgstr "Ilo¶æ narkotyków w grze"
+
+#: src/dopewars.c:173
+msgid "Location of the Loan Shark"
+msgstr "Po³o¿enie Z³otych Pasów"
+
+#: src/dopewars.c:175
+msgid "Location of the bank"
+msgstr "Po³o¿enie banku"
+
+#: src/dopewars.c:177
+msgid "Location of the gun shop"
+msgstr "Po³o¿enie ruskiego bazaru z broni±"
+
+#: src/dopewars.c:179
+msgid "Location of the pub"
+msgstr "Po³o¿enie dyskoteki"
+
+#: src/dopewars.c:182
+msgid "Name of the loan shark"
+msgstr "Nazwa Z³otych Pasów"
+
+#: src/dopewars.c:184
+msgid "Name of the bank"
+msgstr "Nazwa banku"
+
+#: src/dopewars.c:186
+msgid "Name of the gun shop"
+msgstr "Nazwa sklepu z broni±"
+
+#: src/dopewars.c:188
+msgid "Name of the pub"
+msgstr "Nazwa dyskoteki"
+
+#: src/dopewars.c:190
+msgid "Sort key for listing available drugs"
+msgstr "Rodzaj klucza sortuj±cego dostêpne narkotyki"
+
+#: src/dopewars.c:193
+msgid "No. of seconds in which to return fire"
+msgstr "Ilo¶æ sekund na oddanie strza³u"
+
+#: src/dopewars.c:196
+msgid "Players are disconnected after this many seconds"
+msgstr "Gracze s± roz³±czani po tej liczbie sekund"
+
+#: src/dopewars.c:199
+msgid "Time in seconds for connections to be made or broken"
+msgstr "Liczba sekund na nawi±zanie po³±cznia albo zerwanie"
+
+#: src/dopewars.c:202
+msgid "Maximum number of TCP/IP connections"
+msgstr "Maksymalna ilo¶æ po³±czeñ TCP/IP"
+
+#: src/dopewars.c:205
+msgid "Seconds between turns of AI players"
+msgstr "Liczba sekund pomiêdzy turami komputerowych graczy"
+
+#: src/dopewars.c:208
+msgid "Amount of cash that each player starts with"
+msgstr "Ilo¶æ gotówki, z jak± gracz zaczyna"
+
+#: src/dopewars.c:211
+msgid "Amount of debt that each player starts with"
+msgstr "Z jakim d³ugiem zaczyna ka¿dy gracz"
+
+#: src/dopewars.c:213
+msgid "Name of each location"
+msgstr "Nazwa ka¿dej lokacji"
+
+#: src/dopewars.c:217
+msgid "Police presence at each location (%)"
+msgstr "Policja obecna w ka¿dym miejscu (%)"
+
+#: src/dopewars.c:221
+msgid "Minimum number of drugs at each location"
+msgstr "Minimalna ilo¶æ dragów dla ka¿dego miejsca"
+
+#: src/dopewars.c:225
+msgid "Maximum number of drugs at each location"
+msgstr "Maksymalna ilo¶æ dragów dla ka¿dego miejsca"
+
+#: src/dopewars.c:229
+msgid "Name of each drug"
+msgstr "Nazwa poszczególnych narkotyków"
+
+#: src/dopewars.c:233
+msgid "Minimum normal price of each drug"
+msgstr "Minimalna cena ka¿dego draga"
+
+#: src/dopewars.c:237
+msgid "Maximum normal price of each drug"
+msgstr "Maksymalna cena ka¿dego draga"
+
+#: src/dopewars.c:241
+msgid "Non-zero if this drug can be specially cheap"
+msgstr "Niezerowa warto¶æ je¿eli ten drag ma byæ szczególnie tani"
+
+#: src/dopewars.c:245
+msgid "Non-zero if this drug can be specially expensive"
+msgstr "Niezerowa warto¶æ je¿eli ten drag ma byæ szczególnie drogi"
+
+#: src/dopewars.c:249
+msgid "Message displayed when this drug is specially cheap"
+msgstr "Wiadomo¶æ wy¶wietlana, gdy drag jest szczególnie tani"
+
+#: src/dopewars.c:253 src/dopewars.c:256
+#, c-format
+msgid "Format string used for expensive drugs 50% of time"
+msgstr "Format u¿ywany dla drogich dragów przez 50% czasu"
+
+#: src/dopewars.c:259
+msgid "Divider for drug price when it's specially cheap"
+msgstr "Separator dla ceny szczególnie taniego draga"
+
+#: src/dopewars.c:262
+msgid "Multiplier for specially expensive drug prices"
+msgstr "Mno¿nik dla szczególnie drogich dragów"
+
+#: src/dopewars.c:265
+msgid "Name of each gun"
+msgstr "Nazwa ka¿dej broni"
+
+#: src/dopewars.c:269
+msgid "Price of each gun"
+msgstr "Cena ka¿dej broni"
+
+#: src/dopewars.c:273
+msgid "Space taken by each gun"
+msgstr "Miejsce zajmowane przez poszczególn± broñ"
+
+#: src/dopewars.c:277
+msgid "Damage done by each gun"
+msgstr "Obra¿enia zadawane prze poszczególne bronie"
+
+#: src/dopewars.c:281
+#, c-format
+msgid "% probability of escaping from Officer Hardass"
+msgstr "% prawdopodobieñstwo ucieczki od Romka Buta"
+
+#: src/dopewars.c:284
+msgid "Modifier to EscapeProb for each extra deputy"
+msgstr "Modyfikator dla EscapeProb dla ka¿dego gliny extra"
+
+#: src/dopewars.c:287
+#, c-format
+msgid "% probability that Officer Hardass hits you"
+msgstr "% prawdopodobieñstwo, ¿e Romek But ciê trafi"
+
+#: src/dopewars.c:290
+msgid "Modifier to HitProb for each extra deputy"
+msgstr "Modyfikator dla HitProb dla ka¿dego gliny extra"
+
+#: src/dopewars.c:293
+msgid "Maximum damage done to you by each cop"
+msgstr "Maksymalne obra¿enia zadawane przez jednego gliniarza"
+
+#: src/dopewars.c:296
+msgid "Toughness of (difficulty of hitting) each cop"
+msgstr "Twardo¶æ (trudno¶æ trafienia) gliniarza"
+
+#: src/dopewars.c:299
+#, c-format
+msgid "% probability that the cops catch you dropping drugs"
+msgstr "% prawdopodobieñstwo, ¿e gliny z³api± ciê upuszczaj±cego broñ"
+
+#: src/dopewars.c:302
+msgid "Word used to denote a single \"bitch\""
+msgstr "S³owo okre¶laj±ce jedn± \"dziwkê\""
+
+#: src/dopewars.c:304
+msgid "Word used to denote two or more \"bitches\""
+msgstr "S³owo okre¶laj±ce dwie lub wiêcej \"dziwek\""
+
+#: src/dopewars.c:307
+msgid "Word used to denote a single gun or equivalent"
+msgstr "S³owo okre¶laj±ce jedn± broñ"
+
+#: src/dopewars.c:310
+msgid "Word used to denote two or more guns"
+msgstr "S³owo okre¶laj±ce wiêcej broni"
+
+#: src/dopewars.c:312
+msgid "Word used to denote a single drug or equivalent"
+msgstr "S³owo okre¶laj±ce jednego draga"
+
+#: src/dopewars.c:315
+msgid "Word used to denote two or more drugs"
+msgstr "S³owo okre¶laj±ce wiêcej dragów"
+
+#: src/dopewars.c:317
+msgid "Text prefixed to the turn number (i.e. the month)"
+msgstr "Tekst poprzedzaj±cy numer tury (np. miesi±c)"
+
+#: src/dopewars.c:320
+msgid "Text appended to the turn number (i.e. the year)"
+msgstr "Tekst dodawany do numeru tury (np. rok)"
+
+#: src/dopewars.c:323
+msgid "Name of the police officer"
+msgstr "Nazwisko oficera policji"
+
+#: src/dopewars.c:325
+msgid "Name of the reserve police officer"
+msgstr "Nazwisko rezerwowego oficera policji"
+
+#: src/dopewars.c:327
+msgid "Cost for a bitch to spy on the enemy"
+msgstr "Koszt szpiegowania wroga przez dziwkê"
+
+#: src/dopewars.c:330
+msgid "Cost for a bitch to tipoff the cops to an enemy"
+msgstr "Koszt napuszczenia na wroga glin przez dziwkê"
+
+#: src/dopewars.c:333
+msgid "Minimum price to hire a bitch"
+msgstr "Minimalna cena wynajêcia dziwki"
+
+#: src/dopewars.c:336
+msgid "Maximum price to hire a bitch"
+msgstr "Maksymalna wynajêcia dziwki"
+
+#: src/dopewars.c:339
+msgid "List of things which you overhear on the subway"
+msgstr "Lista rzeczy jakie s³yszysz na dworcu"
+
+#: src/dopewars.c:342
+msgid "Number of subway sayings"
+msgstr "Liczba komentarzy na dworcu"
+
+#: src/dopewars.c:345
+msgid "List of songs which you can hear playing"
+msgstr "Liczba piosenek, które mo¿esz us³yszeæ"
+
+#: src/dopewars.c:348
+msgid "Number of playing songs"
+msgstr "Liczba granych piosenek"
+
+#: src/dopewars.c:351
+msgid "List of things which you can stop to do"
+msgstr "Lista rzeczy, które mo¿esz przestaæ robiæ"
+
+#: src/dopewars.c:354
+msgid "Number of things which you can stop to do"
+msgstr "Liczba rzeczy, które mo¿esz przestaæ robiæ"
+
+#: src/dopewars.c:359
+msgid "escaped"
+msgstr "usciek³"
+
+#: src/dopewars.c:359
+msgid "defected"
+msgstr "uszkodzi³"
+
+#: src/dopewars.c:359
+msgid "was shot"
+msgstr "zosta³ postrzelony"
+
+#: src/dopewars.c:363
+msgid "`Are you Experienced` by Jimi Hendrix"
+msgstr "`Czy jeste¶ do¶wiadczony` by Alex Sex Band"
+
+#: src/dopewars.c:364
+msgid "`Cheeba Cheeba` by Tone Loc"
+msgstr "`Chod¼ tu i poka¿ mi swe paski` by Dress Attack"
+
+#: src/dopewars.c:365
+msgid "`Comin` in to Los Angeles` by Arlo Guthrie"
+msgstr "`Dziewczyna drezyna` by BoYz"
+
+#: src/dopewars.c:366
+msgid "`Commercial` by Spanky and Our Gang"
+msgstr "`Spuszczê ci siê do ¶rodka` by Spanky Doggy Dog"
+
+#: src/dopewars.c:367
+msgid "`Late in the Evening` by Paul Simon"
+msgstr "`Mój dom, mój pies` by Krzysztof Krawczyk"
+
+#: src/dopewars.c:368
+msgid "`Light Up` by Styx"
+msgstr "`Murzyn Mariusz` by Acid Drinkers"
+
+#: src/dopewars.c:369
+msgid "`Mexico` by Jefferson Airplane"
+msgstr "`Viva Go³ota` by Calabash"
+
+#: src/dopewars.c:370
+msgid "`One toke over the line` by Brewer & Shipley"
+msgstr "`Mandatory Cocaine Song` by Flapjack"
+
+#: src/dopewars.c:371
+msgid "`The Smokeout` by Shel Silverstein"
+msgstr "`Zagubiona mi³o¶æ` by Classic"
+
+#: src/dopewars.c:372
+msgid "`White Rabbit` by Jefferson Airplane"
+msgstr "`Bia³y króliczek` by Marylin Manson"
+
+#: src/dopewars.c:373
+msgid "`Itchycoo Park` by Small Faces"
+msgstr "`Killin' floor` by Body Count"
+
+#: src/dopewars.c:374
+msgid "`White Punks on Dope` by the Tubes"
+msgstr "`Czarnuchy na kwasie` by Skinner"
+
+#: src/dopewars.c:375
+msgid "`Legend of a Mind` by the Moody Blues"
+msgstr ""
+
+#: src/dopewars.c:376
+msgid "`Eight Miles High` by the Byrds"
+msgstr "`Firestarter` by Prodigy"
+
+#: src/dopewars.c:377
+msgid "`Acapulco Gold` by Riders of the Purple Sage"
+msgstr "`Tata diler` by Kazik na ¿ywo"
+
+#: src/dopewars.c:378
+msgid "`Kicks` by Paul Revere & the Raiders"
+msgstr "`Blondyna Maryna` by Just Five"
+
+#: src/dopewars.c:379
+msgid "the Nixon tapes"
+msgstr "`Zasad¼ Krzaka, zarzuæ Kwacha` by Degenerate Politics"
+
+#: src/dopewars.c:380
+msgid "`Legalize It` by Mojo Nixon & Skid Roper"
+msgstr "`Zalegalizuj To` by Kaliber 45"
+
+#: src/dopewars.c:385
+msgid "have a beer"
+msgstr "pijesz browar"
+
+#: src/dopewars.c:386
+msgid "smoke a joint"
+msgstr "palisz skrêta"
+
+#: src/dopewars.c:387
+msgid "smoke a cigar"
+msgstr "wypalasz cygaro"
+
+#: src/dopewars.c:388
+msgid "smoke a Djarum"
+msgstr "czujesz, ¿e musich sobie ul¿yæ"
+
+#: src/dopewars.c:389
+msgid "smoke a cigarette"
+msgstr "palisz faje"
+
+#: src/dopewars.c:393
+msgid "Baretta"
+msgstr "Baretta"
+
+#: src/dopewars.c:394
+msgid ".38 Special"
+msgstr "Magnum"
+
+#: src/dopewars.c:395
+msgid "Ruger"
+msgstr "Bejzbol"
+
+#: src/dopewars.c:396
+msgid "Saturday Night Special"
+msgstr "Kastet AdidaS"
+
+#: src/dopewars.c:400
+msgid "Bronx"
+msgstr "Warszawa"
+
+#: src/dopewars.c:401
+msgid "Ghetto"
+msgstr "Wroc³aw"
+
+#: src/dopewars.c:402
+msgid "Central Park"
+msgstr "Gdañsk"
+
+#: src/dopewars.c:403
+msgid "Manhattan"
+msgstr "Kraków"
+
+#: src/dopewars.c:404
+msgid "Coney Island"
+msgstr "Pruszków"
+
+#: src/dopewars.c:405
+msgid "Brooklyn"
+msgstr "Gdynia"
+
+#: src/dopewars.c:406
+msgid "Queens"
+msgstr "Poznañ"
+
+#: src/dopewars.c:407
+msgid "Staten Island"
+msgstr "Kozia Wólka"
+
+#: src/dopewars.c:411
+msgid "Acid"
+msgstr "Kwas"
+
+#: src/dopewars.c:412
+msgid "The market is flooded with cheap home-made acid!"
+msgstr "Rynek jest pe³en taniego, domowej roboty kwasu!"
+
+#: src/dopewars.c:413
+msgid "Cocaine"
+msgstr "Kokaina"
+
+#: src/dopewars.c:414
+msgid "Hashish"
+msgstr "Haszysz"
+
+#: src/dopewars.c:414
+msgid "The Marrakesh Express has arrived!"
+msgstr "Ekspres z Marakeszu przywióz³ tani hasz!"
+
+#: src/dopewars.c:415
+msgid "Heroin"
+msgstr "Heroina"
+
+#: src/dopewars.c:416
+msgid "Ludes"
+msgstr "Lufki"
+
+#: src/dopewars.c:417
+msgid "Rival drug dealers raided a pharmacy and are selling cheap ludes!"
+msgstr "Konkurencyjni dresiarze opychaj± tanio lufki"
+
+#: src/dopewars.c:418
+msgid "MDA"
+msgstr "Ekstaza"
+
+#: src/dopewars.c:419
+msgid "Opium"
+msgstr "Opium"
+
+#: src/dopewars.c:420
+msgid "PCP"
+msgstr "PCP"
+
+#: src/dopewars.c:421
+msgid "Peyote"
+msgstr "Peyotl"
+
+#: src/dopewars.c:422
+msgid "Shrooms"
+msgstr "Grzybki"
+
+#: src/dopewars.c:423
+msgid "Speed"
+msgstr "Spidy"
+
+#: src/dopewars.c:424
+msgid "Weed"
+msgstr "Marihuana"
+
+#: src/dopewars.c:424
+msgid ""
+"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+msgstr "¦wie¿a dostawa marihuany z Holandii! Ceny trawy lec± w dó³"
+
+#: src/dopewars.c:430
+#, c-format
+msgid "Cops made a big %s bust! Prices are outrageous!"
+msgstr "Gliny zrobi³y ob³awê na %s ! Ceny towaru s± kosmiczne!"
+
+#: src/dopewars.c:431
+#, c-format
+msgid "Addicts are buying %s at ridiculous prices!"
+msgstr "Æpuny kupuj± %s po absurdalnych cenach!"
+
+#: src/dopewars.c:436
+msgid "Wouldn't it be funny if everyone suddenly quacked at once?"
+msgstr "By³oby fajnie gdyby wszyscy wyszli na ulicê i siê pieprzyli"
+
+#: src/dopewars.c:437
+msgid "The Pope was once Jewish, you know"
+msgstr "Za¿ywasz-przegrywasz!"
+
+#: src/dopewars.c:438
+msgid "I'll bet you have some really interesting dreams"
+msgstr "Hej cieciu, zwolnij trochê"
+
+#: src/dopewars.c:439
+msgid "So I think I'm going to Amsterdam this year"
+msgstr "Po co ci mózg, jak masz dresy"
+
+#: src/dopewars.c:440
+msgid "Son, you need a yellow haircut"
+msgstr "Wiesz, nie zawsze by³am kobiet±"
+
+#: src/dopewars.c:441
+msgid "I think it's wonderful what they're doing with incense these days"
+msgstr "Masz niez³y ty³ek...chcesz siê zabawiæ?"
+
+#: src/dopewars.c:442
+msgid "I wasn't always a woman, you know"
+msgstr "Wiesz, nie zawsze by³am kobiet±"
+
+#: src/dopewars.c:443
+msgid "Does your mother know you're a dope dealer?"
+msgstr "Czy twoja stara wie, ¿e jeste¶ dilerem?"
+
+#: src/dopewars.c:444
+msgid "Are you high on something?"
+msgstr "Co dzi¶ wci±gn±³e¶?"
+
+#: src/dopewars.c:445
+msgid "Oh, you must be from California"
+msgstr "Pan z Wo³omina?"
+
+#: src/dopewars.c:446
+msgid "I used to be a hippie, myself"
+msgstr "Kiedy¶ te¿ by³em ¶mieciem, tak ja ty."
+
+#: src/dopewars.c:447
+msgid "There's nothing like having lots of money"
+msgstr "Nic siê nie liczy oprócz pieniêdzy"
+
+#: src/dopewars.c:448
+msgid "You look like an aardvark!"
+msgstr "Niez³y dres, widzê, ¿e zarabiasz na tym gównie kupê szmalu"
+
+#: src/dopewars.c:449
+msgid "I don't believe in Ronald Reagan"
+msgstr "Przypominasz mi zafajdanego æpuna"
+
+#: src/dopewars.c:450
+msgid "Courage!  Bush is a noodle!"
+msgstr "Odwagi! Zajaraj sobie i siê wyluzujesz!"
+
+#: src/dopewars.c:451
+msgid "Haven't I seen you on TV?"
+msgstr "Czy ja cie czasem nie widzia³em w TV?"
+
+#: src/dopewars.c:452
+msgid "I think hemorrhoid commercials are really neat!"
+msgstr "Reklamy tamponów s± odjazdowe"
+
+#: src/dopewars.c:453
+msgid "We're winning the war for drugs!"
+msgstr "Wygramy tê wojnê o narkotyki!"
+
+#: src/dopewars.c:454
+msgid "A day without dope is like night"
+msgstr "Dzieñ bez prochów jest jak noc"
+
+#: src/dopewars.c:455
+#, c-format
+msgid "We only use 20% of our brains, so why not burn out the other 80%"
+msgstr "U¿ywamy tylko 10% naszego mózgu, czemu nie zjaraæ reszty?"
+
+#: src/dopewars.c:456
+msgid "I'm soliciting contributions for Zombies for Christ"
+msgstr "Zbieram datki na Ko¶ció³ Zombich Chrystusa"
+
+#: src/dopewars.c:457
+msgid "I'd like to sell you an edible poodle"
+msgstr "Sprzedaæ ci trochê py³ku kosmicznego?"
+
+#: src/dopewars.c:458
+msgid "Winners don't do drugs... unless they do"
+msgstr "Zwyciêzcy nie u¿ywaj± dragów...dopóki s± zwyciêzcami"
+
+#: src/dopewars.c:459
+msgid "Kill a cop for Christ!"
+msgstr "Zajeb gline, dla Chrystusa!"
+
+#: src/dopewars.c:460
+msgid "I am the walrus!"
+msgstr "Jestem jebanym cieciem!"
+
+#: src/dopewars.c:461
+msgid "Jesus loves you more than you will know"
+msgstr "Jezus kocha ciê bardziej ode mnie"
+
+#: src/dopewars.c:462
+msgid "I feel an unaccountable urge to dye my hair blue"
+msgstr "Czujê potrzebê przefarbowania siê na niebiesko"
+
+#: src/dopewars.c:463
+msgid "Wasn't Jane Fonda wonderful in Barbarella"
+msgstr "Czy twoja laska nie by³a cudowna w tym porno?"
+
+#: src/dopewars.c:464
+msgid "Just say No... well, maybe... ok, what the hell!"
+msgstr "Po prostu powiedz NIE...chocia¿, mo¿e...ok, a niech tam!"
+
+#: src/dopewars.c:465
+msgid "Would you like a jelly baby?"
+msgstr "Chcesz landrynkê kotku?"
+
+#: src/dopewars.c:466
+msgid "Drugs can be your friend!"
+msgstr "Dragi to twój najlepszy przyjaciel, pamiêtaj!"
+
+#: src/dopewars.c:1383
+#, c-format
+msgid ""
+"Usage: dopewars [OPTION]...\n"
+"Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
+"  -b       \"black and white\" - i.e. do not use pretty colours\n"
+"              (by default colours are used where the terminal supports "
+"them)\n"
+"  -n       be boring and don't connect to any available dopewars servers\n"
+"              (i.e. single player mode)\n"
+"  -a       \"antique\" dopewars - keep as closely to the original version "
+"as\n"
+"              possible (this also disables any networking)\n"
+"  -f file  specify a file to use as the high score table\n"
+"              (by default %s/dopewars.sco is used)\n"
+"  -o addr  specify a hostname where the server for multiplayer dopewars\n"
+"              can be found (in human-readable - e.g. nowhere.com - format)\n"
+"  -s       run in server mode (note: for a \"non-interactive\" server, "
+"simply\n"
+"              run as dopewars -s < /dev/null >> logfile & )\n"
+"  -S       run a \"private\" server (i.e. do not notify the metaserver)\n"
+"  -p       specify the network port to use (default: 7902)\n"
+"  -g file  specify the pathname of a dopewars configuration file. This file\n"
+"              is read immediately when the -g option is encountered\n"
+"  -r file  maintain pid file \"file\" while running the server\n"
+"  -c       create and run a computer player\n"
+"  -w       force the use of a graphical (windowed) client (GTK+ or Win32)\n"
+"  -t       force the use of a text-mode client (curses)\n"
+"              (by default, a windowed client is used when possible)\n"
+"  -h       display this help information\n"
+"  -v       output version information and exit\n"
+"\n"
+"dopewars is Copyright (C) Ben Webb 1998-2000, and released under the GNU "
+"GPL\n"
+"Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
+msgstr ""
+
+#: src/curses_client.c:133
+msgid "D O P E W A R S"
+msgstr "D R E S S   W A R S"
+
+#: src/curses_client.c:138
+msgid ""
+"Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
+msgstr "Oparte s± na starej grze `Drug Wars` Johna E. Dell'a. Jest to symulacja "
+
+#: src/curses_client.c:140
+msgid "imaginary drug market.  dopewars is an All-American game which features"
+msgstr "rynku narkotykowego z takimi elementami jak kupowanie, sprzedawanie "
+
+#: src/curses_client.c:142
+msgid "buying, selling, and trying to get past the cops!"
+msgstr "i próby ucieczki od gliniarzy."
+
+#: src/curses_client.c:144
+msgid ""
+"The first thing you need to do is pay off your debt to the Loan Shark. After"
+msgstr "Najpierw musisz sp³aciæ d³ug Z³otym Pasom. Potem twoim celem jest"
+
+#: src/curses_client.c:146
+msgid ""
+"that, your goal is to make as much money as possible (and stay alive)! You"
+msgstr "zarobienie tak du¿o forsy, jak siê da i pozostanie przy ¿yciu!"
+
+#: src/curses_client.c:148
+msgid "have one month of game time to make your fortune."
+msgstr "Masz jeden miesi±c na zdobycie fortuny."
+
+#: src/curses_client.c:150
+msgid "Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr "   Copyright (C) 1998-2000 Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+
+#: src/curses_client.c:152
+#, c-format
+msgid "Version %s"
+msgstr "Wersja %s"
+
+#: src/curses_client.c:155
+msgid "dopewars is released under the GNU General Public Licence"
+msgstr "  dopewars s± publikowane zgodnie z GNU General Public Licence"
+
+#: src/curses_client.c:158
+msgid "Drug Dealing and Research     Dan Wolf"
+msgstr "Dilowanie dragami i badania   Dan Wolf"
+
+#: src/curses_client.c:159
+msgid "Play Testing                   Phil Davis           Owen Walsh"
+msgstr "Testowanie gry                Phil Davis           Owen Walsh"
+
+#: src/curses_client.c:161
+msgid "Extensive Play Testing        Katherine Holt       Caroline Moore"
+msgstr "Ekstensywne testowanie gry    Katherine Holt       Caroline Moore"
+
+#: src/curses_client.c:163
+msgid "Constructive Criticism        Andrea Elliot-Smith  Pete Winn"
+msgstr "Konstruktywna krytyka         Andrea Elliot-Smith  Pete Winn"
+
+#: src/curses_client.c:165
+msgid "Unconstructive Criticism      James Matthews"
+msgstr "Niekonstruktywna krytyka      James Matthews"
+
+#: src/curses_client.c:167
+msgid "For information on the command line options, type dopewars -h at your"
+msgstr "Informacje o komendach linni poleceñ uzyskasz piszaæ dopewars -h po"
+
+#: src/curses_client.c:169
+msgid ""
+"Unix prompt. This will display a help screen, listing the available options."
+msgstr "  twoim znaku zachêty. To wy¶wietli ekran pomocy z dostêpnym opcjami."
+
+#: src/curses_client.c:185
+msgid "Please enter the hostname and port of a dopewars server:-"
+msgstr "Wprowad¼ nazwê hosta i port serwera dopewars:-"
+
+#: src/curses_client.c:186
+msgid "Hostname: "
+msgstr "Nazwa hosta: "
+
+#: src/curses_client.c:189
+msgid "Port: "
+msgstr "Port: "
+
+#: src/curses_client.c:205
+msgid "No servers listed on metaserver"
+msgstr "Nie ma ¿adnych serwerów na metaserwerze"
+
+#: src/curses_client.c:209
+msgid "Please wait... attempting to contact metaserver..."
+msgstr "Proszê czekaæ... próba kontaktu z metaserwerem..."
+
+#: src/curses_client.c:217
+msgid "Connection to metaserver established. Obtaining server list..."
+msgstr "Po³±czenie ustanowione. Otrzymwanie listy serwerów..."
+
+#: src/curses_client.c:230
+#, c-format
+msgid "Server : %s"
+msgstr "Serwer : %s"
+
+#: src/curses_client.c:232
+#, c-format
+msgid "Port   : %d"
+msgstr "Port:  : %d"
+
+#: src/curses_client.c:234
+#, c-format
+msgid "Version    : %s"
+msgstr "Wersja     : %s"
+
+#: src/curses_client.c:237
+#, c-format
+msgid "Players: -unknown- (maximum %d)"
+msgstr "Gracze: -nieznani- (maksymalnie %d)"
+
+#: src/curses_client.c:240
+#, c-format
+msgid "Players: %d (maximum %d)"
+msgstr "Gracze: %d (maksymalnie %d)"
+
+#: src/curses_client.c:244
+#, c-format
+msgid "Up since   : %s"
+msgstr "Od        : %s"
+
+#: src/curses_client.c:246
+#, c-format
+msgid "Comment: %s"
+msgstr "Komentarz: %s"
+
+#: src/curses_client.c:250
+msgid "N>astêpny serwer; P>oprzedni serwer; W>ybierz ten serwer... "
+msgstr ""
+
+#: src/curses_client.c:251
+msgid "NPS"
+msgstr "NPW"
+
+#: src/curses_client.c:297
+msgid "Please wait... attempting to contact dopewars server..."
+msgstr "Proszê czekaæ... próba kontaktu z serwerem dopewars..."
+
+#: src/curses_client.c:304
+#, c-format
+msgid "Error: %s"
+msgstr "B³±d:  %s"
+
+#: src/curses_client.c:307
+msgid "Could not start multiplayer dopewars"
+msgstr "Nie mogê wystartowaæ trybu multiplayer"
+
+#: src/curses_client.c:314
+msgid "Will you... C>onnect to a different host and/or port"
+msgstr "Chcesz... P>o³±czyæ siê z innym hostem i/lub portem"
+
+#: src/curses_client.c:316
+msgid "            L>ist the servers on the metaserver, and select one"
+msgstr "          Z>obaczyæ listê serwerów na metaserwerze i wybraæ jeden"
+
+#: src/curses_client.c:319
+msgid "            Q>uit (where you can start a server by typing "
+msgstr "          W>yj¶æ (mo¿esz uruchomiæ serwer pisz±c "
+
+#: src/curses_client.c:322
+msgid "                   dopewars -s < /dev/null & )"
+msgstr ""
+
+#: src/curses_client.c:323
+msgid "         or P>lay single-player ? "
+msgstr "          G>raæ w trybie single-player"
+
+#: src/curses_client.c:325
+msgid "CLQP"
+msgstr "PZWG"
+
+#: src/curses_client.c:362 src/gtk_client.c:757
+msgid "Where to, dude ? "
+msgstr "Dok±d jedziesz ? "
+
+#: src/curses_client.c:392
+#, c-format
+msgid "You can't get any cash for the following carried %s :"
+msgstr "Nie dostaniesz forsy za to ci niesiesz %s :"
+
+#: src/curses_client.c:405
+msgid "What do you want to drop? "
+msgstr "Co chcesz zostawiæ? "
+
+#: src/curses_client.c:416
+msgid "How many do you drop? "
+msgstr "Ile chcesz zostawiæ? "
+
+#: src/curses_client.c:445 src/curses_client.c:815
+msgid "What do you wish to buy? "
+msgstr "Co chcesz kupiæ? "
+
+#: src/curses_client.c:447 src/curses_client.c:817
+msgid "What do you wish to sell? "
+msgstr "Co chcesz sprzedaæ? "
+
+#: src/curses_client.c:464
+#, c-format
+msgid "You can afford %d, and can carry %d. "
+msgstr "Staæ ciê na %d, a mo¿esz unie¶æ %d. "
+
+#: src/curses_client.c:467
+msgid "How many do you buy? "
+msgstr "Ile kupujesz? "
+
+#: src/curses_client.c:475
+#, c-format
+msgid "You have %d. "
+msgstr "Posiadasz %d. "
+
+#: src/curses_client.c:477
+msgid "How many do you sell? "
+msgstr "Ile sprzedajesz? "
+
+#: src/curses_client.c:500
+#, c-format
+msgid "Choose an errand to give one of your %s..."
+msgstr "Wybierz zadanie dla jednej ze swoich %s..."
+
+#: src/curses_client.c:506
+#, c-format
+msgid "   S>py on another dealer                  (cost: %s)"
+msgstr "   S>zpieguj innego dilera                 (koszt: %s)"
+
+#: src/curses_client.c:510
+#, c-format
+msgid "   T>ip off the cops to another dealer     (cost: %s)"
+msgstr "   Z>akapuj glinom na innego dilera        (koszt: %s)"
+
+#: src/curses_client.c:513
+msgid "   G>et stuffed"
+msgstr "   W>ypieprz j± z roboty"
+
+#: src/curses_client.c:516
+msgid "or C>ontact your spies and receive reports"
+msgstr "albo K>ontakt ze szpiegami i raporcik"
+
+#: src/curses_client.c:518
+msgid "or N>o errand ? "
+msgstr "   N>ie ma byæ ¿adnego zlecenia ? "
+
+#: src/curses_client.c:521
+msgid "STGCN"
+msgstr "SZWKN"
+
+#: src/curses_client.c:524
+msgid "Whom do you want to spy on? "
+msgstr "Kogo chcesz szpiegowaæ? "
+
+#: src/curses_client.c:529
+msgid "Whom do you want to tip the cops off to? "
+msgstr "Na kogo chcesz nas³aæ gliny? "
+
+#: src/curses_client.c:534
+msgid " Are you sure? "
+msgstr "Jeste¶ pewien? "
+
+#: src/curses_client.c:535 src/curses_client.c:553 src/curses_client.c:1662
+msgid "YN"
+msgstr "TN"
+
+#: src/curses_client.c:551
+msgid "Are you sure you want to quit? "
+msgstr "Na pewno chcesz wyj¶æ? "
+
+#: src/curses_client.c:559
+msgid "New name: "
+msgstr "Nowe imiê: "
+
+#: src/curses_client.c:609
+msgid "You have been pushed from the server. Reverting to single player mode."
+msgstr "Zosta³e¶ wyrzucony z serwera. W³±czenie trybu dla jednego gracza."
+
+#: src/curses_client.c:619
+msgid "The server has terminated. Reverting to single player mode."
+msgstr "Serwer zosta³ zatrzymany. W³±czenie trybu dla jednego gracza."
+
+#: src/curses_client.c:634 src/gtk_client.c:328 src/serverside.c:255
+#, c-format
+msgid "%s joins the game!"
+msgstr "%s do³±czy³ do gry!"
+
+#: src/curses_client.c:639 src/gtk_client.c:334
+#, c-format
+msgid "%s has left the game."
+msgstr "%s opu¶ci³ grê."
+
+#: src/curses_client.c:644
+#, c-format
+msgid "%s will now be known as %s."
+msgstr "%s bêdzie teraz znany jako %s."
+
+#: src/curses_client.c:668
+msgid "S U B W A Y"
+msgstr "P K P"
+
+#: src/curses_client.c:711
+msgid ""
+"Unfortunately, somebody else is already using \"your\" name. Please change "
+"it."
+msgstr "Niestety jaki¶ cieæ u¿ywa ju¿ twojego nicka. Zmieñ go."
+
+#: src/curses_client.c:733
+msgid "H I G H   S C O R E S"
+msgstr "N A J L E P S Z E   W Y N I K I"
+
+#: src/curses_client.c:789
+msgid "Will you B>uy, S>ell, or L>eave? "
+msgstr "K>upiæ, S>przedaæ, czy W>yj¶æ? "
+
+#: src/curses_client.c:794
+msgid "BSL"
+msgstr "KSW"
+
+#: src/curses_client.c:799
+#, c-format
+msgid "You don't have any %s to sell!"
+msgstr "Nie masz ¿adnej %s do sprzedania!"
+
+#: src/curses_client.c:806 src/gtk_client.c:1029
+#, c-format
+msgid "You'll need more %s to carry any more %s!"
+msgstr "Bêdziesz potrzebowa³ wiêcej %s aby jeszcze unie¶æ %s!"
+
+#: src/curses_client.c:828 src/gtk_client.c:1033
+#, c-format
+msgid "You don't have enough space to carry that %s!"
+msgstr "Nie masz wystarczaj±co du¿o miejsca, aby unie¶æ tê %s!"
+
+#: src/curses_client.c:836 src/gtk_client.c:1037
+#, c-format
+msgid "You don't have enough cash to buy that %s!"
+msgstr "Nie masz tyle kasy na %s!"
+
+#: src/curses_client.c:849 src/gtk_client.c:1041
+msgid "You don't have any to sell!"
+msgstr "Nie masz nic do opchniêcia!"
+
+#: src/curses_client.c:873
+msgid "How much money do you pay back? "
+msgstr "Ile forsy oddajesz Z³otym Pasom? "
+
+#: src/curses_client.c:879 src/curses_client.c:909 src/gtk_client.c:1836
+msgid "You don't have that much money!"
+msgstr "Nie masz tak du¿o kasy!"
+
+#: src/curses_client.c:899
+msgid "Do you want to D>eposit money, W>ithdraw money, or L>eave ? "
+msgstr "Zamierzasz Z>deponowaæ, W>ycofaæ gotówkê czy O>pu¶ciæ bank? "
+
+#: src/curses_client.c:902
+msgid "DWL"
+msgstr "ZWO"
+
+#: src/curses_client.c:904
+msgid "How much money? "
+msgstr "Ile kasy? "
+
+#: src/curses_client.c:912 src/gtk_client.c:1829
+msgid "There isn't that much money in the bank..."
+msgstr "Nie ma tyle gotówki w banku..."
+
+#: src/curses_client.c:981
+msgid "Press any key..."
+msgstr "Naci¶nij dowolny klawisz..."
+
+#: src/curses_client.c:1112
+msgid "Messages"
+msgstr "Wiadomo¶ci"
+
+#: src/curses_client.c:1119 src/gtk_client.c:1321
+msgid "Stats"
+msgstr "Statystyka"
+
+#: src/curses_client.c:1122
+#, c-format
+msgid "Cash %17s"
+msgstr "Kasa %17s"
+
+#: src/curses_client.c:1129
+#, c-format
+msgid "Health             %3d"
+msgstr "Zdrowie            %3d"
+
+#: src/curses_client.c:1131
+#, c-format
+msgid "Bank %17s"
+msgstr "Bank %17s"
+
+#: src/curses_client.c:1135
+#, c-format
+msgid "Debt %17s"
+msgstr "Debet %17s"
+
+#: src/curses_client.c:1139
+#, c-format
+msgid "Space %6d"
+msgstr "Miejsce %6d"
+
+#: src/curses_client.c:1141
+#, c-format
+msgid "%s %3d  Space %6d"
+msgstr "%s %3d  Miejsce %6d"
+
+#: src/curses_client.c:1152
+msgid "Trenchcoat"
+msgstr "Twój p³aszcz"
+
+#: src/curses_client.c:1192
+#, c-format
+msgid "Spy reports for %s"
+msgstr "Szpieg z³o¿y³ raport o %s"
+
+#: src/curses_client.c:1196 src/curses_client.c:1201
+#, c-format
+msgid "%s..."
+msgstr "%s..."
+
+#: src/curses_client.c:1222
+msgid "No other players are currently logged on!"
+msgstr "Nie ma aktualnie innych zalogowanych graczy!"
+
+#: src/curses_client.c:1227
+msgid "Players currently logged on:-"
+msgstr "Gracze aktualnie zalogowani:-"
+
+#: src/curses_client.c:1375
+msgid "Hey dude, what's your name? "
+msgstr "Jak siê nazywasz cieciu? "
+
+#: src/curses_client.c:1408
+#, c-format
+msgid "Hey dude, the prices of %s here are:"
+msgstr "Hej cieciu, oto %s jakie s± w obiegu:"
+
+#: src/curses_client.c:1420
+msgid "Will you B>uy"
+msgstr "K>up"
+
+#: src/curses_client.c:1421
+msgid ", S>ell"
+msgstr " S>przedaj"
+
+#: src/curses_client.c:1422
+msgid ", D>rop"
+msgstr " U>pu¶æ"
+
+#: src/curses_client.c:1423
+msgid ", T>alk, P>age, L>ist"
+msgstr " G>adaj P>owiedz Z>obacz"
+
+#: src/curses_client.c:1426
+msgid ", G>ive"
+msgstr " D>aj zlecenie"
+
+#: src/curses_client.c:1429
+msgid ", F>ight"
+msgstr " A>takuj"
+
+#: src/curses_client.c:1433
+msgid ", J>et"
+msgstr " J>ed¼"
+
+#: src/curses_client.c:1435 src/curses_client.c:1450
+msgid ", or Q>uit? "
+msgstr " W>yj¶cie"
+
+#: src/curses_client.c:1443
+msgid "Do you "
+msgstr "Czy "
+
+#: src/curses_client.c:1445
+msgid "F>ight, "
+msgstr "A>takujesz"
+
+#: src/curses_client.c:1446
+msgid "S>tand, "
+msgstr "S>toisz"
+
+#: src/curses_client.c:1448
+msgid "R>un, "
+msgstr "U>ciekasz"
+
+#: src/curses_client.c:1449
+msgid "D>eal "
+msgstr "D>ilujesz"
+
+#: src/curses_client.c:1492
+msgid "Connection to server lost! Reverting to single player mode"
+msgstr "Po³±czenie z serwerem zerwane! W³±czenie trybu dla jednego gracza"
+
+#: src/curses_client.c:1521
+msgid "BSDTPLGFJQ"
+msgstr "KSUGPZDAJW"
+
+#: src/curses_client.c:1523
+msgid "DRFSQ"
+msgstr "ASUDW"
+
+#: src/curses_client.c:1551
+msgid "List what? P>layers or S>cores? "
+msgstr "Co chcesz zobaczyæ? G>raczy W>yniki"
+
+#: src/curses_client.c:1552
+msgid "PS"
+msgstr "GW"
+
+#: src/curses_client.c:1561
+msgid "Whom do you want to page (talk privately to) ? "
+msgstr "Do kogo prywatnie zagadujesz ? "
+
+#: src/curses_client.c:1576
+msgid "Talk: "
+msgstr "Nawijaj: "
+
+#: src/curses_client.c:1661
+msgid "Play again? "
+msgstr "Grasz jeszcze raz? "
+
+#: src/curses_client.c:1673
+msgid ""
+"No curses client available - rebuild the binary passing the\n"
+"--enable-curses-client option to configure, or use a windowed\n"
+"client (if available) instead!\n"
+msgstr ""
+
+#: src/gtk_client.c:141
+msgid "/_Game"
+msgstr "/_Gra"
+
+#: src/gtk_client.c:142
+msgid "/Game/_New"
+msgstr "/Gra/_Nowa"
+
+#: src/gtk_client.c:143
+msgid "/Game/_Quit"
+msgstr "/Gra/_Wyj¶cie"
+
+#: src/gtk_client.c:144
+msgid "/_Talk"
+msgstr "/_Rozmowa"
+
+#: src/gtk_client.c:145
+msgid "/Talk/To _All"
+msgstr "/Rozmowa/Ze _Wszystkimi"
+
+#: src/gtk_client.c:146
+msgid "/Talk/To _Player"
+msgstr "/Rozmowa/Z _Graczem"
+
+#: src/gtk_client.c:147
+msgid "/_List"
+msgstr "/Z_obacz"
+
+#: src/gtk_client.c:148
+msgid "/List/_Players"
+msgstr "/Zobacz/_Graczy"
+
+#: src/gtk_client.c:149
+msgid "/List/_Scores"
+msgstr "/Zobacz/_Wynik"
+
+#: src/gtk_client.c:150
+msgid "/List/_Inventory"
+msgstr "/Zobacz/_Plecak"
+
+#: src/gtk_client.c:151
+msgid "/_Errands"
+msgstr "/_Zlecenia"
+
+#: src/gtk_client.c:152
+msgid "/Errands/_Spy"
+msgstr "/Zlecenia/_Szpiegowanie"
+
+#: src/gtk_client.c:153
+msgid "/Errands/_Tipoff"
+msgstr "/Zlecenia/_Zasadzka"
+
+#: src/gtk_client.c:154
+msgid "/Errands/Sack _Bitch"
+msgstr "/Zlecenia/Zwolnij _dziwkê"
+
+#: src/gtk_client.c:155
+msgid "/Errands/_Get spy reports"
+msgstr "/Zlecenia/_Raport szpiegowski"
+
+#: src/gtk_client.c:156
+msgid "/_Help"
+msgstr "/_Pomoc"
+
+#: src/gtk_client.c:157
+msgid "/Help/_About"
+msgstr "/Pomoc/_O programie"
+
+#: src/gtk_client.c:162
+msgid "Warning"
+msgstr "Ostrze¿enie"
+
+#: src/gtk_client.c:162
+msgid "Message"
+msgstr ""
+
+#: src/gtk_client.c:172
+msgid "Quit Game"
+msgstr "Wyj¶cie z gry"
+
+#: src/gtk_client.c:172 src/gtk_client.c:181
+msgid "Abandon current game?"
+msgstr ""
+
+#: src/gtk_client.c:180
+msgid "Start new game"
+msgstr "Rozpoczniej now± grê"
+
+#: src/gtk_client.c:202
+msgid "Inventory"
+msgstr "Plecak"
+
+#: src/gtk_client.c:230 src/gtk_client.c:2072 src/gtk_client.c:2440
+msgid "Close"
+msgstr "Zamknij"
+
+#: src/gtk_client.c:260
+msgid "Connection to server lost - switching to single player mode"
+msgstr "Po³±czenie z serwerem przerwane - w³±czenie trybu dla jednego gracza"
+
+#: src/gtk_client.c:302
+msgid "You have been pushed from the server."
+msgstr "Zosta³e¶ wyrzucony z serwera"
+
+#: src/gtk_client.c:307
+msgid "The server has terminated."
+msgstr "Serwer siê roz³±czy³"
+
+#: src/gtk_client.c:347
+#, c-format
+msgid "Jetting to %s"
+msgstr ""
+
+#: src/gtk_client.c:352
+msgid "<main>/Errands/Spy"
+msgstr ""
+
+#: src/gtk_client.c:354
+#, c-format
+msgid "_Spy\t(%s)"
+msgstr ""
+
+#: src/gtk_client.c:358
+#, c-format
+msgid "_Tipoff\t(%s)"
+msgstr ""
+
+#: src/gtk_client.c:360
+msgid "<main>/Errands/Tipoff"
+msgstr ""
+
+#: src/gtk_client.c:393
+msgid "High Scores"
+msgstr "Najlepsze wyniki"
+
+#: src/gtk_client.c:427 src/gtk_client.c:980 src/gtk_client.c:1433
+#: src/gtk_client.c:1910 src/gtk_client.c:2189 src/gtk_client.c:2347
+msgid "OK"
+msgstr ""
+
+#: src/gtk_client.c:506
+msgid "Fight"
+msgstr "Atak"
+
+#: src/gtk_client.c:533
+#, c-format
+msgid "_Deal %s"
+msgstr "_Diluj %s"
+
+#: src/gtk_client.c:537 src/gtk_client.c:1266
+msgid "_Fight"
+msgstr "_Atakuj"
+
+#: src/gtk_client.c:540
+msgid "_Stand"
+msgstr "_Stój"
+
+#: src/gtk_client.c:543
+msgid "_Run"
+msgstr "_Uciekaj"
+
+#: src/gtk_client.c:607
+#, c-format
+msgid "Space: %d"
+msgstr "Miejsce: %d"
+
+#: src/gtk_client.c:748
+msgid "Jet to location"
+msgstr ""
+
+#: src/gtk_client.c:813
+#, c-format
+msgid "at %s"
+msgstr ""
+
+#: src/gtk_client.c:818
+#, c-format
+msgid "You are currently carrying %d %s"
+msgstr ""
+
+#: src/gtk_client.c:823
+#, c-format
+msgid "Available space: %d"
+msgstr "Dostêpne miejsce: %d"
+
+#: src/gtk_client.c:828
+#, c-format
+msgid "You can afford %d"
+msgstr "Staæ ciê na %d"
+
+#: src/gtk_client.c:878 src/gtk_client.c:1009
+msgid "Buy"
+msgstr "Kup"
+
+#: src/gtk_client.c:879 src/gtk_client.c:1010
+msgid "Sell"
+msgstr "Sprzedaj"
+
+#: src/gtk_client.c:880 src/gtk_client.c:1011
+msgid "Drop"
+msgstr "Zostaw"
+
+#: src/gtk_client.c:968
+#, c-format
+msgid "%s how many?"
+msgstr ""
+
+#: src/gtk_client.c:986 src/gtk_client.c:1921 src/gtk_client.c:2197
+msgid "Cancel"
+msgstr "Cojnij"
+
+#: src/gtk_client.c:1025
+#, c-format
+msgid "You don't have any %s!"
+msgstr "Nie masz ¿adnej %s do sprzedania!"
+
+#: src/gtk_client.c:1090
+msgid "Question"
+msgstr "Pytanie"
+
+#: src/gtk_client.c:1198
+msgid "<main>/Talk"
+msgstr ""
+
+#: src/gtk_client.c:1200
+msgid "<main>/List"
+msgstr ""
+
+#: src/gtk_client.c:1202
+msgid "<main>/Errands"
+msgstr "<main>/Zlecenia"
+
+#: src/gtk_client.c:1221
+msgid "Cash"
+msgstr "Kasa"
+
+#: src/gtk_client.c:1226
+msgid "Debt"
+msgstr "Debet"
+
+#: src/gtk_client.c:1231
+msgid "Bank"
+msgstr "Bank"
+
+#: src/gtk_client.c:1246
+msgid "Health"
+msgstr "Zdrowie"
+
+#: src/gtk_client.c:1266
+msgid "_Jet!"
+msgstr "_Jed¼"
+
+#: src/gtk_client.c:1297
+msgid "dopewars"
+msgstr ""
+
+#: src/gtk_client.c:1381
+msgid "Drug Dealing and Research"
+msgstr "Dilowanie dragami i rozwój"
+
+#: src/gtk_client.c:1381
+msgid "Dan Wolf"
+msgstr ""
+
+#: src/gtk_client.c:1382
+msgid "Play Testing"
+msgstr "Testowanie gry"
+
+#: src/gtk_client.c:1382
+msgid "Phil Davis"
+msgstr ""
+
+#: src/gtk_client.c:1382
+msgid "Owen Walsh"
+msgstr ""
+
+#: src/gtk_client.c:1383
+msgid "Extensive Play Testing"
+msgstr ""
+
+#: src/gtk_client.c:1383
+msgid "Katherine Holt"
+msgstr ""
+
+#: src/gtk_client.c:1384
+msgid "Caroline Moore"
+msgstr ""
+
+#: src/gtk_client.c:1385
+msgid "Constructive Criticism"
+msgstr "Konstruktywna krytyka"
+
+#: src/gtk_client.c:1385
+msgid "Andrea Elliot-Smith"
+msgstr ""
+
+#: src/gtk_client.c:1386
+msgid "Pete Winn"
+msgstr ""
+
+#: src/gtk_client.c:1387
+msgid "Unconstructive Criticism"
+msgstr "Niekonstruktywna krytyka"
+
+#: src/gtk_client.c:1387
+msgid "James Matthews"
+msgstr ""
+
+#: src/gtk_client.c:1391
+msgid "About dopewars"
+msgstr "O grze"
+
+#: src/gtk_client.c:1400
+msgid ""
+"Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
+"imaginary drug market.  dopewars is an All-American game which features\n"
+"buying, selling, and trying to get past the cops!\n"
+"\n"
+"The first thing you need to do is pay off your debt to the Loan Shark. "
+"After\n"
+"that, your goal is to make as much money as possible (and stay alive)! You\n"
+"have one month of game time to make your fortune.\n"
+msgstr "Oparte s± na starej grze `Drug Wars` Johna E. Dell'a. Jest to symulacja\n"
+"rynku narkotykowego z takimi elementami jak kupowanie, sprzedawanie\n"
+"i próby ucieczki gliniarzom!\n"
+"\n"
+"Najpierw musisz sp³aciæ d³ug Z³otym Pasom. Potem twoim celem jest\n"
+"zarobienie tak du¿o forsy, jak siê da i pozostanie przy ¿yciu!\n"
+"Masz jeden miesi±c na zdobycie fortuny.\n"
+
+#: src/gtk_client.c:1408
+#, c-format
+msgid ""
+"Version %s    Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"dopewars is released under the GNU General Public Licence\n"
+msgstr "Wersja %s    Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"dopewars s± publikowane zgodnie z GNU General Public Licence\n"
+
+#: src/gtk_client.c:1425
+msgid ""
+"\n"
+"For information on the command line options, type dopewars -h at your\n"
+"Unix prompt. This will display a help screen, listing the availableoptions."
+msgstr "\n"
+"Informacje o komendach linni poleceñ uzyskasz piszaæ dopewars -h po\n"
+"twoim znaku zachêty. To wy¶wietli ekran pomocy z dostêpnym opcjami."
+
+#: src/gtk_client.c:1463 src/gtk_client.c:1548
+msgid "Status: Attempting to contact server..."
+msgstr "Status: Próba kontaktu z serwerem..."
+
+#: src/gtk_client.c:1469 src/gtk_client.c:1554
+#, c-format
+msgid "Status: Could not connect (%s)"
+msgstr "Status: Nie mogê siê po³±czyæ (%s)"
+
+#: src/gtk_client.c:1503
+#, c-format
+msgid "%d of %d"
+msgstr "%d z %d"
+
+#: src/gtk_client.c:1570 src/gtk_client.c:1607 src/gtk_client.c:1648
+msgid "Server"
+msgstr "Serwer"
+
+#: src/gtk_client.c:1571 src/gtk_client.c:1622
+msgid "Port"
+msgstr "Port"
+
+#: src/gtk_client.c:1572
+msgid "Version"
+msgstr "Wersja"
+
+#: src/gtk_client.c:1573
+msgid "Players"
+msgstr "Gracze"
+
+#: src/gtk_client.c:1574
+msgid "Comment"
+msgstr "Komentarz"
+
+#: src/gtk_client.c:1583
+msgid "New Game"
+msgstr "Nowa Gra"
+
+#: src/gtk_client.c:1592
+msgid "Hey dude, what's your _name?"
+msgstr "Jak siê _nazywasz cieciu?"
+
+#: src/gtk_client.c:1614
+msgid "Host name"
+msgstr "Nazwa hosta"
+
+#: src/gtk_client.c:1637 src/gtk_client.c:1700
+msgid "_Connect"
+msgstr "_Po³±cz"
+
+#: src/gtk_client.c:1650 src/gtk_client.c:1671
+msgid "Single player"
+msgstr "Pojedyñczy gracz"
+
+#: src/gtk_client.c:1656
+msgid "_Antique mode"
+msgstr "_Tryb `antyczny`"
+
+#: src/gtk_client.c:1663
+msgid "_Start single-player game"
+msgstr "_Rozpocznij grê dla jednego gracza"
+
+#: src/gtk_client.c:1673 src/gtk_client.c:1711
+msgid "Metaserver"
+msgstr "Metaserwer"
+
+#: src/gtk_client.c:1690
+msgid "_Update"
+msgstr "_Uaktualnij"
+
+#: src/gtk_client.c:1715
+msgid "Status: Waiting for user input"
+msgstr "Status: Czekam na aktywno¶æ usera"
+
+#: src/gtk_client.c:1867
+#, c-format
+msgid "Cash: %s"
+msgstr "Kasa: %s"
+
+#: src/gtk_client.c:1874
+#, c-format
+msgid "Debt: %s"
+msgstr "Debet: %s"
+
+#: src/gtk_client.c:1877
+#, c-format
+msgid "Bank: %s"
+msgstr ""
+
+#: src/gtk_client.c:1885
+msgid "Pay back:"
+msgstr "Zwróæ:"
+
+#: src/gtk_client.c:1888
+msgid "Deposit"
+msgstr "Depozyt"
+
+#: src/gtk_client.c:1892
+msgid "Withdraw"
+msgstr "Wycofaj siê"
+
+#: src/gtk_client.c:1916
+msgid "Pay all"
+msgstr "Sp³aæ wszystko"
+
+#: src/gtk_client.c:1938
+msgid "Player List"
+msgstr "Lista graczy"
+
+#: src/gtk_client.c:2027
+msgid "Talk to player(s)"
+msgstr "Mów do gracza(y)"
+
+#: src/gtk_client.c:2049
+msgid "Talk to all players"
+msgstr "Mów do wszystkich graczy"
+
+#: src/gtk_client.c:2053
+msgid "Message:-"
+msgstr "Wiadomo¶æ:-"
+
+#: src/gtk_client.c:2066
+msgid "Send"
+msgstr "Wy¶lij"
+
+#: src/gtk_client.c:2159
+msgid "Spy On Player"
+msgstr "Szpieguj gracza"
+
+#: src/gtk_client.c:2161
+#, c-format
+msgid ""
+"Please choose the player to spy on. Your %s will\n"
+"then offer his services to the player, and if successful,\n"
+"you will be able to view the player's stats with the\n"
+"\"Get spy reports\" menu. Remember that the %s will leave\n"
+"you, so any %s or %s that he's carrying may be lost!"
+msgstr ""
+
+#: src/gtk_client.c:2169
+msgid "Tip Off The Cops"
+msgstr "Napu¶æ gliny"
+
+#: src/gtk_client.c:2171
+#, c-format
+msgid ""
+"Please choose the player to tip off the cops to. Your %s will\n"
+"help the cops to attack that player, and then report back to you\n"
+"on the encounter. Remember that the %s will leave you temporarily,\n"
+"so any %s or %s that he's carrying may be lost!"
+msgstr ""
+
+#: src/gtk_client.c:2211
+#, c-format
+msgid "Sack %s"
+msgstr "Wyrzuæ %s"
+
+#: src/gtk_client.c:2212
+#, c-format
+msgid ""
+"Are you sure? (Any %s or %s carried\n"
+"by this %s may be lost!)"
+msgstr ""
+
+#: src/gtk_client.c:2233
+msgid "Name"
+msgstr "Nazwa"
+
+#: src/gtk_client.c:2234
+msgid "Price"
+msgstr "Cena"
+
+#: src/gtk_client.c:2235
+msgid "Number"
+msgstr "Numer"
+
+#: src/gtk_client.c:2237
+msgid "_Buy ->"
+msgstr "_Kup ->"
+
+#: src/gtk_client.c:2238
+msgid "<- _Sell"
+msgstr "<- _Sprzedaj"
+
+#: src/gtk_client.c:2239
+msgid "_Drop <-"
+msgstr "_Zostaw <-"
+
+#: src/gtk_client.c:2244
+#, c-format
+msgid "%s here"
+msgstr "%s tutaj"
+
+#: src/gtk_client.c:2247
+#, c-format
+msgid "%s carried"
+msgstr "%s posiadane"
+
+#: src/gtk_client.c:2323
+msgid "Change Name"
+msgstr "Zmieñ nicka"
+
+#: src/gtk_client.c:2333
+msgid ""
+"Unfortunately, somebody else is already using \"your\" name. Please change "
+"it:-"
+msgstr "Niestety jaki¶ cieæ u¿ywa ju¿ twojego nicka. Zmieñ go."
+
+#: src/gtk_client.c:2392
+msgid "Done"
+msgstr "Gotowe"
+
+#: src/gtk_client.c:2426
+msgid "Spy reports"
+msgstr "Raport szpiega"
+
+#: src/gtk_client.c:2496
+msgid ""
+"No GTK+ client available - rebuild the binary passing the\n"
+"--enable-gtk-client option to configure, or use the curses\n"
+"client (if available) instead!\n"
+msgstr ""
+
+#: src/serverside.c:68
+#, c-format
+msgid ""
+"dopewars server version %s commands and settings\n"
+"\n"
+"help                       Displays this help screen\n"
+"list                       Lists all players logged on\n"
+"push <player>              Politely asks the named player to leave\n"
+"kill <player>              Abruptly breaks the connection with the named "
+"player\n"
+"msg:<mesg>                 Send message to all players\n"
+"quit                       Gracefully quit, after notifying all players\n"
+"<variable>=<value>         Sets the named variable to the given value\n"
+"<variable>                 Displays the value of the named variable\n"
+"<list>[x].<var>=<value>    Sets the named variable in the given list,\n"
+"                           index x, to the given value\n"
+"<list>[x].<var>            Displays the value of the named list variable\n"
+"\n"
+"Valid variables are listed below:-\n"
+"\n"
+msgstr ""
+
+#: src/serverside.c:100
+msgid "cannot send data to metaserver\n"
+msgstr "Nie mo¿na wys³aæ danych do metaserwera\n"
+
+#: src/serverside.c:122
+#, c-format
+msgid "Sending data to metaserver at %s\n"
+msgstr "Wysy³anie danych do metaserwera w %s\n"
+
+#: src/serverside.c:124
+#, c-format
+msgid "Notifying metaserver at %s\n"
+msgstr "Metaserwer w %s\n"
+
+#: src/serverside.c:127
+msgid "cannot locate metaserver\n"
+msgstr "Nie mo¿na zlokalizowaæ metaserwera\n"
+
+#: src/serverside.c:132
+msgid "cannot create socket for metaserver communication\n"
+msgstr "Nie mo¿na utworzyæ gniazda dla komunikacji z metaserwerem\n"
+
+#: src/serverside.c:166
+msgid "cannot read high score file\n"
+msgstr "Nie mo¿na odczytac pliku z najlepszymi wynikami\n"
+
+#: src/serverside.c:204
+#, c-format
+msgid ""
+"Message is lying about its origin\n"
+"%s: %c: %s: %s\n"
+"Should be from %s"
+msgstr ""
+
+#: src/serverside.c:263
+#, c-format
+msgid "MaxClients (%d) exceeded - dropping connection"
+msgstr "MaxClients (%d) przekoroczona warto¶æ - zrywam po³±czenie"
+
+#: src/serverside.c:265
+#, c-format
+msgid ""
+"Sorry, but this server has a limit of %d %s, which has been reached.^Please "
+"try connecting again later."
+msgstr "Serwer ma limit %d %s, który zosta³ osi±gniêty.^Spróbuj po³±czyæ "
+"siê pó¼niej."
+
+#: src/serverside.c:267
+msgid "player"
+msgstr "gracz"
+
+#: src/serverside.c:267
+msgid "players"
+msgstr "gracze"
+
+#: src/serverside.c:276
+#, c-format
+msgid "%s will now be known as %s"
+msgstr "%s bêdzie znany jako %s"
+
+#: src/serverside.c:291
+msgid "Your dealing time is up..."
+msgstr "Twój czas dilerki dobieg³ koñca..."
+
+#: src/serverside.c:302
+#, c-format
+msgid "%s: DENIED jet to %s"
+msgstr "%s: ZABRONIONY przejazd do %s"
+
+#: src/serverside.c:359
+#, c-format
+msgid "%s now spying on %s"
+msgstr "%s teraz szpieguje %s"
+
+#: src/serverside.c:367
+#, c-format
+msgid "%s spy on %s: DENIED"
+msgstr "%s szpiegowanie %s: ZABRONIONE"
+
+#: src/serverside.c:373
+#, c-format
+msgid "%s tipped off the cops to %s"
+msgstr "%s nas³a³ gliny na %s"
+
+#: src/serverside.c:381
+#, c-format
+msgid "%s tipoff about %s: DENIED"
+msgstr "%s na³anie glin na %S: ZABRONIONE"
+
+#: src/serverside.c:489
+msgid "--More--"
+msgstr "--Dalej--"
+
+#: src/serverside.c:500
+msgid "Pager exited abnormally - using stdout instead..."
+msgstr "Pager nietypowo zakoñczy³ pracê - u¿ywam teraz stdout"
+
+#: src/serverside.c:515
+#, c-format
+msgid "Maintaining pid file %s"
+msgstr "U¿ywam pliku %s"
+
+#: src/serverside.c:519
+#, c-format
+msgid "Cannot create pid file %s"
+msgstr "Nie mo¿na utworzyæ pliku pid %s"
+
+#: src/serverside.c:568
+#, c-format
+msgid ""
+"Cannot open high score file %s.\n"
+"Either ensure you have permissions to access this file and directory, or\n"
+"specify an alternate high score file with the -f command line option."
+msgstr ""
+
+#: src/serverside.c:605
+#, c-format
+msgid ""
+"dopewars server version %s ready and waiting for connections\n"
+"on port %d. For assistance with server commands, enter the command \"help\"\n"
+msgstr ""
+
+#: src/serverside.c:622
+msgid "Cannot install SIGUSR1 interrupt handler!"
+msgstr "Nie mo¿na obs³u¿yæ przerwania SIGUSR1!"
+
+#: src/serverside.c:628
+msgid "Cannot install SIGINT interrupt handler!"
+msgstr "Nie mo¿na obs³u¿yæ przerwania SIGINT!"
+
+#: src/serverside.c:631
+msgid "Cannot install SIGTERM interrupt handler!"
+msgstr "Nie mo¿na obs³u¿yæ przerwania SIGTERM!"
+
+#: src/serverside.c:634
+msgid "Cannot install SIGHUP interrupt handler!"
+msgstr "Nie mo¿na obs³u¿yæ przerwania SIGHUP!"
+
+#: src/serverside.c:639
+msgid "Cannot install pipe handler!"
+msgstr "Nie mo¿na ob³u¿yæ potoku!"
+
+#: src/serverside.c:662
+msgid "Users currently logged on:-\n"
+msgstr "U¿ytkownicy aktualnie zalogowani:=\n"
+
+#: src/serverside.c:667
+msgid "No users currently logged on!"
+msgstr "Nie ma ¿adnych zalogowanych u¿ytkowników"
+
+#: src/serverside.c:671
+#, c-format
+msgid "Pushing %s"
+msgstr "Wywalam %s"
+
+#: src/serverside.c:673 src/serverside.c:681
+msgid "No such user!"
+msgstr "Nie ma takiego u¿ytkownika!"
+
+#: src/serverside.c:677
+#, c-format
+msgid "%s killed"
+msgstr "%s zabity"
+
+#: src/serverside.c:683
+msgid "Unknown command - try \"help\" for help..."
+msgstr "Nieznana komenda - spróbuj \"help\",aby uzyskaæ pomoc..."
+
+#: src/serverside.c:700
+#, c-format
+msgid "got connection from %s"
+msgstr "po³±czenie z %s"
+
+#: src/serverside.c:716
+#, c-format
+msgid "%s leaves the server!"
+msgstr "%s opuszcza serwer!"
+
+#: src/serverside.c:781
+msgid "Standard input closed."
+msgstr "Standardowe wej¶cie zamkniête"
+
+#: src/serverside.c:915
+#, c-format
+msgid "Unable to read high score file %s"
+msgstr "Nie mo¿na odczytaæ pliku z najlepszymi wynikami %s"
+
+#: src/serverside.c:935
+msgid "Congratulations! You made the high scores!"
+msgstr "Gratulacje! Wpiszesz siê na karty historii!"
+
+#: src/serverside.c:948
+msgid "You didn't even make the high score table..."
+msgstr "Nawet siê nie wpiszesz, cieniasie..."
+
+#: src/serverside.c:962
+#, c-format
+msgid "Unable to write high score file %s"
+msgstr "Nie mo¿na zapisaæ do pliku z najlepszymi wynikami %s"
+
+#: src/serverside.c:981
+msgid "(R.I.P.)"
+msgstr ""
+
+#: src/serverside.c:1016
+#, c-format
+msgid "%s: Tipoff from %s"
+msgstr "%s: Zasadzkê zrobi³ %s"
+
+#: src/serverside.c:1033
+#, c-format
+msgid "One of your %s was spying for %s.^The spy %s!"
+msgstr "Jeden z twoich %s chodzi³ za %s.^Szpieg %s!"
+
+#: src/serverside.c:1041
+#, c-format
+msgid "Your spy working with %s has been discovered!^The spy %s!"
+msgstr "Twój szpieg pracuj±cy nad %s zosta³ odkryty!^Szpieg %s!"
+
+#: src/serverside.c:1064
+#, c-format
+msgid " The lady next to you on the subway said,^ \"%s\"%s"
+msgstr " Jaka¶ kobieta stoj±ca obok na dworcu powiedzia³a,^\"%s\"%s"
+
+#: src/serverside.c:1067
+msgid "^    (at least, you -think- that's what she said)"
+msgstr "^    (tak ci siê przynajmniej wydaje, ¿e TO powiedzia³a)"
+
+#: src/serverside.c:1069
+#, c-format
+msgid " You hear someone playing %s"
+msgstr " S³yszysz jak kto¶ puszcza %s"
+
+#: src/serverside.c:1078 src/serverside.c:1087 src/serverside.c:1096
+#: src/serverside.c:1105
+#, c-format
+msgid "YN^Would you like to visit %s?"
+msgstr "TN^Chcia³by¶ odwiedziæ %s?"
+
+#: src/serverside.c:1116
+#, c-format
+msgid "YN^^Would you like to hire %s %s for %s?"
+msgstr "TN^^Chcia³by¶ wynaj±æ %s %s za %s?"
+
+#: src/serverside.c:1117
+msgid "an"
+msgstr " "
+
+#: src/serverside.c:1117
+msgid "a"
+msgstr " "
+
+#: src/serverside.c:1129
+#, c-format
+msgid "AE^%s is already here!^Do you A>ttack, or E>vade?"
+msgstr "AE^%s ju¿ tu jest!^A>takujesz czy E>wakuujesz siê?"
+
+#. Send client "Play" a message announcing the attack of the cops
+#. The format string used for this purpose can be altered by
+#. passing non-NULL "LoneMessage" (for unaccompanied Officer
+#. Hardass) and/or "DeputyMessage" (for him with x deputies)
+#: src/serverside.c:1198
+#, c-format
+msgid "YN^Officer %s is chasing you!"
+msgstr "TN^Gliniarz %s zatrzymuje ciê!"
+
+#: src/serverside.c:1200
+#, c-format
+msgid "YN^Officer %s and %d of his deputies are chasing you!"
+msgstr "^TNOficer %s i inni mundurowi w ilo¶ci %d zatrzymuj± ciê!"
+
+#: src/serverside.c:1221
+msgid "^Do you run?"
+msgstr "^Uciekasz?"
+
+#: src/serverside.c:1224
+msgid "^Do you R>un, or F>ight?"
+msgstr "^U>ciekasz czy A>takujesz?"
+
+#: src/serverside.c:1239
+#, c-format
+msgid "%s: tipoff by %s finished OK."
+msgstr "%s: kablowanie %s zakoñczone OK."
+
+#: src/serverside.c:1245
+#, c-format
+msgid "Following your tipoff, the cops ambushed %s, who was shot dead"
+msgstr "Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który zosta³ zastrzelony"
+
+#: src/serverside.c:1249
+#, c-format
+msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %s. "
+msgstr "Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który uciek³ z %d %s. "
+
+#: src/serverside.c:1286
+msgid "^You stand there like an idiot."
+msgstr "^Stoisz tam jak idiota."
+
+#: src/serverside.c:1289
+#, c-format
+msgid "^You lose %s in the alleys."
+msgstr "^Uda³o ci siê zgubiæ %s w ciemnych alejkach."
+
+#: src/serverside.c:1290 src/serverside.c:1297
+msgid "him"
+msgstr "jego"
+
+#: src/serverside.c:1290 src/serverside.c:1297
+msgid "them"
+msgstr "ich"
+
+#: src/serverside.c:1296
+#, c-format
+msgid "^You can't shake %s, man!"
+msgstr "^Nie mo¿esz zgubiæ %s, dresie!"
+
+#: src/serverside.c:1307
+#, c-format
+msgid "^You killed Officer %s! You find %s on his corpse!"
+msgstr "^Zabi³e¶ oficera %s! Znalaz³e¶ %s przy trupie!"
+
+#: src/serverside.c:1321
+#, c-format
+msgid "YN^^^^Do you pay a doctor %s to sew your %s up?"
+msgstr "TN^^^^P³acisz doktorowi %s, ¿eby pozszywa³ twoje %s?"
+
+#: src/serverside.c:1325
+#, c-format
+msgid "YN^^^^Do you pay a doctor %s to sew you up?"
+msgstr "TN^^^^P³acisz doktorowi %s, ¿eby ciê pozszywa³?"
+
+#: src/serverside.c:1336
+msgid "^You got one, man!"
+msgstr "^Trafi³e¶ jednego!"
+
+#: src/serverside.c:1339
+msgid "^You missed!"
+msgstr "^Chybi³e¶!"
+
+#: src/serverside.c:1342
+#, c-format
+msgid "^%s firing on you, man! "
+msgstr "^%s strzela do ciebie, cz³owieku! "
+
+#: src/serverside.c:1343
+msgid "He's"
+msgstr "On"
+
+#: src/serverside.c:1343
+msgid "They're"
+msgstr "Oni"
+
+#: src/serverside.c:1345
+msgid "You've been hit! "
+msgstr "Zosta³e¶ trafiony! "
+
+#: src/serverside.c:1351
+#, c-format
+msgid "%s wasted you, man! What a drag!"
+msgstr "%s oszczêdzi³ ciê! Ale zadyma!"
+
+#: src/serverside.c:1352 src/serverside.c:1368
+msgid "He"
+msgstr "On"
+
+#: src/serverside.c:1352 src/serverside.c:1368
+msgid "They"
+msgstr "Oni"
+
+#: src/serverside.c:1359
+#, c-format
+msgid "You lost one of your %s!"
+msgstr "Straci³e¶ jedn± ze swoich dziwek!"
+
+#: src/serverside.c:1367
+#, c-format
+msgid "%s missed!"
+msgstr "%s chybi³!"
+
+#: src/serverside.c:1387
+msgid "You were mugged in the subway!"
+msgstr "Zosta³e¶ obrzygany w poci±gu!"
+
+#: src/serverside.c:1398
+#, c-format
+msgid "You meet a friend! He gives you %d %s."
+msgstr "Spotykasz starego dilera! Daje ci %d %s."
+
+#: src/serverside.c:1403
+#, c-format
+msgid "You meet a friend! You give him %d %s."
+msgstr "Spotka³e¶ przyjaciela! Dajesz mu %d %s."
+
+#: src/serverside.c:1410
+msgid "Sanitized away a RandomOffer"
+msgstr ""
+
+#: src/serverside.c:1415
+#, c-format
+msgid ""
+"Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
+msgstr "Policyjne psy skoczy³y ci do gard³a %d! Upu¶ci³e¶ trochê %s! Ale rozpierdol dresie!"
+
+#: src/serverside.c:1429
+#, c-format
+msgid "You find %d %s on a dead dude in the subway!"
+msgstr "Znalaz³e¶ %d %s przy zw³okach jakiego¶ æpuna w WC!"
+
+#: src/serverside.c:1441
+#, c-format
+msgid "Your mama made brownies with some of your %s! They were great!"
+msgstr "Mamu¶ka zrobi³a ci kanapki z odrobin± %s! By³y super!"
+
+#: src/serverside.c:1449
+msgid ""
+"YN^There is some weed that smells like paraquat here!^It looks good! Will "
+"you smoke it? "
+msgstr "TN^Znalaz³e¶ trochê ziela, które pachnie tak ¶wie¿o!^Dobrze wygl±da! "
+"Zapalisz? "
+
+#: src/serverside.c:1456
+#, c-format
+msgid "You stopped to %s."
+msgstr "Zatrzymujesz siê przy %s."
+
+#: src/serverside.c:1477
+#, c-format
+msgid "Would you like to buy a bigger trenchcoat for %s?"
+msgstr "Chcia³byæ kupiæ wiêkszy p³aszcz za %s?"
+
+#: src/serverside.c:1482
+#, c-format
+msgid "YN^Hey dude! I'll help carry your %s for a mere %s. Yes or no?"
+msgstr "TN^Hej kole¶! Pomogê ci ponie¶æ %s za jedyne %s. Tak czy nie?"
+
+#: src/serverside.c:1494
+#, c-format
+msgid "YN^Would you like to buy a %s for %s?"
+msgstr "TN^Chcia³by¶ kupiæ %s za %s?"
+
+#: src/serverside.c:1595 src/serverside.c:1706
+#, c-format
+msgid "%s: offer was on behalf of %s"
+msgstr "%s: propozycja by³a na rachunek %s"
+
+#: src/serverside.c:1598
+#, c-format
+msgid "%s has accepted your %s!^Use the G key to contact your spy."
+msgstr "%s zaakceptowa³ twój %s!^U¿yj klawisza G, aby skontaktowaæ siê ze szpiegiem"
+
+#: src/serverside.c:1644
+msgid ""
+"You hallucinated for three days on the wildest trip you ever imagined!^Then "
+"you died because your brain disintegrated!"
+msgstr "Mia³e¶ haluny przez trzy dni i najlepszego tripa w swoim ¿yciu!^Potem "
+"umar³e¶, bo dla twojego mózga ta wycieczka by³a za mocna!"
+
+#: src/serverside.c:1683
+#, c-format
+msgid "Too late - %s has just left!"
+msgstr "Za pó¼no - %s w³a¶nie zwia³!"
+
+#: src/serverside.c:1709
+#, c-format
+msgid "%s has rejected your %s!"
+msgstr "%s odmówi³ %s"
+
+#: src/serverside.c:1744
+#, c-format
+msgid "%s has got away!"
+msgstr ""
+
+#: src/serverside.c:1785
+#, c-format
+msgid "%s has run off!"
+msgstr "%s zbieg³!"
+
+#: src/serverside.c:1797
+msgid "Coward! You successfully escaped from the fight."
+msgstr "Tchórzliwy dresie! Szczê¶liwie unikn±³e¶ walki."
+
+#: src/serverside.c:1853
+msgid "pitifully armed"
+msgstr "beznadziejnie uzbrojony"
+
+#: src/serverside.c:1854
+msgid "lightly armed"
+msgstr "lekko uzbrojony"
+
+#: src/serverside.c:1855
+msgid "moderately well armed"
+msgstr "ca³kiem nie¼le uzbrojony"
+
+#: src/serverside.c:1856
+msgid "heavily armed"
+msgstr "dobrze uzbrojony"
+
+#: src/serverside.c:1857
+msgid "armed to the teeth"
+msgstr "kurewsko uzbrojony po zêby"
+
+#: src/serverside.c:1858
+msgid " fires and "
+msgstr " strzela i "
+
+#: src/serverside.c:1859
+msgid " stands and takes it."
+msgstr " stoi i dostaje."
+
+#: src/serverside.c:1862
+#, c-format
+msgid "%s arrives, with %d %s, %s,^%s"
+msgstr "%s przyby³, z %d %s, %s,^%s"
+
+#: src/serverside.c:1866
+#, c-format
+msgid "%s arrives, %s,^%s"
+msgstr "%s przyby³, %s,^%s"
+
+#: src/serverside.c:1871
+#, c-format
+msgid "%s fires and "
+msgstr "%s strzela i "
+
+#: src/serverside.c:1873
+#, c-format
+msgid "%s stands and takes it."
+msgstr "%s stoi i dostaje."
+
+#: src/serverside.c:1885
+msgid "misses you!"
+msgstr "Spud³owa³!"
+
+#: src/serverside.c:1886
+#, c-format
+msgid "You failed to hit %s."
+msgstr "Chybi³e¶ strza³ do %s."
+
+#: src/serverside.c:1889
+msgid "You stand and take it."
+msgstr "Soisz i obrywasz."
+
+#: src/serverside.c:1893
+msgid "hits you, man!"
+msgstr "trafi³ ciê, cz³owieku!"
+
+#: src/serverside.c:1896
+msgid " You've been wasted! What a drag!"
+msgstr " Zosta³e¶ oszczêdzony! Co za rozpierdziel!"
+
+#: src/serverside.c:1897
+#, c-format
+msgid "You hit and killed %s"
+msgstr "Trafisz i zabijasz %s"
+
+#: src/serverside.c:1912 src/serverside.c:1945
+msgid ", and loot the body!"
+msgstr ", i rabuje zw³oki!"
+
+#: src/serverside.c:1921
+#, c-format
+msgid "^You lost a %s, man!"
+msgstr "^Zgubi³e¶ %s, dresie!"
+
+#: src/serverside.c:1926
+#, c-format
+msgid "You are paid a bounty of %s in reward for killing^one of %s's %s"
+msgstr "P³ac± ci %s w nagrodê za zabicie^jednego z %s's %s"
+
+#: src/serverside.c:1934
+#, c-format
+msgid "You killed one of %s's %s (%d left)"
+msgstr "Zabi³e¶ jednego z %s's %s (%d zosta³o)"
+
+#: src/serverside.c:1952
+#, c-format
+msgid "You fire, and hit %s!"
+msgstr "Grzejesz i trafiasz %s!"
+
+#: src/serverside.c:1991
+msgid "YN^Officer %%s spots you dropping %s, and chases you!"
+msgstr "TN^Oficer %%s zauwa¿y³ jak upuszczasz %s i ³apie ciê!"
+
+#: src/serverside.c:1993
+msgid ""
+"YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
+msgstr "TN^Oficer %%S i %%d jeden z jego psów zauwa¿yli jak upuszczasz %s i ³api± ciê!"
+
+#: src/serverside.c:2148
+msgid "Player removed due to idle timeout"
+msgstr "Gracz usuniêty przez przekroczenie czasu na ruch"
+
+#: src/serverside.c:2158
+msgid "Player removed due to connect timeout"
+msgstr "Gracz usuniêty przez przekroczenia czasu przy po³±czeniu"
+
+#: src/serverside.c:2164 src/serverside.c:2170
+#, c-format
+msgid "%s fails to return fire..."
+msgstr "%s nie zdo³a³ oddaæ strza³u..."
+
+#: src/message.c:370
+#, c-format
+msgid ""
+"This server is version %s, while your client is version %s.\n"
+"Be warned that different versions may not be fully compatible!\n"
+"Refer to the website at http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/\n"
+"for the latest version."
+msgstr ""
+
+#: src/message.c:505
+msgid "Could not find host"
+msgstr "Nie mo¿na odnale¼æ hosta"
+
+#: src/message.c:506
+msgid "Could not create network socket"
+msgstr "Nie mo¿na utworzyæ gniazda sieciowego"
+
+#: src/message.c:507
+msgid "Connection refused or no server present"
+msgstr "Po³±czenie odrzucone albo brak serwera"
+
+#: src/message.c:663
+msgid "Cannot locate metaserver"
+msgstr "Nie mo¿na zlokalizowaæ metaserwera"
+
+#: src/message.c:664
+msgid "Cannot create socket"
+msgstr "Nie mo¿na utworzyæ gniazda"
+
+#: src/message.c:666
+msgid "Metaserver not running HTTP or connection denied"
+msgstr "Metaserwer nie obs³uguje HTTP albo po³±czenie odrzucone"
+
+#: src/AIPlayer.c:58
+#, c-format
+msgid "AI Player started; attempting to contact server at %s:%d..."
+msgstr "Gracz AI rozpocz±³ grê; próba kontaktu z serwerem %s:%d..."
+
+#: src/AIPlayer.c:61
+#, c-format
+msgid ""
+"Could not connect to dopewars server\n"
+"(%s)\n"
+"AI Player terminating abnormally."
+msgstr "Gracz AI zakoñczy³ rozrgrywkê w nietypowy sposób."
+"(%s)"
+
+#: src/AIPlayer.c:65
+msgid "Connection established\n"
+msgstr "Po³±czenie nawi±zane\n"
+
+#: src/AIPlayer.c:85
+msgid "Connection to server lost!\n"
+msgstr "Po³±czenie z serwerem przerwane!\n"
+
+#: src/AIPlayer.c:98
+msgid "AI Player terminated OK.\n"
+msgstr "Gracz AI zakoñczy³ rozgrywkê.\n"
+
+#: src/AIPlayer.c:111
+#, c-format
+msgid "Using name %s\n"
+msgstr "U¿ywa imienia %s\n"
+
+#: src/AIPlayer.c:130
+msgid "Players in this game:-\n"
+msgstr "Gracze w grze:-\n"
+
+#: src/AIPlayer.c:160
+#, c-format
+msgid "%s joins the game.\n"
+msgstr "%s do³±czy³ do gry.\n"
+
+#: src/AIPlayer.c:163
+#, c-format
+msgid "%s has left the game.\n"
+msgstr "%s opu¶ci³ grê.\n"
+
+#: src/AIPlayer.c:171
+#, c-format
+msgid "Jetting to %s with %s cash and %s debt"
+msgstr "Jedziesz do %s z %s kas± i %s debetem"
+
+#: src/AIPlayer.c:191
+msgid "AI Player killed. Terminating normally.\n"
+msgstr "Gracz AI zabity. Normalne wyj¶cie.\n"
+
+#: src/AIPlayer.c:212
+msgid "Game time is up. Leaving game.\n"
+msgstr "Czas gry siê skoñczy³. Opuszczam grê.\n"
+
+#: src/AIPlayer.c:216
+msgid "AI Player pushed from the server.\n"
+msgstr "Gracz AI wyrzucony z serwera.\n"
+
+#: src/AIPlayer.c:220
+msgid "The server has terminated.\n"
+msgstr "Serwer zakoñczy³ pracê\n"
+
+#: src/AIPlayer.c:276
+#, c-format
+msgid "Selling %d %s at %s\n"
+msgstr "Sprzedajê %d %s w %s\n"
+
+#: src/AIPlayer.c:292
+#, c-format
+msgid "Buying %d %s at %s\n"
+msgstr "Kupujê %d %s w %s\n"
+
+#: src/AIPlayer.c:321
+#, c-format
+msgid "Buying a %s for %s at the gun shop\n"
+msgstr "Kupujê %s za %s na ruskim bazarze z broni±\n"
+
+#: src/AIPlayer.c:361
+#, c-format
+msgid "Debt of %s paid off to loan shark\n"
+msgstr "D³ug %s zosta³ sp³acony Z³otym Pasom\n"
+
+#: src/AIPlayer.c:386
+#, c-format
+msgid "Loan shark located at %s\n"
+msgstr "Siedziba Z³otych Pasów jest w mie¶cie %s\n"
+
+#: src/AIPlayer.c:394
+#, c-format
+msgid "Gun shop located at %s\n"
+msgstr "Sklep z broni± jest w mie¶cie %s\n"
+
+#: src/AIPlayer.c:402
+#, c-format
+msgid "Pub located at %s\n"
+msgstr "Dyskoteka jest w mie¶cie %s\n"
+
+#: src/AIPlayer.c:415
+#, c-format
+msgid "Bank located at %s\n"
+msgstr "Bank jest w mie¶cie %s\n"
+
+#: src/AIPlayer.c:439
+msgid "Call yourselves drug dealers?"
+msgstr "Nazywacie siê dilerami?"
+
+#: src/AIPlayer.c:440
+msgid "A trained monkey could do better..."
+msgstr "Wytrenowana ma³pa zrobi³aby to lepiej..."
+
+#: src/AIPlayer.c:441
+msgid "Think you're hard enough to deal with the likes of me?"
+msgstr "My¶lisz, ¿e jeste¶ taki twardy, aby ze mn± dilowaæ?"
+
+#: src/AIPlayer.c:442
+msgid "Zzzzz... are you dealing in candy or what?"
+msgstr "Zzzzz... dilujesz cukiereczku czy co?"
+
+#: src/AIPlayer.c:443
+msgid "Reckon I'll just have to shoot you for your own good."
+msgstr "Uwa¿am, ¿e powiniennem ciê zastrzeliæ dla twojego w³asnego dobra."
+
+#: src/AIPlayer.c:452
+msgid ""
+"This binary has been compiled without networking support, and thus cannot "
+"act as an AI player.\n"
+"Recompile passing --enable-networking to the configure script."
+msgstr "Program zosta³ skompilowany bez wsparcia dla sieci i nie mo¿e "
+"zachowywaæ siê jakby by³ komputerowym graczem.\n"
+"Skonfiguruj z opcj± --enable-networking i przekompiluj"
