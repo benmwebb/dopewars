@@ -2825,7 +2825,7 @@ void DisplaySpyReports(Player *Play) {
 #else
 
 #include <glib.h>
-#include "dopewars.h"
+#include "dopewars.h" /* We need this for the definition of '_' */
 
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    if (!ReturnOnFail) {

@@ -171,7 +171,13 @@ extern int Width,Depth;
 #define StatsAttr    (COLOR_PAIR(5))
 #define DebtAttr     (COLOR_PAIR(6))
 
+#ifdef CURSES_CLIENT
 int bgetch();
+#else
+/* When not using curses, fall back to stdio's getchar() function */
+#define bgetch getchar
+#endif
+
 #define bselect select
 
 #if NETWORKING
