@@ -72,11 +72,6 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT([Configuring for native Win32 binary under Cygwin])
    AC_DEFINE(CYGWIN, 1, [Define if building under the Cygwin environment])
 
-   dnl The prefix makes little sense under Cygwin, but the installer expects
-   dnl everything relative to the current directory. --prefix="." doesn't
-   dnl work with recent autoconf versions, so it is fixed here.
-   prefix="."
-
    dnl This flag allows linking with MSVC-generated DLLs. -fnative-struct was
    dnl used by gcc 2, and -mms-bitfields by gcc 3, so it is tested for here.
    bkp_CFLAGS="$CFLAGS"
