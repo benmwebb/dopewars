@@ -72,11 +72,21 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT([Configuring for native Win32 binary under Cygwin])
    AC_DEFINE(CYGWIN, 1, [Define if building under the Cygwin environment])
 
+   dnl This flag allows linking with MSVC-generated DLLs. -fnative-struct was
+   dnl used by gcc 2, and -mms-bitfields by gcc 3, so it is tested for here.
+   bkp_CFLAGS="$CFLAGS"
+   AC_MSG_CHECKING(for compiler MSVC compatibility flag)
+   CFLAGS="$CFLAGS -mms-bitfields"
+   AC_COMPILE_IFELSE([ AC_LANG_PROGRAM() ], [ mscompat="-mms-bitfields" ],
+                     [ mscompat="-fnative-struct" ])
+   AC_MSG_RESULT($mscompat)
+   CFLAGS="$bkp_CFLAGS"
+
    dnl Libraries and flags
    dnl N.B. -mno-cygwin is included in CPPFLAGS so the right headers
    dnl are detected (in /usr/include/mingw/ rather than /usr/include)
    dnl later on - e.g. sys/param.h isn't in mingw.
-   CFLAGS="$CFLAGS -mwindows -fnative-struct"
+   CFLAGS="$CFLAGS -mwindows $mscompat"
    CPPFLAGS="$CPPFLAGS -mno-cygwin"
    LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
    LDFLAGS="$LDFLAGS -mno-cygwin"
