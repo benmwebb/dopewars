@@ -1173,7 +1173,7 @@ msgstr ""
 "  -h       Zeige diese Hilfe an\n"
 "  -v       Zeige Version und beende\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, und veröffentlicht unter der "
+"dopewars is Copyright (C) Ben Webb 1998-2003, und veröffentlicht unter der "
 "GNU GPL\n"
 "Melde Programmierfehler dem Autor Ben Webb, ben@bellatrix.pcl.ox.ac.uk\n"
 "Melde Übersetzungsfehler an Tobias Mathes, tobi@ideenpark.de\n"
@@ -1183,7 +1183,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1245,7 +1245,7 @@ msgstr ""
 "  -h       Zeige diese Hilfe an\n"
 "  -v       Zeige Version und beende\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, und veröffentlicht unter der "
+"dopewars is Copyright (C) Ben Webb 1998-2003, und veröffentlicht unter der "
 "GNU GPL\n"
 "Melde Programmierfehler dem Autor Ben Webb, ben@bellatrix.pcl.ox.ac.uk\n"
 "Melde Übersetzungsfehler an Tobias Mathes, tobi@ideenpark.de\n"
@@ -1255,7 +1255,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1298,33 +1298,32 @@ msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an"
 msgstr ""
 "Basiert auf dem Spiel 'Drug Wars' von John E. Dell, Drogenkrieg ist eine "
-"simulation"
 
 #: src/curses_client/curses_client.c:216
 msgid "imaginary drug market.  dopewars is an All-American game which features"
-msgstr "eines imaginären Drogenmarktes. "
+msgstr "simulation eines imaginären Drogenmarktes. "
 
 #: src/curses_client/curses_client.c:218
 msgid "buying, selling, and trying to get past the cops!"
-msgstr " <NULL> "
+msgstr " "
 
 #: src/curses_client/curses_client.c:220
 msgid ""
 "The first thing you need to do is pay off your debt to the Loan Shark. After"
-msgstr " <NULL> "
+msgstr " "
 
 #: src/curses_client/curses_client.c:222
 msgid ""
-"that, your goal is to make as much money as possible (and stay alive)! You"
-msgstr " <NULL> "
+"that, your goal is to make as much money as possible (and stay alive)!"
+msgstr " "
 
 #: src/curses_client/curses_client.c:224
-msgid "have one month of game time to make your fortune."
-msgstr " <NULL> "
+msgid "You have one month of game time to make your fortune."
+msgstr " "
 
 #: src/curses_client/curses_client.c:226
-msgid "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgid "Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr "Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client/curses_client.c:228
 #, c-format
@@ -1337,31 +1336,31 @@ msgstr "Drogenkrieg wurde veröffentlicht unter der GNU General Public Licence"
 
 #: src/curses_client/curses_client.c:234
 msgid "Icons and Graphics            Ocelot Mantis"
-msgstr "Icons und Grafiken           Ocelot Mantis"
+msgstr "Icons und Grafiken               Ocelot Mantis"
 
 #: src/curses_client/curses_client.c:235
 msgid "Sounds                        Robin Kohli, 19.5degs.com"
-msgstr ""
+msgstr "Sounds                           Robin Kohli, 19.5degs.com"
 
 #: src/curses_client/curses_client.c:236
 msgid "Drug Dealing and Research     Dan Wolf"
-msgstr "Drogen Handel und Nachforschung\t\tDan Wolf"
+msgstr "Drogen Handel und Nachforschung  Dan Wolf"
 
 #: src/curses_client/curses_client.c:237
 msgid "Play Testing                  Phil Davis           Owen Walsh"
-msgstr "Spieltests\t\t     Phil Davis\t\t  Owen Walsh"
+msgstr "Spieltests                       Phil Davis           Owen Walsh"
 
 #: src/curses_client/curses_client.c:239
 msgid "Extensive Play Testing        Katherine Holt       Caroline Moore"
-msgstr "Exessive Testspielen         Katherine Holt       Caroline Moore"
+msgstr "Exessive Testspielen             Katherine Holt       Caroline Moore"
 
 #: src/curses_client/curses_client.c:241
 msgid "Constructive Criticism        Andrea Elliot-Smith  Pete Winn"
-msgstr "Konstruktive Kritk            Andrea Elliot-Smith  Pete Winn"
+msgstr "Konstruktive Kritk               Andrea Elliot-Smith  Pete Winn"
 
 #: src/curses_client/curses_client.c:243
 msgid "Unconstructive Criticism      James Matthews"
-msgstr "Unkonstruktive Kritk          James Matthews"
+msgstr "Unkonstruktive Kritk             James Matthews"
 
 #: src/curses_client/curses_client.c:245
 msgid "For information on the command line options, type dopewars -h at your"
@@ -1594,7 +1593,7 @@ msgstr "     V>erpfeife ein anderen Dealer an die Cops (kosten: %P)"
 
 #: src/curses_client/curses_client.c:872
 msgid "   G>et stuffed"
-msgstr "  B>edröhn dich"
+msgstr "     B>edröhn dich"
 
 #: src/curses_client/curses_client.c:875
 msgid "or C>ontact your spies and receive reports"
@@ -2026,7 +2025,7 @@ msgstr "Sprich: "
 
 #: src/curses_client/curses_client.c:2465
 msgid "Play again? "
-msgstr "Möchtest Du nochmal spielen? -=+> "
+msgstr "Möchtest Du nochmal spielen? "
 
 #. The names of the the menus and their items in the GTK+ client
 #: src/gui_client/gtk_client.c:159
@@ -2464,10 +2463,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2405
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2002  Ben Webb, < ben@bellatrix.pcl.ox.ac."
+"Version %s     Copyright (C) 1998-2003  Ben Webb, < ben@bellatrix.pcl.ox.ac."
 "uk >\n"
 "\n"
 "\t Deutsche Übersetzung: Tobias Mathes, < tobi@kreativ-langeweile.de >\n"
