@@ -264,6 +264,20 @@ typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 
+typedef enum {
+  ET_NOERROR, ET_CUSTOM, ET_ERRNO,
+#ifdef CYGWIN
+  ET_WIN32, ET_WINSOCK
+#else
+  ET_HERRNO
+#endif
+} ErrorType;
+
+typedef struct _LastError {
+  gint code;
+  ErrorType type;
+} LastError;
+
 /* Handles reading and writing messages from/to a network connection */
 struct _NetworkBuffer {
    int fd;                /* File descriptor of the socket */
@@ -276,7 +290,7 @@ struct _NetworkBuffer {
    ConnBuf ReadBuf;       /* New data, waiting for the application */
    ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
    gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
-   gint Error;            /* If non-zero, any error from the last operation */
+   LastError error;       /* Any error from the last operation */
 };
 
 struct PLAYER_T {

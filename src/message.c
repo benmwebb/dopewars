@@ -273,6 +273,90 @@ gboolean HaveAbility(Player *Play,gint Type) {
    else return (Play->Abil.Shared[Type]);
 }
 
+void ClearError(LastError *error) {
+  error->type=ET_NOERROR;
+}
+
+void SetError(LastError *error,ErrorType type,gint code) {
+  error->type=type;
+  error->code=code;
+}
+
+typedef struct _ErrStr {
+  int code;
+  char *string;
+} ErrStr;
+
+static ErrStr CustomErrStr[] = {
+  { E_FULLBUF,N_("Connection dropped due to full buffer") },
+  { 0,NULL }
+};
+
+#ifdef CYGWIN
+
+static ErrStr WSAErrStr[] = {
+  { WSANOTINITIALISED,N_("WinSock has not been properly initialised") },
+  { WSAENETDOWN,N_("The network subsystem has failed") },
+  { WSAEADDRINUSE,N_("Address already in use") },
+  { WSAENETDOWN,N_("Cannot reach the network") },
+  { WSAETIMEDOUT,N_("The connection timed out") },
+  { WASEMFILE,N_("Out of file descriptors") },
+  { WASENOBUFS,N_("Out of buffer space") },
+  { WSAEOPNOTSUPP,N_("Operation not supported") },
+  { WSAECONNABORTED,N_("Connection aborted due to failure") },
+  { WSAECONNRESET,N_("Connection reset by remote host") },
+  { WSAECONNREFUSED,N_("Connection refused") },
+  { WSAEAFNOSUPPORT,N_("Address family not supported") },
+  { WSAEPROTONOSUPPORT,N_("Protocol not supported") },
+  { WSAESOCKTNOSUPPORT,N_("Socket type not supported") },
+  { WSAHOST_NOT_FOUND,N_("Host not found") },
+  { WSATRY_AGAIN,N_("Temporary name server error - try again later") },
+  { WSANO_RECOVERY,N_("Failed to contact nameserver") },
+  { WSANO_DATA,N_("Valid name, but no DNS data record present") },
+  { 0,NULL }
+};
+
+#else
+
+static ErrStr DNSErrStr[] = {
+  { HOST_NOT_FOUND,N_("Host not found") },
+  { TRY_AGAIN,N_("Temporary name server error - try again later") },
+  { 0,NULL }
+};
+
+#endif
+
+static gchar *LookupErrorCode(gint code,ErrStr *str,gchar *fallbackstr) {
+  for (;str && str->string;str++) {
+    if (code==str->code) return g_strdup(_(str->string));
+  }
+  return g_strdup_printf(fallbackstr,code);
+}
+
+gchar *GetErrorString(LastError *error) {
+  switch (error->type) {
+    case ET_NOERROR:
+      return NULL;
+    case ET_CUSTOM:
+      return LookupErrorCode(error->code,CustomErrStr,
+                             _("Unknown internal error code %d"));
+    case ET_ERRNO:
+      return g_strdup(strerror(error->code));
+#ifdef CYGWIN
+    case ET_WIN32:
+      return NULL;
+    case ET_WINSOCK:
+      return LookupErrorCode(error->code,WSAErrStr,
+                             _("Unknown WinSock error code %d"));
+#else
+    case ET_HERRNO:
+      return LookupErrorCode(error->code,DNSErrStr,
+                             _("Unknown DNS error code %d"));
+#endif
+  }
+  return NULL;
+}
+
 #if NETWORKING
 static void NetBufCallBack(NetworkBuffer *NetBuf) {
    if (NetBuf && NetBuf->CallBack) {
@@ -300,7 +384,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
    NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
    NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
    NetBuf->WaitConnect=FALSE;
-   NetBuf->Error=0;
+   ClearError(&NetBuf->error);
 }
 
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
@@ -335,6 +419,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
    retval=StartConnect(&NetBuf->fd,RemoteHost,RemotePort,TRUE);
 
    if (retval) {
+      SetError(&NetBuf->error,ET_HERRNO,h_errno);
       ConnectError(retval); return FALSE;
    } else {
       NetBuf->WaitConnect=TRUE;
@@ -537,6 +622,7 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
    while(1) {
       if (CurrentPosition>=conn->Length) {
          if (conn->Length==MAXREADBUF) {
+            SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
             return FALSE; /* drop connection */
          }
          if (conn->Length==0) conn->Length=256; else conn->Length*=2;
@@ -549,10 +635,13 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
          Error = GetSocketError();
 #ifdef CYGWIN
          if (Error==WSAEWOULDBLOCK) break;
-         else { NetBuf->Error = Error; return FALSE; }
+         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
 #else
          if (Error==EAGAIN) break;
-         else if (Error!=EINTR) { NetBuf->Error = Error; return FALSE; }
+         else if (Error!=EINTR) {
+            SetError(&NetBuf->error,ET_ERRNO,Error);
+            return FALSE;
+         }
 #endif
       } else if (BytesRead==0) {
          return FALSE;
@@ -607,7 +696,10 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
    int CurrentPosition,BytesSent,Error;
    conn=&NetBuf->WriteBuf;
    if (!conn->Data || !conn->DataPresent) return TRUE;
-   if (conn->Length==MAXWRITEBUF) return FALSE;
+   if (conn->Length==MAXWRITEBUF) {
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      return FALSE;
+   }
    CurrentPosition=0;
    while (CurrentPosition<conn->DataPresent) {
       BytesSent=send(NetBuf->fd,&conn->Data[CurrentPosition],
@@ -616,10 +708,13 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
          Error=GetSocketError();
 #ifdef CYGWIN
          if (Error==WSAEWOULDBLOCK) break;
-         else { NetBuf->Error=Error; return FALSE; }
+         else { SetError(&NetBuf->error,ET_WINSOCK,Error); return FALSE; }
 #else
          if (Error==EAGAIN) break;
-         else if (Error!=EINTR) { NetBuf->Error=Error; return FALSE; }
+         else if (Error!=EINTR) {
+            SetError(&NetBuf->error,ET_ERRNO,Error);
+            return FALSE;
+         }
 #endif
       } else {
          CurrentPosition+=BytesSent;

@@ -49,6 +49,10 @@ typedef enum {
    C_MEETPLAYER, C_FIGHT, C_FIGHTDONE
 } AICode;
 
+typedef enum {
+   E_FULLBUF
+} CustomError;
+
 #define DT_LOCATION    'A'
 #define DT_DRUG        'B'
 #define DT_GUN         'C'
@@ -137,6 +141,10 @@ gboolean HandleHttpCompletion(HttpConnection *conn);
 gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt);
 void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
+
+void ClearError(LastError *error);
+void SetError(LastError *error,ErrorType type,gint code);
+gchar *GetErrorString(LastError *error);
 
 extern GSList *FirstClient;
 
