@@ -94,7 +94,7 @@ WNDRES = @WNDRES@
 localedir = @localedir@
 
 noinst_LIBRARIES = libguiclient.a
-libguiclient_a_SOURCES = gtk_client.c optdialog.c
+libguiclient_a_SOURCES = gtk_client.c optdialog.c newgamedia.c
 libguiclient_a_DEPENDENCIES = @INTLLIBS@
 INCLUDES = @GTK_CFLAGS@ -I.. -I../.. -I.
 LDADD = @GTK_LIBS@ @INTLLIBS@
@@ -108,7 +108,7 @@ CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 libguiclient_a_LIBADD = 
-libguiclient_a_OBJECTS =  gtk_client.o optdialog.o
+libguiclient_a_OBJECTS =  gtk_client.o optdialog.o newgamedia.o
 AR = ar
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -121,7 +121,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DEP_FILES =  .deps/gtk_client.P .deps/optdialog.P
+DEP_FILES =  .deps/gtk_client.P .deps/newgamedia.P .deps/optdialog.P
 SOURCES = $(libguiclient_a_SOURCES)
 OBJECTS = $(libguiclient_a_OBJECTS)
 

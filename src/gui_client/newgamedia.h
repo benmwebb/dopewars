@@ -1,5 +1,5 @@
 /************************************************************************
- * gtk_client.h   dopewars client using the GTK+ toolkit                *
+ * newgamedia.h   New game dialog                                       *
  * Copyright (C)  1998-2002  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
@@ -20,24 +20,24 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __GTK_CLIENT_H__
-#define __GTK_CLIENT_H__
+#ifndef __NEWGAME_DIA_H__
+#define __NEWGAME_DIA_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "gtkport/gtkport.h"
+#include <glib.h>
+#include "dopewars.h"
+#include "network.h"
 
-extern GtkWidget *MainWindow;
-
-#ifdef CYGWIN
-gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 gboolean ReturnOnFail);
+#ifdef NETWORKING
+void NewGameDialog(Player *play, NBCallBack sockstat);
+void DisplayConnectStatus(gboolean meta, NBStatus oldstatus,
+                          NBSocksStatus oldsocks);
+void FinishServerConnect(gboolean ConnectOK);
 #else
-gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
+void NewGameDialog(Player *play);
 #endif
-
-void GuiStartGame(void);
 
 #endif
