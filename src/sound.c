@@ -113,7 +113,9 @@ static void ScanPluginDir(const gchar *dirname)
 void SoundInit(void)
 {
 #ifdef PLUGINS
+  ScanPluginDir(PLUGINDIR);
   ScanPluginDir("src/plugins/.libs");
+  ScanPluginDir("plugins/.libs");
 #else
 #ifdef HAVE_ESD
   AddPlugin(sound_esd_init);
