@@ -28,6 +28,7 @@
 #include <glib.h>
 
 #include "gtkport.h"
+#include "nls.h"
 
 /* Internationalization stuff */
 

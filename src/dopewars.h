@@ -44,25 +44,6 @@
 #include <glib.h>
 #include "dopeos.h"
 
-/* Internationalization stuff */
-
-#ifdef ENABLE_NLS
-#include <locale.h>
-#include <libintl.h>
-#define _(String) gettext (String)
-#ifdef gettext_noop
-#define N_(String) gettext_noop (String)
-#else
-#define N_(String) (String)
-#endif
-#else
-#define gettext(String) (String)
-#define dgettext(Domain,Message) (Message)
-#define dcgettext(Domain,Message,Type) (Message)
-#define _(String) (String)
-#define N_(String) (String)
-#endif
-
 /* Make price_t be a long long if the type is supported by the compiler */
 #if SIZEOF_LONG_LONG == 0
 typedef long price_t;

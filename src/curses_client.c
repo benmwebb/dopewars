@@ -38,6 +38,7 @@
 #include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
+#include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
 

@@ -45,6 +45,7 @@
 #include "dopeos.h"
 #include "gtk_client.h"
 #include "message.h"
+#include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
 #include "AIPlayer.h"

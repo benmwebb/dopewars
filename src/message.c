@@ -39,9 +39,10 @@
 #include <glib.h>
 #include "dopeos.h"
 #include "dopewars.h"
+#include "message.h"
+#include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
-#include "message.h"
 
 /* Maximum sizes (in bytes) of read and write buffers - connections should
    be dropped if either buffer is filled */
