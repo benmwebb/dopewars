@@ -2106,6 +2106,63 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 #endif
 }
 
+#ifdef HAVE_GLIB2
+/*
+ * Converts a single string from the locale's codeset (e.g. ISO-8859-1)
+ * to UTF8. (If the locale codeset is already UTF8, and the string is
+ * invalid, truncate it at the first invalid character.)
+ */
+static void ConvertString(gchar **str)
+{
+  gchar *utf8str;
+  const gchar *end;
+
+  if (str && *str && **str) {
+    if (g_get_charset(NULL)) {
+      if (!g_utf8_validate(*str, strlen(*str), &end) && end) {
+        *((gchar *)end) = '\0';
+      }
+    } else {
+      utf8str = g_locale_to_utf8(*str, strlen(*str), NULL, NULL, NULL);
+      if (utf8str) {
+        AssignName(str, utf8str);
+        g_free(utf8str);
+      }
+    }
+  }
+}
+
+/*
+ * Converts all configuration file strings from the locale's encoding to
+ * UTF-8. This is a bit of a hack, as ideally all strings would be in
+ * UTF-8 anyway, but we need to support old GTK+1 and curses builds,
+ * which are not Unicode-aware. (N.B. As the default location names, etc.
+ * are set before bind_text_domain_codeset is called
+ */
+static void ConvertToUTF8(void)
+{
+  int i, j;
+  struct GLOBALS *gvar;
+
+  for (i = 0; i < NUMGLOB; i++) {
+    gvar = &Globals[i];
+    if (gvar->StringVal) {
+      if (gvar->StructListPt) {
+        for (j = 1; j <= *gvar->MaxIndex; j++) {
+          ConvertString(GetGlobalString(i, j));
+        }
+      } else {
+        ConvertString(GetGlobalString(i, 0));
+      }
+    } else if (gvar->StringList) {
+      for (j = 0; j < *gvar->MaxIndex; j++) {
+        ConvertString((*gvar->StringList) + j);
+      }
+    }
+  }
+}
+#endif
+
 static void make_tags(GtkTextView *textview)
 {
 #ifdef HAVE_GLIB2
@@ -2146,6 +2203,8 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   /* GTK+2 expects all strings to be UTF-8, so we force gettext to return
    * all translations in this encoding here. */
   bind_textdomain_codeset(PACKAGE, "UTF-8");
+
+  ConvertToUTF8();
 #endif
 
   /* Set up message handlers */
