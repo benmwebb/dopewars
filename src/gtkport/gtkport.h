@@ -766,6 +766,14 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define GTK_STOCK_REFRESH _("Refresh")
 
 GtkWidget *gtk_button_new_from_stock(const gchar *label);
+
+typedef enum
+{
+  GTK_MESSAGE_INFO,
+  GTK_MESSAGE_WARNING,
+  GTK_MESSAGE_QUESTION,
+  GTK_MESSAGE_ERROR
+} GtkMessageType;
 #endif
 
 typedef struct _GtkUrl GtkUrl;
@@ -779,7 +787,7 @@ struct _GtkUrl {
 
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
-                   const gchar *Title, gint Options);
+                   const gchar *Title, GtkMessageType type, gint Options);
 GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
                                               gchar *titles[],
                                               GtkWidget **pack_widg);
