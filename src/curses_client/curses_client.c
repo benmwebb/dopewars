@@ -35,7 +35,7 @@
 #include <errno.h>
 #include <glib.h>
 #include "curses_client.h"
-#include "dopeos.h"
+#include "cursesport/cursesport.h"
 #include "dopewars.h"
 #include "message.h"
 #include "nls.h"
@@ -47,6 +47,16 @@ static void PrintHighScore(char *Data);
 
 static int ResizedFlag;
 static SCREEN *cur_screen;
+
+#define PromptAttr   (COLOR_PAIR(1))
+#define TextAttr     (COLOR_PAIR(2))
+#define LocationAttr (COLOR_PAIR(3)|A_BOLD)
+#define TitleAttr    (COLOR_PAIR(4))
+#define StatsAttr    (COLOR_PAIR(5))
+#define DebtAttr     (COLOR_PAIR(6))
+
+/* Current size of the screen */
+static int Width, Depth;
 
 #ifdef NETWORKING
 static enum {
@@ -308,10 +318,8 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     if (FD_ISSET(0, &readfds)) {
       /* So that Ctrl-L works */
       c = getch();
-#ifndef CYGWIN
       if (c == '\f')
         wrefresh(curscr);
-#endif
     }
     if (RespondToSelect
         (&MetaConn->NetBuf, &readfds, &writefds, NULL, &DoneOK)) {

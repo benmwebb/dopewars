@@ -29,11 +29,11 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <glib.h>
-#include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
 #include "nls.h"
 #include "tstring.h"
+#include "util.h"
 #include "AIPlayer.h"
 
 #if NETWORKING

@@ -195,7 +195,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strdup strstr getopt_long fork)
+AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork)
 
 dnl Enable networking by default under Win32, but on Unix systems
 dnl make it dependent on the availability of select and socket
@@ -252,12 +252,16 @@ AM_CONDITIONAL(CURSES_CLIENT, test "$CURSES_CLIENT" = "yes")
 dnl Compile in the gtkport stuff for any kind of GUI
 AM_CONDITIONAL(GTKPORT, test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes")
 
+dnl Compile in the cursesport stuff for the curses client only
+AM_CONDITIONAL(CURSESPORT, test "$CURSES_CLIENT" = "yes")
+
 AC_OUTPUT([
 Makefile
 src/Makefile
 src/gui_client/Makefile
 src/curses_client/Makefile
 src/gtkport/Makefile
+src/cursesport/Makefile
 doc/Makefile
 intl/Makefile
 po/Makefile.in],

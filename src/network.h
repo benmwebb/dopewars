@@ -28,6 +28,9 @@
 #endif
 
 /* Various includes necessary for select() calls */
+#ifdef CYGWIN
+#include <windows.h>
+#else
 #include <sys/types.h>
 /* Be careful not to include both sys/time.h and time.h on those systems
  * which don't like it */
@@ -44,6 +47,7 @@
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #endif
 
 #include <glib.h>

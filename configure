@@ -4280,7 +4280,7 @@ fi
 
 fi
 
-for ac_func in strdup strstr getopt_long fork
+for ac_func in strdup strstr getopt getopt_long fork
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:4287: checking for $ac_func" >&5
@@ -4588,6 +4588,16 @@ else
   GTKPORT_FALSE=
 fi
 
+
+
+if test "$CURSES_CLIENT" = "yes"; then
+  CURSESPORT_TRUE=
+  CURSESPORT_FALSE='#'
+else
+  CURSESPORT_TRUE='#'
+  CURSESPORT_FALSE=
+fi
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -4695,6 +4705,7 @@ src/Makefile
 src/gui_client/Makefile
 src/curses_client/Makefile
 src/gtkport/Makefile
+src/cursesport/Makefile
 doc/Makefile
 intl/Makefile
 po/Makefile.in config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
@@ -4785,6 +4796,8 @@ s%@CURSES_CLIENT_TRUE@%$CURSES_CLIENT_TRUE%g
 s%@CURSES_CLIENT_FALSE@%$CURSES_CLIENT_FALSE%g
 s%@GTKPORT_TRUE@%$GTKPORT_TRUE%g
 s%@GTKPORT_FALSE@%$GTKPORT_FALSE%g
+s%@CURSESPORT_TRUE@%$CURSESPORT_TRUE%g
+s%@CURSESPORT_FALSE@%$CURSESPORT_FALSE%g
 
 CEOF
 EOF
@@ -4831,6 +4844,7 @@ src/Makefile
 src/gui_client/Makefile
 src/curses_client/Makefile
 src/gtkport/Makefile
+src/cursesport/Makefile
 doc/Makefile
 intl/Makefile
 po/Makefile.in"}

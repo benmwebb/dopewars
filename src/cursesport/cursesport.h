@@ -1,6 +1,6 @@
 /************************************************************************
- * dopeos.h       dopewars - operating system-specific function         *
- *                           definitions                                *
+ * cursesport.h   Portability functions to enable curses applications   *
+ *                     to be built on Win32 systems                     *
  * Copyright (C)  1998-2002  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
@@ -21,8 +21,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __DOPEOS_H__
-#define __DOPEOS_H__
+#ifndef __CURSESPORT_H__
+#define __CURSESPORT_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -33,12 +33,9 @@
 #include <string.h>
 
 #include <stdio.h>
+#include <conio.h>
 
-void refresh();
-HANDLE WINAPI GetConHandle(TCHAR *pszName);
-extern WORD TextAttr, PromptAttr, TitleAttr;
-extern WORD LocationAttr, StatsAttr, DebtAttr;
-extern int Width, Depth;
+extern int COLS, LINES;
 
 #define COLOR_MAGENTA 1
 #define COLOR_BLACK   2
@@ -46,24 +43,7 @@ extern int Width, Depth;
 #define COLOR_BLUE    4
 #define COLOR_RED     5
 
-#define SIGWINCH      0
-#define SIGPIPE       0
-#define SIG_BLOCK     0
-#define SIG_UNBLOCK   0
-
-struct sigaction {
-  void *sa_handler;
-  int sa_flags;
-  int sa_mask;
-};
-
-void sigemptyset(int *mask);
-void sigaddset(int *mask, int sig);
-int sigaction(int sig, struct sigaction *sact, char *pt);
-void sigprocmask(int flag, int *mask, char *pt);
-
-#define COLS  Width
-#define LINES Depth
+#define COLOR_PAIR(i) ((i) << 8)
 
 #define ACS_VLINE       179
 #define ACS_ULCORNER    218
@@ -85,45 +65,30 @@ typedef int SCREEN;
 #define A_BOLD        0
 
 SCREEN *newterm(void *, void *, void *);
-void start_color();
+void refresh(void);
+#define wrefresh(win) refresh()
+void start_color(void);
 void init_pair(int index, WORD fg, WORD bg);
-void cbreak();
-void noecho();
+void cbreak(void);
+void noecho(void);
 void nodelay(void *, char);
 void keypad(void *, char);
 void curs_set(BOOL visible);
-void endwin();
+void endwin(void);
 void move(int y, int x);
 void attrset(WORD newAttr);
 void addstr(char *str);
 void addch(int ch);
 void mvaddstr(int x, int y, char *str);
 void mvaddch(int x, int y, int ch);
-int bgetch();
 
 #define erase() clear_screen()
-char *index(const char *str, int ch);
-int getopt(int argc, char *const argv[], const char *str);
-extern char *optarg;
 
-typedef int ssize_t;
-void standout();
-void standend();
-void endwin();
-int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfs,
-            struct timeval *tm);
+void standout(void);
+void standend(void);
+void endwin(void);
 
 #else /* Definitions for Unix build */
-
-#include <sys/types.h>
-
-#include <stdio.h>
-#include <errno.h>
-
-/* Only include sys/wait.h on those systems which support it */
-#if HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
 
 /* Include a suitable curses-type library */
 #if HAVE_LIBNCURSES
@@ -134,39 +99,8 @@ int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfs,
 #include <curses_colr/curses.h>
 #endif
 
-extern int Width, Depth;
-
-#define PromptAttr   (COLOR_PAIR(1))
-#define TextAttr     (COLOR_PAIR(2))
-#define LocationAttr (COLOR_PAIR(3)|A_BOLD)
-#define TitleAttr    (COLOR_PAIR(4))
-#define StatsAttr    (COLOR_PAIR(5))
-#define DebtAttr     (COLOR_PAIR(6))
-
-#ifdef CURSES_CLIENT
-int bgetch(void);
-#else
-/* When not using curses, fall back to stdio's getchar() function */
-#define bgetch getchar
-#endif
-
-#define bselect select
-
 #endif /* CYGWIN */
 
-void MicroSleep(int microsec);
+int bgetch(void);
 
-int ReadLock(FILE * fp);
-int WriteLock(FILE * fp);
-void ReleaseLock(FILE * fp);
-
-/* Now make definitions if they haven't been done properly */
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-#endif
-
-#ifndef WIFEXITED
-#define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
-#endif /* __DOPEOS_H__ */
+#endif /* __CURSESPORT_H__ */

@@ -13,12 +13,17 @@ GTKPORTSUBDIR = gtkport
 GTKPORTDEP = gtkport/libgtkport.a
 endif
 
-SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR)
-dopewars_DEPENDENCIES = @INTLLIBS@ @WNDRES@ $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP)
-dopewars_LDADD = $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
+if CURSESPORT
+CURSESPORTSUBDIR = cursesport
+CURSESPORTDEP = cursesport/libcursesport.a
+endif
+
+SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR)
+dopewars_DEPENDENCIES = @INTLLIBS@ @WNDRES@ $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) $(CURSESPORTDEP)
+dopewars_LDADD = $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) $(CURSESPORTDEP) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h dopeos.c dopeos.h \
+dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    dopewars.c dopewars.h error.c error.h message.c message.h \
                    network.c network.h nls.h serverside.c serverside.h \
                    tstring.c tstring.h winmain.c winmain.h

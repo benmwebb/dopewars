@@ -46,13 +46,13 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <glib.h>
-#include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
 #include "network.h"
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
+#include "util.h"
 
 #ifdef GUI_SERVER
 #include "gtkport/gtkport.h"
@@ -965,7 +965,6 @@ Player *HandleNewConnection(void)
   if ((ClientSock = accept(ListenSock, (struct sockaddr *)&ClientAddr,
                            &cadsize)) == -1) {
     perror("accept socket");
-    bgetch();
     exit(1);
   }
   dopelog(2, _("got connection from %s"), inet_ntoa(ClientAddr.sin_addr));
@@ -1157,7 +1156,6 @@ void ServerLoop()
           continue;
       }
       perror("select");
-      bgetch();
       break;
     }
     FirstServer = HandleTimeouts(FirstServer);

@@ -1,5 +1,6 @@
 /************************************************************************
- * dopeos.c       dopewars - operating-system-specific functions        *
+ * cursesport.c   Portability functions to enable curses applications   *
+ *                     to be built on Win32 systems                     *
  * Copyright (C)  1998-2002  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
@@ -24,17 +25,20 @@
 #include <config.h>
 #endif
 
-#include "dopeos.h"
-#include "dopewars.h"
+#include "cursesport.h"
 
 #ifdef CYGWIN                   /* Code for native Win32 build under Cygwin */
 
-#include <conio.h>
+int COLS, LINES;
 
-CHAR_INFO RealScreen[25][80], VirtualScreen[25][80];
-HANDLE hOut, hIn;
+static int Width, Depth;
+static CHAR_INFO RealScreen[25][80], VirtualScreen[25][80];
+static HANDLE hOut, hIn;
+static WORD CurAttr = 0;
+static int CurX, CurY;
+static WORD Attr[10];
 
-void refresh()
+void refresh(void)
 {
   int y;
   COORD size, offset;
@@ -58,7 +62,7 @@ void refresh()
   }
 }
 
-HANDLE WINAPI GetConHandle(TCHAR *pszName)
+static HANDLE WINAPI GetConHandle(TCHAR *pszName)
 {
   SECURITY_ATTRIBUTES sa;
 
@@ -70,14 +74,6 @@ HANDLE WINAPI GetConHandle(TCHAR *pszName)
                     &sa, OPEN_EXISTING, (DWORD)0, (HANDLE)0);
 }
 
-WORD CurAttr = 0, TextAttr = 2 << 8;
-WORD PromptAttr = 1 << 8, TitleAttr = 4 << 8;
-WORD LocationAttr = 3 << 8, StatsAttr = 5 << 8, DebtAttr = 6 << 8;
-int Width, Depth, CurX, CurY;
-char *optarg;
-WORD Attr[10];
-HWND hwndMain;
-
 SCREEN *newterm(void *a, void *b, void *c)
 {
   COORD coord;
@@ -85,9 +81,9 @@ SCREEN *newterm(void *a, void *b, void *c)
 
   coord.X = 80;
   coord.Y = 25;
-  Width = 80;
-  Depth = 25;
-  CurAttr = TextAttr;
+  Width = COLS = 80;
+  Depth = LINES = 25;
+  CurAttr = 1 << 8;
   CurX = 0;
   CurY = 0;
   for (i = 0; i < 10; i++)
@@ -98,7 +94,7 @@ SCREEN *newterm(void *a, void *b, void *c)
   return NULL;
 }
 
-void start_color()
+void start_color(void)
 {
 }
 
@@ -137,11 +133,11 @@ void init_pair(int index, WORD fg, WORD bg)
   }
 }
 
-void cbreak()
+void cbreak(void)
 {
 }
 
-void noecho()
+void noecho(void)
 {
 }
 
@@ -163,7 +159,7 @@ void curs_set(BOOL visible)
   SetConsoleCursorInfo(hOut, &ConCurInfo);
 }
 
-void endwin()
+void endwin(void)
 {
   CurAttr = 0;
   refresh();
@@ -227,7 +223,7 @@ void mvaddch(int y, int x, int ch)
 /* 
  * Waits for the user to press a key.
  */
-int bgetch()
+int bgetch(void)
 {
   DWORD NumRead;
   char Buffer[10];
@@ -237,181 +233,16 @@ int bgetch()
   return (int)(Buffer[0]);
 }
 
-char *index(const char *str, int ch)
-{
-  int i;
-
-  for (i = 0; i < strlen(str); i++) {
-    if (str[i] == ch)
-      return str + i;
-  }
-  return NULL;
-}
-
-static int apos = 0;
-
-int getopt(int argc, char *const argv[], const char *str)
-{
-  int i, c;
-  char *pt;
-
-  while (apos < argc && argv[apos]) {
-    if (argv[apos][0] != '-') {
-      apos++;
-      return 0;
-    }
-    for (i = 1; i < strlen(argv[apos]); i++) {
-      c = argv[apos][i];
-      pt = index(str, c);
-      if (pt) {
-        argv[apos][i] = '-';
-        if (*(pt + 1) == ':') {
-          if (apos + 1 < argc && i == strlen(argv[apos]) - 1) {
-            apos++;
-            optarg = argv[apos];
-            apos++;
-          } else
-            return 0;
-        }
-        return c;
-      }
-    }
-    apos++;
-  }
-  return EOF;
-}
-
-void sigemptyset(int *mask)
+void standout(void)
 {
 }
 
-void sigaddset(int *mask, int sig)
-{
-}
-
-int sigaction(int sig, struct sigaction *sact, char *pt)
-{
-  return 0;
-}
-
-void sigprocmask(int flag, int *mask, char *pt)
-{
-}
-
-void standout()
-{
-}
-
-void standend()
-{
-}
-
-gboolean IsKeyPressed()
-{
-  INPUT_RECORD ConsoleIn;
-  DWORD NumConsoleIn;
-
-  while (PeekConsoleInput(hIn, &ConsoleIn, 1, &NumConsoleIn)
-         && NumConsoleIn == 1) {
-    if (ConsoleIn.EventType == KEY_EVENT
-        && ConsoleIn.Event.KeyEvent.bKeyDown) {
-      return TRUE;
-    } else {
-      ReadConsoleInput(hIn, &ConsoleIn, 1, &NumConsoleIn);
-    }
-  }
-  return FALSE;
-}
-
-int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-            struct timeval *tm)
-{
-  int retval;
-  struct timeval tv, *tp;
-  fd_set localread, localexcept;
-  char CheckKbHit = 0, KeyRead;
-
-  if (nfds == 0 && tm) {
-    Sleep(tm->tv_sec * 1000 + tm->tv_usec / 1000);
-    return 0;
-  }
-  if (FD_ISSET(0, readfds)) {
-    if (nfds == 1)
-      return 1;
-    tp = &tv;
-    CheckKbHit = 1;
-    FD_CLR(0, readfds);
-  } else
-    tp = tm;
-  KeyRead = 0;
-  while (1) {
-    tv.tv_sec = 0;
-    tv.tv_usec = 250000;
-
-    if (readfds)
-      memcpy(&localread, readfds, sizeof(fd_set));
-    if (exceptfds)
-      memcpy(&localexcept, exceptfds, sizeof(fd_set));
-    if (CheckKbHit && IsKeyPressed())
-      tv.tv_usec = 0;
-    retval = select(nfds, readfds, writefds, exceptfds, tp);
-    if (retval == SOCKET_ERROR)
-      return retval;
-    if (CheckKbHit && IsKeyPressed()) {
-      retval++;
-      FD_SET(0, readfds);
-    }
-    if (retval > 0 || !CheckKbHit)
-      break;
-    if (CheckKbHit && tm) {
-      if (tm->tv_usec >= 250000)
-        tm->tv_usec -= 250000;
-      else if (tm->tv_sec) {
-        tm->tv_usec += 750000;
-        tm->tv_sec--;
-      } else
-        break;
-    }
-    if (readfds)
-      memcpy(readfds, &localread, sizeof(fd_set));
-    if (exceptfds)
-      memcpy(exceptfds, &localexcept, sizeof(fd_set));
-  }
-  return retval;
-}
-
-/* We don't do locking under Win32 right now */
-int ReadLock(FILE * fp)
-{
-  return 0;
-}
-
-int WriteLock(FILE * fp)
-{
-  return 0;
-}
-
-void ReleaseLock(FILE * fp)
+void standend(void)
 {
 }
 
 #else /* Code for Unix build */
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
-
-int Width, Depth;
-
-#ifdef CURSES_CLIENT
 /* 
  * Calls the curses getch() function; if the key pressed is Ctrl-L
  * then automatically clears and redraws the screen, otherwise
@@ -428,52 +259,5 @@ int bgetch()
   }
   return c;
 }
-#endif
-
-static int DoLock(FILE * fp, int l_type)
-{
-  struct flock lk;
-
-  lk.l_type = l_type;
-  lk.l_whence = lk.l_start = lk.l_len = 0;
-  lk.l_pid = 0;
-
-  while (1) {
-    if (fcntl(fileno(fp), F_SETLKW, &lk) == 0)
-      return 0;
-    else if (errno != EINTR)
-      return 1;
-  }
-  return 1;
-}
-
-int ReadLock(FILE * fp)
-{
-  return DoLock(fp, F_RDLCK);
-}
-
-int WriteLock(FILE * fp)
-{
-  return DoLock(fp, F_WRLCK);
-}
-
-void ReleaseLock(FILE * fp)
-{
-  DoLock(fp, F_UNLCK);
-}
 
 #endif /* CYGWIN */
-
-/* 
- * On systems with select, sleep for "microsec" microseconds.
- */
-void MicroSleep(int microsec)
-{
-#if HAVE_SELECT
-  struct timeval tv;
-
-  tv.tv_sec = 0;
-  tv.tv_usec = microsec;
-  bselect(0, NULL, NULL, NULL, &tv);
-#endif
-}

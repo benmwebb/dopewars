@@ -102,12 +102,15 @@ localedir = @localedir@
 @GTKPORT_TRUE@GTKPORTSUBDIR = @GTKPORT_TRUE@gtkport
 @GTKPORT_TRUE@GTKPORTDEP = @GTKPORT_TRUE@gtkport/libgtkport.a
 
-SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR)
-dopewars_DEPENDENCIES = @INTLLIBS@ @WNDRES@ $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP)
-dopewars_LDADD = $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
+@CURSESPORT_TRUE@CURSESPORTSUBDIR = @CURSESPORT_TRUE@cursesport
+@CURSESPORT_TRUE@CURSESPORTDEP = @CURSESPORT_TRUE@cursesport/libcursesport.a
+
+SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR)
+dopewars_DEPENDENCIES = @INTLLIBS@ @WNDRES@ $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) $(CURSESPORTDEP)
+dopewars_LDADD = $(GUIDEP) $(CURSESDEP) $(GTKPORTDEP) $(CURSESPORTDEP) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h dopeos.c dopeos.h \
+dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    dopewars.c dopewars.h error.c error.h message.c message.h \
                    network.c network.h nls.h serverside.c serverside.h \
                    tstring.c tstring.h winmain.c winmain.h
@@ -127,7 +130,7 @@ PROGRAMS =  $(bin_PROGRAMS)
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-dopewars_OBJECTS =  admin.o AIPlayer.o dopeos.o dopewars.o error.o \
+dopewars_OBJECTS =  admin.o AIPlayer.o util.o dopewars.o error.o \
 message.o network.o serverside.o tstring.o winmain.o
 dopewars_LDFLAGS = 
 CFLAGS = @CFLAGS@
@@ -141,10 +144,10 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-DIST_SUBDIRS =  gui_client curses_client gtkport
-DEP_FILES =  .deps/AIPlayer.P .deps/admin.P .deps/dopeos.P \
-.deps/dopewars.P .deps/error.P .deps/message.P .deps/network.P \
-.deps/serverside.P .deps/tstring.P .deps/winmain.P
+DIST_SUBDIRS =  gui_client curses_client gtkport cursesport
+DEP_FILES =  .deps/AIPlayer.P .deps/admin.P .deps/dopewars.P \
+.deps/error.P .deps/message.P .deps/network.P .deps/serverside.P \
+.deps/tstring.P .deps/util.P .deps/winmain.P
 SOURCES = $(dopewars_SOURCES)
 OBJECTS = $(dopewars_OBJECTS)
 

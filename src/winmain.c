@@ -31,10 +31,10 @@
 #include <glib.h>
 #include <stdlib.h>
 
-#include "dopeos.h"
 #include "dopewars.h"
 #include "nls.h"
 #include "tstring.h"
+#include "util.h"
 #include "AIPlayer.h"
 #include "message.h"
 #include "serverside.h"
@@ -56,7 +56,6 @@ static void ServerLogMessage(const gchar *log_domain,
                              GLogLevelFlags log_level,
                              const gchar *message, gpointer user_data)
 {
-  DWORD NumChar;
   GString *text;
 
   text = GetLogString(log_level, message);
@@ -317,7 +316,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                         LogMask() | G_LOG_LEVEL_MESSAGE |
                         G_LOG_LEVEL_WARNING, ServerLogMessage, NULL);
       g_set_print_handler(ServerPrintFunc);
-      newterm(NULL, NULL, NULL);
       AIPlayerLoop();
     } else {
       switch (WantedClient) {

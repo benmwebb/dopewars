@@ -28,13 +28,13 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "dopeos.h"
 #include "dopewars.h"
 #include "gtk_client.h"
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
+#include "util.h"
 #include "gtkport/gtkport.h"
 #include "dopewars-pill.xpm"
 #include "optdialog.h"

@@ -43,12 +43,12 @@
 #include <glib.h>
 #include <stdarg.h>
 #include "admin.h"
-#include "dopeos.h"
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
 #include "tstring.h"
 #include "AIPlayer.h"
+#include "util.h"
 #include "winmain.h"
 
 #ifdef CURSES_CLIENT

@@ -43,9 +43,9 @@
 #endif
 
 #include <glib.h>
-#include "dopeos.h"
 #include "error.h"
 #include "network.h"
+#include "util.h"
 
 /* Make price_t be a long long if the type is supported by the compiler */
 #if SIZEOF_LONG_LONG == 0
