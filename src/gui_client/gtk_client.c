@@ -2205,6 +2205,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   bind_textdomain_codeset(PACKAGE, "UTF-8");
 
   ConvertToUTF8();
+  WantUTF8Errors(TRUE);
 #endif
 
   /* Set up message handlers */

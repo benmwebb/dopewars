@@ -37,6 +37,44 @@
 #include "error.h"
 #include "nls.h"
 
+static gboolean err_utf8_encoding = FALSE;
+
+/*
+ * If "want" is TRUE, we want all error texts (via. strerror) in UTF8,
+ * even if the locale's charset is not UTF8.
+ */
+void WantUTF8Errors(gboolean want)
+{
+  err_utf8_encoding = want;
+}
+
+/*
+ * Returns the strerror() error string for the given error code,
+ * possibly translated to UTF8. N.B. Unlike strerror(), this string
+ * must be g_free'd by the caller when no longer needed.
+ */
+gchar *ErrStrFromErrno(int errcode)
+{
+  gchar *untran = strerror(errcode);
+
+#ifdef HAVE_GLIB2
+  if (err_utf8_encoding) {
+    gchar *utf8str;
+
+    utf8str = g_locale_to_utf8(untran, strlen(untran), NULL, NULL, NULL);
+    if (utf8str) {
+      return utf8str;
+    } else {
+      g_strdup(_("(Error cannot be displayed in UTF-8)"));
+    }
+  } else {
+    return g_strdup(untran);
+  }
+#else
+  return g_strdup(untran);
+#endif
+}
+
 void FreeError(LastError *error)
 {
   if (!error)
@@ -103,7 +141,9 @@ ErrorType *ET_CUSTOM = &ETCustom;
  */
 void ErrnoAppendError(GString *str, LastError *error)
 {
-  g_string_append(str, strerror(error->code));
+  gchar *errstr = ErrStrFromErrno(error->code);
+  g_string_append(str, errstr);
+  g_free(errstr);
 }
 
 static ErrorType ETErrno = { ErrnoAppendError, NULL };

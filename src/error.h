@@ -58,6 +58,8 @@ typedef struct _ErrTable {
   gchar *string;
 } ErrTable;
 
+void WantUTF8Errors(gboolean want);
+gchar *ErrStrFromErrno(int errcode);
 void FreeError(LastError *error);
 LastError *NewError(ErrorType *type, gint code, gpointer data);
 void SetError(LastError **error, ErrorType *type, gint code,

@@ -552,7 +552,9 @@ static void UpdateLocalConfig(void)
   }
 
   if (!fp) {
-    g_warning(_("Could not open file %s: %s"), cfgfile, strerror(errno));
+    gchar *errstr = ErrStrFromErrno(errno);
+    g_warning(_("Could not open file %s: %s"), cfgfile, errstr);
+    g_free(errstr);
     g_free(cfgfile);
     return;
   }
