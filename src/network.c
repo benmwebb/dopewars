@@ -70,7 +70,7 @@ typedef enum {
 static gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,
                                       gchar *RemoteHost,
                                       unsigned RemotePort);
-static gboolean StartConnect(int *fd, gchar *RemoteHost,
+static gboolean StartConnect(int *fd, const gchar *bindaddr, gchar *RemoteHost,
                              unsigned RemotePort, gboolean *doneOK,
                              LastError **error);
 
@@ -260,6 +260,7 @@ gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf)
 }
 
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
+                                   const gchar *bindaddr,
                                    gchar *RemoteHost, unsigned RemotePort)
 {
   gchar *realhost;
@@ -276,7 +277,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
     realport = RemotePort;
   }
 
-  if (StartConnect(&NetBuf->fd, realhost, realport, &doneOK,
+  if (StartConnect(&NetBuf->fd, bindaddr, realhost, realport, &doneOK,
                    &NetBuf->error)) {
     /* If we connected immediately, then set status, otherwise signal that 
      * we're waiting for the connect to complete */
@@ -1203,7 +1204,8 @@ static gboolean StartHttpConnect(HttpConnection *conn)
     ConnectPort = conn->Port;
   }
 
-  if (!StartNetworkBufferConnect(&conn->NetBuf, ConnectHost, ConnectPort)) {
+  if (!StartNetworkBufferConnect(&conn->NetBuf, conn->bindaddr, ConnectHost,
+                                 ConnectPort)) {
     return FALSE;
   }
   return TRUE;
@@ -1211,9 +1213,9 @@ static gboolean StartHttpConnect(HttpConnection *conn)
 
 gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
                             unsigned Port, gchar *Proxy,
-                            unsigned ProxyPort, SocksServer *socks,
-                            gchar *Method, gchar *Query, gchar *Headers,
-                            gchar *Body)
+                            unsigned ProxyPort, const gchar *bindaddr,
+                            SocksServer *socks, gchar *Method,
+                            gchar *Query, gchar *Headers, gchar *Body)
 {
   HttpConnection *conn;
 
@@ -1225,6 +1227,7 @@ gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
   conn->HostName = g_strdup(HostName);
   if (Proxy && Proxy[0])
     conn->Proxy = g_strdup(Proxy);
+  conn->bindaddr = g_strdup(bindaddr);
   conn->Method = g_strdup(Method);
   conn->Query = g_strdup(Query);
   if (Headers && Headers[0])
@@ -1248,6 +1251,7 @@ void CloseHttpConnection(HttpConnection *conn)
   ShutdownNetworkBuffer(&conn->NetBuf);
   g_free(conn->HostName);
   g_free(conn->Proxy);
+  g_free(conn->bindaddr);
   g_free(conn->Method);
   g_free(conn->Query);
   g_free(conn->Headers);
@@ -1546,8 +1550,8 @@ gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,
   return (retval != SOCKET_ERROR);
 }
 
-gboolean StartConnect(int *fd, gchar *RemoteHost, unsigned RemotePort,
-                      gboolean *doneOK, LastError **error)
+gboolean StartConnect(int *fd, const gchar *bindaddr, gchar *RemoteHost,
+                      unsigned RemotePort, gboolean *doneOK, LastError **error)
 {
   struct sockaddr_in ClientAddr;
   struct hostent *he;
@@ -1561,6 +1565,10 @@ gboolean StartConnect(int *fd, gchar *RemoteHost, unsigned RemotePort,
   *fd = CreateTCPSocket(error);
   if (*fd == SOCKET_ERROR)
     return FALSE;
+
+  if (bindaddr && bindaddr[0] && !BindTCPSocket(*fd, bindaddr, 0, error)) {
+    return FALSE;
+  }
 
   ClientAddr.sin_family = AF_INET;
   ClientAddr.sin_port = htons(RemotePort);

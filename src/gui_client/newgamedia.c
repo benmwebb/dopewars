@@ -154,7 +154,7 @@ static void DoConnect(void)
 
   oldstatus = NetBuf->status;
   oldsocks = NetBuf->sockstat;
-  if (StartNetworkBufferConnect(NetBuf, ServerName, Port)) {
+  if (StartNetworkBufferConnect(NetBuf, NULL, ServerName, Port)) {
     DisplayConnectStatus(FALSE, oldstatus, oldsocks);
     SetNetworkBufferUserPasswdFunc(NetBuf, SocksAuthDialog, NULL);
     SetNetworkBufferCallBack(NetBuf, stgam.sockstat, NULL);

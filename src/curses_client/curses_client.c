@@ -518,7 +518,7 @@ static gboolean DoConnect(Player *Play, GString *errstr)
   oldstatus = netbuf->status;
   oldsocks = netbuf->sockstat;
 
-  if (!StartNetworkBufferConnect(netbuf, ServerName, Port)) {
+  if (!StartNetworkBufferConnect(netbuf, NULL, ServerName, Port)) {
     doneOK = FALSE;
   } else {
     SetNetworkBufferUserPasswdFunc(netbuf, SocksAuthFunc, NULL);

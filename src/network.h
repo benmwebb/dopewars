@@ -154,6 +154,7 @@ struct _HttpConnection {
   gchar *Proxy;                 /* If non-NULL, a web proxy to use */
   unsigned ProxyPort;           /* The port to use for talking to
                                  * the proxy */
+  char *bindaddr;               /* local IP address to bind to */
   gchar *Method;                /* e.g. GET, POST */
   gchar *Query;                 /* e.g. the path of the desired webpage */
   gchar *Headers;               /* if non-NULL, e.g. Content-Type */
@@ -188,6 +189,7 @@ void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
+                                   const gchar *bindaddr,
                                    gchar *RemoteHost, unsigned RemotePort);
 void ShutdownNetworkBuffer(NetworkBuffer *NetBuf);
 void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf, fd_set *readfds,
@@ -213,9 +215,9 @@ void CommitWriteBuffer(NetworkBuffer *NetBuf, ConnBuf *conn, gchar *addpt,
 
 gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,
                             unsigned Port, gchar *Proxy,
-                            unsigned ProxyPort, SocksServer *socks,
-                            gchar *Method, gchar *Query, gchar *Headers,
-                            gchar *Body);
+                            unsigned ProxyPort, const gchar *bindaddr,
+                            SocksServer *socks, gchar *Method,
+                            gchar *Query, gchar *Headers, gchar *Body);
 void CloseHttpConnection(HttpConnection *conn);
 gchar *ReadHttpResponse(HttpConnection *conn, gboolean *doneOK);
 void SetHttpAuthentication(HttpConnection *conn, gboolean proxy,

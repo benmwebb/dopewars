@@ -157,7 +157,7 @@ void AIPlayerLoop()
   oldstatus = netbuf->status;
   oldsocks = netbuf->sockstat;
 
-  if (!StartNetworkBufferConnect(netbuf, ServerName, Port)) {
+  if (!StartNetworkBufferConnect(netbuf, NULL, ServerName, Port)) {
     AIConnectFailed(netbuf);
     return;
   } else {
