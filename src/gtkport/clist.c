@@ -739,6 +739,11 @@ void gtk_clist_update_selection(GtkWidget *widget)
   g_list_free(oldsel);
 }
 
+void gtk_clist_set_column_justification(GtkCList *clist, gint column,
+                                        GtkJustification justification)
+{
+}
+
 #else /* for systems with GTK+ */
 
 GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,

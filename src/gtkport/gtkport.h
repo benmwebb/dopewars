@@ -35,6 +35,8 @@
 #include <glib.h>
 #include <stdarg.h>
 
+#include "gtkenums.h"
+
 #define MB_IMMRETURN 0
 
 #define MYWM_SOCKETDATA (WM_USER+100)
@@ -44,71 +46,6 @@
 #define GDK_MOD1_MASK 0
 
 extern HICON mainIcon;
-
-typedef enum {
-  GTK_WINDOW_TOPLEVEL, GTK_WINDOW_DIALOG, GTK_WINDOW_POPUP
-} GtkWindowType;
-
-typedef enum {
-  GTK_ACCEL_VISIBLE        = 1 << 0,
-  GTK_ACCEL_SIGNAL_VISIBLE = 1 << 1
-} GtkAccelFlags;
-
-typedef enum {
-  GTK_BUTTONBOX_SPREAD,
-  GTK_BUTTONBOX_EDGE,
-  GTK_BUTTONBOX_START,
-  GTK_BUTTONBOX_END
-} GtkButtonBoxStyle;
-
-typedef enum {
-  GTK_STATE_NORMAL,
-  GTK_STATE_ACTIVE,
-  GTK_STATE_PRELIGHT,
-  GTK_STATE_SELECTED,
-  GTK_STATE_INSENSITIVE
-} GtkStateType;
-
-typedef enum {
-  GTK_VISIBILITY_NONE,
-  GTK_VISIBILITY_PARTIAL,
-  GTK_VISIBILITY_FULL
-} GtkVisibility;
-
-typedef enum {
-  GTK_PROGRESS_LEFT_TO_RIGHT,
-  GTK_PROGRESS_RIGHT_TO_LEFT,
-  GTK_PROGRESS_BOTTOM_TO_TOP,
-  GTK_PROGRESS_TOP_TO_BOTTOM
-} GtkProgressBarOrientation;
-
-typedef enum {
-  GTK_EXPAND = 1 << 0,
-  GTK_SHRINK = 1 << 1,
-  GTK_FILL   = 1 << 2
-} GtkAttachOptions;
-
-typedef enum {
-  GTK_SELECTION_SINGLE,
-  GTK_SELECTION_BROWSE,
-  GTK_SELECTION_MULTIPLE,
-  GTK_SELECTION_EXTENDED
-} GtkSelectionMode;
-
-typedef enum {
-  GDK_INPUT_READ      = 1 << 0,
-  GDK_INPUT_WRITE     = 1 << 1,
-  GDK_INPUT_EXCEPTION = 1 << 2
-} GdkInputCondition;
-
-typedef enum
-{
-  GTK_SHADOW_NONE,
-  GTK_SHADOW_IN,
-  GTK_SHADOW_OUT,
-  GTK_SHADOW_ETCHED_IN,
-  GTK_SHADOW_ETCHED_OUT
-} GtkShadowType;
 
 #define GDK_KP_0 0xFFB0
 #define GDK_KP_1 0xFFB1
@@ -126,16 +63,6 @@ typedef void (*GdkInputFunction) (gpointer data, gint source,
                                   GdkInputCondition condition);
 typedef gchar *(*GtkTranslateFunc) (const gchar *path, gpointer func_data);
 typedef void (*GtkDestroyNotify) (gpointer data);
-
-typedef enum {
-  GTK_REALIZED    = 1 << 6,
-  GTK_VISIBLE     = 1 << 8,
-  GTK_SENSITIVE   = 1 << 10,
-  GTK_CAN_FOCUS   = 1 << 11,
-  GTK_HAS_FOCUS   = 1 << 12,
-  GTK_CAN_DEFAULT = 1 << 13,
-  GTK_IS_DEFAULT  = 1 << 14
-} GtkWidgetFlags;
 
 #define GTK_VISIBLE 1
 

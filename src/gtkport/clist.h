@@ -30,6 +30,7 @@
 #ifdef CYGWIN
 
 #include <glib.h>
+#include "gtkenums.h"
 
 typedef struct _GtkCList GtkCList;
 typedef struct _GtkCListRow GtkCListRow;
@@ -99,6 +100,8 @@ void gtk_clist_set_compare_func(GtkCList *clist,
                                 GtkCListCompareFunc cmp_func);
 void gtk_clist_set_column_auto_resize(GtkCList *clist, gint column,
                                       gboolean auto_resize);
+void gtk_clist_set_column_justification(GtkCList *clist, gint column,
+                                        GtkJustification justification);
 #endif /* CYGWIN */
 
 #endif
