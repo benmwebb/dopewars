@@ -25,32 +25,32 @@
 #endif
 
 #include <glib.h>
-#include <gmodule.h>
+#include <dlfcn.h>
 
 #include "sound.h"
 
 static SoundDriver *driver = NULL;
 typedef SoundDriver *(*InitFunc)(void);
-GModule *soundmodule = NULL;
+void *soundmodule = NULL;
 
 void SoundInit(void)
 {
   InitFunc ifunc;
-  gchar *err;
   
-  soundmodule = g_module_open("sound.so", G_MODULE_BIND_LAZY);
+  soundmodule = dlopen("sound.so", RTLD_NOW);
   if (!soundmodule) {
-    g_print("g_module_open failed: %s\n", g_module_error());
+    /* FIXME: using dlerror() here causes a segfault later in the program */
+    g_print("dlopen failed\n");
     return;
   }
-  if (g_module_symbol(soundmodule, "init", (gpointer *)&ifunc)) {
-    g_print("module symbol = %p\n", ifunc);
+  ifunc = dlsym(soundmodule, "init");
+  if (ifunc) {
     driver = (*ifunc)();
     if (driver) {
-      g_print("Plugin %s init OK\n", driver->name);
+      g_print("%s sound plugin init OK\n", driver->name);
     }
   } else {
-    g_print("g_module_symbol failed: %s\n", g_module_error());
+    g_print("dlsym failed: %s\n", dlerror());
   }
 }
 
@@ -67,7 +67,7 @@ void SoundClose(void)
     driver->close();
   }
   if (soundmodule) {
-    g_module_close(soundmodule);
+    dlclose(soundmodule);
   }
 }
 
