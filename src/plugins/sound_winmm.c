@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <glib.h>
-#include "sound.h"
+#include "../sound.h"
 
 static gboolean SoundOpen_WinMM(void)
 {
