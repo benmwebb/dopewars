@@ -609,9 +609,11 @@ static void CreateFightDialog() {
    gtk_widget_show(hsep);
 
    hbbox=gtk_hbutton_box_new();
+
    buf=dpg_strdup_printf(_("_Deal %Tde"),Names.Drugs);
    button=AddFightButton(buf,accel_group,GTK_BOX(hbbox),'D');
-   gtk_widget_show(button); g_free(buf);
+   gtk_object_set_data(GTK_OBJECT(dialog),"deal",button);
+   g_free(buf);
 
    button=AddFightButton(_("_Fight"),accel_group,GTK_BOX(hbbox),'F');
    gtk_object_set_data(GTK_OBJECT(dialog),"fight",button);
@@ -633,7 +635,7 @@ static void CreateFightDialog() {
 void DisplayFightMessage(char *Data) {
    Player *Play;
    gint EditPos;
-   GtkWidget *Fight,*Stand,*Run,*Text;
+   GtkWidget *Deal,*Fight,*Stand,*Run,*Text;
    char cr[] = "\n";
    gchar *AttackName,*DefendName,FightPoint,*Message;
    int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
@@ -652,6 +654,7 @@ void DisplayFightMessage(char *Data) {
    }
    if (!FightDialog) return;
 
+   Deal=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"deal"));
    Fight=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"fight"));
    Stand=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"stand"));
    Run=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"run"));
@@ -680,6 +683,8 @@ void DisplayFightMessage(char *Data) {
       gtk_editable_insert_text(GTK_EDITABLE(Text),cr,strlen(cr),&EditPos);
    }
 
+   if (!CanRunHere || FightPoint==F_LASTLEAVE)
+      gtk_widget_show(Deal); else gtk_widget_hide(Deal);
    if (CanFire && TotalGunsCarried(Play)>0)
       gtk_widget_show(Fight); else gtk_widget_hide(Fight);
    if (CanFire && TotalGunsCarried(Play)==0)

@@ -1501,8 +1501,9 @@ static void Curses_DoGame(Player *Play) {
                }
             }
             if (FightPoint!=F_LASTLEAVE) g_string_append(text,_("R>un, "));
-            dpg_string_sprintfa(text,_("D>eal %tde"),Names.Drugs);
-            g_string_append(text,_(", or Q>uit? "));
+            if (!RunHere || FightPoint==F_LASTLEAVE)
+               dpg_string_sprintfa(text,_("D>eal %tde, "),Names.Drugs);
+            g_string_append(text,_("or Q>uit? "));
             mvaddstr(22,40-strlen(text->str)/2,text->str);
             attrset(TextAttr);
             curs_set(1);
