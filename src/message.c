@@ -991,12 +991,15 @@ char *SetupNetwork(gboolean NonBlocking) {
 
    Network=Client=Server=FALSE;
    retval=StartConnect(&ClientSock,ServerName,Port,NonBlocking);
-   if (!retval) Client=Network=TRUE;
+   if (!retval && !NonBlocking) Client=Network=TRUE;
    return retval;
 }
 
 char *FinishSetupNetwork() {
-   return FinishConnect(ClientSock);
+   gchar *retval;
+   retval=FinishConnect(ClientSock);
+   if (!retval) Client=Network=TRUE;
+   return retval;
 }
 
 #endif /* NETWORKING */
