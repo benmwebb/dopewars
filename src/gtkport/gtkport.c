@@ -5356,6 +5356,49 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   return eventbox;
 }
 
+static void store_filename(GtkWidget *widget, gchar **filename)
+{
+  GtkWidget *file_select = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
+
+  g_assert(file_select != NULL);
+  *filename = g_strdup(gtk_file_selection_get_filename(
+	                       GTK_FILE_SELECTION(file_select)));
+}
+
+gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
+                  const gchar *title)
+{
+  GtkWidget *file_select, *ok, *cancel;
+  gchar *filename = NULL;
+
+  file_select = gtk_file_selection_new(title);
+  if (parent) {
+    gtk_window_set_modal(GTK_WINDOW(file_select), TRUE);
+    gtk_window_set_transient_for(GTK_WINDOW(file_select),
+	                         GTK_WINDOW(parent));
+  }
+
+  ok = GTK_FILE_SELECTION(file_select)->ok_button;
+  cancel = GTK_FILE_SELECTION(file_select)->cancel_button;
+  if (oldname) {
+    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), oldname);
+  }
+  gtk_signal_connect(GTK_OBJECT(ok), "clicked",
+                     GTK_SIGNAL_FUNC(store_filename),
+		     (gpointer)&filename);
+  gtk_signal_connect_object(GTK_OBJECT(ok), "clicked",
+                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
+  gtk_signal_connect_object(GTK_OBJECT(cancel), "clicked",
+                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
+  gtk_signal_connect(GTK_OBJECT(file_select), "destroy",
+                     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
+
+  gtk_widget_show(file_select);
+  gtk_main();
+
+  return filename;
+}
+
 #endif /* CYGWIN */
 
 #if CYGWIN || !HAVE_GLIB2

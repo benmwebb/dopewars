@@ -526,6 +526,21 @@ static void sound_row_unselect(GtkCList *clist, gint row, gint column,
   g_free(text);
 }
 
+static void BrowseSound(GtkWidget *entry)
+{
+  gchar *oldtext, *newtext;
+  GtkWidget *dialog = gtk_widget_get_ancestor(entry, GTK_TYPE_WINDOW);
+
+  oldtext = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+
+  newtext = GtkGetFile(dialog, oldtext, _("Select sound file"));
+  g_free(oldtext);
+  if (newtext) {
+    gtk_entry_set_text(GTK_ENTRY(entry), newtext);
+    g_free(newtext);
+  }
+}
+
 static void TestPlaySound(GtkWidget *entry)
 {
   gchar *text;
@@ -900,7 +915,8 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Browse..."));
-  gtk_object_set_data(GTK_OBJECT(button), "entry", entry);
+  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
+                            GTK_SIGNAL_FUNC(BrowseSound), entry);
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   button = gtk_button_new_with_label(_("Play"));

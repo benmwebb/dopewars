@@ -856,5 +856,7 @@ void TextViewClear(GtkTextView *textview);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
 GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
+gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
+                  const gchar *title);
 
 #endif /* __GTKPORT_H__ */
