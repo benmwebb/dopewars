@@ -1,3 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
 <head>
 <title>Adding computer-controlled players</title>
@@ -6,16 +9,16 @@
 <body>
 <h1>Adding computer-controlled players</h1>
 
-Multiplayer games of dopewars can be made a little more interesting by
+<p>Multiplayer games of dopewars can be made a little more interesting by
 introducing computer-controlled, or AI, players. These players will join
 a dopewars server, and to all intents and purposes will behave like normal
 human players - they will deal in drugs in an attempt to make a fortune,
 they will encounter the cops, you can spy on them, and they will shoot at
-you if you give them the chance!<p>
+you if you give them the chance!</p>
 
-To start a computer-controlled player, all you need is the standard dopewars
+<p>To start a computer-controlled player, all you need is the standard dopewars
 binary. Run it as<br>
-<b>dopewars -c</b><br>
+<tt><b>dopewars -c</b></tt><br>
 and it will attempt to connect to the server and port specified in the
 <a href="configfile.html">configuration files</a> (or the local host, if none
 is specified). Alternatively, you can specify server and port with suitable
@@ -23,9 +26,9 @@ is specified). Alternatively, you can specify server and port with suitable
 takes its game settings from the server it connects to, no other options in
 the configuration files will take effect, with the exception of the 
 <a href="configfile.html#AITurnPause">AITurnPause</a> option, which sets the
-pause in seconds between turns.<p>
+pause in seconds between turns.</p>
 
-Once started and connected to the server, the AI player will choose a
+<p>Once started and connected to the server, the AI player will choose a
 suitable name for itself and start playing. It will continue to play until
 its game finishes - i.e. it is killed or runs out of time - at which point
 the program will finish and drop you back to the command prompt. The program
@@ -35,21 +38,21 @@ whatever you have set AITurnPause to be) before jetting to a new location -
 this is to simulate the time it takes a human player to choose which drugs
 to buy and to press all the requisite keys; it also gives other players a
 fighting chance of spotting the computer sitting still in any one location
-for a few seconds!<p>
+for a few seconds!</p>
 
-If a computer player is attacked by the cops or another player, it will
+<p>If a computer player is attacked by the cops or another player, it will
 defend itself if it can, and attempt to run if necessary. During normal
 play it will also attempt to "blend in" with the other players by hurling
 rather pathetic insults at them... you are free to edit the code of the
 AI player to give these insults a little more "punch", or
 <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">email</a> them to me (preferably
 without actually directing the insults themselves at me!) and I'll add them
-to the next dopewars release.
+to the next dopewars release.</p>
 
 <hr>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>30-9-99</b>
+<p>Last update: <b>13-05-2001</b></p>
 </body>
 </html>

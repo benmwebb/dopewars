@@ -1,3 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
 <head>
 <title>Obtaining and installing dopewars</title>
@@ -6,7 +9,7 @@
 <body>
 <h1>Obtaining and installing dopewars</h1>
 
-The dopewars source code and precompiled binaries for Intel and Alpha
+<p>The dopewars source code and precompiled binaries for Intel and Alpha
 systems (in RPM format) are available from the main dopewars web page,
 at <a href="http://dopewars.sourceforge.net/">
 http://dopewars.sourceforge.net/</a>. Just follow the link from
@@ -15,15 +18,17 @@ for simplifying installation and upgrade of programs, and is part of the
 RedHat Linux distribution. If you are using a different distribution, it
 may be still be included, however. If you do not want to use "rpm", or the
 installation fails, then you can obtain the source code tarball and recompile
-the code from scratch.<p>
+the code from scratch.</p>
 
-<b>Prerequisites:</b> dopewars relies on the screen library curses (or the
-equivalent, such as ncurses or cur_colr) but otherwise aims to be usable
-without modification on a wide variety of Unix variants. The
-<a href="#tarball">tarball</a> can also be compiled using the freely
-available <a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> suite for
-Win32 systems, to yield a Windows binary. dopewars is developed and tested on
-RedHat Linux systems.<p>
+<p><b>Prerequisites:</b> dopewars relies on the screen library curses (or the
+equivalent, such as ncurses or cur_colr, for the text-mode client), the GLib
+library, and the X toolkit <a href="http://www.gtk.org/">GTK+</a> (for the
+graphical client) but otherwise aims to be usable without modification on a
+wide variety of Unix variants. The <a href="#tarball">tarball</a> can also be
+compiled using the freely available
+<a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> suite for Win32
+systems, to yield a Windows binary. dopewars is developed and tested on RedHat
+Linux systems.</p>
 
 <ul>
 <li><a href="#rpmbinary">RPM binary installation</a>
@@ -31,12 +36,12 @@ RedHat Linux systems.<p>
 <li><a href="#tarball">Tarball installation</a>
 </ul>
 
-<a name="rpmbinary"><h2>RPM binary installation</h2></a>
-The binary RPMs are built for Compaq (formerly DEC) Alpha systems running
+<h2><a name="rpmbinary">RPM binary installation</a></h2>
+<p>The binary RPMs are built for Compaq (formerly DEC) Alpha systems running
 RedHat Linux 7.0, and Intel (also Intel compatibles, such as AMD, Cyrix, etc.)
 systems running RedHat Linux 7.1. On other systems, these binary RPMs may
 refuse to install, or may run but then crash with mysterious segmentation
-faults due to library conflicts.
+faults due to library conflicts.</p>
 
 <ol>
 <li>Download the 
@@ -46,57 +51,68 @@ Alpha</a> or
 i386 (Intel)</a> RPM with your web browser. (If your browser is incorrectly set
 up, it may try and display the file, in which case tell it explicitly to save
 the file - Shift+Mouse button 1 in Netscape.)
+
 <li>Become root on your Unix box (if you cannot become root, then you will
 probably not be able to use RPM installation, depending on how "rpm" is set
 up).
+
 <li>Change to the directory containing the dopewars rpm, and install it with
-the command <br>
-<b>rpm -i dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
-(where <b><i>xxx</i></b> is i386 or alpha). If you have a previous version 
-of dopewars installed, upgrade it instead with<br>
-<b>rpm -U dopewars-1.5.0-1.<i>xxx</i>.rpm</b>
+the command<br>
+<tt><b>rpm -Uvh dopewars-1.5.0-1.<i>xxx</i>.rpm</b></tt><br>
+(where <b><i>xxx</i></b> is i386 or alpha). This will replace any
+already-installed earlier version.
 </ol>
 
-<a name="rpmsource"><h2>RPM source installation</h2></a>
-This route is open to you if your system has "rpm", but the binary RPMs do
+<h2><a name="rpmsource">RPM source installation</a></h2>
+<p>This route is open to you if your system has "rpm", but the binary RPMs do
 not work on your system, or your machine is not an Intel or Alpha (a PowerMac,
 for example). It involves obtaining the RPM of the source code, and then
-building the binaries from it on your system.
+building the binaries from it on your system.</p>
 
 <ol>
-<li>Download the <a href="http://dopewars.sourceforge.net/dopewars-1.5.0-1.src.rpm">source code RPM</a>.
+<li>Download the
+<a href="http://dopewars.sourceforge.net/dopewars-1.5.0-1.src.rpm">source code
+RPM</a>.
+
 <li>Become root and change to the directory containing the new rpm.
+
 <li>Build a binary rpm with the command<br>
-<b>rpm --rebuild dopewars-1.5.0-1.src.rpm</b>
+<tt><b>rpm --rebuild dopewars-1.5.0-1.src.rpm</b></tt>
+
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 <i>xxx</i> is your machine type - for example, "i386" on Intel machines,
 "alpha" on Alphas)
+
 <li>Install the binary rpm with the command<br>
-<b>rpm -i dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
-or upgrade an existing version with<br>
-<b>rpm -U dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
+<tt><b>rpm -Uvh dopewars-1.5.0-1.<i>xxx</i>.rpm</b></tt>
 </ol>
 
-<a name="tarball"><h2>Tarball installation</h2></a>
-If you don't have, or don't want to use, RPM, you can obtain the source code in
-gzipped, tarred ("tarball") format and recompile and install it yourself. This
-is also usually a necessity if you cannot become root (the superuser) on your
-Unix box.
+<h2><a name="tarball">Tarball installation</a></h2>
+<p>If you don't have, or don't want to use, RPM, you can obtain the source code
+in gzipped, tarred ("tarball") format and recompile and install it yourself.
+This is also usually a necessity if you cannot become root (the superuser) on
+your Unix box.</p>
 
 <ol>
-<li>Download the <a href="http://dopewars.sourceforge.net/dopewars-1.5.0.tar.gz">source code tarball</a>.
+<li>Download the
+<a href="http://dopewars.sourceforge.net/dopewars-1.5.0.tar.gz">source code
+tarball</a>.
+
 <li>Change to the directory containing the tarball and extract the contents
 with the command <br>
-<b>tar -xvzf dopewars-1.5.0.tar.gz</b><br>
+<tt><b>tar -xvzf dopewars-1.5.0.tar.gz</b></tt><br>
 (or similar).
+
 <li>Change into the dopewars-1.5.0 directory, and read all the important
 documentation in there ;)
+
 <li>Build the binary with the commands<br>
-<b>./configure</b><br>
-<b>make</b>
+<tt><b>./configure</b><br>
+<b>make</b></tt>
+
 <li>Become root and install the dopewars files with<br>
-<b>make install</b><br>
+<tt><b>make install</b></tt><br>
 The configure script will test your system and set up dopewars so that it
 should compile cleanly. If you are running the Cygwin tools under Microsoft
 Windows, the script should detect this and allow you to build a native
@@ -107,13 +123,14 @@ more details, read the INSTALL file in the dopewars-1.5.0 directory.<p>
 If you cannot become root, run the configure script specifying directories for
 which you have write access for both the dopewars binary and high score file
 with a command such as<br>
-<b>./configure --bindir=/home/user/dopewars --datadir=/home/user/dopewars</b>
+<tt><b>./configure --bindir=/home/user/dopewars
+--datadir=/home/user/dopewars</b></tt>
 </ol>
 
 <hr>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>09-07-2000</b>
+<p>Last update: <b>13-05-2001</b></p>
 </body>
 </html>

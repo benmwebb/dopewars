@@ -1,3 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
 <head>
 <title>Internationalization</title>
@@ -6,13 +9,13 @@
 <body>
 <h1>Internationalization</h1>
 
-dopewars uses the <a href="http://www.gnu.org/manual/gettext/">GNU gettext</a>
-utilities for internationalization (i18n) support. This allows the software
-to be translated into the local language at runtime - run dopewars in the UK
-and it'll talk to you in English, but run it in Germany and it'll talk to you
-in German. This relies on translators to translate the program's output into
-each language beforehand, of course, and so native language speakers to carry
-out this task are always needed!
+<p>dopewars uses the <a href="http://www.gnu.org/manual/gettext/">GNU
+gettext</a> utilities for internationalization (i18n) support. This allows the
+software to be translated into the local language at runtime - run dopewars in
+the UK and it'll talk to you in English, but run it in Germany and it'll talk
+to you in German. This relies on translators to translate the program's output
+into each language beforehand, of course, and so native language speakers to
+carry out this task are always needed!</p>
 
 <ul>
 <li><a href="#running">Running dopewars with i18n support</a>
@@ -22,18 +25,18 @@ out this task are always needed!
 <li><a href="#current">Currently available translations</a>
 </ul>
 
-<a name="running"><h2>Running dopewars with i18n support</h2></a>
-i18n is only included in versions of dopewars later than 1.4.8. By default,
+<h2><a name="running">Running dopewars with i18n support</a></h2>
+<p>i18n is only included in versions of dopewars later than 1.4.8. By default,
 "Native Language Support" is compiled in; binary installations should be
 already set up for i18n. When compiling dopewars from source code, the
 <tt>configure</tt> script should detect whether your system can support
 GNU gettext. If it can, but the gettext utilities themselves are not present,
 an included copy in the <tt>intl/</tt> subdirectory is used. To disable i18n,
-pass the <tt>--disable-nls</tt> option to the <tt>configure</tt> script.<p>
+pass the <tt>--disable-nls</tt> option to the <tt>configure</tt> script.</p>
 
-When you run your installed copy of dopewars, it should detect your "locale"
+<p>When you run your installed copy of dopewars, it should detect your "locale"
 automatically and talk to you in your native language. If this does not happen,
-the following are some possible explanations:-
+the following are some possible explanations:-</p>
 <ul>
 <li>dopewars cannot find the locale-specific language file - by default, stored
 under /usr/local/share/locale/
@@ -46,27 +49,27 @@ shell and want a German translation, the command "<tt>export LANG=de</tt>"
 should fix the problem.
 </ul>
 
-<a name="adding"><h2>Adding a new translation</h2></a>
-Translation files are kept in the subdirectory <tt>po/</tt> of the dopewars
+<h2><a name="adding">Adding a new translation</a></h2>
+<p>Translation files are kept in the subdirectory <tt>po/</tt> of the dopewars
 source code distribution. They are named by
 <a href="http://userpage.chemie.fu-berlin.de/diverse/doc/ISO_639.html">
 2-letter language codes</a> followed by the <tt>.po</tt> extension - for
 example, the German translation is stored in the file <tt>po/de.po</tt>.
 They are simple text files, consisting of lists of the original English string
 (labelled by "msgid") followed by the translated string (labelled by
-"msgstr").<p>
+"msgstr").</p>
 
-Adding a new translation is simply a matter of copying the reference file
-<tt>dopewars.pot</tt> to your language-specific <tt>.po</tt> file in the <tt>po/</tt> directory, and filling
-in the "msgstr" entries. Once this is done, edit the <tt>configure.in</tt>
-file in the top dopewars directory to add your language code to the
-<tt>ALL_LINGUAS</tt> variable. Then run <tt>autoconf</tt> to rebuild the
-<tt>configure</tt> script, before making and installing dopewars as usual. The
-new translation should now be available. Once this is complete, please
-<a href="mailto:ben@bellatrix.pcl.ox.ac.uk">send</a> the translation to be
-included in the next dopewars version.<p>
+<p>Adding a new translation is simply a matter of copying the reference file
+<tt>dopewars.pot</tt> to your language-specific <tt>.po</tt> file in the
+<tt>po/</tt> directory, and filling in the "msgstr" entries. Once this is done,
+edit the <tt>configure.in</tt> file in the top dopewars directory to add your
+language code to the <tt>ALL_LINGUAS</tt> variable. Then run <tt>autoconf</tt>
+to rebuild the <tt>configure</tt> script, before making and installing dopewars
+as usual. The new translation should now be available. Once this is complete,
+please <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">send</a> the translation to
+be included in the next dopewars version.</p>
 
-Please note that some strings are <b>format strings</b> containing the %
+<p>Please note that some strings are <b>format strings</b> containing the %
 character. These are used in the program code for substituting numbers and
 other pieces of text into the string - these substitutions are are performed
 using variables which are specified in the <b>same order</b> as the %
@@ -81,9 +84,9 @@ Now the number and string are specified in the wrong order, and this will
 probably crash the program on running! To fix this, use the special notation<br>
 <tt>"%2$d Zeichen lang ist die Zeichenkette '%1$s'"</tt><br>
 (i.e. replace <b>%x</b> with <b>%n$x</b> where <b>n</b> is the index that the
-format specifier "should" have, starting from 1.)<p>
+format specifier "should" have, starting from 1.)</p>
 
-<a name="dopespec"><h2>dopewars specifics</h2>
+<h2><a name="dopespec">dopewars specifics</a></h2>
 <ul>
 <li>When questions are asked in the curses (text mode) client, the keys that
 you are allowed to press in reply are stored in a string. This should be
@@ -109,7 +112,7 @@ free to translate <tt>%txx</tt> to use the most appropriate form of the word.
 If you wish to capitalise the first letter of the word (as used in English for
 titles, etc.) then use "<tt>%T</tt>" rather than "<tt>%t</tt>".<p>
 
-Obviously dopewars cannot guess what your "alternative forms" are; you must
+<p>Obviously dopewars cannot guess what your "alternative forms" are; you must
 specify them yourself. Essentially, when setting a string in a dopewars
 configuration file (or the defaults, which are set in dopewars.c) alternative
 forms can be added by alternating two-letter codes and alternative forms after
@@ -123,20 +126,21 @@ in the translation that you haven't given an alternative form for, the
 default word ("bitch") will be used. In the original English, "<tt>%tde</tt>"
 is used for this purpose, but there is nothing special about the "<tt>de</tt>"
 code - you can use it yourself if you like, and you can use as many
-different two-letter codes as you want to.<p>
+different two-letter codes as you want to.</p>
 
-Additionally, prices in dopewars are automatically formatted into strings by
+<p>Additionally, prices in dopewars are automatically formatted into strings by
 means of the %P notation, and comments can be introduced into format strings
 by means of the %/.../ notation. Everything between the two / characters is
 not printed. This is used to "qualify" some strings for translation, and the
 %/.../ can be left out of the translated string if desired (the comment does
-not need to be translated).
+not need to be translated).</p>
 
 </ul>
 
-<a name="updating"><h2>Updating a translation for a new dopewars
-version</h2></a>
-New versions of dopewars will often change what is printed to the user, and
+<h2><a name="updating">Updating a translation for a new dopewars
+version</a></h2>
+
+<p>New versions of dopewars will often change what is printed to the user, and
 so may may require changes to the translation. To update an existing
 translation, "<tt>make</tt>" the new version of dopewars. This will create
 a <tt>dopewars.pot</tt> file listing the strings that need translating. Change
@@ -150,9 +154,9 @@ translation with the new one:<br>
 <tt>mv newfile de.po</tt><br>
 Rebuild and reinstall dopewars, and the new translations should become
 available. Again, it is deeply appreciated if such updated files are
-contributed to the main dopewars distribution!<p>
+contributed to the main dopewars distribution!</p>
 
-<a name="current"><h2>Currently available translations</h2></a>
+<h2><a name="current">Currently available translations</a></h2>
 
 <ul>
 <li>German (<tt>de.po</tt>)
@@ -175,11 +179,11 @@ Molenda</a>
 </ul>
 </ul>
 
-<hr><br>
+<hr>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>29-04-2001</b>
+<p>Last update: <b>29-04-2001</b></p>
 
 </body>
 </html>

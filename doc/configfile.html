@@ -1,3 +1,6 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
 <head>
 <title>dopewars configuration files</title>
@@ -6,14 +9,14 @@
 <body>
 <h1>dopewars configuration files</h1>
 
-A dopewars <a href="server.html">server</a>, or a <a href="clientplay.html">
+<p>A dopewars <a href="server.html">server</a>, or a <a href="clientplay.html">
 client</a> (in single-player mode) can be heavily configured by the means
 of dopewars configuration files. Clients used to connect to multiplayer
 servers can also be configured by the same means, but almost all of these
 settings will be overridden on connecting to the server (although the server
-location settings <i>Port</i> and <i>Server</i> are still useful).<p>
+location settings <i>Port</i> and <i>Server</i> are still useful).</p>
 
-The order of making dopewars settings is as follows:-
+<p>The order of making dopewars settings is as follows:-</p>
 <ol>
 <li>The global configuration file (if present) <b>/etc/dopewars</b>
 <li>The user-specific file (if present) <b>~/.dopewars</b>
@@ -22,17 +25,17 @@ directory
 <li>Options specified on the <a href="commandline.html">command line</a>
 </ol>
 
-Settings in a configuration file can set numbers, strings or "string lists".
+<p>Settings in a configuration file can set numbers, strings or "string lists".
 A numerical value is set with a command such as <b>Port=7902</b> (which sets
-the TCP port for mulitplayer connections to 7902).<p>
+the TCP port for mulitplayer connections to 7902).</p>
 
-String (text) values are set with commands such as <b>BankName='the bank'</b>
+<p>String (text) values are set with commands such as <b>BankName='the bank'</b>
 (which sets the name of the bank). Notice that string values <b>must</b> be
 enclosed in quotes. Strings in double quotes understand escapes such as "\t";
 strings in single quotes do not treat backslash characters specially, and
-so should be used for Windows pathnames.<p>
+so should be used for Windows pathnames.</p>
 
-A string list is used for setting an array of strings; for example
+<p>A string list is used for setting an array of strings; for example
 <b>SubwaySaying = { "Saying 1", "Saying 2", "Saying 3" }</b> sets up three
 "subway sayings". A string list consists of a list of strings, separated by
 commas and wrapped with braces - { and } characters. Single strings in a
@@ -41,15 +44,15 @@ string list can be replaced individually - for example
 previously "Saying 3"). The <i>number</i> of strings in the list
 <i>"List"</i> can be set with the variable <i>NumList</i> - for example,
 <b>NumSubwaySaying=4</b> dimensions the <b>SubwaySaying</b> list to contain
-four strings.<p>
+four strings.</p>
 
-Whitespace and line breaks are ignored in the configuration files; comments
+<p>Whitespace and line breaks are ignored in the configuration files; comments
 can be used, and extend from a '#' character to the end of the current line,
 or are enclosed by C-style /* and */ symbols. See the 
 <a href="example-cfg">example configuration file</a> for a demonstration.
 Valid configuration file settings are listed below. The examples given
 generally reproduce the default behaviour; obviously you are free to replace
-the parts in italics to customise your own server and client.<p>
+the parts in italics to customise your own server and client.</p>
 
 <ul>
 <li><a href="#fileloc">General configuration: file and server locations</a>
@@ -60,16 +63,16 @@ the parts in italics to customise your own server and client.<p>
 <li><a href="#advanced">Advanced configuration</a>
 </ul>
 
-<a name="fileloc"><h2>General configuration: file and server locations</h2></a>
+<h2><a name="fileloc">General configuration: file and server locations</a></h2>
 
 <dl>
-<a name="Port"><dt><b>Port=<i>7902</i></b></a>
+<dt><a name="Port"><b>Port=<i>7902</i></b></a>
 <dd>Tells the dopewars client to look for a server on port <i>7902</i>, and
 tells the dopewars server to bind to port <i>7902</i> and wait for connections.
 This can be overridden with the -p <a href="commandline.html#port">
 command line option</a>.
 
-<a name="Server"><dt><b>Server=<i>"localhost"</i></b></a>
+<dt><a name="Server"><b>Server=<i>"localhost"</i></b></a>
 <dd>Tells the dopewars client to look for a server at the address
 <i>localhost</i>. Dotted quad (e.g. 127.0.0.1) addresses may also be used here.
 If this variable is set to one of the three "special" names
@@ -81,7 +84,7 @@ This option can be overridden with the -o <a href="commandline.html#server">
 command line option</a> (but be sure to protect the brackets from the shell
 if you use one of the "special" names).
 
-<a name="HiScoreFile"><dt><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
+<dt><a name="HiScoreFile"><b>HiScoreFile=<i>"/var/lib/dopewars.sco"</i></b></a>
 <dd>Tells the dopewars server (or the client, if running in single-player
 mode, not connected to a server) to use the file <i>/var/lib/dopewars.sco</i>
 to store high scores. This can be overridden with the -f
@@ -97,9 +100,9 @@ to 1; this only takes affect, of course, after the ConfigVerbose variable is
 set, and then remains in force until it is reset again.
 </dl>
 
-<a name="metaserver"><h2>Metaserver configuration</h2></a>
+<h2><a name="metaserver">Metaserver configuration</a></h2>
 <dl>
-<a name="MetaServerActive"><dt><b>MetaServer.Active=<i>1</i></b></a>
+<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>1</i></b></a>
 <dd>Tells the dopewars server to report its status to the
 <a href="metaserver.html">metaserver</a>. If <i>1</i>
 is replaced by <i>0</i> (zero) the server will not report to the metaserver.
@@ -127,12 +130,12 @@ by the client due to its much lower overhead.
 registration (server mode) or listing the available servers (client mode) is
 <i>/~ben/cgi-bin/server.pl</i>.
 
-<a name="MetaServerComment"><dt><b>MetaServer.Comment=<i>"dopewars
+<dt><a name="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
 server"</i></b></a>
 <dd>Sets the comment for your server, which appears on the list of servers
 maintained by the metaserver, to <i>dopewars server</i>.
 
-<dt><b>MetaServer.LocalName=<i>"dope-serv.com"</i></b></a>
+<dt><b>MetaServer.LocalName=<i>"dope-serv.com"</i></b>
 <dd>Tells the metaserver that the preferred hostname of your dopewars server
 machine is <i>dope-serv.com</i>. By default, the metaserver tries to ascertain
 your domain name from the connection, and this can fail if you connect via.
@@ -143,12 +146,12 @@ maintainer</a> for this to work. A blank LocalName can also be used with a
 suitable password to identify "your" server, even if its IP changes.
 See the <a href="metaserver.html">metaserver page</a> for more details.
 
-<dt><b>MetaServer.Password=<i>"auth"</i></b></a>
+<dt><b>MetaServer.Password=<i>"auth"</i></b>
 <dd>Uses the password <i>auth</i> to authenticate your dopewars server's
 hostname (see MetaServer.LocalName above) with the metaserver.
 </dl>
 
-<a name="places"><h2>Basic configuration: places in the game</h2></a>
+<h2><a name="places">Basic configuration: places in the game</a></h2>
 
 <dl>
 <dt><b>NumLocation=<i>8</i></b>
@@ -205,7 +208,7 @@ the game.
 <dd>The pub is known by the name <i>"the pub"</i> during the game.
 </dl>
 
-<a name="drugs"><h2>Basic configuration: drug prices</h2></a>
+<h2><a name="drugs">Basic configuration: drug prices</a></h2>
 <dl>
 <dt><b>NumDrug=<i>12</i></b>
 <dd>Sets there to be <i>12</i> different types of drug in the game.
@@ -256,7 +259,7 @@ normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 <i>4</i>.
 </dl>
 
-<a name="combat"><h2>Basic configuration: guns and fighting</h2></a>
+<h2><a name="combat">Basic configuration: guns and fighting</a></h2>
 <dl>
 <dt><b>NumGun=<i>4</i></b>
 <dd>Configures the game to have <i>4</i> guns available to players at the
@@ -335,7 +338,7 @@ against a player.
 <dd>The first cop's deputies will each carry <i>1</i> gun.
 </dl>
 
-<a name="advanced"><h2>Advanced configuration</h2></a>
+<h2><a name="advanced">Advanced configuration</a></h2>
 <dl>
 <dt><b>NumTurns=<i>31</i></b>
 <dd>Defines the game to end after <i>31</i> "days" or turns. If this is set
@@ -372,11 +375,11 @@ server for <i>14400</i> seconds, he/she will be automatically disconnected.
 of connecting or disconnecting to the server, the server will sever the
 connection.
 
-<a name="MaxClients"><dt><b>MaxClients=<i>20</i></b></a>
+<dt><a name="MaxClients"><b>MaxClients=<i>20</i></b></a>
 <dd>Prevents more than <i>20</i> clients from connecting to the server at
 any one time.
 
-<a name="AITurnPause"><dt><b>AITurnPause=<i>5</i></b></a>
+<dt><a name="AITurnPause"><b>AITurnPause=<i>5</i></b></a>
 <dd>Makes computer-controlled client players run from this machine (not
 necessarily AI players that connect to a server run on this machine) wait
 <i>5</i> seconds between moving from location to location - i.e. a turn
@@ -481,6 +484,6 @@ any drugs, and clients will display this information if available.
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>29-04-2001</b>
+<p>Last update: <b>13-05-2001</b></p>
 </body>
 </html>
