@@ -80,9 +80,11 @@ static void PrintMessage(const gchar *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
 static void Bank(Player *Play);
+#ifdef NETWORKING
 static void HttpAuthFunc(HttpConnection *conn,gboolean proxyauth,
                          gchar *realm,gpointer data);
 static void SocksAuthFunc(NetworkBuffer *netbuf,gpointer data);
+#endif
 
 static DispMode DisplayMode;
 static gboolean QuitRequest;
@@ -1709,13 +1711,13 @@ static void Curses_DoGame(Player *Play) {
    fd_set writefs;
    gboolean DoneOK;
    gchar *pt;
+   gboolean justconnected=FALSE;
 #endif
    int NumDrugsHere;
    int MaxSock;
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
-   gboolean justconnected=FALSE;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
