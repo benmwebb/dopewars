@@ -2179,7 +2179,7 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_init(argc, argv);
 #endif
 
-#if HAVE_GLIB2 && !CYGWIN
+#if HAVE_GLIB2
   /* GTK+2 expects all strings to be UTF-8, so we force gettext to return
    * all translations in this encoding here. */
   bind_textdomain_codeset(PACKAGE, "UTF-8");
