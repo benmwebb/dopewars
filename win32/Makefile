@@ -31,7 +31,7 @@ manifest installfiles.gz: filelist makeinstall uninstall
 	sed -e 's/LICENCE/licence.txt/' < ../doc/index.html > index.html
 	sed -e 's/LICENCE/licence.txt/' < ../doc/developer.html > developer.html
 	sed -e 's/example-cfg/example-cfg.txt/' < ../doc/configfile.html > configfile.html
-	awk '{print $$0."\r"}' < ../LICENCE > licence.txt
+	awk '{gsub(/\f/, ""); print $$0."\r"}' < ../LICENCE > licence.txt
 	awk '{print $$0."\r"}' < ../README > readme.txt
 	awk '{print $$0."\r"}' < ../doc/example-cfg > example-cfg.txt
 	./makeinstall
