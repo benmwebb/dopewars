@@ -977,7 +977,8 @@ static void ServerSaveConfigFile(const char *string)
   g_free(file);
 }
 
-static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
+static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
+                                gboolean ForceUTF8)
 {
   GSList *list;
   Player *tmp;
@@ -987,6 +988,9 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
   oldprint = StartServerReply(netbuf);
 
   conv = Conv_New();
+  if (ForceUTF8) {
+    Conv_SetCodeset(conv, "UTF-8");
+  }
   g_scanner_input_text(Scanner, string, strlen(string));
   if (!ParseNextConfig(Scanner, conv, NULL, TRUE)) {
     if (g_strcasecmp(string, "help") == 0 || g_strcasecmp(string, "h") == 0
@@ -1283,7 +1287,7 @@ void ServerLoop(struct CMDLINE *cmdline)
         if (RespondToSelect(netbuf, &readfs, &writefs, &errorfs, &DoneOK)) {
           while ((buf = GetWaitingMessage(netbuf)) != NULL) {
             dopelog(2, LF_SERVER, _("Admin command: %s"), buf);
-            HandleServerCommand(buf, netbuf);
+            HandleServerCommand(buf, netbuf, FALSE);
             g_free(buf);
           }
         }
@@ -1443,7 +1447,7 @@ static void GuiDoCommand(GtkWidget *widget, gpointer data)
 
   text = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
   gtk_editable_delete_text(GTK_EDITABLE(widget), 0, -1);
-  HandleServerCommand(text, NULL);
+  HandleServerCommand(text, NULL, HaveUnicodeSupport());
   g_free(text);
   if (IsServerShutdown())
     GuiQuitServer();
@@ -1555,7 +1559,7 @@ static gint GuiRequestDelete(GtkWidget *widget, GdkEvent * event,
     GuiQuitServer();
   } else {
     TriedPoliteShutdown = TRUE;
-    HandleServerCommand("quit", NULL);
+    HandleServerCommand("quit", NULL, FALSE);
     if (IsServerShutdown())
       GuiQuitServer();
   }
@@ -1687,6 +1691,16 @@ static void SetupTaskBarIcon(GtkWidget *widget)
 void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 {
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
+
+  if (HaveUnicodeSupport()) {
+    /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
+     * strings to be UTF-8, so we force gettext to return all translations
+     * in this encoding here. */
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
+
+    Conv_SetInternalCodeset("UTF-8");
+    WantUTF8Errors(TRUE);
+  }
 
   if (cmdline) {
     InitConfiguration(cmdline);
