@@ -4,7 +4,7 @@ Version: cvs
 Release: 1
 Vendor:  Ben Webb
 License: GPL
-Group:   Games
+Group:   Amusements/Games
 Source0: dopewars-cvs.tar.gz
 
 %description
