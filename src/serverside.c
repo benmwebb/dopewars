@@ -127,6 +127,8 @@ int SendSingleHighScore(Player *Play,struct HISCORE *Score,
                         int ind,gboolean Bold);
 static int SendCopOffer(Player *To,OfferForce Force);
 static int OfferObject(Player *To,gboolean ForceBitch);
+static gboolean HighScoreWrite(FILE *fp,struct HISCORE *MultiScore,
+                               struct HISCORE *AntiqueScore);
 
 #ifdef GUI_SERVER
 static void GuiHandleMeta(gpointer data,gint socket,
@@ -183,7 +185,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
       AddURLEnc(body,MetaServer.Password);
    }
 
-   if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
+   if (SendData && HighScoreRead(ScoreFP,MultiScore,AntiqueScore,TRUE)) {
       for (i=0;i<NUMHISCORE;i++) {
          if (MultiScore[i].Name && MultiScore[i].Name[0]) {
             g_string_sprintfa(body,"&nm[%d]=",i);
@@ -1172,19 +1174,110 @@ void CloseHighScoreFile() {
    if (ScoreFP) fclose(ScoreFP);
 }
 
-int InitHighScoreFile() {
+static void DropPrivileges() {
+/* If we're running setuid/setgid, drop down to the privilege level of the  */
+/* user that started the dopewars process                                   */
+#ifndef CYGWIN
+   if (setregid(getgid(),getgid())!=0) {
+      perror("setregid");
+      exit(1);
+   }
+#endif
+}
+
+static const gchar SCOREHEADER[] = "DOPEWARS SCORES V.";
+static const guint SCOREHDRLEN = sizeof(SCOREHEADER)-1; /* Don't include \0 */
+static const guint SCOREVERSION = 1;
+
+static gboolean HighScoreReadHeader(FILE *fp,gint *ScoreVersion) {
+   gchar *header;
+
+   if (read_string(fp,&header)!=EOF) {
+      if (header && strlen(header) > SCOREHDRLEN &&
+          strncmp(header,SCOREHEADER,SCOREHDRLEN)==0) {
+         if (ScoreVersion) *ScoreVersion = atoi(header+SCOREHDRLEN);
+         g_free(header);
+         return TRUE;
+      }
+   }
+   g_free(header);
+   return FALSE;
+}
+
+static void HighScoreWriteHeader(FILE *fp) {
+   gchar *header;
+
+   header = g_strdup_printf("%s%d",SCOREHEADER,SCOREVERSION);
+   fwrite(header,strlen(header)+1,1,fp);
+}
+
+void ConvertHighScoreFile(void) {
+/* Converts an old format high score file to the new format. */
+   FILE *old,*backup;
+   gchar *BackupFile,ch;
+   struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
+
+/* The user running dopewars must be allowed to mess with the score file */
+   DropPrivileges();
+
+   BackupFile = g_strdup_printf("%s.bak",ConvertFile);
+
+   old=fopen(ConvertFile,"r+");
+   backup=fopen(BackupFile,"w");
+
+   if (old && backup) {
+
+/* First, make a backup of the old file */
+      ftruncate(fileno(backup),0); rewind(backup);
+      rewind(old);
+      while(1) {
+         ch = fgetc(old);
+         if (ch==EOF) break; else fputc(ch,backup);
+      }
+      fclose(backup);
+
+/* Read in the scores without the header, and then write out with the header */
+      if (!HighScoreRead(old,MultiScore,AntiqueScore,FALSE)) {
+         g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Error reading scores from %s."),
+               ConvertFile);
+      } else {
+         ftruncate(fileno(old),0); rewind(old);
+         if (HighScoreWrite(old,MultiScore,AntiqueScore)) {
+            g_message(_("The high score file %s has been converted to the new "
+                        "format.\nA backup of the old file has been created "
+                        "as %s.\n"),ConvertFile,BackupFile);
+         }
+      }
+      fclose(old);
+   } else {
+      if (!old) {
+         g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s."),
+               ConvertFile);
+      } else if (!backup) {
+         g_log(NULL,G_LOG_LEVEL_CRITICAL,
+               _("Cannot create backup of the high score file (%s)."),
+               BackupFile);
+      }
+   }
+
+   g_free(BackupFile);
+}
+
+int InitHighScoreFile(void) {
 /* Opens the high score file for later use, and then drops privileges.      */
 /* If the high score file cannot be found, returns -1 (0=success)           */
+   gboolean NewFile=FALSE;
 
    if (ScoreFP) return 0;  /* If already opened, then we're done */
 
    /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
    ScoreFP=fopen(HiScoreFile,"r+");
-   if (!ScoreFP) ScoreFP=fopen(HiScoreFile,"w+");
+   if (!ScoreFP) {
+      ScoreFP=fopen(HiScoreFile,"w+");
+      NewFile=TRUE;
+   }
 
-#ifndef CYGWIN
-   if (setregid(getgid(),getgid())!=0) perror("setregid");
-#endif
+   DropPrivileges();
 
    if (!ScoreFP) {
       g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s.\n"
@@ -1193,33 +1286,55 @@ int InitHighScoreFile() {
             "the -f command line option."),HiScoreFile);
       return -1;
    }
+
+   if (NewFile) {
+      HighScoreWriteHeader(ScoreFP);
+      fflush(ScoreFP);
+   } else if (!HighScoreReadHeader(ScoreFP,NULL)) {
+      g_log(NULL,G_LOG_LEVEL_CRITICAL,_("%s does not appear to be a valid\n"
+            "high score file - please check it. If it is a high score file\n"
+            "from an older version of dopewars, then first convert it to the\n"
+            "new format by running \"dopewars -C %s\"\n"
+            "from the command line."),HiScoreFile,HiScoreFile);
+      return -1;
+   }
+
    return 0;
 }
 
-int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
-/* Reads all the high scores into MultiScore and                           */
-/* AntiqueScore (antique mode scores). Returns 1 on success, 0 on failure. */
+gboolean HighScoreRead(FILE *fp,struct HISCORE *MultiScore,
+                       struct HISCORE *AntiqueScore,gboolean ReadHeader) {
+/* Reads all the high scores into MultiScore and AntiqueScore (antique  */
+/* mode scores). If ReadHeader is TRUE, read the high score file header */
+/* first. Returns TRUE on success, FALSE on failure.                    */
+   gint ScoreVersion=0;
    memset(MultiScore,0,sizeof(struct HISCORE)*NUMHISCORE);
    memset(AntiqueScore,0,sizeof(struct HISCORE)*NUMHISCORE);
-   if (ScoreFP && ReadLock(ScoreFP)==0) {
-      rewind(ScoreFP);
-      HighScoreTypeRead(AntiqueScore,ScoreFP);
-      HighScoreTypeRead(MultiScore,ScoreFP);
-      ReleaseLock(ScoreFP);
-   } else return 0;
-   return 1;
+   if (fp && ReadLock(fp)==0) {
+      rewind(fp);
+      if (ReadHeader && !HighScoreReadHeader(fp,&ScoreVersion)) {
+         ReleaseLock(fp);
+         return FALSE;
+      }
+      HighScoreTypeRead(AntiqueScore,fp);
+      HighScoreTypeRead(MultiScore,fp);
+      ReleaseLock(fp);
+   } else return FALSE;
+   return TRUE;
 }
 
-int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
+gboolean HighScoreWrite(FILE *fp,struct HISCORE *MultiScore,
+                        struct HISCORE *AntiqueScore) {
 /* Writes out all the high scores from MultiScore and AntiqueScore; returns */
-/* 1 on success, 0 on failure.                                              */
-   if (ScoreFP && WriteLock(ScoreFP)==0) {
-      ftruncate(fileno(ScoreFP),0);
-      rewind(ScoreFP);
-      HighScoreTypeWrite(AntiqueScore,ScoreFP);
-      HighScoreTypeWrite(MultiScore,ScoreFP);
-      ReleaseLock(ScoreFP);
-      fflush(ScoreFP);
+/* TRUE on success, FALSE on failure.                                       */
+   if (fp && WriteLock(fp)==0) {
+      ftruncate(fileno(fp),0);
+      rewind(fp);
+      HighScoreWriteHeader(fp);
+      HighScoreTypeWrite(AntiqueScore,fp);
+      HighScoreTypeWrite(MultiScore,fp);
+      ReleaseLock(fp);
+      fflush(fp);
    } else return 0;
    return 1;
 }
@@ -1237,7 +1352,7 @@ void SendHighScores(Player *Play,gboolean EndGame,char *Message) {
    GString *text;
    int i,j,InList=-1;
    text=g_string_new("");
-   if (!HighScoreRead(MultiScore,AntiqueScore)) {
+   if (!HighScoreRead(ScoreFP,MultiScore,AntiqueScore,TRUE)) {
       g_warning(_("Unable to read high score file %s"),HiScoreFile);
    }
    if (Message) {
@@ -1285,7 +1400,7 @@ void SendHighScores(Player *Play,gboolean EndGame,char *Message) {
    if (InList==-1 && EndGame) SendSingleHighScore(Play,&Score,j,TRUE);
    SendServerMessage(NULL,C_NONE,C_ENDHISCORE,Play,EndGame ? "end" : NULL);
    if (!EndGame) SendDrugsHere(Play,FALSE);
-   if (EndGame && !HighScoreWrite(MultiScore,AntiqueScore)) {
+   if (EndGame && !HighScoreWrite(ScoreFP,MultiScore,AntiqueScore)) {
       g_warning(_("Unable to write high score file %s"),HiScoreFile);
    }
    for (i=0;i<NUMHISCORE;i++) {

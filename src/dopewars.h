@@ -153,8 +153,9 @@ extern gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
 extern unsigned Port;
 extern gboolean Sanitized,ConfigVerbose,DrugValue;
 extern int NumLocation,NumGun,NumCop,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
-extern gchar *HiScoreFile,*ServerName,*Pager;
-extern gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
+extern gchar *HiScoreFile,*ServerName,*Pager,*ConvertFile;
+extern gboolean WantHelp,WantVersion,WantAntique,WantColour,
+                WantNetwork,WantConvert;
 extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;
 extern int DrugSortMethod,FightTimeout,IdleTimeout,ConnectTimeout;

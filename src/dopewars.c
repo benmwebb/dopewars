@@ -61,8 +61,8 @@ gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
 */
 unsigned Port=7902;
 gboolean Sanitized,ConfigVerbose,DrugValue;
-char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL;
-gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
+char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL,*ConvertFile=NULL;
+gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,WantConvert;
 ClientType WantedClient;
 int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
     NumPlaying=0,NumStoppedTo=0;
@@ -1621,6 +1621,7 @@ void SetupParameters() {
 /* Initialise variables */
    srand((unsigned)time(NULL));
    PidFile=NULL;
+   ConvertFile=NULL;
    Location=NULL;
    Gun=NULL;
    Drug=NULL;
@@ -1630,8 +1631,8 @@ void SetupParameters() {
    NumLocation=NumGun=NumDrug=0;
    FirstClient=FirstServer=NULL;
    Noone.Name=g_strdup("Noone");
-   WantColour=WantNetwork=1;
-   WantHelp=WantVersion=WantAntique=0;
+   WantColour=WantNetwork=TRUE;
+   WantHelp=WantConvert=WantVersion=WantAntique=FALSE;
    WantedClient=CLIENT_AUTO;
    Server=AIPlayer=Client=Network=FALSE;
 
@@ -1699,15 +1700,15 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -n       be boring and don't connect to any available dopewars servers\n\
               (i.e. single player mode)\n\
   -a       \"antique\" dopewars - keep as closely to the original version as\n\
-              possible (this also disables any networking)\n\
+              possible (no networking)\n\
   -f file  specify a file to use as the high score table\n\
               (by default %s/dopewars.sco is used)\n\
   -o addr  specify a hostname where the server for multiplayer dopewars\n\
-              can be found (in human-readable - e.g. nowhere.com - format)\n\
+              can be found\n\
   -s       run in server mode (note: for a \"non-interactive\" server, simply\n\
               run as dopewars -s < /dev/null >> logfile & )\n\
   -S       run a \"private\" server (i.e. do not notify the metaserver)\n\
-  -p       specify the network port to use (default: 7902)\n\
+  -p port  specify the network port to use (default: 7902)\n\
   -g file  specify the pathname of a dopewars configuration file. This file\n\
               is read immediately when the -g option is encountered\n\
   -r file  maintain pid file \"file\" while running the server\n\
@@ -1715,6 +1716,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -w       force the use of a graphical (windowed) client (GTK+ or Win32)\n\
   -t       force the use of a text-mode client (curses)\n\
               (by default, a windowed client is used when possible)\n\
+  -C file  convert an \"old format\" score file to the new format\n\
   -h       display this help information\n\
   -v       output version information and exit\n\n\
 dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
@@ -1723,18 +1725,19 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 
 void HandleCmdLine(int argc,char *argv[]) {
    int c;
+
    while (1) {
-      c=getopt(argc,argv,"anbchvf:o:sSp:g:r:wt");
-      if (c==EOF) break;
+      c=getopt(argc,argv,"anbchvf:o:sSp:g:r:wtC:");
+      if (c==-1) break;
       switch(c) {
-         case 'n': WantNetwork=0; break;
-         case 'b': WantColour=0; break;
-         case 'c': AIPlayer=1; break;
-         case 'a': WantAntique=1; WantNetwork=0; break;
-         case 'v': WantVersion=1; break;
+         case 'n': WantNetwork=FALSE; break;
+         case 'b': WantColour=FALSE; break;
+         case 'c': AIPlayer=TRUE; break;
+         case 'a': WantAntique=TRUE; WantNetwork=FALSE; break;
+         case 'v': WantVersion=TRUE; break;
          case 'h':
          case  0 :
-         case '?': WantHelp=1; break;
+         case '?': WantHelp=TRUE; break;
          case 'f': AssignName(&HiScoreFile,optarg); break;
          case 'o': AssignName(&ServerName,optarg); break;
          case 's': Server=TRUE; NotifyMetaServer=TRUE; break;
@@ -1744,6 +1747,7 @@ void HandleCmdLine(int argc,char *argv[]) {
          case 'r': AssignName(&PidFile,optarg); break;
          case 'w': WantedClient=CLIENT_WINDOW; break;
          case 't': WantedClient=CLIENT_CURSES; break;
+         case 'C': AssignName(&ConvertFile,optarg); WantConvert=TRUE; break;
       }
    }
 }
@@ -1753,7 +1757,7 @@ int GeneralStartup(int argc,char *argv[]) {
 /* score init.) - Returns 0 if OK, -1 if something failed.           */
    SetupParameters();
    HandleCmdLine(argc,argv);
-   if (!WantVersion && !WantHelp && !AIPlayer) {
+   if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert) {
       return InitHighScoreFile();
    }
    return 0;
@@ -1807,6 +1811,8 @@ int main(int argc,char *argv[]) {
    if (GeneralStartup(argc,argv)==0) {
       if (WantVersion || WantHelp) {
          HandleHelpTexts();
+      } else if (WantConvert) {
+         ConvertHighScoreFile();
       } else {
 #ifdef NETWORKING
          StartNetworking();
@@ -1846,6 +1852,7 @@ int main(int argc,char *argv[]) {
    }
    CloseHighScoreFile();
    g_free(PidFile);
+   g_free(ConvertFile);
    return 0;
 }
 

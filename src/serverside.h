@@ -56,9 +56,11 @@ void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
 int GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
+void ConvertHighScoreFile(void);
 int InitHighScoreFile(void);
 void CloseHighScoreFile(void);
-int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore);
+gboolean HighScoreRead(FILE *fp,struct HISCORE *MultiScore,
+                       struct HISCORE *AntiqueScore,gboolean ReadHeader);
 void CopsAttackPlayer(Player *Play);
 void AttackPlayer(Player *Play,Player *Attacked);
 gboolean IsOpponent(Player *Play,Player *Other);

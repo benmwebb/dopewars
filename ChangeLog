@@ -4,6 +4,10 @@ cvs
     - Metaserver code is now non-blocking (and should soon support more
       HTTP features, such as redirects and authentication)
     - Many code cleanups
+    - High score files now have a "proper" header, so that file(1) can
+      identify them, and so the -f option cannot be used to force setgid-games
+      dopewars to overwrite random files writeable by group "games" - use
+      the -C option to convert old high score files to the new format
 
 1.5.1   19-06-2001
     - Improved logging in server via. LogLevel and LogTimestamp variables
