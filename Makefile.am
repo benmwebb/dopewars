@@ -1,7 +1,7 @@
 SUBDIRS        = intl src doc po sounds
 DESKTOPDIR     = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP        = dopewars.desktop
-SCOREDIR       = ${DESTDIR}${datadir}
+SCOREDIR       = ${DESTDIR}${localstatedir}
 SCORE          = ${SCOREDIR}/dopewars.sco
 EXTRA_DIST     = ABOUT-NLS LICENCE dopewars.desktop dopewars.spec.in depcomp \
                  runindent.sh win32/Makefile win32/README win32/contid.h \

@@ -1,4 +1,6 @@
 cvs
+    - High score file is now installed in ${localstatedir} rather than
+      ${datadir}, to allow proper Filesystem Hierarchy Standard compliance
     - Fix for a curses client crash if the D key is pressed during attacks
       by the cops
     - Some problems with the curses client missing screen resize events fixed

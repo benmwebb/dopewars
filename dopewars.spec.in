@@ -36,6 +36,7 @@ the Simple DirectMedia Layer mixer (SDL_mixer).
 %setup
 
 %build
+%define _localstatedir /var/lib/games
 %configure --with-sdl --with-esd
 make
 
@@ -47,7 +48,7 @@ make install DESTDIR=${RPM_BUILD_ROOT}
 test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 
 %post
-%{_bindir}/dopewars -C %{_datadir}/dopewars.sco
+%{_bindir}/dopewars -C %{_localstatedir}/dopewars.sco
 
 %files -f %{name}.lang
 %defattr(-,root,root)
@@ -57,7 +58,7 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %doc doc/installation.html doc/metaserver.html doc/server.html
 %doc doc/servercommands.html doc/protocol.html doc/windows.html
 %attr(2755,root,games) %{_bindir}/dopewars
-%attr(0660,root,games) %config %{_datadir}/dopewars.sco
+%attr(0660,root,games) %config %{_localstatedir}/dopewars.sco
 %{_mandir}/man6/dopewars.6.gz
 %{_libdir}/dopewars/libsound_esd.so
 %{_datadir}/gnome/apps/Games/dopewars.desktop
@@ -83,6 +84,10 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
+* Mon Jul 28 2003 Ben Webb <benwebb@users.sf.net>
+- High score file moved to /var/lib/games for consistency with
+  other packages
+
 * Mon Oct 21 2002 Ben Webb <benwebb@users.sf.net>
 - Dependency on SDL-devel added to properly build SDL plugin
 

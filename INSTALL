@@ -100,16 +100,20 @@ the -s option in LDFLAGS. In a Bourne-compatible shell, this can be achieved
 with a command similar to the following:-
 	LDFLAGS="-s" ./configure
 
-The dopewars high score file is written as /usr/local/share/dopewars.sco on
+The dopewars high score file is written as /usr/local/var/dopewars.sco on
 Unix systems or ./dopewars.sco on Win32 systems by default. On Unix systems,
-it can be placed into an alternative location by specifying the --datadir
-flag to configure. (On Win32 systems, the --datadir flag is ignored.)
-The dopewars binary can also be moved from /usr/local/bin/dopewars with
-the --bindir flag. For example:-
+translations, documentation, sounds and graphics are installed in the
+locale, doc, dopewars and pixmaps directories respectively under
+/usr/local/share. (On Windows systems, these directories are under the
+current directory.) On Unix systems, you can move the score file with the
+--localstatedir flag to configure, and the other files with the --datadir
+flag. (On Win32 systems, the --localstatedir and --datadir flags are
+ignored.) The dopewars binary can also be moved from /usr/local/bin/dopewars
+with the --bindir flag. For example:-
 
-	./configure --bindir=/usr/bin --datadir=/var/games/dopewars
+	./configure --bindir=/usr/bin --localstatedir=/var/lib/games
 will configure the system to write the dopewars binary as /usr/bin/dopewars
-and the high score as /var/games/dopewars/dopewars.sco
+and the high score as /var/lib/games/dopewars.sco
 
 Other options to ./configure include:-
 

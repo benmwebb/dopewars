@@ -114,6 +114,7 @@ if test "$CYGWIN" = "yes" ; then
 
    dnl Read high score files, docs and locale files from current directory
    datadir="."
+   localstatedir="."
 else
    AC_MSG_RESULT([Configuring for Unix binary])
 
@@ -362,9 +363,14 @@ if test -n "$GCC"; then
 fi
 
 dnl Tell dopewars where the high scores, docs and locale files are
+DP_EXPAND_DIR(DPSCOREDIR, '${localstatedir}')
+AC_DEFINE_UNQUOTED(DPSCOREDIR, "$DPSCOREDIR",
+                   [The directory containing the high score file])
+AC_SUBST(DPSCOREDIR)
+
 DP_EXPAND_DIR(DPDATADIR, '${datadir}')
 AC_DEFINE_UNQUOTED(DPDATADIR, "$DPDATADIR",
-                   [The directory containing the high score file and docs])
+                   [The directory containing the docs and sounds])
 AC_SUBST(DPDATADIR)
 
 localedir=${datadir}/locale

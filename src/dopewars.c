@@ -2614,7 +2614,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -t, --text-client       force the use of a text-mode client (curses) (by\n\
                             default, a windowed client is used when possible)\n\
   -P, --player=NAME       set player name to \"NAME\"\n\
-  -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DPDATADIR);
+  -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DPSCOREDIR);
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
@@ -2650,7 +2650,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -P name  set player name to \"name\"\n\
   -C file  convert an \"old format\" score file to the new format\n\
   -A       connect to a locally-running server for administration\n"),
-           DPDATADIR);
+           DPSCOREDIR);
   PluginHelp();
 g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
@@ -2808,7 +2808,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
 {
   /* First, open the hard-coded high score file with possibly
    * elevated privileges */
-  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPDATADIR);
+  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPSCOREDIR);
   HiScoreFile = g_strdup(priv_hiscore);
   OpenHighScoreFile();
   DropPrivileges();
