@@ -1474,7 +1474,12 @@ static void UpdateDealDialog(void)
   gtk_label_set_text(GTK_LABEL(DealDialog.space), text->str);
 
   if (DealDialog.Type == BT_BUY) {
-    CanAfford = Play->Cash / Play->Drugs[DrugInd].Price;
+    /* Just in case a price update from the server slips through */
+    if (Play->Drugs[DrugInd].Price == 0) {
+      CanAfford = 0;
+    } else {
+      CanAfford = Play->Cash / Play->Drugs[DrugInd].Price;
+    }
 
     /* Number of the selected drug that you can afford in 'Deal Drugs'
      * dialog */
