@@ -28,16 +28,4 @@
 
 void AIPlayerLoop(void);
 
-#if NETWORKING
-int HandleAIMessage(char *Message,Player *AIPlay);
-void PrintAIMessage(char *Text);
-void AIDealDrugs(Player *AIPlay);
-void AIJet(Player *AIPlay);
-void AIHandleQuestion(char *Data,char AICode,Player *AIPlay,Player *From);
-void AIGunShop(Player *AIPlay);
-void AIPayLoan(Player *AIPlay);
-void AISendRandomMessage(Player *AIPlay);
-void AISetName(Player *AIPlay);
-#endif /* NETWORKING */
-
 #endif

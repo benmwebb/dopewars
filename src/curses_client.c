@@ -48,11 +48,13 @@ static int ResizedFlag;
 static SCREEN *cur_screen;
 
 #ifdef NETWORKING
-static char ConnectMethod=CM_SERVER;
+static enum {
+   CM_SERVER,CM_PROMPT,CM_META,CM_SINGLE
+} ConnectMethod = CM_SERVER;
 #endif
 
 static gboolean CanFire=FALSE,RunHere=FALSE;
-static gchar FightPoint;
+static FightPoint fp;
 
 /* Function definitions; make them static so as not to clash with functions
    of the same name in different clients */
@@ -68,17 +70,18 @@ static void DisplayFightMessage(Player *Play,char *text);
 static void DisplaySpyReports(char *Data,Player *From,Player *To);
 static void display_message(char *buf);
 static void print_location(char *text);
-static void print_status(Player *Play,char DispDrug);
-static char *nice_input(char *prompt,int sy,int sx,char digitsonly,
+static void print_status(Player *Play,gboolean DispDrug);
+static char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
                         char *displaystr);
-static Player *ListPlayers(Player *Play,char Select,char *Prompt);
+static Player *ListPlayers(Player *Play,gboolean Select,char *Prompt);
 static void HandleClientMessage(char *buf,Player *Play);
 static void PrintMessage(const gchar *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
 static void Bank(Player *Play);
 
-static char DisplayMode,QuitRequest;
+static DispMode DisplayMode;
+static gboolean QuitRequest;
 
 static void start_curses(void) {
 /* Initialises the curses library for accessing the screen */
@@ -128,7 +131,7 @@ void CheckForResize(Player *Play) {
       attrset(TextAttr); clear_screen();
       display_message("");
       DisplayFightMessage(Play,"");
-      print_status(Play,1);
+      print_status(Play,TRUE);
    }
    sigprocmask(SIG_UNBLOCK,&sigset,NULL);
 }
@@ -204,10 +207,10 @@ static void SelectServerManually(void) {
    mvaddstr(17,1,
 /* Prompts for hostname and port when selecting a server manually */
             _("Please enter the hostname and port of a dopewars server:-"));
-   text=nice_input(_("Hostname: "),18,1,0,ServerName);
+   text=nice_input(_("Hostname: "),18,1,FALSE,ServerName);
    AssignName(&ServerName,text); g_free(text);
    PortText=g_strdup_printf("%d",Port);
-   text=nice_input(_("Port: "),19,1,1,PortText);
+   text=nice_input(_("Port: "),19,1,TRUE,PortText);
    Port=atoi(text);
    g_free(text); g_free(PortText);
 }
@@ -372,7 +375,7 @@ static char ConnectToServer(Player *Play) {
 }
 #endif /* NETWORKING */
 
-static int jet(Player *Play,char AllowReturn) {
+static int jet(Player *Play,gboolean AllowReturn) {
 /* Displays the list of locations and prompts the user to select one. */
 /* If "AllowReturn" is TRUE, then if the current location is selected */
 /* simply drop back to the main game loop, otherwise send a request   */
@@ -449,7 +452,7 @@ static void DropDrugs(Player *Play) {
          c--;
          if (c<'A') {
             addstr(Drug[i].Name);
-            buf=nice_input(_("How many do you drop? "),23,8,1,NULL);
+            buf=nice_input(_("How many do you drop? "),23,8,TRUE,NULL);
             c=atoi(buf); g_free(buf);
             if (c>0) {
                g_string_sprintf(text,"drug^%d^%d",i,-c);
@@ -462,7 +465,7 @@ static void DropDrugs(Player *Play) {
    g_string_free(text,TRUE);
 }
 
-static void DealDrugs(Player *Play,char Buy) {
+static void DealDrugs(Player *Play,gboolean Buy) {
 /* Prompts the user (i.e. the owner of client "Play") to buy drugs if   */
 /* "Buy" is TRUE, or to sell drugs otherwise. A list of available drugs */
 /* is displayed, and on receiving the selection, the user is prompted   */
@@ -502,7 +505,8 @@ static void DealDrugs(Player *Play,char Buy) {
          text=g_strdup_printf(_("You can afford %d, and can carry %d. "),
                               CanAfford,CanCarry);
          mvaddstr(23,2,text);
-         input=nice_input(_("How many do you buy? "),23,2+strlen(text),1,NULL);
+         input=nice_input(_("How many do you buy? "),23,2+strlen(text),
+                          TRUE,NULL);
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,c);
@@ -513,7 +517,8 @@ static void DealDrugs(Player *Play,char Buy) {
 /* Display of number of drugs you have, when selling drugs */
          text=g_strdup_printf(_("You have %d. "),Play->Drugs[DrugNum].Carried);
          mvaddstr(23,2,text);
-         input=nice_input(_("How many do you sell? "),23,2+strlen(text),1,NULL);
+         input=nice_input(_("How many do you sell? "),23,2+strlen(text),
+                          TRUE,NULL);
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,-c);
@@ -604,12 +609,12 @@ static int want_to_quit(void) {
    return (GetKey(_("YN"),"YN",FALSE,TRUE,FALSE)!='N');
 }
 
-static void change_name(Player *Play,char nullname) {
+static void change_name(Player *Play,gboolean nullname) {
 /* Prompts the user to change his or her name, and notifies the server */
    gchar *NewName;
 
 /* Prompt for player to change his/her name */
-   NewName=nice_input(_("New name: "),23,0,0,NULL);
+   NewName=nice_input(_("New name: "),23,0,FALSE,NULL);
 
    if (NewName[0]) {
       if (nullname) {
@@ -628,8 +633,9 @@ void HandleClientMessage(char *Message,Player *Play) {
 /* game, the global variable QuitRequest is set. The global variable        */
 /* DisplayMode may also be changed by this routine as a result of network   */
 /* traffic.                                                                 */
-   char *pt,*Data,Code,*wrd;
-   char AICode;
+   char *pt,*Data,*wrd;
+   AICode AI;
+   MsgCode Code;
    Player *From,*tmp;
    GSList *list;
    gchar *text;
@@ -637,11 +643,11 @@ void HandleClientMessage(char *Message,Player *Play) {
    gboolean Handled;
 
 /* Ignore To: field - all messages will be for Player "Play" */
-   if (ProcessMessage(Message,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
+   if (ProcessMessage(Message,Play,&From,&AI,&Code,&Data,FirstClient)==-1) {
       return;
    }
 
-   Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
+   Handled=HandleGenericClientMessage(From,AI,Code,Play,Data,&DisplayMode);
    switch(Code) {
       case C_ENDLIST:
          if (FirstClient && g_slist_next(FirstClient)) {
@@ -659,7 +665,7 @@ void HandleClientMessage(char *Message,Player *Play) {
             nice_wait();
             clear_screen();
             display_message("");
-            print_status(Play,1);
+            print_status(Play,TRUE);
             refresh();
          }
          break;
@@ -756,7 +762,7 @@ void HandleClientMessage(char *Message,Player *Play) {
       case C_UPDATE:
          if (From==&Noone) {
             ReceivePlayerData(Play,Data,Play);
-            print_status(Play,1); refresh();
+            print_status(Play,TRUE); refresh();
          } else {
             DisplaySpyReports(Data,From,Play);
          }
@@ -766,7 +772,7 @@ void HandleClientMessage(char *Message,Player *Play) {
          attrset(TextAttr);
          mvaddstr(22,0,_("Unfortunately, somebody else is already "
                          "using \"your\" name. Please change it."));
-         change_name(Play,1);
+         change_name(Play,TRUE);
          break;
       default:
          if (!Handled) {
@@ -832,7 +838,7 @@ void GunShop(Player *Play) {
    int i,c,c2;
    gchar *text;
 
-   print_status(Play,0);
+   print_status(Play,FALSE);
    attrset(TextAttr);
    clear_bottom();
    for (i=0;i<NumGun;i++) {
@@ -927,11 +933,11 @@ void GunShop(Player *Play) {
             text=g_strdup_printf("gun^%d^%d",c2,c=='B' ? 1 : -1);
             SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
-            print_status(Play,0);
+            print_status(Play,FALSE);
          }
       }
    }
-   print_status(Play,1);
+   print_status(Play,TRUE);
 }
 
 void LoanShark(Player *Play) {
@@ -943,7 +949,7 @@ void LoanShark(Player *Play) {
       attrset(PromptAttr);
 
 /* Prompt for paying back loans from the loan shark */
-      text=nice_input(_("How much money do you pay back? "),19,1,1,NULL);
+      text=nice_input(_("How much money do you pay back? "),19,1,TRUE,NULL);
       attrset(TextAttr);
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
@@ -982,7 +988,7 @@ void Bank(Player *Play) {
       if (c=='L') return;
 
 /* Prompt for putting money in or taking money out of the bank */
-      text=nice_input(_("How much money? "),19,1,1,NULL);
+      text=nice_input(_("How much money? "),19,1,TRUE,NULL);
 
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
@@ -1134,11 +1140,11 @@ void DisplayFightMessage(Player *Play,char *text) {
          ReceiveFightMessage(text,&AttackName,&DefendName,&DefendHealth,
                              &DefendBitches,&BitchName,&BitchesKilled,
                              &ArmPercent,
-                             &FightPoint,&RunHere,&Loot,&CanFire,&textpt);
+                             &fp,&RunHere,&Loot,&CanFire,&textpt);
       } else {
          textpt=text;
-         if (Play->Flags&FIGHTING) FightPoint=F_MSG;
-         else FightPoint=F_LASTLEAVE;
+         if (Play->Flags&FIGHTING) fp=F_MSG;
+         else fp=F_LASTLEAVE;
          CanFire = (Play->Flags&CANSHOOT);
          RunHere=FALSE;
       }
@@ -1206,7 +1212,7 @@ void print_location(char *text) {
    attrset(TextAttr);
 }
 
-void print_status(Player *Play,char DispDrug) {
+void print_status(Player *Play,gboolean DispDrug) {
 /* Displays the status of player "Play" - i.e. the current turn, the   */
 /* location, bitches, available space, cash, guns, health and bank     */
 /* details. If "DispDrugs" is TRUE, displays the carried drugs on the  */
@@ -1357,18 +1363,18 @@ void DisplaySpyReports(char *Data,Player *From,Player *To) {
 /* Message displayed with a spy's list of drugs (%Tde="Drugs" by default) */
    text=dpg_strdup_printf(_("%/Spy: Drugs/%Tde..."),Names.Drugs);
    mvaddstr(19,20,text); g_free(text);
-   print_status(From,1); nice_wait();
+   print_status(From,TRUE); nice_wait();
    clear_line(19);
 
 /* Message displayed with a spy's list of guns (%Tde="Guns" by default) */
    text=dpg_strdup_printf(_("%/Spy: Guns/%Tde..."),Names.Guns);
    mvaddstr(19,20,text); g_free(text);
-   print_status(From,0); nice_wait();
+   print_status(From,FALSE); nice_wait();
 
-   print_status(To,1); refresh();
+   print_status(To,TRUE); refresh();
 }
 
-Player *ListPlayers(Player *Play,char Select,char *Prompt) {
+Player *ListPlayers(Player *Play,gboolean Select,char *Prompt) {
 /* Displays the "Prompt" if non-NULL, and then lists all clients     */
 /* currently playing dopewars, other than the current player "Play". */
 /* If "Select" is TRUE, gives each player a letter and asks the user */
@@ -1426,7 +1432,8 @@ Player *ListPlayers(Player *Play,char Select,char *Prompt) {
    return NULL;
 }
 
-char *nice_input(char *prompt,int sy,int sx,char digitsonly,char *displaystr) {
+char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
+                 char *displaystr) {
 /* Displays the given "prompt" (if non-NULL) at coordinates sx,sy and   */
 /* allows the user to input a string, which is returned. This is a      */
 /* dynamically allocated string, and so must be freed by the calling    */
@@ -1533,14 +1540,14 @@ static void Curses_DoGame(Player *Play) {
    attrset(TextAttr); clear_screen();
    display_message(NULL);
    DisplayFightMessage(Play,NULL);
-   print_status(Play,1);
+   print_status(Play,TRUE);
 
    attrset(TextAttr);
    clear_bottom();
    buf=NULL;
    do {
       g_free(buf);
-      buf=nice_input(_("Hey dude, what's your name? "),17,1,0,OldName);
+      buf=nice_input(_("Hey dude, what's your name? "),17,1,FALSE,OldName);
    } while (buf[0]==0);
 #if NETWORKING
    if (WantNetwork) {
@@ -1621,8 +1628,8 @@ static void Curses_DoGame(Player *Play) {
                   g_string_append(text,_("S>tand, "));
                }
             }
-            if (FightPoint!=F_LASTLEAVE) g_string_append(text,_("R>un, "));
-            if (!RunHere || FightPoint==F_LASTLEAVE)
+            if (fp!=F_LASTLEAVE) g_string_append(text,_("R>un, "));
+            if (!RunHere || fp==F_LASTLEAVE)
 /* (%tde = "drugs" by default here) */
                dpg_string_sprintfa(text,_("D>eal %tde, "),Names.Drugs);
             g_string_append(text,_("or Q>uit? "));
@@ -1642,6 +1649,8 @@ static void Curses_DoGame(Player *Play) {
             mvaddstr(22,40-strlen(text->str)/2,text->str);
             attrset(TextAttr);
             curs_set(1);
+            break;
+        case DM_NONE:
             break;
       }
       refresh();
@@ -1745,7 +1754,7 @@ static void Curses_DoGame(Player *Play) {
                if (tmp) {
                   attrset(TextAttr); clear_line(22);
 /* Prompt for sending player-player messages */
-                  TalkMsg=nice_input(_("Talk: "),22,0,0,NULL);
+                  TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL);
                   if (TalkMsg[0]) {
                      SendClientMessage(Play,C_NONE,C_MSGTO,tmp,TalkMsg);
                      buf=g_strdup_printf("%s->%s: %s",GetPlayerName(Play),
@@ -1757,7 +1766,7 @@ static void Curses_DoGame(Player *Play) {
                }
             } else if (c=='T' && Client) {
                attrset(TextAttr); clear_line(22);
-               TalkMsg=nice_input(_("Talk: "),22,0,0,NULL);
+               TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL);
                if (TalkMsg[0]) {
                   SendClientMessage(Play,C_NONE,C_MSG,NULL,TalkMsg);
                   buf=g_strdup_printf("%s: %s",GetPlayerName(Play),TalkMsg);

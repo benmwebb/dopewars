@@ -34,11 +34,11 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-#include <curses_client.h>
-#include <gtk_client.h>
 #include <glib.h>
 #include <stdarg.h>
+#include "curses_client.h"
 #include "dopeos.h"
+#include "gtk_client.h"
 #include "message.h"
 #include "serverside.h"
 #include "tstring.h"
@@ -51,7 +51,7 @@
 #endif
 
 int ClientSock,ListenSock;     
-char Network,Client,Server,NotifyMetaServer,AIPlayer;
+gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
 /* dopewars acting as standalone TCP server:
              Network=Server=TRUE   Client=FALSE
    dopewars acting as client, connecting to standalone server:
@@ -59,10 +59,11 @@ char Network,Client,Server,NotifyMetaServer,AIPlayer;
    dopewars in single-player or antique mode:
              Network=Server=Client=FALSE
 */
-int Port=7902,Sanitized=0,ConfigVerbose=0,DrugValue;
+unsigned Port=7902;
+gboolean Sanitized,ConfigVerbose,DrugValue;
 char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL;
-char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
-char WantedClient;
+gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
+ClientType WantedClient;
 int NumLocation=0,NumGun=0,NumCop=0,NumDrug=0,NumSubway=0,
     NumPlaying=0,NumStoppedTo=0;
 Player Noone;
@@ -151,10 +152,10 @@ struct BITCH Bitch = {
    50000,150000
 };
 
-struct METASERVER MetaServer = { 0,NULL,0,NULL,0,NULL,NULL,NULL,NULL };
+struct METASERVER MetaServer = { FALSE,NULL,0,NULL,0,NULL,NULL,NULL,NULL };
 
 struct METASERVER DefaultMetaServer = {
-   1,"dopewars.sourceforge.net",80,"",8080,"/metaserver.php",
+   TRUE,"dopewars.sourceforge.net",80,"",8080,"/metaserver.php",
    "","","dopewars server"
 };
 
@@ -165,281 +166,276 @@ int PlayerArmour=100,BitchArmour=50;
 int LogLevel=2;
 gchar *LogTimestamp=NULL;
 
-struct GLOBALS Globals[NUMGLOB] = {
+struct GLOBALS Globals[] = {
 /* The following strings are the helptexts for all the options that can be
    set in a dopewars configuration file, or in the server. See
    doc/configfile.html for more detailed explanations. */
-   { &Port,NULL,NULL,NULL,"Port",N_("Network port to connect to"),
+   { &Port,NULL,NULL,NULL,NULL,"Port",N_("Network port to connect to"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&HiScoreFile,NULL,"HiScoreFile",
+   { NULL,NULL,NULL,&HiScoreFile,NULL,"HiScoreFile",
      N_("Name of the high score file"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&ServerName,NULL,"Server",N_("Name of the server to connect to"),
+   { NULL,NULL,NULL,&ServerName,NULL,"Server",
+     N_("Name of the server to connect to"),NULL,NULL,0,"",NULL,NULL },
+   { NULL,&MetaServer.Active,NULL,NULL,NULL,"MetaServer.Active",
+     N_("TRUE if server should report to a metaserver"),
      NULL,NULL,0,"",NULL,NULL },
-   { &MetaServer.Active,NULL,NULL,NULL,"MetaServer.Active",
-     N_("Non-zero if server should report to a metaserver"),
-     NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&MetaServer.Name,NULL,"MetaServer.Name",
+   { NULL,NULL,NULL,&MetaServer.Name,NULL,"MetaServer.Name",
      N_("Metaserver name to report/get server details to/from"),
      NULL,NULL,0,"",NULL,NULL },
-   { &MetaServer.Port,NULL,NULL,NULL,"MetaServer.Port",
+   { &MetaServer.Port,NULL,NULL,NULL,NULL,"MetaServer.Port",
      N_("Port for metaserver communication"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&MetaServer.ProxyName,NULL,"MetaServer.ProxyName",
+   { NULL,NULL,NULL,&MetaServer.ProxyName,NULL,"MetaServer.ProxyName",
      N_("Name of the proxy (if needed) for metaserver communication"),
      NULL,NULL,0,"",NULL,NULL },
-   { &MetaServer.ProxyPort,NULL,NULL,NULL,"MetaServer.ProxyPort",
+   { &MetaServer.ProxyPort,NULL,NULL,NULL,NULL,"MetaServer.ProxyPort",
      N_("Port for communicating with the proxy server"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&MetaServer.Path,NULL,"MetaServer.Path",
+   { NULL,NULL,NULL,&MetaServer.Path,NULL,"MetaServer.Path",
      N_("Path of the script on the metaserver"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&MetaServer.LocalName,NULL,"MetaServer.LocalName",
+   { NULL,NULL,NULL,&MetaServer.LocalName,NULL,"MetaServer.LocalName",
      N_("Preferred hostname of your server machine"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&MetaServer.Password,NULL,"MetaServer.Password",
+   { NULL,NULL,NULL,&MetaServer.Password,NULL,"MetaServer.Password",
      N_("Authentication for LocalName with the metaserver"),NULL,NULL,0,"",NULL,
      NULL },
-   { NULL,NULL,&MetaServer.Comment,NULL,"MetaServer.Comment",
+   { NULL,NULL,NULL,&MetaServer.Comment,NULL,"MetaServer.Comment",
      N_("Server description, reported to the metaserver"),NULL,NULL,0,"",NULL,
      NULL },
-   { NULL,NULL,&Pager,NULL,"Pager",
+   { NULL,NULL,NULL,&Pager,NULL,"Pager",
      N_("Program used to display multi-page output"),NULL,NULL,0,"",NULL,NULL },
-   { &NumTurns,NULL,NULL,NULL,"NumTurns",
+   { &NumTurns,NULL,NULL,NULL,NULL,"NumTurns",
      N_("No. of game turns (if 0, game never ends)"),
      NULL,NULL,0,"",NULL,NULL },
-   { &LogLevel,NULL,NULL,NULL,"LogLevel",
+   { &LogLevel,NULL,NULL,NULL,NULL,"LogLevel",
      N_("Controls the number of log messages produced"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&LogTimestamp,NULL,"LogTimestamp",
+   { NULL,NULL,NULL,&LogTimestamp,NULL,"LogTimestamp",
      N_("strftime() format string for log timestamps"),
      NULL,NULL,0,"",NULL,NULL },
-   { &Sanitized,NULL,NULL,NULL,"Sanitized",N_("Random events are sanitized"),
+   { NULL,&Sanitized,NULL,NULL,NULL,"Sanitized",
+     N_("Random events are sanitized"),NULL,NULL,0,"",NULL,NULL },
+   { NULL,&DrugValue,NULL,NULL,NULL,"DrugValue",
+     N_("TRUE if the value of bought drugs should be saved"),
      NULL,NULL,0,"",NULL,NULL },
-   { &DrugValue,NULL,NULL,NULL,"DrugValue",
-     N_("Non-zero if the value of bought drugs should be saved"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &ConfigVerbose,NULL,NULL,NULL,"ConfigVerbose",
+   { NULL,&ConfigVerbose,NULL,NULL,NULL,"ConfigVerbose",
      N_("Be verbose in processing config file"),NULL,NULL,0,"",NULL,NULL },
-   { &NumLocation,NULL,NULL,NULL,"NumLocation",
+   { &NumLocation,NULL,NULL,NULL,NULL,"NumLocation",
      N_("Number of locations in the game"),
      (void **)(&Location),NULL,sizeof(struct LOCATION),"",NULL,
      ResizeLocations },
-   { &NumCop,NULL,NULL,NULL,"NumCop",
+   { &NumCop,NULL,NULL,NULL,NULL,"NumCop",
      N_("Number of types of cop in the game"),
      (void **)(&Cop),NULL,sizeof(struct COP),"",NULL,ResizeCops },
-   { &NumGun,NULL,NULL,NULL,"NumGun",N_("Number of guns in the game"),
+   { &NumGun,NULL,NULL,NULL,NULL,"NumGun",N_("Number of guns in the game"),
      (void **)(&Gun),NULL,sizeof(struct GUN),"",NULL,ResizeGuns },
-   { &NumDrug,NULL,NULL,NULL,"NumDrug",N_("Number of drugs in the game"),
+   { &NumDrug,NULL,NULL,NULL,NULL,"NumDrug",N_("Number of drugs in the game"),
      (void **)(&Drug),NULL,sizeof(struct DRUG),"",NULL,ResizeDrugs },
-   { &LoanSharkLoc,NULL,NULL,NULL,"LoanShark",N_("Location of the Loan Shark"),
+   { &LoanSharkLoc,NULL,NULL,NULL,NULL,"LoanShark",
+     N_("Location of the Loan Shark"),NULL,NULL,0,"",NULL,NULL },
+   { &BankLoc,NULL,NULL,NULL,NULL,"Bank",N_("Location of the bank"),
      NULL,NULL,0,"",NULL,NULL },
-   { &BankLoc,NULL,NULL,NULL,"Bank",N_("Location of the bank"),
+   { &GunShopLoc,NULL,NULL,NULL,NULL,"GunShop",N_("Location of the gun shop"),
      NULL,NULL,0,"",NULL,NULL },
-   { &GunShopLoc,NULL,NULL,NULL,"GunShop",N_("Location of the gun shop"),
+   { &RoughPubLoc,NULL,NULL,NULL,NULL,"RoughPub",N_("Location of the pub"),
      NULL,NULL,0,"",NULL,NULL },
-   { &RoughPubLoc,NULL,NULL,NULL,"RoughPub",N_("Location of the pub"),
-     NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.LoanSharkName,NULL,"LoanSharkName",
+   { NULL,NULL,NULL,&Names.LoanSharkName,NULL,"LoanSharkName",
      N_("Name of the loan shark"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.BankName,NULL,"BankName",
+   { NULL,NULL,NULL,&Names.BankName,NULL,"BankName",
      N_("Name of the bank"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.GunShopName,NULL,"GunShopName",
+   { NULL,NULL,NULL,&Names.GunShopName,NULL,"GunShopName",
      N_("Name of the gun shop"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.RoughPubName,NULL,"RoughPubName",
+   { NULL,NULL,NULL,&Names.RoughPubName,NULL,"RoughPubName",
      N_("Name of the pub"),NULL,NULL,0,"",NULL,NULL },
-   { &DrugSortMethod,NULL,NULL,NULL,"DrugSortMethod",
+   { &DrugSortMethod,NULL,NULL,NULL,NULL,"DrugSortMethod",
      N_("Sort key for listing available drugs"),
      NULL,NULL,0,"",NULL,NULL },
-   { &FightTimeout,NULL,NULL,NULL,"FightTimeout",
+   { &FightTimeout,NULL,NULL,NULL,NULL,"FightTimeout",
      N_("No. of seconds in which to return fire"),
      NULL,NULL,0,"",NULL,NULL },
-   { &IdleTimeout,NULL,NULL,NULL,"IdleTimeout",
+   { &IdleTimeout,NULL,NULL,NULL,NULL,"IdleTimeout",
      N_("Players are disconnected after this many seconds"),
      NULL,NULL,0,"",NULL,NULL },
-   { &ConnectTimeout,NULL,NULL,NULL,"ConnectTimeout",
+   { &ConnectTimeout,NULL,NULL,NULL,NULL,"ConnectTimeout",
      N_("Time in seconds for connections to be made or broken"),
      NULL,NULL,0,"",NULL,NULL },
-   { &MaxClients,NULL,NULL,NULL,"MaxClients",
+   { &MaxClients,NULL,NULL,NULL,NULL,"MaxClients",
      N_("Maximum number of TCP/IP connections"),
      NULL,NULL,0,"",NULL,NULL },
-   { &AITurnPause,NULL,NULL,NULL,"AITurnPause",
+   { &AITurnPause,NULL,NULL,NULL,NULL,"AITurnPause",
      N_("Seconds between turns of AI players"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&StartCash,NULL,NULL,"StartCash",
+   { NULL,NULL,&StartCash,NULL,NULL,"StartCash",
      N_("Amount of cash that each player starts with"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&StartDebt,NULL,NULL,"StartDebt",
+   { NULL,NULL,&StartDebt,NULL,NULL,"StartDebt",
      N_("Amount of debt that each player starts with"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&StaticLocation.Name,NULL,"Name",N_("Name of each location"),
-     (void **)(&Location),&StaticLocation,
+   { NULL,NULL,NULL,&StaticLocation.Name,NULL,"Name",
+     N_("Name of each location"),(void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
-   { &(StaticLocation.PolicePresence),NULL,NULL,NULL,"PolicePresence",
+   { &(StaticLocation.PolicePresence),NULL,NULL,NULL,NULL,"PolicePresence",
      N_("Police presence at each location (%)"),
      (void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
-   { &(StaticLocation.MinDrug),NULL,NULL,NULL,"MinDrug",
+   { &(StaticLocation.MinDrug),NULL,NULL,NULL,NULL,"MinDrug",
      N_("Minimum number of drugs at each location"),
      (void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
-   { &(StaticLocation.MaxDrug),NULL,NULL,NULL,"MaxDrug",
+   { &(StaticLocation.MaxDrug),NULL,NULL,NULL,NULL,"MaxDrug",
      N_("Maximum number of drugs at each location"),
      (void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
-   { &PlayerArmour,NULL,NULL,NULL,"PlayerArmour",
+   { &PlayerArmour,NULL,NULL,NULL,NULL,"PlayerArmour",
      N_("% resistance to gunshots of each player"),
      NULL,NULL,0,"",NULL,NULL },
-   { &BitchArmour,NULL,NULL,NULL,"BitchArmour",
+   { &BitchArmour,NULL,NULL,NULL,NULL,"BitchArmour",
      N_("% resistance to gunshots of each bitch"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&StaticCop.Name,NULL,"Name",
+   { NULL,NULL,NULL,&StaticCop.Name,NULL,"Name",
      N_("Name of each cop"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { NULL,NULL,&StaticCop.DeputyName,NULL,"DeputyName",
+   { NULL,NULL,NULL,&StaticCop.DeputyName,NULL,"DeputyName",
      N_("Name of each cop's deputy"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { NULL,NULL,&StaticCop.DeputiesName,NULL,"DeputiesName",
+   { NULL,NULL,NULL,&StaticCop.DeputiesName,NULL,"DeputiesName",
      N_("Name of each cop's deputies"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.Armour,NULL,NULL,NULL,"Armour",
+   { &StaticCop.Armour,NULL,NULL,NULL,NULL,"Armour",
      N_("% resistance to gunshots of each cop"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.DeputyArmour,NULL,NULL,NULL,"DeputyArmour",
+   { &StaticCop.DeputyArmour,NULL,NULL,NULL,NULL,"DeputyArmour",
      N_("% resistance to gunshots of each deputy"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.AttackPenalty,NULL,NULL,NULL,"AttackPenalty",
+   { &StaticCop.AttackPenalty,NULL,NULL,NULL,NULL,"AttackPenalty",
      N_("Attack penalty relative to a player"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.DefendPenalty,NULL,NULL,NULL,"DefendPenalty",
+   { &StaticCop.DefendPenalty,NULL,NULL,NULL,NULL,"DefendPenalty",
      N_("Defend penalty relative to a player"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.MinDeputies,NULL,NULL,NULL,"MinDeputies",
+   { &StaticCop.MinDeputies,NULL,NULL,NULL,NULL,"MinDeputies",
      N_("Minimum number of accompanying deputies"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.MaxDeputies,NULL,NULL,NULL,"MaxDeputies",
+   { &StaticCop.MaxDeputies,NULL,NULL,NULL,NULL,"MaxDeputies",
      N_("Maximum number of accompanying deputies"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.GunIndex,NULL,NULL,NULL,"GunIndex",
+   { &StaticCop.GunIndex,NULL,NULL,NULL,NULL,"GunIndex",
      N_("Zero-based index of the gun that cops are armed with"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.CopGun,NULL,NULL,NULL,"CopGun",
+   { &StaticCop.CopGun,NULL,NULL,NULL,NULL,"CopGun",
      N_("Number of guns that each cop carries"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.DeputyGun,NULL,NULL,NULL,"DeputyGun",
+   { &StaticCop.DeputyGun,NULL,NULL,NULL,NULL,"DeputyGun",
      N_("Number of guns that each deputy carries"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { NULL,NULL,&StaticDrug.Name,NULL,"Name",
+   { NULL,NULL,NULL,&StaticDrug.Name,NULL,"Name",
      N_("Name of each drug"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { NULL,&(StaticDrug.MinPrice),NULL,NULL,"MinPrice",
+   { NULL,NULL,&(StaticDrug.MinPrice),NULL,NULL,"MinPrice",
      N_("Minimum normal price of each drug"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { NULL,&(StaticDrug.MaxPrice),NULL,NULL,"MaxPrice",
+   { NULL,NULL,&(StaticDrug.MaxPrice),NULL,NULL,"MaxPrice",
      N_("Maximum normal price of each drug"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { &(StaticDrug.Cheap),NULL,NULL,NULL,"Cheap",
-     N_("Non-zero if this drug can be specially cheap"),
+   { NULL,&(StaticDrug.Cheap),NULL,NULL,NULL,"Cheap",
+     N_("TRUE if this drug can be specially cheap"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { &(StaticDrug.Expensive),NULL,NULL,NULL,"Expensive",
-     N_("Non-zero if this drug can be specially expensive"),
+   { NULL,&(StaticDrug.Expensive),NULL,NULL,NULL,"Expensive",
+     N_("TRUE if this drug can be specially expensive"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { NULL,NULL,&StaticDrug.CheapStr,NULL,"CheapStr",
+   { NULL,NULL,NULL,&StaticDrug.CheapStr,NULL,"CheapStr",
      N_("Message displayed when this drug is specially cheap"),
      (void **)(&Drug),&StaticDrug,
      sizeof(struct DRUG),"Drug",&NumDrug,NULL },
-   { NULL,NULL,&Drugs.ExpensiveStr1,NULL,"Drugs.ExpensiveStr1",
+   { NULL,NULL,NULL,&Drugs.ExpensiveStr1,NULL,"Drugs.ExpensiveStr1",
      N_("Format string used for expensive drugs 50% of time"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Drugs.ExpensiveStr2,NULL,"Drugs.ExpensiveStr2",
+   { NULL,NULL,NULL,&Drugs.ExpensiveStr2,NULL,"Drugs.ExpensiveStr2",
      N_("Format string used for expensive drugs 50% of time"),
      NULL,NULL,0,"",NULL,NULL },
-   { &(Drugs.CheapDivide),NULL,NULL,NULL,"Drugs.CheapDivide",
+   { &(Drugs.CheapDivide),NULL,NULL,NULL,NULL,"Drugs.CheapDivide",
      N_("Divider for drug price when it's specially cheap"),
      NULL,NULL,0,"",NULL,NULL },
-   { &(Drugs.ExpensiveMultiply),NULL,NULL,NULL,"Drugs.ExpensiveMultiply",
+   { &(Drugs.ExpensiveMultiply),NULL,NULL,NULL,NULL,"Drugs.ExpensiveMultiply",
      N_("Multiplier for specially expensive drug prices"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&StaticGun.Name,NULL,"Name",
+   { NULL,NULL,NULL,&StaticGun.Name,NULL,"Name",
      N_("Name of each gun"),
      (void **)(&Gun),&StaticGun,
      sizeof(struct GUN),"Gun",&NumGun,NULL },
-   { NULL,&(StaticGun.Price),NULL,NULL,"Price",
+   { NULL,NULL,&(StaticGun.Price),NULL,NULL,"Price",
      N_("Price of each gun"),
      (void **)(&Gun),&StaticGun,
      sizeof(struct GUN),"Gun",&NumGun,NULL },
-   { &(StaticGun.Space),NULL,NULL,NULL,"Space",
+   { &(StaticGun.Space),NULL,NULL,NULL,NULL,"Space",
      N_("Space taken by each gun"),
      (void **)(&Gun),&StaticGun,
      sizeof(struct GUN),"Gun",&NumGun,NULL },
-   { &(StaticGun.Damage),NULL,NULL,NULL,"Damage",
+   { &(StaticGun.Damage),NULL,NULL,NULL,NULL,"Damage",
      N_("Damage done by each gun"),
      (void **)(&Gun),&StaticGun,
      sizeof(struct GUN),"Gun",&NumGun,NULL },
-   { NULL,NULL,&Names.Bitch,NULL,"Names.Bitch",
+   { NULL,NULL,NULL,&Names.Bitch,NULL,"Names.Bitch",
      N_("Word used to denote a single \"bitch\""),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.Bitches,NULL,"Names.Bitches",
+   { NULL,NULL,NULL,&Names.Bitches,NULL,"Names.Bitches",
      N_("Word used to denote two or more \"bitches\""),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.Gun,NULL,"Names.Gun",
+   { NULL,NULL,NULL,&Names.Gun,NULL,"Names.Gun",
      N_("Word used to denote a single gun or equivalent"),NULL,NULL,0,"",NULL,
      NULL },
-   { NULL,NULL,&Names.Guns,NULL,"Names.Guns",
+   { NULL,NULL,NULL,&Names.Guns,NULL,"Names.Guns",
      N_("Word used to denote two or more guns"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.Drug,NULL,"Names.Drug",
+   { NULL,NULL,NULL,&Names.Drug,NULL,"Names.Drug",
      N_("Word used to denote a single drug or equivalent"),NULL,NULL,0,"",NULL,
      NULL },
-   { NULL,NULL,&Names.Drugs,NULL,"Names.Drugs",
+   { NULL,NULL,NULL,&Names.Drugs,NULL,"Names.Drugs",
      N_("Word used to denote two or more drugs"),NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.Month,NULL,"Names.Month",
+   { NULL,NULL,NULL,&Names.Month,NULL,"Names.Month",
      N_("Text prefixed to the turn number (i.e. the month)"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,&Names.Year,NULL,"Names.Year",
+   { NULL,NULL,NULL,&Names.Year,NULL,"Names.Year",
      N_("Text appended to the turn number (i.e. the year)"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&Prices.Spy,NULL,NULL,"Prices.Spy",
+   { NULL,NULL,&Prices.Spy,NULL,NULL,"Prices.Spy",
      N_("Cost for a bitch to spy on the enemy"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&Prices.Tipoff,NULL,NULL,"Prices.Tipoff",
+   { NULL,NULL,&Prices.Tipoff,NULL,NULL,"Prices.Tipoff",
      N_("Cost for a bitch to tipoff the cops to an enemy"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&Bitch.MinPrice,NULL,NULL,"Bitch.MinPrice",
+   { NULL,NULL,&Bitch.MinPrice,NULL,NULL,"Bitch.MinPrice",
      N_("Minimum price to hire a bitch"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,&Bitch.MaxPrice,NULL,NULL,"Bitch.MaxPrice",
+   { NULL,NULL,&Bitch.MaxPrice,NULL,NULL,"Bitch.MaxPrice",
      N_("Maximum price to hire a bitch"),
      NULL,NULL,0,"",NULL,NULL },
-   { NULL,NULL,NULL,&SubwaySaying,"SubwaySaying",
+   { NULL,NULL,NULL,NULL,&SubwaySaying,"SubwaySaying",
      N_("List of things which you overhear on the subway"),
      NULL,NULL,0,"",&NumSubway,ResizeSubway },
-   { &NumSubway,NULL,NULL,NULL,"NumSubwaySaying",
+   { &NumSubway,NULL,NULL,NULL,NULL,"NumSubwaySaying",
      N_("Number of subway sayings"),
      NULL,NULL,0,"",NULL,ResizeSubway },
-   { NULL,NULL,NULL,&Playing,"Playing",
+   { NULL,NULL,NULL,NULL,&Playing,"Playing",
      N_("List of songs which you can hear playing"),
      NULL,NULL,0,"",&NumPlaying,ResizePlaying },
-   { &NumPlaying,NULL,NULL,NULL,"NumPlaying",
+   { &NumPlaying,NULL,NULL,NULL,NULL,"NumPlaying",
      N_("Number of playing songs"),
      NULL,NULL,0,"",NULL,ResizePlaying },
-   { NULL,NULL,NULL,&StoppedTo,"StoppedTo",
+   { NULL,NULL,NULL,NULL,&StoppedTo,"StoppedTo",
      N_("List of things which you can stop to do"),
      NULL,NULL,0,"",&NumStoppedTo,ResizeStoppedTo },
-   { &NumStoppedTo,NULL,NULL,NULL,"NumStoppedTo",
+   { &NumStoppedTo,NULL,NULL,NULL,NULL,"NumStoppedTo",
      N_("Number of things which you can stop to do"),
      NULL,NULL,0,"",NULL,ResizeStoppedTo }
 };
-
-char *Discover[NUMDISCOVER] = {
-/* Things that can "happen" to your spies - look for strings containing
-   "The spy %s!" to see how these strings are used. */
-   N_("escaped"), N_("defected"), N_("was shot")
-};
+const int NUMGLOB = sizeof(Globals)/sizeof(Globals[0]);
 
 char **Playing=NULL;
-char *DefaultPlaying[NUMPLAYING] = {
+char *DefaultPlaying[] = {
 /* Default list of songs that you can hear playing (N.B. this can be
    overridden in the configuration file with the "Playing" variable) - 
    look for "You hear someone playing %s" to see how these are used. */
@@ -464,7 +460,7 @@ char *DefaultPlaying[NUMPLAYING] = {
 };
 
 char **StoppedTo=NULL;
-char *DefaultStoppedTo[NUMSTOPPEDTO] = {
+char *DefaultStoppedTo[] = {
 /* Default list of things which you can "stop to do" (random events that
    cost you a little money). These can be overridden with the "StoppedTo"
    variable in the configuration file. See the later string
@@ -476,7 +472,7 @@ char *DefaultStoppedTo[NUMSTOPPEDTO] = {
    N_("smoke a cigarette")
 };
 
-struct COP DefaultCop[NUMCOP] = {
+struct COP DefaultCop[] = {
 /* Name of the first police officer to attack you */
    { N_("Officer Hardass"),
 /* Name of a single deputy of the first police officer */
@@ -488,7 +484,7 @@ struct COP DefaultCop[NUMCOP] = {
    { N_("Agent Smith"),N_("cop"),N_("cops"),50,6,20,20,6,18,1,3,2 }
 };
 
-struct GUN DefaultGun[NUMGUN] = {
+struct GUN DefaultGun[] = {
 /* The names of the default guns */
    { N_("Baretta"),3000,4,5 },
    { N_(".38 Special"),3500,4,9 },
@@ -496,7 +492,30 @@ struct GUN DefaultGun[NUMGUN] = {
    { N_("Saturday Night Special"),3100,4,7 }
 };
 
-struct LOCATION DefaultLocation[NUMLOCATION] = {
+struct DRUG DefaultDrug[] = {
+/* The names of the default drugs, and the messages displayed when they are
+   specially cheap or expensive */
+   { N_("Acid"),1000,4400,TRUE,FALSE,
+     N_("The market is flooded with cheap home-made acid!") },
+   { N_("Cocaine"),15000,29000,FALSE,TRUE,"" },
+   { N_("Hashish"),480,1280,TRUE,FALSE,
+     N_("The Marrakesh Express has arrived!") },
+   { N_("Heroin"),5500,13000,FALSE,TRUE,"" },
+   { N_("Ludes"),11,60,TRUE,FALSE,
+     N_("Rival drug dealers raided a pharmacy and are selling cheap ludes!") },
+   { N_("MDA"),1500,4400,FALSE,FALSE,"" },
+   { N_("Opium"),540,1250,FALSE,TRUE,"" },
+   { N_("PCP"),1000,2500,FALSE,FALSE,"" },
+   { N_("Peyote"),220,700,FALSE,FALSE,"" },
+   { N_("Shrooms"),630,1300,FALSE,FALSE,"" },
+   { N_("Speed"),90,250,FALSE,TRUE,"" },
+   { N_("Weed"),315,890,TRUE,FALSE,
+     N_("Columbian freighter dusted the Coast Guard! "
+        "Weed prices have bottomed out!") }
+};
+#define NUMDRUG (sizeof(DefaultDrug)/sizeof(DefaultDrug[0]))
+
+struct LOCATION DefaultLocation[] = {
 /* The names of the default locations */
    { N_("Bronx"),10,NUMDRUG/2+1,NUMDRUG },
    { N_("Ghetto"),5,NUMDRUG/2+2,NUMDRUG },
@@ -508,26 +527,6 @@ struct LOCATION DefaultLocation[NUMLOCATION] = {
    { N_("Staten Island"),20,NUMDRUG/2,NUMDRUG }
 };
 
-struct DRUG DefaultDrug[NUMDRUG] = {
-/* The names of the default drugs, and the messages displayed when they are
-   specially cheap or expensive */
-   { N_("Acid"),1000,4400,1,0,
-     N_("The market is flooded with cheap home-made acid!") },
-   { N_("Cocaine"),15000,29000,0,1,"" },
-   { N_("Hashish"),480,1280,1,0,N_("The Marrakesh Express has arrived!") },
-   { N_("Heroin"),5500,13000,0,1,"" },
-   { N_("Ludes"),11,60,1,0,
-     N_("Rival drug dealers raided a pharmacy and are selling cheap ludes!") },
-   { N_("MDA"),1500,4400,0,0,"" },
-   { N_("Opium"),540,1250,0,1,"" },
-   { N_("PCP"),1000,2500,0,0,"" },
-   { N_("Peyote"),220,700,0,0,"" },
-   { N_("Shrooms"),630,1300,0,0,"" },
-   { N_("Speed"),90,250,0,1,"" },
-   { N_("Weed"),315,890,1,0,N_("Columbian freighter dusted the Coast Guard! \
-Weed prices have bottomed out!") }
-};
-
 struct DRUGS Drugs = { NULL,NULL,0,0 };
 struct DRUGS DefaultDrugs = {
 /* Messages displayed for drug busts, etc. */
@@ -536,7 +535,7 @@ struct DRUGS DefaultDrugs = {
    4,4 };
 
 char **SubwaySaying=NULL;
-char *DefaultSubwaySaying[NUMSUBWAY] = {
+char *DefaultSubwaySaying[] = {
 /* Default list of things which the "lady on the subway" can tell you (N.B.
    can be overridden with the "SubwaySaying" config. file variable). Look
    for "the lady next to you" to see how these strings are used. */
@@ -576,6 +575,11 @@ char *DefaultSubwaySaying[NUMSUBWAY] = {
 int brandom(int bot,int top) {
 /* Returns a random integer not less than bot and less than top */
    return (int)((float)(top-bot)*rand()/(RAND_MAX+1.0))+bot;
+}
+
+price_t prandom(price_t bot,price_t top) {
+/* Returns a random price not less than bot and less than top */
+   return (price_t)((float)(top-bot)*rand()/(RAND_MAX+1.0))+bot;
 }
 
 int CountPlayers(GSList *First) {
@@ -1300,7 +1304,7 @@ void ReadConfigFile(char *FileName) {
 gboolean ParseNextConfig(GScanner *scanner) {
    GTokenType token;
    gchar *ID1,*ID2;
-   gulong index=0;
+   gulong ind=0;
    int GlobalIndex;
    gboolean IndexGiven=FALSE;
 
@@ -1321,7 +1325,7 @@ gboolean ParseNextConfig(GScanner *scanner) {
                                NULL,NULL,FALSE);
          return FALSE;
       }
-      index=scanner->value.v_int;
+      ind=scanner->value.v_int;
       IndexGiven=TRUE;
       token=g_scanner_get_next_token(scanner);
       if (token!=G_TOKEN_RIGHT_BRACE) {
@@ -1345,7 +1349,7 @@ gboolean ParseNextConfig(GScanner *scanner) {
    g_free(ID1); g_free(ID2);
    if (GlobalIndex==-1) return FALSE;
    if (token==G_TOKEN_EOF) {
-      PrintConfigValue(GlobalIndex,index,IndexGiven,scanner);
+      PrintConfigValue(GlobalIndex,(int)ind,IndexGiven,scanner);
       return TRUE;
    } else if (token==G_TOKEN_EQUAL_SIGN) {
       if (CountPlayers(FirstServer)>0) {
@@ -1354,7 +1358,7 @@ _("Configuration can only be changed interactively when no\n"
 "players are logged on. Wait for all players to log off, or remove\n"
 "them with the push or kill commands, and try again."));
       } else {
-         SetConfigValue(GlobalIndex,index,IndexGiven,scanner);
+         SetConfigValue(GlobalIndex,(int)ind,IndexGiven,scanner);
       }
       return TRUE;
    } else {
@@ -1365,8 +1369,9 @@ _("Configuration can only be changed interactively when no\n"
 
 int GetGlobalIndex(gchar *ID1,gchar *ID2) {
    int i;
+   const int NumGlob=sizeof(Globals)/sizeof(Globals[0]);
    if (!ID1) return -1;
-   for (i=0;i<NUMGLOB;i++) {
+   for (i=0;i<NumGlob;i++) {
       if (strcasecmp(ID1,Globals[i].Name)==0 && !Globals[i].NameStruct[0]) {
 /* Just a bog-standard ID1=value */
          return i;
@@ -1388,6 +1393,8 @@ void *GetGlobalPointer(int GlobalIndex,int StructIndex) {
       ValPt=(void *)Globals[GlobalIndex].IntVal;
    } else if (Globals[GlobalIndex].PriceVal) {
       ValPt=(void *)Globals[GlobalIndex].PriceVal;
+   } else if (Globals[GlobalIndex].BoolVal) {
+      ValPt=(void *)Globals[GlobalIndex].BoolVal;
    } else if (Globals[GlobalIndex].StringVal) {
       ValPt=(void *)Globals[GlobalIndex].StringVal;
    }
@@ -1395,8 +1402,8 @@ void *GetGlobalPointer(int GlobalIndex,int StructIndex) {
 
    if (Globals[GlobalIndex].StructStaticPt &&
        Globals[GlobalIndex].StructListPt) {
-      return ValPt-Globals[GlobalIndex].StructStaticPt +
-             *(Globals[GlobalIndex].StructListPt) +
+      return (char *)ValPt-(char *)Globals[GlobalIndex].StructStaticPt +
+             (char *)*(Globals[GlobalIndex].StructListPt) +
              (StructIndex-1)*Globals[GlobalIndex].LenStruct;
    } else {
       return ValPt;
@@ -1435,6 +1442,11 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
 /* Display of a numeric config. file variable - e.g. "NumDrug is 6" */
       g_print(_("%s is %d\n"),GlobalName,
               *((int *)GetGlobalPointer(GlobalIndex,StructIndex)));
+   } else if (Globals[GlobalIndex].BoolVal) {
+/* Display of a boolean config. file variable - e.g. "DrugValue is TRUE" */
+      g_print(_("%s is %s\n"),GlobalName,
+              *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex)) ?
+              _("TRUE") : _("FALSE"));
    } else if (Globals[GlobalIndex].PriceVal) {
 /* Display of a price config. file variable - e.g. "Bitch.MinPrice is $200" */
       dpg_print(_("%s is %P\n"),GlobalName,
@@ -1501,6 +1513,28 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
          g_scanner_unexp_token(scanner,G_TOKEN_INT,NULL,NULL,
                                NULL,NULL,FALSE); return;
       }
+   } else if (Globals[GlobalIndex].BoolVal) {
+      scanner->config->identifier_2_string=TRUE;
+      scanner->config->cset_identifier_first=
+          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+      scanner->config->cset_identifier_nth=
+          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+      token=g_scanner_get_next_token(scanner);
+      if (token==G_TOKEN_INT || token==G_TOKEN_STRING) {
+         *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=
+            (token==G_TOKEN_INT && scanner->value.v_int>0) ||
+            (token==G_TOKEN_STRING && 
+             (strcasecmp(scanner->value.v_string,_("TRUE"))==0 ||
+              strcasecmp(scanner->value.v_string,_("YES"))==0 ||
+              strcasecmp(scanner->value.v_string,_("ON"))==0));
+      } else {
+         g_scanner_unexp_token(scanner,G_TOKEN_INT,NULL,NULL,
+                               NULL,NULL,FALSE); return;
+      }
+      scanner->config->identifier_2_string=FALSE;
+      scanner->config->cset_identifier_first=G_CSET_a_2_z "_" G_CSET_A_2_Z;
+      scanner->config->cset_identifier_nth=
+              G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
    } else if (Globals[GlobalIndex].PriceVal) {
       token=g_scanner_get_next_token(scanner);
       if (token==G_TOKEN_INT) {
@@ -1585,13 +1619,14 @@ void SetupParameters() {
    int i;
 
 /* Initialise variables */
-   srand(time(NULL));
+   srand((unsigned)time(NULL));
    PidFile=NULL;
    Location=NULL;
    Gun=NULL;
    Drug=NULL;
    SubwaySaying=Playing=StoppedTo=NULL;
-   DrugValue=1;
+   DrugValue=TRUE;
+   Sanitized=ConfigVerbose=FALSE;
    NumLocation=NumGun=NumDrug=0;
    FirstClient=FirstServer=NULL;
    Noone.Name=g_strdup("Noone");
@@ -1612,23 +1647,23 @@ void SetupParameters() {
    CopyMetaServer(&MetaServer,&DefaultMetaServer);
    CopyDrugs(&Drugs,&DefaultDrugs);
 
-   ResizeLocations(NUMLOCATION);
+   ResizeLocations(sizeof(DefaultLocation)/sizeof(DefaultLocation[0]));
    for (i=0;i<NumLocation;i++) CopyLocation(&Location[i],&DefaultLocation[i]);
-   ResizeCops(NUMCOP);
+   ResizeCops(sizeof(DefaultCop)/sizeof(DefaultCop[0]));
    for (i=0;i<NumCop;i++) CopyCop(&Cop[i],&DefaultCop[i]);
-   ResizeGuns(NUMGUN);
+   ResizeGuns(sizeof(DefaultGun)/sizeof(DefaultGun[0]));
    for (i=0;i<NumGun;i++) CopyGun(&Gun[i],&DefaultGun[i]);
-   ResizeDrugs(NUMDRUG);
+   ResizeDrugs(sizeof(DefaultDrug)/sizeof(DefaultDrug[0]));
    for (i=0;i<NumDrug;i++) CopyDrug(&Drug[i],&DefaultDrug[i]);
-   ResizeSubway(NUMSUBWAY);
+   ResizeSubway(sizeof(DefaultSubwaySaying)/sizeof(DefaultSubwaySaying[0]));
    for (i=0;i<NumSubway;i++) {
       AssignName(&SubwaySaying[i],_(DefaultSubwaySaying[i]));
    }
-   ResizePlaying(NUMPLAYING);
+   ResizePlaying(sizeof(DefaultPlaying)/sizeof(DefaultPlaying[0]));
    for (i=0;i<NumPlaying;i++) {
       AssignName(&Playing[i],_(DefaultPlaying[i]));
    }
-   ResizeStoppedTo(NUMSTOPPEDTO);
+   ResizeStoppedTo(sizeof(DefaultStoppedTo)/sizeof(DefaultStoppedTo[0]));
    for (i=0;i<NumStoppedTo;i++) {
       AssignName(&StoppedTo[i],_(DefaultStoppedTo[i]));
    }

@@ -298,18 +298,21 @@ void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
 #endif /* NETWORKING */
 
 void HandleClientMessage(char *pt,Player *Play) {
-   char *Data,Code,AICode,DisplayMode;
+   char *Data;
+   DispMode DisplayMode;
+   AICode AI;
+   MsgCode Code;
    Player *From,*tmp;
    gchar *text;
    gboolean Handled;
    GtkWidget *MenuItem;
    GSList *list;
 
-   if (ProcessMessage(pt,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
+   if (ProcessMessage(pt,Play,&From,&AI,&Code,&Data,FirstClient)==-1) {
       return;
    }
 
-   Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
+   Handled=HandleGenericClientMessage(From,AI,Code,Play,Data,&DisplayMode);
    switch(Code) {
       case C_STARTHISCORE:
          PrepareHighScoreDialog(); break;
@@ -414,6 +417,12 @@ void HandleClientMessage(char *pt,Player *Play) {
          gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
          if (IsShowingInventory) {
             UpdateInventory(&ClientData.InvenDrug,Play->Drugs,NumDrug,TRUE);
+         }
+         break;
+      default:
+         if (!Handled) {
+            g_print("Unknown network message received: %s^%c^%s^%s",
+                    GetPlayerName(From),Code,GetPlayerName(Play),Data);
          }
          break;
    }
@@ -827,7 +836,8 @@ void DisplayFightMessage(char *Data) {
    GtkAccelGroup *accel_group;
    GtkWidget *Deal,*Fight,*Stand,*Run,*Text;
    char cr[] = "\n";
-   gchar *AttackName,*DefendName,*BitchName,FightPoint,*Message;
+   gchar *AttackName,*DefendName,*BitchName,*Message;
+   FightPoint fp;
    int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
    gboolean CanRunHere,Loot,CanFire;
 
@@ -856,11 +866,11 @@ void DisplayFightMessage(char *Data) {
    if (HaveAbility(Play,A_NEWFIGHT)) {
       ReceiveFightMessage(Data,&AttackName,&DefendName,&DefendHealth,
                           &DefendBitches,&BitchName,&BitchesKilled,&ArmPercent,
-                          &FightPoint,&CanRunHere,&Loot,&CanFire,&Message);
-      if (FightPoint==F_HIT || FightPoint==F_ARRIVED || FightPoint==F_MISS) {
+                          &fp,&CanRunHere,&Loot,&CanFire,&Message);
+      if (fp==F_HIT || fp==F_ARRIVED || fp==F_MISS) {
          UpdateCombatant(DefendName,DefendBitches,BitchName,DefendHealth);
       }
-      if (FightPoint==F_LASTLEAVE) {
+      if (fp==F_LASTLEAVE) {
          Play->Flags&= ~FIGHTING;
       } else {
          Play->Flags|=FIGHTING;
@@ -870,7 +880,7 @@ void DisplayFightMessage(char *Data) {
       SetJetButtonTitle(accel_group);
    } else {
       Message=Data;
-      if (Play->Flags&FIGHTING) FightPoint=F_MSG; else FightPoint=F_LASTLEAVE;
+      if (Play->Flags&FIGHTING) fp=F_MSG; else fp=F_LASTLEAVE;
       CanFire = (Play->Flags&CANSHOOT);
       CanRunHere=FALSE;
    }
@@ -885,13 +895,13 @@ void DisplayFightMessage(char *Data) {
       gtk_editable_insert_text(GTK_EDITABLE(Text),cr,strlen(cr),&EditPos);
    }
 
-   if (!CanRunHere || FightPoint==F_LASTLEAVE)
+   if (!CanRunHere || fp==F_LASTLEAVE)
       gtk_widget_show(Deal); else gtk_widget_hide(Deal);
    if (CanFire && TotalGunsCarried(Play)>0)
       gtk_widget_show(Fight); else gtk_widget_hide(Fight);
    if (CanFire && TotalGunsCarried(Play)==0)
       gtk_widget_show(Stand); else gtk_widget_hide(Stand);
-   if (FightPoint!=F_LASTLEAVE)
+   if (fp!=F_LASTLEAVE)
       gtk_widget_show(Run); else gtk_widget_hide(Run);
 }
 
@@ -1567,8 +1577,8 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
    int index1,index2;
    price_t pricediff;
 
-   index1=GPOINTER_TO_INT(((GtkCListRow *)ptr1)->data);
-   index2=GPOINTER_TO_INT(((GtkCListRow *)ptr2)->data);
+   index1=GPOINTER_TO_INT(((const GtkCListRow *)ptr1)->data);
+   index2=GPOINTER_TO_INT(((const GtkCListRow *)ptr2)->data);
    if (index1<0 || index1>=NumDrug || index2<0 || index2>=NumDrug) return 0;
 
    switch(DrugSortMethod) {
@@ -1695,7 +1705,7 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
 #ifdef CYGWIN
 char GtkLoop(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
 #else
-char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
+char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
 #endif
    GtkWidget *window,*vbox,*vbox2,*hbox,*frame,*table,*menubar,*text,
              *vpaned,*button,*clist;
@@ -3038,7 +3048,7 @@ void DisplaySpyReports(Player *Play) {
 #include <glib.h>
 #include "dopewars.h" /* We need this for the definition of '_' */
 
-char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
+char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    if (!ReturnOnFail) {
 /* Error message displayed if the user tries to run the graphical client
    when none is compiled into the dopewars binary. */

@@ -55,6 +55,18 @@
 #define SD_RECV 0
 #endif
 
+static const price_t MINTRENCHPRICE=200,MAXTRENCHPRICE=300;
+
+#define ESCAPE      0
+#define DEFECT      1
+#define SHOT        2
+#define NUMDISCOVER 3
+char *Discover[NUMDISCOVER] = {
+/* Things that can "happen" to your spies - look for strings containing
+   "The spy %s!" to see how these strings are used. */
+   N_("escaped"), N_("defected"), N_("was shot")
+};
+
 /* If we haven't talked to the metaserver for 3 hours, then remind it that */
 /* we still exist, so we don't get wiped from the list of active servers   */
 #define METAUPDATETIME  (10800)
@@ -108,8 +120,14 @@ static char HelpText[] = {
     "\nValid variables are listed below:-\n\n")
 };
 
+typedef enum _OfferForce {
+   NOFORCE, FORCECOPS, FORCEBITCH
+} OfferForce;
+
 int SendSingleHighScore(Player *Play,struct HISCORE *Score,
-                        int index,char Bold);
+                        int ind,gboolean Bold);
+static int SendCopOffer(Player *To,OfferForce Force);
+static int OfferObject(Player *To,gboolean ForceBitch);
 
 #ifdef GUI_SERVER
 static void GuiHandleMeta(gpointer data,gint socket,
@@ -226,7 +244,7 @@ void HandleServerPlayer(Player *Play) {
 }
 #endif /* NETWORKING */
 
-void SendPlayerDetails(Player *Play,Player *To,char Code) {
+void SendPlayerDetails(Player *Play,Player *To,MsgCode Code) {
 /* Sends details (name, ID) about player "Play" to player "To", using */
 /* message code "Code"                                                */
    GString *text;
@@ -243,13 +261,15 @@ void HandleServerMessage(gchar *buf,Player *Play) {
 /* sends suitable replies.                                            */
    Player *To,*tmp,*pt;
    GSList *list;
-   char Code,*Data,AICode;
+   char *Data;
+   AICode AI;
+   MsgCode Code;
    gchar *text;
    DopeEntry NewEntry;
    int i;
    price_t money;
 
-   if (ProcessMessage(buf,Play,&To,&AICode,&Code,&Data,FirstServer)==-1) {
+   if (ProcessMessage(buf,Play,&To,&AI,&Code,&Data,FirstServer)==-1) {
       g_warning("Bad message");
       return;
    }
@@ -258,7 +278,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          if (Network) {
             dopelog(3,"%s->%s: %s",GetPlayerName(Play),GetPlayerName(To),Data);
          }
-         SendServerMessage(Play,AICode,Code,To,Data);
+         SendServerMessage(Play,AI,Code,To,Data);
          break;
       case C_NETMESSAGE:
          dopelog(1,"Net:%s\n",Data);
@@ -1130,7 +1150,7 @@ void HighScoreTypeRead(struct HISCORE *HiScore,FILE *fp) {
       read_string(fp,&HiScore[i].Time);
       read_string(fp,&buf);
       HiScore[i].Money=strtoprice(buf); g_free(buf);
-      HiScore[i].Dead=fgetc(fp);
+      HiScore[i].Dead=(fgetc(fp)>0);
    }
 }
 
@@ -1148,7 +1168,7 @@ void HighScoreTypeWrite(struct HISCORE *HiScore,FILE *fp) {
       text=pricetostr(HiScore[i].Money);
       fwrite(text,strlen(text)+1,1,fp);
       g_free(text);
-      fputc(HiScore[i].Dead,fp);
+      fputc(HiScore[i].Dead ? 1 : 0,fp);
    }
 }
 
@@ -1209,7 +1229,7 @@ int HighScoreWrite(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
    return 1;
 }
 
-void SendHighScores(Player *Play,char EndGame,char *Message) {
+void SendHighScores(Player *Play,gboolean EndGame,char *Message) {
 /* Adds "Play" to the high score list if necessary, and then sends the */
 /* scores over the network to "Play"                                   */
 /* If "EndGame" is TRUE, add the current score if it's high enough and */
@@ -1233,7 +1253,7 @@ void SendHighScores(Player *Play,char EndGame,char *Message) {
    if (EndGame) {
       Score.Money=Play->Cash+Play->Bank-Play->Debt;
       Score.Name=g_strdup(GetPlayerName(Play));
-      if (Play->Health==0) Score.Dead=1; else Score.Dead=0;
+      Score.Dead = (Play->Health==0);
       tim=time(NULL);
       timep=gmtime(&tim);
       Score.Time=g_new(char,80); /* Yuck! */
@@ -1267,7 +1287,7 @@ void SendHighScores(Player *Play,char EndGame,char *Message) {
    for (i=0;i<NUMHISCORE;i++) {
       if (SendSingleHighScore(Play,&HiScore[i],j,InList==i)) j++;
    }
-   if (InList==-1 && EndGame) SendSingleHighScore(Play,&Score,j,1);
+   if (InList==-1 && EndGame) SendSingleHighScore(Play,&Score,j,TRUE);
    SendServerMessage(NULL,C_NONE,C_ENDHISCORE,Play,EndGame ? "end" : NULL);
    if (!EndGame) SendDrugsHere(Play,FALSE);
    if (EndGame && !HighScoreWrite(MultiScore,AntiqueScore)) {
@@ -1281,13 +1301,13 @@ void SendHighScores(Player *Play,char EndGame,char *Message) {
 }
 
 int SendSingleHighScore(Player *Play,struct HISCORE *Score,
-                        int index,char Bold) {
-/* Sends a single high score in "Score" with position "index" to player  */
+                        int ind,gboolean Bold) {
+/* Sends a single high score in "Score" with position "ind" to player    */
 /* "Play". If Bold is TRUE, instructs the client to display the score in */
 /* bold text.                                                            */
    gchar *Data,*prstr;
    if (!Score->Time || Score->Time[0]==0) return 0;
-   Data=g_strdup_printf("%d^%c%c%18s  %-14s %-34s %8s%c",index,
+   Data=g_strdup_printf("%d^%c%c%18s  %-14s %-34s %8s%c",ind,
                         Bold ? 'B' : 'N',Bold ? '>' : ' ',
                         prstr=FormatPrice(Score->Money),
                         Score->Time,Score->Name,Score->Dead ? _("(R.I.P.)") :"",
@@ -1426,7 +1446,7 @@ void SendEvent(Player *To) {
             break;
          case E_HIREBITCH:
             if (To->IsAt+1==RoughPubLoc && !WantAntique) {
-               To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice);
+               To->Bitches.Price=prandom(Bitch.MinPrice,Bitch.MaxPrice);
                text=dpg_strdup_printf(
                            _("YN^^Would you like to hire a %tde for %P?"),
                            Names.Bitch,To->Bitches.Price);
@@ -1454,13 +1474,15 @@ void SendEvent(Player *To) {
             }
             SendDrugsHere(To,TRUE);
             break;
+         default:
+            break;
       }
       To->EventNum++;
    } 
    if (To->EventNum >= E_MAX) To->EventNum=E_NONE;
 }
 
-int SendCopOffer(Player *To,char Force) {
+int SendCopOffer(Player *To,OfferForce Force) {
 /* In response to client player "To" being in state E_OFFOBJECT,   */
 /* randomly engages the client in combat with the cops or offers   */
 /* other random events. Returns 0 if the client should then be     */
@@ -1560,7 +1582,7 @@ void AttackPlayer(Player *Play,Player *Attacked) {
 
    Play->Attacking = Attacked;
 
-   SendFightMessage(Attacked,Play,0,F_ARRIVED,FALSE,TRUE,NULL);
+   SendFightMessage(Attacked,Play,0,F_ARRIVED,(price_t)0,TRUE,NULL);
    
    Fire(Play);
 }
@@ -1693,7 +1715,7 @@ void RunFromCombat(Player *Play,int ToLocation) {
       Play->IsAt=BackupAt;
       Play->EventNum=Play->ResyncNum; SendEvent(Play);
    } else {
-      SendFightMessage(Play,NULL,0,F_FAILFLEE,FALSE,TRUE,NULL);
+      SendFightMessage(Play,NULL,0,F_FAILFLEE,(price_t)0,TRUE,NULL);
       AllowNextShooter(Play);
       if (FightTimeout) SetFightTimeout(Play);
       DoReturnFire(Play);
@@ -1794,7 +1816,7 @@ void Fire(Player *Play) {
    int AttackRating,DefendRating;
    int BitchesKilled;
    price_t Loot;
-   gchar FightPoint;
+   FightPoint fp;
    Player *Defend;
 
    if (!Play->FightArray) return;
@@ -1809,16 +1831,16 @@ void Fire(Player *Play) {
       if (TotalGunsCarried(Play)>0) {
          GetFightRatings(Play,Defend,&AttackRating,&DefendRating);
          if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
-            FightPoint=F_HIT;
+            fp=F_HIT;
             for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
                Damage+=brandom(0,Gun[i].Damage);
             }
             Damage=Damage*100/GetArmour(Defend);
             if (Damage==0) Damage=1;
             HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
-         } else FightPoint=F_MISS;
-      } else FightPoint=F_STAND;
-      SendFightMessage(Play,Defend,BitchesKilled,FightPoint,Loot,TRUE,NULL);
+         } else fp=F_MISS;
+      } else fp=F_STAND;
+      SendFightMessage(Play,Defend,BitchesKilled,fp,Loot,TRUE,NULL);
    }
    CheckForKilledPlayers(Play);
 
@@ -1934,7 +1956,7 @@ void WithdrawFromCombat(Player *Play) {
          } else if (CanRunHere(Defend) &&
                     brandom(0,100)>Location[(int)Defend->IsAt].PolicePresence) {
             Defend->EventNum=E_DOCTOR;
-            Defend->DocPrice=brandom(Bitch.MinPrice,Bitch.MaxPrice)*
+            Defend->DocPrice=prandom(Bitch.MinPrice,Bitch.MaxPrice)*
                              Defend->Health/500;
             text=dpg_strdup_printf(
                     _("YN^Do you pay a doctor %P to sew you up?"),
@@ -2049,7 +2071,7 @@ int RandomOffer(Player *To) {
    return 0;
 }
 
-int OfferObject(Player *To,char ForceBitch) {
+int OfferObject(Player *To,gboolean ForceBitch) {
 /* Offers player "To" bitches/trenchcoats or guns. If ForceBitch is  */
 /* TRUE, then a bitch is definitely offered. Returns 0 if the client */
 /* can advance immediately to the next state, 1 otherwise.           */
@@ -2058,11 +2080,11 @@ int OfferObject(Player *To,char ForceBitch) {
 
    if (brandom(0,100)<50 || ForceBitch) {
       if (WantAntique) {
-         To->Bitches.Price=brandom(MINTRENCHPRICE,MAXTRENCHPRICE);
+         To->Bitches.Price=prandom(MINTRENCHPRICE,MAXTRENCHPRICE);
          text=dpg_strdup_printf(_("YN^Would you like to buy a bigger "
                                 "trenchcoat for %P?"),To->Bitches.Price);
       } else {
-         To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice)/10l;
+         To->Bitches.Price=prandom(Bitch.MinPrice,Bitch.MaxPrice)/(price_t)10;
          text=dpg_strdup_printf(
                        _("YN^Hey dude! I'll help carry your %tde for a "
                          "mere %P. Yes or no?"),Names.Drugs,To->Bitches.Price);
@@ -2083,7 +2105,7 @@ int OfferObject(Player *To,char ForceBitch) {
    return 0;
 }
 
-void SendDrugsHere(Player *To,char DisplayBusts) {
+void SendDrugsHere(Player *To,gboolean DisplayBusts) {
 /* Sends details of drug prices to player "To". If "DisplayBusts"   */
 /* is TRUE, also regenerates drug prices and sends details of       */
 /* special events such as drug busts                                */
@@ -2135,13 +2157,13 @@ void GenerateDrugsHere(Player *To,gchar *Deal) {
       if (Deal[i]!=0) continue;
       if (Drug[i].Expensive && (!Drug[i].Cheap || brandom(0,100)<50)) {
          Deal[i]=brandom(1,3);
-         To->Drugs[i].Price=brandom(Drug[i].MinPrice,Drug[i].MaxPrice)
+         To->Drugs[i].Price=prandom(Drug[i].MinPrice,Drug[i].MaxPrice)
                             *Drugs.ExpensiveMultiply;
          NumDrugs++;
          NumEvents--;
       } else if (Drug[i].Cheap) {
          Deal[i]=1;
-         To->Drugs[i].Price=brandom(Drug[i].MinPrice,Drug[i].MaxPrice)
+         To->Drugs[i].Price=prandom(Drug[i].MinPrice,Drug[i].MaxPrice)
                             /Drugs.CheapDivide;
          NumDrugs++;
          NumEvents--;
@@ -2155,7 +2177,7 @@ void GenerateDrugsHere(Player *To,gchar *Deal) {
    while (NumDrugs>0) {
       i=brandom(0,NumDrug);
       if (To->Drugs[i].Price==0) {
-         To->Drugs[i].Price=brandom(Drug[i].MinPrice,Drug[i].MaxPrice);
+         To->Drugs[i].Price=prandom(Drug[i].MinPrice,Drug[i].MaxPrice);
          NumDrugs--;
       }
    }
@@ -2238,6 +2260,8 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          }
          From->EventNum=From->ResyncNum; SendEvent(From);
          break;
+      default:
+         break;
    } else if (From->EventNum==E_ARRIVE) {
       if ((answer[0]=='A' || answer[0]=='T') && 
           g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
@@ -2287,6 +2311,8 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             }   
          }
          From->EventNum++; SendEvent(From);
+         break;
+      default:
          break;
    }
 }

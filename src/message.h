@@ -29,95 +29,52 @@
 #include <glib.h>
 #include "dopewars.h"
 
-#define C_PRINTMESSAGE 'A'
-#define C_LIST         'B'
-#define C_ENDLIST      'C'
-#define C_NEWNAME      'D' 
-#define C_MSG          'E'
-#define C_MSGTO        'F'
-#define C_JOIN         'G'
-#define C_LEAVE        'H'
-#define C_SUBWAYFLASH  'I'
-#define C_UPDATE       'J'
-#define C_DRUGHERE     'K'
-#define C_GUNSHOP      'L'
-#define C_LOANSHARK    'M'
-#define C_BANK         'N'
-#define C_QUESTION     'O'
-#define C_HISCORE      'Q'
-#define C_STARTHISCORE 'R' 
-#define C_ENDHISCORE   'S'
-#define C_BUYOBJECT    'T'
-#define C_DONE         'U'
-#define C_REQUESTJET   'V'
-#define C_PAYLOAN      'W'
-#define C_ANSWER       'X'
-#define C_DEPOSIT      'Y'
-#define C_PUSH         'Z'
-#define C_QUIT         'a'
-#define C_RENAME       'b'
-#define C_NAME         'c'
-#define C_SACKBITCH    'd'
-#define C_TIPOFF       'e'
-#define C_SPYON        'f'
-#define C_WANTQUIT     'g'
-#define C_CONTACTSPY   'h'
-#define C_KILL         'i'
-#define C_REQUESTSCORE 'j'
-#define C_INIT         'k'
-#define C_DATA         'l'
-#define C_FIGHTPRINT   'm'
-#define C_FIGHTACT     'n'
-#define C_TRADE        'o'
-#define C_CHANGEDISP   'p'
-#define C_NETMESSAGE   'q'
-#define C_ABILITIES    'r'
+typedef enum {
+   C_PRINTMESSAGE = 'A',
+   C_LIST, C_ENDLIST, C_NEWNAME, C_MSG, C_MSGTO, C_JOIN, C_LEAVE,
+   C_SUBWAYFLASH, C_UPDATE, C_DRUGHERE, C_GUNSHOP, C_LOANSHARK,
+   C_BANK, C_QUESTION, C_HISCORE, C_STARTHISCORE, C_ENDHISCORE,
+   C_BUYOBJECT, C_DONE, C_REQUESTJET, C_PAYLOAN, C_ANSWER, C_DEPOSIT, C_PUSH,
+   C_QUIT = 'a',
+   C_RENAME, C_NAME, C_SACKBITCH, C_TIPOFF, C_SPYON, C_WANTQUIT,
+   C_CONTACTSPY, C_KILL, C_REQUESTSCORE, C_INIT, C_DATA,
+   C_FIGHTPRINT, C_FIGHTACT, C_TRADE, C_CHANGEDISP,
+   C_NETMESSAGE, C_ABILITIES
+} MsgCode;
 
-#define C_NONE        'A'
-#define C_ASKLOAN     'B'
-#define C_COPSMESG    'C'
-#define C_ASKBITCH    'D'
-#define C_ASKGUN      'E'
-#define C_ASKGUNSHOP  'F'
-#define C_ASKPUB      'G'
-#define C_ASKBANK     'H'
-#define C_ASKRUN      'I'
-#define C_ASKRUNFIGHT 'J'
-#define C_ASKSEW      'K'
-#define C_MEETPLAYER  'L'
-#define C_FIGHT       'M'
-#define C_FIGHTDONE   'N'
+typedef enum {
+   C_NONE = 'A',
+   C_ASKLOAN, C_COPSMESG, C_ASKBITCH, C_ASKGUN, C_ASKGUNSHOP,
+   C_ASKPUB, C_ASKBANK, C_ASKRUN, C_ASKRUNFIGHT, C_ASKSEW,
+   C_MEETPLAYER, C_FIGHT, C_FIGHTDONE
+} AICode;
 
 #define DT_LOCATION    'A'
 #define DT_DRUG        'B'
 #define DT_GUN         'C'
 #define DT_PRICES      'D'
 
-#define F_ARRIVED      'A'
-#define F_STAND        'S'
-#define F_HIT          'H'
-#define F_MISS         'M'
-#define F_RELOAD       'R'
-#define F_LEAVE        'L'
-#define F_LASTLEAVE    'D'
-#define F_FAILFLEE     'F'
-#define F_MSG          'G'
+typedef enum {
+   F_ARRIVED = 'A', F_STAND = 'S', F_HIT = 'H',
+   F_MISS = 'M', F_RELOAD = 'R', F_LEAVE = 'L',
+   F_LASTLEAVE = 'D', F_FAILFLEE = 'F', F_MSG = 'G'
+} FightPoint;
 
-void SendClientMessage(Player *From,char AICode,char Code,
+void SendClientMessage(Player *From,AICode AI,MsgCode Code,
                        Player *To,char *Data);
-void SendNullClientMessage(Player *From,char AICode,char Code,
+void SendNullClientMessage(Player *From,AICode AI,MsgCode Code,
                            Player *To,char *Data);
-void DoSendClientMessage(Player *From,char AICode,char Code,
+void DoSendClientMessage(Player *From,AICode AI,MsgCode Code,
                          Player *To,char *Data,Player *BufOwn);
-void SendServerMessage(Player *From,char AICode,char Code,
+void SendServerMessage(Player *From,AICode AI,MsgCode Code,
                        Player *To,char *Data);
-void SendPrintMessage(Player *From,char AICode,Player *To,char *Data);
-void SendQuestion(Player *From,char AICode,Player *To,char *Data);
+void SendPrintMessage(Player *From,AICode AI,Player *To,char *Data);
+void SendQuestion(Player *From,AICode AI,Player *To,char *Data);
 
 #if NETWORKING
 /* Keeps track of the progress of an HTTP connection */
-typedef enum _HttpStatus {
-   HS_CONNECTING,HS_READHEADERS,HS_READSEPARATOR,HS_READBODY
+typedef enum {
+   HS_CONNECTING, HS_READHEADERS, HS_READSEPARATOR, HS_READBODY
 } HttpStatus;
 
 /* A structure used to keep track of an HTTP connection */
@@ -185,9 +142,9 @@ extern void (*SocketWriteTestPt) (Player *,gboolean);
 
 void AddURLEnc(GString *str,gchar *unenc);
 void chomp(char *str);
-void BroadcastToClients(char AICode,char Code,char *Data,Player *From,
+void BroadcastToClients(AICode AI,MsgCode Code,char *Data,Player *From,
                         Player *Except);
-void SendInventory(Player *From,char AICode,char Code,Player *To,
+void SendInventory(Player *From,AICode AI,MsgCode Code,Player *To,
                    Inventory *Guns,Inventory *Drugs);
 void ReceiveInventory(char *Data,Inventory *Guns,Inventory *Drugs);
 void SendPlayerData(Player *To);
@@ -205,11 +162,11 @@ char *SetupNetwork(gboolean NonBlocking);
 char *FinishSetupNetwork(void);
 void ShutdownNetwork(void);
 void SwitchToSinglePlayer(Player *Play);
-int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
-                   char *Code,char **Data,GSList *First);
+int ProcessMessage(char *Msg,Player *Play,Player **Other,AICode *AI,
+                   MsgCode *Code,char **Data,GSList *First);
 void ReceiveDrugsHere(char *text,Player *To);
-gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
-                               Player *To,char *Data,char *DisplayMode);
+gboolean HandleGenericClientMessage(Player *From,AICode AI,MsgCode Code,
+                               Player *To,char *Data,DispMode *DisplayMode);
 #ifdef NETWORKING
 char *OpenMetaServerConnection(int *HttpSock);
 void CloseMetaServerConnection(int HttpSock);
@@ -230,12 +187,12 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
                          int *DefendHealth,int *DefendBitches,
                          gchar **BitchName,
                          int *BitchesKilled,int *ArmPercent,
-                         gchar *FightPoint,gboolean *CanRunHere,
+                         FightPoint *fp,gboolean *CanRunHere,
                          gboolean *Loot,gboolean *CanFire,gchar **Message);
 void SendFightMessage(Player *Attacker,Player *Defender,
-                      int BitchesKilled,gchar FightPoint,
+                      int BitchesKilled,FightPoint fp,
                       price_t Loot,gboolean Broadcast,gchar *Msg);
 void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         Player *Defender,int BitchesKilled,int ArmPercent,
-                        gchar FightPoint,price_t Loot);
+                        FightPoint fp,price_t Loot);
 #endif

@@ -35,6 +35,16 @@
 #include "AIPlayer.h"
 
 #if NETWORKING
+static int HandleAIMessage(char *Message,Player *AIPlay);
+static void PrintAIMessage(char *Text);
+static void AIDealDrugs(Player *AIPlay);
+static void AIJet(Player *AIPlay);
+static void AIGunShop(Player *AIPlay);
+static void AIPayLoan(Player *AIPlay);
+static void AISendRandomMessage(Player *AIPlay);
+static void AISetName(Player *AIPlay);
+static void AIHandleQuestion(char *Data,AICode AI,Player *AIPlay,Player *From);
+
 #define NUMNAMES      8
 #define MINSAFECASH   300
 #define MINSAFEHEALTH 140
@@ -139,19 +149,20 @@ static void HandleCombat(Player *AIPlay,gchar *Msg) {
 /* Decodes the fighting-related message "Msg", and then decides whether */
 /* to stand or run...                                                   */
    gchar *text;
-   gchar *AttackName,*DefendName,*BitchName,FightPoint;
+   gchar *AttackName,*DefendName,*BitchName;
+   FightPoint fp;
    int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
    gboolean CanRunHere,Loot,CanFire;
 
    if (HaveAbility(AIPlay,A_NEWFIGHT)) {
       ReceiveFightMessage(Msg,&AttackName,&DefendName,&DefendHealth,
                           &DefendBitches,&BitchName,&BitchesKilled,
-                          &ArmPercent,&FightPoint,&CanRunHere,&Loot,
+                          &ArmPercent,&fp,&CanRunHere,&Loot,
                           &CanFire,&text);
    } else {
       text=Msg;
-      if (AIPlay->Flags&FIGHTING) FightPoint=F_MSG;
-      else FightPoint=F_LASTLEAVE;
+      if (AIPlay->Flags&FIGHTING) fp=F_MSG;
+      else fp=F_LASTLEAVE;
       CanFire = (AIPlay->Flags&CANSHOOT);
       CanRunHere=FALSE;
    }
@@ -164,7 +175,7 @@ static void HandleCombat(Player *AIPlay,gchar *Msg) {
          AIDealDrugs(AIPlay);
          AIJet(AIPlay);
       }
-   } else if (FightPoint==F_LASTLEAVE) {
+   } else if (fp==F_LASTLEAVE) {
       AIJet(AIPlay);
    } else {
       SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"F");
@@ -175,16 +186,18 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
 /* Performs appropriate processing on an incoming network message */
 /* "Message" for AI player "AIPlay". Returns 1 if the game should */
 /* be ended as a result, 0 otherwise.                             */
-   char *Data,Code,AICode,WasFighting;
+   char *Data,WasFighting;
+   AICode AI;
+   MsgCode Code;
    Player *From,*tmp;
    GSList *list;
    struct timeval tv;
    gboolean Handled;
-   if (ProcessMessage(Message,AIPlay,&From,&AICode,&Code,
+   if (ProcessMessage(Message,AIPlay,&From,&AI,&Code,
                       &Data,FirstClient)==-1) {
       g_warning("Bad network message. Oops."); return 0;
    }
-   Handled=HandleGenericClientMessage(From,AICode,Code,AIPlay,Data,NULL);
+   Handled=HandleGenericClientMessage(From,AI,Code,AIPlay,Data,NULL);
    switch(Code) {
       case C_ENDLIST:
          g_print(_("Players in this game:-\n"));
@@ -252,7 +265,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          AIPayLoan(AIPlay);
          break;
       case C_QUESTION:
-         AIHandleQuestion(Data,AICode,AIPlay,From);
+         AIHandleQuestion(Data,AI,AIPlay,From);
          break;
       case C_HISCORE: case C_STARTHISCORE:
          break;
@@ -410,16 +423,16 @@ void AISendAnswer(Player *From,Player *To,char *answer) {
    SendClientMessage(From,C_NONE,C_ANSWER,To,answer); puts(answer);
 }
 
-void AIHandleQuestion(char *Data,char AICode,Player *AIPlay,Player *From) {
+void AIHandleQuestion(char *Data,AICode AI,Player *AIPlay,Player *From) {
 /* Works out a sensible response to the question coded in "Data" and with */
-/* computer-readable code "AICode", claiming to be from "From" and for AI */
+/* computer-readable code "AI", claiming to be from "From" and for AI     */
 /* player "AIPlay", and sends it                                          */
    char *Prompt,*allowed;
    if (From==&Noone) From=NULL;
    Prompt=Data;
    allowed=GetNextWord(&Prompt,"");
    PrintAIMessage(Prompt);
-   switch (AICode) {
+   switch (AI) {
       case C_ASKLOAN:
          if (RealLoanShark==-1) {
             g_print(_("Loan shark located at %s\n"),

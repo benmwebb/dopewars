@@ -99,26 +99,26 @@ GSList *FirstClient;
 void (*ClientMessageHandlerPt) (char *,Player *) = NULL;
 void (*SocketWriteTestPt) (Player *,gboolean) = NULL;
 
-void SendClientMessage(Player *From,char AICode,char Code,
+void SendClientMessage(Player *From,AICode AI,MsgCode Code,
                        Player *To,char *Data) {
 /* Sends a message from player "From" to player "To" via. the server.     */
-/* AICode, Code and Data define the message.                              */
-   DoSendClientMessage(From,AICode,Code,To,Data,From);
+/* AI, Code and Data define the message.                                  */
+   DoSendClientMessage(From,AI,Code,To,Data,From);
 }
 
-void SendNullClientMessage(Player *From,char AICode,char Code,
+void SendNullClientMessage(Player *From,AICode AI,MsgCode Code,
                            Player *To,char *Data) {
 /* Sends a message from player "From" to player "To" via. the server,     */
 /* sending a blank name for "From" (this is required with the old message */
 /* format, up to and including the first successful C_NAME message, but   */
-/* has no effect with the new format. AICode, Code and Data define the    */
+/* has no effect with the new format. AI, Code and Data define the        */
 /* message.                                                               */
-   DoSendClientMessage(NULL,AICode,Code,To,Data,From);
+   DoSendClientMessage(NULL,AI,Code,To,Data,From);
 }
 
-void DoSendClientMessage(Player *From,char AICode,char Code,
+void DoSendClientMessage(Player *From,AICode AI,MsgCode Code,
                          Player *To,char *Data,Player *BufOwn) {
-/* Send a message from client player "From" with computer code "AICode",  */
+/* Send a message from client player "From" with computer code "AI",      */
 /* human-readable code "Code" and data "Data". The message is sent to the */
 /* server, identifying itself as for "To". "BufOwn" identifies the player */
 /* which owns the buffers used for the actual wire connection. With the   */
@@ -129,10 +129,10 @@ void DoSendClientMessage(Player *From,char AICode,char Code,
    text=g_string_new(NULL);
    if (HaveAbility(BufOwn,A_PLAYERID)) {
       if (To) g_string_sprintfa(text,"%d",To->ID);
-      g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
+      g_string_sprintfa(text,"^%c%c%s",AI,Code,Data ? Data : "");
    } else {
       g_string_sprintf(text,"%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
-                       To ? GetPlayerName(To) : "",AICode,Code,
+                       To ? GetPlayerName(To) : "",AI,Code,
                        Data ? Data : "");
    }
 #if NETWORKING
@@ -154,35 +154,33 @@ void DoSendClientMessage(Player *From,char AICode,char Code,
    g_string_free(text,TRUE);
 }
 
-void SendPrintMessage(Player *From,char AICode,
-                      Player *To,char *Data) {
+void SendPrintMessage(Player *From,AICode AI,Player *To,char *Data) {
 /* Shorthand for the server sending a "printmessage"; instructs the */
 /* client "To" to display "Data"                                    */
-   SendServerMessage(From,AICode,C_PRINTMESSAGE,To,Data);
+   SendServerMessage(From,AI,C_PRINTMESSAGE,To,Data);
 }
 
-void SendQuestion(Player *From,char AICode,
-                  Player *To,char *Data) {
+void SendQuestion(Player *From,AICode AI,Player *To,char *Data) {
 /* Shorthand for the server sending a "question"; instructs the client  */
 /* "To" to display the second word of Data and accept any letter within */
 /* the first word of Data as suitable reply                             */
-   SendServerMessage(From,AICode,C_QUESTION,To,Data);
+   SendServerMessage(From,AI,C_QUESTION,To,Data);
 }
 
-void SendServerMessage(Player *From,char AICode,char Code,
+void SendServerMessage(Player *From,AICode AI,MsgCode Code,
                        Player *To,char *Data) {
 /* Sends a message from the server to client player "To" with computer    */
-/* code "AICode", human-readable code "Code" and data "Data", claiming    */
+/* code "AI", human-readable code "Code" and data "Data", claiming        */
 /* to be from player "From"                                               */
    GString *text;
    if (IsCop(To)) return;
    text=g_string_new(NULL);
    if (HaveAbility(To,A_PLAYERID)) {
       if (From) g_string_sprintfa(text,"%d",From->ID);
-      g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
+      g_string_sprintfa(text,"^%c%c%s",AI,Code,Data ? Data : "");
    } else {
       g_string_sprintf(text,"%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
-                       To ? GetPlayerName(To) : "",AICode,Code,
+                       To ? GetPlayerName(To) : "",AI,Code,
                        Data ? Data : "");
    }
 #if NETWORKING
@@ -793,20 +791,20 @@ void AddURLEnc(GString *str,gchar *unenc) {
    }
 }
 
-void BroadcastToClients(char AICode,char Code,char *Data,
+void BroadcastToClients(AICode AI,MsgCode Code,char *Data,
                         Player *From,Player *Except) {
-/* Sends the message made up of AICode,Code and Data to all players except */
+/* Sends the message made up of AI,Code and Data to all players except     */
 /* "Except" (if non-NULL). It will be sent by the server, and on behalf of */
 /* player "From"                                                           */
    Player *tmp;
    GSList *list;
    for (list=FirstServer;list;list=g_slist_next(list)) {
       tmp=(Player *)list->data;
-      if (tmp!=Except) SendServerMessage(From,AICode,Code,tmp,Data);
+      if (tmp!=Except) SendServerMessage(From,AI,Code,tmp,Data);
    }
 }
 
-void SendInventory(Player *From,char AICode,char Code,
+void SendInventory(Player *From,AICode AI,MsgCode Code,
                    Player *To,Inventory *Guns,Inventory *Drugs) {
 /* Encodes an Inventory structure into a string, and sends it as the data */
 /* with a server message constructed from the other arguments.            */ 
@@ -819,7 +817,7 @@ void SendInventory(Player *From,char AICode,char Code,
    for (i=0;i<NumDrug;i++) {
       g_string_sprintfa(text,"%d:",Drugs ? Drugs[i].Carried : 0);
    }
-   SendServerMessage(From,AICode,Code,To,text->str);
+   SendServerMessage(From,AI,Code,To,text->str);
    g_string_free(text,TRUE);
 }
 
@@ -1007,7 +1005,7 @@ void ReceiveMiscData(char *Data) {
       case DT_GUN:
          if (i>=0 && i<NumGun) {
             AssignName(&Gun[i].Name,&Name[1]);
-            Gun[i].Price=GetNextPrice(&pt,0);
+            Gun[i].Price=GetNextPrice(&pt,(price_t)0);
             Gun[i].Space=GetNextInt(&pt,0);
             Gun[i].Damage=GetNextInt(&pt,0);
          }
@@ -1015,13 +1013,13 @@ void ReceiveMiscData(char *Data) {
       case DT_DRUG:
          if (i>=0 && i<NumDrug) {
             AssignName(&Drug[i].Name,&Name[1]);
-            Drug[i].MinPrice=GetNextPrice(&pt,0);
-            Drug[i].MaxPrice=GetNextPrice(&pt,0);
+            Drug[i].MinPrice=GetNextPrice(&pt,(price_t)0);
+            Drug[i].MaxPrice=GetNextPrice(&pt,(price_t)0);
          }
          break;
       case DT_PRICES:
          Prices.Spy=strtoprice(&Name[1]);
-         Prices.Tipoff=GetNextPrice(&pt,0);
+         Prices.Tipoff=GetNextPrice(&pt,(price_t)0);
          break;
    }
 }
@@ -1032,9 +1030,9 @@ void ReceivePlayerData(Player *Play,char *text,Player *From) {
    char *cp;
    int i;
    cp=text;
-   From->Cash=GetNextPrice(&cp,0);
-   From->Debt=GetNextPrice(&cp,0);
-   From->Bank=GetNextPrice(&cp,0);
+   From->Cash=GetNextPrice(&cp,(price_t)0);
+   From->Debt=GetNextPrice(&cp,(price_t)0);
+   From->Bank=GetNextPrice(&cp,(price_t)0);
    From->Health=GetNextInt(&cp,100);
    From->CoatSize=GetNextInt(&cp,0);
    From->IsAt=GetNextInt(&cp,0);
@@ -1047,7 +1045,7 @@ void ReceivePlayerData(Player *Play,char *text,Player *From) {
       From->Drugs[i].Carried=GetNextInt(&cp,0);
    }
    if (HaveAbility(Play,A_DRUGVALUE)) for (i=0;i<NumDrug;i++) {
-      From->Drugs[i].TotalValue=GetNextPrice(&cp,0);
+      From->Drugs[i].TotalValue=GetNextPrice(&cp,(price_t)0);
    }
    From->Bitches.Carried=GetNextInt(&cp,0);
 }
@@ -1207,8 +1205,8 @@ void ShutdownNetwork() {
    Client=Network=Server=FALSE;
 }
 
-int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
-                   char *Code,char **Data,GSList *First) {
+int ProcessMessage(char *Msg,Player *Play,Player **Other,AICode *AI,
+                   MsgCode *Code,char **Data,GSList *First) {
 /* Given a "raw" message in "Msg" and a pointer to the start of the linked   */
 /* list of known players in "First", sets the other arguments to the message */
 /* fields. Data is returned as a pointer into the message "Msg", and should  */
@@ -1223,7 +1221,8 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
 
    if (!First || !Play) return -1;
 
-   *AICode=*Code=C_NONE;
+   *AI=C_NONE;
+   *Code=C_PRINTMESSAGE;
    *Other=&Noone;
    pt=Msg;
    if (HaveAbility(Play,A_PLAYERID)) {
@@ -1241,7 +1240,7 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
    if (!(*Other)) return -1;
 
    if (strlen(pt)>=2) {
-      *AICode=pt[0];
+      *AI=pt[0];
       *Code=pt[1];
       *Data=&pt[2];
       return 0;
@@ -1258,12 +1257,13 @@ void ReceiveDrugsHere(char *text,Player *To) {
    To->EventNum=E_ARRIVE;
    cp=text;
    for (i=0;i<NumDrug;i++) {
-      To->Drugs[i].Price=GetNextPrice(&cp,0);
+      To->Drugs[i].Price=GetNextPrice(&cp,(price_t)0);
    }
 }
 
-gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
-                                    Player *To,char *Data,char *DisplayMode) {
+gboolean HandleGenericClientMessage(Player *From,AICode AI,MsgCode Code,
+                                    Player *To,char *Data,
+                                    DispMode *DisplayMode) {
 /* Handles messages that both human clients and AI players deal with in the */
 /* same way.                                                                */
    Player *tmp;
@@ -1399,7 +1399,7 @@ void ReadMetaServerData(int HttpSock) {
 #endif /* NETWORKING */
 
 void SendFightReload(Player *To) {
-   SendFightMessage(To,NULL,0,F_RELOAD,FALSE,FALSE,NULL);
+   SendFightMessage(To,NULL,0,F_RELOAD,(price_t)0,FALSE,NULL);
 }
 
 void SendOldCanFireMessage(Player *To,GString *text) {
@@ -1438,14 +1438,14 @@ void SendOldFightPrint(Player *To,GString *text,gboolean FightOver) {
 
 void SendFightLeave(Player *Play,gboolean FightOver) {
    SendFightMessage(Play,NULL,0,FightOver ? F_LASTLEAVE : F_LEAVE,
-                    FALSE,TRUE,NULL);
+                    (price_t)0,TRUE,NULL);
 }
 
 void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
                          int *DefendHealth,int *DefendBitches,
                          gchar **BitchName,
                          int *BitchesKilled,int *ArmPercent,
-                         gchar *FightPoint,gboolean *CanRunHere,
+                         FightPoint *fp,gboolean *CanRunHere,
                          gboolean *Loot,gboolean *CanFire,gchar **Message) {
    gchar *pt,*Flags;
 
@@ -1460,19 +1460,19 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
 
    Flags=GetNextWord(&pt,NULL);
    if (Flags && strlen(Flags)>=4) {
-      *FightPoint=Flags[0];
+      *fp=Flags[0];
       *CanRunHere=(Flags[1]=='1');
       *Loot=(Flags[2]=='1');
       *CanFire=(Flags[3]=='1');
    } else {
-      *FightPoint=F_MSG;
+      *fp=F_MSG;
       *CanRunHere=*Loot=*CanFire=FALSE;
    }
    *Message=pt;
 }
 
 void SendFightMessage(Player *Attacker,Player *Defender,
-                      int BitchesKilled,gchar FightPoint,
+                      int BitchesKilled,FightPoint fp,
                       price_t Loot,gboolean Broadcast,gchar *Msg) {
    int ArrayInd,ArmPercent,Damage,MaxDamage,i;
    Player *To;
@@ -1519,28 +1519,28 @@ void SendFightMessage(Player *Attacker,Player *Defender,
                           Defender ? Defender->Bitches.Carried : 0,
                           BitchName,
                           BitchesKilled,ArmPercent,
-                          FightPoint,CanRunHere(To) ? '1' : '0',
+                          fp,CanRunHere(To) ? '1' : '0',
                           Loot ? '1' : '0',
-                          FightPoint!=F_ARRIVED && FightPoint!=F_LASTLEAVE &&
+                          fp!=F_ARRIVED && fp!=F_LASTLEAVE &&
                                  CanPlayerFire(To) ? '1' : '0');
       }
       if (Msg) {
          g_string_append(text,Msg);
       } else {
          FormatFightMessage(To,text,Attacker,Defender,BitchesKilled,
-                            ArmPercent,FightPoint,Loot);
+                            ArmPercent,fp,Loot);
       }
       if (HaveAbility(To,A_NEWFIGHT)) {
          SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,To,text->str);
       } else if (CanRunHere(To)) {
-         if (FightPoint!=F_ARRIVED && FightPoint!=F_MSG &&
-             FightPoint!=F_LASTLEAVE && 
-             (FightPoint!=F_LEAVE || Attacker!=To) &&
+         if (fp!=F_ARRIVED && fp!=F_MSG &&
+             fp!=F_LASTLEAVE && 
+             (fp!=F_LEAVE || Attacker!=To) &&
              CanPlayerFire(To) && To->EventNum==E_FIGHT) {
             SendOldCanFireMessage(To,text);
          } else if (text->len>0) SendPrintMessage(NULL,C_NONE,To,text->str);
       } else {
-         SendOldFightPrint(To,text,FightPoint==F_LASTLEAVE);
+         SendOldFightPrint(To,text,fp==F_LASTLEAVE);
       }
    }
    g_string_free(text,TRUE);
@@ -1548,7 +1548,7 @@ void SendFightMessage(Player *Attacker,Player *Defender,
 
 void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         Player *Defender,int BitchesKilled,int ArmPercent,
-                        gchar FightPoint,price_t Loot) {
+                        FightPoint fp,price_t Loot) {
    gchar *Armament,*DefendName,*AttackName;
    int Health,Bitches;
    gchar *BitchName,*BitchesName;
@@ -1566,7 +1566,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
    Health = Defender ? Defender->Health : 0;
    Bitches = Defender ? Defender->Bitches.Carried : 0;
 
-   switch(FightPoint) {
+   switch(fp) {
       case F_ARRIVED:
          Armament= ArmPercent<10 ? _("pitifully armed")       :
                    ArmPercent<25 ? _("lightly armed")         :
@@ -1673,6 +1673,8 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
             }
          }
 /*       if (Health>0) g_string_sprintfa(text,_(" (Health: %d)"),Health);*/
+         break;
+      case F_MSG:
          break;
    }
 }

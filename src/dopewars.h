@@ -72,12 +72,16 @@ typedef long long price_t;
 
 /* "Abilities" are protocol extensions, which are negotiated between the
    client and server at connect-time. */
-#define A_PLAYERID      0    /* Use numeric IDs rather than player names
-                                in network messages */
-#define A_DRUGVALUE     1    /* Server keeps track of purchase price of drugs */
-#define A_NEWFIGHT      2    /* Use new unified fighting code */
-#define A_TSTRING       3    /* We understand the %Txx (tstring) notation */
-#define A_NUM           4
+typedef enum {
+   A_PLAYERID = 0,  /* Use numeric IDs rather than player names
+                       in network messages */
+   A_DRUGVALUE,     /* Server keeps track of purchase price of drugs */
+   A_NEWFIGHT,      /* Use new unified fighting code */
+   A_TSTRING,       /* We understand the %Txx (tstring) notation */
+
+   A_NUM            /* N.B. Must be last */
+} AbilType;
+
 typedef struct ABILITIES {
    gboolean Local[A_NUM];   /* Abilities that we have */
    gboolean Remote[A_NUM];  /* Those that the other end of the connection has */
@@ -90,11 +94,11 @@ struct NAMES {
 };
 
 struct METASERVER {
-   int Active;
+   gboolean Active;
    gchar *Name;
-   int Port;
+   unsigned Port;
    gchar *ProxyName;
-   int ProxyPort;
+   unsigned ProxyPort;
    gchar *Path,*LocalName,*Password,*Comment;
 };
 
@@ -106,17 +110,52 @@ struct BITCH {
    price_t MinPrice,MaxPrice;
 };
 
-#define CLIENT_AUTO   0
-#define CLIENT_WINDOW 1
-#define CLIENT_CURSES 2
+typedef enum {
+   CLIENT_AUTO, CLIENT_WINDOW, CLIENT_CURSES
+} ClientType;
+
+typedef enum {
+   DM_NONE, DM_STREET, DM_FIGHT, DM_DEAL
+} DispMode;
+
+typedef enum {
+   E_NONE = 0,
+   E_SUBWAY, E_OFFOBJECT, E_WEED, E_SAYING, E_LOANSHARK,
+   E_BANK, E_GUNSHOP, E_ROUGHPUB, E_HIREBITCH, E_ARRIVE,
+   E_MAX,
+
+   E_FINISH = 100,
+
+   E_OUTOFSYNC = 120,
+   E_FIGHT, E_FIGHTASK, E_DOCTOR,
+   E_MAXOOS
+} EventCode;
+
+typedef enum {
+   FIRSTTURN   = 1 << 0,
+   DEADHARDASS = 1 << 1,
+   TIPPEDOFF   = 1 << 2,
+   SPIEDON     = 1 << 3,
+   SPYINGON    = 1 << 4,
+   FIGHTING    = 1 << 5,
+   CANSHOOT    = 1 << 6,
+   TRADING     = 1 << 7
+} PlayerFlags;
+
+typedef enum {
+   ACID = 0,
+   COCAINE, HASHISH, HEROIN, LUDES, MDA, OPIUM, PCP,
+   PEYOTE, SHROOMS, SPEED, WEED
+} DrugIndex;
 
 extern int ClientSock,ListenSock;
-extern char Network,Client,Server,NotifyMetaServer,AIPlayer;
-extern int Port,Sanitized,DrugValue;
+extern gboolean Network,Client,Server,NotifyMetaServer,AIPlayer;
+extern unsigned Port;
+extern gboolean Sanitized,ConfigVerbose,DrugValue;
 extern int NumLocation,NumGun,NumCop,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
 extern gchar *HiScoreFile,*ServerName,*Pager;
-extern char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
-extern char WantedClient;
+extern gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
+extern ClientType WantedClient;
 extern int LoanSharkLoc,BankLoc,GunShopLoc,RoughPubLoc;
 extern int DrugSortMethod,FightTimeout,IdleTimeout,ConnectTimeout;
 extern int MaxClients,AITurnPause;
@@ -132,47 +171,13 @@ extern gchar *LogTimestamp;
 
 #define MAXLOG        6
 
-#define DM_NONE       0
-#define DM_STREET     1
-#define DM_FIGHT      2
-#define DM_DEAL       3
-
 #define DS_ATOZ       1
 #define DS_ZTOA       2
 #define DS_CHEAPFIRST 3
 #define DS_CHEAPLAST  4
 #define DS_MAX        5
 
-#define NUMSUBWAY    31
 #define NUMHISCORE   18
-#define NUMSTOPPEDTO 5
-#define NUMPLAYING   18
-#define NUMDISCOVER  3
-
-#define NUMDRUG      12
-#define NUMGUN       4
-#define NUMCOP       3
-#define NUMLOCATION  8
-
-#define ESCAPE  0
-#define DEFECT  1
-#define SHOT    2
-
-#define MINTRENCHPRICE 200
-#define MAXTRENCHPRICE 300
-
-#define ACID    0
-#define COCAINE 1
-#define HASHISH 2
-#define HEROIN  3
-#define LUDES   4
-#define MDA     5
-#define OPIUM   6
-#define PCP     7
-#define PEYOTE  8
-#define SHROOMS 9
-#define SPEED   10 
-#define WEED    11
 
 #define DEFLOANSHARK 1
 #define DEFBANK      1
@@ -180,36 +185,6 @@ extern gchar *LogTimestamp;
 #define DEFROUGHPUB  2
 
 #define METAVERSION 2
-
-#define FIRSTTURN   1
-#define DEADHARDASS 2
-#define TIPPEDOFF   4
-#define SPIEDON     8
-#define SPYINGON    16
-#define FIGHTING    32
-#define CANSHOOT    64
-#define TRADING     128
-
-#define E_NONE       0
-#define E_SUBWAY     1
-#define E_OFFOBJECT  2
-#define E_WEED       3
-#define E_SAYING     4
-#define E_LOANSHARK  5
-#define E_BANK       6
-#define E_GUNSHOP    7
-#define E_ROUGHPUB   8
-#define E_HIREBITCH  9
-#define E_ARRIVE     10
-#define E_MAX        11
-
-#define E_FINISH     100
-
-#define E_OUTOFSYNC  120
-#define E_FIGHT      121
-#define E_FIGHTASK   122
-#define E_DOCTOR     123
-#define E_MAXOOS     124
 
 struct COP {
    gchar *Name,*DeputyName,*DeputiesName;
@@ -219,7 +194,7 @@ struct COP {
    gint GunIndex;
    gint CopGun,DeputyGun;
 };
-extern struct COP DefaultCop[NUMCOP],*Cop;
+extern struct COP *Cop;
 
 struct GUN {
    gchar *Name;
@@ -227,12 +202,12 @@ struct GUN {
    int Space;
    int Damage;
 };
-extern struct GUN DefaultGun[NUMGUN],*Gun;
+extern struct GUN *Gun;
 
 struct HISCORE {
    gchar *Time;
    price_t Money;
-   char Dead;
+   gboolean Dead;
    gchar *Name;
 };
 
@@ -241,15 +216,15 @@ struct LOCATION {
    int PolicePresence;
    int MinDrug,MaxDrug;
 };
-extern struct LOCATION DefaultLocation[NUMLOCATION],*Location;
+extern struct LOCATION *Location;
 
 struct DRUG {
    gchar *Name;
    price_t MinPrice,MaxPrice;
-   int Cheap,Expensive;
+   gboolean Cheap,Expensive;
    gchar *CheapStr;
 };
-extern struct DRUG DefaultDrug[NUMDRUG],*Drug;
+extern struct DRUG *Drug;
 
 struct DRUGS {
    gchar *ExpensiveStr1,*ExpensiveStr2;
@@ -302,10 +277,10 @@ struct PLAYER_T {
    int Health;
    int CoatSize;
    char IsAt;
-   char Flags;
+   PlayerFlags Flags;
    gchar *Name;
    Inventory *Guns,*Drugs,Bitches;
-   int EventNum,ResyncNum;
+   EventCode EventNum,ResyncNum;
    time_t FightTimeout,IdleTimeout,ConnectTimeout;
    price_t DocPrice;
    DopeList SpyList,TipList;
@@ -322,25 +297,20 @@ struct PLAYER_T {
                               cops up to Cop[-1-CopIndex] */
 };
 
-#define CM_SERVER 0
-#define CM_PROMPT 1
-#define CM_META   2
-#define CM_SINGLE 3
-
 #define SN_PROMPT "(Prompt)"
 #define SN_META   "(MetaServer)"
 #define SN_SINGLE "(Single)"
 
 typedef struct tag_serverdata {
    char *Name;
-   int Port;
+   unsigned Port;
    int MaxPlayers,CurPlayers;
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 89
 struct GLOBALS {
    int *IntVal;
+   gboolean *BoolVal;
    price_t *PriceVal;
    gchar **StringVal;
    gchar ***StringList;
@@ -353,9 +323,10 @@ struct GLOBALS {
    void (*ResizeFunc)(int NewNum);
 };
 
-extern struct GLOBALS Globals[NUMGLOB];
+extern const int NUMGLOB;
+extern struct GLOBALS Globals[];
+
 extern Player Noone;
-extern char *Discover[NUMDISCOVER];
 extern char **Playing;
 extern char **SubwaySaying;
 extern char **StoppedTo;
@@ -383,6 +354,7 @@ void ClearList(DopeList *List);
 int TotalGunsCarried(Player *Play);
 int read_string(FILE *fp,char **buf);
 int brandom(int bot,int top);
+price_t prandom(price_t bot,price_t top);
 void AddInventory(Inventory *Cumul,Inventory *Add,int Length);
 void TruncateInventoryFor(Inventory *Guns,Inventory *Drugs,
                           Player *Play);

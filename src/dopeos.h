@@ -145,15 +145,6 @@ void SetReuse(SOCKET sock);
 #include <sys/wait.h>
 #endif
 
-/* Now make definitions if they haven't been done properly */
-#ifndef WEXITSTATUS
-#define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-#endif
-
-#ifndef WIFEXITED
-#define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
 /* Include a suitable curses-type library */
 #if HAVE_LIBNCURSES
 #include <ncurses.h>
@@ -197,6 +188,7 @@ int ReadLock(FILE *fp);
 int WriteLock(FILE *fp); 
 void ReleaseLock(FILE *fp);
 
+/* Now make definitions if they haven't been done properly */
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif

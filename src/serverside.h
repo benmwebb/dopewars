@@ -28,13 +28,6 @@
 
 #include "dopewars.h"
 
-#define NOFORCE    0
-#define FORCECOPS  1
-#define FORCEBITCH 2
-
-#define AT_FIRST   1
-#define AT_SHOOT   2
-
 extern GSList *FirstServer;
 extern char *PidFile;
 
@@ -49,11 +42,9 @@ void ServerLoop(void);
 void HandleServerPlayer(Player *Play);
 void HandleServerMessage(gchar *buf,Player *ReallyFrom);
 void FinishGame(Player *Play,char *Message);
-void SendHighScores(Player *Play,char AddCurrent,char *Message);
+void SendHighScores(Player *Play,gboolean EndGame,char *Message);
 void SendEvent(Player *To);
-int SendCopOffer(Player *To,char Force);
-int OfferObject(Player *To,char ForceBitch);
-void SendDrugsHere(Player *To,char DisplayBusts);
+void SendDrugsHere(Player *To,gboolean DisplayBusts);
 void GenerateDrugsHere(Player *To,char *Deal);
 void BuyObject(Player *From,char *data);
 int RandomOffer(Player *To);
