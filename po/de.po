@@ -49,15 +49,15 @@ msgstr "-2000"
 
 #: src/dopewars.c:110
 msgid "Hardass"
-msgstr "Bulle"
+msgstr "Erich"
 
 #: src/dopewars.c:110
 msgid "Bob"
-msgstr "Bulleschwein"
+msgstr "Rainer"
 
 #: src/dopewars.c:110
 msgid "the Loan Shark"
-msgstr "der Kredithai"
+msgstr "den Kredithai"
 
 #: src/dopewars.c:110
 msgid "the Bank"
@@ -69,7 +69,7 @@ msgstr "Otto's Haus der Waffen"
 
 #: src/dopewars.c:111
 msgid "the pub"
-msgstr "der Schottische Pub"
+msgstr "den Schottischen Pub"
 
 #: src/dopewars.c:127
 msgid "Network port to connect to"
@@ -1115,7 +1115,7 @@ msgstr "Wen möchtest Du los werden? "
 
 #: src/curses_client.c:543
 msgid " Are you sure? "
-msgstr " Bist Du sicher? [J/N] "
+msgstr " Bist Du sicher? "
 
 #: src/curses_client.c:544 src/curses_client.c:562 src/curses_client.c:1691
 msgid "YN"
@@ -1123,7 +1123,7 @@ msgstr "JN"
 
 #: src/curses_client.c:560
 msgid "Are you sure you want to quit? "
-msgstr "Willst Du wirklich schon gehen? [J/N]"
+msgstr "Willst Du wirklich schon gehen? "
 
 #: src/curses_client.c:568
 msgid "New name: "
@@ -1168,11 +1168,11 @@ msgstr "B E S T E N L I S T E"
 
 #: src/curses_client.c:803
 msgid "Will you B>uy, S>ell, or L>eave? "
-msgstr "Willst Du K>aufen, V>erkaufen, oder A>bhauen? "
+msgstr "Willst Du E>inkaufen, V>erkaufen, oder G>ehen? "
 
 #: src/curses_client.c:808
 msgid "BSL"
-msgstr "KVA"
+msgstr "EVG"
 
 #: src/curses_client.c:813
 #, c-format
@@ -1297,7 +1297,7 @@ msgstr "Hey kleiner, die %s preise von hier:"
 
 #: src/curses_client.c:1445
 msgid "Will you B>uy"
-msgstr "K>aufen"
+msgstr "Willst Du E>inkaufen"
 
 #: src/curses_client.c:1446
 msgid ", S>ell"
@@ -1313,7 +1313,7 @@ msgstr ", S>prechen, F>lüstern, L>iste"
 
 #: src/curses_client.c:1451
 msgid ", G>ive"
-msgstr ", G>eben"
+msgstr ", A>ktion"
 
 #: src/curses_client.c:1454
 msgid ", F>ight"
@@ -1345,7 +1345,7 @@ msgstr "R>ennen, "
 
 #: src/curses_client.c:1474
 msgid "D>eal "
-msgstr "D>ealen "
+msgstr "H>andeln "
 
 #: src/curses_client.c:1517
 msgid "Connection to server lost! Reverting to single player mode"
@@ -1353,11 +1353,11 @@ msgstr "Verbindung zu Server unterbrochen! Kehre zurück in Einzelspieler-Modus"
 
 #: src/curses_client.c:1546
 msgid "BSDTPLGFJQ"
-msgstr "KVWSFLGKRE"
+msgstr "EVWSFLAKRE"
 
 #: src/curses_client.c:1548
 msgid "DRFSQ"
-msgstr "DRKSE"
+msgstr "HRKSE"
 
 #: src/curses_client.c:1576
 msgid "List what? P>layers or S>cores? "
@@ -1377,7 +1377,7 @@ msgstr "Sprich: "
 
 #: src/curses_client.c:1690
 msgid "Play again? "
-msgstr "Möchtest Du nochmal spielen? [J/N]+-> "
+msgstr "Möchtest Du nochmal spielen? -=+> "
 
 #: src/curses_client.c:1702
 msgid ""
@@ -1440,11 +1440,11 @@ msgstr "/Aktionen/_Verpfeifen"
 
 #: src/gtk_client.c:154
 msgid "/Errands/Sack _Bitch"
-msgstr "/Aktionen/Sack _Bitch"
+msgstr "/Aktionen/Töte _Hure"
 
 #: src/gtk_client.c:155
 msgid "/Errands/_Get spy reports"
-msgstr "/Aktionen/_Get spy reports"
+msgstr "/Aktionen/_Lese Spionagereport"
 
 #: src/gtk_client.c:156
 msgid "/_Help"
@@ -1480,7 +1480,7 @@ msgstr "Inventar"
 
 #: src/gtk_client.c:240 src/gtk_client.c:2160 src/gtk_client.c:2524
 msgid "Close"
-msgstr "Schliesse"
+msgstr "Schliessen"
 
 #: src/gtk_client.c:270
 msgid "Connection to server lost - switching to single player mode"
@@ -1492,12 +1492,12 @@ msgstr "Du wurdest vom Server geworfen."
 
 #: src/gtk_client.c:319
 msgid "The server has terminated."
-msgstr "Der server wurde beendet."
+msgstr "Der Server wurde beendet."
 
 #: src/gtk_client.c:359
 #, c-format
 msgid "Jetting to %s"
-msgstr "Reise zu %s"
+msgstr "Reise => %s"
 
 #: src/gtk_client.c:367
 #, c-format
@@ -1511,7 +1511,7 @@ msgstr "_Verpfeife\t(%s)"
 
 #: src/gtk_client.c:405
 msgid "High Scores"
-msgstr "Bestenliste"
+msgstr "B E S T E N  L I S T E"
 
 #: src/gtk_client.c:439 src/gtk_client.c:1035 src/gtk_client.c:1490
 #: src/gtk_client.c:1835 src/gtk_client.c:1999 src/gtk_client.c:2275
@@ -1521,7 +1521,7 @@ msgstr "OK"
 
 #: src/gtk_client.c:521
 msgid "Fight"
-msgstr "Fighten"
+msgstr "K"
 
 #: src/gtk_client.c:548
 #, c-format
@@ -1530,7 +1530,7 @@ msgstr "_Dealen %s"
 
 #: src/gtk_client.c:552 src/gtk_client.c:1127 src/gtk_client.c:1324
 msgid "_Fight"
-msgstr "_Fighten"
+msgstr "_Kämpfen"
 
 #: src/gtk_client.c:555
 msgid "_Stand"
@@ -1552,7 +1552,7 @@ msgstr ""
 #: src/gtk_client.c:874
 #, c-format
 msgid "You are currently carrying %d %s"
-msgstr ""
+msgstr "Zur Zeit trägst Du %d %s"
 
 #: src/gtk_client.c:879
 #, c-format
@@ -1566,7 +1566,7 @@ msgstr "Du kannst %d kaufen"
 
 #: src/gtk_client.c:933 src/gtk_client.c:1064
 msgid "Buy"
-msgstr "Kaufen"
+msgstr "Einkaufen"
 
 #: src/gtk_client.c:934 src/gtk_client.c:1065
 msgid "Sell"
@@ -1661,7 +1661,7 @@ msgstr "Unkonstruktive Kritik"
 
 #: src/gtk_client.c:1447
 msgid "About dopewars"
-msgstr "Ueber Drogenkrieg"
+msgstr "Über Drogenkrieg"
 
 #: src/gtk_client.c:1456
 msgid ""
@@ -1674,6 +1674,14 @@ msgid ""
 "that, your goal is to make as much money as possible (and stay alive)! You\n"
 "have one month of game time to make your fortune.\n"
 msgstr ""
+"Drogenkrieg basiert auf John E. Dell's Spiel 'Drug Wars'.\n"
+"Das Spiel simuliert einen imaginären Drogenmarkt, mit allen\n"
+"Dingen die man so gerne macht, wie zum Beispiel: \n"
+"Einkaufen, Verkaufen und versuchen nicht von der Polizei erwischt zu werden.\n" 
+"\n"
+"Als erstes muss man seine Schulden beim Kredithai begleichen.\n"
+"Danach ist es dein Ziel soviel Geld wie möglich zu verdienen und\n"
+"natürlich am Leben zu bleiben. Du hast dafür einen ganzen Monat Zeit.\n"
 
 #: src/gtk_client.c:1464
 #, c-format
@@ -1681,11 +1689,11 @@ msgid ""
 "Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2000  Ben Webb, < ben@bellatrix.pcl.ox.ac.uk >\n"
 "\n"
-"               German Translation by    Tobias Mathes tobi@ideenpark.de\n"
+"\t Deutsche Übersetzung: Tobias Mathes, < tobi@kreativ-langeweile.de >\n"
 "\n"
-"drogenkrieg ist veröffentlicht worden unter der GNU General Public Licence\n"
+"Drogenkrieg wurde unter der GNU General Public Licence veröffentlicht.\n"
 
 #: src/gtk_client.c:1482
 msgid ""
@@ -1694,18 +1702,18 @@ msgid ""
 "Unix prompt. This will display a help screen, listing the availableoptions."
 msgstr ""
 "\n"
-"Für Informationen über Kommando Optionen, tippe dopewars -h in deiner \n"
-"UNIX shell ein. Es wird dann die Hilfe-Uebersicht angezeigt."
+"Für Informationen über Kommando Optionen, tippe 'dopewars -h' in deiner \n"
+"UNIX-shell ein. Die Hilfe Übersicht wird dir dann angezeigt."
 
 #: src/gtk_client.c:1520 src/gtk_client.c:1543
 #, c-format
 msgid "Status: Could not connect (%s)"
-msgstr "Status: Kann keine Verbing mit (%s) herstellen"
+msgstr "Status: Kann keine Verbindung zu %s herstellen"
 
 #: src/gtk_client.c:1531
 #, c-format
 msgid "Status: Attempting to contact %s..."
-msgstr ""
+msgstr "Status: Versuche Verbindung zu %s herzustellen..."
 
 #: src/gtk_client.c:1591
 #, c-format
@@ -1821,7 +1829,7 @@ msgstr "Nachricht:-"
 
 #: src/gtk_client.c:2154
 msgid "Send"
-msgstr "Sende"
+msgstr "Senden"
 
 #: src/gtk_client.c:2245
 msgid "Spy On Player"
@@ -1844,7 +1852,7 @@ msgstr ""
 
 #: src/gtk_client.c:2255
 msgid "Tip Off The Cops"
-msgstr "Gib den Bullen einen Tipp"
+msgstr "Gib der Polizei einen Tipp"
 
 #: src/gtk_client.c:2257
 #, c-format
@@ -1861,7 +1869,7 @@ msgstr ""
 #: src/gtk_client.c:2297
 #, c-format
 msgid "Sack %s"
-msgstr ""
+msgstr "Toete %s"
 
 #: src/gtk_client.c:2298
 #, c-format
@@ -1886,7 +1894,7 @@ msgstr "Anzahl"
 
 #: src/gtk_client.c:2322
 msgid "_Buy ->"
-msgstr "_Kaufen ->"
+msgstr "_Einkaufen ->"
 
 #: src/gtk_client.c:2323
 msgid "<- _Sell"
@@ -1908,7 +1916,7 @@ msgstr "%s dabei"
 
 #: src/gtk_client.c:2408
 msgid "Change Name"
-msgstr "Aendere Name"
+msgstr "Ändere Name"
 
 #: src/gtk_client.c:2418
 msgid ""
@@ -1922,7 +1930,7 @@ msgstr "Fertig"
 
 #: src/gtk_client.c:2510
 msgid "Spy reports"
-msgstr "Spion meldet"
+msgstr "Spion berichtet"
 
 #: src/gtk_client.c:2581
 msgid ""
@@ -2031,7 +2039,7 @@ msgstr "Deine Zeit als Dealer ist vorbei..."
 #: src/serverside.c:316
 #, c-format
 msgid "%s: DENIED jet to %s"
-msgstr "%s: Abgelehnt reise zu %s"
+msgstr "%s: VERWEIGERT Reise zu %s"
 
 #: src/serverside.c:373
 #, c-format
@@ -2118,7 +2126,7 @@ msgstr "Eingelogte Spieler:-\n"
 
 #: src/serverside.c:680
 msgid "No users currently logged on!"
-msgstr "Du bist ganz allein, machs Dir selbst!"
+msgstr "Du bist ganz allein auf der Welt!"
 
 #: src/serverside.c:684
 #, c-format
@@ -2159,11 +2167,11 @@ msgstr "Fehler: Kann die Bestenliste %s nicht lesen"
 
 #: src/serverside.c:960
 msgid "Congratulations! You made the high scores!"
-msgstr "Fantastisch! Du hasts geschafft!"
+msgstr "Fantastisch! Du hast Dir einen Platz auf der Bestenliste verdient!"
 
 #: src/serverside.c:973
 msgid "You didn't even make the high score table..."
-msgstr "Tja, besser spielen dann gibs auch ein Eintrag"
+msgstr "Tja, besser spielen dann gibs auch nen Eintrag."
 
 #: src/serverside.c:987
 #, c-format
