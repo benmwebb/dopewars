@@ -34,4 +34,9 @@ install-exec-am:
 	for plug in ${PLUGINS}; do \
 	  ${INSTALL} $${plug} ${PLUGINDIR}; \
 	done
+
+uninstall-local:
+	for plug in ${PLUGINS}; do \
+	  /bin/rm -f ${PLUGINDIR}/$${plug}; \
+	done
 endif
