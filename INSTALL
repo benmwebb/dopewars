@@ -6,9 +6,10 @@ the GTK+ client. Other libraries may be required for additional features:-
 Windows:
    - Get Cygwin from http://sourceware.cygnus.com/cygwin/. It should be
      possible to build dopewars with C compilers other than Cygwin, but
-     this is not supported.
+     this is not supported. Make sure that when you install Cygwin you
+     select the "mingw" package for install.
    - Get GLib from http://user.sgic.fi/~tml/gimp/win32/. The various header
-     files need to be placed in /usr/include/mingw32/ of your Cygwin
+     files need to be placed in /usr/include/mingw/ of your Cygwin
      installation, while the GLib DLL eventually needs to be placed either
      in the same directory as the dopewars binary, or your Windows directory.
      Later versions of GLib depend on IConv, so also install this if required.
@@ -40,17 +41,18 @@ test can be overridden (if, for example, you wanted to build the Unix version
 under Cygwin) with the --enable-nativewin32 option to configure e.g.
 
 to build the Win32 binary under Cygwin
-	./configure --datadir="."
+	./configure --datadir="." --disable-nls
 	(Cygwin should be automatically detected)
 or
-	./configure --enable-nativewin32 --datadir="."
+	./configure --enable-nativewin32 --datadir="." --disable-nls
 
 to build the Unix version under Cygwin
-	./configure --disable-nativewin32
+	./configure --disable-nativewin32 --disable-nls
 
 (The --datadir="." forces the high score file to be placed in the current
 directory, which is rather more useful on a Windows system than the default
-location - see below.)
+location - see below. --disable-nls compiles a version of the software
+without support for translation into non-English languages.)
 
 For a smaller binary, you may wish to build a "stripped" binary by specifying
 the -s option in LDFLAGS. In a Bourne-compatible shell, this can be achieved
