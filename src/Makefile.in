@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -96,9 +96,7 @@ WNDRES = @WNDRES@
 localedir = @localedir@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = admin.c AIPlayer.c curses_client.c dopeos.c dopewars.c \
-                   error.c gtk_client.c message.c network.c serverside.c \
-                   tstring.c winmain.c @GTKPORT_C@
+dopewars_SOURCES = admin.c AIPlayer.c curses_client.c dopeos.c dopewars.c                    error.c gtk_client.c message.c network.c serverside.c                    tstring.c winmain.c @GTKPORT_C@
 
 dopewars_DEPENDENCIES = @INTLLIBS@ @GTKPORT_O@ @WNDRES@
 INCLUDES = @GTK_CFLAGS@ -I.. -I.

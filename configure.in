@@ -22,6 +22,14 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
 AC_STRUCT_TM
 
+dnl We need this for the Darwin test, plus gettext uses it anyway
+AC_CANONICAL_HOST
+
+dnl Fix Apple's stupid C preprocessor
+case "$host_os" in darwin*)
+   CPPFLAGS="$CPPFLAGS -no-cpp-precomp"
+esac
+
 HAVE_FIXED_GTK="no"
 
 dnl Process client options

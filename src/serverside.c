@@ -1877,12 +1877,12 @@ void SendEvent(Player *To) {
          case E_SAYING:
             if (!Sanitized && (brandom(0,100) < 15)) {
                if (brandom(0,100)<50) {
-                  text=g_strdup_printf(_(" The lady next to you on the subway "
+                  text=g_strdup_printf(_("The lady next to you on the subway "
                    "said,^ \"%s\"%s"),
                    SubwaySaying[brandom(0,NumSubway)],brandom(0,100)<30 ? 
                    _("^    (at least, you -think- that's what she said)") : "");
                } else {
-                  text=g_strdup_printf(_(" You hear someone playing %s"),
+                  text=g_strdup_printf(_("You hear someone playing %s"),
                                        Playing[brandom(0,NumPlaying)]);
                }
                SendPrintMessage(NULL,C_NONE,To,text);
