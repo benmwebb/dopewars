@@ -50,6 +50,15 @@ AC_ARG_ENABLE(glib2,
 [  --disable-glib2         use GLib/GTK+ 1.x, even if 2.x is found],
 [ USE_GLIB2="$enableval" ],[ USE_GLIB2="yes" ])
 
+AC_ARG_WITH(esd,
+[  --without-esd           do not support ESD sound output],
+[ USE_ESD="$withval" ], [ USE_ESD="probe" ])
+
+AC_ARG_WITH(sdl,
+[  --without-sdl           do not support SDL sound output],
+[ USE_SDL="$withval" ], [ USE_SDL="probe" ])
+
+
 dnl Test for Cygwin environment
 AC_CYGWIN
 dnl Let the user override this with the --enable-nativewin32 option
@@ -163,33 +172,45 @@ else
 
    dnl Add esound support if available
    ESD=no
-   AM_PATH_ESD(0.0.20, ESD=yes)
-   if test "$ESD" = "yes"; then
-     SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
-     SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
-     PLUGOBJS="$PLUGOBJS plugins/sound_esd.o"
-     AC_SUBST(ESD_LIBS)
-     AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
+   if test "$USE_ESD" != "no"; then
+     AM_PATH_ESD(0.0.20, ESD=yes)
+     if test "$ESD" = "yes"; then
+       SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
+       SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
+       PLUGOBJS="$PLUGOBJS plugins/sound_esd.o"
+       AC_SUBST(ESD_LIBS)
+       AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
+     elif test "$USE_ESD" = "yes"; then
+       AC_MSG_ERROR(Cannot find ESD library)
+     fi
    fi
    AM_CONDITIONAL(ESD, test "$ESD" = "yes")
 
    dnl Add SDL_mixer sound support if available
    SDL=no
-   AM_PATH_SDL(1.0.0, SDL=yes)
-   if test "$SDL" = "yes"; then
-     headers=no
-     libs=no
-     AC_CHECK_HEADER(SDL/SDL_mixer.h, headers=yes)
-     AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
-     if test "$libs" = "yes"; then
-       if test "$headers" = "yes"; then
-         SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
-         SDL_LIBS="$SDL_LIBS -lSDL_mixer"
-         SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
-         PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
-         AC_SUBST(SDL_LIBS)
-         AC_DEFINE(HAVE_SDL_MIXER, 1, [Do we have the SDL_mixer sound library?])
+   if test "$USE_SDL" != "no"; then
+     SDL_ALL=no
+     AM_PATH_SDL(1.0.0, SDL=yes)
+     if test "$SDL" = "yes"; then
+       headers=no
+       libs=no
+       AC_CHECK_HEADER(SDL/SDL_mixer.h, headers=yes)
+       AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+       if test "$libs" = "yes"; then
+         if test "$headers" = "yes"; then
+           SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
+           SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+           SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
+           PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
+           AC_SUBST(SDL_LIBS)
+           AC_DEFINE(HAVE_SDL_MIXER, 1,
+                     [Do we have the SDL_mixer sound library?])
+           SDL_ALL=yes
+         fi
        fi
+     fi
+     if test "$USE_SDL" = "yes" -a "$SDL_ALL" = "no"; then
+       AC_MSG_ERROR(Cannot find SDL library)
      fi
    fi
    AM_CONDITIONAL(SDL, test "$SDL" = "yes")
