@@ -667,13 +667,15 @@ static gboolean ConnectToServer(Player *Play)
 static gboolean jet(Player *Play, gboolean AllowReturn)
 {
   int i, c;
-  char text[80];
+  GString *text;
 
+  text = g_string_new("");
   attrset(TextAttr);
   clear_bottom();
   for (i = 0; i < NumLocation; i++) {
-    sprintf(text, "%d. %s", i + 1, Location[i].Name);
-    mvaddstr(17 + i / 3, (i % 3) * 20 + 12, text);
+    /* Display of shortcut keys and locations to jet to */
+    dpg_string_sprintf(text, _("%d. %tde"), i + 1, Location[i].Name);
+    mvaddstr(17 + i / 3, (i % 3) * 20 + 12, text->str);
   }
   attrset(PromptAttr);
 
@@ -684,18 +686,24 @@ static gboolean jet(Player *Play, gboolean AllowReturn)
   do {
     c = bgetch();
     if (c >= '1' && c < '1' + NumLocation) {
-      addstr(Location[c - '1'].Name);
+      dpg_string_sprintf(text, _("%/Location display/%tde"),
+                         Location[c - '1'].Name);
+      addstr(text->str);
       if (Play->IsAt != c - '1') {
-        sprintf(text, "%d", c - '1');
+        g_string_sprintf(text, "%d", c - '1');
         DisplayMode = DM_NONE;
-        SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, text);
-      } else
+        SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, text->str);
+      } else {
         c = 0;
-    } else
+      }
+    } else {
       c = 0;
+    }
   } while (c == 0 && !AllowReturn);
 
   curs_set(0);
+  g_string_free(text, TRUE);
+
   return (c != 0);
 }
 
@@ -1068,7 +1076,10 @@ void HandleClientMessage(char *Message, Player *Play)
       refresh();
       MicroSleep(100000);
     }
-    print_location(Location[(int)Play->IsAt].Name);
+    text = dpg_strdup_printf(_("%/Current location/%tde"),
+                             Location[Play->IsAt].Name);
+    print_location(text);
+    g_free(text);
     break;
   case C_QUESTION:
     pt = Data;
@@ -1775,7 +1786,9 @@ void print_status(Player *Play, gboolean DispDrug)
                        Play->Bitches.Carried, Play->CoatSize);
   }
   mvaddstr(0, Width - 2 - strlen(text->str), text->str);
-  print_location(Location[(int)Play->IsAt].Name);
+  dpg_string_sprintf(text, _("%/Current location/%tde"),
+                     Location[Play->IsAt].Name);
+  print_location(text->str);
   attrset(StatsAttr);
 
   c = 0;

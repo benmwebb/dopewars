@@ -1180,8 +1180,9 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
 
   text = g_string_new(NULL);
 
-  gtk_label_set_text(GTK_LABEL(Status->Location),
-                     Location[(int)Play->IsAt].Name);
+  dpg_string_sprintf(text, _("%/Current location/%tde"),
+                     Location[Play->IsAt].Name);
+  gtk_label_set_text(GTK_LABEL(Status->Location), text->str);
 
   g_string_sprintf(text, "%s%02d%s", Names.Month, Play->Turn, Names.Year);
   gtk_label_set_text(GTK_LABEL(Status->Date), text->str);
@@ -1441,7 +1442,10 @@ void Jet(GtkWidget *parent)
     row = i / boxsize;
     col = i % boxsize;
     if (AccelChar == '\0') {
-      button = gtk_button_new_with_label(Location[i].Name);
+      name = dpg_strdup_printf(_("%/Location to jet to/%tde"),
+                               Location[i].Name);
+      button = gtk_button_new_with_label(name);
+      g_free(name);
     } else {
       button = gtk_button_new_with_label("");
 
