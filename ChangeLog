@@ -4,7 +4,8 @@ cvs
     - Icon added for GTK+ client
     - Bug with withdrawing cash from the bank fixed
     - URL in GTK+ client "About" box is now clickable
-    - Crash bugs when running on PPC systems fixed
+    - Crash bugs when running on PPC systems fixed (with thanks to Zeke
+      and Brian Campbell)
 
 1.5.3   04-02-2002
     - Text-mode server is now non-interactive by default (server admin can
