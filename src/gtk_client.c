@@ -2455,14 +2455,14 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
          money=-money;
       }
       if (-money>ClientData.Play->Bank) {
-         GtkMessageBox(dialog,_("There isn't that much money in the bank..."),
-                    "Bank",MB_OK);
+         GtkMessageBox(dialog,_("There isn't that much money available..."),
+                       Names.BankName,MB_OK);
          return;
       }
    }
    if (money>ClientData.Play->Cash) {
       GtkMessageBox(dialog,_("You don't have that much money!"),
-                 Debt ? "Pay loan" : "Bank",MB_OK);
+                    Debt ? Names.LoanSharkName : Names.BankName,MB_OK);
       return;
    }
    text=pricetostr(money);
@@ -2489,7 +2489,7 @@ void TransferDialog(gboolean Debt) {
    } else {
 /* Title of bank dialog - (%Tde="The Bank" by default) */
       dpg_string_sprintf(text,_("%/BankName window title/%Tde"),
-                         Names.LoanSharkName);
+                         Names.BankName);
    }
    gtk_window_set_title(GTK_WINDOW(dialog),text->str);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
