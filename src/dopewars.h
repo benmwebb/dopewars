@@ -430,6 +430,7 @@ void RestoreConfig(void);
 void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error);
 gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
+gchar *GetDocRoot(void);
 gchar *GetDocIndex(void);
 gchar *GetGlobalConfigFile(void);
 gchar *GetLocalConfigFile(void);

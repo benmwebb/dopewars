@@ -2252,23 +2252,34 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
 }
 
 /*
- * Returns the URL of the index file for the local HTML documentation.
+ * Returns the URL of the directory containing local HTML documentation.
  */
-gchar *GetDocIndex(void)
+gchar *GetDocRoot(void)
 {
-  static gchar *indexfile = "index.html";
   gchar *path;
 #ifdef CYGWIN
   gchar *bindir;
 
   bindir = GetBinaryDir();
-  path = g_strdup_printf("file://%s\\%s", bindir, indexfile);
+  path = g_strdup_printf("file://%s\\", bindir);
   g_free(bindir);
 #else
-  path = g_strdup_printf("file://%s/doc/%s-%s/%s", DATADIR, PACKAGE,
-                         VERSION, indexfile);
+  path = g_strdup_printf("file://%s/doc/%s-%s/", DATADIR, PACKAGE, VERSION);
 #endif
   return path;
+}
+
+/*
+ * Returns the URL of the index file for the local HTML documentation.
+ */
+gchar *GetDocIndex(void)
+{
+  gchar *file, *root;
+
+  root = GetDocRoot();
+  file = g_strdup_printf("%sindex.html", root);
+  g_free(root);
+  return file;
 }
 
 /*

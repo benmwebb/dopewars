@@ -47,6 +47,7 @@ const gchar *GTK_STOCK_CANCEL = N_("_Cancel");
 const gchar *GTK_STOCK_REFRESH = N_("_Refresh");
 const gchar *GTK_STOCK_YES = N_("_Yes");
 const gchar *GTK_STOCK_NO = N_("_No");
+const gchar *GTK_STOCK_HELP = N_("_Help");
 #endif
 
 #ifdef CYGWIN
@@ -812,6 +813,11 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
   return FALSE;
 }
 
+void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
+{
+  ShellExecute(parent->hWnd, "open", target, NULL, NULL, 0);
+}
+
 LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
 {
   GtkWidget *widget;
@@ -838,12 +844,9 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     }
     return TRUE;
   } else if (msg == WM_LBUTTONUP) {
-    gchar *target;
-
     widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
-    target = GTK_URL(widget)->target;
 
-    ShellExecute(hwnd, "open", target, NULL, NULL, 0);
+    DisplayHTML(widget, NULL, GTK_URL(widget)->target);
     return FALSE;
   } else
     return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -5297,16 +5300,12 @@ static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
   gdk_cursor_destroy(cursor);
 }
 
-static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
-                                  gpointer data)
+void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 {
 #ifdef HAVE_FORK
-  gchar *bin, *target, *args[3];
+  char *args[3];
   pid_t pid;
   int status;
-
-  target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
-  bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
 
   if (target && target[0] && bin && bin[0]) {
     args[0] = bin;
@@ -5328,6 +5327,16 @@ static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
     }
   }
 #endif
+}
+
+static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
+                                  gpointer data)
+{
+  gchar *bin, *target;
+
+  bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
+  target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
+  DisplayHTML(widget, bin, target);
   return TRUE;
 }
 

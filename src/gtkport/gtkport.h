@@ -750,7 +750,8 @@ struct _GtkUrl {
 
 #if CYGWIN || !HAVE_GLIB2
 extern const gchar *GTK_STOCK_OK, *GTK_STOCK_CLOSE, *GTK_STOCK_CANCEL, 
-                   *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO;
+                   *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO,
+                   *GTK_STOCK_HELP;
 
 typedef enum
 {
@@ -785,5 +786,6 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
 GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
+void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
 
 #endif /* __GTKPORT_H__ */

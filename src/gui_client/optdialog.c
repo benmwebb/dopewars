@@ -557,6 +557,29 @@ static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
   gtk_widget_destroy(dialog);
 }
 
+static gchar *GetHelpPage(const gchar *pagename)
+{
+  gchar *root, *file;
+
+  root = GetDocRoot();
+  file = g_strdup_printf("%shelp%c%s.html", root, G_DIR_SEPARATOR, pagename);
+  g_free(root);
+  return file;
+}
+
+static void HelpCallback(GtkWidget *widget, GtkWidget *notebook)
+{
+  const static gchar *pagehelp[] = {
+    "general", "locations", "drugs", "guns", "cops", "server", "sounds"
+  };
+  gint page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
+  gchar *help;
+
+  help = GetHelpPage(pagehelp[page]);
+  DisplayHTML(widget, WebBrowser, help);
+  g_free(help);
+}
+
 static void FinishOptDialog(GtkWidget *widget, gpointer data)
 {
   FreeConfigWidgets();
@@ -950,6 +973,12 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+
+  button = NewStockButton(GTK_STOCK_HELP, accel_group);
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                     GTK_SIGNAL_FUNC(HelpCallback), (gpointer)notebook);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
