@@ -755,24 +755,11 @@ void CompleteHighScoreDialog(gboolean AtEnd)
  */
 void PrintMessage(char *text, char *tagname)
 {
-  gint EditPos;
-  GtkTextView *messages;
-  GtkTextBuffer *buffer;
-  GtkTextIter iter;
-  GtkTextMark *insert;
-
-  messages = GTK_TEXT_VIEW(ClientData.messages);
-  buffer = gtk_text_view_get_buffer(messages);
+  GtkTextView *messages = GTK_TEXT_VIEW(ClientData.messages);
 
   g_strdelimit(text, "^", '\n');
-  gtk_text_buffer_get_end_iter(buffer, &iter);
-  gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1,
-                                           tagname, NULL);
-  gtk_text_buffer_insert(buffer, &iter, "\n", -1);
-
-  gtk_text_buffer_place_cursor(buffer, &iter);
-  insert = gtk_text_buffer_get_mark(buffer, "insert");
-  gtk_text_view_scroll_mark_onscreen(messages, insert);
+  TextViewAppend(messages, text, tagname, FALSE);
+  TextViewAppend(messages, "\n", NULL, TRUE);
 }
 
 /* 
