@@ -182,7 +182,7 @@ extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
 extern int DebtInterest, BankInterest;
 extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
-	     *BindAddress;
+	     *BindAddress, *PlayerName;
 #ifdef CYGWIN
 extern gboolean MinToSysTray;
 #else
@@ -359,6 +359,7 @@ struct CMDLINE {
   gboolean convert, admin, ai, server, notifymeta;
   gboolean setport;
   gchar *scorefile, *servername, *pidfile, *logfile, *plugin, *convertfile;
+  gchar *playername;
   unsigned port;
   ClientType client;
   GSList *configs;

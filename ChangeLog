@@ -5,6 +5,8 @@ cvs
       larger than 80x24
     - Fix for a crash encountered if you drop drugs and then encounter
       the cops
+    - Addition of -P, --player command line option to set the player name
+      to use (thanks to Michael Mitton)
 
 1.5.8   21-10-2002
     - Options dialog now allows sounds for all supported game events to be set

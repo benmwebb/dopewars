@@ -2336,11 +2336,15 @@ static void Curses_DoGame(Player *Play)
   attrset(TextAttr);
   clear_bottom();
   buf = NULL;
-  do {
-    g_free(buf);
-    buf = nice_input(_("Hey dude, what's your name? "), get_ui_area_top() + 1,
-                     1, FALSE, OldName, '\0');
-  } while (buf[0] == 0);
+  if (PlayerName && PlayerName[0]) {
+    buf = g_strdup(PlayerName);
+  } else {
+    do {
+      g_free(buf);
+      buf = nice_input(_("Hey dude, what's your name? "),
+                       get_ui_area_top() + 1, 1, FALSE, OldName, '\0');
+    } while (buf[0] == 0);
+  }
 #if NETWORKING
   if (WantNetwork) {
     if (!ConnectToServer(Play)) {

@@ -81,7 +81,7 @@ gboolean Network, Client, Server, WantAntique = FALSE, UseSounds = TRUE;
 unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue, Antique = FALSE;
 gchar *HiScoreFile = NULL, *ServerName = NULL;
-gchar *ServerMOTD = NULL, *BindAddress = NULL;
+gchar *ServerMOTD = NULL, *BindAddress = NULL, *PlayerName = NULL;
 
 struct DATE StartDate = {
   1, 12, 1984
@@ -2602,6 +2602,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
                             client (GTK+ or Win32)\n\
   -t, --text-client       force the use of a text-mode client (curses) (by\n\
                             default, a windowed client is used when possible)\n\
+  -P, --player=NAME       set player name to \"NAME\"\n\
   -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DPDATADIR);
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
@@ -2635,6 +2636,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -w       force the use of a graphical (windowed) client (GTK+ or Win32)\n\
   -t       force the use of a text-mode client (curses)\n\
               (by default, a windowed client is used when possible)\n\
+  -P name  set player name to \"name\"\n\
   -C file  convert an \"old format\" score file to the new format\n\
   -A       connect to a locally-running server for administration\n"),
            DPDATADIR);
@@ -2650,7 +2652,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
 {
   int c;
   struct CMDLINE *cmdline = g_new0(struct CMDLINE, 1);
-  static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NAu:";
+  static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NAu:P:";
 
 #ifdef HAVE_GETOPT_LONG
   static const struct option long_options[] = {
@@ -2668,6 +2670,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
     {"ai-player", no_argument, NULL, 'c'},
     {"windowed-client", no_argument, NULL, 'w'},
     {"text-client", no_argument, NULL, 't'},
+    {"player", required_argument, NULL, 'P'},
     {"convert", required_argument, NULL, 'C'},
     {"logfile", required_argument, NULL, 'l'},
     {"admin", no_argument, NULL, 'A'},
@@ -2679,7 +2682,8 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
 #endif
 
   cmdline->scorefile = cmdline->servername = cmdline->pidfile
-      = cmdline->logfile = cmdline->plugin = cmdline->convertfile = NULL;
+      = cmdline->logfile = cmdline->plugin = cmdline->convertfile
+      = cmdline->playername = NULL;
   cmdline->configs = NULL;
   cmdline->colour = cmdline->network = TRUE;
   cmdline->client = CLIENT_AUTO;
@@ -2748,6 +2752,9 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
     case 't':
       cmdline->client = CLIENT_CURSES;
       break;
+    case 'P':
+      AssignName(&cmdline->playername, optarg);
+      break;
     case 'C':
       AssignName(&cmdline->convertfile, optarg);
       cmdline->convert = TRUE;
@@ -2771,6 +2778,7 @@ void FreeCmdLine(struct CMDLINE *cmdline)
   g_free(cmdline->logfile);
   g_free(cmdline->plugin);
   g_free(cmdline->convertfile);
+  g_free(cmdline->playername);
 
   for (list = cmdline->configs; list; list = g_slist_next(list)) {
     g_free(list->data);
@@ -2815,6 +2823,9 @@ void InitConfiguration(struct CMDLINE *cmdline)
   }
   if (cmdline->servername) {
     AssignName(&ServerName, cmdline->servername);
+  }
+  if (cmdline->playername) {
+    AssignName(&PlayerName, cmdline->playername);
   }
   if (cmdline->pidfile) {
     AssignName(&PidFile, cmdline->pidfile);

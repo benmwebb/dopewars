@@ -2228,6 +2228,9 @@ gboolean GtkLoop(int *argc, char **argv[],
   /* Create the main player */
   ClientData.Play = g_new(Player, 1);
   FirstClient = AddPlayer(0, ClientData.Play, FirstClient);
+  if (PlayerName && PlayerName[0]) {
+    SetPlayerName(ClientData.Play, PlayerName);
+  }
 
   gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
   gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);

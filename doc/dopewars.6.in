@@ -60,6 +60,9 @@ Force the use of a graphical client (GTK+ or Win32)
 Force the use of a text-mode (curses) client (by default, a windowed client
 is used when possible)
 .TP
+\fB\-P\fR, \fB\-\-player\fR=\fINAME\fR
+Sets the default player name
+.TP
 \fB\-C\fR, \fB\-\-convert\fR=\fIFILE\fR
 Convert a high score file used by dopewars-1.5.1 or earlier to the format
 used by more recent versions
