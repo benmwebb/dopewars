@@ -1002,12 +1002,14 @@ void HandleClientMessage(char *Message, Player *Play)
     text = g_strdup_printf("%s: %s", GetPlayerName(From), Data);
     display_message(text);
     g_free(text);
+    SoundPlay(Sounds.TalkToAll);
     break;
   case C_MSGTO:
     text = g_strdup_printf("%s->%s: %s", GetPlayerName(From),
                            GetPlayerName(Play), Data);
     display_message(text);
     g_free(text);
+    SoundPlay(Sounds.TalkPrivate);
     break;
   case C_JOIN:
     text = g_strdup_printf(_("%s joins the game!"), Data);
