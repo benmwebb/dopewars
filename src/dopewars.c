@@ -46,6 +46,7 @@
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
+#include "sound.h"
 #include "tstring.h"
 #include "AIPlayer.h"
 #include "util.h"
@@ -151,6 +152,9 @@ struct GUN StaticGun, *Gun = NULL;
 struct COP StaticCop, *Cop = NULL;
 struct NAMES Names = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
+struct SOUNDS Sounds = {
+  NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* N.B. The slightly over-enthusiastic comments here are for the benefit
@@ -372,6 +376,24 @@ struct GLOBALS Globals[] = {
    N_("Name of the gun shop"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Names.RoughPubName, NULL, "RoughPubName",
    N_("Name of the pub"), NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.FightHit, NULL, "Sounds.FightHit",
+   N_("Sound file played for a gun \"hit\""), NULL, NULL, 0, "",
+   NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.FightMiss, NULL, "Sounds.FightMiss",
+   N_("Sound file played for a gun \"miss\""), NULL, NULL, 0, "",
+   NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.FightReload, NULL, "Sounds.FightReload",
+   N_("Sound file played when guns are reloaded"), NULL, NULL, 0, "",
+   NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.Jet, NULL, "Sounds.Jet",
+   N_("Sound file played on arriving at a new location"), NULL, NULL, 0, "",
+   NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.TalkToAll, NULL, "Sounds.TalkToAll",
+   N_("Sound file played when a player sends a public chat message"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.TalkPrivate, NULL, "Sounds.TalkPrivate",
+   N_("Sound file played when a player sends a private chat message"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {&DrugSortMethod, NULL, NULL, NULL, NULL, "DrugSortMethod",
    N_("Sort key for listing available drugs"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
@@ -2420,6 +2442,8 @@ void SetupParameters(void)
   ServerMOTD = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
+  AssignName(&Sounds.FightHit, "hit.wav");
+  AssignName(&Sounds.Jet, "jet.wav");
 
   CopyNames(&Names, &DefaultNames);
   CopyDrugs(&Drugs, &DefaultDrugs);
@@ -2817,6 +2841,7 @@ int main(int argc, char *argv[])
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 #endif
+  SoundInit();
   WantUTF8Errors(FALSE);
   GeneralStartup(argc, argv);
   OpenLog();
@@ -2870,6 +2895,7 @@ int main(int argc, char *argv[])
   g_free(PidFile);
   g_free(Log.File);
   g_free(ConvertFile);
+  SoundClose();
   return 0;
 }
 
