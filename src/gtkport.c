@@ -634,6 +634,8 @@ static GSList *GtkTimeouts=NULL;
 static HWND TopLevel=NULL;
 long AsyncSocketError=0;
 
+static WNDPROC wpOrigEntryProc;
+
 static void gtk_set_default_font(HWND hWnd) {
    SendMessage(hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(FALSE,0));
 }
@@ -894,6 +896,17 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          return DefWindowProc(hwnd,msg,wParam,lParam);
    }
    return FALSE;
+}
+
+LRESULT APIENTRY EntryWndProc(HWND hwnd,UINT msg,WPARAM wParam,
+                              LPARAM lParam) {
+   GtkWidget *widget;
+   if (msg==WM_KEYUP && wParam==VK_RETURN) {
+      widget=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
+      if (widget) gtk_signal_emit(GTK_OBJECT(widget),"activate");
+      return FALSE;
+   }
+   return CallWindowProc(wpOrigEntryProc,hwnd,msg,wParam,lParam);
 }
 
 void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
@@ -1961,6 +1974,11 @@ void gtk_entry_realize(GtkWidget *widget) {
                             widget->allocation.x,widget->allocation.y,
                             widget->allocation.width,widget->allocation.height,
                             Parent,NULL,hInst,NULL);
+/* Subclass the window (we assume that all edit boxes have the same window
+   procedure) */
+   wpOrigEntryProc = (WNDPROC) SetWindowLong(widget->hWnd,
+                                             GWL_WNDPROC,
+                                             (LONG)EntryWndProc);
    gtk_set_default_font(widget->hWnd);
    gtk_editable_set_editable(GTK_EDITABLE(widget),
                              GTK_EDITABLE(widget)->is_editable);
