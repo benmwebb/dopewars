@@ -2067,7 +2067,7 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group)
     caption = _("_Fight");
   } else {
     /* Caption of 'Jet' button in main window */
-    caption = _("_Jet");
+    caption = _("_Jet!");
   }
   ClientData.JetAccel = SetAccelerator(button, caption, button,
                                        "clicked", accel_group, FALSE);
