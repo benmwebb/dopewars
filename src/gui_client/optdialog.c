@@ -723,6 +723,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
   gchar *sound_titles[2];
+  int width;
 
   struct ConfigMembers locmembers[] = {
     { N_("Police presence"), "PolicePresence" },
@@ -1009,4 +1010,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
   gtk_widget_show_all(dialog);
+
+  width = gtk_clist_optimal_column_width(GTK_CLIST(clist), 0);
+  gtk_clist_set_column_width(GTK_CLIST(clist), 0, width);
 }
