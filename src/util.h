@@ -38,8 +38,6 @@
 #define SIG_BLOCK     0
 #define SIG_UNBLOCK   0
 
-typedef int ssize_t;
-
 struct sigaction {
   void *sa_handler;
   int sa_flags;
