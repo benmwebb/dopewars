@@ -130,7 +130,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
-            win32_init(hInstance,hPrevInstance);
+            win32_init(hInstance,hPrevInstance,"mainicon");
             GuiServerLoop();
 #else
             AllocConsole();
@@ -150,7 +150,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                       "Recompile passing --enable-networking to the "
                       "configure script.\n"));
             WindowPrintEnd();
-#endif /* NETWORKING
+#endif /* NETWORKING */
          } else if (AIPlayer) {
             AllocConsole();
 
