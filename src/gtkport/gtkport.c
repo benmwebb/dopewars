@@ -5657,8 +5657,8 @@ void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
   int status;
 
   if (target && target[0] && bin && bin[0]) {
-    args[0] = bin;
-    args[1] = target;
+    args[0] = (char *)bin;
+    args[1] = (char *)target;
     args[2] = NULL;
     /* Fork twice so that the spawned process gets init as its parent */
     pid = fork();
