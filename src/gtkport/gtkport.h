@@ -781,7 +781,11 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #else /* CYGWIN */
 
 /* Include standard GTK+ headers on Unix systems */
-#define GTK_DISABLE_DEPRECATED 1
+
+/* We'd like to do this under GTK+2, but we can't until we get rid of
+   clists, gtk_object, etc.
+   #define GTK_DISABLE_DEPRECATED 1
+ */
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
