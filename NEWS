@@ -1,3 +1,52 @@
+4th February 2002
+     dopewars-1.5.3 released. This fixes several bugs and annoyances in the
+Windows version, and supports running the Windows server as an "NT Service".
+The Unix server is now also more daemon-like.
+
+16th October 2001
+     dopewars-1.5.2 released. This features a new networking subsystem, with
+HTTP/1.0 and SOCKS4&5 support, and now has a familiar install/uninstall
+program for Windows systems.
+
+19th June 2001
+     dopewars-1.5.1 released. This fixes a few minor bugs, and supports the
+"new" metaserver on SourceForge.
+
+13th May 2001
+     dopewars-1.5.0 released. This improves on 1.4.8 by adding a graphical
+client, and features many security and usability fixes.
+
+29th April 2001
+     Second beta release of 1.5.0, fixing several bugs that were reported
+with the first beta.
+
+9th April 2001
+     Beta release of the new dopewars version, 1.5.0, which features a
+graphical client, internationalisation, and rewrites of many parts of the code.
+
+10th September 2000
+     The dopewars project, previously hosted solely at
+http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/ now has an additional home at
+SourceForge! This is to allow developers easier access to development codes
+(by CVS) and to take advantage of SourceForge's mailing lists and forums.
+Translators are particularly needed for translation of the development
+version of the dopewars code into other languages!
+
+2nd August 2000
+    The German translation now has its home at
+http://www.ideenpark.de/dopewars/. This site also mirrors the original
+English version of the program.  
+
+28th July 2000
+    A German translation of dopewars is now available, at
+http://www.rLUG.de/files/dopewars-german/.
+
+9th July 2000
+     dopewars 1.4.8 released. This features a complete revamp of the
+metaserver interface - new servers now report game data, such as current
+number of players and high scores, to the metaserver. Several bugs, mainly
+in the Win32 networking code, have been fixed.
+
 2nd July 2000
      A mirror in the US is now available for dopewars downloads. Follow the US
 links (as opposed to the UK links) on the download page to download from this
