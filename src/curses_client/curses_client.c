@@ -2154,7 +2154,8 @@ static void Curses_DoGame(Player *Play)
       if (HaveWorthless && !WantAntique)
         g_string_append(text, _(", D>rop"));
       if (Network)
-        g_string_append(text, _(", T>alk, P>age, L>ist"));
+        g_string_append(text, _(", T>alk, P>age"));
+      g_string_append(text, _(", L>ist"));
       if (!WantAntique && (Play->Bitches.Carried > 0 ||
                            Play->Flags & SPYINGON)) {
         g_string_append(text, _(", G>ive"));
@@ -2309,14 +2310,19 @@ static void Curses_DoGame(Player *Play)
           clear_bottom();
           SendClientMessage(Play, C_NONE, C_WANTQUIT, NULL, NULL);
         }
-      } else if (c == 'L' && Network) {
-        attrset(PromptAttr);
-        mvaddstr(23, 20, _("List what? P>layers or S>cores? "));
-        /* P>layers, S>cores */
-        i = GetKey(_("PS"), "PS", TRUE, FALSE, FALSE);
-        if (i == 'P') {
-          ListPlayers(Play, FALSE, NULL);
-        } else if (i == 'S') {
+      } else if (c == 'L') {
+        if (Network) {
+          attrset(PromptAttr);
+          mvaddstr(23, 20, _("List what? P>layers or S>cores? "));
+          /* P>layers, S>cores */
+          i = GetKey(_("PS"), "PS", TRUE, FALSE, FALSE);
+          if (i == 'P') {
+            ListPlayers(Play, FALSE, NULL);
+          } else if (i == 'S') {
+            DisplayMode = DM_NONE;
+            SendClientMessage(Play, C_NONE, C_REQUESTSCORE, NULL, NULL);
+          }
+        } else {
           DisplayMode = DM_NONE;
           SendClientMessage(Play, C_NONE, C_REQUESTSCORE, NULL, NULL);
         }
