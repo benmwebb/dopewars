@@ -77,6 +77,10 @@ if test "$CYGWIN" = "yes" ; then
    WNDRES="dopewars.res"
    AC_SUBST(WNDRES)
 
+   dnl Add support for the Windows multimedia system
+   SOUND_LIBS="$SOUND_LIBS -lwinmm"
+   AC_DEFINE(HAVE_WINMM, 1, [Do we have the Windows multimedia system?])
+
    dnl The gtkport implementation works just fine
    dnl for gtk_entry_set_visibility()
    HAVE_FIXED_GTK="yes"
@@ -157,6 +161,15 @@ else
            AC_MSG_RESULT([$HAVE_FIXED_GTK])
         fi
      fi
+   fi
+
+   dnl Add esound support if available
+   ESD=no
+   AM_PATH_ESD(0.0.20, ESD=yes)
+   if test "$ESD" = "yes"; then
+     SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
+     SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
+     AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
    fi
 
    dnl Use console server by default
@@ -294,6 +307,9 @@ if test "$CURSES_CLIENT" = "yes" ; then
   CURSESPORTLIB="cursesport/libcursesport.a"
   AC_SUBST(CURSESPORTLIB)
 fi
+
+AC_SUBST(SOUND_CFLAGS)
+AC_SUBST(SOUND_LIBS)
 
 AC_OUTPUT([
 Makefile
