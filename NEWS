@@ -1,3 +1,8 @@
+29th April 2002
+     dopewars-1.5.6 released. This corrects some problems with the GTK+2.0
+client in non-UTF8 locales, fixes a server memory corruption bug, and adds
+extra sanity checks to the server to foil cheating clients.
+
 13th April 2002
      dopewars-1.5.5 released. The code should now compile with GTK+2.0,
 and several minor glitches have been fixed.
