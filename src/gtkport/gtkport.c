@@ -737,7 +737,7 @@ HWND gtk_get_parent_hwnd(GtkWidget *widget)
 }
 
 static void UpdatePanedGhostRect(GtkPaned *paned, RECT *OldRect,
-                                 RECT *NewRect, gint x, gint y)
+                                 RECT *NewRect, gint16 x, gint16 y)
 {
   HWND hWnd, parent;
   RECT rect, clrect;
