@@ -545,7 +545,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->Bank=0;
    NewPlayer->Bitches.Carried=8;
    NewPlayer->CopIndex=0;
-   NewPlayer->Health=MaxHealth(NewPlayer,NewPlayer->Bitches.Carried);
+   NewPlayer->Health=100;
    NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
    NewPlayer->ReadBuf.Data=NewPlayer->WriteBuf.Data=NULL;
@@ -554,6 +554,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    InitAbilities(NewPlayer);
    if (Server) NewPlayer->fd=fd;
    NewPlayer->FightArray=NULL;
+   NewPlayer->Attacking=NULL;
    return g_slist_append(First,(gpointer)NewPlayer);
 }
 
@@ -600,14 +601,6 @@ void CopyPlayer(Player *Dest,Player *Src) {
    Dest->Name=g_strdup(Src->Name);
    Dest->Bitches.Carried=Src->Bitches.Carried;
    Dest->Flags=Src->Flags;
-}
-
-int MaxHealth(Player *Play,int NumBitches) {
-   if (IsCop(Play))
-      return (Cop[Play->CopIndex-1].Health+
-              NumBitches*Cop[Play->CopIndex-1].DeputyHealth);
-   else
-      return (80+NumBitches*20);
 }
 
 gboolean IsCop(Player *Play) {

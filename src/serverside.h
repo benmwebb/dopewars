@@ -69,8 +69,6 @@ gboolean CheckHighScoreFile();
 int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore);
 void CopsAttackPlayer(Player *Play);
 void AttackPlayer(Player *Play,Player *Attacked);
-void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other,
-                      gboolean Inform);
 gboolean IsOpponent(Player *Play,Player *Other);
 void Fire(Player *Play);
 void WithdrawFromCombat(Player *Play);

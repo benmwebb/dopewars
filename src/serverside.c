@@ -1187,6 +1187,10 @@ void CopsAttackPlayer(Player *Play) {
    gint CopIndex,NumDeputy,GunIndex;
 
    CopIndex=1-Play->CopIndex;
+   if (CopIndex<0) {
+      g_warning(_("Cops cannot attack other cops!"));
+      return;
+   }
    if (CopIndex > NumCop) CopIndex=NumCop;
    Cops=g_new(Player,1);
    FirstServer=AddPlayer(0,Cops,FirstServer);
@@ -1200,7 +1204,7 @@ void CopsAttackPlayer(Player *Play) {
    GunIndex=Cop[CopIndex-1].GunIndex;
    if (GunIndex>=NumGun) GunIndex=NumGun-1;
    Cops->Guns[GunIndex].Carried=NumDeputy+1;
-   Cops->Health=MaxHealth(Cops,NumDeputy);
+   Cops->Health=100;
 
    Play->EventNum++;
    AttackPlayer(Cops,Play);
@@ -1217,39 +1221,35 @@ void AttackPlayer(Player *Play,Player *Attacked) {
 
    if (Play->FightArray && Attacked->FightArray) {
       if (Play->FightArray==Attacked->FightArray) {
-         g_warning("Players are already in a fight!");
+         g_warning(_("Players are already in a fight!"));
       } else {
-         g_warning("Players are already in separate fights!");
+         g_warning(_("Players are already in separate fights!"));
       }
       return;
    }
 
-   if (Play->FightArray) {
-      FightArray=Play->FightArray;
-      AddPlayerToFight(Attacked,FightArray,Play,TRUE);
-   } else if (Attacked->FightArray) {
-      FightArray=Attacked->FightArray;
-      AddPlayerToFight(Play,FightArray,Attacked,TRUE);
+   if (!Play->FightArray && !Attacked->FightArray) {
+      FightArray = g_ptr_array_new();
    } else {
-      FightArray=g_ptr_array_new();
-      AddPlayerToFight(Attacked,FightArray,Play,TRUE);
-      AddPlayerToFight(Play,FightArray,Attacked,FALSE);
+      FightArray = Play->FightArray ? Play->FightArray : Attacked->FightArray;
    }
+
+   if (!Play->FightArray) {
+      Play->ResyncNum=Play->EventNum;
+      g_ptr_array_add(FightArray,Play);
+   }
+   if (!Attacked->FightArray) {
+      Attacked->ResyncNum=Attacked->EventNum;
+      g_ptr_array_add(FightArray,Attacked);
+   }
+   Play->FightArray=Attacked->FightArray=FightArray;
+   Play->EventNum=Attacked->EventNum=E_FIGHT;
+
+   Play->Attacking = Attacked;
+
+   SendFightMessage(Attacked,Play,0,F_ARRIVED,FALSE,TRUE,NULL);
    
    Fire(Play);
-}
-
-void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other,
-                      gboolean Inform) {
-/* Adds the player "NewPlay" to the fight "Fight", and informs any      */
-/* players already in the fight of the new player's arrival, if         */
-/* "Inform" is TRUE. "Other" is a player already in the fight.          */
-   NewPlay->FightArray=Fight;
-   NewPlay->ResyncNum=NewPlay->EventNum;
-   NewPlay->EventNum=E_FIGHT;
-
-   g_ptr_array_add(Fight,NewPlay);
-   if (Inform) SendFightMessage(NewPlay,Other,0,F_ARRIVED,FALSE,TRUE,NULL);
 }
 
 gboolean IsOpponent(Player *Play,Player *Other) {
@@ -1273,10 +1273,9 @@ void HandleDamage(Player *Defend,Player *Attack,int Damage,
       AddInventory(Drugs,Defend->Drugs,NumDrug);
       Defend->Health=0;
    } else if (Defend->Bitches.Carried>0 &&
-              Defend->Health-Damage <=
-              MaxHealth(Defend,Defend->Bitches.Carried-1)) {
+              Defend->Health<=Damage) {
       LoseBitch(Defend,Guns,Drugs);
-      Defend->Health=MaxHealth(Defend,Defend->Bitches.Carried);
+      Defend->Health=100;
       *BitchesKilled=1;
    } else {
       Defend->Health-=Damage;
@@ -1352,7 +1351,11 @@ void RunFromCombat(Player *Play) {
 
    if (!Play || !Play->FightArray) return;
 
-   EscapeProb=50;
+   EscapeProb=60;
+
+/* Penalise players that are attacking others */
+   if (Play->Attacking) EscapeProb/=2;
+
    RandNum=brandom(0,100);
 
    if (RandNum<EscapeProb) {
@@ -1366,7 +1369,7 @@ void RunFromCombat(Player *Play) {
       WithdrawFromCombat(Play);
       Play->EventNum=Play->ResyncNum; SendEvent(Play);
    } else {
-      SendFightMessage(Play,NULL,0,F_MSG,FALSE,FALSE,"You can't get away!");
+      SendFightMessage(Play,NULL,0,F_MSG,FALSE,FALSE,_("You can't get away!"));
       AllowNextShooter(Play);
       DoReturnFire(Play);
    }
@@ -1400,10 +1403,56 @@ void CheckForKilledPlayers(Player *Play) {
    g_ptr_array_free(KilledPlayers,FALSE);
 }
 
+static void CheckCopsIntervene(Player *Play) {
+/* If "Play" is attacking someone, and no cops are currently present, */
+/* then have the cops intervene (with a probability dependent on the  */
+/* current location's PolicePresence)                                 */
+   gint ArrayInd;
+   Player *Defend;
+
+   if (!Play || !Play->FightArray) return; /* Sanity check */
+
+   if (!Play->Attacking) return; /* Cops don't attack "innocent victims" ;) */
+
+   if (brandom(0,100) > Location[(int)Play->IsAt].PolicePresence) {
+      return; /* The cops shouldn't _always_ attack (unless P.P. == 100) */
+   }
+
+   for (ArrayInd=0;Play->FightArray && ArrayInd<Play->FightArray->len;
+        ArrayInd++) {
+      Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+      if (IsCop(Defend)) return;  /* We don't want _more_ cops! */
+   }
+
+   /* OK - let 'em have it... */
+   CopsAttackPlayer(Play);
+}
+
+static Player *GetFireTarget(Player *Play) {
+/* Returns a suitable player (or cop) for "Play" to fire at. If "Play" */
+/* is attacking a designated target already, return that, otherwise    */
+/* return the first valid opponent in the player's FightArray.         */
+   Player *Defend;
+   gint ArrayInd;
+
+   if (Play->Attacking && g_slist_find(FirstServer,(gpointer)Play->Attacking)) {
+      return Play->Attacking;
+   } else {
+      Play->Attacking=NULL;
+      for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+         if (Defend && Defend!=Play && IsOpponent(Play,Defend)) {
+            return Defend;
+         }
+      }
+   }
+   return NULL;
+}
+
 void Fire(Player *Play) {
-/* Fires all weapons of player "Play" at all opponents, and resets  */
-/* the fight timeout (the reload time)                              */
-   int Damage,ArrayInd,i,j;
+/* Fires all weapons of player "Play" at an opponent, and resets  */
+/* the fight timeout (the reload time)                            */
+   int Damage,i,j;
    int AttackRating,DefendRating;
    int BitchesKilled;
    gboolean Loot;
@@ -1416,29 +1465,28 @@ void Fire(Player *Play) {
    AllowNextShooter(Play);
    if (FightTimeout) SetFightTimeout(Play);
 
-   for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
-      Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
-
-      if (Defend && Defend!=Play && IsOpponent(Play,Defend)) {
-         Damage=0; BitchesKilled=0; Loot=FALSE;
-         if (TotalGunsCarried(Play)>0) {
-            GetFightRatings(Play,Defend,&AttackRating,&DefendRating);
-            if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
-               FightPoint=F_HIT;
-               for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
-                  Damage+=brandom(0,Gun[i].Damage);
-               }
-               if (Damage==0) Damage=1;
-               HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
-            } else FightPoint=F_MISS;
-         } else FightPoint=F_STAND;
-         SendFightMessage(Play,Defend,BitchesKilled,FightPoint,Loot,TRUE,NULL);
-      }
+   Defend = GetFireTarget(Play);
+   if (Defend) {
+      Damage=0; BitchesKilled=0; Loot=FALSE;
+      if (TotalGunsCarried(Play)>0) {
+         GetFightRatings(Play,Defend,&AttackRating,&DefendRating);
+         if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
+            FightPoint=F_HIT;
+            for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
+               Damage+=brandom(0,Gun[i].Damage);
+            }
+            if (Damage==0) Damage=1;
+            HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
+         } else FightPoint=F_MISS;
+      } else FightPoint=F_STAND;
+      SendFightMessage(Play,Defend,BitchesKilled,FightPoint,Loot,TRUE,NULL);
    }
    CheckForKilledPlayers(Play);
 
 /* Careful, as we might have killed Player "Play" */
    if (g_slist_find(FirstServer,(gpointer)Play)) DoReturnFire(Play);
+
+   if (g_slist_find(FirstServer,(gpointer)Play)) CheckCopsIntervene(Play);
 }
 
 gboolean CanPlayerFire(Player *Play) {
@@ -1501,6 +1549,7 @@ void WithdrawFromCombat(Player *Play) {
    int i,j;
    gboolean FightDone;
    Player *Attack,*Defend;
+   GSList *list;
 
    if (!Play->FightArray) return;
 
@@ -1514,6 +1563,11 @@ void WithdrawFromCombat(Player *Play) {
              IsOpponent(Attack,Defend)) { FightDone=FALSE; break; }
       }
       if (!FightDone) break;
+   }
+
+   for (list=FirstServer;list;list=g_slist_next(list)) {
+      Attack=(Player *)list->data;
+      if (Attack->Attacking==Play) Attack->Attacking=NULL;
    }
 
    SendFightLeave(Play,FightDone);
@@ -1535,6 +1589,7 @@ void WithdrawFromCombat(Player *Play) {
       g_ptr_array_free(Play->FightArray,TRUE);
    }
    Play->FightArray=NULL;
+   Play->Attacking=NULL;
 }
 
 int RandomOffer(Player *To) {
@@ -1818,7 +1873,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
       case E_DOCTOR:
          if (From->Cash >= From->DocPrice) {
             From->Cash -= From->DocPrice;
-            From->Health=MaxHealth(From,From->Bitches.Carried);
+            From->Health=100;
             SendPlayerData(From);
          }
 /*       FinishFightWithHardass(From,NULL);*/

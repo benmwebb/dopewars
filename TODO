@@ -1,4 +1,4 @@
-- Tidy up display of high scores in GUI client
+DONE - Tidy up display of high scores in GUI client
 - Revamp player-player fighting; use same system for fighting the cops and
   for fighting other players (perhaps the cops can intervene in fights);
   add SWAT teams, soldiers, etc. as dealers get more and more guns

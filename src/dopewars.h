@@ -70,6 +70,8 @@ typedef long price_t;
 typedef long long price_t;
 #endif
 
+/* "Abilities" are protocol extensions, which are negotiated between the
+   client and server at connect-time. */
 #define A_PLAYERID      0    /* Use numeric IDs rather than player names
                                 in network messages */
 #define A_DRUGVALUE     1    /* Server keeps track of purchase price of drugs */
@@ -77,9 +79,9 @@ typedef long long price_t;
 #define A_TSTRING       3    /* We understand the %Txx (tstring) notation */
 #define A_NUM           4
 typedef struct ABILITIES {
-   gboolean Local[A_NUM];
-   gboolean Remote[A_NUM];
-   gboolean Shared[A_NUM];
+   gboolean Local[A_NUM];   /* Abilities that we have */
+   gboolean Remote[A_NUM];  /* Those that the other end of the connection has */
+   gboolean Shared[A_NUM];  /* Abilites shared by us and the remote host */
 } Abilities;
 
 struct NAMES {
@@ -292,7 +294,8 @@ struct PLAYER_T {
    Player *OnBehalfOf;
    ConnBuf ReadBuf,WriteBuf;
    Abilities Abil;
-   GPtrArray *FightArray;
+   GPtrArray *FightArray; /* If non-NULL, a list of players in a fight */
+   Player *Attacking;     /* The player that this player is attacking */
    gint CopIndex;  /* if >0,  then this player is a cop, described
                               by Cop[CopIndex-1]
                       if ==0, this is a normal player that has killed no cops
@@ -347,7 +350,6 @@ int CountPlayers(GSList *First);
 GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First);
 void UpdatePlayer(Player *Play);
 void CopyPlayer(Player *Dest,Player *Src);
-int MaxHealth(Player *Play,int NumBitches);
 void ClearInventory(Inventory *Guns,Inventory *Drugs);
 int IsCarryingRandom(Player *Play,int amount);
 void ChangeSpaceForInventory(Inventory *Guns,Inventory *Drugs,
