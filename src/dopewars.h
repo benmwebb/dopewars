@@ -91,8 +91,11 @@ struct NAMES {
 
 struct METASERVER {
    int Active;
-   int HttpPort,UdpPort;
-   gchar *Name,*Path,*LocalName,*Password,*Comment;
+   gchar *Name;
+   int Port;
+   gchar *ProxyName;
+   int ProxyPort;
+   gchar *Path,*LocalName,*Password,*Comment;
 };
 
 struct PRICES {
@@ -329,7 +332,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 86
+#define NUMGLOB 87
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;

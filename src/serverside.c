@@ -60,9 +60,9 @@
 #define METAUPDATETIME  (10800)
 
 /* Don't report players logging in/out to the metaserver more frequently */
-/* than once every 5 minutes (so as not to overload the metaserver, or   */
-/* slow down our own server).                                            */
-#define METAMINTIME (300)
+/* than once every minute (so as not to overload the metaserver, or slow */
+/* down our own server).                                                 */
+#define METAMINTIME (60)
 
 int TerminateRequest,ReregisterRequest;
 
@@ -70,8 +70,9 @@ int MetaUpdateTimeout;
 int MetaMinTimeout;
 gboolean WantQuit=FALSE;
 
-/* Do we want to talk to the metaserver when the timeout expires? */
-gboolean MetaPending=FALSE;
+/* Do we want to update the player details on the metaserver when the
+   timeout expires? */
+gboolean MetaPlayerPending=FALSE;
 
 GSList *FirstServer=NULL;
 
@@ -128,55 +129,72 @@ int SendToMetaServer(char Up,int MetaSock,char *data,
    return 1;
 }
 
-void RegisterWithMetaServer(gboolean Up,gboolean SendData) {
+void RegisterWithMetaServer(gboolean Up,gboolean SendData,
+                            gboolean RespectTimeout) {
 /* Sends server details to the metaserver, if specified. If "Up" is  */
 /* TRUE, informs the metaserver that the server is now accepting     */
 /* connections - otherwise tells the metaserver that this server is  */
 /* about to go down. If "SendData" is TRUE, then also sends game     */
-/* data (e.g. scores) to the metaserver. If networking is disabled,  */
-/* does nothing.                                                     */
+/* data (e.g. scores) to the metaserver. If "RespectTimeout" is TRUE */
+/* then the update is delayed if a previous update happened too      */
+/* recently. If networking is disabled, this function does nothing.  */
 #if NETWORKING
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
    GString *text;
    gchar *prstr;
+   gchar *MetaName;
+   int MetaPort;
    int i;
 
-   if (!MetaServer.Active || !NotifyMetaServer) return;
-   if (MetaMinTimeout > time(NULL)) {
-      MetaPending=TRUE;
+   if (!MetaServer.Active || !NotifyMetaServer || WantQuit) return;
+
+   if (MetaMinTimeout > time(NULL) && RespectTimeout) {
+      g_print("Attempt to connect to metaserver too frequently - waiting for next timeout\n");
+      MetaPlayerPending=TRUE;
       return;
    }
 
-/* If the previous connect hung for so long that it's still pending, then
+/* If the previous connect hung for so long that it's still active, then
    break the connection before we start a new one */
    ShutdownNetworkBuffer(&MetaNetBuf);
 
-   if (StartNetworkBufferConnect(&MetaNetBuf,"dopewars.sourceforge.net",80)) {
-      g_print("Waiting for metaserver connect...\n");
+/* If a proxy is defined, connect to that. Otherwise, connect to the
+   metaserver directly */
+   if (MetaServer.ProxyName[0]) {
+      MetaName=MetaServer.ProxyName; MetaPort=MetaServer.ProxyPort;
+   } else {
+      MetaName=MetaServer.Name; MetaPort=MetaServer.Port;
    }
-   MetaPending=FALSE;
+
+   if (StartNetworkBufferConnect(&MetaNetBuf,MetaName,MetaPort)) {
+      g_print("Waiting for metaserver connect to %s:%d...\n",MetaName,MetaPort);
+   } else return;
+   MetaPlayerPending=FALSE;
    text=g_string_new("");
 
-   g_string_sprintf(text,"GET /metaserver.php?");
+   g_string_sprintf(text,"GET %s?output=text&",MetaServer.Path);
 
-   g_string_sprintfa(text,"port=%d&version=%s&players=%d&maxplay=%d&comment=%s",
-                    Port,VERSION,CountPlayers(FirstServer),MaxClients,
-                    MetaServer.Comment);
+   g_string_sprintfa(text,"up=%d&port=%d&version=%s&players=%d"
+                     "&maxplay=%d&comment=%s",
+                     Up ? 1 : 0,Port,VERSION,CountPlayers(FirstServer),
+                     MaxClients,MetaServer.Comment);
 
 
-   if (HighScoreRead(MultiScore,AntiqueScore)) {
-      for (i=0;i<NUMHISCORE;i++) if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-         g_string_sprintfa(text,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
-                           i,MultiScore[i].Name,i,MultiScore[i].Time,
-                           i,MultiScore[i].Dead ? "dead" : "alive",
-                           i,prstr=FormatPrice(MultiScore[i].Money));
-         g_free(prstr);
+   if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
+      for (i=0;i<NUMHISCORE;i++) {
+         if (MultiScore[i].Name && MultiScore[i].Name[0]) {
+            g_string_sprintfa(text,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
+                              i,MultiScore[i].Name,i,MultiScore[i].Time,
+                              i,MultiScore[i].Dead ? "dead" : "alive",
+                              i,prstr=FormatPrice(MultiScore[i].Money));
+            g_free(prstr);
+         }
       }
    }
 
    g_string_sprintfa(text," HTTP/1.1");
    QueueMessageForSend(&MetaNetBuf,text->str);
-   g_string_sprintf(text,"Host: dopewars.sourceforge.net\n");
+   g_string_sprintf(text,"Host: %s:%d\n",MetaServer.Name,MetaServer.Port);
    QueueMessageForSend(&MetaNetBuf,text->str);
    g_string_free(text,TRUE);
    
@@ -263,7 +281,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                   if (pt!=Play && !IsCop(pt)) SendPlayerDetails(pt,Play,C_LIST);
                }
                SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
-               RegisterWithMetaServer(TRUE,FALSE);
+               RegisterWithMetaServer(TRUE,FALSE,TRUE);
                Play->ConnectTimeout=0;
 
                if (Network) {
@@ -442,7 +460,6 @@ void ClientLeftServer(Player *Play) {
 
 void CleanUpServer() {
 /* Closes down the server and frees up associated handles and memory */
-   if (Server) RegisterWithMetaServer(FALSE,FALSE);
    while (FirstServer) {
       FirstServer=RemovePlayer((Player *)FirstServer->data,FirstServer);
    }
@@ -664,10 +681,29 @@ void StartServer() {
    }
 #endif
 
-   RegisterWithMetaServer(TRUE,TRUE);
+   RegisterWithMetaServer(TRUE,TRUE,FALSE);
 }
 
-gboolean HandleServerCommand(char *string) {
+void RequestServerShutdown() {
+/* Begin the process of shutting down the server. In order to do this, */
+/* we need to log out all of the currently connected players, and tell */
+/* the metaserver that we're shutting down. We only shut down properly */
+/* once all of these messages have been completely sent and            */
+/* acknowledged. (Of course, this can be overridden by a SIGINT or     */
+/* similar in the case of unresponsive players.)                       */
+   RegisterWithMetaServer(FALSE,FALSE,FALSE);
+   BroadcastToClients(C_NONE,C_QUIT,NULL,NULL,NULL);
+   WantQuit=TRUE;
+}
+
+gboolean IsServerShutdown() {
+/* Returns TRUE if the actions initiated by RequestServerShutdown()  */
+/* have been successfully completed, such that we can shut down the  */
+/* server properly now.                                              */
+   return (WantQuit && !FirstServer && !IsNetworkBufferActive(&MetaNetBuf));
+}
+
+void HandleServerCommand(char *string) {
    GSList *list;
    Player *tmp;
    g_scanner_input_text(Scanner,string,strlen(string));
@@ -676,9 +712,7 @@ gboolean HandleServerCommand(char *string) {
           strcmp(string,"?")==0) {
          ServerHelp();
       } else if (strcasecmp(string,"quit")==0) {
-         if (!FirstServer) return TRUE;
-         WantQuit=TRUE;
-         BroadcastToClients(C_NONE,C_QUIT,NULL,NULL,NULL);
+         RequestServerShutdown();
       } else if (strncasecmp(string,"msg:",4)==0) {
          BroadcastToClients(C_NONE,C_MSG,string+4,NULL,NULL);
       } else if (strcasecmp(string,"list")==0) {
@@ -707,7 +741,6 @@ gboolean HandleServerCommand(char *string) {
          g_warning(_("Unknown command - try \"help\" for help..."));
       }
    }
-   return FALSE;
 }
 
 Player *HandleNewConnection() {
@@ -736,7 +769,7 @@ void StopServer() {
    RemovePidFile();
 }
 
-gboolean RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
+void RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
 #ifdef GUI_SERVER
    if (Play->InputTag) gdk_input_remove(Play->InputTag);
 #endif
@@ -747,10 +780,9 @@ gboolean RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
       SetPlayerName(Play,NULL);
 /* Report the new high scores (if any) and the new number of players
    to the metaserver */
-      RegisterWithMetaServer(TRUE,TRUE);
+      RegisterWithMetaServer(TRUE,TRUE,TRUE);
    }
    FirstServer=RemovePlayer(Play,FirstServer);
-   return (!FirstServer && WantQuit);
 }
 
 void ServerLoop() {
@@ -765,7 +797,7 @@ void ServerLoop() {
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean EndOfLine,DataWaiting;
+   gboolean EndOfLine,DoneOK;
    gchar *buf;
 
    InitNetworkBuffer(&MetaNetBuf,'\n');
@@ -800,9 +832,13 @@ void ServerLoop() {
          if (errno==EINTR) {
             if (ReregisterRequest) {
                ReregisterRequest=0;
-               RegisterWithMetaServer(TRUE,TRUE);
+               RegisterWithMetaServer(TRUE,TRUE,FALSE);
                continue;
-            } else if (TerminateRequest) break; else continue;
+            } else if (TerminateRequest) {
+               RequestServerShutdown();
+               if (IsServerShutdown()) break;
+               else continue;
+            } else continue;
          }
          perror("select"); bgetch(); break;
       }
@@ -810,41 +846,48 @@ void ServerLoop() {
       if (FD_ISSET(0,&readfs)) {
          if (ReadServerKey(LineBuf,&EndOfLine)==FALSE) {
             if (isatty(0)) {
-               break;
+               RequestServerShutdown();
+               if (IsServerShutdown()) break;
             } else {
                g_message(_("Standard input closed."));
                InputClosed=TRUE;
             }
          } else if (EndOfLine) {
-            if (HandleServerCommand(LineBuf->str)) break;
+            HandleServerCommand(LineBuf->str);
+            if (IsServerShutdown()) break;
             g_string_truncate(LineBuf,0);
          }
       }
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
-      if (!RespondToSelect(&MetaNetBuf,&readfs,&writefs,
-                           &errorfs,&DataWaiting)) {
-         g_warning("Metaserver connection closed");
-         ShutdownNetworkBuffer(&MetaNetBuf);
-      } else if (DataWaiting) {
+      if (RespondToSelect(&MetaNetBuf,&readfs,&writefs,&errorfs,&DoneOK)) {
          while ((buf=GetWaitingMessage(&MetaNetBuf))) {
             g_print("Meta: %s\n",buf);
             g_free(buf);
          }
       }
+      if (!DoneOK) {
+         g_print("Meta: (closed)\n");
+         ShutdownNetworkBuffer(&MetaNetBuf);
+         if (IsServerShutdown()) break;
+      }
       list=FirstServer;
       while (list) {
          nextlist=g_slist_next(list);
          tmp=(Player *)list->data;
-         if (tmp && !RespondToSelect(&tmp->NetBuf,&readfs,&writefs,&errorfs,
-                                     &DataWaiting)) {
-/* The socket has been shut down, or the buffer was filled - remove player */
-            if (RemovePlayerFromServer(tmp,WantQuit)) break;
-            tmp=NULL;
-         } else if (tmp && DataWaiting) {
+         if (tmp) {
+            if (RespondToSelect(&tmp->NetBuf,&readfs,&writefs,
+                                &errorfs,&DoneOK)) {
 /* If any complete messages were read, process them */
-            HandleServerPlayer(tmp);
+               HandleServerPlayer(tmp);
+            }
+            if (!DoneOK) {
+/* The socket has been shut down, or the buffer was filled - remove player */
+               RemovePlayerFromServer(tmp,WantQuit);
+               if (IsServerShutdown()) break;
+               tmp=NULL;
+            }
          }
          list=nextlist;
       }
@@ -914,29 +957,30 @@ static void GuiQuitServer() {
 
 static void GuiDoCommand(GtkWidget *widget,gpointer data) {
    gchar *text;
-   gboolean retval;
    text=gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1);
    gtk_editable_delete_text(GTK_EDITABLE(widget),0,-1);
-   retval=HandleServerCommand(text);
+   HandleServerCommand(text);
    g_free(text);
-   if (retval) GuiQuitServer();
+   if (IsServerShutdown()) GuiQuitServer();
 }
 
 static void GuiHandleSocket(gpointer data,gint socket,
                             GdkInputCondition condition) {
    Player *Play;
-   gboolean DataWaiting;
+   gboolean DoneOK;
    Play = (Player *)data;
 
    /* Sanity check - is the player still around? */
    if (!g_slist_find(FirstServer,(gpointer)Play)) return;
 
-   if (!PlayerHandleNetwork(Play,condition&GDK_INPUT_READ,
-                            condition&GDK_INPUT_WRITE,&DataWaiting)) {
-      if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
-   } else if (DataWaiting) {
+   if (PlayerHandleNetwork(Play,condition&GDK_INPUT_READ,
+                           condition&GDK_INPUT_WRITE,&DoneOK)) {
       HandleServerPlayer(Play);
       GuiSetTimeouts();  /* We may have set some new timeouts */
+   }
+   if (!DoneOK) {
+      RemovePlayerFromServer(Play,WantQuit);
+      if (IsServerShutdown()) GuiQuitServer();
    }
 }
 
@@ -964,7 +1008,8 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
       GuiQuitServer();
    } else {
       TriedPoliteShutdown=TRUE;
-      if (HandleServerCommand("quit")) GuiQuitServer();
+      HandleServerCommand("quit");
+      if (IsServerShutdown()) GuiQuitServer();
    }
    return TRUE; /* Never allow automatic deletion - we handle it manually */
 }
@@ -2384,13 +2429,12 @@ GSList *HandleTimeouts(GSList *First) {
    time_t timenow;
 
    timenow=time(NULL);
-   if (MetaMinTimeout!=0 && MetaMinTimeout<=timenow) {
+   if (MetaMinTimeout<=timenow) {
       MetaMinTimeout=0;
-      if (MetaPending) RegisterWithMetaServer(TRUE,FALSE);
+      if (MetaPlayerPending) RegisterWithMetaServer(TRUE,TRUE,FALSE);
    }
    if (MetaUpdateTimeout!=0 && MetaUpdateTimeout<=timenow) {
-      MetaUpdateTimeout=0;
-      RegisterWithMetaServer(TRUE,FALSE);
+      RegisterWithMetaServer(TRUE,FALSE,FALSE);
    }
    list=First;
    while (list) {

@@ -297,8 +297,14 @@ void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
    NetBuf->fd=fd;
 }
 
-static void MetaConnectError(gchar *Msg) {
-   g_warning(_("Cannot connect to metaserver: %s"),Msg);
+gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf) {
+/* Returns TRUE if the pointer is to a valid network buffer, and it's */
+/* connected to an active socket.                                     */
+   return (NetBuf && NetBuf->fd>=0);
+}
+
+static void ConnectError(gchar *Msg) {
+   g_warning(_("Cannot connect to remote host: %s"),Msg);
 }
 
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
@@ -309,7 +315,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
    retval=StartConnect(&NetBuf->fd,RemoteHost,RemotePort,TRUE);
 
    if (retval) {
-      MetaConnectError(retval); return FALSE;
+      ConnectError(retval); return FALSE;
    } else {
       NetBuf->WaitConnect=TRUE;
       return TRUE;
@@ -358,7 +364,7 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
          retval=FinishConnect(NetBuf->fd);
          if (retval) {
             *WriteOK=FALSE;
-            MetaConnectError(retval);
+            ConnectError(retval);
          } else NetBuf->WaitConnect=FALSE;
       }
       return FALSE;
@@ -370,37 +376,43 @@ static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
 
    if (ReadReady) {
       *ReadOK=ReadDataFromWire(NetBuf);
-      if (ReadOK) DataWaiting=TRUE;
+      if (NetBuf->ReadBuf.DataPresent>0) DataWaiting=TRUE;
    }
    return DataWaiting;
 }
 
 gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
                          fd_set *writefds,fd_set *errorfds,
-                         gboolean *DataWaiting) {
+                         gboolean *DoneOK) {
 /* Responds to a select() call by reading/writing data as necessary.   */
-/* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
-/* a fatal error (i.e. the connection was broken) occurred.            */
+/* If any data were read, TRUE is returned. "DoneOK" is set TRUE       */
+/* unless a fatal error (i.e. the connection was broken) occurred.     */
    gboolean ReadOK,WriteOK,ErrorOK;
-   *DataWaiting=FALSE;
-   if (!NetBuf || NetBuf->fd<=0) return TRUE;
-   *DataWaiting=DoNetworkBufferStuff(NetBuf,FD_ISSET(NetBuf->fd,readfds),
+   gboolean DataWaiting=FALSE;
+
+   *DoneOK=TRUE;
+   if (!NetBuf || NetBuf->fd<=0) return DataWaiting;
+   DataWaiting=DoNetworkBufferStuff(NetBuf,FD_ISSET(NetBuf->fd,readfds),
                         FD_ISSET(NetBuf->fd,writefds),
                         errorfds ? FD_ISSET(NetBuf->fd,errorfds) : FALSE,
                         &ReadOK,&WriteOK,&ErrorOK);
-   return (WriteOK && ErrorOK && ReadOK);
+   *DoneOK=(WriteOK && ErrorOK && ReadOK);
+   return DataWaiting;
 }
 
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
-                             gboolean WriteReady,gboolean *DataWaiting) {
-/* Reads and writes player data from/to the network if it is ready.    */
-/* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
-/* a fatal error (i.e. the connection was broken) occurred.            */
+                             gboolean WriteReady,gboolean *DoneOK) {
+/* Reads and writes player data from/to the network if it is ready.  */
+/* If any data were read, TRUE is returned. "DoneOK" is set TRUE     */
+/* unless a fatal error (i.e. the connection was broken) occurred.   */
    gboolean ReadOK,WriteOK,ErrorOK;
-   *DataWaiting=FALSE;
-   if (!Play || Play->NetBuf.fd<=0) return TRUE;
-   *DataWaiting=DoNetworkBufferStuff(&Play->NetBuf,ReadReady,WriteReady,FALSE,
-                                     &ReadOK,&WriteOK,&ErrorOK);
+   gboolean DataWaiting=FALSE;
+
+   *DoneOK=TRUE;
+   if (!Play || Play->NetBuf.fd<=0) return DataWaiting;
+
+   DataWaiting=DoNetworkBufferStuff(&Play->NetBuf,ReadReady,WriteReady,FALSE,
+                                    &ReadOK,&WriteOK,&ErrorOK);
 
 /* If we've written out everything, then ask not to be notified of
    socket write-ready status in future */
@@ -408,7 +420,9 @@ gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
        SocketWriteTestPt) {
       (*SocketWriteTestPt)(Play,FALSE);
    }
-   return (WriteOK && ErrorOK && ReadOK);
+
+   *DoneOK=(WriteOK && ErrorOK && ReadOK);
+   return DataWaiting;
 }
 
 gchar *GetWaitingPlayerMessage(Player *Play) {
@@ -1103,11 +1117,21 @@ char *OpenMetaServerConnection(int *HttpSock) {
                     N_("Metaserver not running HTTP or connection denied");
    struct sockaddr_in HttpAddr;
    struct hostent *he;
+   gchar *MetaName;
+   int MetaPort;
 
-   if ((he=gethostbyname(MetaServer.Name))==NULL) return NoHost;
+/* If a proxy is defined, connect to that. Otherwise, connect to the
+   metaserver directly */ 
+   if (MetaServer.ProxyName[0]) {
+      MetaName=MetaServer.ProxyName; MetaPort=MetaServer.ProxyPort;
+   } else {
+      MetaName=MetaServer.Name; MetaPort=MetaServer.Port;
+   }
+
+   if ((he=gethostbyname(MetaName))==NULL) return NoHost;
    if ((*HttpSock=socket(AF_INET,SOCK_STREAM,0))==-1) return NoSocket;
    HttpAddr.sin_family=AF_INET;
-   HttpAddr.sin_port=htons(MetaServer.HttpPort);
+   HttpAddr.sin_port=htons(MetaPort);
    HttpAddr.sin_addr=*((struct in_addr *)he->h_addr);
    memset(HttpAddr.sin_zero,0,sizeof(HttpAddr.sin_zero));
    if (connect(*HttpSock,(struct sockaddr *)&HttpAddr,
@@ -1139,8 +1163,9 @@ void ReadMetaServerData(int HttpSock) {
    gboolean HeaderDone;
 
    ClearServerList();
-   buf=g_strdup_printf("GET %s?output=text&getlist=%d HTTP/1.0\n\n",
-                       MetaServer.Path,METAVERSION);
+   buf=g_strdup_printf("GET %s?output=text&getlist=%d HTTP/1.1\n"
+                       "Host: %s:%d\n\n",MetaServer.Path,METAVERSION,
+                       MetaServer.Name,MetaServer.Port);
    send(HttpSock,buf,strlen(buf),0);
    g_free(buf);
    HeaderDone=FALSE;

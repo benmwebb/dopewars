@@ -43,7 +43,7 @@ void BreakHandle();
 void ClientLeftServer(Player *Play);
 void StartServer();
 void StopServer();
-gboolean HandleServerCommand(char *string);
+void HandleServerCommand(char *string);
 Player *HandleNewConnection();
 void ServerLoop();
 void HandleServerPlayer(Player *Play);

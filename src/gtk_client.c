@@ -257,20 +257,21 @@ void ListInventory(GtkWidget *widget,gpointer data) {
 void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
-   gboolean DataWaiting;
-   if (!PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
-                            condition&GDK_INPUT_WRITE,&DataWaiting)) {
+   gboolean DoneOK;
+   if (PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
+                           condition&GDK_INPUT_WRITE,&DoneOK)) {
+      while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
+         HandleClientMessage(pt,ClientData.Play);
+         g_free(pt);
+      }
+   }
+   if (!DoneOK) {
       if (Network) gdk_input_remove(ClientData.GdkInputTag);
       if (InGame) {
 /* The network connection to the server was dropped unexpectedly */
          g_warning(_("Connection to server lost - switching to "
                    "single player mode"));
          SwitchToSinglePlayer(ClientData.Play);
-      }
-   } else if (DataWaiting) {
-      while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
-         HandleClientMessage(pt,ClientData.Play);
-         g_free(pt);
       }
    }
 }

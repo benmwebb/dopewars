@@ -54,7 +54,7 @@ void AIPlayerLoop() {
    gchar *pt;
    Player *AIPlay;
    fd_set readfs,writefs;
-   gboolean DataWaiting,QuitRequest;
+   gboolean DoneOK,QuitRequest;
    int MaxSock;
 
    AIPlay=g_new(Player,1);
@@ -91,11 +91,7 @@ void AIPlayerLoop() {
          printf("Error in select\n"); exit(1);
       }
 
-      if (!RespondToSelect(&AIPlay->NetBuf,&readfs,&writefs,
-                           NULL,&DataWaiting)) {
-         g_print(_("Connection to server lost!\n"));
-         break;
-      } else if (DataWaiting) {
+      if (RespondToSelect(&AIPlay->NetBuf,&readfs,&writefs,NULL,&DoneOK)) {
          QuitRequest=FALSE;
          while ((pt=GetWaitingPlayerMessage(AIPlay))!=NULL) {
             if (HandleAIMessage(pt,AIPlay)) {
@@ -104,6 +100,10 @@ void AIPlayerLoop() {
             }
          }
          if (QuitRequest) break;
+      }
+      if (!DoneOK) {
+         g_print(_("Connection to server lost!\n"));
+         break;
       }
    }
    ShutdownNetwork();

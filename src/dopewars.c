@@ -150,11 +150,11 @@ struct BITCH Bitch = {
    50000,150000
 };
 
-struct METASERVER MetaServer = { 0,0,0,NULL,NULL,NULL,NULL,NULL };
+struct METASERVER MetaServer = { 0,NULL,0,NULL,0,NULL,NULL,NULL,NULL };
 
 struct METASERVER DefaultMetaServer = {
-   1,80,7802,"bellatrix.pcl.ox.ac.uk","/~ben/cgi-bin/server.pl","","",
-   "dopewars server"
+   1,"dopewars.sourceforge.net",80,"",8080,"/metaserver.php",
+   "","","dopewars server"
 };
 
 int NumTurns=31;
@@ -174,17 +174,20 @@ struct GLOBALS Globals[NUMGLOB] = {
    { &MetaServer.Active,NULL,NULL,NULL,"MetaServer.Active",
      N_("Non-zero if server should report to a metaserver"),
      NULL,NULL,0,"",NULL,NULL },
-   { &MetaServer.HttpPort,NULL,NULL,NULL,"MetaServer.HttpPort",
-     N_("Port for metaserver communication (client)"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &MetaServer.UdpPort,NULL,NULL,NULL,"MetaServer.UdpPort",
-     N_("Port for metaserver communication (server)"),
-     NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&MetaServer.Name,NULL,"MetaServer.Name",
-     N_("Metaserver name to report server details to"),
+     N_("Metaserver name to report/get server details to/from"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &MetaServer.Port,NULL,NULL,NULL,"MetaServer.Port",
+     N_("Port for metaserver communication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,&MetaServer.ProxyName,NULL,"MetaServer.ProxyName",
+     N_("Name of the proxy (if needed) for metaserver communication"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &MetaServer.ProxyPort,NULL,NULL,NULL,"MetaServer.ProxyPort",
+     N_("Port for communicating with the proxy server"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&MetaServer.Path,NULL,"MetaServer.Path",
-     N_("Path of the CGI script on the metaserver (client)"),
+     N_("Path of the script on the metaserver"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&MetaServer.LocalName,NULL,"MetaServer.LocalName",
      N_("Preferred hostname of your server machine"),NULL,NULL,0,"",NULL,NULL },
@@ -1183,9 +1186,10 @@ void CopyNames(struct NAMES *dest,struct NAMES *src) {
 
 void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src) {
    dest->Active=src->Active;
-   dest->HttpPort=src->HttpPort;
-   dest->UdpPort=src->UdpPort;
+   dest->Port=src->Port;
+   dest->ProxyPort=src->ProxyPort;
    AssignName(&dest->Name,src->Name);
+   AssignName(&dest->ProxyName,src->ProxyName);
    AssignName(&dest->Path,src->Path);
    AssignName(&dest->LocalName,src->LocalName);
    AssignName(&dest->Password,src->Password);

@@ -120,6 +120,7 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
 char *FinishConnect(int fd);
 
 void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator);
+gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
                                    unsigned RemotePort);
@@ -128,9 +129,9 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
                                fd_set *writefds,fd_set *errorfds,int *MaxSock);
 gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
                          fd_set *writefds,fd_set *errorfds,
-                         gboolean *DataWaiting);
+                         gboolean *DoneOK);
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
-                             gboolean WriteReady,gboolean *DataWaiting);
+                             gboolean WriteReady,gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
 void QueuePlayerMessageForSend(Player *Play,gchar *data);
 gboolean WritePlayerDataToWire(Player *Play);
