@@ -5054,20 +5054,22 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title)
 {
   OPENFILENAME ofn;
-  char file[800], filetitle[800];
+  char file[800];
 
-  memset(&ofn, 0, sizeof(OPENFILENAME));
   ofn.lStructSize = sizeof(OPENFILENAME);
   ofn.hwndOwner = parent ? parent->hWnd : NULL;
+  ofn.hInstance = NULL;
   ofn.lpstrFilter = NULL;
-  ofn.nFilterIndex = 0;
+  ofn.lpstrCustomFilter = NULL;
+  ofn.nFilterIndex = 1;
   ofn.lpstrFile = file;
   ofn.nMaxFile = sizeof(file);
-  ofn.lpstrFileTitle = filetitle;
-  ofn.nMaxFileTitle = sizeof(filetitle);
+  ofn.lpstrFileTitle = NULL;
+  ofn.nMaxFileTitle = 0;
   ofn.lpstrInitialDir = NULL;
+  ofn.lpstrTitle = title;
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
   ofn.lpstrDefExt = NULL;
-  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
   if (GetOpenFileName(&ofn)) {
     return g_strdup(file);
   } else {
