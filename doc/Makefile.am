@@ -1,11 +1,13 @@
-DOCPATH    = ${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/
-DOCS       = aiplayer.html configfile.html index.html i18n.html server.html \
-             clientplay.html credits.html example-cfg installation.html \
-             servercommands.html commandline.html developer.html \
-             metaserver.html protocol.html windows.html ../LICENCE
-man_MANS   = dopewars.6
-SUBDIRS    = help
-EXTRA_DIST = ${man_MANS} ${DOCS}
+DOCPATH        = ${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/
+DOCS           = aiplayer.html configfile.html index.html i18n.html \
+                 server.html clientplay.html credits.html example-cfg \
+                 installation.html servercommands.html commandline.html \
+                 developer.html metaserver.html protocol.html windows.html \
+                 ../LICENCE
+man_MANS       = dopewars.6
+SUBDIRS        = help
+EXTRA_DIST     = ${man_MANS} ${DOCS}
+DISTCLEANFILES = dopewars.6
 
 install-data-local:
 	${INSTALL} -d -m 0755 ${DOCPATH}

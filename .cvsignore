@@ -13,5 +13,6 @@ stamp-h
 stamp-h.in
 stamp-h1
 dopewars.sco
+dopewars.spec
 libtool
 autom4te.cache
