@@ -918,6 +918,7 @@ static void change_name(Player *Play, gboolean nullname)
   NewName = nice_input(_("New name: "), 23, 0, FALSE, NULL, '\0');
 
   if (NewName[0]) {
+    StripTerminators(NewName);
     if (nullname) {
       SendNullClientMessage(Play, C_NONE, C_NAME, NULL, NewName);
     } else {
@@ -2073,6 +2074,7 @@ static void Curses_DoGame(Player *Play)
 
   InitAbilities(Play);
   SendAbilities(Play);
+  StripTerminators(buf);
   SetPlayerName(Play, buf);
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, buf);
   g_free(buf);

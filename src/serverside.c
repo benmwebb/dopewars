@@ -380,6 +380,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     ReceiveAbilities(Play, Data);
     break;
   case C_NAME:
+    StripTerminators(Data);
     pt = GetPlayerByName(Data, FirstServer);
     if (pt && pt != Play) {
       if (ConnectTimeout) {

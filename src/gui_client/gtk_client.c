@@ -1906,6 +1906,7 @@ void GuiStartGame(void)
 
   InitAbilities(Play);
   SendAbilities(Play);
+  StripTerminators(GetPlayerName(Play));
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, GetPlayerName(Play));
   InGame = TRUE;
   UpdateMenus();
@@ -3022,6 +3023,7 @@ static void NewNameOK(GtkWidget *widget, GtkWidget *window)
   entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(window), "entry"));
   text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
   if (text[0]) {
+    StripTerminators(text);
     SetPlayerName(ClientData.Play, text);
     SendNullClientMessage(ClientData.Play, C_NONE, C_NAME, NULL, text);
     gtk_widget_destroy(window);

@@ -2680,7 +2680,8 @@ void GeneralStartup(int argc, char *argv[])
 }
 
 /*
- * Removes any ^ characters from the given string, which is modified in place.
+ * Removes any ^ or \n characters from the given string, which is
+ * modified in place.
  */
 void StripTerminators(gchar *str)
 {
@@ -2688,8 +2689,13 @@ void StripTerminators(gchar *str)
 
   if (str) {
     for (i = 0; i < strlen(str); i++) {
-      if (str[i] == '^') {
+      switch(str[i]) {
+      case '^':
+      case '\n':
         str[i] = '~';
+        break;
+      default:
+        break;
       }
     }
   }
@@ -2811,6 +2817,7 @@ int main(int argc, char *argv[])
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
 #endif
+  WantUTF8Errors(FALSE);
   GeneralStartup(argc, argv);
   OpenLog();
   if (WantVersion || WantHelp) {

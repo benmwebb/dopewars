@@ -402,6 +402,7 @@ void HandleCmdLine(int argc, char *argv[]);
 void SetupParameters(void);
 void HandleHelpTexts(void);
 void GeneralStartup(int argc, char *argv[]);
+void StripTerminators(gchar *str);
 void ReadConfigFile(char *FileName);
 gboolean ParseNextConfig(GScanner *scanner, gboolean print);
 int GetGlobalIndex(gchar *ID1, gchar *ID2);
