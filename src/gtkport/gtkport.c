@@ -691,6 +691,30 @@ static void DispatchTimeoutEvent(UINT id)
   }
 }
 
+HWND gtk_get_parent_hwnd(GtkWidget *widget)
+{
+  widget = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
+  if (widget) {
+    return widget->hWnd;
+  } else {
+    return NULL;
+  }
+}
+
+static HWND gtk_get_window_or_notebook(GtkWidget *widget)
+{
+  while (widget && GTK_OBJECT(widget)->klass != GTK_TYPE_WINDOW
+         && GTK_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
+    widget = widget->parent;
+  }
+  if (widget) {
+    return widget->hWnd;
+  } else {
+    return NULL;
+  }
+}
+
+
 static void UpdatePanedGhostRect(GtkPaned *paned, RECT *OldRect,
                                  RECT *NewRect, gint x, gint y)
 {
@@ -1510,8 +1534,17 @@ void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
   gtk_signal_emit(GTK_OBJECT(widget), "set_size", allocation);
   memcpy(&widget->allocation, allocation, sizeof(GtkAllocation));
   if (widget->hWnd) {
-    SetWindowPos(widget->hWnd, HWND_TOP,
-                 allocation->x, allocation->y,
+    HWND imm_parent, window_parent;
+    POINT pt;
+
+    pt.x = allocation->x;
+    pt.y = allocation->y;
+    imm_parent = GetParent(widget->hWnd);
+    window_parent = gtk_get_parent_hwnd(widget);
+    if (imm_parent && window_parent && imm_parent != window_parent) {
+      MapWindowPoints(window_parent, imm_parent, &pt, 1);
+    }
+    SetWindowPos(widget->hWnd, HWND_TOP, pt.x, pt.y,
                  allocation->width, allocation->height,
                  SWP_NOZORDER |
                  (GTK_OBJECT(widget)->klass ==
@@ -2446,15 +2479,6 @@ void gtk_box_realize(GtkWidget *widget)
   }
 }
 
-HWND gtk_get_parent_hwnd(GtkWidget *widget)
-{
-  widget = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  if (widget)
-    return widget->hWnd;
-  else
-    return NULL;
-}
-
 void gtk_button_realize(GtkWidget *widget)
 {
   GtkButton *but = GTK_BUTTON(widget);
@@ -2526,18 +2550,18 @@ void gtk_text_realize(GtkWidget *widget)
 
 void gtk_frame_realize(GtkWidget *widget)
 {
-  GtkFrame *frame = GTK_FRAME(widget);
   HWND Parent;
+  GtkFrame *frame = GTK_FRAME(widget);
 
-  gtk_container_realize(widget);
-  Parent = gtk_get_parent_hwnd(widget);
+  Parent = gtk_get_window_or_notebook(widget);
   widget->hWnd = myCreateWindow("BUTTON", frame->text,
                                 WS_CHILD | BS_GROUPBOX,
                                 widget->allocation.x, widget->allocation.y,
                                 widget->allocation.width,
-                                widget->allocation.height, Parent, NULL,
-                                hInst, NULL);
+                                widget->allocation.height,
+                                Parent, NULL, hInst, NULL);
   gtk_set_default_font(widget->hWnd);
+  gtk_container_realize(widget);
 }
 
 void gtk_check_button_realize(GtkWidget *widget)
