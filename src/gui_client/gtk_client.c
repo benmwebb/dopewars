@@ -3035,10 +3035,13 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
     gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
     gtk_container_add(GTK_CONTAINER(frame[i]), scrollwin);
-    if (i == 0)
+    if (i == 0) {
+      gtk_clist_set_column_justification(GTK_CLIST(clist), 1,
+                                         GTK_JUSTIFY_RIGHT);
       widgets->HereList = clist;
-    else
+    } else {
       widgets->CarriedList = clist;
+    }
   }
   if (CreateHere)
     gtk_box_pack_start(GTK_BOX(hbox), frame[0], TRUE, TRUE, 0);
