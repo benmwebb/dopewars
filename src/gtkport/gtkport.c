@@ -5074,6 +5074,25 @@ GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
   return textview;
 }
 
+void TextViewAppend(GtkTextView *textview, const gchar *text,
+                    const gchar *tagname, gboolean scroll)
+{
+  GtkTextBuffer *buffer;
+  GtkTextIter iter;
+  GtkTextMark *insert;
+
+  buffer = gtk_text_view_get_buffer(textview);
+
+  gtk_text_buffer_get_end_iter(buffer, &iter);
+  gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1,
+                                           tagname, NULL);
+  if (scroll) {
+    gtk_text_buffer_place_cursor(buffer, &iter);
+    insert = gtk_text_buffer_get_mark(buffer, "insert");
+    gtk_text_view_scroll_mark_onscreen(textview, insert);
+  }
+}
+
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
 {
   gtk_main_quit();
