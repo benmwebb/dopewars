@@ -1,4 +1,5 @@
 cvs
+    - Basic configuration file editor added to GTK+ client
     - Annoying flashing on closure of modal windows in Win32 fixed
     - Icon added for GTK+ client
     - Bug with withdrawing cash from the bank fixed
