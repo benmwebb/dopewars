@@ -2319,8 +2319,12 @@ void SetupParameters(void)
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
   Log.File = g_strdup("");
 
+  /* The currency symbol */
   Currency.Symbol = g_strdup(_("$"));
-  Currency.Prefix = TRUE;
+  Currency.Prefix = (strcmp("Currency.Prefix=TRUE",
+  /* Translate this to "Currency.Prefix=FALSE" if you want your currency
+   * symbol to follow all prices. */
+                            _("Currency.Prefix=TRUE")) == 0);
 
   /* Set hard-coded default values */
   g_free(ServerName);
