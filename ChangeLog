@@ -15,6 +15,8 @@
     - Spying fixed (cannot now spy on a player until they accept your bitch)
     - Longer T>alk and P>age messages allowed in curses client
     - Minor bug fixes to configure options
+    - configure script tweaked to fix networking under Solaris (and friends)
+      (with thanks to Caolan McNamara)
     - Client-side code moved out of clientside.c and dopewars.c;
       client-specific code now placed in <xxx>_client.c, while generic code is
       in message.c
