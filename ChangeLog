@@ -10,6 +10,7 @@ cvs
       codeset, which may cause problems on non-US ASCII systems)
     - Encoding config variable added, to allow the config file's encoding
       (usually taken from the locale) to be overridden
+    - Spanish translation added by Quique
 
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;

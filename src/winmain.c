@@ -179,8 +179,9 @@ static gchar *GetWindowsLocale(void)
   switch (lang) {
   case LANG_ENGLISH:
     strcat(langenv, "en");
-    if (sublang == SUBLANG_ENGLISH_UK)
-      strcat(langenv, "_gb");
+    if (sublang == SUBLANG_ENGLISH_UK) {
+      strcat(langenv, "_GB");
+    }
     break;
   case LANG_FRENCH:
     strcat(langenv, "fr");
@@ -191,6 +192,9 @@ static gchar *GetWindowsLocale(void)
   case LANG_POLISH:
     strcat(langenv, "pl");
     break;
+  case LANG_SPANISH:
+    strcat(langenv, "es");
+    break;
   case LANG_NORWEGIAN:
     if (sublang == SUBLANG_NORWEGIAN_NYNORSK) {
       strcat(langenv, "nn");
@@ -200,8 +204,9 @@ static gchar *GetWindowsLocale(void)
     break;
   case LANG_PORTUGUESE:
     strcat(langenv, "pt");
-    if (sublang == SUBLANG_PORTUGUESE_BRAZILIAN)
-      strcat(langenv, "_br");
+    if (sublang == SUBLANG_PORTUGUESE_BRAZILIAN) {
+      strcat(langenv, "_BR");
+    }
     break;
   }
 
