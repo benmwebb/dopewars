@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __NLS_H__
-#define __NLS_H__
+#ifndef __DP_NLS_H__
+#define __DP_NLS_H__
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -44,4 +44,4 @@
 # define N_(String) (String)
 #endif
 
-#endif /* __NLS_H__ */
+#endif /* __DP_NLS_H__ */

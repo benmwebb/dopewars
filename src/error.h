@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __ERROR_H__
-#define __ERROR_H__
+#ifndef __DP_ERROR_H__
+#define __DP_ERROR_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -69,4 +69,4 @@ void LookupErrorCode(GString *str, gint code, ErrTable *table,
 void g_string_assign_error(GString *str, LastError *error);
 void g_string_append_error(GString *str, LastError *error);
 
-#endif /* __ERROR_H__ */
+#endif /* __DP_ERROR_H__ */

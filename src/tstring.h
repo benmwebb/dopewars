@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __TSTRING_H__
-#define __TSTRING_H__
+#ifndef __DP_TSTRING_H__
+#define __DP_TSTRING_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -36,4 +36,4 @@ void dpg_string_sprintfa(GString *string, gchar *format, ...);
 
 gchar *GetDefaultTString(gchar *tstring);
 
-#endif /* __TSTRING_H__ */
+#endif /* __DP_TSTRING_H__ */

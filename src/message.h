@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __MESSAGE_H__
-#define __MESSAGE_H__
+#ifndef __DP_MESSAGE_H__
+#define __DP_MESSAGE_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -142,4 +142,4 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
                         Player *Defender, int BitchesKilled,
                         int ArmPercent, FightPoint fp, price_t Loot);
 
-#endif /* __MESSAGE_H__ */
+#endif /* __DP_MESSAGE_H__ */

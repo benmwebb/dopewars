@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __WINMAIN_H__
-#define __WINMAIN_H__
+#ifndef __DP_WINMAIN_H__
+#define __DP_WINMAIN_H__
 
 #ifdef CYGWIN
 
@@ -29,4 +29,4 @@ gchar *GetBinaryDir(void);
 
 #endif /* CYGWIN */
 
-#endif /* __WINMAIN_H__ */
+#endif /* __DP_WINMAIN_H__ */

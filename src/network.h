@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __NETWORK_H__
-#define __NETWORK_H__
+#ifndef __DP_NETWORK_H__
+#define __DP_NETWORK_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -244,4 +244,4 @@ void AddB64Enc(GString *str, gchar *unenc);
 
 #endif /* NETWORKING */
 
-#endif /* __NETWORK_H__ */
+#endif /* __DP_NETWORK_H__ */

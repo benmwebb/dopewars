@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __DOPEWARS_H__
-#define __DOPEWARS_H__
+#ifndef __DP_DOPEWARS_H__
+#define __DP_DOPEWARS_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -443,4 +443,4 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
 #endif
 #endif
 
-#endif
+#endif /* __DP_DOPEWARS_H__ */

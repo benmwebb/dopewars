@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __SERVERSIDE_H__
-#define __SERVERSIDE_H__
+#ifndef __DP_SERVERSIDE_H__
+#define __DP_SERVERSIDE_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -81,4 +81,4 @@ void ServiceMain(void);
 gchar *GetLocalSocket(void);
 #endif
 
-#endif
+#endif /* __DP_SERVERSIDE_H__ */

@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef __DP_UTIL_H__
+#define __DP_UTIL_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -76,4 +76,4 @@ void ReleaseLock(FILE *fp);
 #define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
 
-#endif /* __UTIL_H__ */
+#endif /* __DP_UTIL_H__ */

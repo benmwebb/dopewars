@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __ADMIN_H__
-#define __ADMIN_H__
+#ifndef __DP_ADMIN_H__
+#define __DP_ADMIN_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -33,4 +33,4 @@ void AdminServer(void);
 
 #endif /* CYGWIN */
 
-#endif
+#endif /* __DP_ADMIN_H__ */

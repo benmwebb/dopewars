@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __AIPLAYER_H__
-#define __AIPLAYER_H__
+#ifndef __DP_AIPLAYER_H__
+#define __DP_AIPLAYER_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -29,4 +29,4 @@
 
 void AIPlayerLoop(void);
 
-#endif
+#endif /* __DP_AIPLAYER_H__ */
