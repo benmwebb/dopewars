@@ -1,6 +1,6 @@
 /************************************************************************
  * unicodewrap.c  Unicode wrapper functions for Win32                   *
- * Copyright (C)  2002  Ben Webb                                        *
+ * Copyright (C)  2002-2003  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

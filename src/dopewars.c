@@ -1,6 +1,6 @@
 /************************************************************************
  * dopewars.c     dopewars - general purpose routines and init          *
- * Copyright (C)  1998-2002  Ben Webb                                   *
+ * Copyright (C)  1998-2003  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
@@ -2606,7 +2606,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"));
 #else
            /* Usage information, printed when the user runs "dopewars -h"
@@ -2641,7 +2641,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
 g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2003, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"));
 #endif
 }

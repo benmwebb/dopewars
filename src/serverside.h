@@ -1,6 +1,6 @@
 /************************************************************************
  * serverside.h   Server-side parts of dopewars                         *
- * Copyright (C)  1998-2002  Ben Webb                                   *
+ * Copyright (C)  1998-2003  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
