@@ -37,6 +37,7 @@
 #include "tstring.h"
 #include "gtkport/gtkport.h"
 #include "dopewars-pill.xpm"
+#include "optdialog.h"
 
 #define BT_BUY  (GINT_TO_POINTER(1))
 #define BT_SELL (GINT_TO_POINTER(2))
@@ -93,6 +94,7 @@ static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
 static void DestroyGtk(GtkWidget *widget, gpointer data);
 static void NewGame(GtkWidget *widget, gpointer data);
+static void AbandonGame(GtkWidget *widget, gpointer data);
 static void ListScores(GtkWidget *widget, gpointer data);
 static void ListInventory(GtkWidget *widget, gpointer data);
 static void NewGameDialog(void);
@@ -169,6 +171,8 @@ static GtkItemFactoryEntry menu_items[] = {
   /* The names of the the menus and their items in the GTK+ client */
   {N_("/_Game"), NULL, NULL, 0, "<Branch>"},
   {N_("/Game/_New..."), "<control>N", NewGame, 0, NULL},
+  {N_("/Game/_Abandon..."), "<control>A", AbandonGame, 0, NULL},
+  {N_("/Game/_Options..."), "<control>O", OptDialog, 0, NULL},
   {N_("/Game/_Quit..."), "<control>Q", QuitGame, 0, NULL},
   {N_("/_Talk"), NULL, NULL, 0, "<Branch>"},
   {N_("/Talk/To _All..."), NULL, TalkToAll, 0, NULL},
@@ -245,6 +249,15 @@ void NewGame(GtkWidget *widget, gpointer data)
   BackupConfig();
 
   NewGameDialog();
+}
+
+void AbandonGame(GtkWidget *widget, gpointer data)
+{
+  if (InGame && GtkMessageBox(ClientData.window, _("Abandon current game?"),
+                              /* Title of 'abandon game' dialog */
+                              _("Abandon game"), MB_YESNO) == IDYES) {
+    EndGame();
+  }
 }
 
 void ListScores(GtkWidget *widget, gpointer data)
@@ -1912,6 +1925,12 @@ void UpdateMenus(void)
                                                        "<main>/Talk"),
                            InGame && Network);
   gtk_widget_set_sensitive(gtk_item_factory_get_widget
+                           (ClientData.Menu, "<main>/Game/Options..."),
+                           !InGame);
+  gtk_widget_set_sensitive(gtk_item_factory_get_widget
+                           (ClientData.Menu, "<main>/Game/Abandon..."),
+                           InGame);
+  gtk_widget_set_sensitive(gtk_item_factory_get_widget
                            (ClientData.Menu, "<main>/List"), InGame);
   gtk_widget_set_sensitive(gtk_item_factory_get_widget
                            (ClientData.Menu, "<main>/List/Players..."),
@@ -2034,11 +2053,10 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                  gboolean ReturnOnFail)
-{
 #else
 gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
-{
 #endif
+{
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
       *vpaned, *button, *clist;
   GtkAccelGroup *accel_group;
@@ -2172,7 +2190,7 @@ static void PackCentredURL(GtkWidget *vbox, gchar *title, gchar *target,
 
   url = gtk_url_new(title, target, browser);
   gtk_box_pack_start(GTK_BOX(hbox), url, FALSE, FALSE, 0);
-    
+
   label = gtk_label_new("");
   gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
