@@ -5,6 +5,6 @@ DOCS= aiplayer.html configfile.html index.html server.html \
       metaserver.html windows.html
 
 install-data-local:
-	${INSTALL} -d -o root -g root -m 0755 $(DOCPATH)
-	${INSTALL} -o root -g root -m 0644 $(DOCS) $(DOCPATH)
+	${INSTALL} -d -o root -g root -m 0755 ${DESTDIR}$(DOCPATH)
+	${INSTALL} -o root -g root -m 0644 $(DOCS) ${DESTDIR}$(DOCPATH)
 

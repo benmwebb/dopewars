@@ -195,8 +195,8 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
 install-data-local:
-	${INSTALL} -d -o root -g root -m 0755 $(DOCPATH)
-	${INSTALL} -o root -g root -m 0644 $(DOCS) $(DOCPATH)
+	${INSTALL} -d -o root -g root -m 0755 ${DESTDIR}$(DOCPATH)
+	${INSTALL} -o root -g root -m 0644 $(DOCS) ${DESTDIR}$(DOCPATH)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
