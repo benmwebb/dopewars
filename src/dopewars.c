@@ -2387,7 +2387,7 @@ gchar *GetGlobalConfigFile(void)
   /* Global configuration is in the same directory as the dopewars binary */
   bindir = GetBinaryDir();
   if (bindir) {
-    conf = g_strdup_printf("%s/dopewars-config.txt", conf);
+    conf = g_strdup_printf("%s/dopewars-config.txt", bindir);
     g_free(bindir);
   }
   return conf;
