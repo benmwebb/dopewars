@@ -176,8 +176,7 @@ static gchar *MenuTranslate(const gchar *path, gpointer func_data)
 static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
                        const gchar *message, gpointer user_data)
 {
-  g_print("message: %s\n", message);
-  GtkMessageBox(MainWindow, message,
+  GtkMessageBox(NULL, message,
                 /* Titles of the message boxes for warnings and errors */
                 log_level & G_LOG_LEVEL_WARNING ? _("Warning") :
                 log_level & G_LOG_LEVEL_CRITICAL ? _("Error") :
