@@ -3626,6 +3626,8 @@ GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,gfloat climb_rate,
    GtkSpinButton *spin;
 
    spin=GTK_SPIN_BUTTON(GtkNewObject(&GtkSpinButtonClass));
+   GTK_ENTRY(spin)->is_visible = TRUE;
+
    gtk_spin_button_set_adjustment(spin,adjustment);
 
    return GTK_WIDGET(spin);
