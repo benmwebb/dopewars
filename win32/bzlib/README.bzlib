@@ -1,6 +1,7 @@
 If you are intending to build the Win32 installer for dopewars, then place
-the bzlib distribution into this directory. The installer expects to
-statically link with the file libbz2.a in this directory; the libbz2.a file
-included in the Cygwin distribution should _not_ be used, as this requires
-the CYGWIN.DLL file, which is not a standard Windows DLL. Use the
-Makefile.nocygwin file to compile bzlib, as this adds in the -mno-cygwin flag.
+the bzlib distribution (from http://sources.redhat.com/bzip2/) into this
+directory. The installer expects to statically link with the file libbz2.a
+in this directory; the libbz2.a file included in the Cygwin distribution
+should _not_ be used, as this requires the CYGWIN.DLL file, which is not
+a standard Windows DLL. Use the Makefile.nocygwin file to compile bzlib,
+as this adds in the -mno-cygwin flag.

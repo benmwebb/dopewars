@@ -140,8 +140,9 @@ these warnings can be safely ignored, so this is not the default.
 WIN32 INSTALLER
 ===============
 
-In order to build the Win32 installer program for dopewars, place the ZLib
-source code (from www.zlib.org) into win32/zlib, and build it with
+In order to build the Win32 installer program for dopewars, place the
+libbzip2 source code (from http://sources.redhat.com/bzip2/) into
+win32/bzlib, and build it with
 
     make -f Makefile.nocygwin
 
