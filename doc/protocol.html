@@ -396,7 +396,7 @@ C_REQUESTJET or C_FIGHTACT message<p /></dd>
 
 <dt><a name="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
 <dd>Negotiates protocol extensions between client and server<br />
-<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)</tt>
+<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)(donefight)</tt>
 
 <p><a name="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather
 than player names to identify players in network messages ('0' otherwise). It is
@@ -424,7 +424,20 @@ sent in the <a href="i18n.html">translated string</a> (tstring) notation;
 only necessary if you are supporting non-English languages. Ability name
 in dopewars code: <b>A_TSTRING</b></p>
 
-e.g. "^^Ar1010" (N.B. the double ^ is a feature of the "old" protocol)</dd>
+<p><a name="donefight"><tt>donefight</tt></a> = '1' if, when a fight finishes,
+the client is expected to send a C_DONE message to instruct the server to
+move on. (This is to allow the user to close the fight dialog before any
+new dialogs pop up.) Ability name in dopewars code: <b>A_DONEFIGHT</b></p>
+
+<p><b>N.B.</b> Only five abilities are listed here. Older servers or clients
+may not only not support some of these abilities, they may not even know
+of their existence (conversely, newer versions may add new abilities). Thus
+all servers and clients, if passed an unexpectedly short abilities string,
+should pad it out with zeroes. If passed a long string, it should be truncated.
+This will cause these extra (or unspecified) abilities to be unsupported.
+(The order of the abilities string should never change.)</p>
+
+e.g. "^^Ar10100" (N.B. the double ^ is a feature of the "old" protocol)</dd>
 
 </dl>
 
@@ -541,11 +554,12 @@ no C_ABILITIES reply message will be sent, and the client should assume that
 after the C_ABILITIES message to be compliant with these abilities.</p>
 
 e.g.<br />
-- client sends "1110" (supports everything except
+- client sends "11101" (supports everything except
 <a href="#tstring">A_TSTRING</a>)<br />
-- server responds with "1011" (supports everything except
-<a href="#drugvalue">A_DRUGVALUE</a>)<br />
-- client should adopt the abilities "1010" (
+- server responds with "10110" (supports everything except
+<a href="#drugvalue">A_DRUGVALUE</a> and
+<a href="#donefight">A_DONEFIGHT</a>)<br />
+- client should adopt the abilities "10100" (
 <a href="#playerid">A_PLAYERID</a> and <a href="#newfight">A_NEWFIGHT</a>)</dd>
 
 </dl>
@@ -558,7 +572,7 @@ e.g.<br />
   </ul>
 </li>
 </ul>
-<p>Last update: <b>29-10-2001</b></p>
+<p>Last update: <b>13-04-2002</b></p>
 
 </body>
 </html>

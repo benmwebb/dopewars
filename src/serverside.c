@@ -469,6 +469,10 @@ void HandleServerMessage(gchar *buf, Player *Play)
       } else {
         RunFromCombat(Play, i);
       }
+      if (Play->EventNum == E_WAITDONE) {
+        Play->EventNum = Play->ResyncNum;
+        SendEvent(Play);
+      }
     }
     if (NumTurns > 0 && Play->Turn >= NumTurns
         && Play->EventNum != E_FINISH) {
@@ -534,7 +538,10 @@ void HandleServerMessage(gchar *buf, Player *Play)
     HandleAnswer(Play, To, Data);
     break;
   case C_DONE:
-    if (Play->EventNum != E_NONE && Play->EventNum < E_OUTOFSYNC) {
+    if (Play->EventNum == E_WAITDONE) {
+      Play->EventNum = Play->ResyncNum;
+      SendEvent(Play);
+    } else if (Play->EventNum != E_NONE && Play->EventNum < E_OUTOFSYNC) {
       Play->EventNum++;
       SendEvent(Play);
     }
@@ -2529,6 +2536,19 @@ void DoReturnFire(Player *Play)
   }
 }
 
+/*
+ * Puts the given player into the "fight ended" state.
+ */
+static void WaitForFightDone(Player *Play)
+{
+  if (HaveAbility(Play, A_DONEFIGHT)) {
+    Play->EventNum = E_WAITDONE;
+  } else {
+    Play->EventNum = Play->ResyncNum;
+    SendEvent(Play);
+  }
+}
+
 /* 
  * Withdraws player "Play" from combat, and levies any penalties on
  * the player for this cowardly act, if applicable. If "ToLocation"
@@ -2570,8 +2590,7 @@ void RunFromCombat(Player *Play, int ToLocation)
     Play->IsAt = ToLocation;
     WithdrawFromCombat(Play);
     Play->IsAt = BackupAt;
-    Play->EventNum = Play->ResyncNum;
-    SendEvent(Play);
+    WaitForFightDone(Play);
   } else {
     SendFightMessage(Play, NULL, 0, F_FAILFLEE, (price_t)0, TRUE, NULL);
     AllowNextShooter(Play);
@@ -2878,8 +2897,7 @@ void WithdrawFromCombat(Player *Play)
         SendQuestion(NULL, C_ASKSEW, Defend, text);
         g_free(text);
       } else {
-        Defend->EventNum = Defend->ResyncNum;
-        SendEvent(Defend);
+        WaitForFightDone(Defend);
       }
     }
     g_ptr_array_free(Play->FightArray, TRUE);
@@ -3239,8 +3257,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
         From->Health = 100;
         SendPlayerData(From);
       }
-      From->EventNum = From->ResyncNum;
-      SendEvent(From);
+      WaitForFightDone(From);
       break;
     default:
       break;
@@ -3276,8 +3293,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
       SendEvent(From);
       break;
     case E_DOCTOR:
-      From->EventNum = From->ResyncNum;
-      SendEvent(From);
+      WaitForFightDone(From);
       break;
     case E_HIREBITCH:
     case E_GUNSHOP:

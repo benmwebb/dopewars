@@ -244,6 +244,7 @@ void InitAbilities(Player *Play)
   Play->Abil.Local[A_NEWFIGHT] = TRUE;
   Play->Abil.Local[A_DRUGVALUE] = (DrugValue ? TRUE : FALSE);
   Play->Abil.Local[A_TSTRING] = TRUE;
+  Play->Abil.Local[A_DONEFIGHT] = TRUE;
 
   if (!Network)
     for (i = 0; i < A_NUM; i++) {

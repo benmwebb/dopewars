@@ -2321,6 +2321,9 @@ static void Curses_DoGame(Player *Play)
       switch (c) {
       case 'D':
         DisplayMode = DM_STREET;
+        if (!(Play->Flags & FIGHTING) && HaveAbility(Play, A_DONEFIGHT)) {
+          SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
+        }
         break;
       case 'R':
         if (RunHere) {

@@ -81,6 +81,7 @@ static void AIStartGame(Player *AIPlay)
 {
   Client = Network = TRUE;
   InitAbilities(AIPlay);
+  SetAbility(AIPlay, A_DONEFIGHT, FALSE);
   SendAbilities(AIPlay);
 
   AISetName(AIPlay);

@@ -791,6 +791,9 @@ static void FightCallback(GtkWidget *widget, gpointer data)
   switch (Answer) {
   case 'D':
     gtk_widget_hide(FightDialog);
+    if (!(Play->Flags & FIGHTING) && HaveAbility(Play, A_DONEFIGHT)) {
+      SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
+    }
     break;
   case 'R':
     if (CanRunHere) {

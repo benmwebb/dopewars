@@ -64,6 +64,8 @@ typedef enum {
   A_NEWFIGHT,                   /* Use new unified fighting code */
   A_TSTRING,                    /* We understand the %Txx (tstring)
                                  * notation */
+  A_DONEFIGHT,                  /* A fight is only considered over once the
+                                 * client sends the server a C_DONE message */
   A_NUM                         /* N.B. Must be last */
 } AbilType;
 
@@ -125,7 +127,7 @@ typedef enum {
   E_FINISH = 100,
 
   E_OUTOFSYNC = 120,
-  E_FIGHT, E_FIGHTASK, E_DOCTOR,
+  E_FIGHT, E_FIGHTASK, E_DOCTOR, E_WAITDONE,
   E_MAXOOS
 } EventCode;
 
