@@ -181,6 +181,18 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
   clear_bottom();
 }
 
+/*
+ * Displays a string, horizontally centred on the given row
+ */
+static void mvaddcentstr(const int row, const gchar *str)
+{
+  int col;
+
+  col = (Width - strlen(str)) / 2;
+  col = MAX(col, 0);
+  mvaddstr(row, col, str);
+}
+
 /* 
  * Displays a dopewars introduction screen.
  */
@@ -1306,7 +1318,7 @@ void GunShop(Player *Play)
     text = _("Will you B>uy, S>ell, or L>eave? ");
     attrset(PromptAttr);
     clear_line(22);
-    mvaddstr(22, 40 - strlen(text) / 2, text);
+    mvaddcentstr(22, text);
     attrset(TextAttr);
 
     /* Translate these three keys in line with the above options, keeping
@@ -2140,7 +2152,7 @@ static void Curses_DoGame(Player *Play)
         g_string_append(text, _(", J>et"));
       }
       g_string_append(text, _(", or Q>uit? "));
-      mvaddstr(22, 40 - strlen(text->str) / 2, text->str);
+      mvaddcentstr(22, text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
@@ -2162,7 +2174,7 @@ static void Curses_DoGame(Player *Play)
         /* (%tde = "drugs" by default here) */
         dpg_string_sprintfa(text, _("D>eal %tde, "), Names.Drugs);
       g_string_append(text, _("or Q>uit? "));
-      mvaddstr(22, 40 - strlen(text->str) / 2, text->str);
+      mvaddcentstr(22, text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
@@ -2175,7 +2187,7 @@ static void Curses_DoGame(Player *Play)
       g_string_append(text, Names.Drugs);
       g_string_append(text, ", or Q>uit? ");
       attrset(PromptAttr);
-      mvaddstr(22, 40 - strlen(text->str) / 2, text->str);
+      mvaddcentstr(22, text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
