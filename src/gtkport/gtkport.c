@@ -56,6 +56,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 #include <windows.h>
 #include <winsock.h>
 #include <commctrl.h>
+#include <richedit.h>
 
 #define LISTITEMVPACK  0
 
@@ -63,6 +64,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 
 HICON mainIcon = NULL;
 static WNDPROC customWndProc = NULL;
+static gboolean HaveRichEdit = FALSE;
 
 static guint RecurseLevel = 0;
 
@@ -1145,6 +1147,9 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   InitCommonControls();
+  LoadLibrary("RICHED32.DLL");
+  HaveRichEdit = GetClassInfo(hInstance, "RichEdit", &wc);
+
   if (!hPrevInstance) {
     wc.style = 0;
     wc.lpfnWndProc = MainWndProc;
@@ -1928,6 +1933,30 @@ void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
   g_string_free(newstr, TRUE);
 }
 
+static void gtk_text_view_set_format(GtkTextView *textview,
+                                     const gchar *tagname, guint len,
+                                     gint endpos)
+{
+  CHARFORMAT cf;
+  GtkWidget *widget = GTK_WIDGET(textview);
+
+  if (!GTK_WIDGET_REALIZED(widget)) {
+    return;
+  }
+
+  mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)(endpos - len),
+                (LPARAM)endpos);
+  cf.cbSize = sizeof(CHARFORMAT);
+  cf.dwMask = CFM_COLOR;
+  if (tagname) {
+    cf.crTextColor = RGB(0, 0, 255);
+    cf.dwEffects = 0;
+  } else {
+    cf.dwEffects = CFE_AUTOCOLOR;
+  }
+  mySendMessage(widget->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+}
+
 void gtk_editable_delete_text(GtkEditable *editable,
                               gint start_pos, gint end_pos)
 {
@@ -2427,7 +2456,8 @@ void gtk_text_realize(GtkWidget *widget)
   Parent = gtk_get_parent_hwnd(widget);
   editable = GTK_EDITABLE(widget)->is_editable;
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
-  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "EDIT", "",
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE,
+                                  HaveRichEdit ? "RichEdit" : "EDIT", "",
                                   WS_CHILD | (editable ? WS_TABSTOP : 0) |
                                   ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL |
                                   (GTK_TEXT(widget)->word_wrap ?
@@ -5470,6 +5500,9 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
   editpos = gtk_text_get_length(GTK_TEXT(textview));
   gtk_editable_insert_text(GTK_EDITABLE(textview), text, strlen(text),
                            &editpos);
+#ifdef CYGWIN
+  gtk_text_view_set_format(textview, tagname, strlen(text), editpos);
+#endif
   if (scroll) {
     gtk_editable_set_position(GTK_EDITABLE(textview), editpos);
   }
