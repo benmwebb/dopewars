@@ -90,11 +90,10 @@ GSList *FirstServer=NULL;
 
 #ifdef NETWORKING
 static GScanner *Scanner;
-#endif
 
 /* Data waiting to be sent to/read from the metaserver */
 HttpConnection *MetaConn=NULL;
-gint MetaInputTag=0;
+#endif
 
 /* Handle to the high score file */
 static FILE *ScoreFP=NULL;
@@ -132,6 +131,8 @@ static int OfferObject(Player *To,gboolean ForceBitch);
 #ifdef GUI_SERVER
 static void GuiHandleMeta(gpointer data,gint socket,
                           GdkInputCondition condition);
+static void MetaSocketStatus(NetworkBuffer *NetBuf,
+                             gboolean Read,gboolean Write);
 #endif
 
 void RegisterWithMetaServer(gboolean Up,gboolean SendData,
@@ -161,10 +162,6 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 /* If the previous connect hung for so long that it's still active, then
    break the connection before we start a new one */
    if (MetaConn) CloseHttpConnection(MetaConn);
-#ifdef GUI_SERVER
-   if (MetaInputTag) gdk_input_remove(MetaInputTag);
-   MetaInputTag=0;
-#endif
 
    headers=g_string_new("");
    body=g_string_new("");
@@ -208,7 +205,6 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    MetaConn=OpenHttpConnection(MetaServer.Name,MetaServer.Port,
                                MetaServer.ProxyName,MetaServer.ProxyPort,
                                "POST",MetaServer.Path,headers->str,body->str);
-   g_print("Sending headers %s and body %s\n",headers->str,body->str);
    g_string_free(headers,TRUE);
    g_string_free(body,TRUE);
 
@@ -217,9 +213,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
               MetaServer.Name,MetaServer.Port);
    } else return;
 #ifdef GUI_SERVER
-   MetaInputTag=gdk_input_add(MetaConn->NetBuf.fd,
-                              GDK_INPUT_READ|GDK_INPUT_WRITE,
-                              GuiHandleMeta,NULL);
+   SetNetworkBufferCallBack(&MetaConn->NetBuf,MetaSocketStatus,NULL);
 #endif
    MetaPlayerPending=FALSE;
 
@@ -653,7 +647,6 @@ void StartServer() {
 
    Network=TRUE;
    FirstServer=NULL;
-   SocketWriteTestPt=NULL;
    ClientMessageHandlerPt=NULL;
    ListenSock=socket(AF_INET,SOCK_STREAM,0);
    if (ListenSock==SOCKET_ERROR) {
@@ -800,9 +793,6 @@ void StopServer() {
 }
 
 void RemovePlayerFromServer(Player *Play) {
-#ifdef GUI_SERVER
-   if (Play->InputTag) gdk_input_remove(Play->InputTag);
-#endif
    if (!WantQuit && strlen(GetPlayerName(Play))>0) {
       dopelog(2,_("%s leaves the server!"),GetPlayerName(Play));
       ClientLeftServer(Play);
@@ -935,7 +925,7 @@ void ServerLoop() {
 #ifdef GUI_SERVER
 static GtkWidget *TextOutput;
 static gint ListenTag=0;
-static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
+static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 static void GuiSetTimeouts(void);
 static time_t NextTimeout=0;
 static guint TimeoutTag=0;
@@ -1021,15 +1011,7 @@ void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
    if (!DoneOK) {
       dopelog(4,"MetaServer: (closed)\n");
       CloseHttpConnection(MetaConn); MetaConn=NULL;
-      gdk_input_remove(MetaInputTag);
-      MetaInputTag=0;
       if (IsServerShutdown()) GuiQuitServer();
-   } else if (condition&GDK_INPUT_WRITE &&
-              !MetaConn->NetBuf.WriteBuf.DataPresent) {
-/* If we've written out everything, no need to test for write-ready any more */
-      gdk_input_remove(MetaInputTag);
-      MetaInputTag=gdk_input_add(MetaConn->NetBuf.fd,
-                                 GDK_INPUT_READ,GuiHandleMeta,NULL);
    }
 }
 
@@ -1053,11 +1035,26 @@ static void GuiHandleSocket(gpointer data,gint socket,
    }
 }
 
-void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
-   if (Play->InputTag) gdk_input_remove(Play->InputTag);
-   Play->InputTag=gdk_input_add(Play->NetBuf.fd,
-                      GDK_INPUT_READ|(WriteTest ? GDK_INPUT_WRITE : 0),
-                      GuiHandleSocket,(gpointer)Play);
+void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+   if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
+   NetBuf->InputTag=0;
+   if (Read || Write) {
+      NetBuf->InputTag=gdk_input_add(NetBuf->fd,
+                                     (Read ? GDK_INPUT_READ : 0) |
+                                     (Write ? GDK_INPUT_WRITE : 0),
+                                     GuiHandleSocket,NetBuf->CallBackData);
+   }
+}
+
+void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+   if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
+   NetBuf->InputTag=0;
+   if (Read || Write) {
+      NetBuf->InputTag=gdk_input_add(NetBuf->fd,
+                                     (Read ? GDK_INPUT_READ : 0) |
+                                     (Write ? GDK_INPUT_WRITE : 0),
+                                     GuiHandleMeta,NetBuf->CallBackData);
+   }
 }
 
 static void GuiNewConnect(gpointer data,gint socket,
@@ -1065,8 +1062,7 @@ static void GuiNewConnect(gpointer data,gint socket,
    Player *Play;
    if (condition&GDK_INPUT_READ) {
       Play=HandleNewConnection();
-      Play->InputTag=0;
-      SetSocketWriteTest(Play,TRUE);
+      SetNetworkBufferCallBack(&Play->NetBuf,SocketStatus,(gpointer)Play);
    }
 }
 
@@ -1121,7 +1117,6 @@ void GuiServerLoop() {
                      GuiServerLogMessage,NULL);
    StartServer();
 
-   SocketWriteTestPt = SetSocketWriteTest;
    ListenTag=gdk_input_add(ListenSock,GDK_INPUT_READ,GuiNewConnect,NULL);
    gtk_main();
 }

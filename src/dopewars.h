@@ -259,16 +259,23 @@ typedef struct tagConnBuf {
    int DataPresent; /* number of bytes currently in "Data"   */
 } ConnBuf;            
 
+typedef struct _NetworkBuffer NetworkBuffer;
+
+typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
+
 /* Handles reading and writing messages from/to a network connection */
-typedef struct tagNetworkBuffer {
+struct _NetworkBuffer {
    int fd;                /* File descriptor of the socket */
    gint InputTag;         /* Identifier for gdk_input routines */
+   NBCallBack CallBack;   /* Function called when the socket read- or
+                             write-able status changes */
+   gpointer CallBackData; /* Data accessible to the callback function */
    char Terminator;       /* Character that separates messages */
    char StripChar;        /* Character that should be removed from messages */
    ConnBuf ReadBuf;       /* New data, waiting for the application */
    ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
    gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
-} NetworkBuffer;
+};
 
 struct PLAYER_T {
    guint ID;
@@ -287,7 +294,6 @@ struct PLAYER_T {
    Player *OnBehalfOf;
    NetworkBuffer NetBuf;
    Abilities Abil;
-   gint InputTag;
    GPtrArray *FightArray; /* If non-NULL, a list of players in a fight */
    Player *Attacking;     /* The player that this player is attacking */
    gint CopIndex;  /* if >0,  then this player is a cop, described

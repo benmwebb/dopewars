@@ -1849,7 +1849,6 @@ void CursesLoop(void) {
 
 /* Set up message handlers */
    ClientMessageHandlerPt = HandleClientMessage;
-   SocketWriteTestPt = NULL;
 
 /* Make the GLib log messages display nicely */
    g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,

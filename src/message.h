@@ -98,6 +98,8 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
 char *FinishConnect(int fd);
 
 void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar);
+void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
+                              gpointer CallBackData);
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
@@ -138,7 +140,6 @@ gchar *bgets(int fd);
 extern GSList *FirstClient;
 
 extern void (*ClientMessageHandlerPt) (char *,Player *);
-extern void (*SocketWriteTestPt) (Player *,gboolean);
 
 void AddURLEnc(GString *str,gchar *unenc);
 void chomp(char *str);
