@@ -31,6 +31,7 @@
 #include "dopewars.h"           /* For struct GLOBALS etc. */
 #include "gtk_client.h"         /* For mainwindow etc. */
 #include "nls.h"                /* For _ function */
+#include "sound.h"              /* For SoundPlay */
 #include "gtkport/gtkport.h"    /* For gtk_ functions */
 
 struct ConfigWidget {
@@ -488,6 +489,52 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
   }
 }
 
+static void sound_row_select(GtkCList *clist, gint row, gint column,
+                             GdkEvent *event, gpointer data)
+{
+  GtkWidget *entry;
+  int globind;
+  gchar **text;
+
+  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
+  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
+  g_assert(globind >=0 && globind < NUMGLOB);
+
+  text = GetGlobalString(globind, 0);
+  gtk_entry_set_text(GTK_ENTRY(entry), *text);
+}
+
+static void sound_row_unselect(GtkCList *clist, gint row, gint column,
+                               GdkEvent *event, gpointer data)
+{
+  GtkWidget *entry;
+  int globind;
+  gchar *text, **oldtext;
+
+  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
+  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
+  g_assert(globind >=0 && globind < NUMGLOB);
+
+  text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+  oldtext = GetGlobalString(globind, 0);
+  g_assert(text && oldtext);
+  if (strcmp(text, *oldtext) != 0) {
+    AssignName(GetGlobalString(globind, 0), text);
+    Globals[globind].Modified = TRUE;
+  }
+  gtk_entry_set_text(GTK_ENTRY(entry), "");
+  g_free(text);
+}
+
+static void TestPlaySound(GtkWidget *entry)
+{
+  gchar *text;
+
+  text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+  SoundPlay(text);
+  g_free(text);
+}
+
 static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
 {
   SaveConfigWidgets();
@@ -603,11 +650,33 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   return hbox;
 }
 
+static void FillSoundsList(GtkCList *clist)
+{
+  gchar *rowtext[2];
+  gint i, row;
+
+  gtk_clist_freeze(clist);
+  gtk_clist_clear(clist);
+  for (i = 0; i < NUMGLOB; i++) {
+    if (strlen(Globals[i].Name) > 7
+	&& strncmp(Globals[i].Name, "Sounds.", 7) == 0) {
+      rowtext[0] = &Globals[i].Name[7];
+      rowtext[1] = Globals[i].Help;
+      row = gtk_clist_append(clist, rowtext);
+      gtk_clist_set_row_data(clist, row, GINT_TO_POINTER(i));
+    }
+  }
+
+  gtk_clist_thaw(clist);
+}
+
 void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
-  GtkWidget *hbox, *vbox, *hsep, *button, *hbbox;
+  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *clist;
+  GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
+  gchar *sound_titles[2];
 
   struct ConfigMembers locmembers[] = {
     { N_("Police presence"), "PolicePresence" },
@@ -803,6 +872,46 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("Server"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+
+  vbox2 = gtk_vbox_new(FALSE, 5);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
+
+  sound_titles[0] = _("Sound name");
+  sound_titles[1] = _("Description");
+  clist = gtk_scrolled_clist_new_with_titles(2, sound_titles, &scrollwin);
+  gtk_clist_column_titles_passive(GTK_CLIST(clist));
+  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
+  FillSoundsList(GTK_CLIST(clist));
+  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
+                     GTK_SIGNAL_FUNC(sound_row_select), NULL);
+  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
+                     GTK_SIGNAL_FUNC(sound_row_unselect), NULL);
+
+  clists = g_slist_append(clists, clist);
+
+  gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
+
+  hbox = gtk_hbox_new(FALSE, 5);
+  label = gtk_label_new(_("Sound file"));
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+
+  entry = gtk_entry_new();
+  gtk_object_set_data(GTK_OBJECT(clist), "entry", entry);
+  gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
+
+  button = gtk_button_new_with_label(_("Browse..."));
+  gtk_object_set_data(GTK_OBJECT(button), "entry", entry);
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+  button = gtk_button_new_with_label(_("Play"));
+  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
+                            GTK_SIGNAL_FUNC(TestPlaySound), entry);
+  gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+
+  gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, FALSE, 0);
+
+  label = gtk_label_new(_("Sounds"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 
   gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
 
