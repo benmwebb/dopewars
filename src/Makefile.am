@@ -12,17 +12,16 @@ CURSESPORTSUBDIR = cursesport
 endif
 
 SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR)
-dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @SOUND_LIBS@ @INTLLIBS@ @WNDRES@
+dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @INTLLIBS@ @WNDRES@
 dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @INTLLIBS@ @WNDRES@
 
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    dopewars.c dopewars.h error.c error.h message.c message.h \
                    network.c network.h nls.h serverside.c serverside.h \
-                   sound.c sound.h sound_esd.c sound_esd.h \
-                   sound_sdl.c sound_sdl.h sound_winmm.c sound_winmm.h \
+                   sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
-INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@ @SOUND_CFLAGS@
+INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@
 DEFS       = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}
