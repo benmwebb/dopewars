@@ -3662,6 +3662,11 @@ void gtk_hpaned_realize(GtkWidget *widget) {
                                0,0,0,0,Parent,NULL,hInst,NULL);
 }
 
+static void gtk_paned_set_handle_percent(GtkPaned *paned,gint16 req[2]) {
+   if (req[0]+req[1]) paned->handle_pos=req[0]*100/(req[0]+req[1]);
+   else paned->handle_pos=0;
+}
+
 void gtk_vpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    GtkPaned *paned=GTK_PANED(widget);
    gint i;
@@ -3674,7 +3679,7 @@ void gtk_vpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
       requisition->height += req[i];
    }
    requisition->height += paned->handle_size;
-   if (req[0] && req[1]) paned->handle_pos=req[0]*100/(req[0]+req[1]);
+   gtk_paned_set_handle_percent(paned,req);
 }
 
 void gtk_hpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
@@ -3689,44 +3694,66 @@ void gtk_hpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
       requisition->width += req[i];
    }
    requisition->width += paned->handle_size;
-   if (req[0] && req[1]) paned->handle_pos=req[0]*100/(req[0]+req[1]);
+   gtk_paned_set_handle_percent(paned,req);
 }
 
 void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkPaned *paned=GTK_PANED(widget);
-   gint i,numchildren=0;
+   GtkWidget *child;
+   gint16 alloc;
    GtkAllocation child_alloc;
-   child_alloc.x=allocation->x;
-   child_alloc.y=allocation->y;
-   for (i=0;i<2;i++) if (paned->children[i].widget) numchildren++;
-   if (numchildren==0) return;
-   child_alloc.width=allocation->width;
-   child_alloc.height=(allocation->height-paned->handle_size)/numchildren;
-   for (i=0;i<2;i++) if (paned->children[i].widget) {
-      gtk_widget_set_size(paned->children[i].widget,&child_alloc);
-      child_alloc.y+=(allocation->height-paned->handle_size)/numchildren+
-                     paned->handle_size;
+
+   alloc=allocation->height-paned->handle_size;
+
+   child=paned->children[0].widget;
+   if (child) {
+      child_alloc.x=allocation->x;
+      child_alloc.y=allocation->y;
+      child_alloc.width=allocation->width;
+      child_alloc.height=alloc*paned->handle_pos/100;
+      gtk_widget_set_size(child,&child_alloc);
    }
-   allocation->y += (allocation->height-paned->handle_size)/numchildren;
+
+   child=paned->children[1].widget;
+   if (child) {
+      child_alloc.x=allocation->x;
+      child_alloc.width=allocation->width;
+      child_alloc.height=alloc*(100-paned->handle_pos)/100;
+      child_alloc.y=allocation->y+allocation->height-child_alloc.height;
+      gtk_widget_set_size(child,&child_alloc);
+   }
+
+   allocation->y += alloc*paned->handle_pos/100;
    allocation->height = paned->handle_size;
 }
 
 void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkPaned *paned=GTK_PANED(widget);
-   gint i,numchildren=0;
+   GtkWidget *child;
+   gint16 alloc;
    GtkAllocation child_alloc;
-   child_alloc.x=allocation->x;
-   child_alloc.y=allocation->y;
-   for (i=0;i<2;i++) if (paned->children[i].widget) numchildren++;
-   if (numchildren==0) return;
-   child_alloc.height=allocation->height;
-   child_alloc.width=(allocation->width-paned->handle_size)/numchildren;
-   for (i=0;i<2;i++) if (paned->children[i].widget) {
-      gtk_widget_set_size(paned->children[i].widget,&child_alloc);
-      child_alloc.x+=(allocation->width-paned->handle_size)/numchildren+
-                     paned->handle_size;
+
+   alloc=allocation->width-paned->handle_size;
+
+   child=paned->children[0].widget;
+   if (child) {
+      child_alloc.x=allocation->x;
+      child_alloc.y=allocation->y;
+      child_alloc.height=allocation->height;
+      child_alloc.width=alloc*paned->handle_pos/100;
+      gtk_widget_set_size(child,&child_alloc);
    }
-   allocation->x += (allocation->width-paned->handle_size)/numchildren;
+
+   child=paned->children[1].widget;
+   if (child) {
+      child_alloc.x=allocation->x;
+      child_alloc.height=allocation->height;
+      child_alloc.width=alloc*(100-paned->handle_pos)/100;
+      child_alloc.x=allocation->x+allocation->width-child_alloc.width;
+      gtk_widget_set_size(child,&child_alloc);
+   }
+
+   allocation->x += alloc*paned->handle_pos/100;
    allocation->width = paned->handle_size;
 }
 
