@@ -1800,6 +1800,34 @@ void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
   g_print("%s\n", msg);
 }
 
+/*
+ * On Windows systems, check the current config file referenced by "scanner"
+ * for a UTF-8 header. If one is found, "conv" and "encoding" are set
+ * for UTF-8 encoding.
+ */
+static void CheckConfigHeader(GScanner *scanner, Converter *conv,
+                              gchar **encoding)
+{
+#ifdef CYGWIN
+  GTokenType token;
+
+  token = g_scanner_peek_next_token(scanner);
+  if (token == (guchar)'\357') {
+    /* OK; assume this is a Windows-style \357 \273 \277 UTF-8 header */
+    if (g_scanner_get_next_token(scanner) != (guchar)'\357'
+        || g_scanner_get_next_token(scanner) != (guchar)'\273'
+        || g_scanner_get_next_token(scanner) != (guchar)'\277') {
+      return;
+    }
+    Conv_SetCodeset(conv, "UTF-8");
+    if (encoding) {
+      g_free(*encoding);
+      *encoding = g_strdup("UTF-8");
+    }
+  }
+#endif
+}
+
 /* 
  * Read a configuration file given by "FileName"
  */
@@ -1820,6 +1848,7 @@ static gboolean ReadConfigFile(char *FileName, gchar **encoding)
     scanner->input_name = FileName;
     scanner->msg_handler = ScannerErrorHandler;
     g_scanner_input_file(scanner, fileno(fp));
+    CheckConfigHeader(scanner, conv, encoding);
     while (!g_scanner_eof(scanner)) {
       if (!ParseNextConfig(scanner, conv, encoding, FALSE)) {
         ConfigErrors++;
