@@ -5047,7 +5047,7 @@ for ac_file in $CONFIG_FILES; do
           ;;
         esac
       done
-sed -e "/POTFILES =/r po/POTFILES" -e 's/^prefix = /prefix = ${DESTDIR}/' po/Makefile.in > po/Makefile
+sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile
 exit 0
 EOF
 chmod +x $CONFIG_STATUS
