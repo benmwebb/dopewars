@@ -4,6 +4,7 @@ cvs
       socket for admin connections
     - New ServerMOTD variable to welcome players to a server (with thanks
       to Mike Robinson)
+    - GTK+ client should now work with GTK+2.0
 
 1.5.4   03-03-2002
     - Basic configuration file editor added to GTK+ client
