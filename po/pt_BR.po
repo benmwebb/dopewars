@@ -2294,11 +2294,11 @@ msgstr "Você escuta alguém tocando %s"
 #: src/serverside.c:1092 src/serverside.c:1101 src/serverside.c:1110
 #: src/serverside.c:1119
 msgid "YN^Would you like to visit %tde?"
-msgstr "SN^Você gostaria de visitar %tde?"
+msgstr "YN^Você gostaria de visitar %tde?"
 
 #: src/serverside.c:1130
 msgid "YN^^Would you like to hire a %tde for %P?"
-msgstr "SN^^Você gostaria de contratar %tde por %P?"
+msgstr "YN^^Você gostaria de contratar %tde por %P?"
 
 #: src/serverside.c:1142
 #, c-format
@@ -2363,7 +2363,7 @@ msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
-"SN^Tem um weed aqui que cheira muito bem!^Parece bom! Você irá fumar? "
+"YN^Tem um weed aqui que cheira muito bem!^Parece bom! Você irá fumar? "
 
 #: src/serverside.c:1625
 #, c-format
@@ -2376,11 +2376,11 @@ msgstr "Você gostaria de comprar um colete por %P?"
 
 #: src/serverside.c:1651
 msgid "YN^Hey dude! I'll help carry your %tde for a mere %P. Yes or no?"
-msgstr "SN^Ei carinha! Eu posso ajudar você carregar %tde por meros %P. Sim ou não?"
+msgstr "YN^Ei carinha! Eu posso ajudar você carregar %tde por meros %P. Sim ou não?"
 
 #: src/serverside.c:1661
 msgid "YN^Would you like to buy a %tde for %P?"
-msgstr "SN^Você gostaria de comprar %tde por %P?"
+msgstr "YN^Você gostaria de comprar %tde por %P?"
 
 #: src/serverside.c:1765 src/serverside.c:1858
 #, c-format
@@ -2412,13 +2412,13 @@ msgstr "%s rejeitou seu %s!"
 
 #: src/serverside.c:1904
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
-msgstr "SN^Oficial %%s faz você largar %s, e persegue você!"
+msgstr "YN^Oficial %%s faz você largar %s, e persegue você!"
 
 #: src/serverside.c:1906
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
-"SN^Oficial %%s e %%d de seus ajudantes faz você largar %s, e perseguem você!"
+"YN^Oficial %%s e %%d de seus ajudantes faz você largar %s, e perseguem você!"
 
 #: src/serverside.c:2065
 msgid "Player removed due to idle timeout"
