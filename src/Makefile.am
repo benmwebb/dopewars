@@ -21,7 +21,7 @@ CURSESPORTSUBDIR = cursesport
 endif
 
 SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR) plugins
-dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @INTLLIBS@ @WNDRES@ @PLUGOBJS@ @PLUGLIBS@
+dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @INTLLIBS@ @WNDRES@ @PLUGOBJS@ @PLUGLIBS@ @GLIB_LIBS@
 dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @INTLLIBS@ @WNDRES@ @PLUGOBJS@
 
 bin_PROGRAMS = dopewars
@@ -31,7 +31,7 @@ dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    message.c message.h network.c network.h nls.h \
                    serverside.c serverside.h sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
-INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@
+INCLUDES   = -I../intl -I${srcdir} -I.. @GLIB_CFLAGS@ @GTK_CFLAGS@
 DEFS       = @DEFS@
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}
