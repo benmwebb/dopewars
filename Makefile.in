@@ -105,6 +105,7 @@ EXTRA_DIST = ABOUT-NLS LICENCE dopewars.desktop dopewars.spec \
              win32/uninstall.c win32/uninstall.rc win32/util.c win32/util.h \
              win32/zlib/Makefile.nocygwin win32/zlib/README.zlib
 
+CLEANFILES = dopewars.sco dopewars-log.txt dopewars-config.txt
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
@@ -350,6 +351,7 @@ installdirs-am:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-rm -f Makefile $(CONFIG_CLEAN_FILES)
