@@ -92,10 +92,11 @@ else
    glib2_found="no"
    if test "$USE_GLIB2" = "yes" ; then
      AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
-     AC_DEFINE(HAVE_GLIB2)
    fi
    if test "$glib2_found" = "no" ; then
      AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
+   else
+     AC_DEFINE(HAVE_GLIB2)
    fi
 
    dnl On true Unix systems, test for valid curses-like libraries
