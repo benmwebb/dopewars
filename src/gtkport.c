@@ -242,6 +242,15 @@ struct _GdkInput {
    gpointer data;
 };
 
+typedef struct _GtkTimeout GtkTimeout;
+
+struct _GtkTimeout {
+   guint32 interval;
+   GtkFunction function;
+   gpointer data;
+   guint id;
+};
+
 typedef struct _GtkItemFactoryChild GtkItemFactoryChild;
 
 struct _GtkItemFactoryChild {
@@ -621,6 +630,7 @@ static HINSTANCE hInst;
 static HFONT hFont;
 static GSList *WindowList=NULL;
 static GSList *GdkInputs=NULL;
+static GSList *GtkTimeouts=NULL;
 static HWND TopLevel=NULL;
 long AsyncSocketError=0;
 
@@ -647,6 +657,22 @@ static void DispatchSocketEvent(SOCKET sock,long event) {
          (*input->function)(input->data,input->source,
                             (event&(FD_READ|FD_CLOSE) ? GDK_INPUT_READ:0) |
                             (event&(FD_WRITE|FD_CONNECT) ? GDK_INPUT_WRITE:0));
+         break;
+      }
+   }
+}
+
+static void DispatchTimeoutEvent(UINT id) {
+   GSList *list;
+   GtkTimeout *timeout;
+   for (list=GtkTimeouts;list;list=g_slist_next(list)) {
+      timeout=(GtkTimeout *)list->data;
+      if (timeout->id == id) {
+         if (timeout->function) {
+            if (!(*timeout->function)(timeout->data)) {
+               gtk_timeout_remove(id);
+            }
+         }
          break;
       }
    }
@@ -861,6 +887,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          DispatchSocketEvent((SOCKET)wParam,WSAGETSELECTEVENT(lParam));
          AsyncSocketError=0;
          break;
+      case WM_TIMER:
+         DispatchTimeoutEvent((UINT)wParam);
+         return FALSE;
       default:
          return DefWindowProc(hwnd,msg,wParam,lParam);
    }
@@ -4228,6 +4257,52 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
                    const gchar *Title,gint Options) {
    return MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
                      Text,Title,Options);
+}
+
+guint gtk_timeout_add(guint32 interval,GtkFunction function,gpointer data) {
+   GtkTimeout *timeout;
+   GSList *list;
+   guint id=1;
+
+/* Get an unused ID */
+   list=GtkTimeouts;
+   while (list) {
+      timeout=(GtkTimeout *)list->data;
+      if (timeout->id == id) {
+         id++; list=GtkTimeouts;
+      } else {
+         list=g_slist_next(list);
+      }
+   }
+
+   timeout=g_new(GtkTimeout,1);
+   timeout->interval = interval;
+   timeout->function = function;
+   timeout->data = data;
+
+   timeout->id=SetTimer(TopLevel,id,interval,NULL);
+   if (timeout->id==0) {
+      g_warning("Failed to create timer!");
+   }
+
+   GtkTimeouts = g_slist_append(GtkTimeouts,timeout);
+   return timeout->id;
+}
+
+void gtk_timeout_remove(guint timeout_handler_id) {
+   GSList *list;
+   GtkTimeout *timeout;
+   for (list=GtkTimeouts;list;list=g_slist_next(list)) {
+      timeout=(GtkTimeout *)list->data;
+      if (timeout->id == timeout_handler_id) {
+         if (KillTimer(TopLevel,timeout->id)==0) {
+            g_warning("Failed to kill timer!");
+         }
+         GtkTimeouts=g_slist_remove(GtkTimeouts,timeout);
+         g_free(timeout);
+         break;
+      }
+   }
 }
 
 #else   /* CYGWIN */
