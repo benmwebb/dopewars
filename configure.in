@@ -194,6 +194,7 @@ fi
 
 dnl Enable full warnings if using gcc
 if test -n "$GCC"; then
+dnl   CFLAGS="$CFLAGS -Wall -Wfloat-equal -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wredundant-decls -Wnested-externs -Wunreachable-code -Wunused"
    CFLAGS="$CFLAGS -Wall"
 fi
 

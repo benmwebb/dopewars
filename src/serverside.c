@@ -81,7 +81,7 @@ static GScanner *Scanner;
 #endif
 
 /* Data waiting to be sent to/read from the metaserver */
-NetworkBuffer MetaNetBuf;
+HttpConnection *MetaConn=NULL;
 gint MetaInputTag=0;
 
 /* Handle to the high score file */
@@ -127,10 +127,8 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 /* recently. If networking is disabled, this function does nothing.  */
 #if NETWORKING
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
-   GString *text,*query;
+   GString *headers,*body;
    gchar *prstr;
-   gchar *MetaName;
-   int MetaPort;
    int i;
 
    if (!MetaServer.Active || !NotifyMetaServer || WantQuit) return;
@@ -144,75 +142,68 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 
 /* If the previous connect hung for so long that it's still active, then
    break the connection before we start a new one */
-   ShutdownNetworkBuffer(&MetaNetBuf);
-
-/* If a proxy is defined, connect to that. Otherwise, connect to the
-   metaserver directly */
-   if (MetaServer.ProxyName[0]) {
-      MetaName=MetaServer.ProxyName; MetaPort=MetaServer.ProxyPort;
-   } else {
-      MetaName=MetaServer.Name; MetaPort=MetaServer.Port;
-   }
-
-   if (StartNetworkBufferConnect(&MetaNetBuf,MetaName,MetaPort)) {
-      dopelog(2,_("Waiting for metaserver connect to %s:%d..."),MetaName,
-              MetaPort);
-   } else return;
+   if (MetaConn) CloseHttpConnection(MetaConn);
 #ifdef GUI_SERVER
    if (MetaInputTag) gdk_input_remove(MetaInputTag);
-   MetaInputTag=gdk_input_add(MetaNetBuf.fd,GDK_INPUT_READ|GDK_INPUT_WRITE,
-                              GuiHandleMeta,NULL);
+   MetaInputTag=0;
 #endif
-   MetaPlayerPending=FALSE;
-   text=g_string_new("");
-   query=g_string_new("");
 
-   g_string_assign(query,"output=text&");
+   headers=g_string_new("");
+   body=g_string_new("");
 
-   g_string_sprintfa(query,"up=%d&port=%d&version=",Up ? 1 : 0,Port);
-   AddURLEnc(query,VERSION);
-   g_string_sprintfa(query,"&players=%d&maxplay=%d&comment=",
+   g_string_assign(body,"output=text&");
+
+   g_string_sprintfa(body,"up=%d&port=%d&version=",Up ? 1 : 0,Port);
+   AddURLEnc(body,VERSION);
+   g_string_sprintfa(body,"&players=%d&maxplay=%d&comment=",
                      CountPlayers(FirstServer),MaxClients);
-   AddURLEnc(query,MetaServer.Comment);
+   AddURLEnc(body,MetaServer.Comment);
 
    if (MetaServer.LocalName[0]) {
-      g_string_append(query,"&hostname=");
-      AddURLEnc(query,MetaServer.LocalName);
+      g_string_append(body,"&hostname=");
+      AddURLEnc(body,MetaServer.LocalName);
    }
    if (MetaServer.Password[0]) {
-      g_string_append(query,"&password=");
-      AddURLEnc(query,MetaServer.Password);
+      g_string_append(body,"&password=");
+      AddURLEnc(body,MetaServer.Password);
    }
 
    if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
       for (i=0;i<NUMHISCORE;i++) {
          if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-            g_string_sprintfa(query,"&nm[%d]=",i);
-            AddURLEnc(query,MultiScore[i].Name);
-            g_string_sprintfa(query,"&dt[%d]=",i);
-            AddURLEnc(query,MultiScore[i].Time);
-            g_string_sprintfa(query,"&st[%d]=%s&sc[%d]=",i,
+            g_string_sprintfa(body,"&nm[%d]=",i);
+            AddURLEnc(body,MultiScore[i].Name);
+            g_string_sprintfa(body,"&dt[%d]=",i);
+            AddURLEnc(body,MultiScore[i].Time);
+            g_string_sprintfa(body,"&st[%d]=%s&sc[%d]=",i,
                               MultiScore[i].Dead ? "dead" : "alive",i);
-            AddURLEnc(query,prstr=FormatPrice(MultiScore[i].Money));
+            AddURLEnc(body,prstr=FormatPrice(MultiScore[i].Money));
             g_free(prstr);
          }
       }
    }
 
-   g_string_sprintf(text,"POST %s HTTP/1.1",MetaServer.Path);
-   QueueMessageForSend(&MetaNetBuf,text->str);
-   g_string_sprintf(text,"Host: %s:%d",MetaServer.Name,MetaServer.Port);
-   QueueMessageForSend(&MetaNetBuf,text->str);
-   QueueMessageForSend(&MetaNetBuf,
-                       "Content-Type: application/x-www-form-urlencoded");
-   g_string_sprintf(text,"Content-Length: %d\n",(int)strlen(query->str));
-   QueueMessageForSend(&MetaNetBuf,text->str);
-
-   QueueMessageForSend(&MetaNetBuf,query->str);
-
-   g_string_free(query,TRUE);
-   g_string_free(text,TRUE);
+   g_string_sprintf(headers,
+                    "Content-Type: application/x-www-form-urlencoded\n"
+                    "Content-Length: %d",(int)strlen(body->str));
    
+   MetaConn=OpenHttpConnection(MetaServer.Name,MetaServer.Port,
+                               MetaServer.ProxyName,MetaServer.ProxyPort,
+                               "POST",MetaServer.Path,headers->str,body->str);
+   g_string_free(headers,TRUE);
+   g_string_free(body,TRUE);
+
+   if (MetaConn) {
+      dopelog(2,_("Waiting for metaserver connect to %s:%u..."),
+              MetaServer.Name,MetaServer.Port);
+   } else return;
+#ifdef GUI_SERVER
+   MetaInputTag=gdk_input_add(MetaConn->NetBuf.fd,
+                              GDK_INPUT_READ|GDK_INPUT_WRITE,
+                              GuiHandleMeta,NULL);
+#endif
+   MetaPlayerPending=FALSE;
+
    MetaUpdateTimeout=time(NULL)+METAUPDATETIME;
    MetaMinTimeout=time(NULL)+METAMINTIME;
 #endif /* NETWORKING */
@@ -525,7 +516,7 @@ void PrintHelpTo(FILE *fp) {
    g_string_free(VarName,TRUE);
 }
 
-void ServerHelp() {
+void ServerHelp(void) {
 /* Displays a simple help screen listing the server commands and options */
    int i;
 #if CYGWIN || GUI_SERVER
@@ -565,7 +556,7 @@ void ServerHelp() {
 }
 
 #if NETWORKING
-void CreatePidFile() {
+void CreatePidFile(void) {
 /* Creates a pid file (if "PidFile" is non-NULL) and writes the process */
 /* ID into it                                                           */
    FILE *fp;
@@ -579,7 +570,7 @@ void CreatePidFile() {
    } else g_warning(_("Cannot create pid file %s"),PidFile);
 }
 
-void RemovePidFile() {
+void RemovePidFile(void) {
 /* Removes the previously-created pid file "PidFile" */
    if (PidFile) unlink(PidFile);
 }
@@ -624,8 +615,6 @@ void StartServer() {
 #ifndef CYGWIN
    struct sigaction sact;
 #endif
-
-   InitNetworkBuffer(&MetaNetBuf,'\n','\r');
 
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
@@ -704,7 +693,7 @@ void StartServer() {
    RegisterWithMetaServer(TRUE,TRUE,FALSE);
 }
 
-void RequestServerShutdown() {
+void RequestServerShutdown(void) {
 /* Begin the process of shutting down the server. In order to do this, */
 /* we need to log out all of the currently connected players, and tell */
 /* the metaserver that we're shutting down. We only shut down properly */
@@ -716,11 +705,11 @@ void RequestServerShutdown() {
    WantQuit=TRUE;
 }
 
-gboolean IsServerShutdown() {
+gboolean IsServerShutdown(void) {
 /* Returns TRUE if the actions initiated by RequestServerShutdown()  */
 /* have been successfully completed, such that we can shut down the  */
 /* server properly now.                                              */
-   return (WantQuit && !FirstServer && !IsNetworkBufferActive(&MetaNetBuf));
+   return (WantQuit && !FirstServer && !MetaConn);
 }
 
 void HandleServerCommand(char *string) {
@@ -763,7 +752,7 @@ void HandleServerCommand(char *string) {
    }
 }
 
-Player *HandleNewConnection() {
+Player *HandleNewConnection(void) {
    int cadsize;
    int ClientSock;
    struct sockaddr_in ClientAddr;
@@ -817,12 +806,11 @@ void ServerLoop() {
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean EndOfLine,DoneOK,ReadingHeaders;
+   gboolean EndOfLine,DoneOK;
    gchar *buf;
 
    StartServer();
 
-   ReadingHeaders=TRUE;
    LineBuf=g_string_new("");
    while (1) {
       FD_ZERO(&readfs);
@@ -832,8 +820,10 @@ void ServerLoop() {
       FD_SET(ListenSock,&readfs);
       FD_SET(ListenSock,&errorfs);
       topsock=ListenSock+1;
-      SetSelectForNetworkBuffer(&MetaNetBuf,&readfs,&writefs,
-                                &errorfs,&topsock);
+      if (MetaConn) {
+         SetSelectForNetworkBuffer(&MetaConn->NetBuf,&readfs,&writefs,
+                                   &errorfs,&topsock);
+      }
       for (list=FirstServer;list;list=g_slist_next(list)) {
          tmp=(Player *)list->data;
          if (!IsCop(tmp)) {
@@ -880,20 +870,22 @@ void ServerLoop() {
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
-      if (MetaNetBuf.WaitConnect) ReadingHeaders=TRUE;
-      if (RespondToSelect(&MetaNetBuf,&readfs,&writefs,&errorfs,&DoneOK)) {
-         while ((buf=GetWaitingMessage(&MetaNetBuf))) {
-            if (buf[0] || ReadingHeaders) {
-               dopelog(ReadingHeaders ? 4 : 2,"MetaServer: %s",buf);
+      if (MetaConn) {
+         if (RespondToSelect(&MetaConn->NetBuf,&readfs,&writefs,
+                             &errorfs,&DoneOK)) {
+            while ((buf=ReadHttpResponse(MetaConn))) {
+               gboolean ReadingBody = (MetaConn->Status==HS_READBODY);
+               if (buf[0] || !ReadingBody) {
+                  dopelog(ReadingBody ? 2 : 4,"MetaServer: %s",buf);
+               }
+               g_free(buf);
             }
-            if (buf[0]==0) ReadingHeaders=FALSE;
-            g_free(buf);
          }
-      }
-      if (!DoneOK) {
-         dopelog(4,"MetaServer: (closed)\n");
-         ShutdownNetworkBuffer(&MetaNetBuf);
-         if (IsServerShutdown()) break;
+         if (!DoneOK) {
+            dopelog(4,"MetaServer: (closed)\n");
+            CloseHttpConnection(MetaConn); MetaConn=NULL;
+            if (IsServerShutdown()) break;
+         }
       }
       list=FirstServer;
       while (list) {
@@ -923,7 +915,7 @@ void ServerLoop() {
 static GtkWidget *TextOutput;
 static gint ListenTag=0;
 static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
-static void GuiSetTimeouts();
+static void GuiSetTimeouts(void);
 static time_t NextTimeout=0;
 static guint TimeoutTag=-1;
 
@@ -938,7 +930,7 @@ static gint GuiDoTimeouts(gpointer data) {
    return FALSE;
 }
 
-void GuiSetTimeouts() {
+void GuiSetTimeouts(void) {
    int MinTimeout;
    time_t TimeNow;
    TimeNow=time(NULL);
@@ -993,22 +985,21 @@ static void GuiDoCommand(GtkWidget *widget,gpointer data) {
 void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
    gboolean DoneOK;
    gchar *buf;
-   static gboolean ReadingHeaders=TRUE;
 
-   if (MetaNetBuf.WaitConnect) ReadingHeaders=TRUE;
-   if (NetBufHandleNetwork(&MetaNetBuf,condition&GDK_INPUT_READ,
+   if (!MetaConn) return;
+   if (NetBufHandleNetwork(&MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
-      while ((buf=GetWaitingMessage(&MetaNetBuf))) {
-         if (buf[0] || ReadingHeaders) {
-            dopelog(ReadingHeaders ? 4 : 2,"MetaServer: %s",buf);
+      while ((buf=ReadHttpResponse(MetaConn))) {
+         gboolean ReadingBody = (MetaConn->Status==HS_READBODY);
+         if (buf[0] || !ReadingBody) {
+            dopelog(ReadingBody ? 2 : 4,"MetaServer: %s",buf);
          }
-         if (buf[0]==0) ReadingHeaders=FALSE;
          g_free(buf);
       }
    }
    if (!DoneOK) {
       dopelog(4,"MetaServer: (closed)\n");
-      ShutdownNetworkBuffer(&MetaNetBuf);
+      CloseHttpConnection(MetaConn); MetaConn=NULL;
       gdk_input_remove(MetaInputTag);
       MetaInputTag=0;
       if (IsServerShutdown()) GuiQuitServer();
