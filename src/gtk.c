@@ -163,6 +163,10 @@ static void gtk_clist_update_all_widths(GtkCList *clist);
 static void gtk_clist_do_auto_resize(GtkCList *clist);
 static void gtk_clist_set_column_width_full(GtkCList *clist,gint column,
                                             gint width,gboolean ResizeHeader);
+static void gtk_widget_set_focus(GtkWidget *widget);
+static void gtk_widget_lose_focus(GtkWidget *widget);
+static void gtk_window_update_focus(GtkWindow *window);
+static void gtk_window_set_focus(GtkWindow *window);
 
 typedef struct _GdkInput GdkInput;
 
@@ -627,6 +631,24 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          alloc.height=rect.bottom-rect.top;
          gtk_widget_set_size(window,&alloc);
          break;
+      case WM_ACTIVATE:
+      case WM_ACTIVATEAPP:
+         widget=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
+         if (widget) klass=GTK_OBJECT(widget)->klass; else klass=NULL;
+         if (klass==&GtkWindowClass) {
+             if ((msg==WM_ACTIVATE && LOWORD(wParam)!=WA_INACTIVE)||
+                 (msg==WM_ACTIVATEAPP && wParam)) {
+               if (GTK_WINDOW(widget)->focus) {
+                  gtk_widget_set_focus(GTK_WINDOW(widget)->focus);
+               }
+               if (!GTK_WINDOW(widget)->focus) {
+                  gtk_window_set_focus(GTK_WINDOW(widget));
+               }
+            } else if (msg==WM_ACTIVATE && LOWORD(wParam)==WA_INACTIVE) {
+               gtk_window_update_focus(GTK_WINDOW(widget));
+            }
+         }
+         break;
       case WM_COMMAND:
          widget=GTK_WIDGET(GetWindowLong((HWND)lParam,GWL_USERDATA));
          if (widget) klass=GTK_OBJECT(widget)->klass; else klass=NULL;
@@ -761,6 +783,7 @@ void gtk_widget_show_full(GtkWidget *widget,gboolean recurse) {
 
    if (GTK_WIDGET_VISIBLE(widget)) return;
    GTK_WIDGET_SET_FLAGS(widget,GTK_VISIBLE);
+
    if (recurse) gtk_widget_show_all_full(widget,TRUE);
    else gtk_signal_emit(GTK_OBJECT(widget),"show");
 
@@ -777,6 +800,9 @@ void gtk_widget_show_full(GtkWidget *widget,gboolean recurse) {
       gtk_widget_update(widget,TRUE);
       if (!recurse) ShowWindow(widget->hWnd,SW_SHOWNORMAL);
    }
+
+// g_print("widget show - set focus\n");
+   gtk_widget_set_focus(widget);
 }
 
 void gtk_widget_hide(GtkWidget *widget) {
@@ -789,6 +815,8 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
    GtkWidget *window;
 
    if (!GTK_WIDGET_VISIBLE(widget)) return;
+
+   gtk_widget_lose_focus(widget);
 
    if (recurse) gtk_widget_hide_all_full(widget,TRUE);
    else {
@@ -815,6 +843,70 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
    }
 }
 
+void gtk_widget_set_focus(GtkWidget *widget) {
+   GtkWidget *window;
+   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
+       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget)) return;
+   window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+   gtk_window_update_focus(GTK_WINDOW(window));
+   if (!window || GTK_WINDOW(window)->focus) return;
+
+// g_print("Window %p focus set to widget %p (%s)\n",window,widget,GTK_OBJECT(widget)->klass->Name);
+   GTK_WINDOW(window)->focus=widget;
+   if (widget->hWnd) {
+//    if (!SetFocus(widget->hWnd)) g_print("SetFocus failed on widget %p\n",widget);
+      SetFocus(widget->hWnd);
+   }
+// else g_print("Cannot call SetFocus - no hWnd\n");
+}
+
+static BOOL CALLBACK SetFocusEnum(HWND hWnd,LPARAM data) {
+   GtkWidget *widget;
+   GtkWindow *window=GTK_WINDOW(data);
+   widget=GTK_WIDGET(GetWindowLong(hWnd,GWL_USERDATA));
+   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
+       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget) ||
+       window->focus==widget) {
+      return TRUE;
+   } else {
+//g_print("gtk_window_set_focus: focus set to widget %p\n",widget);
+      window->focus=widget;
+      SetFocus(widget->hWnd);
+      return FALSE;
+   }
+}
+
+void gtk_window_set_focus(GtkWindow *window) {
+   if (!window||!GTK_WIDGET(window)->hWnd) return;
+   EnumChildWindows(GTK_WIDGET(window)->hWnd,SetFocusEnum,(LPARAM)window);
+}
+
+void gtk_widget_lose_focus(GtkWidget *widget) {
+   GtkWidget *window;
+   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
+       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget)) return;
+   window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+   gtk_window_update_focus(GTK_WINDOW(window));
+   if (GTK_WINDOW(window)->focus==widget) {
+      gtk_window_set_focus(GTK_WINDOW(window));
+   }
+}
+
+void gtk_window_update_focus(GtkWindow *window) {
+   GtkWidget *widget;
+   HWND FocusWnd;
+   if (GTK_WIDGET(window)->hWnd != GetActiveWindow()) return;
+   FocusWnd=GetFocus();
+   window->focus=NULL;
+   if (FocusWnd) {
+      widget=GTK_WIDGET(GetWindowLong(FocusWnd,GWL_USERDATA));
+      if (widget && GTK_WIDGET(window)->hWnd &&
+          GetParent(FocusWnd)==GTK_WIDGET(window)->hWnd) {
+         window->focus=widget;
+      } /*else g_print("Widget %p is not child of window %p\n",widget,window);*/
+   }// else g_print("GetFocus returned NULL\n");
+}
+
 void gtk_widget_realize(GtkWidget *widget) {
    GtkRequisition req;
 /* g_print("Realizing widget %p of class %s\n",widget,GTK_OBJECT(widget)->klass->Name);*/
@@ -822,6 +914,7 @@ void gtk_widget_realize(GtkWidget *widget) {
    if (widget->hWnd) SetWindowLong(widget->hWnd,GWL_USERDATA,(LONG)widget);
    GTK_WIDGET_SET_FLAGS(widget,GTK_REALIZED);
    gtk_widget_set_sensitive(widget,GTK_WIDGET_SENSITIVE(widget));
+
    gtk_widget_size_request(widget,&req);
 }
 
@@ -831,6 +924,7 @@ void gtk_widget_create(GtkWidget *widget) {
 
 void gtk_widget_destroy(GtkWidget *widget) {
    if (!widget) return;
+   gtk_widget_lose_focus(widget);
 // g_print("gtk_widget_destroy on widget %p\n",widget);
    gtk_signal_emit(GTK_OBJECT(widget),"destroy");
 // g_print("Freeing widget\n");
@@ -839,10 +933,17 @@ void gtk_widget_destroy(GtkWidget *widget) {
 }
 
 void gtk_widget_set_sensitive(GtkWidget *widget,gboolean sensitive) {
-   if (widget->hWnd) EnableWindow(widget->hWnd,sensitive);
+   if (sensitive) {
+      GTK_WIDGET_SET_FLAGS(widget,GTK_SENSITIVE);
+      if (widget->hWnd) EnableWindow(widget->hWnd,sensitive);
+      gtk_widget_set_focus(widget);
+   } else {
+      gtk_widget_lose_focus(widget);
+      GTK_WIDGET_UNSET_FLAGS(widget,GTK_SENSITIVE);
+      if (widget->hWnd) EnableWindow(widget->hWnd,sensitive);
+   }
+
    gtk_signal_emit(GTK_OBJECT(widget),sensitive ? "enable" : "disable");
-   if (sensitive) GTK_WIDGET_SET_FLAGS(widget,GTK_SENSITIVE);
-   else GTK_WIDGET_UNSET_FLAGS(widget,GTK_SENSITIVE);
    if (sensitive && widget->hWnd && GTK_OBJECT(widget)->klass==&GtkWindowClass)
       SetActiveWindow(widget->hWnd);
 }
@@ -1561,7 +1662,7 @@ void gtk_window_realize(GtkWidget *widget) {
    widget->hWnd = CreateWindow("mainwin",win->title,
                      win->type == GTK_WINDOW_TOPLEVEL ?
                         WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX :
-                        WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW,
+                        WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX,
                      CW_USEDEFAULT,0,
                      widget->allocation.width,widget->allocation.height,
                      Parent,NULL,hInst,NULL);
@@ -1570,6 +1671,7 @@ void gtk_window_realize(GtkWidget *widget) {
    gtk_set_default_font(widget->hWnd);
 /* g_print("Window window %p created\n",widget->hWnd);*/
    gtk_container_realize(widget);
+// if (win->focus && win->focus->hWnd) SetFocus(win->focus->hWnd);
 }
 
 void gtk_container_realize(GtkWidget *widget) {
@@ -1602,6 +1704,7 @@ HWND gtk_get_parent_hwnd(GtkWidget *widget) {
 void gtk_button_realize(GtkWidget *widget) {
    GtkButton *but=GTK_BUTTON(widget);
    HWND Parent;
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    Parent=gtk_get_parent_hwnd(widget);
    widget->hWnd = CreateWindow("BUTTON",but->text,
                             WS_CHILD|WS_TABSTOP|BS_PUSHBUTTON,
@@ -1614,6 +1717,7 @@ void gtk_button_realize(GtkWidget *widget) {
 void gtk_entry_realize(GtkWidget *widget) {
    HWND Parent;
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT","",
                             WS_CHILD|WS_TABSTOP|ES_AUTOHSCROLL,
                             widget->allocation.x,widget->allocation.y,
@@ -1629,6 +1733,7 @@ void gtk_entry_realize(GtkWidget *widget) {
 void gtk_text_realize(GtkWidget *widget) {
    HWND Parent;
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT","",
                             WS_CHILD|WS_TABSTOP|
                             ES_MULTILINE|ES_WANTRETURN|WS_VSCROLL|
@@ -1660,6 +1765,7 @@ void gtk_check_button_realize(GtkWidget *widget) {
    HWND Parent;
    gboolean toggled;
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindow("BUTTON",but->text,
                             WS_CHILD|WS_TABSTOP|BS_CHECKBOX,
                             widget->allocation.x,widget->allocation.y,
@@ -1680,6 +1786,7 @@ void gtk_radio_button_realize(GtkWidget *widget) {
    HWND Parent;
    gboolean toggled;
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindow("BUTTON",but->text,
                             WS_CHILD|WS_TABSTOP|BS_RADIOBUTTON,
                             widget->allocation.x,widget->allocation.y,
@@ -1744,6 +1851,7 @@ void gtk_clist_realize(GtkWidget *widget) {
 
    gtk_container_realize(widget);
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    rcParent.left = rcParent.top = 0;
    rcParent.right = rcParent.bottom = 800;
    header=CreateWindowEx(0,WC_HEADER,NULL,
@@ -2962,8 +3070,9 @@ void gtk_notebook_realize(GtkWidget *widget) {
    TC_ITEM tie;
 
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindow(WC_TABCONTROL,"",
-                               WS_CHILD,0,0,0,0,
+                               WS_CHILD|WS_TABSTOP,0,0,0,0,
                                Parent,NULL,hInst,NULL);
    if (widget->hWnd==NULL) g_print("Error creating window!\n");
    gtk_set_default_font(widget->hWnd);
@@ -3174,7 +3283,8 @@ void gtk_spin_button_realize(GtkWidget *widget) {
    gtk_entry_realize(widget);
 
    Parent=gtk_get_parent_hwnd(widget->parent);
-   spin->updown=CreateUpDownControl(WS_CHILD|WS_BORDER|
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
+   spin->updown=CreateUpDownControl(WS_CHILD|WS_BORDER|WS_TABSTOP|
                         UDS_SETBUDDYINT|UDS_NOTHOUSANDS|UDS_ARROWKEYS,
                         0,0,0,0,Parent,0,hInst,widget->hWnd,20,10,15);
    gtk_set_default_font(spin->updown);
@@ -3270,6 +3380,9 @@ void gtk_widget_grab_default(GtkWidget *widget) {
 }
 
 void gtk_widget_grab_focus(GtkWidget *widget) {
+   if (widget->hWnd && GTK_WIDGET_CAN_FOCUS(widget)) {
+      SetFocus(widget->hWnd);
+   }
 }
 
 void gtk_window_set_modal(GtkWindow *window,gboolean modal) {
@@ -3524,6 +3637,7 @@ void gtk_option_menu_realize(GtkWidget *widget) {
    GtkOptionMenu *option_menu=GTK_OPTION_MENU(widget);
 
    Parent=gtk_get_parent_hwnd(widget);
+   GTK_WIDGET_SET_FLAGS(widget,GTK_CAN_FOCUS);
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"COMBOBOX","",
                                  WS_CHILD|WS_TABSTOP|WS_VSCROLL|
                                  CBS_HASSTRINGS|CBS_DROPDOWNLIST,
@@ -3612,6 +3726,16 @@ void gtk_widget_set_usize(GtkWidget *widget,gint width,gint height) {
 }
 
 void gtk_clist_select_row(GtkCList *clist,gint row,gint column) {
+   HWND hWnd;
+   hWnd=GTK_WIDGET(clist)->hWnd;
+   if (hWnd) {
+      if (clist->mode==GTK_SELECTION_SINGLE) {
+         SendMessage(hWnd,LB_SETCURSEL,(WPARAM)row,0);
+      } else {
+         SendMessage(hWnd,LB_SETSEL,(WPARAM)TRUE,(LPARAM)row);
+      }
+      gtk_clist_update_selection(GTK_WIDGET(clist));
+   }
 }
 
 GtkVisibility gtk_clist_row_is_visible(GtkCList *clist,gint row) {

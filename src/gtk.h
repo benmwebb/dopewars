@@ -48,6 +48,8 @@ typedef enum {
    GTK_REALIZED    = 1 << 6,
    GTK_VISIBLE     = 1 << 8,
    GTK_SENSITIVE   = 1 << 10,
+   GTK_CAN_FOCUS   = 1 << 11,
+   GTK_HAS_FOCUS   = 1 << 12,
    GTK_CAN_DEFAULT = 1 << 13
 } GtkWidgetFlags;
 
@@ -366,6 +368,7 @@ struct _GtkWindow {
    gint default_width,default_height;
    GtkMenuBar *menu_bar;
    GtkAccelGroup *accel_group;
+   GtkWidget *focus;
    HACCEL hAccel;
    guint modal : 1;
 };
@@ -430,6 +433,8 @@ struct _GtkTableRowCol {
 #define GTK_WIDGET_REALIZED(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_REALIZED) != 0)
 #define GTK_WIDGET_VISIBLE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_VISIBLE) != 0)
 #define GTK_WIDGET_SENSITIVE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_SENSITIVE) != 0)
+#define GTK_WIDGET_CAN_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_CAN_FOCUS) != 0)
+#define GTK_WIDGET_HAS_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_HAS_FOCUS) != 0)
 #define GTK_WIDGET_SET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) |= (flag))
 #define GTK_WIDGET_UNSET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) &= ~(flag))
 
