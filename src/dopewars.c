@@ -74,9 +74,9 @@ gboolean WantHelp,WantVersion,WantAntique,WantColour,WantNetwork,
 gboolean MinToSysTray=TRUE;
 #else
 gboolean Daemonize=TRUE;
-gchar *WebBrowser = NULL;
 #endif
 
+gchar *WebBrowser = NULL;
 gint ConfigErrors=0;
 
 ClientType WantedClient;
@@ -1823,11 +1823,8 @@ void SetupParameters(void) {
    g_free(HiScoreFile); g_free(ServerName);
    HiScoreFile=g_strdup_printf("%s/dopewars.sco",DATADIR);
    ServerName=g_strdup("localhost");
-
-#ifndef CYGWIN
    g_free(WebBrowser);
    WebBrowser = g_strdup("/usr/bin/mozilla");
-#endif
 
    CopyNames(&Names,&DefaultNames);
    CopyDrugs(&Drugs,&DefaultDrugs);

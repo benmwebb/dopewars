@@ -119,6 +119,8 @@ static void gtk_label_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
 static void gtk_label_set_size(GtkWidget *widget,
                                GtkAllocation *allocation);
+static void gtk_url_size_request(GtkWidget *widget,
+                                 GtkRequisition *requisition);
 static void gtk_label_destroy(GtkWidget *widget);
 static void gtk_url_destroy(GtkWidget *widget);
 static void gtk_label_realize(GtkWidget *widget);
