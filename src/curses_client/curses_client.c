@@ -269,6 +269,7 @@ static void mvaddfixwidstr(const int row, const int col, const int wid,
  */
 void display_intro(void)
 {
+  const gchar *translation = N_("English Translation           Ben Webb");
   GString *text;
 
   attrset(TextAttr);
@@ -300,6 +301,10 @@ void display_intro(void)
                           "General Public Licence"));
   mvaddcentstr(11, text->str);
 
+  g_string_assign(text, _(translation));
+  if (strcmp(text->str, translation) != 0) {
+    mvaddstr(12, 7, text->str);
+  }
   mvaddstr(13, 7, _("Icons and Graphics            Ocelot Mantis"));
   mvaddstr(14, 7, _("Sounds                        Robin Kohli, 19.5degs.com"));
   mvaddstr(15, 7, _("Drug Dealing and Research     Dan Wolf"));

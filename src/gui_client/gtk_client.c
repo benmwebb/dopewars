@@ -2361,11 +2361,12 @@ void display_intro(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *label, *table, *OKButton, *vbox, *hsep, *hbbox;
   gchar *VersionStr, *docindex;
-  const int rows = 6, cols = 3;
+  const int rows = 8, cols = 3;
   int i, j;
   GtkAccelGroup *accel_group;
-  gchar *table_data[7][3] = {
+  gchar *table_data[8][3] = {
     /* Credits labels in GTK+ 'about' dialog */
+    {N_("English Translation"), N_("Ben Webb"), NULL},
     {N_("Icons and graphics"), "Ocelot Mantis", NULL},
     {N_("Sounds"), "Robin Kohli, 19.5degs.com", NULL},
     {N_("Drug Dealing and Research"), "Dan Wolf", NULL},
@@ -2418,16 +2419,21 @@ void display_intro(GtkWidget *widget, gpointer data)
   table = gtk_table_new(rows, cols, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 3);
   gtk_table_set_col_spacings(GTK_TABLE(table), 3);
-  for (i = 0; i < rows; i++)
-    for (j = 0; j < cols; j++)
-      if (table_data[i][j]) {
-        if (j == 0)
-          label = gtk_label_new(_(table_data[i][j]));
-        else
-          label = gtk_label_new(table_data[i][j]);
-        gtk_table_attach_defaults(GTK_TABLE(table), label, j, j + 1, i,
-                                  i + 1);
+  for (i = 0; i < rows; i++) {
+    if (i > 0 || strcmp(_(table_data[i][1]), "Ben Webb") != 0) {
+      for (j = 0; j < cols; j++) {
+        if (table_data[i][j]) {
+          if (j == 0 || i == 0) {
+            label = gtk_label_new(_(table_data[i][j]));
+          } else {
+            label = gtk_label_new(table_data[i][j]);
+          }
+          gtk_table_attach_defaults(GTK_TABLE(table), label, j, j + 1, i,
+                                    i + 1);
+        }
       }
+    }
+  }
   gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
 
   /* Label at the bottom of GTK+ 'about' dialog */
