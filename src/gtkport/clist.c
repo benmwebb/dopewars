@@ -31,6 +31,8 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include "unicodewrap.h"
+
 #define LISTITEMHPACK  3
 #define LISTHEADERPACK 6
 
@@ -167,11 +169,11 @@ void gtk_clist_realize(GtkWidget *widget)
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   rcParent.left = rcParent.top = 0;
   rcParent.right = rcParent.bottom = 800;
-  header = CreateWindowEx(0, WC_HEADER, NULL,
-                          WS_CHILD | WS_BORDER | HDS_HORZ
-                          | (GTK_CLIST(widget)->coldata[0].button_passive ?
-                             0 : HDS_BUTTONS),
-                          0, 0, 0, 0, Parent, NULL, hInst, NULL);
+  header = myCreateWindowEx(0, WC_HEADER, NULL,
+                            WS_CHILD | WS_BORDER | HDS_HORZ
+                            | (GTK_CLIST(widget)->coldata[0].button_passive ?
+                               0 : HDS_BUTTONS),
+                            0, 0, 0, 0, Parent, NULL, hInst, NULL);
   SetWindowLong(header, GWL_USERDATA, (LONG)widget);
   GTK_CLIST(widget)->header = header;
   gtk_set_default_font(header);
@@ -179,18 +181,19 @@ void gtk_clist_realize(GtkWidget *widget)
   hdl.pwpos = &wp;
   SendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
   clist->header_size = wp.cy;
-  widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
-                                WS_CHILD | WS_TABSTOP | WS_VSCROLL
-                                | WS_HSCROLL | LBS_OWNERDRAWFIXED
-                                | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
-                                hInst, NULL);
+  widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
+                                  WS_CHILD | WS_TABSTOP | WS_VSCROLL
+                                  | WS_HSCROLL | LBS_OWNERDRAWFIXED
+                                  | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
+                                  hInst, NULL);
   gtk_set_default_font(widget->hWnd);
 
   gtk_clist_update_all_widths(clist);
   for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
     row = (GtkCListRow *)rows->data;
-    if (row)
+    if (row) {
       SendMessage(widget->hWnd, LB_ADDSTRING, 0, (LPARAM)row->data);
+    }
   }
 
   for (i = 0; i < clist->cols; i++) {
@@ -203,7 +206,7 @@ void gtk_clist_realize(GtkWidget *widget)
         hdi.cxy = clist->coldata[i].width;
       hdi.cchTextMax = strlen(hdi.pszText);
       hdi.fmt = HDF_LEFT | HDF_STRING;
-      SendMessage(header, HDM_INSERTITEM, i + 1, (LPARAM)&hdi);
+      myHeader_InsertItem(header, i + 1, &hdi);
     }
   }
 }
@@ -258,8 +261,8 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
         if (i == clist->cols - 1)
           rcCol.right = lpdis->rcItem.right;
         if (row->text[i]) {
-          DrawText(lpdis->hDC, row->text[i], -1, &rcCol,
-                   DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
+          myDrawText(lpdis->hDC, row->text[i], -1, &rcCol,
+                     DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS);
         }
       }
   }
@@ -357,6 +360,7 @@ gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[])
 
   new_row = g_new0(GtkCListRow, 1);
   new_row->text = g_new0(gchar *, clist->cols);
+  new_row->data = GINT_TO_POINTER(1);
 
   for (i = 0; i < clist->cols; i++) {
     new_row->text[i] = g_strdup(text[i]);
@@ -368,7 +372,7 @@ gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[])
 
   if (GTK_WIDGET_REALIZED(widget)) {
     hWnd = widget->hWnd;
-    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, (LPARAM)NULL);
+    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, (LPARAM)new_row->data);
   }
 
   return row;
@@ -630,7 +634,7 @@ void gtk_clist_set_row_data(GtkCList *clist, gint row, gpointer data)
   if (row >= 0 && row < clist->rows) {
     list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
     if (list_row)
-      list_row->data = data;
+      list_row->data = data + 1;
   }
 }
 
@@ -641,7 +645,7 @@ gpointer gtk_clist_get_row_data(GtkCList *clist, gint row)
   if (row >= 0 && row < clist->rows) {
     list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
     if (list_row)
-      return list_row->data;
+      return list_row->data - 1;
   }
   return NULL;
 }

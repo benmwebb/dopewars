@@ -29,18 +29,29 @@
 
 #ifdef CYGWIN
 #include <windows.h>
+#include <commctrl.h>
 
 void InitUnicodeSupport(void);
-void HaveUnicodeSupport(void);
 
 BOOL mySetWindowText(HWND hWnd, LPCTSTR lpString);
-HWND myCreateWindow(LPCTSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle,
+HWND myCreateWindow(LPCTSTR lpClassName, LPCTSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,
                     HMENU hMenu, HANDLE hInstance, LPVOID lpParam);
 HWND myCreateWindowEx(DWORD dwExStyle, LPCTSTR lpClassName,
-                      LPCSTR lpWindowName, DWORD dwStyle, int x, int y,
+                      LPCTSTR lpWindowName, DWORD dwStyle, int x, int y,
                       int nWidth, int nHeight, HWND hwndParent, HMENU hMenu,
                       HANDLE hInstance, LPVOID lpParam);
+gchar *myGetWindowText(HWND hWnd);
+int myDrawText(HDC hDC, LPCTSTR lpString, int nCount, LPRECT lpRect,
+               UINT uFormat);
+BOOL WINAPI mySetMenuItemInfo(HMENU hMenu, UINT uItem, BOOL fByPosition,
+                              LPMENUITEMINFO lpmii);
+BOOL WINAPI myInsertMenuItem(HMENU hMenu, UINT uItem, BOOL fByPosition,
+                             LPMENUITEMINFO lpmii);
+int myHeader_InsertItem(HWND hWnd, int index, const HD_ITEM *phdi);
+ATOM myRegisterClass(CONST WNDCLASS *lpWndClass);
+HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
+                    DLGPROC lpDialogFunc);
 
 #endif /* CYGWIN */
 

@@ -751,8 +751,6 @@ struct _GtkUrl {
   gchar *target, *bin;
 };
 
-gboolean HaveUnicodeSupport(void);
-
 #endif /* CYGWIN */
 
 #if CYGWIN || !HAVE_GLIB2
@@ -794,5 +792,6 @@ GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
+gboolean HaveUnicodeSupport(void);
 
 #endif /* __GTKPORT_H__ */

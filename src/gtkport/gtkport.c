@@ -1142,7 +1142,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "mainwin";
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
 
     wc.style = 0;
     wc.lpfnWndProc = MainWndProc;
@@ -1154,7 +1154,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = WC_GTKDIALOG;
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
 
     wc.style = 0;
     wc.lpfnWndProc = GtkPanedProc;
@@ -1166,7 +1166,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = WC_GTKHPANED;
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
 
     wc.style = 0;
     wc.lpfnWndProc = GtkPanedProc;
@@ -1178,7 +1178,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = WC_GTKVPANED;
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
 
     wc.style = 0;
     wc.lpfnWndProc = GtkSepProc;
@@ -1190,7 +1190,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = WC_GTKSEP;
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
 
     wc.style = 0;
     wc.lpfnWndProc = GtkUrlProc;
@@ -1202,7 +1202,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = WC_GTKURL;
-    RegisterClass(&wc);
+    myRegisterClass(&wc);
   }
 
   InitCommonControls();
@@ -1886,16 +1886,14 @@ GSList *gtk_radio_button_group(GtkRadioButton *radio_button)
 static void gtk_editable_sync_text(GtkEditable *editable)
 {
   HWND hWnd;
-  gint textlen;
   gchar *buffer;
 
   hWnd = GTK_WIDGET(editable)->hWnd;
-  if (!hWnd)
+  if (!hWnd) {
     return;
+  }
 
-  textlen = SendMessage(hWnd, WM_GETTEXTLENGTH, 0, 0);
-  buffer = g_new(gchar, textlen + 1);
-  SendMessage(hWnd, WM_GETTEXT, (WPARAM)(textlen + 1), (LPARAM)buffer);
+  buffer = myGetWindowText(hWnd);
   g_string_assign(editable->text, buffer);
   g_free(buffer);
 }
@@ -2326,7 +2324,7 @@ void gtk_window_realize(GtkWidget *widget)
 
   Parent = gtk_get_parent_hwnd(widget->parent);
   if (Parent) {
-    widget->hWnd = CreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
+    widget->hWnd = myCreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
     mySetWindowText(widget->hWnd, win->title);
   } else {
     widget->hWnd = myCreateWindow("mainwin", win->title,
@@ -3734,7 +3732,7 @@ void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active)
     mii.cbSize = sizeof(MENUITEMINFO);
     mii.fMask = MIIM_STATE;
     mii.fState = active ? MFS_CHECKED : MFS_UNCHECKED;
-    SetMenuItemInfo(parent_menu, menu_item->ID, FALSE, &mii);
+    mySetMenuItemInfo(parent_menu, menu_item->ID, FALSE, &mii);
   }
 }
 
@@ -3827,7 +3825,7 @@ void gtk_menu_item_realize(GtkWidget *widget)
   mii.wID = menu_item->ID;
   mii.dwTypeData = (LPTSTR)menu_item->text;
   mii.cch = strlen(menu_item->text);
-  InsertMenuItem(parent_menu, pos, TRUE, &mii);
+  myInsertMenuItem(parent_menu, pos, TRUE, &mii);
 }
 
 void gtk_menu_realize(GtkWidget *widget)
@@ -4777,7 +4775,7 @@ static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
     mii.fType = MFT_STRING;
     mii.dwTypeData = (LPTSTR)menuitem->text;
     mii.cch = strlen(menuitem->text);
-    SetMenuItemInfo(parent_menu, menuitem->ID, FALSE, &mii);
+    mySetMenuItemInfo(parent_menu, menuitem->ID, FALSE, &mii);
   }
 }
 
