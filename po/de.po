@@ -3,7 +3,6 @@
 # Created by Ben Webb <ben@bellatrix.pcl.ox.ac.uk>, Sep 2000, based on
 # Tobias Mathes' translated dopewars client
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"

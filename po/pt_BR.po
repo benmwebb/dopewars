@@ -2,7 +2,6 @@
 # Copyright (C) 2000 Free Software Foundation, Inc.
 # Created by Hugo Cisneiros <hugo@netdados.com.br>, Nov 2000
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"

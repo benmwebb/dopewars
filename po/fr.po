@@ -2,7 +2,6 @@
 # leonard <triton@madchat.org>, en l'An de Grace 2001
 # Copyright (C) 2001 Free Software Foundation, Inc.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"
