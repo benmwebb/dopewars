@@ -1,5 +1,5 @@
 /************************************************************************
- * sound.c        dopewars sound system                                 *
+ * sound_sdl.h    Header file for dopewars sound system (SDL driver)    *
  * Copyright (C)  1998-2002  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
@@ -20,46 +20,17 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
+#ifndef __DP_SOUND_SDL_H__
+#define __DP_SOUND_SDL_H__
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include "sound_esd.h"
-#include "sound_sdl.h"
-#include "sound_winmm.h"
+#include "sound.h"
 
-static SoundDriver *driver = NULL;
-
-void SoundInit(void)
-{
 #ifdef HAVE_SDL_MIXER
-  driver = SoundInit_SDL();
-#endif
-//#ifdef HAVE_ESD
-//  driver = SoundInit_ESD();
-//#endif
-#ifdef HAVE_WINMM
-  driver = SoundInit_WinMM();
-#endif
-}
+SoundDriver *SoundInit_SDL(void);
+#endif /* HAVE_SDL_MIXER */
 
-void SoundOpen(gchar *drivername)
-{
-  if (driver && driver->open) {
-    driver->open();
-  }
-}
-
-void SoundClose(void)
-{
-  if (driver && driver->close) {
-    driver->close();
-  }
-}
-
-void SoundPlay(const gchar *snd)
-{
-  if (driver && driver->play && snd && snd[0]) {
-    driver->play(snd);
-  }
-}
+#endif /* __DP_SOUND_SDL_H__ */
