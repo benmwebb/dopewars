@@ -35,6 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include <glib.h>
 
 #include "gtkport.h"
@@ -65,6 +66,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 HICON mainIcon = NULL;
 static WNDPROC customWndProc = NULL;
 static gboolean HaveRichEdit = FALSE;
+static gchar *RichEditClass = NULL;
 
 static guint RecurseLevel = 0;
 
@@ -82,6 +84,7 @@ static void gtk_entry_set_size(GtkWidget *widget,
                                GtkAllocation *allocation);
 static void gtk_text_size_request(GtkWidget *widget,
                                   GtkRequisition *requisition);
+static void gtk_text_destroy(GtkWidget *widget);
 static void gtk_button_destroy(GtkWidget *widget);
 static void gtk_check_button_size_request(GtkWidget *widget,
                                           GtkRequisition *requisition);
@@ -393,6 +396,7 @@ static GtkClass GtkSpinButtonClass = {
 static GtkSignalType GtkTextSignals[] = {
   {"size_request", gtk_marshal_VOID__GPOIN, gtk_text_size_request},
   {"realize", gtk_marshal_VOID__VOID, gtk_text_realize},
+  {"destroy", gtk_marshal_VOID__VOID, gtk_text_destroy},
   {"", NULL, NULL}
 };
 
@@ -1148,7 +1152,16 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   InitCommonControls();
   LoadLibrary("RICHED32.DLL");
-  HaveRichEdit = GetClassInfo(hInstance, "RichEdit", &wc);
+
+  /* Rich Edit controls have two different class names, depending on whether
+   * we want ANSI or Unicode - argh! */
+  if (HaveUnicodeSupport()) {
+    RichEditClass = "RichEdit20W";
+  } else {
+    RichEditClass = "RichEdit20A";
+  }
+  RichEditClass = "RichEdit";
+  HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
 
   if (!hPrevInstance) {
     wc.style = 0;
@@ -1861,7 +1874,12 @@ GtkWidget *gtk_frame_new(const gchar *text)
 
 GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj)
 {
-  return GTK_WIDGET(GtkNewObject(&GtkTextClass));
+  GtkText *text;
+
+  text = GTK_TEXT(GtkNewObject(&GtkTextClass));
+  text->buffer = g_new(GtkTextBuffer, 1);
+  g_datalist_init(&text->buffer->tags);
+  return GTK_WIDGET(text);
 }
 
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
@@ -1937,8 +1955,9 @@ static void gtk_text_view_set_format(GtkTextView *textview,
                                      const gchar *tagname, guint len,
                                      gint endpos)
 {
-  CHARFORMAT cf;
+  CHARFORMAT *cf, cfdef;
   GtkWidget *widget = GTK_WIDGET(textview);
+  GtkTextBuffer *buffer;
 
   if (!GTK_WIDGET_REALIZED(widget)) {
     return;
@@ -1946,15 +1965,15 @@ static void gtk_text_view_set_format(GtkTextView *textview,
 
   mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)(endpos - len),
                 (LPARAM)endpos);
-  cf.cbSize = sizeof(CHARFORMAT);
-  cf.dwMask = CFM_COLOR;
-  if (tagname) {
-    cf.crTextColor = RGB(0, 0, 255);
-    cf.dwEffects = 0;
-  } else {
-    cf.dwEffects = CFE_AUTOCOLOR;
+
+  if (!tagname || !(buffer = gtk_text_view_get_buffer(textview))
+      || !(cf = g_datalist_get_data(&buffer->tags, tagname))) {
+    cfdef.cbSize = sizeof(CHARFORMAT);
+    cfdef.dwMask = CFM_COLOR;
+    cfdef.dwEffects = CFE_AUTOCOLOR;
+    cf = &cfdef;
   }
-  mySendMessage(widget->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+  mySendMessage(widget->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)cf);
 }
 
 void gtk_editable_delete_text(GtkEditable *editable,
@@ -2090,6 +2109,17 @@ void gtk_box_destroy(GtkWidget *widget)
     g_free(child);
   }
   g_list_free(GTK_BOX(widget)->children);
+}
+
+static void gtk_text_destroy(GtkWidget *widget)
+{
+  GtkText *text = GTK_TEXT(widget);
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(text);
+
+  if (buffer) {
+    g_datalist_clear(&buffer->tags);
+    g_free(buffer);
+  }
 }
 
 static void EnableParent(GtkWindow *window)
@@ -2457,7 +2487,7 @@ void gtk_text_realize(GtkWidget *widget)
   editable = GTK_EDITABLE(widget)->is_editable;
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE,
-                                  HaveRichEdit ? "RichEdit" : "EDIT", "",
+                                  HaveRichEdit ? RichEditClass : "EDIT", "",
                                   WS_CHILD | (editable ? WS_TABSTOP : 0) |
                                   ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL |
                                   (GTK_TEXT(widget)->word_wrap ?
@@ -4677,6 +4707,78 @@ void gtk_text_thaw(GtkText *text)
 {
 }
 
+GtkTextBuffer *gtk_text_view_get_buffer(GtkText *text)
+{
+  return text->buffer;
+}
+
+static int parse_colcomp(const gchar *hexval)
+{
+  int col = 0, i, ch;
+
+  for (i = 0; i < 4; ++i) {
+    col <<= 4;
+    ch = toupper(hexval[i]);
+    if (ch >= '0' && ch <= '9') {
+      col |= (ch - '0');
+    } else if (ch >= 'A' && ch <= 'F') {
+      col |= (ch - 'A' + 10);
+    }
+  }
+  return col / 257; /* Scale from 0-65535 to 0-255 */
+}
+
+static gboolean parse_color(const gchar *name, COLORREF *color)
+{
+  int red, green, blue, i, ch;
+
+  if (!name || strlen(name) != 13 || name[0] != '#') {
+    return FALSE;
+  }
+  for (i = strlen(name) - 1; i >= 1; --i) {
+    ch = toupper(name[i]);
+    if (!((ch >= '0' && ch <= '9')
+          || (ch >= 'A' && ch <= 'F'))) {
+      return FALSE;
+    }
+  }
+  red = parse_colcomp(&name[1]);
+  green = parse_colcomp(&name[5]);
+  blue = parse_colcomp(&name[9]);
+  if (color) {
+    *color = RGB(red, green, blue);
+  }
+  return TRUE;
+}
+
+void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...)
+{
+  va_list ap;
+  gchar *attr, *data;
+  CHARFORMAT *cf;
+
+  va_start(ap, name);
+  cf = g_new(CHARFORMAT, 1);
+  cf->cbSize = sizeof(CHARFORMAT);
+  cf->dwMask = 0;
+  do {
+    attr = va_arg(ap, gchar *);
+    if (attr) {
+      if (strcmp(attr, "foreground") == 0) {
+	data = va_arg(ap, gchar *);
+	cf->dwMask |= CFM_COLOR;
+	cf->dwEffects = 0;
+	if (!parse_color(data, &cf->crTextColor)) {
+	  cf->dwEffects = CFE_AUTOCOLOR;
+	}
+      }
+    }
+  } while (attr);
+
+  g_datalist_set_data_full(&buffer->tags, name, cf, g_free);
+  va_end(ap);
+}
+
 GtkWidget *gtk_option_menu_new()
 {
   GtkOptionMenu *option_menu;
@@ -5507,7 +5609,7 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
   gtk_editable_insert_text(GTK_EDITABLE(textview), text, strlen(text),
                            &editpos);
 #ifdef CYGWIN
-  gtk_text_view_set_format(textview, tagname, strlen(text), editpos);
+  gtk_text_view_set_format(textview, tagname, myw32strlen(text), editpos);
 #endif
   if (scroll) {
     gtk_editable_set_position(GTK_EDITABLE(textview), editpos);

@@ -225,6 +225,7 @@ struct _GtkMenuBar {
 typedef struct _GtkEditable GtkEditable;
 typedef struct _GtkEntry GtkEntry;
 typedef struct _GtkText GtkText;
+typedef struct _GtkTextBuffer GtkTextBuffer;
 typedef struct _GtkSpinButton GtkSpinButton;
 
 struct _GtkEditable {
@@ -244,9 +245,14 @@ struct _GtkSpinButton {
   HWND updown;
 };
 
+struct _GtkTextBuffer {
+  GData *tags;
+};
+
 struct _GtkText {
   GtkEditable editable;
   gint word_wrap:1;
+  GtkTextBuffer *buffer;
 };
 
 typedef struct _GtkLabel GtkLabel;
@@ -547,6 +553,8 @@ void gtk_text_set_editable(GtkText *text, gboolean is_editable);
 void gtk_text_set_word_wrap(GtkText *text, gboolean word_wrap);
 void gtk_text_freeze(GtkText *text);
 void gtk_text_thaw(GtkText *text);
+GtkTextBuffer *gtk_text_view_get_buffer(GtkText *text);
+void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...);
 void gtk_table_attach(GtkTable *table, GtkWidget *widget,
                       guint left_attach, guint right_attach,
                       guint top_attach, guint bottom_attach,

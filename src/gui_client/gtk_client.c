@@ -2142,14 +2142,19 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 
 static void make_tags(GtkTextView *textview)
 {
-#if HAVE_GLIB2 && !CYGWIN
+#if HAVE_GLIB2
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
 
-  gtk_text_buffer_create_tag(buffer, "jet", "foreground", "blue", NULL);
-  gtk_text_buffer_create_tag(buffer, "talk", "foreground", "red", NULL);
-  gtk_text_buffer_create_tag(buffer, "page", "foreground", "magenta", NULL);
-  gtk_text_buffer_create_tag(buffer, "join", "foreground", "darkblue", NULL);
-  gtk_text_buffer_create_tag(buffer, "leave", "foreground", "darkred", NULL);
+  gtk_text_buffer_create_tag(buffer, "jet", "foreground",
+                             "#00000000FFFF", NULL);
+  gtk_text_buffer_create_tag(buffer, "talk", "foreground",
+                             "#FFFF00000000", NULL);
+  gtk_text_buffer_create_tag(buffer, "page", "foreground",
+                             "#FFFF0000FFFF", NULL);
+  gtk_text_buffer_create_tag(buffer, "join", "foreground",
+                             "#000000008B8B", NULL);
+  gtk_text_buffer_create_tag(buffer, "leave", "foreground",
+                             "#8B8B00000000", NULL);
 #endif
 }
 
