@@ -123,7 +123,14 @@ in the translation that you haven't given an alternative form for, the
 default word ("bitch") will be used. In the original English, "<tt>%tde</tt>"
 is used for this purpose, but there is nothing special about the "<tt>de</tt>"
 code - you can use it yourself if you like, and you can use as many
-different two-letter codes as you want to.
+different two-letter codes as you want to.<p>
+
+Additionally, prices in dopewars are automatically formatted into strings by
+means of the %P notation, and comments can be introduced into format strings
+by means of the %/.../ notation. Everything between the two / characters is
+not printed. This is used to "qualify" some strings for translation, and the
+%/.../ can be left out of the translated string if desired (the comment does
+not need to be translated).
 
 </ul>
 
@@ -172,7 +179,7 @@ Molenda</a>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>02-12-2000</b>
+Last update: <b>07-04-2001</b>
 
 </body>
 </html>

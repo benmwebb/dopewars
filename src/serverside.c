@@ -1771,7 +1771,7 @@ void SendDrugsHere(Player *To,char DisplayBusts) {
 /* is TRUE, also regenerates drug prices and sends details of       */
 /* special events such as drug busts                                */
    int i;
-   gchar *Deal;
+   gchar *Deal,*prstr;
    GString *text;
    gboolean First;
 
@@ -1793,7 +1793,8 @@ void SendDrugsHere(Player *To,char DisplayBusts) {
    if (!First) SendPrintMessage(NULL,C_NONE,To,text->str);
    g_string_truncate(text,0);
    for (i=0;i<NumDrug;i++) {
-      dpg_string_sprintfa(text,"%P^",To->Drugs[i].Price);
+      g_string_sprintfa(text,"%s^",(prstr=pricetostr(To->Drugs[i].Price)));
+      g_free(prstr);
    }
    SendServerMessage(NULL,C_NONE,C_DRUGHERE,To,text->str);
    g_string_free(text,TRUE);

@@ -155,6 +155,7 @@ static void GetSpyReports(GtkWidget *widget,gpointer data);
 static void DisplaySpyReports(Player *Play);
 
 static GtkItemFactoryEntry menu_items[] = {
+/* The names of the the menus and their items in the GTK+ client */
    { N_("/_Game"),NULL,NULL,0,"<Branch>" },
    { N_("/Game/_New"),"<control>N",NewGame,0,NULL },
    { N_("/Game/_Quit"),"<control>Q",QuitGame,0,NULL },
@@ -182,6 +183,7 @@ static gchar *MenuTranslate(const gchar *path,gpointer func_data) {
 static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                        const gchar *message,gpointer user_data) {
    GtkMessageBox(NULL,message,
+/* Titles of the message boxes for warnings and errors */
                  log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
                  MB_OK);
 }
@@ -202,7 +204,10 @@ static guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
 
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
-      GtkMessageBox(ClientData.window,_("Abandon current game?"),
+      GtkMessageBox(ClientData.window,
+/* Prompt in 'quit game' dialog */
+                    _("Abandon current game?"),
+/* Title of 'quit game' dialog */
                     _("Quit Game"),MB_YESNO)==IDYES) {
       gtk_main_quit();
    }
@@ -220,7 +225,9 @@ gint MainDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
 
 void NewGame(GtkWidget *widget,gpointer data) {
    if (InGame) {
-      if (GtkMessageBox(ClientData.window,_("Abandon current game?"),
+      if (GtkMessageBox(ClientData.window,
+                        _("Abandon current game?"),
+/* Title of 'stop game to start a new game' dialog */
                         _("Start new game"),MB_YESNO)==IDYES) EndGame();
       else return;
    }
@@ -240,6 +247,8 @@ void ListInventory(GtkWidget *widget,gpointer data) {
    gtk_window_set_default_size(GTK_WINDOW(window),550,120);
    accel_group=gtk_accel_group_new();
    gtk_window_add_accel_group(GTK_WINDOW(window),accel_group);
+
+/* Title of inventory window */
    gtk_window_set_title(GTK_WINDOW(window),_("Inventory"));
 
    IsShowingInventory=TRUE;
@@ -266,6 +275,7 @@ void ListInventory(GtkWidget *widget,gpointer data) {
    hsep=gtk_hseparator_new();
    gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
 
+/* Caption of the button to close a dialog */
    button=gtk_button_new_with_label(_("Close"));
    gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
                              GTK_SIGNAL_FUNC(gtk_widget_destroy),
@@ -389,6 +399,7 @@ void HandleClientMessage(char *pt,Player *Play) {
             tmp=(Player *)list->data;
             tmp->Flags &= ~FIGHTING;
          }
+/* Message displayed when the player "jets" to a new location */
          text=dpg_strdup_printf(_("Jetting to %tde"),
                                 Location[(int)Play->IsAt].Name);
          PrintMessage(text); g_free(text);
@@ -396,9 +407,13 @@ void HandleClientMessage(char *pt,Player *Play) {
       case C_ENDLIST:
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Spy");
+
+/* Text to update the Errands/Spy menu item with the price for spying */
          text=dpg_strdup_printf(_("_Spy\t(%P)"),Prices.Spy);
          SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
+
+/* Text to update the Errands/Tipoff menu item with the price for a tipoff */
          text=dpg_strdup_printf(_("_Tipoff\t(%P)"),Prices.Tipoff);
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Tipoff");
@@ -472,6 +487,7 @@ void AddScoreToDialog(char *Data) {
 /* Get the first word - the score */
    spl1 = g_strsplit(cp," ",1);
    if (!spl1 || !spl1[0] || !spl1[1]) {
+/* Error - the high score from the server is invalid */
       g_warning(_("Corrupt high score!"));
       g_strfreev(spl1);
       return;
@@ -539,6 +555,8 @@ static void EndHighScore(GtkWidget *widget) {
 void CompleteHighScoreDialog(gboolean AtEnd) {
    GtkWidget *OKButton,*dialog;
    dialog=HiScoreDialog.dialog;
+
+/* Caption of the "OK" button in dialogs */
    OKButton=gtk_button_new_with_label(_("OK"));
    gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
                              GTK_SIGNAL_FUNC(gtk_widget_destroy),
@@ -700,17 +718,23 @@ static void CreateFightDialog() {
 
    hbbox=gtk_hbutton_box_new();
 
+/* Button for closing the "Fight" dialog and going back to dealing drugs
+   (%Tde = "Drugs" by default) */
    buf=dpg_strdup_printf(_("_Deal %Tde"),Names.Drugs);
    button=AddFightButton(buf,accel_group,GTK_BOX(hbbox),'D');
    gtk_object_set_data(GTK_OBJECT(dialog),"deal",button);
    g_free(buf);
 
+/* Button for shooting at other players in the "Fight" dialog, or for
+   popping up the "Fight" dialog from the main window */
    button=AddFightButton(_("_Fight"),accel_group,GTK_BOX(hbbox),'F');
    gtk_object_set_data(GTK_OBJECT(dialog),"fight",button);
 
+/* Button to stand and take it in the "Fight" dialog */
    button=AddFightButton(_("_Stand"),accel_group,GTK_BOX(hbbox),'S');
    gtk_object_set_data(GTK_OBJECT(dialog),"stand",button);
 
+/* Button to run from combat in the "Fight" dialog */
    button=AddFightButton(_("_Run"),accel_group,GTK_BOX(hbbox),'R');
    gtk_object_set_data(GTK_OBJECT(dialog),"run",button);
 
@@ -758,7 +782,11 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
       RowIndex=0;
    }
 
+/* Display of number of bitches or deputies during combat (%tde="bitches"
+   or "deputies" (etc.) by default) */
    BitchText=dpg_strdup_printf(_("%d %tde"),DefendBitches,BitchName);
+
+/* Display of health during combat */
    HealthText=g_strdup_printf(_("Health: %d"),DefendHealth);
 
    ProgPercent=(gfloat)DefendHealth/100.0;
@@ -770,7 +798,9 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
       gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
                               ProgPercent);
    } else {
+/* Display of the current player's name during combat */
       compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
+
       gtk_table_attach_defaults(GTK_TABLE(table),compt->name,0,1,
                                 RowIndex,RowIndex+1);
       compt->bitches = gtk_label_new(BitchText);
@@ -906,6 +936,7 @@ void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    gtk_label_set_text(GTK_LABEL(Status->DebtValue),prstr);
    g_free(prstr);
 
+/* Display of carried guns in GTK+ client status window */
    tstring_fmt(&tfmt,&tstr,_("**Stats: Guns** %Tde"),Names.Guns);
    gtk_label_set_text(GTK_LABEL(Status->GunsName),tstr[0]);
    tstring_free(tfmt,tstr);
@@ -913,6 +944,7 @@ void DisplayStats(Player *Play,struct StatusWidgets *Status) {
    gtk_label_set_text(GTK_LABEL(Status->GunsValue),text->str);
 
    if (!WantAntique) {
+/* Display of number of bitches in GTK+ client status window */
       tstring_fmt(&tfmt,&tstr,_("**Stats: Bitches** %Tde"),Names.Bitches);
       gtk_label_set_text(GTK_LABEL(Status->BitchesName),tstr[0]);
       tstring_free(tfmt,tstr);
@@ -1073,7 +1105,9 @@ void Jet() {
    accel_group=gtk_accel_group_new();
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+/* Title of 'Jet' dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("Jet to location"));
+
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
@@ -1082,6 +1116,7 @@ void Jet() {
 
    vbox=gtk_vbox_new(FALSE,7);
 
+/* Prompt in 'Jet' dialog */
    label=gtk_label_new(_("Where to, dude ? "));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
@@ -1105,7 +1140,9 @@ void Jet() {
          button=gtk_button_new_with_label(Location[i].Name);
       } else {
          button=gtk_button_new_with_label("");
-         name=g_strdup_printf("_%c. %s",AccelChar,Location[i].Name);
+
+/* Display of locations in 'Jet' window (%tde="The Bronx" etc. by default) */
+         name=dpg_strdup_printf(_("_%c. %tde"),AccelChar,Location[i].Name);
          SetAccelerator(button,name,button,"clicked",accel_group);
          g_free(name);
       }
@@ -1138,20 +1175,28 @@ static void UpdateDealDialog() {
    DrugInd=DealDialog.DrugInd;
    Play=ClientData.Play;
 
+/* Display of the current price of the selected drug in 'Deal Drugs' dialog */
    dpg_string_sprintf(text,_("at %P"),Play->Drugs[DrugInd].Price);
    gtk_label_set_text(GTK_LABEL(DealDialog.cost),text->str);
 
    CanDrop=Play->Drugs[DrugInd].Carried;
+
+/* Display of current inventory of the selected drug in 'Deal Drugs' dialog
+   (%tde="Opium" etc. by default) */
    dpg_string_sprintf(text,_("You are currently carrying %d %tde"),
                       CanDrop,Drug[DrugInd].Name);
    gtk_label_set_text(GTK_LABEL(DealDialog.carrying),text->str);
 
    CanCarry=Play->CoatSize;
+
+/* Available space for drugs in 'Deal Drugs' dialog */
    g_string_sprintf(text,_("Available space: %d"),CanCarry);
    gtk_label_set_text(GTK_LABEL(DealDialog.space),text->str);
 
    if (DealDialog.Type==BT_BUY) {
       CanAfford=Play->Cash/Play->Drugs[DrugInd].Price;
+
+/* Number of the selected drug that you can afford in 'Deal Drugs' dialog */
       g_string_sprintf(text,_("You can afford %d"),CanAfford);
       gtk_label_set_text(GTK_LABEL(DealDialog.afford),text->str);
       MaxDrug=MIN(CanCarry,CanAfford);
@@ -1201,6 +1246,7 @@ void DealDrugs(GtkWidget *widget,gpointer data) {
    gint DrugInd,i,SelIndex,FirstInd;
    gboolean DrugIndOK;
 
+/* Action in 'Deal Drugs' dialog - "Buy/Sell/Drop Drugs" */
    if (data==BT_BUY) Action=_("Buy");
    else if (data==BT_SELL) Action=_("Sell");
    else if (data==BT_DROP) Action=_("Drop");
@@ -1315,6 +1361,8 @@ void DealDrugs(GtkWidget *widget,gpointer data) {
    GTK_WIDGET_SET_FLAGS(button,GTK_CAN_DEFAULT);
    gtk_widget_grab_default(button);
    gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);   
+
+/* Caption of "Cancel" button for GTK+ client dialogs */
    button=gtk_button_new_with_label(_("Cancel"));
    gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
                              GTK_SIGNAL_FUNC(gtk_widget_destroy),
@@ -1351,6 +1399,7 @@ void DealGuns(GtkWidget *widget,gpointer data) {
    } else return;
 
    
+/* Title of 'gun shop' dialog (%tde="guns" by default) */
    if (data==BT_BUY) Title=dpg_strdup_printf(_("Buy %tde"),Names.Guns);
    else if (data==BT_SELL) Title=dpg_strdup_printf(_("Sell %tde"),Names.Guns);
    else Title=dpg_strdup_printf(_("Drop %tde"),Names.Guns);
@@ -1358,7 +1407,7 @@ void DealGuns(GtkWidget *widget,gpointer data) {
    text=g_string_new("");
 
    if (data!=BT_BUY && TotalGunsCarried(ClientData.Play)==0) {
-      dpg_string_sprintf(text,_("You don't have any %tde!"),Names.Guns);
+      dpg_string_sprintf(text,_("You don't have any %tde to sell!"),Names.Guns);
       GtkMessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && TotalGunsCarried(ClientData.Play) >=
                               ClientData.Play->Bitches.Carried+2) { 
@@ -1405,6 +1454,9 @@ void QuestionDialog(char *Data,Player *From) {
    GtkWidget *dialog,*label,*vbox,*hsep,*hbbox,*button;
    GtkAccelGroup *accel_group;
    gchar *Responses,**split,*LabelText;
+
+/* Button titles that correspond to the single-keypress options provided
+   by the curses client (e.g. _Yes corresponds to 'Y' etc.) */
    gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
                       N_("_Fight"), N_("_Attack"), N_("_Evade") };
    gint numWords = sizeof(Words) / sizeof(Words[0]);
@@ -1424,7 +1476,10 @@ void QuestionDialog(char *Data,Player *From) {
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
                       GTK_SIGNAL_FUNC(DisallowDelete),NULL);
    gtk_object_set_data(GTK_OBJECT(dialog),"From",(gpointer)From);
+
+/* Title of the 'ask player a question' dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("Question"));
+
    gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
@@ -1551,22 +1606,30 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status) {
    label=Status->Date = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,2,4,0,1);
 
+/* Available space label in GTK+ client status display */
    label=Status->SpaceName = gtk_label_new(_("Space"));
+
    gtk_table_attach_defaults(GTK_TABLE(table),label,4,5,0,1);
    label=Status->SpaceValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,5,6,0,1);
 
+/* Player's cash label in GTK+ client status display */
    label=Status->CashName = gtk_label_new(_("Cash"));
+
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
    label=Status->CashValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,1,2,1,2);
 
+/* Player's debt label in GTK+ client status display */
    label=Status->DebtName = gtk_label_new(_("Debt"));
+
    gtk_table_attach_defaults(GTK_TABLE(table),label,2,3,1,2);
    label=Status->DebtValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,3,4,1,2);
 
+/* Player's bank balance label in GTK+ client status display */
    label=Status->BankName = gtk_label_new(_("Bank"));
+
    gtk_table_attach_defaults(GTK_TABLE(table),label,4,5,1,2);
    label=Status->BankValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,5,6,1,2);
@@ -1581,7 +1644,9 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status) {
    label=Status->BitchesValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,3,4,2,3);
 
+/* Player's health label in GTK+ client status display */
    label=Status->HealthName = gtk_label_new(_("Health"));
+
    gtk_table_attach_defaults(GTK_TABLE(table),label,4,5,2,3);
    label=Status->HealthValue = gtk_label_new(NULL);
    gtk_table_attach_defaults(GTK_TABLE(table),label,5,6,2,3);
@@ -1601,7 +1666,9 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
    
    ClientData.JetAccel=SetAccelerator(button,
                 (ClientData.Play && ClientData.Play->Flags & FIGHTING) ?
-                _("_Fight") : _("_Jet!"),button,"clicked",accel_group);
+                _("_Fight") :
+/* Caption of 'Jet' button in main window */
+                _("_Jet!"),button,"clicked",accel_group);
 }
 
 #ifdef CYGWIN
@@ -1636,6 +1703,8 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    ClientData.PlayerName=NULL;
    ClientData.Play=NULL;
    window=ClientData.window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
+
+/* Title of main window in GTK+ client */
    gtk_window_set_title(GTK_WINDOW(window),_("dopewars"));
    gtk_window_set_default_size(GTK_WINDOW(window),450,390);
    gtk_signal_connect(GTK_OBJECT(window),"delete_event",
@@ -1714,6 +1783,7 @@ void display_intro(GtkWidget *widget,gpointer data) {
    const int rows=5,cols=3;
    int i,j;
    gchar *table_data[5][3] = {
+/* Credits labels in GTK+ 'about' dialog */
       { N_("Drug Dealing and Research"), "Dan Wolf", NULL },
       { N_("Play Testing"), "Phil Davis", "Owen Walsh" },
       { N_("Extensive Play Testing"), "Katherine Holt",
@@ -1724,7 +1794,10 @@ void display_intro(GtkWidget *widget,gpointer data) {
    };
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+
+/* Title of GTK+ 'about' dialog */
    gtk_window_set_title(GTK_WINDOW(dialog),_("About dopewars"));
+
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                 GTK_WINDOW(ClientData.window));
@@ -1733,6 +1806,7 @@ void display_intro(GtkWidget *widget,gpointer data) {
    vbox=gtk_vbox_new(FALSE,5);
 
    label=gtk_label_new(
+/* Main content of GTK+ 'about' dialog */
 _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "imaginary drug market.  dopewars is an All-American game which features\n"
 "buying, selling, and trying to get past the cops!\n\n"
@@ -1741,6 +1815,7 @@ _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "have one month of game time to make your fortune.\n"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
+/* Version and copyright notice in GTK+ 'about' dialog */
    VersionStr=g_strdup_printf(_("Version %s     "
 "Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"),VERSION);
@@ -1759,6 +1834,7 @@ _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
    gtk_box_pack_start(GTK_BOX(vbox),table,FALSE,FALSE,0);
 
    label=gtk_label_new(
+/* Label at the bottom of GTK+ 'about' dialog */
 _("\nFor information on the command line options, type dopewars -h at your\n"
 "Unix prompt. This will display a help screen, listing the available "
 "options."));
@@ -1797,6 +1873,7 @@ static void FinishConnect(gpointer data,gint socket,
    widgets->ConnectTag=0;
    NetworkError=FinishSetupNetwork();
    if (NetworkError) {
+/* Error: GTK+ client could not connect to the given dopewars server */
       text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
       gtk_label_set_text(GTK_LABEL(widgets->status),text);
       g_free(text);
@@ -1808,6 +1885,7 @@ static void FinishConnect(gpointer data,gint socket,
 
 static void DoConnect(struct StartGameStruct *widgets) {
    gchar *text,*NetworkError;
+/* Message displayed during the attempted connect to a dopewars server */
    text=g_strdup_printf(_("Status: Attempting to contact %s..."),ServerName);
    gtk_label_set_text(GTK_LABEL(widgets->status),text); g_free(text);
 
@@ -1869,8 +1947,11 @@ static void FillMetaServerList(struct StartGameStruct *widgets) {
       titles[1]=g_strdup_printf("%d",ThisServer->Port);
       titles[2]=ThisServer->Version;
       if (ThisServer->CurPlayers==-1) {
+/* Displayed if we don't know how many players are logged on to a server */
          titles[3]=_("Unknown");
       } else {
+/* e.g. "5 of 20" means 5 players are logged on to a server, out of a
+   maximum of 20 */
          titles[3]=g_strdup_printf(_("%d of %d"),ThisServer->CurPlayers,
                                                  ThisServer->MaxPlayers);
       }
@@ -1938,6 +2019,7 @@ void NewGameDialog() {
    guint AccelKey;
    gboolean UpdateMeta=FALSE;
 
+/* Column titles of metaserver information */
    server_titles[0]=_("Server");
    server_titles[1]=_("Port");
    server_titles[2]=_("Version");
@@ -1956,6 +2038,7 @@ void NewGameDialog() {
    gtk_window_set_default_size(GTK_WINDOW(dialog),400,250);
    accel_group=gtk_accel_group_new();
 
+/* Title of 'New Game' dialog */
    gtk_window_set_title(GTK_WINDOW(widgets.dialog),_("New Game"));
    gtk_container_set_border_width(GTK_CONTAINER(widgets.dialog),7);
    gtk_window_add_accel_group(GTK_WINDOW(widgets.dialog),accel_group);
@@ -1964,7 +2047,9 @@ void NewGameDialog() {
    hbox=gtk_hbox_new(FALSE,7);
 
    label=gtk_label_new("");
+
    AccelKey=gtk_label_parse_uline(GTK_LABEL(label),
+/* Prompt for player's name in 'New Game' dialog */
                                   _("Hey dude, what's your _name?"));
    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
 
@@ -2018,6 +2103,7 @@ void NewGameDialog() {
    gtk_box_pack_start(GTK_BOX(vbox2),table,FALSE,FALSE,0);
 
    button=gtk_button_new_with_label("");
+/* Button to connect to a named dopewars server */
    SetAccelerator(button,_("_Connect"),button,"clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(ConnectToServer),
@@ -2029,11 +2115,15 @@ void NewGameDialog() {
 
    label=gtk_label_new(_("Server"));
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
+
+/* Title of 'New Game' dialog notebook tab for single-player mode */
    frame=gtk_frame_new(_("Single player"));
    gtk_container_set_border_width(GTK_CONTAINER(frame),4);
    vbox2=gtk_vbox_new(FALSE,7);
    gtk_container_set_border_width(GTK_CONTAINER(vbox2),4);
    widgets.antique=gtk_check_button_new_with_label("");
+
+/* Checkbox to activate 'antique mode' in single-player games */
    SetAccelerator(widgets.antique,_("_Antique mode"),widgets.antique,
                   "clicked",accel_group);
    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.antique),WantAntique);
@@ -2065,6 +2155,8 @@ void NewGameDialog() {
 
    hbbox=gtk_hbutton_box_new();
    button=gtk_button_new_with_label("");
+
+/* Button to update metaserver information */
    SetAccelerator(button,_("_Update"),button,
                   "clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
@@ -2254,14 +2346,17 @@ void TransferDialog(gboolean Debt) {
    gtk_table_set_row_spacings(GTK_TABLE(table),4);
    gtk_table_set_col_spacings(GTK_TABLE(table),4);
 
+/* Display of player's cash in bank or loan shark dialog */
    text=dpg_strdup_printf(_("Cash: %P"),ClientData.Play->Cash);
    label=gtk_label_new(text);
    g_free(text);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,0,1);
 
    if (Debt) {
+/* Display of player's debt in loan shark dialog */
       text=dpg_strdup_printf(_("Debt: %P"),ClientData.Play->Debt);
    } else {
+/* Display of player's bank balance in bank dialog */
       text=dpg_strdup_printf(_("Bank: %P"),ClientData.Play->Bank);
    }
    label=gtk_label_new(text);

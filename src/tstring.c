@@ -161,6 +161,10 @@ void GetNextFormat(int *Index,gchar *str,int *StartPos,
             Code[1]=str[i+2];
             Code[2]=0;
             i+=3;
+         } else if (type=='/') {
+            i++;
+            while (str[i]!='\0' && str[i]!='/') i++;
+            if (str[i]=='/') i++;
          } else i++;
          *ArgNum=anum; *Wid=wid; *Prec=prec; *Index=i; *Type=type;
          return;
@@ -205,6 +209,8 @@ gchar *HandleTFmt(gchar *format, va_list va) {
             fdat->data.CharVal=(char)va_arg(va,int); break;
          case 's': case 't': case 'T':
             fdat->data.StrVal=va_arg(va,char *); break;
+         case '%': case '/':
+            break;  /* No special action for %% or %/.../ */
          default:
             g_error("Unknown format type %c!",fdat->Type);
       }
@@ -239,6 +245,8 @@ gchar *HandleTFmt(gchar *format, va_list va) {
             g_string_sprintfa(string,tmpfmt->str,fstr); g_free(fstr); break;
          case 's':
             g_string_sprintfa(string,tmpfmt->str,fdat->data.StrVal); break;
+         case '%':
+            g_string_append_c(string,'%'); break;
       }
    }
    retstr=string->str;
