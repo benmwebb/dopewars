@@ -289,14 +289,14 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
 void PrintAIMessage(char *Text) {
 /* Prints a message received via a printmessage or question */
 /* network message, stored in "Text"                        */
-   int i;
-   char SomeText=0;
+   unsigned i;
+   gboolean SomeText=FALSE;
    for (i=0;i<strlen(Text);i++) {
       if (Text[i]=='^') {
          if (SomeText) putchar('\n'); 
       } else {
          putchar(Text[i]);
-         SomeText=1;
+         SomeText=TRUE;
       }
    }
    putchar('\n');

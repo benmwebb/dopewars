@@ -4752,6 +4752,7 @@ else
 fi
 
 if test -n "$GCC"; then
+   CFLAGS="$CFLAGS -Wall -Wfloat-equal -Wpointer-arith -Wcast-qual -Wcast-align -Wsign-compare -Waggregate-return -Wredundant-decls -Wnested-externs -Wunused"
    CFLAGS="$CFLAGS -Wall"
 fi
 
