@@ -282,10 +282,6 @@ static GtkSignalType GtkSeparatorSignals[] = {
   {"", NULL, NULL}
 };
 
-static GtkClass GtkMiscClass = {
-  "misc", &GtkWidgetClass, sizeof(GtkMisc), NULL, NULL
-};
-
 static GtkSignalType GtkProgressBarSignals[] = {
   {"size_request", gtk_marshal_VOID__GPOIN, gtk_progress_bar_size_request},
   {"realize", gtk_marshal_VOID__VOID, gtk_progress_bar_realize},
