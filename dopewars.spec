@@ -43,7 +43,7 @@ the Simple DirectMedia Layer mixer (SDL_mixer).
 %setup
 
 %build
-%configure
+%configure --with-sdl --with-esd
 make
 
 %install
