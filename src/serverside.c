@@ -1308,14 +1308,7 @@ void GuiSetTimeouts(void)
 
 static void GuiServerPrintFunc(const gchar *string)
 {
-  gint EditPos;
-
-  gtk_text_freeze(GTK_TEXT(TextOutput));
-  EditPos = gtk_text_get_length(GTK_TEXT(TextOutput));
-  gtk_editable_insert_text(GTK_EDITABLE(TextOutput), string,
-                           strlen(string), &EditPos);
-  gtk_text_thaw(GTK_TEXT(TextOutput));
-  gtk_editable_set_position(GTK_EDITABLE(TextOutput), EditPos);
+  TextViewAppend(GTK_TEXT_VIEW(TextOutput), string, NULL, TRUE);
 }
 
 static void GuiServerLogMessage(const gchar *log_domain,
@@ -1604,7 +1597,6 @@ static void SetupTaskBarIcon(GtkWidget *widget)
 void GuiServerLoop(gboolean is_service)
 {
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
-  GtkAdjustment *adj;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(window), "delete_event",
@@ -1617,10 +1609,9 @@ void GuiServerLoop(gboolean is_service)
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
   vbox = gtk_vbox_new(FALSE, 7);
-  adj = (GtkAdjustment *)gtk_adjustment_new(0, 0, 100, 1, 10, 10);
-  TextOutput = text = gtk_scrolled_text_new(NULL, adj, &hbox);
-  gtk_text_set_editable(GTK_TEXT(text), FALSE);
-  gtk_text_set_word_wrap(GTK_TEXT(text), TRUE);
+  TextOutput = text = gtk_scrolled_text_view_new(&hbox);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
   hbox = gtk_hbox_new(FALSE, 4);
