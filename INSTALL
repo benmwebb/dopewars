@@ -16,7 +16,7 @@ Windows:
    - Get Cygwin from http://www.cygwin.com/. It should be possible to build
      dopewars with C compilers other than Cygwin, but this is not supported.
      Make sure that when you install Cygwin you select the following packages
-     for installation:-
+     for installation:
          pkgconfig gettext libiconv w32api mingw-runtime gcc make bash unzip
    - If you want to build from CVS, you will also need the following:-
          autoconf automake gettext-devel
@@ -24,37 +24,44 @@ Windows:
      libiconv. Links to the binary distributions of these can be found at
      http://www.gimp.org/win32/downloads.html. (You can also build them from
      the source code, but this is not described here.) The binary packages
-     that you will need are:-
-         glib-2.0.6-20020802.zip
-         glib-dev-2.0.6-20020802.zip 
-         libintl-0.10.40-20020310.zip
-         libiconv-1.7-w32.bin.zip (from the "Libiconv for Win32" link)
+     that you will need are:
+         glib-2.2.1.zip
+         glib-dev-2.2.1.zip
+         libintl-0.10.40-tml-20020904.zip
+         gettext-dev-0.10.40-20020904.zip
+         libiconv-1.9-w32.2.bin.woe32.zip (from the "Libiconv for Win32" link)
      Later versions of any of these packages should also work. Note that the
      libintl and libiconv Cygwin packages will NOT suffice here.
    - These packages need to be installed on your Cygwin system under /target,
-     so start a Cygwin shell, and execute something similar to the following:-
-         mkdir /target
-         cd /target
-         unzip /glib-2.0.6-20020802.zip
-         unzip /glib-dev-2.0.6-20020802.zip
-         unzip /libintl-0.10.40-20020310.zip
-         unzip /libiconv-1.7-w32.bin.zip
+     so start a Cygwin shell, and execute something similar to the following:
+         mkdir -p /target/build
+         cd /target/build
+         unzip /glib-2.2.1.zip
+         unzip /glib-dev-2.2.1.zip
+         unzip /libintl-0.10.40-tml-20020904.zip
+         unzip /gettext-dev-0.10.40-20020904.zip
+         unzip /libiconv-1.9-w32.2.bin.woe32.zip
    - In order for pkg-config to detect the installed packages, you need
-     to put their .pc files (in /target/lib/pkgconfig) in the pkgconfig search
-     path. One way of doing this is with the following command:-
-         ln -s /target/lib/pkgconfig /lib/pkgconfig
+     to put their .pc files (in /target/build/lib/pkgconfig) in the pkgconfig
+     search path. One way of doing this is with the following command:
+         ln -s /target/build/lib/pkgconfig /lib/pkgconfig
    - To link properly with iconv, it needs to be placed in your link path. The
-     following should accomplish this:-
-         mv /target/libiconv-1.7-w32.bin/iconv.lib /target/lib
+     following should accomplish this:
+         cd /target/build
+         mv libiconv-1.9-w32.2.bin.woe32/lib/iconv.lib lib
    - In order for the configure script to properly detect libintl, it needs to
-     be placed in the include path:-
-         ln -s /target/include/libintl.h /usr/include/mingw
+     be placed in the include path:
+         ln -s /target/build/include/libintl.h /usr/include/mingw
+   - iconv.dll does not have its executable bit set, which upsets Cygwin.
+     The following should correct this:
+         chmod a+x /target/build/libiconv-1.9-w32.2.bin.woe32/bin/iconv.dll
    - Finally, in order for GLib applications such as dopewars to work, the
      libintl, libiconv and libglib DLLs need to be in the Windows library
      search path. You can either copy them into the dopewars directory, or
      place them somewhere such as C:\WINNT\System32, either with Windows
-     Explorer or with a Cygwin command such as:-
-         cp lib/libintl-1.dll libiconv-1.7-w32.bin/iconv.dll \
+     Explorer or with a Cygwin command such as:
+         cd /target/build
+         cp lib/libintl-1.dll libiconv-1.9-w32.2.bin.woe32/bin/iconv.dll \
             lib/libglib-2.0-0.dll /cygdrive/c/winnt/system32
 
 
