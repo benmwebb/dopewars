@@ -1,3 +1,4 @@
+- Fix errors reported by 'msgfmt -cv foo.po'
 - User accounts (i.e. players connect with a username and password, so can
   build up their status over several games, or save and continue games)
 - Popup to let you know you only have x days left before the end of the game
