@@ -280,8 +280,6 @@ void ToggleSound(GtkWidget *widget, gpointer data)
   if (widget) {
     enable = GTK_CHECK_MENU_ITEM(widget)->active;
     SoundEnable(enable);
-  } else {
-    g_print("widget is NULL\n");
   }
 }
 

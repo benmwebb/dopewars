@@ -3818,10 +3818,14 @@ void gtk_menu_item_realize(GtkWidget *widget)
     mii.hSubMenu = GTK_MENU_SHELL(menu_item->submenu)->menu;
   }
   mii.fType = MFT_STRING;
-  if (GTK_WIDGET_SENSITIVE(widget))
+  if (GTK_WIDGET_SENSITIVE(widget)) {
     mii.fState = MFS_ENABLED;
-  else
+  } else {
     mii.fState = MFS_GRAYED;
+  }
+  if (menu_item->check) {
+    mii.fState |= (menu_item->active ? MFS_CHECKED : MFS_UNCHECKED);
+  }
   mii.wID = menu_item->ID;
   mii.dwTypeData = (LPTSTR)menu_item->text;
   mii.cch = strlen(menu_item->text);
