@@ -46,8 +46,6 @@
 #include <commctrl.h>
 
 #define LISTITEMVPACK  0
-#define LISTITEMHPACK  3
-#define LISTHEADERPACK 6
 
 #define PANED_STARTPOS 200
 
@@ -62,7 +60,6 @@ static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
 
-static BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
 static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
 static void gtk_entry_size_request(GtkWidget *widget,
@@ -112,7 +109,6 @@ static gint gtk_window_delete_event(GtkWidget *widget, GdkEvent *event);
 static void gtk_window_realize(GtkWidget *widget);
 static void gtk_window_show(GtkWidget *widget);
 static void gtk_window_hide(GtkWidget *widget);
-static void gtk_container_realize(GtkWidget *widget);
 static void gtk_button_realize(GtkWidget *widget);
 static void gtk_entry_realize(GtkWidget *widget);
 static void gtk_text_realize(GtkWidget *widget);
@@ -121,7 +117,6 @@ static void gtk_radio_button_realize(GtkWidget *widget);
 static void gtk_radio_button_destroy(GtkWidget *widget);
 static void gtk_box_realize(GtkWidget *widget);
 
-static HWND gtk_get_parent_hwnd(GtkWidget *widget);
 static void gtk_label_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
 static void gtk_label_set_size(GtkWidget *widget,
@@ -149,27 +144,6 @@ static void gtk_table_hide_all(GtkWidget *widget, gboolean hWndOnly);
 static void gtk_widget_hide_all_full(GtkWidget *widget, gboolean hWndOnly);
 static void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse);
 
-static void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
-                                    GtkSignalFunc default_action,
-                                    va_list args);
-static void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
-                                   GtkSignalFunc default_action,
-                                   va_list args);
-static void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
-                                   GtkSignalFunc default_action,
-                                   va_list args);
-static void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
-                                   GtkSignalFunc default_action,
-                                   va_list args);
-static void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
-                                    GtkSignalFunc default_action,
-                                    va_list args);
-static void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
-                                   GtkSignalFunc default_action,
-                                   va_list args);
-void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
-                                       GtkSignalFunc default_action,
-                                       va_list args);
 static void gtk_menu_bar_realize(GtkWidget *widget);
 static void gtk_menu_item_realize(GtkWidget *widget);
 static void gtk_menu_item_enable(GtkWidget *widget);
@@ -508,7 +482,7 @@ static GtkSignalType GtkContainerSignals[] = {
   {"", NULL, NULL}
 };
 
-static GtkClass GtkContainerClass = {
+GtkClass GtkContainerClass = {
   "container", &GtkWidgetClass, sizeof(GtkContainer), GtkContainerSignals, NULL
 };
 
@@ -640,8 +614,9 @@ static GtkClass GtkWindowClass = {
 const GtkType GTK_TYPE_WINDOW = &GtkWindowClass;
 const GtkType GTK_TYPE_MENU_BAR = &GtkMenuBarClass;
 
-static HINSTANCE hInst;
-static HFONT defFont, urlFont;
+HINSTANCE hInst;
+HFONT defFont;
+static HFONT urlFont;
 static GSList *WindowList = NULL;
 static GSList *GdkInputs = NULL;
 static GSList *GtkTimeouts = NULL;
@@ -649,12 +624,12 @@ static HWND TopLevel = NULL;
 
 static WNDPROC wpOrigEntryProc, wpOrigTextProc;
 
-static void gtk_set_default_font(HWND hWnd)
+void gtk_set_default_font(HWND hWnd)
 {
   SendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
 }
 
-static GtkObject *GtkNewObject(GtkClass *klass)
+GtkObject *GtkNewObject(GtkClass *klass)
 {
   GtkObject *newObj;
 

@@ -28,6 +28,12 @@
 
 #ifdef CYGWIN
 
+#include <windows.h>
+#include <commctrl.h>
+
+#define LISTITEMHPACK  3
+#define LISTHEADERPACK 6
+
 static void gtk_clist_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
 static void gtk_clist_set_size(GtkWidget *widget,

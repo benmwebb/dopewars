@@ -462,6 +462,10 @@ struct _GtkTableRowCol {
   gint16 spacing;
 };
 
+extern GtkClass GtkContainerClass;
+extern HFONT defFont;
+extern HINSTANCE hInst;
+
 #define GTK_OBJECT(obj) ((GtkObject *)(obj))
 #define GTK_CONTAINER(obj) ((GtkContainer *)(obj))
 #define GTK_PANED(obj) ((GtkPaned *)(obj))
@@ -694,6 +698,34 @@ guint gtk_timeout_add(guint32 interval, GtkFunction function,
                       gpointer data);
 void gtk_timeout_remove(guint timeout_handler_id);
 guint gtk_main_level(void);
+GtkObject *GtkNewObject(GtkClass *klass);
+BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
+void gtk_container_realize(GtkWidget *widget);
+void gtk_set_default_font(HWND hWnd);
+HWND gtk_get_parent_hwnd(GtkWidget *widget);
+
+/* Functions for handling emitted signals */
+void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
+                             GtkSignalFunc default_action,
+                             va_list args);
+void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
+                            GtkSignalFunc default_action,
+                            va_list args);
+void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
+                            GtkSignalFunc default_action,
+                            va_list args);
+void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
+                            GtkSignalFunc default_action,
+                            va_list args);
+void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
+                             GtkSignalFunc default_action,
+                             va_list args);
+void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
+                            GtkSignalFunc default_action,
+                            va_list args);
+void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
+                                       GtkSignalFunc default_action,
+                                       va_list args);
 
 /* Private functions */
 void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
