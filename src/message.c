@@ -1017,12 +1017,8 @@ void SendFightMessage(Player *Attacker,Player *Defender,
       if (Msg) {
          g_string_append(text,Msg);
       } else {
-         FormatFightMessage(To,text,Attacker==To ? "" : GetPlayerName(Attacker),
-                            (Defender==To || Defender==NULL)
-                                         ? "" : GetPlayerName(Defender),
-                            Defender ? Defender->Health : 0,
-                            Defender ? Defender->Bitches.Carried : 0,
-                            BitchesKilled,ArmPercent,FightPoint,Loot);
+         FormatFightMessage(To,text,Attacker,Defender,BitchesKilled,
+                            ArmPercent,FightPoint,Loot);
       }
       if (HaveAbility(To,A_NEWFIGHT)) {
          SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,To,text->str);
@@ -1040,11 +1036,17 @@ void SendFightMessage(Player *Attacker,Player *Defender,
    g_string_free(text,TRUE);
 }
 
-void FormatFightMessage(Player *To,GString *text,
-                        gchar *AttackName,gchar *DefendName,int Health,
-                        int Bitches,int BitchesKilled,int ArmPercent,
+void FormatFightMessage(Player *To,GString *text,Player *Attacker,
+                        Player *Defender,int BitchesKilled,int ArmPercent,
                         gchar FightPoint,gboolean Loot) {
-   gchar *Armament;
+   gchar *Armament,*DefendName,*AttackName;
+   int Health,Bitches;
+
+   AttackName = (!Attacker || Attacker==To ? "" : GetPlayerName(Attacker));
+   DefendName = (!Defender || Defender==To ? "" : GetPlayerName(Defender));
+   Health = Defender ? Defender->Health : 0;
+   Bitches = Defender ? Defender->Bitches.Carried : 0;
+
    switch(FightPoint) {
       case F_ARRIVED:
          Armament= ArmPercent<10 ? _("pitifully armed")       :
@@ -1065,10 +1067,12 @@ void FormatFightMessage(Player *To,GString *text,
          }
          break;
       case F_LEAVE: case F_LASTLEAVE:
-         if (AttackName[0]) {
-            g_string_sprintfa(text,_("%s has got away!"),AttackName);
-         } else {
-            g_string_sprintfa(text,_("You got away!"));
+         if (Attacker->Health>0) {
+            if (AttackName[0]) {
+               g_string_sprintfa(text,_("%s has got away!"),AttackName);
+            } else {
+               g_string_sprintfa(text,_("You got away!"));
+            }
          }
          break;
       case F_RELOAD:

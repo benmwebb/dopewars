@@ -170,8 +170,7 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
 void SendFightMessage(Player *Attacker,Player *Defender,
                       int BitchesKilled,gchar FightPoint,
                       gboolean Loot,gboolean Broadcast,gchar *Msg);
-void FormatFightMessage(Player *To,GString *text,
-                        gchar *AttackName,gchar *DefendName,int Health,
-                        int Bitches,int BitchesKilled,int ArmPercent,
+void FormatFightMessage(Player *To,GString *text,Player *Attacker,
+                        Player *Defender,int BitchesKilled,int ArmPercent,
                         gchar FightPoint,gboolean Loot);
 #endif

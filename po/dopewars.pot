@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-10-21 18:33+0100\n"
+"POT-Creation-Date: 2000-10-21 22:14+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2314,114 +2314,114 @@ msgstr ""
 msgid "Do you run, or fight?"
 msgstr ""
 
-#: src/message.c:1050
+#: src/message.c:1052
 msgid "pitifully armed"
 msgstr ""
 
-#: src/message.c:1051
+#: src/message.c:1053
 msgid "lightly armed"
 msgstr ""
 
-#: src/message.c:1052
+#: src/message.c:1054
 msgid "moderately well armed"
 msgstr ""
 
-#: src/message.c:1053
+#: src/message.c:1055
 msgid "heavily armed"
 msgstr ""
 
-#: src/message.c:1054
+#: src/message.c:1056
 msgid "armed to the teeth"
 msgstr ""
 
-#: src/message.c:1056
+#: src/message.c:1058
 msgid "%s arrives with %d %tde, %s!"
 msgstr ""
 
-#: src/message.c:1062
+#: src/message.c:1064
 #, c-format
 msgid "%s stands and takes it"
 msgstr ""
 
-#: src/message.c:1064
+#: src/message.c:1066
 msgid "You stand there like a dummy."
 msgstr ""
 
-#: src/message.c:1069
+#: src/message.c:1072
 #, c-format
 msgid "%s has got away!"
 msgstr ""
 
-#: src/message.c:1071
+#: src/message.c:1074
 msgid "You got away!"
 msgstr ""
 
-#: src/message.c:1076
+#: src/message.c:1080
 msgid "Guns reloaded..."
 msgstr ""
 
-#: src/message.c:1081
+#: src/message.c:1085
 #, c-format
 msgid "%s shoots at %s... and misses!"
 msgstr ""
 
-#: src/message.c:1084
+#: src/message.c:1088
 #, c-format
 msgid "%s shoots at you... and misses!"
 msgstr ""
 
-#: src/message.c:1087
+#: src/message.c:1091
 #, c-format
 msgid "You missed %s!"
 msgstr ""
 
-#: src/message.c:1093
+#: src/message.c:1097
 #, c-format
 msgid "%s shoots %s dead."
 msgstr ""
 
-#: src/message.c:1096
+#: src/message.c:1100
 msgid "%s shoots at %s and kills a %tde!"
 msgstr ""
 
-#: src/message.c:1099
+#: src/message.c:1103
 #, c-format
 msgid "%s shoots at %s."
 msgstr ""
 
-#: src/message.c:1104
+#: src/message.c:1108
 #, c-format
 msgid "%s wasted you, man! What a drag!"
 msgstr ""
 
-#: src/message.c:1108
+#: src/message.c:1112
 msgid "%s shoots at you... and kills a %tde!"
-msgstr ""
-
-#: src/message.c:1111
-#, c-format
-msgid "%s hits you, man!"
 msgstr ""
 
 #: src/message.c:1115
 #, c-format
+msgid "%s hits you, man!"
+msgstr ""
+
+#: src/message.c:1119
+#, c-format
 msgid "You killed %s!"
 msgstr ""
 
-#: src/message.c:1117
+#: src/message.c:1121
 msgid "You hit %s, and killed a %tde!"
 msgstr ""
 
-#: src/message.c:1120
+#: src/message.c:1124
 #, c-format
 msgid "You hit %s!"
 msgstr ""
 
-#: src/message.c:1123
+#: src/message.c:1127
 msgid " You loot the body!"
 msgstr ""
 
-#: src/message.c:1126
+#: src/message.c:1130
 #, c-format
 msgid " (Health: %d)"
 msgstr ""
