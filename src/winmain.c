@@ -74,8 +74,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    g_strfreev(split);
    if (WantVersion || WantHelp) {
       AllocConsole();
+      g_set_print_handler(Win32PrintFunc);
       HandleHelpTexts();
       newterm(NULL,NULL,NULL);
+      g_print(_("Press any key..."));
       bgetch();
    } else {
       StartNetworking();

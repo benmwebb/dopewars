@@ -194,22 +194,26 @@ int apos=0;
 int getopt(int argc,char *argv[],char *str) {
    int i,c;
    char *pt;
-   if (apos>=argc) return EOF;
-   if (argv[apos] && argv[apos][0]=='-') {
+   while (apos<argc && argv[apos]) {
+      if (argv[apos][0]!='-') { apos++; return 0; }
       for (i=1;i<strlen(argv[apos]);i++) {
          c=argv[apos][i];
          pt=index(str,c);
          if (pt) {
-            if (*(pt+1)==':' && apos<argc-1) {
-               optarg=argv[apos+1]; argv[apos+1]=NULL;
-            }
             argv[apos][i]='-';
+            if (*(pt+1)==':') {
+               if (apos+1<argc && i==strlen(argv[apos])-1) {
+                  apos++;
+                  optarg=argv[apos];
+                  apos++;
+               } else return 0;
+            }
             return c;
          }
       }
+      apos++;
    }
-   apos++;
-   return 0;
+   return EOF;
 }
 
 void sigemptyset(int *mask) {}

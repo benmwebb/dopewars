@@ -1589,16 +1589,23 @@ void SetupParameters() {
 /* Now read in the global configuration file */
    ReadConfigFile("/etc/dopewars");
 
-/* Finally, try to read in the .dopewars file in the user's home directory */
+/* Next, try to read in the .dopewars file in the user's home directory */
    pt=getenv("HOME");
-   if (!pt) return;
-   ConfigFile=g_strdup_printf("%s/.dopewars",pt);
-   ReadConfigFile(ConfigFile);
-   g_free(ConfigFile);
+   if (pt) {
+      ConfigFile=g_strdup_printf("%s/.dopewars",pt);
+      ReadConfigFile(ConfigFile);
+      g_free(ConfigFile);
+   }
+
+#ifdef CYGWIN
+/* Finally, try dopewars-config.txt in the current directory (Windows
+   systems only) */
+   ReadConfigFile("dopewars-config.txt");
+#endif
 }
 
 void HandleHelpTexts() {
-   g_print("dopewars version %s\n",VERSION);
+   g_print(_("dopewars version %s\n"),VERSION);
    if (!WantHelp) return;
 
    g_print(
@@ -1644,6 +1651,7 @@ void HandleCmdLine(int argc,char *argv[]) {
          case 'a': WantAntique=1; WantNetwork=0; break;
          case 'v': WantVersion=1; break;
          case 'h':
+         case  0 :
          case '?': WantHelp=1; break;
          case 'f': AssignName(&HiScoreFile,optarg); break;
          case 'o': AssignName(&ServerName,optarg); break;
