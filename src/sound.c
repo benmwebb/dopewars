@@ -41,7 +41,8 @@
 
 static SoundDriver *driver = NULL;
 typedef SoundDriver *(*InitFunc)(void);
-void *soundmodule = NULL;
+static void *soundmodule = NULL;
+static gboolean module_open = FALSE;
 
 static void AddPlugin(InitFunc ifunc)
 {
@@ -127,19 +128,22 @@ void SoundInit(void)
   AddPlugin(sound_winmm_init);
 #endif
 #endif
+  module_open = FALSE;
 }
 
 void SoundOpen(gchar *drivername)
 {
-  if (driver && driver->open) {
+  if (driver && driver->open && !module_open) {
     driver->open();
+    module_open = TRUE;
   }
 }
 
 void SoundClose(void)
 {
-  if (driver && driver->close) {
+  if (driver && driver->close && module_open) {
     driver->close();
+    module_open = FALSE;
   }
 #ifdef PLUGINS
   if (soundmodule) {
