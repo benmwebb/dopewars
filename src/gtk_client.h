@@ -27,7 +27,9 @@
 #include <config.h>
 #endif
 
-#include <glib.h>
+#include "gtkport.h"
+
+extern GtkWidget *MainWindow;
 
 #ifdef CYGWIN
 char GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance);

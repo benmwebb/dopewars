@@ -74,6 +74,8 @@ struct ClientDataStruct {
   guint JetAccel;
 };
 
+GtkWidget *MainWindow;
+
 struct StartGameStruct {
   GtkWidget *dialog, *name, *hostname, *port, *antique, *status, *metaserv;
 #ifdef NETWORKING
@@ -2070,7 +2072,7 @@ char GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   ClientData.Play = g_new(Player, 1);
   FirstClient = AddPlayer(0, ClientData.Play, FirstClient);
 
-  window = ClientData.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  window = MainWindow = ClientData.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of main window in GTK+ client */
   gtk_window_set_title(GTK_WINDOW(window), _("dopewars"));
