@@ -296,6 +296,11 @@ void gtk_clist_do_auto_resize(GtkCList *clist)
     }
 }
 
+gint gtk_clist_optimal_column_width(GtkCList *clist, gint column)
+{
+  return clist->coldata[column].width;
+}
+
 void gtk_clist_update_all_widths(GtkCList *clist)
 {
   GSList *list;
