@@ -986,6 +986,7 @@ void gtk_window_update_focus(GtkWindow *window) {
 
 void gtk_widget_realize(GtkWidget *widget) {
    GtkRequisition req;
+   if (GTK_WIDGET_REALIZED(widget)) return;
 /* g_print("Realizing widget %p of class %s\n",widget,GTK_OBJECT(widget)->klass->Name);*/
    gtk_signal_emit(GTK_OBJECT(widget),"realize",&req);
    if (widget->hWnd) SetWindowLong(widget->hWnd,GWL_USERDATA,(LONG)widget);
@@ -1499,6 +1500,10 @@ void gtk_box_pack_start(GtkBox *box,GtkWidget *child,gboolean Expand,
 
    box->children = g_list_append(box->children,(gpointer)newChild);
    child->parent = GTK_WIDGET(box);
+   if (GTK_WIDGET_REALIZED(GTK_WIDGET(box))) {
+      gtk_widget_realize(child);
+      gtk_widget_update(GTK_WIDGET(box),TRUE);
+   }
 }
 
 void gtk_button_destroy(GtkWidget *widget) {
@@ -2360,6 +2365,10 @@ void gtk_label_realize(GtkWidget *widget) {
 void gtk_container_add(GtkContainer *container,GtkWidget *widget) {
    container->child=widget;
    widget->parent=GTK_WIDGET(container);
+   if (GTK_WIDGET_REALIZED(GTK_WIDGET(container))) {
+      gtk_widget_realize(widget);
+      gtk_widget_update(GTK_WIDGET(container),TRUE);
+   }
 }
 
 void gtk_container_set_border_width(GtkContainer *container,
@@ -2405,6 +2414,10 @@ void gtk_table_attach(GtkTable *table,GtkWidget *widget,
 
    table->children=g_list_append(table->children,(gpointer)newChild);
    widget->parent = GTK_WIDGET(table);
+   if (GTK_WIDGET_REALIZED(GTK_WIDGET(table))) {
+      gtk_widget_realize(widget);
+      gtk_widget_update(GTK_WIDGET(table),TRUE);
+   }
 }
 
 void gtk_table_destroy(GtkWidget *widget) {
@@ -3443,8 +3456,8 @@ gint gdk_input_add(gint source,GdkInputCondition condition,
    input->function=function;
    input->data=data;
    rc=WSAAsyncSelect(source,TopLevel,WM_SOCKETDATA,
-                  (condition&GDK_INPUT_READ ? FD_READ : 0) |
-                  (condition&GDK_INPUT_WRITE ? FD_WRITE|FD_CONNECT : 0));
+                  (condition&GDK_INPUT_READ ? FD_READ|FD_CLOSE:0) |
+                  (condition&GDK_INPUT_WRITE ? FD_WRITE|FD_CONNECT|FD_CLOSE:0));
    GdkInputs=g_slist_append(GdkInputs,input);
    return source;
 }

@@ -122,6 +122,9 @@ void fcntl(SOCKET s,int fsetfl,long cmd);
 void StartNetworking();
 void StopNetworking();
 void SetReuse(SOCKET sock);
+#define EPIPE WSAECONNRESET 
+#define EINPROGRESS WSAEWOULDBLOCK 
+#define EAGAIN WSAEWOULDBLOCK 
 #endif
 
 #else /* Definitions for Unix build */
@@ -178,8 +181,6 @@ int GetSocketError();
 void StartNetworking();
 void StopNetworking();
 void SetReuse(int sock);
-#define WSAECONNRESET EPIPE
-#define WSAEWOULDBLOCK EINPROGRESS
 #endif /* NETWORKING */
 
 #endif /* CYGWIN */

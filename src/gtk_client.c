@@ -280,6 +280,7 @@ void ListInventory(GtkWidget *widget,gpointer data) {
 void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
+   gboolean ReadOK;
    if (condition&GDK_INPUT_WRITE) {
       WriteConnectionBufferToWire(ClientData.Play);
       if (ClientData.Play->WriteBuf.DataPresent==0) {
@@ -287,15 +288,17 @@ void GetClientMessage(gpointer data,gint socket,
       }
    }
    if (condition&GDK_INPUT_READ) {
-      if (ReadConnectionBufferFromWire(ClientData.Play)) {
-         while ((pt=ReadFromConnectionBuffer(ClientData.Play))!=NULL) {
-            HandleClientMessage(pt,ClientData.Play); g_free(pt);
-         }
-      } else {
+      ReadOK=ReadConnectionBufferFromWire(ClientData.Play);
+      while ((pt=ReadFromConnectionBuffer(ClientData.Play))!=NULL) {
+         HandleClientMessage(pt,ClientData.Play); g_free(pt);
+      }
+      if (!ReadOK) {
          if (Network) gdk_input_remove(ClientData.GdkInputTag);
-         g_warning(_("Connection to server lost - switching to "
-                   "single player mode"));
-         SwitchToSinglePlayer(ClientData.Play);
+         if (InGame) {
+            g_warning(_("Connection to server lost - switching to "
+                      "single player mode"));
+            SwitchToSinglePlayer(ClientData.Play);
+         }
       }
    }
 }
@@ -460,7 +463,7 @@ void AddScoreToDialog(char *Data) {
 }
 
 static void EndHighScore(GtkWidget *widget) {
-   gtk_widget_destroy(widget);
+/* gtk_widget_destroy(widget);*/
    EndGame();
 }
 
@@ -468,14 +471,13 @@ void CompleteHighScoreDialog(gboolean AtEnd) {
    GtkWidget *OKButton,*dialog;
    dialog=HiScoreDialog.dialog;
    OKButton=gtk_button_new_with_label(_("OK"));
+   gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
+                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                             (gpointer)dialog);
    if (AtEnd) {
-      gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
-                                GTK_SIGNAL_FUNC(EndHighScore),
-                                (gpointer)dialog);
-   } else {
-      gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
-                                GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                                (gpointer)dialog);
+      InGame=FALSE;
+      gtk_signal_connect_object(GTK_OBJECT(dialog),"destroy",
+                                GTK_SIGNAL_FUNC(EndHighScore),NULL);
    }
    gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox),OKButton,TRUE,TRUE,0);
  
@@ -1418,7 +1420,7 @@ char GtkLoop(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
 #endif
    GtkWidget *window,*vbox,*vbox2,*hbox,*frame,*table,*menubar,*text,
-             *vpaned,*button,*vscroll,*clist;
+             *vpaned,*button,*clist;
    GtkAccelGroup *accel_group;
    GtkItemFactory *item_factory;
    GtkAdjustment *adj;

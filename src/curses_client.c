@@ -1400,6 +1400,7 @@ static void Curses_DoGame(Player *Play) {
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
+   gboolean ReadOK;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
@@ -1540,7 +1541,15 @@ static void Curses_DoGame(Player *Play) {
          perror("bselect"); exit(1);
       }
       if (Client && FD_ISSET(Play->fd,&readfs)) {
-         if (!ReadConnectionBufferFromWire(Play)) {
+         ReadOK=ReadConnectionBufferFromWire(Play);
+
+         while ((pt=ReadFromConnectionBuffer(Play))!=NULL) {
+            HandleClientMessage(pt,Play);
+            g_free(pt);
+         }
+         if (QuitRequest) return;
+
+         if (!ReadOK) {
             attrset(TextAttr);
             clear_line(22);
             mvaddstr(22,0,_("Connection to server lost! "
@@ -1548,12 +1557,6 @@ static void Curses_DoGame(Player *Play) {
             nice_wait();
             SwitchToSinglePlayer(Play);
             print_status(Play,TRUE);
-         } else {
-            while ((pt=ReadFromConnectionBuffer(Play))!=NULL) {
-               HandleClientMessage(pt,Play);
-               g_free(pt);
-            }
-            if (QuitRequest) return;
          }
       }
       if (Client && FD_ISSET(Play->fd,&writefs)) {

@@ -324,14 +324,14 @@ gboolean ReadConnectionBufferFromWire(Player *Play) {
       BytesRead=recv(Play->fd,&conn->Data[CurrentPosition],
                      conn->Length-CurrentPosition,0);
       if (BytesRead==SOCKET_ERROR) {
-         break;
+         if (GetSocketError()==EAGAIN) break; else return FALSE;
       } else if (BytesRead==0) {
          return FALSE;
       } else {
          CurrentPosition+=BytesRead;
+         conn->DataPresent=CurrentPosition;
       }
    }
-   conn->DataPresent=CurrentPosition;
    return TRUE;
 }
 
@@ -372,8 +372,7 @@ gboolean WriteConnectionBufferToWire(Player *Play) {
       BytesSent=send(Play->fd,&conn->Data[CurrentPosition],
                      conn->DataPresent-CurrentPosition,0);
       if (BytesSent==SOCKET_ERROR) {
-         if (GetSocketError()==WSAECONNRESET) return FALSE;
-         break;
+         if (GetSocketError()==EAGAIN) break; else return FALSE;
       } else {
          CurrentPosition+=BytesSent;
       }
@@ -706,7 +705,7 @@ char *SetupNetwork(gboolean NonBlocking) {
    if (NonBlocking) fcntl(ClientSock,F_SETFL,O_NONBLOCK);
    if (connect(ClientSock,(struct sockaddr *)&ClientAddr,
        sizeof(struct sockaddr))==-1) {
-      if (GetSocketError()==WSAEWOULDBLOCK) return NULL;
+      if (GetSocketError()==EINPROGRESS) return NULL;
       CloseSocket(ClientSock);
       return NoConnect;
    } else {
