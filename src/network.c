@@ -331,6 +331,56 @@ static void SocksAppendError(GString *str,LastError *error) {
 
 static ErrorType ETSocks = { SocksAppendError };
 
+typedef enum {
+  HEC_TRIESEX   = 1,
+  HEC_OK        = 200,
+  HEC_REDIRECT  = 300,
+  HEC_MOVEPERM  = 301,
+  HEC_MOVETEMP  = 302,
+  HEC_CLIENTERR = 400,
+  HEC_AUTHREQ   = 401,
+  HEC_PROXYAUTH = 407,
+  HEC_FORBIDDEN = 403,
+  HEC_NOTFOUND  = 404,
+  HEC_SERVERERR = 500
+} HTTPErrorCode;
+
+static void HTTPAppendError(GString *str,LastError *error) {
+  switch (error->code) {
+    case HEC_TRIESEX:
+      g_string_append(str,_("Number of tries exceeded"));
+      break;
+    case HEC_FORBIDDEN:
+      g_string_append(str,_("403: forbidden"));
+      break;
+    case HEC_NOTFOUND:
+      g_string_append(str,_("404: page not found"));
+      break;
+    case HEC_AUTHREQ:
+      g_string_append(str,_("401: HTTP authentication failed"));
+      break;
+    case HEC_PROXYAUTH:
+      g_string_append(str,_("407: HTTP proxy authentication failed"));
+      break;
+    case HEC_MOVETEMP: case HEC_MOVEPERM:
+      g_string_append(str,_("Bad redirect message from server"));
+      break;
+    default:
+      if (error->code<HEC_REDIRECT || error->code>=600) {
+        g_string_sprintfa(str,_("Unknown HTTP error %d"),error->code);
+      } else if (error->code<HEC_CLIENTERR) {
+        g_string_sprintfa(str,_("%d: redirect error"),error->code);
+      } else if (error->code<HEC_SERVERERR) {
+        g_string_sprintfa(str,_("%d: HTTP client error"),error->code);
+      } else {
+        g_string_sprintfa(str,_("%d: HTTP server error"),error->code);
+      }
+      break;
+  }
+}
+
+static ErrorType ETHTTP = { HTTPAppendError };
+
 static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf) {
    if (!NetBuf->userpasswd) {
       SetError(&NetBuf->error,&ETSocks,SEC_NOMETHODS);
@@ -358,7 +408,8 @@ gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
    addlen = 3 + strlen(user) + strlen(password);
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt || strlen(user)>255 || strlen(password)>255) {
-      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      return FALSE;
    }
    addpt[0] = 1;  /* Subnegotiation version code */
    addpt[1] = strlen(user);
@@ -393,7 +444,8 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
    addlen = hostlen + 7;
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt) {
-      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      return FALSE;
    }
    addpt[0] = 5;       /* SOCKS version 5 */
    addpt[1] = 1;       /* CONNECT */
@@ -492,12 +544,10 @@ g_print("FIXME: SOCKS5 connect reply\n");
       data = GetWaitingData(NetBuf,8);
       if (data) {
          retval=FALSE;
-         g_print("FIXME: Reply from SOCKS4 server: %d %d\n",data[0],data[1]);
          if (data[0]!=0) {
             SetError(&NetBuf->error,&ETSocks,SEC_REPLYVERSION);
          } else {
             if (data[1]==90) {
-               g_print("FIXME: SOCKS4 sucessful connect\n");
                NetBuf->status = NBS_CONNECTED;
                NetBufCallBack(NetBuf); /* status has changed */
                retval=TRUE;
@@ -800,7 +850,8 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
       addlen=2+num_methods;
       addpt = ExpandWriteBuffer(conn,addlen);
       if (!addpt) {
-         g_print("FIXME: buffer size exceeded\n"); return FALSE;
+         SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+         return FALSE;
       }
       addpt[0] = 5;   /* SOCKS version 5 */
       addpt[1] = num_methods;
@@ -856,7 +907,8 @@ g_print("username %s\n",pwd->pw_name);
 
    addpt = ExpandWriteBuffer(conn,addlen);
    if (!addpt) {
-      g_print("FIXME: buffer size exceeded\n"); return FALSE;
+      SetError(&NetBuf->error,ET_CUSTOM,E_FULLBUF);
+      return FALSE;
    }
 
    addpt[0] = 4;  /* SOCKS version */
@@ -871,8 +923,6 @@ g_print("username %s\n",pwd->pw_name);
 #endif
    addpt[addlen-1] = '\0';
 
-   g_print("FIXME: SOCKS4 CONNECT request sent\n");
-   
    conn->DataPresent+=addlen;
 
 /* If the buffer was empty before, we may need to tell the owner to check
@@ -1129,7 +1179,7 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
   split=g_strsplit(line," ",1);
   if (split[0] && split[1]) {
     if (g_strcasecmp(split[0],"Location:")==0 &&
-        (conn->StatusCode==302 || conn->StatusCode==301)) {
+        (conn->StatusCode==HEC_MOVETEMP || conn->StatusCode==HEC_MOVEPERM)) {
       if (ParseHtmlLocation(split[1],&host,&port,&query)) {
         g_print("Redirect to %s:%u%s\n",host,port,query);
         g_free(conn->RedirHost); g_free(conn->RedirQuery);
@@ -1139,13 +1189,13 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
         g_print("FIXME: Bad redirect\n");
       }
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
-               conn->StatusCode==401) {
+               conn->StatusCode==HEC_AUTHREQ) {
       g_print("FIXME: Authentication %s required\n",split[1]);
       StartHttpAuth(conn,FALSE,split[1]);
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
     } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
-               conn->StatusCode==407) {
+               conn->StatusCode==HEC_PROXYAUTH) {
       g_print("FIXME: Proxy authentication %s required\n",split[1]);
       StartHttpAuth(conn,TRUE,split[1]);
     }
@@ -1163,7 +1213,6 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          split=g_strsplit(msg," ",2);
          if (split[0] && split[1]) {
             conn->StatusCode=atoi(split[1]);
-            g_print("HTTP status code %d returned\n",conn->StatusCode);
          } else g_warning("Invalid HTTP status line %s",msg);
          g_strfreev(split);
          break;
@@ -1188,6 +1237,9 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    gpointer CallBackData;
    NBUserPasswd userpasswd;
    gboolean retry=FALSE;
+   LastError *error;
+
+   error=&conn->NetBuf.error;
 
 /* If we're still waiting for authentication etc., then signal that the
    connection shouldn't be closed yet, and go into the "WAITCOMPLETE" state */
@@ -1197,7 +1249,7 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
    }
 
    if (conn->Tries>=5) {
-      g_print("FIXME: Number of tries exceeded\n");
+      SetError(error,&ETHTTP,HEC_TRIESEX);
       return TRUE;
    }
 
@@ -1210,11 +1262,12 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
       conn->RedirHost = conn->RedirQuery = NULL;
       retry = TRUE;
    }
-   if (conn->StatusCode==401 && conn->user && conn->password) {
+   if (conn->StatusCode==HEC_AUTHREQ && conn->user && conn->password) {
       g_print("Trying again with authentication\n");
       retry = TRUE;
    }
-   if (conn->StatusCode==407 && conn->proxyuser && conn->proxypassword) {
+   if (conn->StatusCode==HEC_PROXYAUTH && conn->proxyuser &&
+       conn->proxypassword) {
       g_print("Trying again with proxy authentication\n");
       retry = TRUE;
    }
@@ -1230,10 +1283,8 @@ gboolean HandleHttpCompletion(HttpConnection *conn) {
          SetNetworkBufferUserPasswdFunc(&conn->NetBuf,userpasswd);
          return FALSE;
       }
-   } else {
-      if (conn->StatusCode>=300) {
-        g_print("FIXME: Connection failed, code %d\n",conn->StatusCode);
-      }
+   } else if (conn->StatusCode>=300) {
+     SetError(error,&ETHTTP,conn->StatusCode);
    }
    return TRUE;
 }

@@ -2051,8 +2051,9 @@ static void FillMetaServerList(struct StartGameStruct *widgets,
    gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
-static void SetMetaStatus(struct StartGameStruct *widgets,
-                          NBStatus oldstatus,NBSocksStatus oldsocks) {
+static void DisplayConnectStatus(struct StartGameStruct *widgets,
+                                 gboolean meta,
+                                 NBStatus oldstatus,NBSocksStatus oldsocks) {
   NBStatus status;
   NBSocksStatus sockstat;
   gchar *text;
@@ -2125,7 +2126,7 @@ g_print("HandleMetaSock: read %d, write %d\n",
    if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
       MetaDone(widgets);
    } else {
-      SetMetaStatus(widgets,oldstatus,oldsocks);
+      DisplayConnectStatus(widgets,TRUE,oldstatus,oldsocks);
    }
 }
 
@@ -3203,7 +3204,7 @@ static void DestroyAuthDialog(GtkWidget *window,gpointer data) {
       g_print("FIXME: Connect error on setauth\n");
       MetaDone(widgets);
    } else {
-      SetMetaStatus(widgets,oldstatus,oldsocks);
+      DisplayConnectStatus(widgets,TRUE,oldstatus,oldsocks);
    }
 
    g_free(username); g_free(password);
