@@ -431,11 +431,15 @@ void HandleClientMessage(char *pt,Player *Play) {
 struct HiScoreDiaStruct {
    GtkWidget *dialog,*table,*vbox;
 };
-static struct HiScoreDiaStruct HiScoreDialog;
+static struct HiScoreDiaStruct HiScoreDialog = { NULL,NULL,NULL };
 
 void PrepareHighScoreDialog(void) {
 /* Creates an empty dialog to display high scores */
    GtkWidget *dialog,*vbox,*hsep,*table;
+
+/* Make sure the server doesn't fool us into creating
+   multiple dialogs */
+   if (HiScoreDialog.dialog) return;
 
    HiScoreDialog.dialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
 
@@ -468,6 +472,8 @@ void AddScoreToDialog(char *Data) {
    gchar **spl1,**spl2;
    int index,slen;
    gboolean bold;
+
+   if (!HiScoreDialog.dialog) return;
 
    cp=Data;
    index=GetNextInt(&cp,0);
@@ -556,6 +562,8 @@ void CompleteHighScoreDialog(gboolean AtEnd) {
    GtkWidget *OKButton,*dialog;
    dialog=HiScoreDialog.dialog;
 
+   if (!HiScoreDialog.dialog) return;
+
 /* Caption of the "OK" button in dialogs */
    OKButton=gtk_button_new_with_label(_("OK"));
    gtk_signal_connect_object(GTK_OBJECT(OKButton),"clicked",
@@ -571,6 +579,9 @@ void CompleteHighScoreDialog(gboolean AtEnd) {
    GTK_WIDGET_SET_FLAGS(OKButton,GTK_CAN_DEFAULT);
    gtk_widget_grab_default(OKButton);
    gtk_widget_show(OKButton);
+
+/* OK, we're done - allow the creation of new high score dialogs */
+   HiScoreDialog.dialog=NULL;
 }
 
 void PrintMessage(char *text) {
