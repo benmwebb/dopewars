@@ -1,7 +1,8 @@
-cvs
+1.5.6   29-04-2002
     - Bug fix: the server will only let you pay back loans or deal with the
       bank when you are at the correct location, and you can no longer
       "pay back" negative amounts of cash to the loan shark
+    - Minor improvements to fighting code
     - The GTK+2 client should now run properly in non-UTF8 locales, and
       handle configuration files in both UTF8 and non-UTF8 locales
     - Unsafe list iteration in serverside code (which could possibly cause
