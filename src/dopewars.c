@@ -2360,10 +2360,6 @@ void SetupParameters(void)
     g_free(ConfigFile);
   }
 #endif /* CYGWIN */
-
-  /* Save this configuration, so we can restore those elements that get
-   * overwritten when we connect to a dopewars server */
-  BackupConfig();
 }
 
 void HandleHelpTexts()

@@ -419,4 +419,6 @@ void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error);
 void OpenLog(void);
 void CloseLog(void);
 gboolean IsConnectedPlayer(Player *play);
+void BackupConfig(void);
+void WriteConfigFile(void);
 #endif

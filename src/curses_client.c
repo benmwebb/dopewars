@@ -2377,6 +2377,10 @@ void CursesLoop(void)
   if (!CheckHighScoreFileConfig())
     return;
 
+  /* Save the configuration, so we can restore those elements that get
+   * overwritten when we connect to a dopewars server */
+  BackupConfig();
+
   start_curses();
   Width = COLS;
   Depth = LINES;

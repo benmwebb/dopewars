@@ -239,6 +239,11 @@ void NewGame(GtkWidget *widget, gpointer data)
     else
       return;
   }
+
+  /* Save the configuration, so we can restore those elements that get
+   * overwritten when we connect to a dopewars server */
+  BackupConfig();
+
   NewGameDialog();
 }
 
