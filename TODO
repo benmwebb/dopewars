@@ -1,3 +1,6 @@
+- Network installer for Win32 version, so that we don't have to distribute
+  megabytes of DLLs, sounds and translations if the user doesn't want them
+  (or already has them)
 - Option to let the cops search/fine you rather than shooting at them
 - Limit rate of server connections to combat DOS attacks / players trying
   to get a good starting day?
