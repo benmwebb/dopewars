@@ -1863,6 +1863,7 @@ static void HighScoreWriteHeader(FILE *fp)
 
   header = g_strdup_printf("%s%d", SCOREHEADER, SCOREVERSION);
   fwrite(header, strlen(header) + 1, 1, fp);
+  g_free(header);
 }
 
 /* 
