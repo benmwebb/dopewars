@@ -1,5 +1,5 @@
 /* gtk_client.c  dopewars client using the GTK+ toolkit                 */
-/* Copyright (C)  1998-2000  Ben Webb                                   */
+/* Copyright (C)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
 
@@ -438,9 +438,9 @@ void PrepareHighScoreDialog() {
                                 GTK_WINDOW(ClientData.window));
 
    HiScoreDialog.vbox=vbox=gtk_vbox_new(FALSE,7);
-   HiScoreDialog.table=table=gtk_table_new(NUMHISCORE,1,FALSE);
+   HiScoreDialog.table=table=gtk_table_new(NUMHISCORE,4,FALSE);
    gtk_table_set_row_spacings(GTK_TABLE(table),5);
-   gtk_table_set_col_spacings(GTK_TABLE(table),5);
+   gtk_table_set_col_spacings(GTK_TABLE(table),30);
 
    gtk_box_pack_start(GTK_BOX(vbox),table,TRUE,TRUE,0);
    hsep=gtk_hseparator_new();
@@ -452,14 +452,80 @@ void PrepareHighScoreDialog() {
 void AddScoreToDialog(char *Data) {
    GtkWidget *label;
    char *cp;
-   int index;
+   gchar **spl1,**spl2;
+   int index,slen;
+   gboolean bold;
+
    cp=Data;
    index=GetNextInt(&cp,0);
-   if (!cp || strlen(cp)<2) return;
-   label=gtk_label_new(&cp[1]);
+   if (!cp || strlen(cp)<3) return;
+
+   bold = (*cp=='B');   /* Is this score "our" score? (Currently ignored) */
+
+/* Step past the 'bold' character, and the initial '>' (if present) */
+   cp+=2;
+   g_strchug(cp);
+
+/* Get the first word - the score */
+   spl1 = g_strsplit(cp," ",1);
+   if (!spl1 || !spl1[0] || !spl1[1]) {
+      g_warning(_("Corrupt high score!"));
+      g_strfreev(spl1);
+      return;
+   }
+   label=gtk_label_new(spl1[0]);
+   gtk_misc_set_alignment(GTK_MISC(label),1.0,0.5);
    gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table),label,
                              0,1,index,index+1);
    gtk_widget_show(label);
+
+/* Remove any leading whitespace from the remainder, since g_strsplit
+   will split at every space character, not at a run of them */
+   g_strchug(spl1[1]);
+
+/* Get the second word - the date */
+   spl2 = g_strsplit(spl1[1]," ",1);
+   if (!spl2 || !spl2[0] || !spl2[1]) {
+      g_warning(_("Corrupt high score!"));
+      g_strfreev(spl2);
+      return;
+   }
+   label=gtk_label_new(spl2[0]);
+   gtk_misc_set_alignment(GTK_MISC(label),0.5,0.5);
+   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table),label,
+                             1,2,index,index+1);
+   gtk_widget_show(label);
+
+/* The remainder is the name, terminated with (R.I.P.) if the player died,
+   and '<' for the 'current' score */
+   g_strchug(spl2[1]);
+
+/* Remove '<' suffix if present */
+   slen=strlen(spl2[1]);
+   if (slen>=1 && spl2[1][slen-1]=='<') {
+     spl2[1][slen-1]='\0';
+   }
+   slen--;
+
+/* Check for (R.I.P.) suffix, and add it to the 4th column if found */
+   if (slen>8 && spl2[1][slen-1]==')' && spl2[1][slen-8]=='(') {
+      label=gtk_label_new(&spl2[1][slen-8]);
+      gtk_misc_set_alignment(GTK_MISC(label),0.5,0.5);
+      gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table),label,
+                                3,4,index,index+1);
+      gtk_widget_show(label);
+      spl2[1][slen-8]='\0';  /* Remove suffix from the player name */
+   }
+
+/* Finally, add in what's left of the player name */
+   g_strchomp(spl2[1]);
+   label=gtk_label_new(spl2[1]);
+   gtk_misc_set_alignment(GTK_MISC(label),0,0.5);
+   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table),label,
+                             2,3,index,index+1);
+   gtk_widget_show(label);
+
+   g_strfreev(spl1); g_strfreev(spl2);
 }
 
 static void EndHighScore(GtkWidget *widget) {
