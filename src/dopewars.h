@@ -76,6 +76,8 @@ struct NAMES {
          *LoanSharkName,*BankName,*GunShopName,*RoughPubName;
 };
 
+#ifdef NETWORKING
+
 struct METASERVER {
    gboolean Active;
    gchar *Name;
@@ -85,6 +87,7 @@ struct METASERVER {
    gchar *Path,*LocalName,*Password,*Comment;
    gboolean UseSocks;
 };
+#endif
 
 struct PRICES {
    price_t Spy,Tipoff;
@@ -148,9 +151,13 @@ extern struct PRICES Prices;
 extern struct BITCH Bitch;
 extern price_t StartCash,StartDebt;
 extern struct NAMES Names;
+
+#ifdef NETWORKING
 extern struct METASERVER MetaServer;
 extern SocksServer Socks;
 extern gboolean UseSocks;
+#endif
+
 extern int NumTurns;
 extern int PlayerArmour,BitchArmour;
 extern int LogLevel;
@@ -255,7 +262,9 @@ struct PLAYER_T {
    price_t DocPrice;
    DopeList SpyList,TipList;
    Player *OnBehalfOf;
+#ifdef NETWORKING
    NetworkBuffer NetBuf;
+#endif
    Abilities Abil;
    GPtrArray *FightArray; /* If non-NULL, a list of players in a fight */
    Player *Attacking;     /* The player that this player is attacking */
@@ -341,7 +350,9 @@ void ResizePlaying(int NewNum);
 void ResizeStoppedTo(int NewNum);
 void AssignName(gchar **dest,gchar *src);
 void CopyNames(struct NAMES *dest,struct NAMES *src);
+#ifdef NETWORKING
 void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src);
+#endif
 void CopyLocation(struct LOCATION *dest,struct LOCATION *src);
 void CopyCop(struct COP *dest,struct COP *src);
 void CopyGun(struct GUN *dest,struct GUN *src);
@@ -357,13 +368,13 @@ void SetupParameters(void);
 void HandleHelpTexts(void);
 int GeneralStartup(int argc,char *argv[]);
 void ReadConfigFile(char *FileName);
-gboolean ParseNextConfig(GScanner *scanner);
+gboolean ParseNextConfig(GScanner *scanner,gboolean print);
 int GetGlobalIndex(gchar *ID1,gchar *ID2);
 void *GetGlobalPointer(int GlobalIndex,int StructIndex);
 void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                       GScanner *scanner);
-void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
-                    GScanner *scanner);
+gboolean SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
+                        GScanner *scanner);
 gboolean IsCop(Player *Play);
 void dopelog(int loglevel,const gchar *format,...);
 GLogLevelFlags LogMask(void);

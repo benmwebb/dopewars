@@ -762,7 +762,7 @@ void HandleServerCommand(char *string) {
    GSList *list;
    Player *tmp;
    g_scanner_input_text(Scanner,string,strlen(string));
-   if (!ParseNextConfig(Scanner)) {
+   if (!ParseNextConfig(Scanner,TRUE)) {
       if (g_strcasecmp(string,"help")==0 || g_strcasecmp(string,"h")==0 ||
           strcmp(string,"?")==0) {
          ServerHelp();

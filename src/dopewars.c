@@ -158,6 +158,7 @@ struct BITCH Bitch = {
    50000,150000
 };
 
+#ifdef NETWORKING
 struct METASERVER MetaServer = { FALSE,NULL,0,NULL,0,NULL,NULL,NULL,
                                  NULL,FALSE };
 
@@ -166,8 +167,9 @@ struct METASERVER DefaultMetaServer = {
    "","","dopewars server", FALSE
 };
 
-SocksServer Socks = { NULL,0,0 };
+SocksServer Socks = { NULL,0,0,FALSE,NULL };
 gboolean UseSocks;
+#endif
 
 int NumTurns=31;
 
@@ -186,8 +188,17 @@ struct GLOBALS Globals[] = {
      N_("Name of the high score file"),NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,NULL,&ServerName,NULL,"Server",
      N_("Name of the server to connect to"),NULL,NULL,0,"",NULL,NULL },
+#ifdef NETWORKING
    { NULL,&UseSocks,NULL,NULL,NULL,"Socks.Active",
      N_("TRUE if a SOCKS server should be used for networking"),
+     NULL,NULL,0,"",NULL,NULL },
+#ifndef CYGWIN
+   { NULL,&Socks.numuid,NULL,NULL,NULL,"Socks.NumUID",
+     N_("TRUE if numeric user IDs should be used for SOCKS4"),
+     NULL,NULL,0,"",NULL,NULL },
+#endif
+   { NULL,NULL,NULL,&Socks.user,NULL,"Socks.User",
+     N_("If not blank, the username to use for SOCKS4"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,NULL,&Socks.name,NULL,"Socks.Name",
      N_("The hostname of a SOCKS server to use"),
@@ -208,7 +219,7 @@ struct GLOBALS Globals[] = {
      N_("Port for metaserver communication"),
      NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,NULL,&MetaServer.ProxyName,NULL,"MetaServer.ProxyName",
-     N_("Name of the proxy (if needed) for metaserver communication"),
+     N_("Name of a proxy for metaserver communication"),
      NULL,NULL,0,"",NULL,NULL },
    { &MetaServer.ProxyPort,NULL,NULL,NULL,NULL,"MetaServer.ProxyPort",
      N_("Port for communicating with the proxy server"),
@@ -225,8 +236,9 @@ struct GLOBALS Globals[] = {
      N_("Server description, reported to the metaserver"),NULL,NULL,0,"",NULL,
      NULL },
    { NULL,&MetaServer.UseSocks,NULL,NULL,NULL,"MetaServer.UseSocks",
-     N_("TRUE if SOCKS should be used for metaserver communication"),
+     N_("If TRUE, use SOCKS for metaserver communication"),
      NULL,NULL,0,"",NULL,NULL },
+#endif
    { NULL,NULL,NULL,&Pager,NULL,"Pager",
      N_("Program used to display multi-page output"),NULL,NULL,0,"",NULL,NULL },
    { &NumTurns,NULL,NULL,NULL,NULL,"NumTurns",
@@ -1240,6 +1252,7 @@ void CopyNames(struct NAMES *dest,struct NAMES *src) {
    AssignName(&dest->RoughPubName,_(src->RoughPubName));
 }
 
+#ifdef NETWORKING
 void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src) {
    dest->Active=src->Active;
    dest->Port=src->Port;
@@ -1252,6 +1265,7 @@ void CopyMetaServer(struct METASERVER *dest,struct METASERVER *src) {
    AssignName(&dest->Password,src->Password);
    AssignName(&dest->Comment,src->Comment);
 }
+#endif
 
 void CopyLocation(struct LOCATION *dest,struct LOCATION *src) {
    AssignName(&dest->Name,_(src->Name));
@@ -1297,10 +1311,15 @@ void CopyDrugs(struct DRUGS *dest,struct DRUGS *src) {
    dest->ExpensiveMultiply=src->ExpensiveMultiply;
 }
 
+void ScannerErrorHandler(GScanner *scanner,gchar *msg,gint error) {
+   g_print("%s\n",msg);
+}
+
 void ReadConfigFile(char *FileName) {
 /* Read a configuration file given by "FileName"; GScanner under Win32 */
 /* doesn't work properly with files, so we use a nasty workaround      */
    FILE *fp;
+   gint errors=0;
 #ifdef CYGWIN
    char *buf;
 #endif
@@ -1309,13 +1328,15 @@ void ReadConfigFile(char *FileName) {
    if (fp) {
       scanner=g_scanner_new(&ScannerConfig);
       scanner->input_name=FileName;
+      scanner->msg_handler=ScannerErrorHandler;
 #ifdef CYGWIN
       read_string(fp,&buf); if (!buf) { fclose(fp); return; }
       g_scanner_input_text(scanner,buf,strlen(buf));
 #else
       g_scanner_input_file(scanner,fileno(fp));
 #endif
-      while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner)) {
+      while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner,FALSE)) {
+         errors++;
          g_scanner_error(scanner,
                          _("Unable to process configuration file line"));
       }
@@ -1324,10 +1345,23 @@ void ReadConfigFile(char *FileName) {
 #ifdef CYGWIN
       g_free(buf);
 #endif
+      if (errors) {
+#ifdef CYGWIN
+         g_warning(
+_("Errors were encountered during the reading of the configuration file.\n"
+"As as result, some settings may not work as expected. Please consult the\n"
+"file \"dopewars-log.txt\" for further details."));
+#else
+         g_warning(
+_("Errors were encountered during the reading of the configuration file.\n"
+"As a result, some settings may not work as expected. Please see the\n"
+"messages on standard output for further details."));
+#endif
+      }
    }
 }
 
-gboolean ParseNextConfig(GScanner *scanner) {
+gboolean ParseNextConfig(GScanner *scanner,gboolean print) {
    GTokenType token;
    gchar *ID1,*ID2;
    gulong ind=0;
@@ -1384,7 +1418,9 @@ _("Configuration can only be changed interactively when no\n"
 "players are logged on. Wait for all players to log off, or remove\n"
 "them with the push or kill commands, and try again."));
       } else {
-         SetConfigValue(GlobalIndex,(int)ind,IndexGiven,scanner);
+         if (SetConfigValue(GlobalIndex,(int)ind,IndexGiven,scanner) && print) {
+            PrintConfigValue(GlobalIndex,(int)ind,IndexGiven,scanner);
+         }
       }
       return TRUE;
    } else {
@@ -1504,8 +1540,8 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
    if (Globals[GlobalIndex].NameStruct[0]) g_free(GlobalName);
 }
 
-void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
-                    GScanner *scanner) {
+gboolean SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
+                        GScanner *scanner) {
    gchar *GlobalName,*tmpstr;
    GTokenType token;
    int IntVal,NewNum;
@@ -1513,7 +1549,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
    GSList *list,*StartList;
    gboolean parsed;
 
-   if (!CheckMaxIndex(scanner,GlobalIndex,StructIndex,IndexGiven)) return;
+   if (!CheckMaxIndex(scanner,GlobalIndex,StructIndex,IndexGiven)) return FALSE;
    if (Globals[GlobalIndex].NameStruct[0]) {
       GlobalName=g_strdup_printf("%s[%d].%s",Globals[GlobalIndex].NameStruct,
                                  StructIndex,Globals[GlobalIndex].Name);
@@ -1539,7 +1575,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
          *((int *)GetGlobalPointer(GlobalIndex,StructIndex))=IntVal;
       } else {
          g_scanner_unexp_token(scanner,G_TOKEN_INT,NULL,NULL,
-                               NULL,NULL,FALSE); return;
+                               NULL,NULL,FALSE); return FALSE;
       }
    } else if (Globals[GlobalIndex].BoolVal) {
       scanner->config->cset_identifier_first=
@@ -1570,7 +1606,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
          g_scanner_unexp_token(scanner,G_TOKEN_NONE,NULL,NULL,NULL,
                  _("expected a boolean value (one of 0, OFF, NO, FALSE, "
                  "1, ON, YES, TRUE)"),FALSE);
-         return;
+         return FALSE;
       }
    } else if (Globals[GlobalIndex].PriceVal) {
       token=g_scanner_get_next_token(scanner);
@@ -1579,7 +1615,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                           (price_t)scanner->value.v_int;
       } else {
          g_scanner_unexp_token(scanner,G_TOKEN_INT,NULL,NULL,
-                               NULL,NULL,FALSE); return;
+                               NULL,NULL,FALSE); return FALSE;
       }
    } else if (Globals[GlobalIndex].StringVal) {
       scanner->config->identifier_2_string=TRUE;
@@ -1610,13 +1646,13 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                        scanner->value.v_string);
          } else {
             g_scanner_unexp_token(scanner,G_TOKEN_STRING,NULL,NULL,
-                                  NULL,NULL,FALSE); return;
+                                  NULL,NULL,FALSE); return FALSE;
          }
       } else {
          StartList=NULL;
          if (token!=G_TOKEN_LEFT_CURLY) {
             g_scanner_unexp_token(scanner,G_TOKEN_LEFT_CURLY,NULL,NULL,
-                                  NULL,NULL,FALSE); return;
+                                  NULL,NULL,FALSE); return FALSE;
          }
          NewNum=0;
          while(1) {
@@ -1629,7 +1665,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
             } else if (token==G_TOKEN_COMMA) {
             } else {
                g_scanner_unexp_token(scanner,G_TOKEN_STRING,NULL,NULL,
-                                     NULL,NULL,FALSE); return;
+                                     NULL,NULL,FALSE); return FALSE;
             }
             if (tmpstr) {
                NewNum++; StartList=g_slist_append(StartList,tmpstr);
@@ -1646,6 +1682,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
       }
    }
    if (Globals[GlobalIndex].NameStruct[0]) g_free(GlobalName);
+   return TRUE;
 }
 
 void SetupParameters() {
@@ -1682,13 +1719,17 @@ void SetupParameters() {
    LogTimestamp=g_strdup("[%H:%M:%S] ");
 
    CopyNames(&Names,&DefaultNames);
-   CopyMetaServer(&MetaServer,&DefaultMetaServer);
    CopyDrugs(&Drugs,&DefaultDrugs);
 
+#ifdef NETWORKING
+   CopyMetaServer(&MetaServer,&DefaultMetaServer);
    AssignName(&Socks.name,"socks");
    Socks.port = 1080;
    Socks.version = 4;
+   Socks.user = NULL;
+   Socks.numuid = FALSE;
    UseSocks = FALSE;
+#endif
 
    ResizeLocations(sizeof(DefaultLocation)/sizeof(DefaultLocation[0]));
    for (i=0;i<NumLocation;i++) CopyLocation(&Location[i],&DefaultLocation[i]);
