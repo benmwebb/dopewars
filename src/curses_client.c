@@ -64,7 +64,7 @@ static char *nice_input(char *prompt,int sy,int sx,char digitsonly,
                         char *displaystr);
 static Player *ListPlayers(Player *Play,char Select,char *Prompt);
 static void HandleClientMessage(char *buf,Player *Play);
-static void PrintMessage(char *text);
+static void PrintMessage(const gchar *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
 static void Bank(Player *Play);
@@ -122,6 +122,14 @@ void CheckForResize(Player *Play) {
       print_status(Play,1);
    }
    sigprocmask(SIG_UNBLOCK,&sigset,NULL);
+}
+
+static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
+                       const gchar *message,gpointer user_data) {
+   attrset(TextAttr); clear_bottom();
+   PrintMessage(message);
+   nice_wait();
+   attrset(TextAttr); clear_bottom();
 }
 
 void display_intro() {
@@ -755,23 +763,23 @@ void PrintHighScore(char *Data) {
    if (cp[0]=='B') standend();
 }
 
-void PrintMessage(char *text) {
+void PrintMessage(const gchar *text) {
 /* Prints a message "text" received via. a "printmessage" message in the */
 /* bottom part of the screen.                                            */
    int i,line;
    attrset(TextAttr);
    clear_line(16);
    for (i=0;i<strlen(text);i++) {
-      if (text[i]!='^') {
+      if (text[i]!='^' || text[i]=='\n') {
          clear_exceptfor(i+1);
          break;
       }
    }
    line=17; move(line,1);
    for (i=0;i<strlen(text);i++) {
-      if (text[i]=='^') {
+      if (text[i]=='^' || text[i]=='\n') {
          line++; move(line,1);
-      } else addch(text[i]);
+      } else if (text[i]!='\r') addch(text[i]);
    }
 }
 
@@ -1660,6 +1668,10 @@ void CursesLoop() {
 /* Set up message handlers */
    ClientMessageHandlerPt = HandleClientMessage;
    SocketWriteTestPt = NULL;
+
+/* Make the GLib log messages display nicely */
+   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
+                     LogMessage,NULL);
 
    display_intro();
 
