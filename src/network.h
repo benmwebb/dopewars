@@ -104,6 +104,7 @@ struct _HttpConnection {
    unsigned RedirPort;    /* The port on the host to redirect to */
    HCAuthFunc authfunc;   /* Callback function for authentication */
    gboolean proxyauth;    /* TRUE if the authentication is with a proxy */
+   gboolean authsupplied; /* TRUE if the request should be retried with auth */
    gchar *realm;          /* The realm for basic HTTP authentication */
    gchar *user;           /* The supplied username */
    gchar *password;       /* The supplied password */
@@ -159,6 +160,8 @@ void SetBlocking(SOCKET sock,gboolean blocking);
 void SetReuse(int sock);
 void SetBlocking(int sock,gboolean blocking);
 #endif
+
+void AddB64Enc(GString *str,gchar *unenc);
 
 #endif /* NETWORKING */
 

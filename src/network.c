@@ -435,10 +435,12 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
 
 static void SendHttpRequest(HttpConnection *conn) {
    GString *text;
+   char *userpasswd;
 
    conn->Tries++;
    conn->StatusCode=0;
    conn->Status=HS_CONNECTING;
+   conn->authsupplied=FALSE;
 
    text=g_string_new("");
 
@@ -447,6 +449,14 @@ static void SendHttpRequest(HttpConnection *conn) {
    QueueMessageForSend(&conn->NetBuf,text->str);
 
    if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
+
+   if (conn->user && conn->password) {
+      userpasswd = g_strdup_printf("%s:%s",conn->user,conn->password);
+      g_string_assign(text,"Authorization: Basic ");
+      AddB64Enc(text,userpasswd);
+      g_free(userpasswd);
+      QueueMessageForSend(&conn->NetBuf,text->str);
+   }
 
    g_string_sprintf(text,"User-Agent: dopewars/%s",VERSION);
    QueueMessageForSend(&conn->NetBuf,text->str);
@@ -592,7 +602,7 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
-      if (conn->authfunc) (*conn->authfunc)(conn,split[1]);
+      if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
     }
   }
   g_strfreev(split);
@@ -628,22 +638,31 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
 gboolean HandleHttpCompletion(HttpConnection *conn) {
    NBCallBack CallBack;
    gpointer CallBackData;
+   gboolean retry=FALSE;
+
+   if (conn->Tries>=5) {
+      g_print("FIXME: Number of tries exceeded\n");
+      return TRUE;
+   }
+
    if (conn->RedirHost) {
       g_print("Following redirect to %s\n",conn->RedirHost);
-      CallBack=conn->NetBuf.CallBack;
-      CallBackData=conn->NetBuf.CallBackData;
-      ShutdownNetworkBuffer(&conn->NetBuf);
       g_free(conn->HostName); g_free(conn->Query);
       conn->HostName = conn->RedirHost;
       conn->Query = conn->RedirQuery;
       conn->Port = conn->RedirPort;
       conn->RedirHost = conn->RedirQuery = NULL;
+      retry = TRUE;
+   }
+   if (conn->authsupplied && conn->user && conn->password) {
+      g_print("Trying again with authentication\n");
+      retry = TRUE;
+   }
 
-      if (conn->Tries>=5) {
-         g_print("FIXME: Number of tries exceeded\n");
-         return TRUE;
-      }
-
+   if (retry) {
+      CallBack=conn->NetBuf.CallBack;
+      CallBackData=conn->NetBuf.CallBackData;
+      ShutdownNetworkBuffer(&conn->NetBuf);
       if (StartHttpConnect(conn)) {
          SendHttpRequest(conn);
          SetNetworkBufferCallBack(&conn->NetBuf,CallBack,CallBackData);
@@ -727,6 +746,44 @@ gboolean FinishConnect(int fd,LastError *error) {
      return FALSE;
    }
 #endif /* CYGWIN */
+}
+
+static void AddB64char(GString *str,int c) {
+   if (c<0) return;
+   else if (c<26) g_string_append_c(str,c+'A');
+   else if (c<52) g_string_append_c(str,c-26+'a');
+   else if (c<62) g_string_append_c(str,c-52+'0');
+   else if (c==62) g_string_append_c(str,'+');
+   else g_string_append_c(str,'/');
+}
+
+void AddB64Enc(GString *str,gchar *unenc) {
+/* Adds the plain text string "unenc" to the end of the GString "str", */
+/* using the Base64 encoding scheme.                                   */
+   guint i;
+   long value=0;
+   if (!unenc || !str) return;
+   for (i=0;i<strlen(unenc);i++) {
+      value <<= 8;
+      value |= (unsigned char)unenc[i];
+      if (i % 3 == 2) {
+        AddB64char(str,(value>>18)&0x3F);
+        AddB64char(str,(value>>12)&0x3F);
+        AddB64char(str,(value>>6)&0x3F);
+        AddB64char(str,value&0x3F);
+        value=0;
+      }
+   }
+   if (i % 3 == 1) {
+      AddB64char(str,(value>>2)&0x3F);
+      AddB64char(str,(value<<4)&0x3F);
+      g_string_append(str,"==");
+   } else if (i % 3 == 2) {
+      AddB64char(str,(value>>10)&0x3F);
+      AddB64char(str,(value>>4)&0x3F);
+      AddB64char(str,(value<<2)&0x3F);
+      g_string_append_c(str,'=');
+   }
 }
 
 #endif /* NETWORKING */
