@@ -2,3 +2,4 @@ Makefile
 Makefile.in
 POTFILES
 *.gmo
+stamp-cat-id
