@@ -36,7 +36,8 @@
 #include "newgamedia.h"
 
 struct StartGameStruct {
-  GtkWidget *dialog, *name, *hostname, *port, *antique, *status, *metaserv;
+  GtkWidget *dialog, *name, *hostname, *port, *antique, *status,
+            *metaserv, *notebook;
   Player *play;
 #ifdef NETWORKING
   HttpConnection *MetaConn;
@@ -424,6 +425,9 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   }
   ClearServerList(&stgam.NewMetaList);
 #endif
+
+  /* Remember which tab we chose for the next time we use this dialog */
+  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
 #ifdef NETWORKING
@@ -491,7 +495,7 @@ void NewGameDialog(Player *play)
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-  notebook = gtk_notebook_new();
+  notebook = stgam.notebook = gtk_notebook_new();
 
 #ifdef NETWORKING
   frame = gtk_frame_new(_("Server"));
