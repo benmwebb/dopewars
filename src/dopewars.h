@@ -66,6 +66,8 @@ typedef enum {
                                  * notation */
   A_DONEFIGHT,                  /* A fight is only considered over once the
                                  * client sends the server a C_DONE message */
+  A_UTF8,                       /* All strings are sent over the network using
+                                 * UTF-8 (Unicode) encoding */
   A_NUM                         /* N.B. Must be last */
 } AbilType;
 
@@ -169,7 +171,7 @@ extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
 extern int DebtInterest, BankInterest;
 extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
-	     *WantedPlugin, *BindAddress;
+	     *WantedPlugin, *BindAddress, *Encoding;
 extern gboolean WantHelp, WantVersion, WantAntique, WantColour,
                 WantNetwork, WantConvert, WantAdmin;
 #ifdef CYGWIN

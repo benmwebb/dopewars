@@ -80,6 +80,7 @@ unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue;
 gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
 gchar *ServerMOTD = NULL, *WantedPlugin = NULL, *BindAddress = NULL;
+gchar *Encoding = NULL;
 gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
 gboolean WantConvert, WantAdmin;
 
@@ -226,6 +227,11 @@ struct GLOBALS Globals[] = {
   /* The following strings are the helptexts for all the options that can
    * be set in a dopewars configuration file, or in the server. See
    * doc/configfile.html for more detailed explanations. */
+#ifdef HAVE_GLIB2
+  {NULL, NULL, NULL, &Encoding, NULL, "Encoding",
+   N_("Charset encoding of the config file (e.g. UTF-8)"), NULL, NULL,
+   0, "", NULL, NULL, FALSE, 0},
+#endif
   {&Port, NULL, NULL, NULL, NULL, "Port", N_("Network port to connect to"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &HiScoreFile, NULL, "HiScoreFile",
@@ -2331,9 +2337,11 @@ void SetupParameters(void)
   /* Set hard-coded default values */
   g_free(ServerName);
   g_free(ServerMOTD);
+  g_free(Encoding);
   g_free(BindAddress);
   ServerName = g_strdup("localhost");
   ServerMOTD = g_strdup("");
+  Encoding = g_strdup("");
   BindAddress = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");

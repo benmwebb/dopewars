@@ -1,5 +1,5 @@
 /************************************************************************
- * configfile.h   Functions for dealing with dopewars config files      *
+ * convert.h      Header file for codeset conversion functions          *
  * Copyright (C)  2002  Ben Webb                                        *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
  *                WWW: http://dopewars.sourceforge.net/                 *
@@ -20,12 +20,26 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __DP_CONFIGFILE_H__
-#define __DP_CONFIGFILE_H__
+#ifndef __DP_CONVERT_H__
+#define __DP_CONVERT_H__
+
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
 
 #include <glib.h>
 
-gboolean UpdateConfigFile(const gchar *cfgfile);
-void ConvertConfigFile(void);
+typedef struct _Converter Converter;
+struct _Converter {
+  gchar *ext_codeset;
+};
 
-#endif /* __DP_CONFIGFILE_H__ */
+void Conv_SetInternalCodeset(const gchar *codeset);
+Converter *Conv_New(void);
+void Conv_SetCodeset(Converter *conv, const gchar *codeset);
+gboolean Conv_Needed(Converter *conv);
+gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, size_t len);
+gchar *Conv_ToInternal(Converter *conv, const gchar *ext_str, size_t len);
+void Conv_Free(Converter *conv);
+
+#endif /* __DP_CONVERT_H__ */

@@ -31,6 +31,7 @@
 #include <ctype.h>              /* For isprint */
 #include <glib.h>
 
+#include "convert.h"            /* For Converter */
 #include "dopewars.h"           /* For struct GLOBALS etc. */
 #include "nls.h"                /* For _ function */
 #include "error.h"              /* For ErrStrFromErrno */
@@ -77,35 +78,12 @@ static void PrintEscaped(FILE *fp, gchar *str)
 }
 
 /*
- * Converts the given string from UTF-8 to the locale's codeset. If the
- * locale codeset already is UTF-8, returns a copy of the original
- * string. The returned string is dynamically allocated, and should be
- * later g_free'd by the caller.
- */
-static gchar *ToLocaleCodeset(const gchar *origstr)
-{
-#ifdef HAVE_GLIB2
-  if (!g_get_charset(NULL)) {
-    gchar *convstr = g_locale_from_utf8(origstr, -1, NULL, NULL, NULL);
-    if (convstr) {
-      return convstr;
-    } else {
-      return g_strdup("[Could not convert string from UTF8]");
-    }
-  } else {
-    return g_strdup(origstr);
-  }
-#else
-  return g_strdup(origstr);
-#endif
-}
-
-/*
  * Writes a single configuration file variable (identified by GlobalIndex
  * and StructIndex) to the specified file, in a format suitable for reading
  * back in (via. ParseNextConfig and friends).
  */
-static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
+static void WriteConfigValue(FILE *fp, Converter *conv, int GlobalIndex,
+                             int StructIndex)
 {
   gchar *GlobalName;
 
@@ -133,19 +111,24 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
     gchar *convstr;
 
     fprintf(fp, "%s = \"", GlobalName);
-    convstr = ToLocaleCodeset(*GetGlobalString(GlobalIndex, StructIndex));
+    convstr = Conv_ToExternal(conv,
+                              *GetGlobalString(GlobalIndex, StructIndex), -1);
     PrintEscaped(fp, convstr);
     g_free(convstr);
     fprintf(fp, "\"\n");
   } else if (Globals[GlobalIndex].StringList) {
     int i;
+    gchar *convstr;
 
     fprintf(fp, "%s = { ", GlobalName);
     for (i = 0; i < *Globals[GlobalIndex].MaxIndex; i++) {
       if (i > 0)
         fprintf(fp, ", ");
       fputc('"', fp);
-      PrintEscaped(fp, (*Globals[GlobalIndex].StringList)[i]);
+      convstr = Conv_ToExternal(conv,
+                                (*Globals[GlobalIndex].StringList)[i], -1);
+      PrintEscaped(fp, convstr);
+      g_free(convstr);
       fputc('"', fp);
     }
     fprintf(fp, " }\n");
@@ -209,18 +192,24 @@ static void ReadFileToString(FILE *fp, gchar *str, int matchlen)
 static void WriteConfigFile(FILE *fp)
 {
   int i, j;
+  Converter *conv = Conv_New();
+
+  if (Encoding && Encoding[0]) {
+    Conv_SetCodeset(conv, Encoding);
+  }
 
   for (i = 0; i < NUMGLOB; i++) {
     if (Globals[i].Modified) {
       if (Globals[i].NameStruct[0]) {
         for (j = 1; j <= *Globals[i].MaxIndex; j++) {
-          WriteConfigValue(fp, i, j);
+          WriteConfigValue(fp, conv, i, j);
         }
       } else {
-        WriteConfigValue(fp, i, 0);
+        WriteConfigValue(fp, conv, i, 0);
       }
     }
   }
+  Conv_Free(conv);
 }
 
 gboolean UpdateConfigFile(const gchar *cfgfile)
@@ -260,4 +249,39 @@ gboolean UpdateConfigFile(const gchar *cfgfile)
   fclose(fp);
   g_free(defaultfile);
   return TRUE;
+}
+
+static void ConvertString(Converter *conv, gchar **str)
+{
+  AssignName(str, Conv_ToInternal(conv, *str, -1));
+}
+
+void ConvertConfigFile(void)
+{
+  int i, j;
+  struct GLOBALS *gvar;
+  Converter *conv = Conv_New();
+
+  if (Encoding && Encoding[0]) {
+    Conv_SetCodeset(conv, Encoding);
+  }
+
+  for (i = 0; i < NUMGLOB; i++) {
+    gvar = &Globals[i];
+    if (gvar->StringVal) {
+      if (gvar->StructListPt) {
+        for (j = 1; j <= *gvar->MaxIndex; j++) {
+          ConvertString(conv, GetGlobalString(i, j));
+        }
+      } else {
+        ConvertString(conv, GetGlobalString(i, 0));
+      }
+    } else if (gvar->StringList) {
+      for (j = 0; j < *gvar->MaxIndex; j++) {
+        ConvertString(conv, (*gvar->StringList) + j);
+      }
+    }
+  }
+
+  Conv_Free(conv);
 }

@@ -638,6 +638,15 @@ feature.)</dd>
 <dd>If TRUE, then the server will keep track of the price you paid for
 any drugs, and clients will display this information if available.</dd>
 
+<dt><b>Encoding=<i>"UTF-8"</i></b></dt>
+<dd>Specifies that any text in the configuration files is in <i>"UTF-8"</i>
+encoding. This variable is only supported if dopewars is built on a Unix
+system and linked against GLib version 2. This influences both how the file
+is read and written. If this variable is set to a blank string (the default)
+then it will be assumed that your configuration files are in the locale's
+default encoding - e.g. ISO-8859-1 for C or POSIX locales, ISO-8859-2 for pl_PL,
+ISO-8859-15 for es_ES@euro, or UTF-8 for en_GB.UTF-8.</dd>
+
 <dt><b>Sounds.FightHit=<i>"hit.wav"</i></b></dt>
 <dd>Plays the sound file <i>"hit.wav"</i> when you fire a gun and hit your
 target. The sound must be installed on your system, and you must be using
@@ -653,7 +662,7 @@ can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>16-07-2002</b><br />
+  Last update: <b>04-08-2002</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>
