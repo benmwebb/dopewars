@@ -421,4 +421,5 @@ void CloseLog(void);
 gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
 void WriteConfigFile(void);
+gchar *GetDocIndex(void);
 #endif

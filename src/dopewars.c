@@ -2249,6 +2249,26 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
   return TRUE;
 }
 
+/*
+ * Returns the URL of the index file for the local HTML documentation.
+ */
+gchar *GetDocIndex(void)
+{
+  static gchar *indexfile = "index.html";
+  gchar *path;
+#ifdef CYGWIN
+  gchar *bindir;
+
+  bindir = GetBinaryDir();
+  path = g_strdup_printf("file://%s\\%s", bindir, indexfile);
+  g_free(bindir);
+#else
+  path = g_strdup_printf("file://%s/doc/%s-%s/%s", DATADIR, PACKAGE,
+                         VERSION, indexfile);
+#endif
+  return path;
+}
+
 /* 
  * Sets up data - such as the location of the high score file - to
  * hard-coded internal values, and then processes the global and
