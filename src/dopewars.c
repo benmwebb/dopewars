@@ -93,7 +93,11 @@ gboolean MinToSysTray = TRUE;
 gboolean Daemonize = TRUE;
 #endif
 
+#ifdef CYGWIN
 #define SNDPATH "sounds\\19.5degs\\"
+#else
+#define SNDPATH DPDATADIR"/dopewars/"
+#endif
 
 gchar *WebBrowser = NULL;
 gint ConfigErrors = 0;
@@ -2429,7 +2433,6 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   AssignName(&BindAddress, "");
   AssignName(&WebBrowser, "/usr/bin/mozilla");
 
-#ifdef CYGWIN
   AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
   AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");
   AssignName(&Sounds.BitchKilled, SNDPATH"losebitch.wav");
@@ -2441,7 +2444,6 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   AssignName(&Sounds.TalkPrivate, SNDPATH"murmur.wav");
   AssignName(&Sounds.TalkToAll, SNDPATH"message.wav");
   AssignName(&Sounds.EndGame, SNDPATH"bye.wav");
-#endif
 
   LoanSharkLoc = DEFLOANSHARK;
   BankLoc = DEFBANK;

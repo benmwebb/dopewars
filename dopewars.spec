@@ -70,6 +70,18 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_datadir}/pixmaps/dopewars-pill.png
 %{_datadir}/pixmaps/dopewars-weed.png
 %{_datadir}/pixmaps/dopewars-shot.png
+%{_datadir}/dopewars/bye.wav
+%{_datadir}/dopewars/colt.wav
+%{_datadir}/dopewars/die.wav
+%{_datadir}/dopewars/gun.wav
+%{_datadir}/dopewars/jet.wav
+%{_datadir}/dopewars/losebitch.wav
+%{_datadir}/dopewars/message.wav
+%{_datadir}/dopewars/murmur.wav
+%{_datadir}/dopewars/punch.wav
+%{_datadir}/dopewars/run.wav
+%{_datadir}/dopewars/shotdown.wav
+%{_datadir}/dopewars/train.wav
 
 %files esd
 %defattr(-,root,root)
