@@ -1,3 +1,4 @@
+- Price history graph and/or more sensible price fluctuations
 - Network installer for Win32 version, so that we don't have to distribute
   megabytes of DLLs, sounds and translations if the user doesn't want them
   (or already has them)
