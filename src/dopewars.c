@@ -758,7 +758,7 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
   NewPlayer->ID = 0;
   /* Generate a unique player ID, if we're the server (clients get their
    * IDs from the server, so don't need to generate IDs) */
-  if (Server)
+  if (Server) {
     while (list) {
       tmp = (Player *)list->data;
       if (tmp->ID == NewPlayer->ID) {
@@ -768,6 +768,7 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
         list = g_slist_next(list);
       }
     }
+  }
   NewPlayer->Name = NULL;
   SetPlayerName(NewPlayer, NULL);
   NewPlayer->IsAt = 0;
