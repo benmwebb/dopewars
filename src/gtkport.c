@@ -4849,4 +4849,52 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    return retval;
 }
 
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
+{
+  GtkWidget *label, *eventbox;
+  GtkUrl *url;
+  int i, len;
+  gchar *pattern;
+  GtkStyle *style;
+  GdkColor color;
+  GdkColormap *colormap;
+  GdkCursor *cursor;
+
+  color.red = 0;
+  color.green = 0;
+  color.blue = 0xDDDD;
+
+  url = g_new0(GtkUrl, 1);
+  url->target = g_strdup(target);
+
+  label = gtk_label_new(text);
+
+  style = gtk_style_new();
+  colormap = gtk_widget_get_colormap(label);
+  gdk_colormap_alloc_color(colormap, &color, FALSE, TRUE);
+  style->fg[GTK_STATE_NORMAL] = color;
+  gtk_widget_set_style(label, style);
+
+  len = strlen(text);
+  pattern = g_new(gchar, len+1);
+  for (i = 0; i < len; i++) pattern[i] = '_';
+  pattern[len] = '\0';
+  gtk_label_set_pattern(GTK_LABEL(label), pattern);
+  g_free(pattern);
+
+  url->label = GTK_LABEL(label);
+
+/*gtk_widget_realize(label);
+
+  cursor = gdk_cursor_new(GDK_HAND2);
+  gdk_window_set_cursor(label->window, cursor);
+  gdk_cursor_destroy(cursor);*/
+
+  eventbox = gtk_event_box_new();
+
+  gtk_container_add(GTK_CONTAINER(eventbox), label);
+
+  return eventbox;
+}
+
 #endif  /* CYGWIN */

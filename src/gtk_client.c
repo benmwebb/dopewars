@@ -1794,6 +1794,21 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
                 _("_Jet!"),button,"clicked",accel_group);
 }
 
+static void SetIcon(GtkWidget *window, gchar **xpmdata)
+{
+#ifndef CYGWIN
+  GdkBitmap *mask;
+  GdkPixmap *icon;
+  GtkStyle *style;
+
+  style = gtk_widget_get_style(window);
+  icon = gdk_pixmap_create_from_xpm_d(window->window, &mask,
+                                      &style->bg[GTK_STATE_NORMAL],
+                                      xpmdata);
+  gdk_window_set_icon(window->window, NULL, icon, mask);
+#endif
+}
+
 #ifdef CYGWIN
 char GtkLoop(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
 #else
@@ -1804,9 +1819,6 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    GtkAccelGroup *accel_group;
    GtkItemFactory *item_factory;
    GtkAdjustment *adj;
-   GdkBitmap *mask;
-   GdkPixmap *icon;
-   GtkStyle *style;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
 #ifdef CYGWIN
@@ -1902,12 +1914,8 @@ char GtkLoop(int *argc,char **argv[],gboolean ReturnOnFail) {
    gtk_widget_show(window);
 
    gtk_widget_realize(window);
-   style = gtk_widget_get_style(window);
 
-   icon = gdk_pixmap_create_from_xpm_d(window->window, &mask,
-                                       &style->bg[GTK_STATE_NORMAL],
-                                       dopewars_pill_xpm);
-   gdk_window_set_icon(window->window, NULL, icon, mask);
+   SetIcon(window, dopewars_pill_xpm);
 
    gtk_main();
 
@@ -1981,7 +1989,8 @@ _("\nFor information on the command line options, type dopewars -h at your\n"
 "options.\n"));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
-   label=gtk_label_new("http://dopewars.sourceforge.net/");
+   label=gtk_url_new("http://dopewars.sourceforge.net/",
+                     "http://dopewars.sourceforge.net/");
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
    hsep=gtk_hseparator_new();
