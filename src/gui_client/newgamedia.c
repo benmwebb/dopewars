@@ -520,7 +520,7 @@ void NewGameDialog(Player *play)
 
   button = gtk_button_new_with_label("");
   /* Button to connect to a named dopewars server */
-  SetAccelerator(button, _("_Connect"), button, "clicked", accel_group);
+  SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
@@ -541,7 +541,7 @@ void NewGameDialog(Player *play)
 
   /* Checkbox to activate 'antique mode' in single-player games */
   SetAccelerator(stgam.antique, _("_Antique mode"), stgam.antique,
-                 "clicked", accel_group);
+                 "clicked", accel_group, TRUE);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stgam.antique),
                                WantAntique);
   gtk_box_pack_start(GTK_BOX(vbox2), stgam.antique, FALSE, FALSE, 0);
@@ -549,7 +549,7 @@ void NewGameDialog(Player *play)
 
   /* Button to start a new single-player (standalone, non-network) game */
   SetAccelerator(button, _("_Start single-player game"), button,
-                 "clicked", accel_group);
+                 "clicked", accel_group, TRUE);
 
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(StartSinglePlayer), NULL);
@@ -579,13 +579,13 @@ void NewGameDialog(Player *play)
   button = gtk_button_new_with_label("");
 
   /* Button to update metaserver information */
-  SetAccelerator(button, _("_Update"), button, "clicked", accel_group);
+  SetAccelerator(button, _("_Update"), button, "clicked", accel_group, TRUE);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(UpdateMetaServerList), NULL);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label("");
-  SetAccelerator(button, _("_Connect"), button, "clicked", accel_group);
+  SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(MetaServerConnect), NULL);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
