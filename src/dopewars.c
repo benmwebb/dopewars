@@ -1664,6 +1664,19 @@ void HandleCmdLine(int argc,char *argv[]) {
    }
 }
 
+int GeneralStartup(int argc,char *argv[]) {
+/* Does general startup stuff (config. files, command line, and high */
+/* score init.) - Returns 0 if OK, -1 if something failed.           */
+   SetupParameters();
+   HandleCmdLine(argc,argv);
+   if (WantVersion || WantHelp) {
+      HandleHelpTexts();
+   } else if (!AIPlayer) {
+      return InitHighScoreFile();
+   }
+   return 0;
+}
+
 #ifndef CYGWIN
 
 /* Standard program entry - Win32 uses WinMain() instead, in winmain.c */
@@ -1673,11 +1686,7 @@ int main(int argc,char *argv[]) {
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   SetupParameters();
-   HandleCmdLine(argc,argv);
-   if (WantVersion || WantHelp) {
-      HandleHelpTexts();
-   } else {
+   if (GeneralStartup(argc,argv)==0 && !WantVersion && !WantHelp) {
       StartNetworking();
       if (Server) {
          ServerLoop();
@@ -1694,6 +1703,7 @@ int main(int argc,char *argv[]) {
       }
       StopNetworking();
    }
+   CloseHighScoreFile();
    g_free(PidFile);
    return 0;
 }

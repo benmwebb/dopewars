@@ -28,11 +28,11 @@
 #include <commctrl.h>
 #include <glib.h>
 #include <stdlib.h>
-#include "dopeid.h"
 
 #include "dopeos.h"
 #include "dopewars.h"
 #include "tstring.h"
+#include "AIPlayer.h"
 #include "curses_client.h"
 #include "gtk_client.h"
 #include "message.h"
@@ -68,16 +68,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
    while (split[argc] && split[argc][0]) argc++;
-   HandleCmdLine(argc,split);
-   g_strfreev(split);
-   if (WantVersion || WantHelp) {
-      AllocConsole();
-      g_set_print_handler(Win32PrintFunc);
-      HandleHelpTexts();
-      newterm(NULL,NULL,NULL);
-      g_print(_("Press any key..."));
-      bgetch();
-   } else {
+   if (GeneralStartup(argc,split)==0 && !WantVersion && !WantHelp) {
       StartNetworking();
       if (Server) {
          AllocConsole();
@@ -104,6 +95,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
       }
       StopNetworking();
    }
+   g_strfreev(split);
+   CloseHighScoreFile();
    if (PidFile) g_free(PidFile);
    return 0;
 }

@@ -79,8 +79,8 @@ SCREEN *newterm(void *a,void *b,void *c) {
    Width=80; Depth=25; CurAttr=TextAttr; CurX=0; CurY=0;
    for (i=0;i<10;i++)
       Attr[i]=FOREGROUND_RED|FOREGROUND_BLUE|FOREGROUND_GREEN;
-   hOut=GetStdHandle(STD_OUTPUT_HANDLE);
-   hIn=GetStdHandle(STD_INPUT_HANDLE);
+   hOut=GetConHandle("CONOUT$");
+   hIn=GetConHandle("CONIN$");
    SetConsoleMode(hIn,0);
 /* SetConsoleScreenBufferSize(hOut,coord);*/
 /* clear_screen();*/

@@ -396,6 +396,7 @@ void SetPlayerName(Player *Play,char *Name);
 void HandleCmdLine(int argc,char *argv[]);
 void SetupParameters();
 void HandleHelpTexts();
+int GeneralStartup(int argc,char *argv[]);
 void ReadConfigFile(char *FileName);
 gboolean ParseNextConfig(GScanner *scanner);
 int GetGlobalIndex(gchar *ID1,gchar *ID2);

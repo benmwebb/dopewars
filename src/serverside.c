@@ -739,8 +739,6 @@ void ServerLoop() {
    GString *LineBuf;
    gboolean EndOfLine;
 
-   InitHighScoreFile();
-
    StartServer();
 
    LineBuf=g_string_new("");
@@ -826,8 +824,6 @@ void ServerLoop() {
    }
    StopServer();
    g_string_free(LineBuf,TRUE);
-
-   CloseHighScoreFile();
 }
 #endif /* NETWORKING */
 
@@ -879,23 +875,26 @@ void CloseHighScoreFile() {
    if (ScoreFP) fclose(ScoreFP);
 }
 
-void InitHighScoreFile() {
+int InitHighScoreFile() {
 /* Opens the high score file for later use, and then drops privileges.      */
-/* If the high score file cannot be found, exits the program with an error. */
+/* If the high score file cannot be found, returns -1 (0=success)           */
 
-   if (ScoreFP) return;  /* If already opened, then we're done */
+   if (ScoreFP) return 0;  /* If already opened, then we're done */
 
    ScoreFP=fopen(HiScoreFile,"a+");
 
+#ifndef CYGWIN
    if (setregid(getgid(),getgid())!=0) perror("setregid");
+#endif
 
    if (!ScoreFP) {
       g_warning(_("Cannot open high score file %s.\n"
                 "Either ensure you have permissions to access this file and "
                 "directory, or\nspecify an alternate high score file with "
                 "the -f command line option."),HiScoreFile);
-      exit(1);
+      return -1;
    }
+   return 0;
 }
 
 int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore) {
