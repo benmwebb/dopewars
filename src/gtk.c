@@ -591,6 +591,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    HPEN oldpen,dkpen,ltpen;
    RECT rect;
    HDC hDC;
+   gint newpos;
    GtkPaned *paned;
    paned=GTK_PANED(GetWindowLong(hwnd,GWL_USERDATA));
    switch(msg) {
@@ -637,6 +638,15 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          if (!paned||!paned->Tracking) break;
          ReleaseCapture();
          paned->Tracking=FALSE;
+         GetClientRect(hwnd,&rect);
+         if (rect.right > rect.bottom) {
+            newpos=((gint16)HIWORD(lParam)+GTK_WIDGET(paned)->allocation.y-
+                    paned->true_alloc.y)*100/paned->true_alloc.height;
+         } else {
+            newpos=((gint16)LOWORD(lParam)+GTK_WIDGET(paned)->allocation.x-
+                    paned->true_alloc.x)*100/paned->true_alloc.width;
+         }
+         gtk_paned_set_position(paned,newpos);
          return TRUE;
       default:
          return DefWindowProc(hwnd,msg,wParam,lParam);
@@ -3703,6 +3713,8 @@ void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    gint16 alloc;
    GtkAllocation child_alloc;
 
+   memcpy(&paned->true_alloc,allocation,sizeof(GtkAllocation));
+
    alloc=allocation->height-paned->handle_size;
 
    child=paned->children[0].widget;
@@ -3733,6 +3745,7 @@ void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    gint16 alloc;
    GtkAllocation child_alloc;
 
+   memcpy(&paned->true_alloc,allocation,sizeof(GtkAllocation));
    alloc=allocation->width-paned->handle_size;
 
    child=paned->children[0].widget;
@@ -4048,4 +4061,13 @@ void gtk_window_handle_auto_size(GtkWindow *window,
    if (allocation->height < widget->allocation.height) {
       allocation->height=widget->allocation.height;
    }
+}
+
+void gtk_paned_set_position(GtkPaned *paned,gint position) {
+   GtkAllocation allocation;
+   if (position<0) position=0;
+   if (position>100) position=100;
+   paned->handle_pos=position;
+   memcpy(&allocation,&paned->true_alloc,sizeof(GtkAllocation));
+   gtk_widget_set_size(GTK_WIDGET(paned),&allocation);
 }

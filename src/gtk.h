@@ -216,6 +216,7 @@ struct _GtkPanedChild {
 struct _GtkPaned {
    GtkContainer container;
    GtkPanedChild children[2];
+   GtkAllocation true_alloc;
    gint handle_size,gutter_size;
    gint handle_pos;
    gint Tracking : 1;
@@ -605,6 +606,7 @@ void gtk_paned_pack1(GtkPaned *paned,GtkWidget *child,gboolean resize,
                      gboolean shrink);
 void gtk_paned_pack2(GtkPaned *paned,GtkWidget *child,gboolean resize,
                      gboolean shrink);
+void gtk_paned_set_position(GtkPaned *paned,gint position);
 
 #define gtk_container_border_width gtk_container_set_border_width
 #define gtk_hbutton_box_new() gtk_hbox_new(TRUE,5)
