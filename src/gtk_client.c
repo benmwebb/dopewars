@@ -1934,7 +1934,8 @@ static gboolean GetStartGamePlayerName(struct StartGameStruct *widgets,
 
 #ifdef NETWORKING
 static void SetStartGameStatus(struct StartGameStruct *widgets,gchar *msg) {
-   gtk_label_set_text(GTK_LABEL(widgets->status),msg);
+   gtk_label_set_text(GTK_LABEL(widgets->status),
+                      msg ? msg : _("Status: Waiting for user input"));
 }
 
 static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
@@ -2075,7 +2076,11 @@ static void HandleMetaSock(gpointer data,gint socket,
            _("Status: Obtaining server information from metaserver"));
    }
    if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
-      ConnectError(widgets,TRUE);
+      if (IsHttpError(widgets->MetaConn)) {
+         ConnectError(widgets,TRUE);
+      } else {
+         SetStartGameStatus(widgets,NULL);
+      }
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;
       FillMetaServerList(widgets,TRUE);
@@ -2353,7 +2358,7 @@ void NewGameDialog(void) {
    gtk_box_pack_start(GTK_BOX(vbox),notebook,TRUE,TRUE,0);
 
 /* Caption of status label in New Game dialog before anything has happened */
-   label=widgets.status=gtk_label_new(_("Status: Waiting for user input"));
+   label=widgets.status=gtk_label_new("");
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
    gtk_container_add(GTK_CONTAINER(widgets.dialog),vbox);
@@ -2367,6 +2372,7 @@ void NewGameDialog(void) {
    }
 #endif
 
+   SetStartGameStatus(&widgets,NULL);
    gtk_widget_show_all(widgets.dialog);
    gtk_notebook_set_page(GTK_NOTEBOOK(notebook),NewGameType);
 }
