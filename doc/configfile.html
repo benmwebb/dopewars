@@ -572,14 +572,21 @@ replaced by "candy bar" or something similarly innocuous).</dd>
 <dt><b>Names.Drugs=<i>"drugs"</i></b></dt>
 <dd>Sets the word used to describe two or more "drugs".</dd>
 
-<dt><b>Names.Month=<i>"12-"</i></b></dt>
-<dd>Sets the text which is displayed on the client's screen to the immediate
-left of the current turn (by default, a "turn" is a day, and so this part
-is the month, in displaying the date in MM-DD-YYYY format)</dd>
+<dt><b>Names.Date=<i>"%m-%d-%Y"</i></b></dt>
+<dd>Sets the format string (which is passed to the strftime() function) for
+displaying the current game date. This example (the default) displays the
+date in MM-DD-YYYY format, as is commonplace in the US. Only date (not time)
+formats can be used, and the special format %T is used to display the
+current game turn.</dd>
 
-<dt><b>Names.Year=<i>"-1984"</i></b></dt>
-<dd>Sets the text displayed to the immediate right of the current turn (by
-default, the year).</dd>
+<dt><b>StartDate.Day=<i>"1"</i></b></dt>
+<dd>Sets the day of the month on which the game starts to <i>1</i>.</dd>
+
+<dt><b>StartDate.Month=<i>"12"</i></b></dt>
+<dd>Sets the month in which the game starts to <i>12</i> (i.e. December).</dd>
+
+<dt><b>StartDate.Year=<i>"1984"</i></b></dt>
+<dd>Sets the year in which the game starts to <i>1984</i>.</dd>
 
 <dt><b>Prices.Spy=<i>20000</i></b></dt>
 <dd>Sets the price to pay a bitch to spy on another player to be
@@ -662,7 +669,7 @@ can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>04-08-2002</b><br />
+  Last update: <b>11-08-2002</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>

@@ -84,6 +84,10 @@ gchar *Encoding = NULL;
 gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
 gboolean WantConvert, WantAdmin;
 
+struct DATE StartDate = {
+  1, 12, 1984
+};
+
 #ifdef CYGWIN
 gboolean MinToSysTray = TRUE;
 #else
@@ -154,7 +158,7 @@ struct DRUG StaticDrug, *Drug = NULL;
 struct GUN StaticGun, *Gun = NULL;
 struct COP StaticCop, *Cop = NULL;
 struct NAMES Names = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 struct SOUNDS Sounds = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
@@ -179,13 +183,10 @@ struct NAMES DefaultNames = {
   N_("drug"),
   /* Word used for two or more drugs */
   N_("drugs"),
-  /* Text that is printed before the turn number. In US mm-dd-yyyy date
-   * notation, with MaxTurns at 31 or less, this works out as the month -
-   * i.e. December in this case */
-  N_("12-"),
-  /* Text that is printed _after_ the turn number (the year, in US
-   * notation) */
-  N_("-1984"),
+  /* String for displaying the game date or turn number. This is passed
+   * to the strftime() function, with the exception that %T is used to
+   * mean the turn number rather than the calendar date. */
+  N_("%m-%d-%Y"),
   /* Names of the loan shark, the bank, the gun shop, and the pub,
    * respectively */
   N_("the Loan Shark"), N_("the Bank"),
@@ -331,6 +332,15 @@ struct GLOBALS Globals[] = {
 #endif
   {&NumTurns, NULL, NULL, NULL, NULL, "NumTurns",
    N_("No. of game turns (if 0, game never ends)"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {&StartDate.day, NULL, NULL, NULL, NULL, "StartDate.Day",
+   N_("Day of the month on which the game starts"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {&StartDate.month, NULL, NULL, NULL, NULL, "StartDate.Month",
+   N_("Month in which the game starts"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {&StartDate.year, NULL, NULL, NULL, NULL, "StartDate.Year",
+   N_("Year in which the game starts"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Currency.Symbol, NULL, "Currency.Symbol",
    N_("The currency symbol (e.g. $)"),
@@ -582,11 +592,8 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &Names.Drugs, NULL, "Names.Drugs",
    N_("Word used to denote two or more drugs"), NULL, NULL, 0, "", NULL,
    NULL, FALSE, 0},
-  {NULL, NULL, NULL, &Names.Month, NULL, "Names.Month",
-   N_("Text prefixed to the turn number (i.e. the month)"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
-  {NULL, NULL, NULL, &Names.Year, NULL, "Names.Year",
-   N_("Text appended to the turn number (i.e. the year)"),
+  {NULL, NULL, NULL, &Names.Date, NULL, "Names.Date",
+   N_("strftime() format string for displaying the game turn"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, &Prices.Spy, NULL, NULL, "Prices.Spy",
    N_("Cost for a bitch to spy on the enemy"),
@@ -836,6 +843,8 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
   InitList(&(NewPlayer->SpyList));
   InitList(&(NewPlayer->TipList));
   NewPlayer->Turn = 1;
+  NewPlayer->date = g_date_new_dmy(StartDate.day, StartDate.month,
+                                   StartDate.year);
   NewPlayer->Cash = StartCash;
   NewPlayer->Debt = StartDebt;
   NewPlayer->Bank = 0;
@@ -893,6 +902,7 @@ GSList *RemovePlayer(Player *Play, GSList *First)
 #endif
   ClearList(&(Play->SpyList));
   ClearList(&(Play->TipList));
+  g_date_free(Play->date);
   g_free(Play->Name);
   g_free(Play->Guns);
   g_free(Play->Drugs);
@@ -1619,8 +1629,7 @@ void CopyNames(struct NAMES *dest, struct NAMES *src)
   AssignName(&dest->Guns, _(src->Guns));
   AssignName(&dest->Drug, _(src->Drug));
   AssignName(&dest->Drugs, _(src->Drugs));
-  AssignName(&dest->Month, _(src->Month));
-  AssignName(&dest->Year, _(src->Year));
+  AssignName(&dest->Date, _(src->Date));
   AssignName(&dest->LoanSharkName, _(src->LoanSharkName));
   AssignName(&dest->BankName, _(src->BankName));
   AssignName(&dest->GunShopName, _(src->GunShopName));
@@ -2437,6 +2446,24 @@ void SetupParameters(void)
     ReadConfigFile(conf);
     g_free(conf);
   }
+}
+
+void GetDateString(GString *str, Player *Play)
+{
+  gchar buf[200], *turn, *pt;
+
+  turn = g_strdup_printf("%d", Play->Turn);
+  g_string_assign(str, Names.Date);
+  while ((pt = strstr(str->str, "%T")) != NULL) {
+    int ind = pt - str->str;
+
+    g_string_erase(str, ind, 2);
+    g_string_insert(str, ind, turn);
+  }
+
+  g_date_strftime(buf, sizeof(buf), str->str, Play->date);
+  g_string_assign(str, buf);
+  g_free(turn);
 }
 
 static void PluginHelp(void)

@@ -1703,7 +1703,7 @@ void print_status(Player *Play, gboolean DispDrug)
   text = g_string_new(NULL);
   attrset(TitleAttr);
   clear_line(0);
-  g_string_sprintf(text, "%s%02d%s", Names.Month, Play->Turn, Names.Year);
+  GetDateString(text, Play);
   mvaddstr(0, 3, text->str);
 
   attrset(StatsAttr);

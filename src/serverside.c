@@ -525,6 +525,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
               GetPlayerName(Play), Location[i].Name);
       Play->IsAt = i;
       Play->Turn++;
+      g_date_add_days(Play->date, 1);
       Play->Debt = Play->Debt * (DebtInterest + 100) / 100;
       Play->Debt = MAX(Play->Debt, 0);
       Play->Bank = Play->Bank * (BankInterest + 100) / 100;

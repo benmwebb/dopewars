@@ -256,6 +256,7 @@ void InitAbilities(Player *Play)
 #else
   Play->Abil.Local[A_UTF8] = FALSE;
 #endif
+  Play->Abil.Local[A_DATE] = TRUE;
 
   if (!Network) {
     for (i = 0; i < A_NUM; i++) {
@@ -653,6 +654,10 @@ void SendSpyReport(Player *To, Player *SpiedOn)
   g_free(cashstr);
   g_free(debtstr);
   g_free(bankstr);
+  if (HaveAbility(SpiedOn, A_DATE)) {
+    g_string_sprintfa(text, "%d^%d^%d^", g_date_day(SpiedOn->date),
+                      g_date_month(SpiedOn->date), g_date_year(SpiedOn->date));
+  }
   for (i = 0; i < NumGun; i++) {
     g_string_sprintfa(text, "%d^", SpiedOn->Guns[i].Carried);
   }
@@ -674,13 +679,13 @@ void SendSpyReport(Player *To, Player *SpiedOn)
   g_string_free(text, TRUE);
 }
 
-#define NUMNAMES 12
+#define NUMNAMES 11
 
 void SendInitialData(Player *To)
 {
   gchar *LocalNames[NUMNAMES] = { Names.Bitch, Names.Bitches, Names.Gun,
     Names.Guns, Names.Drug, Names.Drugs,
-    Names.Month, Names.Year, Names.LoanSharkName,
+    Names.Date, Names.LoanSharkName,
     Names.BankName, Names.GunShopName,
     Names.RoughPubName
   };
@@ -696,15 +701,23 @@ void SendInitialData(Player *To)
   text = g_string_new("");
   g_string_sprintf(text, "%s^%d^%d^%d^", VERSION, NumLocation, NumGun,
                    NumDrug);
-  for (i = 0; i < 8; i++) {
+  for (i = 0; i < 6; i++) {
     g_string_append(text, LocalNames[i]);
     g_string_append_c(text, '^');
   }
+
+  if (HaveAbility(To, A_DATE)) {
+    g_string_append(text, LocalNames[6]);
+    g_string_append_c(text, '^');
+  } else {
+    g_string_sprintfa(text, "%d-^-%d^", StartDate.month, StartDate.year);
+  }
+
   if (HaveAbility(To, A_PLAYERID))
     g_string_sprintfa(text, "%d^", To->ID);
 
-  /* Player ID is expected after the first 8 names, so send the rest now */
-  for (i = 8; i < NUMNAMES; i++) {
+  /* Player ID is expected after the first 7 names, so send the rest now */
+  for (i = 7; i < NUMNAMES; i++) {
     g_string_append(text, LocalNames[i]);
     g_string_append_c(text, '^');
   }
@@ -739,8 +752,17 @@ void ReceiveInitialData(Player *Play, char *Data)
   AssignName(&Names.Guns, GetNextWord(&pt, ""));
   AssignName(&Names.Drug, GetNextWord(&pt, ""));
   AssignName(&Names.Drugs, GetNextWord(&pt, ""));
-  AssignName(&Names.Month, GetNextWord(&pt, ""));
-  AssignName(&Names.Year, GetNextWord(&pt, ""));
+  if (HaveAbility(Play, A_DATE)) {
+    AssignName(&Names.Date, GetNextWord(&pt, ""));
+  } else {
+    gchar *month, *year, *date;
+    month = GetNextWord(&pt, "");
+    year = GetNextWord(&pt, "");
+
+    date = g_strdup_printf("%s%%T%s", month, year);
+    AssignName(&Names.Date, date);
+    g_free(date);
+  }
   if (HaveAbility(Play, A_PLAYERID))
     Play->ID = GetNextInt(&pt, 0);
 
@@ -880,6 +902,11 @@ void ReceivePlayerData(Player *Play, char *text, Player *From)
   From->IsAt = GetNextInt(&cp, 0);
   From->Turn = GetNextInt(&cp, 0);
   From->Flags = GetNextInt(&cp, 0);
+  if (HaveAbility(Play, A_DATE)) {
+    g_date_set_day(From->date, GetNextInt(&cp, 1));
+    g_date_set_month(From->date, GetNextInt(&cp, 1));
+    g_date_set_year(From->date, GetNextInt(&cp, 1980));
+  }
   for (i = 0; i < NumGun; i++) {
     From->Guns[i].Carried = GetNextInt(&cp, 0);
   }

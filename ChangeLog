@@ -8,6 +8,9 @@ cvs
       all network messages will be sent in UTF-8 (Unicode) encoding (without
       the ability, all messages are assumed to be in your locale's default
       codeset, which may cause problems on non-US ASCII systems)
+    - Names.Month and Names.Year have been replaced with StartDate.Day,
+      StartDate.Month, StartDate.Year and Names.Date; these can be used to
+      handle the date display properly after the turn number exceeds 31
     - Encoding config variable added, to allow the config file's encoding
       (usually taken from the locale) to be overridden
     - Spanish translation added by Quique

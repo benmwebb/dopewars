@@ -1190,7 +1190,7 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
                      Location[Play->IsAt].Name);
   gtk_label_set_text(GTK_LABEL(Status->Location), text->str);
 
-  g_string_sprintf(text, "%s%02d%s", Names.Month, Play->Turn, Names.Year);
+  GetDateString(text, Play);
   gtk_label_set_text(GTK_LABEL(Status->Date), text->str);
 
   g_string_sprintf(text, "%d", Play->CoatSize);

@@ -68,6 +68,8 @@ typedef enum {
                                  * client sends the server a C_DONE message */
   A_UTF8,                       /* All strings are sent over the network using
                                  * UTF-8 (Unicode) encoding */
+  A_DATE,                       /* We can understand "proper" dd-mm-yy dates
+                                 * rather than just turn numbers */
   A_NUM                         /* N.B. Must be last */
 } AbilType;
 
@@ -82,7 +84,7 @@ typedef struct ABILITIES {
 
 struct NAMES {
   gchar *Bitch, *Bitches, *Gun, *Guns, *Drug, *Drugs;
-  gchar *Month, *Year, *LoanSharkName, *BankName;
+  gchar *Date, *LoanSharkName, *BankName;
   gchar *GunShopName, *RoughPubName;
 };
 
@@ -163,6 +165,11 @@ struct LOG {
   FILE *fp;
 };
 
+struct DATE {
+  int day, month, year;
+};
+
+extern struct DATE StartDate;
 extern int ClientSock, ListenSock;
 extern gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
 extern unsigned Port;
@@ -287,6 +294,7 @@ typedef struct TDopeList DopeList;
 struct PLAYER_T {
   guint ID;
   int Turn;
+  GDate *date;
   price_t Cash, Debt, Bank;
   int Health;
   int CoatSize;
@@ -427,6 +435,7 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
                         gboolean IndexGiven, GScanner *scanner);
 gboolean IsCop(Player *Play);
 void RestoreConfig(void);
+void GetDateString(GString *str, Player *Play);
 void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error);
 gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
