@@ -4908,11 +4908,20 @@ void gtk_progress_bar_realize(GtkWidget *widget)
 }
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
-                   const gchar *Title, gint Options)
+                   const gchar *Title, GtkMessageType type, gint Options)
 {
   gint retval;
 
   RecurseLevel++;
+
+  switch(type) {
+  case GTK_MESSAGE_WARNING:
+    Options |= MB_ICONWARNING; break;
+  case GTK_MESSAGE_ERROR:
+    Options |= MB_ICONERROR; break;
+  default:
+  }
+
   retval = MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
                       Text, Title, Options);
   RecurseLevel--;
@@ -5086,7 +5095,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
 #ifdef HAVE_GLIB2
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
-                   const gchar *Title, gint Options)
+                   const gchar *Title, GtkMessageType type, gint Options)
 {
   GtkWidget *dialog;
   gint retval;
@@ -5102,8 +5111,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
 
   dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
                                   GTK_DIALOG_MODAL,
-                                  GTK_MESSAGE_INFO,
-                                  buttons, Text);
+                                  type, buttons, Text);
   if (Title) gtk_window_set_title(GTK_WINDOW(dialog), Title);
 
   retval = gtk_dialog_run(GTK_DIALOG(dialog));
@@ -5114,7 +5122,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
 #else
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
-                   const gchar *Title, gint Options)
+                   const gchar *Title, GtkMessageType type, gint Options)
 {
   return OldGtkMessageBox(parent, Text, Title, Options);
 }
