@@ -720,15 +720,16 @@ static void EndHighScore(GtkWidget *widget)
  */
 void CompleteHighScoreDialog(gboolean AtEnd)
 {
-  GtkWidget *OKButton, *dialog;
+  GtkWidget *button, *dialog, *hbbox;
 
   dialog = HiScoreDialog.dialog;
 
   if (!HiScoreDialog.dialog)
     return;
 
-  OKButton = gtk_button_new_from_stock(GTK_STOCK_OK);
-  gtk_signal_connect_object(GTK_OBJECT(OKButton), "clicked",
+  hbbox = my_hbbox_new();
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
   if (AtEnd) {
@@ -736,11 +737,12 @@ void CompleteHighScoreDialog(gboolean AtEnd)
     gtk_signal_connect_object(GTK_OBJECT(dialog), "destroy",
                               GTK_SIGNAL_FUNC(EndHighScore), NULL);
   }
-  gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), OKButton, TRUE, TRUE, 0);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), hbbox, FALSE, FALSE, 0);
 
-  GTK_WIDGET_SET_FLAGS(OKButton, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default(OKButton);
-  gtk_widget_show(OKButton);
+  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default(button);
+  gtk_widget_show_all(hbbox);
 
   /* OK, we're done - allow the creation of new high score dialogs */
   HiScoreDialog.dialog = NULL;
