@@ -1,6 +1,6 @@
 /************************************************************************
  * makeinstall.c  Program to create install data for setup.c            *
- * Copyright (C)  2001-2003  Ben Webb                                   *
+ * Copyright (C)  2001-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
