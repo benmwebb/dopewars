@@ -51,6 +51,7 @@ static const gchar *WC_GTKSEP    = "WC_GTKSEP";
 static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
 static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
+static const gchar *WC_GTKURL    = "WC_GTKURL";
 
 static BOOL GetTextSize(HWND hWnd,char *text,LPSIZE lpSize);
 static void gtk_button_size_request(GtkWidget *widget,
@@ -112,7 +113,9 @@ static void gtk_label_size_request(GtkWidget *widget,
 static void gtk_label_set_size(GtkWidget *widget,
                                GtkAllocation *allocation);
 static void gtk_label_destroy(GtkWidget *widget);
+static void gtk_url_destroy(GtkWidget *widget);
 static void gtk_label_realize(GtkWidget *widget);
+static void gtk_url_realize(GtkWidget *widget);
 static void gtk_frame_size_request(GtkWidget *widget,
                                    GtkRequisition *requisition);
 static void gtk_frame_set_size(GtkWidget *widget,GtkAllocation *allocation);
@@ -411,6 +414,18 @@ static GtkClass GtkLabelClass = {
    "label",&GtkWidgetClass,sizeof(GtkLabel),GtkLabelSignals
 };
 
+static GtkSignalType GtkUrlSignals[] = {
+  { "size_request",gtk_marshal_VOID__GPOIN,gtk_label_size_request },
+  { "set_size",gtk_marshal_VOID__GPOIN,gtk_label_set_size },
+  { "realize",gtk_marshal_VOID__VOID,gtk_url_realize },
+  { "destroy",gtk_marshal_VOID__VOID,gtk_url_destroy },
+  { "", NULL, NULL }
+};
+
+static GtkClass GtkUrlClass = {
+  "URL", &GtkLabelClass, sizeof(GtkUrl), GtkUrlSignals
+};
+
 static GtkSignalType GtkButtonSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_button_size_request },
    { "set_text",gtk_marshal_VOID__GPOIN,gtk_button_set_text },
@@ -619,7 +634,7 @@ const GtkType GTK_TYPE_WINDOW=&GtkWindowClass;
 const GtkType GTK_TYPE_MENU_BAR=&GtkMenuBarClass;
 
 static HINSTANCE hInst;
-static HFONT hFont;
+static HFONT hFont, urlFont;
 static GSList *WindowList=NULL;
 static GSList *GdkInputs=NULL;
 static GSList *GtkTimeouts=NULL;
@@ -785,6 +800,42 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          return DefWindowProc(hwnd,msg,wParam,lParam);
    }
    return FALSE;
+}
+
+LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam) {
+  GtkWidget *widget;
+
+  if (msg == WM_PAINT) {
+    gchar *text;
+    RECT wndrect;
+    PAINTSTRUCT ps;
+    HDC hDC;
+    HFONT oldFont;
+
+    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    text = GTK_LABEL(widget)->text;
+    if (text && BeginPaint(hwnd, &ps)) {
+      hDC = ps.hdc;
+      oldFont = SelectObject(hDC, urlFont);
+      SetTextColor(hDC, RGB(0, 0, 0xCC));
+      SetBkMode(hDC, TRANSPARENT);
+      GetClientRect(hwnd, &wndrect);
+      DrawText(hDC, text, -1, &wndrect,
+               DT_CENTER | DT_VCENTER | DT_END_ELLIPSIS);
+      SelectObject(hDC, oldFont);
+      EndPaint(hwnd, &ps);
+    }
+    return TRUE;
+  } else if (msg == WM_LBUTTONUP) {
+    gchar *target;
+
+    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    target = GTK_URL(widget)->target;
+
+    ShellExecute(hwnd, "open", target, NULL, NULL, 0);
+//  MessageBox(NULL, "URL triggered", NULL, MB_OK);
+    return FALSE;
+  } else return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK GtkSepProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
@@ -986,8 +1037,12 @@ void SetCustomWndProc(WNDPROC wndproc) {
 
 void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    WNDCLASS wc;
+
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
+   urlFont = CreateFont(14, 0, 0, 0, FW_SEMIBOLD, FALSE, TRUE, FALSE,
+                        ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+                        DEFAULT_QUALITY, FF_SWISS | DEFAULT_PITCH, NULL);
    WindowList=NULL;
    RecurseLevel=0;
    customWndProc = NULL;
@@ -1055,6 +1110,18 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
       wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
       wc.lpszMenuName	= NULL;
       wc.lpszClassName	= WC_GTKSEP;
+      RegisterClass(&wc);
+
+      wc.style		= CS_HREDRAW|CS_VREDRAW;
+      wc.lpfnWndProc	= GtkUrlProc;
+      wc.cbClsExtra	= 0;
+      wc.cbWndExtra	= 0;
+      wc.hInstance	= hInstance;
+      wc.hIcon		= NULL;
+      wc.hCursor	= LoadCursor(NULL,IDC_HAND);
+      wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
+      wc.lpszMenuName	= NULL;
+      wc.lpszClassName	= WC_GTKURL;
       RegisterClass(&wc);
    }
 
@@ -1565,6 +1632,18 @@ GtkWidget *gtk_label_new(const gchar *text) {
    gtk_label_set_text(label,text);
 
    return GTK_WIDGET(label);
+}
+
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target)
+{
+  GtkUrl *url;
+
+  url = GTK_URL(GtkNewObject(&GtkUrlClass));
+
+  GTK_LABEL(url)->text = g_strdup(text);
+  url->target = g_strdup(target);
+
+  return GTK_WIDGET(url);
 }
 
 GtkWidget *gtk_hbox_new(gboolean homogeneous,gint spacing) {
@@ -2645,6 +2724,12 @@ void gtk_label_destroy(GtkWidget *widget) {
    g_free(GTK_LABEL(widget)->text);
 }
 
+void gtk_url_destroy(GtkWidget *widget)
+{
+  g_free(GTK_LABEL(widget)->text);
+  g_free(GTK_URL(widget)->target);
+}
+
 void gtk_label_realize(GtkWidget *widget) {
    GtkLabel *label=GTK_LABEL(widget);
    HWND Parent;
@@ -2655,6 +2740,16 @@ void gtk_label_realize(GtkWidget *widget) {
                             widget->allocation.width,widget->allocation.height,
                             Parent,NULL,hInst,NULL);
    gtk_set_default_font(widget->hWnd);
+}
+
+void gtk_url_realize(GtkWidget *widget) {
+   HWND Parent;
+   Parent=gtk_get_parent_hwnd(widget);
+   widget->hWnd = CreateWindow(WC_GTKURL,GTK_LABEL(widget)->text,
+                            WS_CHILD,
+                            widget->allocation.x,widget->allocation.y,
+                            widget->allocation.width,widget->allocation.height,
+                            Parent,NULL,hInst,NULL);
 }
 
 void gtk_container_add(GtkContainer *container,GtkWidget *widget) {

@@ -271,6 +271,13 @@ struct _GtkLabel {
    gchar *text;
 };
 
+typedef struct _GtkUrl GtkUrl;
+
+struct _GtkUrl {
+  GtkLabel label;
+  gchar *target;
+};
+
 typedef struct _GtkContainer GtkContainer;
 
 struct _GtkContainer {
@@ -503,6 +510,7 @@ struct _GtkTableRowCol {
 #define GTK_RADIO_BUTTON(obj) ((GtkRadioButton *)(obj))
 #define GTK_CHECK_BUTTON(obj) ((GtkCheckButton *)(obj))
 #define GTK_LABEL(obj) ((GtkLabel *)(obj))
+#define GTK_URL(obj) ((GtkUrl *)(obj))
 #define GTK_TABLE(obj) ((GtkTable *)(obj))
 #define GTK_MENU_SHELL(obj) ((GtkMenuShell *)(obj))
 #define GTK_MENU_BAR(obj) ((GtkMenuBar *)(obj))
@@ -544,6 +552,7 @@ void gtk_container_add(GtkContainer *container,GtkWidget *widget);
 void gtk_container_set_border_width(GtkContainer *container,guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
+GtkWidget *gtk_url_new(const gchar *text, const gchar *target);
 GtkWidget *gtk_hbox_new(gboolean homogeneous,gint spacing);
 GtkWidget *gtk_vbox_new(gboolean homogeneous,gint spacing);
 GtkWidget *gtk_check_button_new_with_label(const gchar *label);
