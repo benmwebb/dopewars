@@ -26,8 +26,8 @@
 
 #include <string.h>             /* For strcmp */
 #include <stdlib.h>             /* For atoi */
-#include <errno.h>              /* For errno */
 
+#include "configfile.h"         /* For UpdateConfigFile etc. */
 #include "dopewars.h"           /* For struct GLOBALS etc. */
 #include "gtk_client.h"         /* For mainwindow etc. */
 #include "nls.h"                /* For _ function */
@@ -488,88 +488,10 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
   }
 }
 
-static void ReadFileToString(FILE *fp, gchar *str)
-{
-  int len, mpos, ch;
-  gchar *match;
-  GString *file;
-
-  file = g_string_new("");
-  len = strlen(str);
-  match = g_new(gchar, len);
-  mpos = 0;
-
-  while (mpos < len && (ch = fgetc(fp)) != EOF) {
-    g_string_append_c(file, ch);
-    match[mpos++] = ch;
-    if (ch != str[mpos - 1]) {
-      int start;
-      gboolean shortmatch = FALSE;
-
-      for (start = 1; start < mpos; start++) {
-        if (memcmp(str, &match[start], mpos - start) == 0) {
-          mpos -= start;
-          memmove(match, &match[start], mpos);
-          shortmatch = TRUE;
-          break;
-        }
-      }
-      if (!shortmatch)
-        mpos = 0;
-    }
-  }
-
-  g_free(match);
-
-  rewind(fp);
-  ftruncate(fileno(fp), 0);
-  fprintf(fp, file->str);
-
-  if (mpos < len)
-    fprintf(fp, str);
-
-  g_string_free(file, TRUE);
-}
-
-static void UpdateLocalConfig(void)
-{
-  gchar *cfgfile;
-  FILE *fp;
-  static gchar *header =
-      "\n### Everything from here on is written automatically by the\n"
-      "### dopewars graphical client; you can edit it manually, but any\n"
-      "### formatting (comments, etc.) will be lost at the next rewrite.\n\n";
-
-  cfgfile = GetLocalConfigFile();
-  if (!cfgfile) {
-    g_warning(_("Could not determine local config file to write to"));
-    return;
-  }
-
-  fp = fopen(cfgfile, "r+");
-  if (!fp) {
-    fp = fopen(cfgfile, "w+");
-  }
-
-  if (!fp) {
-    gchar *errstr = ErrStrFromErrno(errno);
-    g_warning(_("Could not open file %s: %s"), cfgfile, errstr);
-    g_free(errstr);
-    g_free(cfgfile);
-    return;
-  }
-
-  ReadFileToString(fp, header);
-  WriteConfigFile(fp);
-
-  fclose(fp);
-  g_free(cfgfile);
-}
-
 static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
 {
   SaveConfigWidgets();
-  UpdateLocalConfig();
+  UpdateConfigFile(NULL);
   gtk_widget_destroy(dialog);
 }
 

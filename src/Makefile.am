@@ -25,6 +25,7 @@ dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @INTLL
 
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
+                   configfile.c configfile.h \
                    dopewars.c dopewars.h error.c error.h log.c log.h \
                    message.c message.h network.c network.h nls.h \
                    serverside.c serverside.h sound.c sound.h \
