@@ -1,5 +1,7 @@
 #include <windows.h>
 
+1 24 "dopewars.manifest"
+
 mainicon ICON pill.ico
 
 gtkdialog DIALOG 40, 40, 40, 40
