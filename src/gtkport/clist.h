@@ -42,6 +42,7 @@ typedef gint (*GtkCListCompareFunc) (GtkCList *clist, gconstpointer ptr1,
 struct _GtkCListColumn {
   gchar *title;
   gint width;
+  gint optimal_width;
   GtkJustification justification;
   guint visible:1;
   guint resizeable:1;

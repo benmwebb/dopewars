@@ -212,6 +212,7 @@ GtkWidget *gtk_clist_new(gint columns)
   clist->rowdata = NULL;
   for (i = 0; i < columns; i++) {
     clist->coldata[i].width = 0;
+    clist->coldata[i].optimal_width = 0;
     clist->coldata[i].visible = TRUE;
     clist->coldata[i].resizeable = TRUE;
     clist->coldata[i].justification = GTK_JUSTIFY_LEFT;
@@ -383,13 +384,13 @@ void gtk_clist_do_auto_resize(GtkCList *clist)
 
   for (i = 0; i < clist->cols; i++)
     if (clist->coldata[i].auto_resize) {
-      gtk_clist_set_column_width(clist, i, clist->coldata[i].width);
+      gtk_clist_set_column_width(clist, i, clist->coldata[i].optimal_width);
     }
 }
 
 gint gtk_clist_optimal_column_width(GtkCList *clist, gint column)
 {
-  return clist->coldata[column].width;
+  return clist->coldata[column].optimal_width;
 }
 
 void gtk_clist_update_all_widths(GtkCList *clist)
@@ -401,18 +402,22 @@ void gtk_clist_update_all_widths(GtkCList *clist)
   gint i;
 
   header = clist->header;
-  if (header)
+  if (header) {
     for (i = 0; i < clist->cols; i++) {
-      if (GetTextSize(header, clist->coldata[i].title, &size, defFont) &&
-          clist->coldata[i].width < size.cx + 4 + 2 * LISTHEADERPACK) {
-        clist->coldata[i].width = size.cx + 4 + 2 * LISTHEADERPACK;
+      if (GetTextSize(header, clist->coldata[i].title, &size, defFont)) {
+        int new_width = size.cx + 4 + 2 * LISTHEADERPACK;
+        clist->coldata[i].width = MAX(clist->coldata[i].width, new_width);
+        clist->coldata[i].optimal_width = MAX(clist->coldata[i].optimal_width,
+                                              new_width);
       }
     }
+  }
 
   for (list = clist->rowdata; list; list = g_slist_next(list)) {
     row = (GtkCListRow *)list->data;
-    if (row && row->text)
+    if (row && row->text) {
       gtk_clist_update_widths(clist, row->text);
+    }
   }
 
   gtk_clist_set_extent(clist);
@@ -428,10 +433,10 @@ void gtk_clist_update_widths(GtkCList *clist, gchar *text[])
   if (!hWnd)
     return;
   for (i = 0; i < clist->cols; i++) {
-    if (clist->coldata[i].auto_resize
-        && GetTextSize(hWnd, text[i], &size, defFont)
-        && size.cx + 4 + 2 * LISTITEMHPACK > clist->coldata[i].width) {
-      clist->coldata[i].width = size.cx + 4 + 2 * LISTITEMHPACK;
+    if (GetTextSize(hWnd, text[i], &size, defFont)) {
+      int new_width = size.cx + 4 + 2 * LISTITEMHPACK;
+      clist->coldata[i].optimal_width = MAX(clist->coldata[i].optimal_width,
+                                            new_width);
     }
   }
 }
