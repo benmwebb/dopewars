@@ -392,11 +392,11 @@ struct _GtkCListRow {
 
 struct _GtkCList {
   GtkContainer container;
-  gint ncols;
+  gint cols, rows;
   HWND header;
   gint16 header_size;
-  GSList *rows;
-  GtkCListColumn *cols;
+  GSList *rowdata;
+  GtkCListColumn *coldata;
   GList *selection;
   GtkSelectionMode mode;
   GtkCListCompareFunc cmp_func;
@@ -480,6 +480,7 @@ struct _GtkTable {
 struct _GtkTableChild {
   GtkWidget *widget;
   guint16 left_attach, right_attach, top_attach, bottom_attach;
+  GtkAttachOptions xoptions, yoptions;
 };
 
 struct _GtkTableRowCol {
@@ -586,9 +587,11 @@ GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
 GtkWidget *gtk_clist_new(gint columns);
 GtkWidget *gtk_clist_new_with_titles(gint columns, gchar *titles[]);
 gint gtk_clist_append(GtkCList *clist, gchar *text[]);
+void gtk_clist_remove(GtkCList *clist, gint row);
 void gtk_clist_set_column_title(GtkCList *clist, gint column,
                                 const gchar *title);
 gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[]);
+gint gtk_clist_set_text(GtkCList *clist, gint row, gint col, gchar *text);
 void gtk_clist_set_column_width(GtkCList *clist, gint column, gint width);
 void gtk_clist_column_title_passive(GtkCList *clist, gint column);
 void gtk_clist_column_titles_passive(GtkCList *clist);
@@ -728,6 +731,7 @@ void gtk_clist_columns_autosize(GtkCList *clist);
 void gtk_text_set_point(GtkText *text, guint index);
 void gtk_widget_set_usize(GtkWidget *widget, gint width, gint height);
 void gtk_clist_select_row(GtkCList *clist, gint row, gint column);
+void gtk_clist_unselect_row(GtkCList *clist, gint row, gint column);
 GtkVisibility gtk_clist_row_is_visible(GtkCList *clist, gint row);
 void gtk_clist_moveto(GtkCList *clist, gint row, gint column,
                       gfloat row_align, gfloat col_align);
