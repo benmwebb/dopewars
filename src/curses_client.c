@@ -215,7 +215,7 @@ static void SelectServerManually(void) {
    g_free(text); g_free(PortText);
 }
 
-static char *SelectServerFromMetaServer(void) {
+static char *SelectServerFromMetaServer(Player *Play) {
 /* Contacts the dopewars metaserver, and obtains a list of valid */
 /* server/port pairs, one of which the user should select.       */
 /* Returns a pointer to a static string containing an error      */
@@ -248,8 +248,13 @@ static char *SelectServerFromMetaServer(void) {
       SetSelectForNetworkBuffer(&MetaConn->NetBuf,&readfds,&writefds,
                                 NULL,&maxsock);
       if (bselect(maxsock,&readfds,&writefds,NULL,NULL)==-1) {
-         if (errno==EINTR) { /*CheckForResize(Play);*/ continue; }
+         if (errno==EINTR) { CheckForResize(Play); continue; }
          perror("bselect"); exit(1);
+      }
+      if (FD_ISSET(0,&readfds)) {
+        /* So that Ctrl-L works */
+        c = getch();
+        if (c=='\f') wrefresh(curscr);
       }
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
          while (HandleWaitingMetaServerData(MetaConn)) {}
@@ -329,7 +334,7 @@ static char ConnectToServer(Player *Play) {
    int c;
    if (strcasecmp(ServerName,SN_META)==0 || ConnectMethod==CM_META) {
       ConnectMethod=CM_META;
-      MetaError=SelectServerFromMetaServer();
+      MetaError=SelectServerFromMetaServer(Play);
    } else if (strcasecmp(ServerName,SN_PROMPT)==0 ||
               ConnectMethod==CM_PROMPT) {
       ConnectMethod=CM_PROMPT;
@@ -384,7 +389,7 @@ static char ConnectToServer(Player *Play) {
             case 'P': ConnectMethod=CM_SINGLE;
                       return TRUE;
             case 'L': ConnectMethod=CM_META;
-                      MetaError=SelectServerFromMetaServer();
+                      MetaError=SelectServerFromMetaServer(Play);
                       break;
             case 'C': ConnectMethod=CM_PROMPT;
                       SelectServerManually();
