@@ -1096,6 +1096,10 @@ void ServerLoop()
 
 #ifndef CYGWIN
   localsock = SetupLocalSocket();
+  if (localsock == -1) {
+    dopelog(0, _("Could not set up Unix domain socket for admin "
+                 "connections - check permissions on /tmp!"));
+  }
 #endif
 
   LineBuf = g_string_new("");
@@ -1107,8 +1111,10 @@ void ServerLoop()
     FD_SET(ListenSock, &errorfs);
     topsock = ListenSock + 1;
 #ifndef CYGWIN
-    FD_SET(localsock, &readfs);
-    topsock = MAX(topsock, localsock + 1);
+    if (localsock >= 0) {
+      FD_SET(localsock, &readfs);
+      topsock = MAX(topsock, localsock + 1);
+    }
     for (list = localconn; list; list = g_slist_next(list)) {
       NetworkBuffer *netbuf;
 
@@ -1163,7 +1169,7 @@ void ServerLoop()
       HandleNewConnection();
     }
 #ifndef CYGWIN
-    if (FD_ISSET(localsock, &readfs)) {
+    if (localsock >= 0 && FD_ISSET(localsock, &readfs)) {
       int newlocal;
       NetworkBuffer *netbuf;
 

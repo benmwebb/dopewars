@@ -1,5 +1,7 @@
 cvs
     - Incorrect handling of WM_CLOSE under Win32 fixed
+    - Unix server now fails "gracefully" if it cannot create the Unix domain
+      socket for admin connections
 
 1.5.4   03-03-2002
     - Basic configuration file editor added to GTK+ client

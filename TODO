@@ -1,3 +1,7 @@
+- More complete Options dialog
+- Impose sensible limits on numbers in Options dialog (e.g. percentages)
+- Fix bug: data not updated in Options dialog if list box selection is cleared
+- Buttons in Options dialog should become sensitive only at applicable times
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
 - Fix problem with dialogs popping up while menus are open
