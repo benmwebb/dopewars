@@ -57,7 +57,7 @@ AC_ARG_ENABLE(nativewin32,
 [ CYGWIN="$enableval" ])
 
 if test "$CYGWIN" = "yes" ; then
-   AC_MSG_RESULT("Configuring for native Win32 binary under Cygwin")
+   AC_MSG_RESULT([Configuring for native Win32 binary under Cygwin])
    AC_DEFINE(CYGWIN)
 
    dnl We NEED GLib, but glib-config is not usually installed under Cygwin
@@ -86,7 +86,7 @@ if test "$CYGWIN" = "yes" ; then
      GUI_SERVER="yes"
    fi
 else
-   AC_MSG_RESULT("Configuring for Unix binary")
+   AC_MSG_RESULT([Configuring for Unix binary])
 
    dnl We NEED glib - so test for it first
    glib2_found="no"
@@ -154,7 +154,7 @@ else
                  HAVE_FIXED_GTK="yes"
               fi
            fi
-           AC_MSG_RESULT("$HAVE_FIXED_GTK")
+           AC_MSG_RESULT([$HAVE_FIXED_GTK])
         fi
      fi
    fi
@@ -267,13 +267,29 @@ CFLAGS="$CFLAGS -DDATADIR=\\\"${datadir}\\\""
 
 dnl Add in the required clients
 AM_CONDITIONAL(GUI_CLIENT, test "$GUI_CLIENT" = "yes")
+if test "$GUI_CLIENT" = "yes" ; then
+  GUILIB="gui_client/libguiclient.a"
+  AC_SUBST(GUILIB)
+fi
 AM_CONDITIONAL(CURSES_CLIENT, test "$CURSES_CLIENT" = "yes")
+if test "$CURSES_CLIENT" = "yes" ; then
+  CURSESLIB="curses_client/libcursesclient.a"
+  AC_SUBST(CURSESLIB)
+fi
 
 dnl Compile in the gtkport stuff for any kind of GUI
 AM_CONDITIONAL(GTKPORT, test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes")
+if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+  GTKPORTLIB="gtkport/libgtkport.a"
+  AC_SUBST(GTKPORTLIB)
+fi
 
 dnl Compile in the cursesport stuff for the curses client only
 AM_CONDITIONAL(CURSESPORT, test "$CURSES_CLIENT" = "yes")
+if test "$CURSES_CLIENT" = "yes" ; then
+  CURSESPORTLIB="cursesport/libcursesport.a"
+  AC_SUBST(CURSESPORTLIB)
+fi
 
 AC_OUTPUT([
 Makefile
