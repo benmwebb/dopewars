@@ -2147,8 +2147,11 @@ void SendHighScores(Player *Play, gboolean EndGame, char *Message)
     if (SendSingleHighScore(Play, &HiScore[i], j, InList == i))
       j++;
   }
-  if (InList == -1 && EndGame)
+  if (InList == -1 && EndGame) {
     SendSingleHighScore(Play, &Score, j, TRUE);
+    g_free(Score.Name);
+    g_free(Score.Time);
+  }
   SendServerMessage(NULL, C_NONE, C_ENDHISCORE, Play,
                     EndGame ? "end" : NULL);
   if (!EndGame)
