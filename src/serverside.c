@@ -1890,7 +1890,7 @@ void BuyObject(Player *From,char *data) {
           amount<0) && From->Cash >= amount*From->Drugs[index].Price) {
          if (amount>0) {
             From->Drugs[index].TotalValue+=amount*From->Drugs[index].Price;
-         } else {
+         } else if (From->Drugs[index].Carried!=0) {
             From->Drugs[index].TotalValue = From->Drugs[index].TotalValue*
                  (From->Drugs[index].Carried+amount)/From->Drugs[index].Carried;
          }
