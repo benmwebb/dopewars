@@ -1,4 +1,4 @@
-DOCPATH=${datadir}/doc/${PACKAGE}-${VERSION}/
+DOCPATH=${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/
 DOCS= aiplayer.html configfile.html index.html i18n.html server.html \
       clientplay.html credits.html installation.html \
       servercommands.html commandline.html developer.html \
@@ -7,6 +7,6 @@ man_MANS = dopewars.6
 EXTRA_DIST = ${man_MANS}
 
 install-data-local:
-	${INSTALL} -d -o root -g 0 -m 0755 ${DESTDIR}${DOCPATH}
-	${INSTALL} -o root -g 0 -m 0644 ${DOCS} ${DESTDIR}${DOCPATH}
+	${INSTALL} -d -o root -g 0 -m 0755 ${DOCPATH}
+	${INSTALL} -o root -g 0 -m 0644 ${DOCS} ${DOCPATH}
 

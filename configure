@@ -5210,13 +5210,12 @@ test -z "$CONFIG_HEADERS" || echo timestamp > stamp-h
 case "$CONFIG_FILES" in *po/Makefile.in*)
         sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile
       esac
-sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile
+sed -e "/POTFILES =/r po/POTFILES" -e 's/^prefix = /prefix = ${DESTDIR}/' po/Makefile.in > po/Makefile
 exit 0
 EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
-
 
 
 echo

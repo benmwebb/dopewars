@@ -8,11 +8,13 @@ LDADD      = @GTKPORT_O@ @GTK_LIBS@ @INTLLIBS@ @WNDRES@
 DEFS       = @DEFS@ -DLOCALEDIR=\"${localedir}\"
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 PIXMAPS    = dopewars-pill.png dopewars-shot.png dopewars-weed.png
+DOPEDIR    = ${DESTDIR}${bindir}
+DOPEBIN    = ${DOPEDIR}/dopewars
 
 install-exec-hook:
-	chown root:games ${DESTDIR}${bindir}/dopewars || \
-	    chown root:wheel ${DESTDIR}${bindir}/dopewars
-	chmod 2755 ${DESTDIR}${bindir}/dopewars
+	chown root:games ${DOPEBIN} || \
+	    chown root:wheel ${DOPEBIN}
+	chmod 2755 ${DOPEBIN}
 
 install-data-local:
 	${mkinstalldirs} ${PIXDIR}

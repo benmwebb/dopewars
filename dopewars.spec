@@ -1,11 +1,13 @@
-Summary: Drug dealing game
-Name:    dopewars
-Version: cvs
-Release: 1
-Vendor:  Ben Webb
-License: GPL
-Group:   Amusements/Games
-Source0: dopewars-cvs.tar.gz
+Summary:   Drug dealing game
+Name:      dopewars
+Version:   cvs
+Release:   1
+Vendor:    Ben Webb
+License:   GPL
+Group:     Amusements/Games
+Source0:   dopewars-cvs.tar.gz
+
+BuildRoot: /tmp/dopewars-rpm
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -24,10 +26,14 @@ switches (via dopewars -h) for further information.
 %setup
 %build
 ./configure --prefix=/usr
-make
+make DESTDIR=${RPM_BUILD_ROOT}
 
 %install
-make install-strip
+make DESTDIR=${RPM_BUILD_ROOT} install-strip
+${RPM_BUILD_ROOT}/usr/bin/dopewars -C ${RPM_BUILD_ROOT}/usr/share/dopewars.sco
+
+%clean
+rm -rf ${RPM_BUILD_ROOT}
 
 %files
 %doc ChangeLog LICENCE README
@@ -35,10 +41,9 @@ make install-strip
 %doc doc/developer.html doc/example-cfg doc/i18n.html doc/index.html
 %doc doc/installation.html doc/metaserver.html doc/server.html 
 %doc doc/servercommands.html doc/windows.html
-
 /usr/bin/dopewars
 %config /usr/share/dopewars.sco
-/usr/man/man6/dopewars.6
+/usr/man/man6/dopewars.6.gz
 /usr/share/gnome/apps/Games/dopewars.desktop
 /usr/share/pixmaps/dopewars-pill.png
 /usr/share/pixmaps/dopewars-weed.png
@@ -48,3 +53,5 @@ make install-strip
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
 
 %changelog
+* Wed Sep 26 2001 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+   - Added support for a buildroot
