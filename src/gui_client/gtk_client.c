@@ -176,7 +176,8 @@ static gchar *MenuTranslate(const gchar *path, gpointer func_data)
 static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
                        const gchar *message, gpointer user_data)
 {
-  GtkMessageBox(NULL, message,
+  g_print("message: %s\n", message);
+  GtkMessageBox(MainWindow, message,
                 /* Titles of the message boxes for warnings and errors */
                 log_level & G_LOG_LEVEL_WARNING ? _("Warning") :
                 log_level & G_LOG_LEVEL_CRITICAL ? _("Error") :
@@ -480,7 +481,7 @@ void HandleClientMessage(char *pt, Player *Play)
     /* Text for the Errands/Sack Bitch menu item */
     text = dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde..."),
                              Names.Bitch);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL);
+    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
     g_free(text);
 
     MenuItem = gtk_item_factory_get_widget(ClientData.Menu,
@@ -488,7 +489,7 @@ void HandleClientMessage(char *pt, Player *Play)
 
     /* Text to update the Errands/Spy menu item with the price for spying */
     text = dpg_strdup_printf(_("_Spy (%P)"), Prices.Spy);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL);
+    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
     g_free(text);
 
     /* Text to update the Errands/Tipoff menu item with the price for a
@@ -496,7 +497,7 @@ void HandleClientMessage(char *pt, Player *Play)
     text = dpg_strdup_printf(_("_Tipoff (%P)"), Prices.Tipoff);
     MenuItem = gtk_item_factory_get_widget(ClientData.Menu,
                                            "<main>/Errands/Tipoff...");
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL);
+    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
     g_free(text);
     if (FirstClient->next)
       ListPlayers(NULL, NULL);
@@ -595,7 +596,11 @@ void AddScoreToDialog(char *Data)
   g_strchug(cp);
 
   /* Get the first word - the score */
+#ifdef HAVE_GLIB2
+  spl1 = g_strsplit(cp, " ", 2);
+#else
   spl1 = g_strsplit(cp, " ", 1);
+#endif
   if (!spl1 || !spl1[0] || !spl1[1]) {
     /* Error - the high score from the server is invalid */
     g_warning(_("Corrupt high score!"));
@@ -623,7 +628,11 @@ void AddScoreToDialog(char *Data)
   g_strchug(spl1[1]);
 
   /* Get the second word - the date */
+#ifdef HAVE_GLIB2
+  spl2 = g_strsplit(spl1[1], " ", 2);
+#else
   spl2 = g_strsplit(spl1[1], " ", 1);
+#endif
   if (!spl2 || !spl2[0] || !spl2[1]) {
     g_warning(_("Corrupt high score!"));
     g_strfreev(spl2);
@@ -793,7 +802,7 @@ static GtkWidget *AddFightButton(gchar *Text, GtkAccelGroup *accel_group,
   GtkWidget *button;
 
   button = gtk_button_new_with_label("");
-  SetAccelerator(button, Text, button, "clicked", accel_group);
+  SetAccelerator(button, Text, button, "clicked", accel_group, FALSE);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(FightCallback),
                      GINT_TO_POINTER(Answer));
@@ -1402,7 +1411,7 @@ void Jet(GtkWidget *parent)
       /* Display of locations in 'Jet' window (%tde="The Bronx" etc. by
        * default) */
       name = dpg_strdup_printf(_("_%c. %tde"), AccelChar, Location[i].Name);
-      SetAccelerator(button, name, button, "clicked", accel_group);
+      SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
       /* Add keypad shortcuts as well */
       if (i < 9) {
         gtk_widget_add_accelerator(button, "clicked", accel_group,
@@ -1774,7 +1783,11 @@ void QuestionDialog(char *Data, Player *From)
   guint numWords = sizeof(Words) / sizeof(Words[0]);
   guint i, j;
 
+#ifdef HAVE_GLIB2
+  split = g_strsplit(Data, "^", 2);
+#else
   split = g_strsplit(Data, "^", 1);
+#endif
   if (!split[0] || !split[1]) {
     g_warning("Bad QUESTION message %s", Data);
     return;
@@ -1820,10 +1833,10 @@ void QuestionDialog(char *Data, Player *From)
     }
     button = gtk_button_new_with_label("");
     if (trword) {
-      SetAccelerator(button, trword, button, "clicked", accel_group);
+      SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
     } else {
       trword = g_strdup_printf("_%c", Responses[i]);
-      SetAccelerator(button, trword, button, "clicked", accel_group);
+      SetAccelerator(button, trword, button, "clicked", accel_group, FALSE);
       g_free(trword);
     }
     gtk_object_set_data(GTK_OBJECT(button), "dialog", (gpointer)dialog);
@@ -2010,6 +2023,7 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group)
 {
   GtkWidget *button;
   guint accel_key;
+  gchar *caption;
 
   button = ClientData.JetButton;
   accel_key = ClientData.JetAccel;
@@ -2018,14 +2032,14 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group)
     gtk_widget_remove_accelerator(button, accel_group, accel_key, 0);
   }
 
-  ClientData.JetAccel = SetAccelerator(button,
-                                       (ClientData.Play
-                                        && ClientData.Play->
-                                        Flags & FIGHTING) ? _("_Fight") :
-                                       /* Caption of 'Jet' button in main
-                                        * window */
-                                       _("_Jet!"), button, "clicked",
-                                       accel_group);
+  if (ClientData.Play && ClientData.Play->Flags & FIGHTING) {
+    caption = _("_Fight");
+  } else {
+    /* Caption of 'Jet' button in main window */
+    caption = _("_Jet");
+  }
+  ClientData.JetAccel = SetAccelerator(button, caption, button,
+                                       "clicked", accel_group, FALSE);
 }
 
 static void SetIcon(GtkWidget *window, gchar **xpmdata)
@@ -2874,7 +2888,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     for (i = 0; i < 3; i++) {
       button[i] = gtk_button_new_with_label("");
       SetAccelerator(button[i], _(button_text[i]), button[i],
-                     "clicked", accel_group);
+                     "clicked", accel_group, FALSE);
       if (CallBack)
         gtk_signal_connect(GTK_OBJECT(button[i]), "clicked",
                            GTK_SIGNAL_FUNC(CallBack), button_type[i]);
