@@ -180,7 +180,7 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
                 /* Titles of the message boxes for warnings and errors */
                 log_level & G_LOG_LEVEL_WARNING ? _("Warning") :
                 log_level & G_LOG_LEVEL_CRITICAL ? _("Error") :
-                _("Message"),
+                _("Message"), GTK_MESSAGE_INFO,
                 MB_OK | (gtk_main_level() > 0 ? MB_IMMRETURN : 0));
 }
 
@@ -205,7 +205,8 @@ void QuitGame(GtkWidget *widget, gpointer data)
                                /* Prompt in 'quit game' dialog */
                                _("Abandon current game?"),
                                /* Title of 'quit game' dialog */
-                               _("Quit Game"), MB_YESNO) == IDYES) {
+                               _("Quit Game"), GTK_MESSAGE_QUESTION,
+                               MB_YESNO) == IDYES) {
     gtk_main_quit();
   }
 }
@@ -219,7 +220,8 @@ gint MainDelete(GtkWidget *widget, GdkEvent * event, gpointer data)
 {
   return (InGame
           && GtkMessageBox(ClientData.window, _("Abandon current game?"),
-                           _("Quit Game"), MB_YESNO) == IDNO);
+                           _("Quit Game"), GTK_MESSAGE_QUESTION,
+                           MB_YESNO) == IDNO);
 }
 
 
@@ -228,7 +230,8 @@ void NewGame(GtkWidget *widget, gpointer data)
   if (InGame) {
     if (GtkMessageBox(ClientData.window, _("Abandon current game?"),
                       /* Title of 'stop game to start a new game' dialog */
-                      _("Start new game"), MB_YESNO) == IDYES)
+                      _("Start new game"), GTK_MESSAGE_QUESTION,
+                      MB_YESNO) == IDYES)
       EndGame();
     else
       return;
@@ -249,7 +252,8 @@ void AbandonGame(GtkWidget *widget, gpointer data)
 {
   if (InGame && GtkMessageBox(ClientData.window, _("Abandon current game?"),
                               /* Title of 'abandon game' dialog */
-                              _("Abandon game"), MB_YESNO) == IDYES) {
+                              _("Abandon game"), GTK_MESSAGE_QUESTION,
+                              MB_YESNO) == IDYES) {
     EndGame();
   }
 }
@@ -1738,26 +1742,27 @@ void DealGuns(GtkWidget *widget, gpointer data)
   if (data != BT_BUY && TotalGunsCarried(ClientData.Play) == 0) {
     dpg_string_sprintf(text, _("You don't have any %tde to sell!"),
                        Names.Guns);
-    GtkMessageBox(dialog, text->str, Title, MB_OK);
+    GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY && TotalGunsCarried(ClientData.Play) >=
              ClientData.Play->Bitches.Carried + 2) {
     dpg_string_sprintf(text,
                        _("You'll need more %tde to carry any more %tde!"),
                        Names.Bitches, Names.Guns);
-    GtkMessageBox(dialog, text->str, Title, MB_OK);
+    GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY
              && Gun[GunInd].Space > ClientData.Play->CoatSize) {
     dpg_string_sprintf(text,
                        _("You don't have enough space to carry that %tde!"),
                        Names.Gun);
-    GtkMessageBox(dialog, text->str, Title, MB_OK);
+    GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY && Gun[GunInd].Price > ClientData.Play->Cash) {
     dpg_string_sprintf(text,
                        _("You don't have enough cash to buy that %tde!"),
                        Names.Gun);
-    GtkMessageBox(dialog, text->str, Title, MB_OK);
+    GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_SELL && ClientData.Play->Guns[GunInd].Carried == 0) {
-    GtkMessageBox(dialog, _("You don't have any to sell!"), Title, MB_OK);
+    GtkMessageBox(dialog, _("You don't have any to sell!"), Title, 
+                  GTK_MESSAGE_WARNING, MB_OK);
   } else {
     g_string_sprintf(text, "gun^%d^%d", GunInd, data == BT_BUY ? 1 : -1);
     SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL,
@@ -2374,13 +2379,13 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 
   if (money < 0) {
     GtkMessageBox(dialog, _("You must enter a positive amount of money!"),
-                  title, MB_OK);
+                  title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (!Debt && withdraw && money > ClientData.Play->Bank) {
     GtkMessageBox(dialog, _("There isn't that much money available..."),
-                  title, MB_OK);
+                  title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (!withdraw && money > ClientData.Play->Cash) {
     GtkMessageBox(dialog, _("You don't have that much money!"),
-                  title, MB_OK);
+                  title, GTK_MESSAGE_WARNING, MB_OK);
   } else {
     text = pricetostr(withdraw ? -money : money);
     SendClientMessage(ClientData.Play, C_NONE,
@@ -2837,7 +2842,8 @@ void SackBitch(GtkWidget *widget, gpointer data)
                              "by this %tde may be lost!)"), Names.Guns,
                            Names.Drugs, Names.Bitch);
 
-  if (GtkMessageBox(ClientData.window, text, title, MB_YESNO) == IDYES) {
+  if (GtkMessageBox(ClientData.window, text, title, GTK_MESSAGE_QUESTION,
+                    MB_YESNO) == IDYES) {
     ClientData.Play->Bitches.Carried--;
     UpdateMenus();
     SendClientMessage(ClientData.Play, C_NONE, C_SACKBITCH, NULL, NULL);
