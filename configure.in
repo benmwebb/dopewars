@@ -96,10 +96,10 @@ else
    dnl We NEED glib - so test for it first
    glib2_found="no"
    if test "$USE_GLIB2" = "yes" ; then
-     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes", , gmodule)
+     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
    fi
    if test "$glib2_found" = "no" ; then
-     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)], gmodule)
+     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
    else
      AC_DEFINE(HAVE_GLIB2, 1, [Do we have GLIB 2.0 ?])
    fi
