@@ -621,6 +621,7 @@ static GtkClass GtkWindowClass = {
 
 const GtkType GTK_TYPE_WINDOW = &GtkWindowClass;
 const GtkType GTK_TYPE_MENU_BAR = &GtkMenuBarClass;
+const GtkType GTK_TYPE_NOTEBOOK = &GtkNotebookClass;
 
 HINSTANCE hInst;
 HFONT defFont;
@@ -985,6 +986,17 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   }
 
   switch (msg) {
+  case WM_CTLCOLORSTATIC:
+    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWL_USERDATA));
+    if (widget && gtk_widget_get_ancestor(widget, GTK_TYPE_NOTEBOOK)) {
+      hDC = (HDC)wParam;
+      if (GTK_OBJECT(widget)->klass == &GtkLabelClass) {
+        SetBkMode(hDC, TRANSPARENT);
+        *dodef = FALSE;
+        return GetStockObject(NULL_BRUSH);
+      }
+    }
+    break;
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
         && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
