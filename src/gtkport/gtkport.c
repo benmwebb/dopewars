@@ -4941,6 +4941,8 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
     Options |= MB_ICONWARNING; break;
   case GTK_MESSAGE_ERROR:
     Options |= MB_ICONERROR; break;
+  case GTK_MESSAGE_QUESTION:
+    Options |= MB_ICONQUESTION; break;
   default:
   }
 
