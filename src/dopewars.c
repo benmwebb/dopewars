@@ -2308,8 +2308,6 @@ void SetupParameters(void)
   ServerMOTD = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
-  AssignName(&Sounds.FightHit, "hit.wav");
-  AssignName(&Sounds.Jet, "jet.wav");
 
   CopyNames(&Names, &DefaultNames);
   CopyDrugs(&Drugs, &DefaultDrugs);
