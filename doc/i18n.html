@@ -45,8 +45,10 @@ the following are some possible explanations:-</p>
 <li>dopewars cannot find the locale-specific language file - by default, stored
 under /usr/local/share/locale/</li>
 <li>Your language is not yet supported - why not add it yourself?</li>
-<li>Your system does not have locale support (at present i18n only functions
-properly on Unix systems - not Windows)</li>
+<li>Your system does not have locale support.</li>
+<li>On a Windows system, you need to select the language from the relevant
+section of Control Panel (or set the LANG environment variable, below). i18n
+under Windows is only supported by version 1.5.3 and later.</li>
 <li>You haven't set an environment variable to specify your locale (usually
 this is done automatically). For example, if you're using the <tt>bash</tt>
 shell and want a German translation, the command "<tt>export LANG=de_DE</tt>"
@@ -148,11 +150,12 @@ version</a></h2>
 
 <p>New versions of dopewars will often change what is printed to the user, and
 so may may require changes to the translation. To update an existing
-translation, "<tt>make</tt>" the new version of dopewars. This will create
-a <tt>dopewars.pot</tt> file listing the strings that need translating. Change
-into the <tt>po/</tt> subdirectory, and create a new translation file from
-your "old" translation file (we'll assume it's called <tt>de.po</tt>) and
-<tt>dopewars.pot</tt> with the <tt>msgmerge</tt> command:-<br />
+translation, change into the <tt>po</tt> subdirectory of the dopewars
+source code, and do a "<tt>make dopewars.pot</tt>". This creates the
+<tt>dopewars.pot</tt> file, which lists the strings that need translating.
+Next, create a new translation file from your "old" translation file (we'll
+assume it's called <tt>de.po</tt>) and <tt>dopewars.pot</tt> with the
+<tt>msgmerge</tt> command:-<br />
 <tt>msgmerge -o newfile de.po dopewars.pot</tt><br />
 Examine this new file <tt>newfile</tt> for translations that need updating
 (a search for "fuzzy" should find most of them) and then overwrite your old
@@ -201,7 +204,7 @@ contributed to the main dopewars distribution!</p>
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
-<p>Last update: <b>16-10-2001</b></p>
+<p>Last update: <b>04-02-2002</b></p>
 
 </body>
 </html>
