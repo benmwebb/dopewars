@@ -5065,7 +5065,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   };
 
   imm_return = Options & MB_IMMRETURN;
-  dialog = gtk_window_new(GTK_WINDOW_POPUP);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
