@@ -1755,8 +1755,8 @@ void QuestionDialog(char *Data, Player *From)
   gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
     N_("_Fight"), N_("_Attack"), N_("_Evade")
   };
-  gint numWords = sizeof(Words) / sizeof(Words[0]);
-  gint i, j;
+  guint numWords = sizeof(Words) / sizeof(Words[0]);
+  guint i, j;
 
   split = g_strsplit(Data, "^", 1);
   if (!split[0] || !split[1]) {
