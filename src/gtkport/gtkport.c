@@ -5354,6 +5354,7 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   style = gtk_style_copy(style);
   style->fg[GTK_STATE_NORMAL] = color;
   gtk_widget_set_style(label, style);
+  gtk_style_unref(style);
 
   /* Make the text underlined */
   len = strlen(text);
