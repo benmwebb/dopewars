@@ -158,6 +158,8 @@ main ()
         :
        else
           echo "*** Could not run GLIB test program, checking why..."
+          ac_save_CFLAGS="$CFLAGS"
+          ac_save_LIBS="$LIBS"
           CFLAGS="$CFLAGS $GLIB_CFLAGS"
           LIBS="$LIBS $GLIB_LIBS"
           AC_TRY_LINK([

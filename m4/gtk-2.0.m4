@@ -163,6 +163,8 @@ main ()
         :
        else
           echo "*** Could not run GTK+ test program, checking why..."
+          ac_save_CFLAGS="$CFLAGS"
+          ac_save_LIBS="$LIBS"
           CFLAGS="$CFLAGS $GTK_CFLAGS"
           LIBS="$LIBS $GTK_LIBS"
           AC_TRY_LINK([
