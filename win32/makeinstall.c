@@ -23,7 +23,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "zlib/zlib.h"
+#include "bzlib/bzlib.h"
 #include "util.h"
 
 char *read_line(HANDLE hin)
@@ -166,7 +166,7 @@ InstData *ReadInstallData()
 }
 
 #define BUFFER_SIZE (32*1024)
-#define COMPRESSION Z_BEST_COMPRESSION
+#define COMPRESSION 9
 
 void OpenNextFile(InstFiles *filelist, InstFiles **listpt, HANDLE *fin)
 {
@@ -203,23 +203,23 @@ int main()
   char *inbuf, *outbuf;
   int status, count;
   bstr *str;
-  z_stream z;
+  bz_stream bz;
 
   idata = ReadInstallData();
 
-  fout = CreateFile("installfiles.gz", GENERIC_WRITE, 0, NULL,
+  fout = CreateFile("installfiles.bz2", GENERIC_WRITE, 0, NULL,
                     CREATE_ALWAYS, 0, NULL);
 
   outbuf = bmalloc(BUFFER_SIZE);
   inbuf = bmalloc(BUFFER_SIZE);
 
-  z.zalloc = Z_NULL;
-  z.zfree = Z_NULL;
-  z.opaque = Z_NULL;
-  deflateInit(&z, COMPRESSION);
-  z.avail_in = 0;
-  z.next_out = outbuf;
-  z.avail_out = BUFFER_SIZE;
+  bz.bzalloc = NULL;
+  bz.bzfree = NULL;
+  bz.opaque = NULL;
+  BZ2_bzCompressInit(&bz, COMPRESSION, 0, 30);
+  bz.avail_in = 0;
+  bz.next_out = outbuf;
+  bz.avail_out = BUFFER_SIZE;
 
   filept = NULL;
   fin = NULL;
@@ -229,8 +229,8 @@ int main()
   }
 
   while (fin != INVALID_HANDLE_VALUE) {
-    if (z.avail_in == 0) {
-      z.next_in = inbuf;
+    if (bz.avail_in == 0) {
+      bz.next_in = inbuf;
       bytes_read = 0;
       while (!bytes_read && fin) {
         if (!ReadFile(fin, inbuf, BUFFER_SIZE, &bytes_read, NULL)) {
@@ -241,29 +241,27 @@ int main()
         if (!bytes_read)
           OpenNextFile(idata->instfiles, &filept, &fin);
       }
-      z.avail_in = bytes_read;
+      bz.avail_in = bytes_read;
     }
-    if (z.avail_in == 0) {
-      status = deflate(&z, Z_FINISH);
-      count = BUFFER_SIZE - z.avail_out;
-      if (!WriteFile(fout, outbuf, count, &bytes_written, NULL)) {
-        printf("Write error\n");
-      }
-      break;
-    }
-    status = deflate(&z, Z_NO_FLUSH);
-    count = BUFFER_SIZE - z.avail_out;
+    status = BZ2_bzCompress(&bz, bz.avail_in == 0 ? BZ_FINISH : BZ_RUN);
+    count = BUFFER_SIZE - bz.avail_out;
     if (!WriteFile(fout, outbuf, count, &bytes_written, NULL)) {
       printf("Write error\n");
     }
-    z.next_out = outbuf;
-    z.avail_out = BUFFER_SIZE;
+    bz.next_out = outbuf;
+    bz.avail_out = BUFFER_SIZE;
+    if (status == BZ_STREAM_END) {
+      break;
+    } else if (status != BZ_RUN_OK && status != BZ_FINISH_OK) {
+      printf("Unexpected bzlib status: %d\n", status);
+      break;
+    }
   }
 
-  printf("Written compressed data: raw %lu, compressed %lu\n",
-         z.total_in, z.total_out);
-  bytes_written = z.total_out;
-  deflateEnd(&z);
+  printf("Written compressed data: raw %d, compressed %d\n",
+         bz.total_in_lo32, bz.total_out_lo32);
+  bytes_written = bz.total_out_lo32;
+  BZ2_bzCompressEnd(&bz);
 
   CloseHandle(fout);
 
@@ -309,4 +307,9 @@ int main()
   FreeInstData(idata, TRUE);
 
   return 0;
+}
+
+void bz_internal_error(int errcode)
+{
+  printf("bzip error %d\n", errcode);
 }

@@ -2,10 +2,10 @@ all: setup makeinstall uninstall
 
 clean:
 	/bin/rm -f *.o *.res uninstall.exe setup.exe makeinstall.exe core *~
-	/bin/rm -f installfiles.gz manifest
+	/bin/rm -f installfiles.bz2 manifest
 
 setup: setup.o util.o guifunc.o setup.res
-	gcc -Wall -mno-cygwin -mwindows -o setup setup.o util.o guifunc.o setup.res zlib/libz.a -lcomctl32 -lole32 -luuid
+	gcc -Wall -mno-cygwin -mwindows -o setup setup.o util.o guifunc.o setup.res bzlib/libbz2.a -lcomctl32 -lole32 -luuid
 	strip setup.exe
 
 uninstall: uninstall.o util.o guifunc.o uninstall.res
@@ -27,7 +27,7 @@ util.o: util.c util.h
 guifunc.o: guifunc.c guifunc.h
 	gcc -Wall -mno-cygwin -c guifunc.c
 
-manifest installfiles.gz: filelist makeinstall uninstall
+manifest installfiles.bz2: filelist makeinstall uninstall
 	sed -e 's/LICENCE/licence.txt/' < ../doc/index.html > index.html
 	sed -e 's/LICENCE/licence.txt/' < ../doc/developer.html > developer.html
 	sed -e 's/example-cfg/example-cfg.txt/' < ../doc/configfile.html > configfile.html
@@ -38,11 +38,11 @@ manifest installfiles.gz: filelist makeinstall uninstall
 	/bin/rm -f index.html configfile.html developer.html licence.txt
 	/bin/rm -f example-cfg.txt readme.txt
 
-setup.res: setup.rc dialogs.rc contid.h manifest installfiles.gz
+setup.res: setup.rc dialogs.rc contid.h manifest installfiles.bz2
 	windres -O coff -o setup.res setup.rc
 
 makeinstall: makeinstall.o util.o
-	gcc -Wall -mno-cygwin -o makeinstall makeinstall.o util.o zlib/libz.a
+	gcc -Wall -mno-cygwin -o makeinstall makeinstall.o util.o bzlib/libbz2.a
 
 makeinstall.o: makeinstall.c util.h
 	gcc -Wall -mno-cygwin -c makeinstall.c

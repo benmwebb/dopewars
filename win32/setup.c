@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "zlib/zlib.h"
+#include "bzlib/bzlib.h"
 #include <shlobj.h>
 
 #include "contid.h"
@@ -429,7 +429,7 @@ char *GetFirstFile(InstFiles *filelist, DWORD totalsize)
   DWORD bufsiz;
   char *inbuf, *outbuf;
   int status;
-  z_stream z;
+  bz_stream bz;
 
   if (!filelist)
     return NULL;
@@ -441,22 +441,22 @@ char *GetFirstFile(InstFiles *filelist, DWORD totalsize)
   bufsiz = filelist->filesize;
   outbuf = bmalloc(bufsiz + 1);
 
-  z.zalloc = Z_NULL;
-  z.zfree = Z_NULL;
-  z.opaque = Z_NULL;
-  z.next_in = inbuf;
-  z.avail_in = totalsize;
+  bz.bzalloc = NULL;
+  bz.bzfree = NULL;
+  bz.opaque = NULL;
+  bz.next_in = inbuf;
+  bz.avail_in = totalsize;
 
-  inflateInit(&z);
-  z.next_out = outbuf;
-  z.avail_out = bufsiz;
+  BZ2_bzDecompressInit(&bz, 0, 0);
+  bz.next_out = outbuf;
+  bz.avail_out = bufsiz;
 
   while (1) {
-    status = inflate(&z, Z_SYNC_FLUSH);
-    if ((status != Z_OK && status != Z_STREAM_END) || z.avail_out == 0)
+    status = BZ2_bzDecompress(&bz);
+    if ((status != BZ_OK && status != BZ_STREAM_END) || bz.avail_out == 0)
       break;
   }
-  inflateEnd(&z);
+  BZ2_bzDecompressEnd(&bz);
 
   outbuf[bufsiz] = '\0';
   return outbuf;
@@ -827,7 +827,7 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
   BOOL skipfile, service_installed;
   char *inbuf, *outbuf;
   int status, count;
-  z_stream z;
+  bz_stream bz;
   InstFiles *listpt;
   InstData *oldidata;
 
@@ -877,28 +877,28 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
 
   outbuf = bmalloc(BUFFER_SIZE);
 
-  z.zalloc = Z_NULL;
-  z.zfree = Z_NULL;
-  z.opaque = Z_NULL;
-  z.next_in = inbuf;
-  z.avail_in = idata->totalsize;
+  bz.bzalloc = NULL;
+  bz.bzfree = NULL;
+  bz.opaque = NULL;
+  bz.next_in = inbuf;
+  bz.avail_in = idata->totalsize;
 
-  inflateInit(&z);
-  z.next_out = outbuf;
-  z.avail_out = BUFFER_SIZE;
+  BZ2_bzDecompressInit(&bz, 0, 0);
+  bz.next_out = outbuf;
+  bz.avail_out = BUFFER_SIZE;
 
   while (1) {
-    status = inflate(&z, Z_SYNC_FLUSH);
-    if (status == Z_OK || status == Z_STREAM_END) {
-      count = BUFFER_SIZE - z.avail_out;
-      z.next_out = outbuf;
+    status = BZ2_bzDecompress(&bz);
+    if (status == BZ_OK || status == BZ_STREAM_END) {
+      count = BUFFER_SIZE - bz.avail_out;
+      bz.next_out = outbuf;
       while (count >= fileleft) {
         if (fileleft && !skipfile
-            && !WriteFile(fout, z.next_out, fileleft, &bytes_written, NULL)) {
+            && !WriteFile(fout, bz.next_out, fileleft, &bytes_written, NULL)) {
           printf("Write error\n");
         }
         count -= fileleft;
-        z.next_out += fileleft;
+        bz.next_out += fileleft;
         if (!OpenNextOutput(&fout, idata->instfiles, idata->keepfiles,
                             &listpt, &fileleft, logf, &skipfile))
           break;
@@ -906,18 +906,18 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
       if (fout == INVALID_HANDLE_VALUE)
         break;
       if (count && !skipfile
-          && !WriteFile(fout, z.next_out, count, &bytes_written, NULL)) {
+          && !WriteFile(fout, bz.next_out, count, &bytes_written, NULL)) {
         printf("Write error\n");
       }
       fileleft -= count;
-      z.next_out = outbuf;
-      z.avail_out = BUFFER_SIZE;
+      bz.next_out = outbuf;
+      bz.avail_out = BUFFER_SIZE;
     }
-    if (status != Z_OK)
+    if (status != BZ_OK)
       break;
   }
 
-  inflateEnd(&z);
+  BZ2_bzDecompressEnd(&bz);
   if (!skipfile)
     CloseHandle(fout);
 
@@ -1173,4 +1173,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   FreeInstData(idata, FALSE);
 
   return 0;
+}
+
+void bz_internal_error(int errcode)
+{
 }
