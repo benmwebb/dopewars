@@ -820,8 +820,8 @@ static void CreateFightDialog(void)
   vbox = gtk_vbox_new(FALSE, 7);
 
   table = gtk_table_new(2, 4, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  gtk_table_set_row_spacings(GTK_TABLE(table), 7);
+  gtk_table_set_col_spacings(GTK_TABLE(table), 10);
 
   hsep = gtk_hseparator_new();
   gtk_table_attach_defaults(GTK_TABLE(table), hsep, 0, 4, 1, 2);
@@ -957,11 +957,11 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     /* Display of the current player's name during combat */
     compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
 
-    gtk_table_attach_defaults(GTK_TABLE(table), compt->name, 0, 1,
-                              RowIndex, RowIndex + 1);
+    gtk_table_attach(GTK_TABLE(table), compt->name, 0, 1,
+                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
     compt->bitches = gtk_label_new(DefendBitches >= 0 ? BitchText : "");
-    gtk_table_attach_defaults(GTK_TABLE(table), compt->bitches, 1, 2,
-                              RowIndex, RowIndex + 1);
+    gtk_table_attach(GTK_TABLE(table), compt->bitches, 1, 2,
+                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
     compt->healthprog = gtk_progress_bar_new();
     gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(compt->healthprog),
                                      GTK_PROGRESS_LEFT_TO_RIGHT);
@@ -970,8 +970,8 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     gtk_table_attach_defaults(GTK_TABLE(table), compt->healthprog, 2, 3,
                               RowIndex, RowIndex + 1);
     compt->healthlabel = gtk_label_new(HealthText);
-    gtk_table_attach_defaults(GTK_TABLE(table), compt->healthlabel, 3, 4,
-                              RowIndex, RowIndex + 1);
+    gtk_table_attach(GTK_TABLE(table), compt->healthlabel, 3, 4,
+                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
     gtk_widget_show(compt->name);
     gtk_widget_show(compt->bitches);
     gtk_widget_show(compt->healthprog);
