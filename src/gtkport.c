@@ -657,8 +657,8 @@ static void DispatchSocketEvent(SOCKET sock,long event) {
       input=(GdkInput *)(list->data);
       if (input->source==sock) {
          (*input->function)(input->data,input->source,
-                            (event&(FD_READ|FD_CLOSE) ? GDK_INPUT_READ:0) |
-                            (event&(FD_WRITE|FD_CONNECT) ? GDK_INPUT_WRITE:0));
+                     (event&(FD_READ|FD_CLOSE|FD_ACCEPT) ? GDK_INPUT_READ:0) |
+                     (event&(FD_WRITE|FD_CONNECT) ? GDK_INPUT_WRITE:0));
          break;
       }
    }
@@ -3643,7 +3643,7 @@ gint gdk_input_add(gint source,GdkInputCondition condition,
    input->function=function;
    input->data=data;
    rc=WSAAsyncSelect(source,TopLevel,WM_SOCKETDATA,
-                  (condition&GDK_INPUT_READ ? FD_READ|FD_CLOSE:0) |
+                  (condition&GDK_INPUT_READ ? FD_READ|FD_CLOSE|FD_ACCEPT:0) |
                   (condition&GDK_INPUT_WRITE ? FD_WRITE|FD_CONNECT:0));
    GdkInputs=g_slist_append(GdkInputs,input);
    return source;
