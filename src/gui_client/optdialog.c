@@ -269,13 +269,13 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
   if (gvar->BoolVal) {
     GtkWidget *check;
 
-    check = gtk_check_button_new_with_label(member->label);
+    check = gtk_check_button_new_with_label(_(member->label));
     gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 2, row, row + 1);
     AddConfigWidget(check, ind);
   } else {
     GtkWidget *label, *entry;
 
-    label = gtk_label_new(member->label);
+    label = gtk_label_new(_(member->label));
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1,
                      GTK_SHRINK, GTK_SHRINK, 0, 0);
     entry = gtk_entry_new();
@@ -510,7 +510,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   int ind, minlistlength = 0;
   gint i, row, nummembers;
   struct GLOBALS *gvar;
-  struct ConfigMembers namemember = { "Name", "Name" };
+  struct ConfigMembers namemember = { N_("Name"), "Name" };
 
   ind = GetGlobalIndex(structname, "Name");
   g_assert(ind >= 0);
@@ -610,32 +610,32 @@ void OptDialog(GtkWidget *widget, gpointer data)
   GtkAccelGroup *accel_group;
 
   struct ConfigMembers locmembers[] = {
-    { "Police presence", "PolicePresence" },
-    { "Minimum no. of drugs", "MinDrug" },
-    { "Maximum no. of drugs", "MaxDrug" },
+    { N_("Police presence"), "PolicePresence" },
+    { N_("Minimum no. of drugs"), "MinDrug" },
+    { N_("Maximum no. of drugs"), "MaxDrug" },
     { NULL, NULL }
   };
   struct ConfigMembers drugmembers[] = {
-    { "Minimum normal price", "MinPrice" },
-    { "Maximum normal price", "MaxPrice" },
-    { "Can be specially cheap", "Cheap" },
-    { "Cheap string", "CheapStr" },
-    { "Can be specially expensive", "Expensive" },
+    { N_("Minimum normal price"), "MinPrice" },
+    { N_("Maximum normal price"), "MaxPrice" },
+    { N_("Can be specially cheap"), "Cheap" },
+    { N_("Cheap string"), "CheapStr" },
+    { N_("Can be specially expensive"), "Expensive" },
     { NULL, NULL }
   };
   struct ConfigMembers gunmembers[] = {
-    { "Price", "Price" },
-    { "Inventory space", "Space" },
-    { "Damage", "Damage" },
+    { N_("Price"), "Price" },
+    { N_("Inventory space"), "Space" },
+    { N_("Damage"), "Damage" },
     { NULL, NULL }
   };
   struct ConfigMembers copmembers[] = {
-    { "Name of one deputy", "DeputyName" },
-    { "Name of several deputies", "DeputiesName" },
-    { "Minimum no. of deputies", "MinDeputies" },
-    { "Maximum no. of deputies", "MaxDeputies" },
-    { "Cop armour", "Armour" },
-    { "Deputy armour", "DeputyArmour" },
+    { N_("Name of one deputy"), "DeputyName" },
+    { N_("Name of several deputies"), "DeputiesName" },
+    { N_("Minimum no. of deputies"), "MinDeputies" },
+    { N_("Maximum no. of deputies"), "MaxDeputies" },
+    { N_("Cop armour"), "Armour" },
+    { N_("Deputy armour"), "DeputyArmour" },
     { NULL, NULL }
   };
 
