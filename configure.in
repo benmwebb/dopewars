@@ -349,8 +349,8 @@ if test -n "$GCC"; then
 fi
 
 dnl Tell dopewars where the high scores, docs and locale files are
-DP_EXPAND_DIR(DATADIR, '${datadir}')
-AC_DEFINE_UNQUOTED(DATADIR, "$DATADIR",
+DP_EXPAND_DIR(DPDATADIR, '${datadir}')
+AC_DEFINE_UNQUOTED(DPDATADIR, "$DPDATADIR",
                    [The directory containing the high score file and docs])
 
 localedir=${datadir}/locale

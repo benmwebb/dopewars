@@ -2338,7 +2338,7 @@ gchar *GetDocRoot(void)
   path = g_strdup_printf("file://%s\\", bindir);
   g_free(bindir);
 #else
-  path = g_strdup_printf("file://%s/doc/%s-%s/", DATADIR, PACKAGE, VERSION);
+  path = g_strdup_printf("file://%s/doc/%s-%s/", DPDATADIR, PACKAGE, VERSION);
 #endif
   return path;
 }
@@ -2587,7 +2587,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
                             client (GTK+ or Win32)\n\
   -t, --text-client       force the use of a text-mode client (curses) (by\n\
                             default, a windowed client is used when possible)\n\
-  -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DATADIR);
+  -C, --convert=FILE      convert an \"old format\" score file to the new format\n"), DPDATADIR);
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
@@ -2621,7 +2621,8 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -t       force the use of a text-mode client (curses)\n\
               (by default, a windowed client is used when possible)\n\
   -C file  convert an \"old format\" score file to the new format\n\
-  -A       connect to a locally-running server for administration\n"), DATADIR);
+  -A       connect to a locally-running server for administration\n"),
+           DPDATADIR);
   PluginHelp();
 g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
@@ -2773,7 +2774,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
 {
   /* First, open the hard-coded high score file with possibly
    * elevated privileges */
-  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DATADIR);
+  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPDATADIR);
   HiScoreFile = g_strdup(priv_hiscore);
   OpenHighScoreFile();
   DropPrivileges();
