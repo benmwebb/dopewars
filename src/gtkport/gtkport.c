@@ -1504,7 +1504,7 @@ void gtk_window_update_focus(GtkWindow *window)
   if (FocusWnd) {
     widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWL_USERDATA));
     if (widget && GTK_WIDGET(window)->hWnd &&
-        GetParent(FocusWnd) == GTK_WIDGET(window)->hWnd) {
+        IsChild(GTK_WIDGET(window)->hWnd, FocusWnd)) {
       window->focus = widget;
     }
   }
