@@ -760,10 +760,10 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define MB_IMMRETURN 16
 
 #ifndef HAVE_GLIB2
-#define GTK_STOCK_OK      _("_OK")
-#define GTK_STOCK_CLOSE   _("_Close")
-#define GTK_STOCK_CANCEL  _("_Cancel")
-#define GTK_STOCK_REFRESH _("_Refresh")
+#define GTK_STOCK_OK      _("OK")
+#define GTK_STOCK_CLOSE   _("Close")
+#define GTK_STOCK_CANCEL  _("Cancel")
+#define GTK_STOCK_REFRESH _("Refresh")
 
 GtkWidget *gtk_button_new_from_stock(const gchar *label);
 #endif
