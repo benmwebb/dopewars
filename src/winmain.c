@@ -38,6 +38,7 @@
 #include "AIPlayer.h"
 #include "message.h"
 #include "serverside.h"
+#include "sound.h"
 #include "winmain.h"
 
 #ifdef CURSES_CLIENT
@@ -261,6 +262,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   while (split[argc] && split[argc][0])
     argc++;
 
+  SoundInit();
   GeneralStartup(argc, split);
   OpenLog();
   if (WantVersion || WantHelp) {
@@ -351,6 +353,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   g_free(PidFile);
   g_free(Log.File);
   g_free(ConvertFile);
+  SoundClose();
   return 0;
 }
 

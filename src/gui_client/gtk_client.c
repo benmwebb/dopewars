@@ -33,6 +33,7 @@
 #include "message.h"
 #include "nls.h"
 #include "serverside.h"
+#include "sound.h"
 #include "tstring.h"
 #include "util.h"
 #include "gtkport/gtkport.h"
@@ -495,6 +496,7 @@ void HandleClientMessage(char *pt, Player *Play)
                              Location[(int)Play->IsAt].Name);
     PrintMessage(text, "jet");
     g_free(text);
+    SoundPlay(Sounds.Jet);
     break;
   case C_ENDLIST:
     MenuItem = gtk_item_factory_get_widget(ClientData.Menu,
@@ -2218,6 +2220,8 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 
   if (!CheckHighScoreFileConfig())
     return TRUE;
+
+  SoundOpen(NULL);
 
   /* Create the main player */
   ClientData.Play = g_new(Player, 1);

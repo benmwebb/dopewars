@@ -41,6 +41,7 @@
 #include "network.h"
 #include "nls.h"
 #include "serverside.h"
+#include "sound.h"
 #include "tstring.h"
 #include "util.h"
 
@@ -1167,6 +1168,20 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
     *CanRunHere = *Loot = *CanFire = FALSE;
   }
   *Message = pt;
+
+  switch (*fp) {
+  case F_HIT:
+    SoundPlay(Sounds.FightHit);
+    break;
+  case F_MISS:
+    SoundPlay(Sounds.FightMiss);
+    break;
+  case F_RELOAD:
+    SoundPlay(Sounds.FightReload);
+    break;
+  default:
+    break;
+  }
 }
 
 void SendFightMessage(Player *Attacker, Player *Defender,
