@@ -430,6 +430,18 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
+static void metalist_row_select(GtkWidget *clist, gint row, gint column,
+                                GdkEvent *event, GtkWidget *conn_button)
+{
+  gtk_widget_set_sensitive(conn_button, TRUE);
+}
+
+static void metalist_row_unselect(GtkWidget *clist, gint row, gint column,
+                                  GdkEvent *event, GtkWidget *conn_button)
+{
+  gtk_widget_set_sensitive(conn_button, FALSE);
+}
+
 #ifdef NETWORKING
 void NewGameDialog(Player *play, NBCallBack sockstat)
 #else
@@ -606,6 +618,11 @@ void NewGameDialog(Player *play)
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(MetaServerConnect), NULL);
+  gtk_widget_set_sensitive(button, FALSE);
+  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
+                     GTK_SIGNAL_FUNC(metalist_row_select), button);
+  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
+                     GTK_SIGNAL_FUNC(metalist_row_unselect), button);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
