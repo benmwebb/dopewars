@@ -72,7 +72,12 @@ struct ClientDataStruct {
 };
 
 static struct ClientDataStruct ClientData;
-static gboolean InGame=FALSE,MetaServerRead=FALSE;
+static gboolean InGame=FALSE;
+
+#ifdef NETWORKING
+static gboolean MetaServerRead=FALSE;
+#endif
+
 static GtkWidget *FightDialog=NULL,*SpyReportsDialog;
 static gboolean IsShowingPlayerList=FALSE,IsShowingTalkList=FALSE,
                 IsShowingInventory=FALSE,IsShowingGunShop=FALSE;
@@ -87,9 +92,13 @@ static void NewGameDialog();
 static void StartGame();
 static void EndGame();
 static void UpdateMenus();
+
+#ifdef NETWORKING
 static void GetClientMessage(gpointer data,gint socket,
                              GdkInputCondition condition);
 static void SetSocketWriteTest(Player *Play,gboolean WriteTest);
+#endif
+
 static void HandleClientMessage(char *buf,Player *Play);
 static void PrepareHighScoreDialog();
 static void AddScoreToDialog(char *Data);
@@ -254,6 +263,7 @@ void ListInventory(GtkWidget *widget,gpointer data) {
    gtk_widget_show_all(window);
 }
 
+#ifdef NETWORKING
 void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
@@ -284,6 +294,7 @@ void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
                              GetClientMessage,NULL);
    }
 }
+#endif /* NETWORKING */
 
 void HandleClientMessage(char *pt,Player *Play) {
    char *Data,Code,AICode,DisplayMode;
@@ -1508,16 +1519,18 @@ void StartGame() {
    Player *Play;
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
+#ifdef NETWORKING
    BindNetworkBufferToSocket(&Play->NetBuf,ClientSock);
+#endif
    InitAbilities(Play);
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
    SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);
    InGame=TRUE;
    UpdateMenus();
-   if (Network) {
-      SetSocketWriteTest(Play,TRUE);
-   }
+#ifdef NETWORKING
+   if (Network) SetSocketWriteTest(Play,TRUE);
+#endif
    gtk_widget_show_all(ClientData.vbox);
    UpdatePlayerLists();
 }
@@ -1699,7 +1712,9 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
 /* Set up message handlers */
    ClientMessageHandlerPt = HandleClientMessage;
    ClientData.GdkInputTag=0;
+#ifdef NETWORKING
    SocketWriteTestPt = SetSocketWriteTest;
+#endif
 
 /* Have the GLib log messages pop up in a nice dialog box */
    g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
@@ -1869,6 +1884,7 @@ struct StartGameStruct {
    gint ConnectTag;
 };
 
+#ifdef NETWORKING
 static void FinishServerConnect(gpointer data,gint socket,
                                 GdkInputCondition condition) {
    gchar *text,*NetworkError;
@@ -1923,17 +1939,6 @@ static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
                                                 0,-1);
    if (!ClientData.PlayerName || !ClientData.PlayerName[0]) return;
    DoConnect(widgets);
-}
-
-static void StartSinglePlayer(GtkWidget *widget,
-                              struct StartGameStruct *widgets) {
-   WantAntique=
-          gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->antique));
-   g_free(ClientData.PlayerName);
-   ClientData.PlayerName=gtk_editable_get_chars(GTK_EDITABLE(widgets->name),
-                                                0,-1);
-   StartGame();
-   gtk_widget_destroy(widgets->dialog);
 }
 
 static void FillMetaServerList(struct StartGameStruct *widgets) {
@@ -2007,23 +2012,39 @@ static void MetaServerConnect(GtkWidget *widget,
       DoConnect(widgets);
    }
 }
+#endif /* NETWORKING */
+
+static void StartSinglePlayer(GtkWidget *widget,
+                              struct StartGameStruct *widgets) {
+   WantAntique=
+          gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widgets->antique));
+   g_free(ClientData.PlayerName);
+   ClientData.PlayerName=gtk_editable_get_chars(GTK_EDITABLE(widgets->name),
+                                                0,-1);
+   StartGame();
+   gtk_widget_destroy(widgets->dialog);
+}
 
 static void CloseNewGameDia(GtkWidget *widget,
                             struct StartGameStruct *widgets) {
+#ifdef NETWORKING
    if (widgets->ConnectTag!=0) {
-      gdk_input_remove(widgets->ConnectTag); CloseSocket(ClientSock);
+      gdk_input_remove(widgets->ConnectTag);
+      CloseSocket(ClientSock);
       widgets->ConnectTag=0;
    }
+#endif
 }
 
 void NewGameDialog() {
    GtkWidget *vbox,*vbox2,*hbox,*label,*entry,*notebook,*frame,*button;
-   GtkWidget *table,*clist,*scrollwin,*dialog,*hbbox;
+   GtkWidget *dialog;
    GtkAccelGroup *accel_group;
-   gchar *text;
-   gchar *server_titles[5],*ServerEntry;
    static struct StartGameStruct widgets;
    guint AccelKey;
+#ifdef NETWORKING
+   GtkWidget *clist,*scrollwin,*table,*hbbox;
+   gchar *server_titles[5],*ServerEntry,*text;
    gboolean UpdateMeta=FALSE;
 
 /* Column titles of metaserver information */
@@ -2032,6 +2053,7 @@ void NewGameDialog() {
    server_titles[2]=_("Version");
    server_titles[3]=_("Players");
    server_titles[4]=_("Comment");
+#endif /* NETWORKING */
 
    widgets.ConnectTag=0;
    widgets.dialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
@@ -2042,7 +2064,9 @@ void NewGameDialog() {
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                 GTK_WINDOW(ClientData.window));
+#ifdef NETWORKING
    gtk_window_set_default_size(GTK_WINDOW(dialog),500,300);
+#endif
    accel_group=gtk_accel_group_new();
 
 /* Title of 'New Game' dialog */
@@ -2072,6 +2096,7 @@ void NewGameDialog() {
 
    notebook=gtk_notebook_new();
 
+#ifdef NETWORKING
    frame=gtk_frame_new(_("Server"));
    gtk_container_set_border_width(GTK_CONTAINER(frame),4);
    vbox2=gtk_vbox_new(FALSE,7);
@@ -2125,6 +2150,7 @@ void NewGameDialog() {
 
    label=gtk_label_new(_("Server"));
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
+#endif /* NETWORKING */
 
 /* Title of 'New Game' dialog notebook tab for single-player mode */
    frame=gtk_frame_new(_("Single player"));
@@ -2152,6 +2178,7 @@ void NewGameDialog() {
    label=gtk_label_new(_("Single player"));
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
 
+#ifdef NETWORKING
 /* Title of Metaserver frame in New Game dialog */
    frame=gtk_frame_new(_("Metaserver"));
    gtk_container_set_border_width(GTK_CONTAINER(frame),4);
@@ -2192,6 +2219,8 @@ void NewGameDialog() {
 
    label=gtk_label_new(_("Metaserver"));
    gtk_notebook_append_page(GTK_NOTEBOOK(notebook),frame,label);
+#endif /* NETWORKING */
+
    gtk_box_pack_start(GTK_BOX(vbox),notebook,TRUE,TRUE,0);
 
 /* Caption of status label in New Game dialog before anything has happened */
@@ -2201,11 +2230,13 @@ void NewGameDialog() {
    gtk_container_add(GTK_CONTAINER(widgets.dialog),vbox);
 
    gtk_widget_grab_focus(widgets.name);
+#ifdef NETWORKING
    if (UpdateMeta) {
       UpdateMetaServerList(NULL,&widgets);
    } else {
       FillMetaServerList(&widgets);
    }
+#endif
 
    gtk_widget_show_all(widgets.dialog);
    gtk_notebook_set_page(GTK_NOTEBOOK(notebook),NewGameType);

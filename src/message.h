@@ -177,10 +177,12 @@ int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
 void ReceiveDrugsHere(char *text,Player *To);
 gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
                                Player *To,char *Data,char *DisplayMode);
+#ifdef NETWORKING
 char *OpenMetaServerConnection(int *HttpSock);
 void CloseMetaServerConnection(int HttpSock);
 void ClearServerList();
 void ReadMetaServerData(int HttpSock);
+#endif
 void InitAbilities(Player *Play);
 void SendAbilities(Player *Play);
 void ReceiveAbilities(Player *Play,gchar *Data);

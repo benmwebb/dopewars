@@ -136,8 +136,9 @@ void SetReuse(SOCKET sock);
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <errno.h>
 #endif /* NETWORKING */
+
+#include <errno.h>
 
 /* Only include sys/wait.h on those systems which support it */
 #if HAVE_SYS_WAIT_H

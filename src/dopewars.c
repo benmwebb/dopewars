@@ -1751,6 +1751,7 @@ GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
 
 #ifndef CYGWIN
 
+#ifdef NETWORKING
 static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                              const gchar *message,gpointer user_data) {
    GString *text;
@@ -1759,6 +1760,7 @@ static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
       g_print("%s\n",text->str); g_string_free(text,TRUE);
    }
 }
+#endif
 
 /* Standard program entry - Win32 uses WinMain() instead, in winmain.c */
 int main(int argc,char *argv[]) {
@@ -1771,8 +1773,11 @@ int main(int argc,char *argv[]) {
       if (WantVersion || WantHelp) {
          HandleHelpTexts();
       } else {
+#ifdef NETWORKING
          StartNetworking();
+#endif
          if (Server) {
+#ifdef NETWORKING
 #ifdef GUI_SERVER
             gtk_set_locale();
             gtk_init(&argc,&argv);
@@ -1781,7 +1786,13 @@ int main(int argc,char *argv[]) {
 /* Deal with dopelog() stuff nicely */
             g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
             ServerLoop();
-#endif
+#endif /* GUI_SERVER */
+#else
+            g_print(_("This binary has been compiled without networking "
+                      "support, and thus cannot run\nin server mode. "
+                      "Recompile passing --enable-networking to the "
+                      "configure script.\n"));
+#endif /* NETWORKING */
          } else if (AIPlayer) {
             AIPlayerLoop();
          } else switch(WantedClient) {
@@ -1793,7 +1804,9 @@ int main(int argc,char *argv[]) {
             case CLIENT_CURSES:
                CursesLoop(); break;
          }
+#ifdef NETWORKING
          StopNetworking();
+#endif
       }
    }
    CloseHighScoreFile();

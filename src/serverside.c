@@ -76,7 +76,9 @@ gboolean MetaPlayerPending=FALSE;
 
 GSList *FirstServer=NULL;
 
+#ifdef NETWORKING
 static GScanner *Scanner;
+#endif
 
 /* Data waiting to be sent to/read from the metaserver */
 NetworkBuffer MetaNetBuf;
@@ -205,6 +207,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 #endif /* NETWORKING */
 }
 
+#ifdef NETWORKING
 void HandleServerPlayer(Player *Play) {
    gchar *buf;
    gboolean MessageRead=FALSE;
@@ -218,6 +221,7 @@ void HandleServerPlayer(Player *Play) {
       Play->IdleTimeout=time(NULL)+(time_t)IdleTimeout;
    }
 }
+#endif /* NETWORKING */
 
 void SendPlayerDetails(Player *Play,Player *To,char Code) {
 /* Sends details (name, ID) about player "Play" to player "To", using */

@@ -1004,7 +1004,9 @@ void SwitchToSinglePlayer(Player *Play) {
       FirstClient=RemovePlayer((Player *)g_slist_next(FirstClient)->data,
                                FirstClient);
    }
+#ifdef NETWORKING
    CloseSocket(ClientSock);
+#endif
    CleanUpServer();
    Network=Server=Client=FALSE;
    InitAbilities(Play);
@@ -1135,6 +1137,7 @@ gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
    return TRUE;
 }
 
+#ifdef NETWORKING
 char *OpenMetaServerConnection(int *HttpSock) {
    static char NoHost[] = N_("Cannot locate metaserver");
    static char NoSocket[] = N_("Cannot create socket");
@@ -1218,6 +1221,7 @@ void ReadMetaServerData(int HttpSock) {
       }
    }
 }
+#endif /* NETWORKING */
 
 void SendFightReload(Player *To) {
    SendFightMessage(To,NULL,0,F_RELOAD,FALSE,FALSE,NULL);

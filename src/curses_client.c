@@ -44,7 +44,11 @@ static void PrintHighScore(char *Data);
 
 static int ResizedFlag;
 static SCREEN *cur_screen;
+
+#ifdef NETWORKING
 static char ConnectMethod=CM_SERVER;
+#endif
+
 static gboolean CanFire=FALSE,RunHere=FALSE;
 static gchar FightPoint;
 
@@ -1495,19 +1499,23 @@ static void Curses_DoGame(Player *Play) {
 /* dopewars is essentially server-driven, so this loop simply has to    */
 /* make the screen look pretty, respond to user keypresses, and react   */
 /* to messages from the server.                                         */
-   gchar *buf,*OldName,*TalkMsg,*pt;
+   gchar *buf,*OldName,*TalkMsg;
    GString *text;
    int i,c;
    char IsCarrying;
 #if NETWORKING || HAVE_SELECT
-   fd_set readfs,writefs;
+   fd_set readfs;
+#endif
+#ifdef NETWORKING
+   fd_set writefs;
+   gboolean DoneOK;
+   gchar *pt;
 #endif
    int NumDrugsHere;
    int MaxSock;
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
-   gboolean DoneOK;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
