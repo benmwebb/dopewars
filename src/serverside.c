@@ -177,19 +177,22 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
 
    g_string_assign(query,"output=text&");
 
-   g_string_sprintfa(query,"up=%d&port=%d&version=%s&players=%d"
-                     "&maxplay=%d&comment=%s",
-                     Up ? 1 : 0,Port,VERSION,CountPlayers(FirstServer),
-                     MaxClients,MetaServer.Comment);
-
+   g_string_sprintfa(query,"up=%d&port=%d&version=",Up ? 1 : 0,Port);
+   AddURLEnc(query,VERSION);
+   g_string_sprintfa(query,"&players=%d&maxplay=%d&comment=",
+                     CountPlayers(FirstServer),MaxClients);
+   AddURLEnc(query,MetaServer.Comment);
 
    if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
       for (i=0;i<NUMHISCORE;i++) {
          if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-            g_string_sprintfa(query,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
-                              i,MultiScore[i].Name,i,MultiScore[i].Time,
-                              i,MultiScore[i].Dead ? "dead" : "alive",
-                              i,prstr=FormatPrice(MultiScore[i].Money));
+            g_string_sprintfa(query,"&nm[%d]=",i);
+            AddURLEnc(query,MultiScore[i].Name);
+            g_string_sprintfa(query,"&dt[%d]=",i);
+            AddURLEnc(query,MultiScore[i].Time);
+            g_string_sprintfa(query,"&st[%d]=%s&sc[%d]=",i,
+                              MultiScore[i].Dead ? "dead" : "alive",i);
+            AddURLEnc(query,prstr=FormatPrice(MultiScore[i].Money));
             g_free(prstr);
          }
       }

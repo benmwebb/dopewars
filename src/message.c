@@ -600,6 +600,27 @@ void chomp(char *str) {
    if (str[len-1]=='\n') str[len-1]=0;
 }
 
+void AddURLEnc(GString *str,gchar *unenc) {
+/* Adds the plain text string "unenc" to the end of the GString "str", */
+/* replacing "special" characters in the same way as the               */
+/* application/x-www-form-urlencoded media type, suitable for sending  */
+/* to CGI scripts etc.                                                 */ 
+   int i;
+   if (!unenc || !str) return;
+   for (i=0;i<strlen(unenc);i++) {
+      if ((unenc[i]>='a' && unenc[i]<='z') ||
+          (unenc[i]>='A' && unenc[i]<='Z') ||
+          (unenc[i]>='0' && unenc[i]<='9') ||
+          unenc[i]=='-' || unenc[i]=='_' || unenc[i]=='.') {
+         g_string_append_c(str,unenc[i]);
+      } else if (unenc[i]==' ') {
+         g_string_append_c(str,'+');
+      } else {
+         g_string_sprintfa(str,"%%%02X",unenc[i]);
+      }
+   }
+}
+
 void BroadcastToClients(char AICode,char Code,char *Data,
                         Player *From,Player *Except) {
 /* Sends the message made up of AICode,Code and Data to all players except */

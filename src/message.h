@@ -150,6 +150,7 @@ extern GSList *FirstClient;
 extern void (*ClientMessageHandlerPt) (char *,Player *);
 extern void (*SocketWriteTestPt) (Player *,gboolean);
 
+void AddURLEnc(GString *str,gchar *unenc);
 void chomp(char *str);
 void BroadcastToClients(char AICode,char Code,char *Data,Player *From,
                         Player *Except);
