@@ -42,5 +42,6 @@ void SoundInit(void);
 void SoundOpen(gchar *drivername);
 void SoundClose(void);
 void SoundPlay(const gchar *snd);
+void SoundEnable(gboolean enable);
 
 #endif /* __DP_SOUND_H__ */

@@ -47,6 +47,7 @@
 static SoundDriver *driver = NULL;
 static GSList *driverlist = NULL;
 typedef SoundDriver *(*InitFunc)(void);
+static gboolean sound_enabled = TRUE;
 
 gchar *GetPluginList(void)
 {
@@ -194,6 +195,7 @@ void SoundOpen(gchar *drivername)
       g_free(err);
     }
   }
+  sound_enabled = TRUE;
 }
 
 void SoundClose(void)
@@ -221,7 +223,12 @@ void SoundClose(void)
 
 void SoundPlay(const gchar *snd)
 {
-  if (driver && driver->play && snd && snd[0]) {
+  if (sound_enabled && driver && driver->play && snd && snd[0]) {
     driver->play(snd);
   }
+}
+
+void SoundEnable(gboolean enable)
+{
+  sound_enabled = enable;
 }

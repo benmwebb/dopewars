@@ -2111,6 +2111,7 @@ static void Curses_DoGame(Player *Play)
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, buf);
   g_free(buf);
   g_free(OldName);
+  SoundPlay(Sounds.StartGame);
 
   text = g_string_new("");
 
@@ -2454,6 +2455,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   FirstClient = AddPlayer(0, Play, FirstClient);
   do {
     Curses_DoGame(Play);
+    SoundPlay(Sounds.EndGame);
     ShutdownNetwork(Play);
     CleanUpServer();
     RestoreConfig();

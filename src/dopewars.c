@@ -157,7 +157,8 @@ struct NAMES Names = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 struct SOUNDS Sounds = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL
 };
 
 /* N.B. The slightly over-enthusiastic comments here are for the benefit
@@ -405,6 +406,18 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &Sounds.FightReload, NULL, "Sounds.FightReload",
    N_("Sound file played when guns are reloaded"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.EnemyBitchKilled, NULL, "Sounds.EnemyBitchKilled",
+   N_("Sound file played when an enemy bitch/deputy is killed"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.BitchKilled, NULL, "Sounds.BitchKilled",
+   N_("Sound file played when one of your bitches is killed"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.EnemyKilled, NULL, "Sounds.EnemyKilled",
+   N_("Sound file played when another player or cop is killed"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.Killed, NULL, "Sounds.Killed",
+   N_("Sound file played when you are killed"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.Jet, NULL, "Sounds.Jet",
    N_("Sound file played on arriving at a new location"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0},
@@ -419,6 +432,12 @@ struct GLOBALS Globals[] = {
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.LeaveGame, NULL, "Sounds.LeaveGame",
    N_("Sound file played when a player leaves the game"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.StartGame, NULL, "Sounds.StartGame",
+   N_("Sound file played at the start of the game"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.EndGame, NULL, "Sounds.EndGame",
+   N_("Sound file played at the end of the game"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {&DrugSortMethod, NULL, NULL, NULL, NULL, "DrugSortMethod",
    N_("Sort key for listing available drugs"),

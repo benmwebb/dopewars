@@ -1234,6 +1234,12 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
   switch (*fp) {
   case F_HIT:
     SoundPlay(Sounds.FightHit);
+    if (*BitchesKilled > 0) {
+      SoundPlay(*DefendName[0] ? Sounds.EnemyBitchKilled : Sounds.BitchKilled);
+    }
+    if (*DefendHealth <= 0) {
+      SoundPlay(*DefendName[0] ? Sounds.EnemyKilled : Sounds.Killed);
+    }
     break;
   case F_MISS:
     SoundPlay(Sounds.FightMiss);

@@ -1929,6 +1929,7 @@ void GuiStartGame(void)
   UpdateMenus();
   gtk_widget_show_all(ClientData.vbox);
   UpdatePlayerLists();
+  SoundPlay(Sounds.StartGame);
 }
 
 void EndGame(void)
@@ -1942,6 +1943,7 @@ void EndGame(void)
   RestoreConfig();
   InGame = FALSE;
   UpdateMenus();
+  SoundPlay(Sounds.EndGame);
 }
 
 static void ChangeDrugSort(GtkCList *clist, gint column,
