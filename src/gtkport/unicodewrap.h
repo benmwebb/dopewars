@@ -66,6 +66,7 @@ BOOL myGetMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin,
 LONG myDispatchMessage(CONST MSG *lpmsg);
 BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg);
 size_t myw32strlen(const char *str);
+LRESULT myComboBox_AddString(HWND hWnd, LPCTSTR text);
 
 #endif /* CYGWIN */
 

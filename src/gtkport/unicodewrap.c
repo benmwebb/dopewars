@@ -473,4 +473,18 @@ size_t myw32strlen(const char *str)
   }
 }
 
+LRESULT myComboBox_AddString(HWND hWnd, LPCTSTR text)
+{
+  LRESULT retval;
+  if (unicode_support) {
+    gunichar2 *w32text;
+    w32text = strtow32(text, -1);
+    retval = SendMessageW(hWnd, CB_ADDSTRING, 0, (LPARAM)w32text);
+    g_free(w32text);
+  } else {
+    retval = SendMessageA(hWnd, CB_ADDSTRING, 0, (LPARAM)text);
+  }
+  return retval;
+}
+
 #endif /* CYGWIN */

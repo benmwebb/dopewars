@@ -4700,8 +4700,9 @@ void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu)
     for (list = GTK_MENU_SHELL(menu)->children; list;
          list = g_slist_next(list)) {
       menu_item = GTK_MENU_ITEM(list->data);
-      if (menu_item && menu_item->text)
-        mySendMessage(hWnd, CB_ADDSTRING, 0, (LPARAM)menu_item->text);
+      if (menu_item && menu_item->text) {
+        myComboBox_AddString(hWnd, menu_item->text);
+      }
     }
     mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)GTK_MENU(menu)->active, 0);
   }
