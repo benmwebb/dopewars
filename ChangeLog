@@ -3,6 +3,8 @@ cvs
       + and - keys
     - The curses client now makes better use of space with screen sizes
       larger than 80x24
+    - Fix for a crash encountered if you drop drugs and then encounter
+      the cops
 
 1.5.8   21-10-2002
     - Options dialog now allows sounds for all supported game events to be set

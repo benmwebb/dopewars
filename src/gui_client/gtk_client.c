@@ -834,12 +834,12 @@ static void FightCallback(GtkWidget *widget, gpointer data)
   case 'D':
     gtk_widget_hide(FightDialog);
     if (!(Play->Flags & FIGHTING)) {
-      if (HaveAbility(Play, A_DONEFIGHT)) {
-        SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
-      }
       FreeCombatants();
       gtk_widget_destroy(FightDialog);
       FightDialog = NULL;
+      if (HaveAbility(Play, A_DONEFIGHT)) {
+        SendClientMessage(Play, C_NONE, C_DONE, NULL, NULL);
+      }
     }
     break;
   case 'R':
@@ -1583,10 +1583,11 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
 
   text = g_strdup_printf("drug^%d^%d", DealDialog.DrugInd,
                          data == BT_BUY ? amount : -amount);
-  SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL, text);
-  g_free(text);
 
   gtk_widget_destroy(DealDialog.dialog);
+
+  SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL, text);
+  g_free(text);
 }
 
 void DealDrugs(GtkWidget *widget, gpointer data)
