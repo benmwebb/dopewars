@@ -1777,7 +1777,7 @@ void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
  * Read a configuration file given by "FileName"; GScanner under Win32
  * doesn't work properly with files, so we use a nasty workaround.
  */
-void ReadConfigFile(char *FileName)
+static gboolean ReadConfigFile(char *FileName)
 {
   FILE *fp;
 
@@ -1795,7 +1795,7 @@ void ReadConfigFile(char *FileName)
     read_string(fp, &buf);
     if (!buf) {
       fclose(fp);
-      return;
+      return TRUE;
     }
     g_scanner_input_text(scanner, buf, strlen(buf));
 #else
@@ -1813,6 +1813,9 @@ void ReadConfigFile(char *FileName)
 #ifdef CYGWIN
     g_free(buf);
 #endif
+    return TRUE;
+  } else {
+    return FALSE;
   }
 }
 
@@ -1833,6 +1836,22 @@ gboolean ParseNextConfig(GScanner *scanner, gboolean print)
                           NULL, NULL, FALSE);
     return FALSE;
   }
+
+  if (g_strcasecmp(scanner->value.v_identifier, "include") == 0) {
+    token = g_scanner_get_next_token(scanner);
+    if (token == G_TOKEN_STRING) {
+      if (!ReadConfigFile(scanner->value.v_string)) {
+        g_scanner_error(scanner, _("Unable to open file %s"),
+                        scanner->value.v_string);
+      }
+      return TRUE;
+    } else {
+      g_scanner_unexp_token(scanner, G_TOKEN_STRING, NULL, NULL,
+                            NULL, NULL, FALSE);
+      return FALSE;
+    }
+  }
+
   ID1 = g_strdup(scanner->value.v_identifier);
   token = g_scanner_get_next_token(scanner);
   if (token == G_TOKEN_LEFT_BRACE) {
