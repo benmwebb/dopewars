@@ -20,15 +20,13 @@ may be still be included, however. If you do not want to use "rpm", or the
 installation fails, then you can obtain the source code tarball and recompile
 the code from scratch.</p>
 
-<p><b>Prerequisites:</b> dopewars relies on the screen library curses (or the
-equivalent, such as ncurses or cur_colr, for the text-mode client), the GLib
-library, and the X toolkit <a href="http://www.gtk.org/">GTK+</a> (for the
-graphical client) but otherwise aims to be usable without modification on a
-wide variety of Unix variants. The <a href="#tarball">tarball</a> can also be
-compiled using the freely available
-<a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> suite for Win32
-systems, to yield a Windows binary. dopewars is developed and tested on RedHat
-Linux systems.</p>
+<p><b>Prerequisites:</b> dopewars relies on the GLib library for all builds;
+this library is used for parsing the configuration files, network and string
+handling, and many other purposes. On a Windows system, this is the only
+prequisite; the standard Windows libraries are used for everything else. On a
+Unix/Linux system, you will also need the screen library curses (or the
+equivalent, such as ncurses or cur_colr) for the text-mode client, and the
+<a href="http://www.gtk.org/">GTK+</a> libraries for the graphical client.</p>
 
 <ul>
 <li><a href="#rpmbinary">RPM binary installation</a>
@@ -92,7 +90,16 @@ the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 <p>If you don't have, or don't want to use, RPM, you can obtain the source code
 in gzipped, tarred ("tarball") format and recompile and install it yourself.
 This is also usually a necessity if you cannot become root (the superuser) on
-your Unix box.</p>
+your Unix box, or if you wish to build the Windows version from source code.</p>
+
+<p>Before beginning, you should ensure that you have all the necessary
+prequisites (see above). To compile on a Windows system, you should install
+the free <a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> suite, and
+use the included compiler. (You could use a different C/C++ Windows compiler,
+but you'll have to write your project files if you do this.) On either Windows
+or Unix systems, you will need to get the GLib library first, available for
+Unix <a href="http://www.gtk.org/download/">here</a> or for Windows
+<a href="http://user.sgic.fi/~tml/gimp/win32/downloads.html">here</a>.</p>
 
 <ol>
 <li>Download the
@@ -131,6 +138,6 @@ with a command such as<br>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>17-06-2001</b></p>
+<p>Last update: <b>18-06-2001</b></p>
 </body>
 </html>
