@@ -7,6 +7,7 @@ URL:           http://dopewars.sourceforge.net/
 License:       GPL
 Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz
+Obsoletes:     dopewars-esd = 1.5.7
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires: SDL_mixer-devel, esound-devel
 
@@ -22,14 +23,6 @@ have one month of game time to make your fortune.
 dopewars supports multiple players via. TCP/IP. Chatting to and fighting
 with other players (computer or human) is supported; check the command line
 switches (via dopewars -h) for further information. 
-
-%package esd
-Summary:  dopewars ESD sound plugin
-Group:    Amusements/Games
-Requires: %{name}
-%description esd
-This package adds a plugin to dopewars to allow sound to be output via.
-the ESD (Esound) daemon.
 
 %package sdl
 Summary:  dopewars SDL_mixer sound plugin
@@ -66,6 +59,7 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %attr(2755,root,games) %{_bindir}/dopewars
 %attr(0660,root,games) %config %{_datadir}/dopewars.sco
 %{_mandir}/man6/dopewars.6.gz
+%{_libdir}/dopewars/libsound_esd.so
 %{_datadir}/gnome/apps/Games/dopewars.desktop
 %{_datadir}/pixmaps/dopewars-pill.png
 %{_datadir}/pixmaps/dopewars-weed.png
@@ -83,15 +77,15 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_datadir}/dopewars/shotdown.wav
 %{_datadir}/dopewars/train.wav
 
-%files esd
-%defattr(-,root,root)
-%{_libdir}/dopewars/libsound_esd.so
-
 %files sdl
 %defattr(-,root,root)
 %{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
+* Fri Oct 18 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+- ESD plugin incorporated into main package
+- Sound files added to distribution
+
 * Fri Jun 21 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
 - Description typos corrected
 - A lot of hardcoded texts replaced with %{name} etc.
