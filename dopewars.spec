@@ -9,6 +9,7 @@ Group:     Amusements/Games
 Source0:   dopewars-cvs.tar.gz
 
 BuildRoot: /tmp/dopewars-rpm
+BuildRequires: SDL_mixer-devel, esound-devel
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -22,6 +23,23 @@ have one month of game time to make your fortune.
 dopewars supports multiple players via. TCP/IP. Chatting to and fighting
 with other players (computer or human) is supported; check the command line
 switches (via dopewars -h) for further information. 
+
+%package esd
+Summary:  dopewars ESD sound plugin
+Group:    Amusements/Games
+Requires: dopewars
+%description esd
+This package adds a plugin to dopewars to allow sound to be output via.
+the ESD (Esound) daemon.
+
+%package sdl
+Summary:  dopewars SDL_mixer sound plugin
+Group:    Amusements/Games
+Requires: dopewars
+%description sdl
+This package adds a plugin to dopewars to allow sound to be output via.
+the Simple DirectMedia Layer mixer (SDL_mixer)
+the ESD (Esound) daemon.
 
 %prep
 %setup
@@ -54,7 +72,18 @@ rm -rf ${RPM_BUILD_ROOT}
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
 /usr/share/locale/fr/LC_MESSAGES/dopewars.mo
 
+%files esd
+%defattr(-,root,root)
+/usr/lib/dopewars/libsound_esd.so
+
+%files sdl
+%defattr(-,root,root)
+/usr/lib/dopewars/libsound_sdl.so
+
 %changelog
+* Mon May 13 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+- SDL and ESD plugin subpackages added
+
 * Sun Feb 03 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
 - Use of %attr tidied up
 - Rebuild with new version
