@@ -70,7 +70,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
    while (split[argc]) argc++;
-// g_set_print_handler(Win32PrintFunc);
    HandleCmdLine(argc,split);
    g_strfreev(split);
    if (WantVersion || WantHelp) {
@@ -85,6 +84,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          SetConsoleTitle(_("dopewars server"));
          g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                            ServerLogMessage,NULL);
+         g_set_print_handler(Win32PrintFunc);
          newterm(NULL,NULL,NULL);
          ServerLoop();
       } else if (WantedClient==CLIENT_CURSES) {
