@@ -1490,6 +1490,8 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
    int IntVal,NewNum;
    Player *tmp;
    GSList *list,*StartList;
+   gboolean parsed;
+
    if (!CheckMaxIndex(scanner,GlobalIndex,StructIndex,IndexGiven)) return;
    if (Globals[GlobalIndex].NameStruct[0]) {
       GlobalName=g_strdup_printf("%s[%d].%s",Globals[GlobalIndex].NameStruct,
@@ -1519,27 +1521,36 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                                NULL,NULL,FALSE); return;
       }
    } else if (Globals[GlobalIndex].BoolVal) {
-      scanner->config->identifier_2_string=TRUE;
       scanner->config->cset_identifier_first=
-          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+          G_CSET_a_2_z "01" G_CSET_A_2_Z;
       scanner->config->cset_identifier_nth=
-          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+          G_CSET_a_2_z G_CSET_A_2_Z;
       token=g_scanner_get_next_token(scanner);
-      if (token==G_TOKEN_INT || token==G_TOKEN_STRING) {
-         *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=
-            (token==G_TOKEN_INT && scanner->value.v_int>0) ||
-            (token==G_TOKEN_STRING && 
-             (strcasecmp(scanner->value.v_string,_("TRUE"))==0 ||
-              strcasecmp(scanner->value.v_string,_("YES"))==0 ||
-              strcasecmp(scanner->value.v_string,_("ON"))==0));
-      } else {
-         g_scanner_unexp_token(scanner,G_TOKEN_INT,NULL,NULL,
-                               NULL,NULL,FALSE); return;
-      }
-      scanner->config->identifier_2_string=FALSE;
       scanner->config->cset_identifier_first=G_CSET_a_2_z "_" G_CSET_A_2_Z;
       scanner->config->cset_identifier_nth=
               G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
+      parsed=FALSE;
+      if (token==G_TOKEN_IDENTIFIER) {
+         if (strcasecmp(scanner->value.v_identifier,_("TRUE"))==0 ||
+             strcasecmp(scanner->value.v_identifier,_("YES"))==0 ||
+             strcasecmp(scanner->value.v_identifier,_("ON"))==0 ||
+             strcmp(scanner->value.v_identifier,"1")==0) {
+            parsed=TRUE;
+            *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=TRUE;
+         } else if (strcasecmp(scanner->value.v_identifier,_("FALSE"))==0 ||
+             strcasecmp(scanner->value.v_identifier,_("NO"))==0 ||
+             strcasecmp(scanner->value.v_identifier,_("OFF"))==0 ||
+             strcmp(scanner->value.v_identifier,"0")==0) {
+            parsed=TRUE;
+            *((gboolean *)GetGlobalPointer(GlobalIndex,StructIndex))=FALSE;
+         }
+      }
+      if (!parsed) {
+         g_scanner_unexp_token(scanner,G_TOKEN_NONE,NULL,NULL,NULL,
+                 _("expected a boolean value (one of 0, OFF, NO, FALSE, "
+                 "1, ON, YES, TRUE)"),FALSE);
+         return;
+      }
    } else if (Globals[GlobalIndex].PriceVal) {
       token=g_scanner_get_next_token(scanner);
       if (token==G_TOKEN_INT) {
