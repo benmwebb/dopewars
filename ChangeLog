@@ -29,7 +29,7 @@
       removed - only an old client connecting to a new server will
       trigger them)
     - Bug fix: when the buttons in the Fight dialog are not visible to a
-      mouse user, previously you were able to access them via. the keyboard
+      mouse user, previously you were able to access them via the keyboard
       shortcuts; now fixed.
     - configure should now work properly if GLib 2.0 is installed but
       GTK2.0 is not
@@ -113,7 +113,7 @@
     - Simple installer now in place for Win32 systems
 
 1.5.1   19-06-2001
-    - Improved logging in server via. LogLevel and LogTimestamp variables
+    - Improved logging in server via LogLevel and LogTimestamp variables
     - Metaserver (both client and server) moved to SourceForge
     - Icons (courtesy of Ocelot Mantis) and GNOME desktop entry added
 
@@ -139,7 +139,7 @@
 1.5.0beta1 08-04-2001
     - Completely rewritten fighting code
     - Internationalization (i18n) support
-    - Tense and case-sensitive translated strings handled via. dpg_ analogues
+    - Tense and case-sensitive translated strings handled via dpg_ analogues
       to glib's g_ string handling functions %P = price,
       %Txx or %txx = tense-sensitive string, %/.../ = comment (ignored)
     - Networking revamped - now uses nonblocking sockets to improve server
@@ -159,7 +159,7 @@
       client-specific code now placed in <xxx>_client.c, while generic code is
       in message.c
     - GTK+ client added
-    - Native "pointy-clicky" Win32 graphical client added (via. GTK+ emulation)
+    - Native "pointy-clicky" Win32 graphical client added (via GTK+ emulation)
     - GLib dependency introduced; string and list handling is taken care of
       now by GLib routines
     - Configuration files now handled by GLib's GScanner; "string lists"
@@ -210,7 +210,7 @@
     - Option to allow the "local" server name to be specified when registering
       with the metaserver - MetaServer.LocalName variable. Useful when the
       metaserver refuses to resolve your IP address to your "preferred" domain
-      name or when connecting via. an enforced web proxy. Email the metaserver
+      name or when connecting via an enforced web proxy. Email the metaserver
       maintainer, for an authentication password (MetaServer.Password) linked to
       your chosen domain name, to use this option successfully.
 
@@ -243,7 +243,7 @@
       client to list the servers, prompt the user for a server, or play
       in single-player mode, rather than connecting immediately to a server
     - "MetaServer.Port" variable added to facilitate connection to the
-      metaserver via. a proxy server (with thanks to Tony Brown)
+      metaserver via a proxy server (with thanks to Tony Brown)
     - Signal handling cleaned up
     - Buffer overflow problem with ExtractWord() fixed (hopefully) (with thanks
       to Lamagra)

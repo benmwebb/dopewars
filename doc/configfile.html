@@ -111,7 +111,7 @@ accept connections coming in on any valid network interface.
 <dt><b>Socks.Active=<i>FALSE</i></b></dt>
 <dd>Instructs the dopewars client to connect directly to the given server,
 without using an intermediate SOCKS server. If this is set to TRUE, all
-connections go via. the SOCKS server. By default, SOCKS is not used for
+connections go via the SOCKS server. By default, SOCKS is not used for
 metaserver communications - see the MetaServer.UseSocks variable. N.B. You
 cannot run a dopewars server behind a SOCKS server, due to limitations in
 the SOCKS protocol.</dd>
@@ -199,15 +199,15 @@ This setting, if set to TRUE, can be overridden by the -S
 <dd>Tells dopewars that the metaserver is located at
 <i>dopewars.sourceforge.net</i>. See the
 <a href="metaserver.html">metaserver</a> page, and below, for information
-about connecting to the dopewars metaserver via. a proxy web server.</dd>
+about connecting to the dopewars metaserver via a proxy web server.</dd>
 
 <dt><b>MetaServer.Port=<i>80</i></b></dt>
 <dd>Instructs dopewars that the metaserver can be found on TCP port
 <i>80</i>. This is the standard HTTP port for Web access. (You shouldn't need
-to change this, even if you connect via. a proxy.)</dd>
+to change this, even if you connect via a proxy.)</dd>
 
 <dt><b>MetaServer.ProxyName=<i>"proxy.com"</i></b></dt>
-<dd>Sends all requests to the metaserver via. the web proxy at <i>proxy.com</i>.
+<dd>Sends all requests to the metaserver via the web proxy at <i>proxy.com</i>.
 If this is set to a blank string (the default) then the connection to the
 metaserver is made directly.</dd>
 
@@ -229,7 +229,7 @@ maintained by the metaserver, to <i>dopewars server</i>.</dd>
 <dt><b>MetaServer.LocalName=<i>"dope-serv.com"</i></b></dt>
 <dd>Tells the metaserver that the preferred hostname of your dopewars server
 machine is <i>dope-serv.com</i>. By default, the metaserver tries to ascertain
-your domain name from the connection, and this can fail if you connect via.
+your domain name from the connection, and this can fail if you connect via
 a proxy server, or if DNS does not properly translate your IP address to your
 domain name. You must also set MetaServer.Password to the password given to
 you by the <a href="mailto:ben@bellatrix.pcl.ox.ac.uk">metaserver

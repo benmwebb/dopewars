@@ -18,7 +18,7 @@ Either...
 Or...
 
 2. Get the tarball dopewars-1.5.8.tar.gz from the same URL
-   Extract it via. tar -xvzf dopewars-1.5.8.tar.gz
+   Extract it via tar -xvzf dopewars-1.5.8.tar.gz
    Follow the instructions in the INSTALL file in the newly-created
       dopewars-1.5.8 directory
 
@@ -76,7 +76,7 @@ settings in ~/.dopewars. All of the settings here can also be set on the command
 line of an interactive dopewars server when no players are logged on. See the
 file "example-cfg" for an example configuration file, and for a brief
 explanation of each option, type "help" in an interactive server. A subset of
-the configuration options can also be tweaked via. the "Options" menu item
+the configuration options can also be tweaked via the "Options" menu item
 in the GTK+/Win32 client.
 
 PLAYING
