@@ -888,6 +888,8 @@ GSList *RemovePlayer(Player *Play, GSList *First)
   ClearList(&(Play->SpyList));
   ClearList(&(Play->TipList));
   g_free(Play->Name);
+  g_free(Play->Guns);
+  g_free(Play->Drugs);
   g_free(Play);
   return First;
 }
