@@ -1,4 +1,5 @@
 cvs
+    - AI players now are at least partially functional
     - Fix for server segfault on invalid short network messages
     - dopewars no longer runs GTK+ setgid
     - "make install" installs dopewars as group "wheel" if "games" is

@@ -35,7 +35,7 @@
 #if NETWORKING
 #define NUMNAMES      8
 #define MINSAFECASH   300
-#define MINSAFEHEALTH 40
+#define MINSAFEHEALTH 140
 
 /* Reserve some space for picking up new guns */
 #define SPACERESERVE  10
@@ -54,6 +54,8 @@ void AIPlayerLoop() {
    gchar *pt;
    Player *AIPlay;
    fd_set readfs,writefs;
+   gboolean ReadOK,QuitRequest;
+
    AIPlay=g_new(Player,1);
    FirstClient=AddPlayer(0,AIPlay,FirstClient);
    g_message(_("AI Player started; attempting to contact server at %s:%d..."),
@@ -62,6 +64,10 @@ void AIPlayerLoop() {
    if (pt) g_error(_("Could not connect to dopewars server\n(%s)\n"
                    "AI Player terminating abnormally."),_(pt));
    AIPlay->fd=ClientSock;
+
+   InitAbilities(AIPlay);
+   SendAbilities(AIPlay);
+
    AISetName(AIPlay);
    g_message(_("Connection established\n"));
 
@@ -73,7 +79,7 @@ void AIPlayerLoop() {
       FD_ZERO(&writefs);
       FD_SET(ClientSock,&readfs);
       if (AIPlay->WriteBuf.DataPresent) FD_SET(ClientSock,&writefs);
-      if (bselect(ClientSock+1,&readfs,NULL,NULL,NULL)==-1) {
+      if (bselect(ClientSock+1,&readfs,&writefs,NULL,NULL)==-1) {
          if (errno==EINTR) continue;
          printf("Error in select\n"); exit(1);
       }
@@ -81,21 +87,24 @@ void AIPlayerLoop() {
          WriteConnectionBufferToWire(AIPlay);
       }
       if (FD_ISSET(ClientSock,&readfs)) {
-         pt=bgets(ClientSock);
-         if (!pt) {
-            g_print(_("Connection to server lost!\n"));
-            ShutdownNetwork();
-            break;
-         } else {
+         QuitRequest=FALSE;
+         ReadOK=ReadConnectionBufferFromWire(AIPlay);
+
+         while ((pt=ReadFromConnectionBuffer(AIPlay))!=NULL) {
             if (HandleAIMessage(pt,AIPlay)) {
-               g_free(pt);
-               ShutdownNetwork();
+               QuitRequest=TRUE;
                break;
             }
-            g_free(pt);
+         }
+         if (QuitRequest) break;
+
+         if (!ReadOK) {
+            g_print(_("Connection to server lost!\n"));
+            break;
          }
       }
    }
+   ShutdownNetwork();
    g_print(_("AI Player terminated OK.\n"));
 }
 
@@ -110,6 +119,52 @@ void AISetName(Player *AIPlay) {
    g_free(text);
    SendNullClientMessage(AIPlay,C_NONE,C_NAME,NULL,GetPlayerName(AIPlay));
    g_print(_("Using name %s\n"),GetPlayerName(AIPlay));
+}
+
+gboolean ShouldRun(Player *AIPlay) {
+/* Returns TRUE if it would be prudent to run away...           */
+   gint TotalHealth;
+
+   if (TotalGunsCarried(AIPlay)==0) return TRUE;
+
+   TotalHealth=AIPlay->Health + AIPlay->Bitches.Carried*100;
+   return (TotalHealth < MINSAFEHEALTH);
+}
+
+static void HandleCombat(Player *AIPlay,gchar *Msg) {
+/* Decodes the fighting-related message "Msg", and then decides whether */
+/* to stand or run...                                                   */
+   gchar *text;
+   gchar *AttackName,*DefendName,*BitchName,FightPoint;
+   int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
+   gboolean CanRunHere,Loot,CanFire;
+
+   if (HaveAbility(AIPlay,A_NEWFIGHT)) {
+      ReceiveFightMessage(Msg,&AttackName,&DefendName,&DefendHealth,
+                          &DefendBitches,&BitchName,&BitchesKilled,
+                          &ArmPercent,&FightPoint,&CanRunHere,&Loot,
+                          &CanFire,&text);
+   } else {
+      text=Msg;
+      if (AIPlay->Flags&FIGHTING) FightPoint=F_MSG;
+      else FightPoint=F_LASTLEAVE;
+      CanFire = (AIPlay->Flags&CANSHOOT);
+      CanRunHere=FALSE;
+   }
+   PrintAIMessage(text);
+
+   if (ShouldRun(AIPlay)) {
+      if (CanRunHere) {
+         SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"R");
+      } else {
+         AIDealDrugs(AIPlay);
+         AIJet(AIPlay);
+      }
+   } else if (FightPoint==F_LASTLEAVE) {
+      AIJet(AIPlay);
+   } else {
+      SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"F");
+   }
 }
 
 int HandleAIMessage(char *Message,Player *AIPlay) {
@@ -138,15 +193,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          AISetName(AIPlay);
          break;
       case C_FIGHTPRINT:
-         PrintAIMessage(Data);
-         if (From!=&Noone) {
-            AIPlay->Flags |= FIGHTING+CANSHOOT;
-         }
-         if (TotalGunsCarried(AIPlay)>0 && AIPlay->Health>MINSAFEHEALTH) {
-            SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"F");
-         } else {
-            AIJet(AIPlay);
-         }
+         HandleCombat(AIPlay,Data);
          break;
       case C_PRINTMESSAGE:
          PrintAIMessage(Data);
@@ -169,7 +216,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          tv.tv_sec=AITurnPause;
          tv.tv_usec=0;
          bselect(0,NULL,NULL,NULL,&tv);
-         dpg_print(_("Jetting to %tde with %P cash and %P debt"),
+         dpg_print(_("Jetting to %tde with %P cash and %P debt\n"),
                 Location[(int)AIPlay->IsAt].Name,AIPlay->Cash,AIPlay->Debt);
          if (brandom(0,100)<10) AISendRandomMessage(AIPlay);
          break;
@@ -396,7 +443,7 @@ void AIHandleQuestion(char *Data,char AICode,Player *AIPlay,Player *From) {
          AISendAnswer(AIPlay,From,"Y");
          break;
       case C_ASKRUNFIGHT:
-         AISendAnswer(AIPlay,From,AIPlay->Health<MINSAFEHEALTH ? "R" : "F");
+         AISendAnswer(AIPlay,From,ShouldRun(AIPlay) ? "R" : "F");
          break;
       case C_ASKBANK:
          if (RealBank==-1) {

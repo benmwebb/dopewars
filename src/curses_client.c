@@ -1167,6 +1167,7 @@ void display_message(char *buf) {
                addch(' ' | StatsAttr);
             }
             addch(ACS_VLINE | StatsAttr);
+            addch(' ' | TextAttr);
          }
       }
       return;
@@ -1299,10 +1300,18 @@ void print_status(Player *Play,char DispDrug) {
       }
       for (i=0;i<NumDrug;i++) {
          if (Play->Drugs[i].Carried>0) {
+/* Display of carried drugs with price (%tde="Opium", etc. by default) */
+            if (HaveAbility(Play,A_DRUGVALUE)) {
+               dpg_string_sprintf(text,_("%-7tde  %3d @ %P"),Drug[i].Name,
+                          Play->Drugs[i].Carried,
+                          Play->Drugs[i].TotalValue/Play->Drugs[i].Carried);
+               mvaddstr(3+c,Width/2+3,text->str);
+            } else {
 /* Display of carried drugs (%tde="Opium", etc. by default) */
-            dpg_string_sprintf(text,_("%-7tde  %3d"),Drug[i].Name,
-                               Play->Drugs[i].Carried);
-            mvaddstr(3+c/2,Width/2+3+(c%2)*17,text->str);
+               dpg_string_sprintf(text,_("%-7tde  %3d"),Drug[i].Name,
+                                  Play->Drugs[i].Carried);
+               mvaddstr(3+c/2,Width/2+3+(c%2)*17,text->str);
+            }
             c++;
          }
       }

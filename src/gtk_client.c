@@ -977,7 +977,7 @@ void UpdateInventory(struct InventoryWidgets *Inven,
 
       if (Objects[i].Carried > 0) {
          if (price>0) CanSell=TRUE; else CanDrop=TRUE;
-         if (HaveAbility(ClientData.Play,A_DRUGVALUE)) {
+         if (HaveAbility(ClientData.Play,A_DRUGVALUE) && AreDrugs) {
             titles[1] = dpg_strdup_printf("%d @ %P",Objects[i].Carried,
                               Objects[i].TotalValue/Objects[i].Carried);
          } else {
