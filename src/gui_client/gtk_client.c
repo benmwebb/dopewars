@@ -1339,10 +1339,12 @@ void UpdateInventory(struct InventoryWidgets *Inven,
 
   for (i = 0; i < NumObjects; i++) {
     if (AreDrugs) {
-      titles[0] = Drug[i].Name;
+      titles[0] = dpg_strdup_printf(_("%/Inventory drug name/%tde"),
+                                    Drug[i].Name);
       price = Objects[i].Price;
     } else {
-      titles[0] = Gun[i].Name;
+      titles[0] = dpg_strdup_printf(_("%/Inventory gun name/%tde"),
+                                    Gun[i].Name);
       price = Gun[i].Price;
     }
 
@@ -1379,6 +1381,7 @@ void UpdateInventory(struct InventoryWidgets *Inven,
         gtk_clist_select_row(GTK_CLIST(carrylist), row, 0);
       }
     }
+    g_free(titles[0]);
   }
 
   for (i = 0; i < numlist; i++) {
@@ -1684,7 +1687,8 @@ void DealDrugs(GtkWidget *widget, gpointer data)
         || (data == BT_SELL && Play->Drugs[i].Carried > 0
          && Play->Drugs[i].Price != 0)
         || (data == BT_BUY && Play->Drugs[i].Price != 0)) {
-      menuitem = gtk_menu_item_new_with_label(Drug[i].Name);
+      dpg_string_sprintf(text, _("%/DealDrugs drug name/%tde"), Drug[i].Name);
+      menuitem = gtk_menu_item_new_with_label(text->str);
       gtk_signal_connect(GTK_OBJECT(menuitem), "activate",
                          GTK_SIGNAL_FUNC(DealSelectCallback),
                          GINT_TO_POINTER(i));
