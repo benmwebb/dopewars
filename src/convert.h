@@ -38,8 +38,8 @@ void Conv_SetInternalCodeset(const gchar *codeset);
 Converter *Conv_New(void);
 void Conv_SetCodeset(Converter *conv, const gchar *codeset);
 gboolean Conv_Needed(Converter *conv);
-gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, size_t len);
-gchar *Conv_ToInternal(Converter *conv, const gchar *ext_str, size_t len);
+gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, int len);
+gchar *Conv_ToInternal(Converter *conv, const gchar *ext_str, int len);
 void Conv_Free(Converter *conv);
 
 #endif /* __DP_CONVERT_H__ */

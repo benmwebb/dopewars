@@ -94,7 +94,7 @@ gboolean Conv_Needed(Converter *conv)
 }
 
 static gchar *do_convert(const gchar *from_codeset, const gchar *to_codeset,
-                         const gchar *from_str, size_t from_len)
+                         const gchar *from_str, int from_len)
 {
 #ifdef HAVE_GLIB2
   gchar *to_str;
@@ -132,12 +132,12 @@ static gchar *do_convert(const gchar *from_codeset, const gchar *to_codeset,
 #endif
 }
 
-gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, size_t len)
+gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, int len)
 {
   return do_convert(int_codeset, conv->ext_codeset, int_str, len);
 }
 
-gchar *Conv_ToInternal(Converter *conv, const gchar *ext_str, size_t len)
+gchar *Conv_ToInternal(Converter *conv, const gchar *ext_str, int len)
 {
   return do_convert(conv->ext_codeset, int_codeset, ext_str, len);
 }
