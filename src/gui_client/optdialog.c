@@ -315,11 +315,14 @@ static void swap_rows(GtkCList *clist, gint selrow, gint swaprow,
 static void list_delete(GtkWidget *widget, gchar *structname)
 {
   GtkCList *clist;
+  int minlistlength;
 
   clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
   g_assert(clist);
+  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
+                                                      "minlistlength"));
 
-  if (clist->rows > 1 && clist->selection) {
+  if (clist->rows > minlistlength && clist->selection) {
     GSList *listpt;
     int row = GPOINTER_TO_INT(clist->selection->data);
 
@@ -415,12 +418,15 @@ static void list_row_select(GtkCList *clist, gint row, gint column,
 {
   GSList *listpt;
   GtkWidget *delbut, *upbut, *downbut;
+  int minlistlength;
 
+  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
+                                                      "minlistlength"));
   delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
   upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
   downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
   g_assert(delbut && upbut && downbut);
-  gtk_widget_set_sensitive(delbut, TRUE);
+  gtk_widget_set_sensitive(delbut, clist->rows > minlistlength);
   gtk_widget_set_sensitive(upbut, row > 0);
   gtk_widget_set_sensitive(downbut, row < clist->rows - 1);
 
@@ -577,7 +583,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 {
   GtkWidget *hbox, *vbox, *hbbox, *clist, *scrollwin, *button, *table;
   gchar *titles[3];
-  int ind;
+  int ind, minlistlength = 0;
   gint i, row, nummembers;
   struct GLOBALS *gvar;
   struct ConfigMembers namemember = { "Name", "Name" };
@@ -586,6 +592,13 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   g_assert(ind >= 0);
   gvar = &Globals[ind];
   g_assert(gvar->StringVal && gvar->MaxIndex);
+
+  for (i = 0; i < NUMGLOB; i++) {
+    if (Globals[i].StructListPt == gvar->StructListPt
+        && Globals[i].ResizeFunc) {
+      minlistlength = Globals[i].MinVal;
+    }
+  }
 
   nummembers = 0;
   while (members && members[nummembers].label) {
@@ -627,6 +640,8 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_widget_set_sensitive(button, FALSE);
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
   gtk_object_set_data(GTK_OBJECT(clist), "delete", button);
+  gtk_object_set_data(GTK_OBJECT(clist), "minlistlength",
+                      GINT_TO_POINTER(minlistlength));
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(list_delete), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
