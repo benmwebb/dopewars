@@ -2508,7 +2508,7 @@ void TransferDialog(gboolean Debt)
 
 void ListPlayers(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *clist, *button, *vbox, *hsep;
+  GtkWidget *dialog, *clist, *button, *vbox, *hsep, *hbbox;
 
   if (IsShowingPlayerList)
     return;
@@ -2539,11 +2539,14 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  button = gtk_button_new_from_stock(GTK_STOCK_OK);
+  hbbox = my_hbbox_new();
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
-  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+
+  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
 }
@@ -3012,7 +3015,7 @@ gint DisallowDelete(GtkWidget *widget, GdkEvent *event, gpointer data)
 
 void GunShopDialog(void)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *hbox;
+  GtkWidget *window, *button, *hsep, *vbox, *hbox, *hbbox;
   GtkAccelGroup *accel_group;
   gchar *text;
 
@@ -3050,13 +3053,14 @@ void GunShopDialog(void)
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  button = gtk_button_new_from_stock(GTK_STOCK_OK);
-
+  hbbox = my_hbbox_new();
+  button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)window);
-  gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
+  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
+  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
   UpdateInventory(&ClientData.Gun, ClientData.Play->Guns, NumGun, FALSE);
