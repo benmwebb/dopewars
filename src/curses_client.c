@@ -45,6 +45,8 @@ static void PrintHighScore(char *Data);
 static int ResizedFlag;
 static SCREEN *cur_screen;
 static char ConnectMethod=CM_SERVER;
+static gboolean CanFire=FALSE,RunHere=FALSE;
+static gchar FightPoint;
 
 /* Function definitions; make them static so as not to clash with functions
    of the same name in different clients */
@@ -56,7 +58,7 @@ static int GetKey(char *allowed,char *orig_allowed,gboolean AllowOther,
 static void clear_bottom(), clear_screen();
 static void clear_line(int line), clear_exceptfor(int skip);
 static void nice_wait();
-static void DisplayFightMessage(char *text);
+static void DisplayFightMessage(Player *Play,char *text);
 static void DisplaySpyReports(char *Data,Player *From,Player *To);
 static void display_message(char *buf);
 static void print_location(char *text);
@@ -119,7 +121,7 @@ void CheckForResize(Player *Play) {
       Width=COLS; Depth=LINES;
       attrset(TextAttr); clear_screen();
       display_message("");
-      DisplayFightMessage(NULL);
+      DisplayFightMessage(Play,NULL);
       print_status(Play,1);
    }
    sigprocmask(SIG_UNBLOCK,&sigset,NULL);
@@ -668,15 +670,10 @@ void HandleClientMessage(char *Message,Player *Play) {
          nice_wait();
          break;
       case C_FIGHTPRINT:
-         pt=Data;
-         wrd=GetNextWord(&pt,NULL);
-         while (wrd) {
-            DisplayFightMessage(wrd);
-            wrd=GetNextWord(&pt,NULL);
-         }
+         DisplayFightMessage(Play,Data);
          break;
       case C_SUBWAYFLASH:
-         DisplayFightMessage(NULL);
+         DisplayFightMessage(Play,NULL);
          for (list=FirstClient;list;list=g_slist_next(list)) {
             tmp=(Player *)list->data;
             tmp->Flags &= ~FIGHTING;
@@ -1029,7 +1026,7 @@ void nice_wait() {
    attrset(TextAttr);
 }
 
-void DisplayFightMessage(char *text) {
+void DisplayFightMessage(Player *Play,char *text) {
 /* Handles the display of messages pertaining to player-player fights   */
 /* in the lower part of screen (fighting sub-screen). Adds the new line */
 /* of text in "text" and scrolls up previous messages if necessary      */
@@ -1041,26 +1038,42 @@ void DisplayFightMessage(char *text) {
    static int x,y;
    char *textpt;
    int i;
+   gchar *AttackName,*DefendName;
+   int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
+   gboolean Loot;
+
    if (text==NULL) {
       x=0; y=15;
       for (i=0;i<5;i++) Messages[i][0]='\0';
       return;
    }
-   textpt=text;
-   if (!textpt[0]) {
+   if (!text[0]) {
       attrset(TextAttr);
       clear_bottom();
       for (i=16;i<=20;i++) {
          mvaddstr(i,1,Messages[i-16]);
       }
-   } else while(textpt[0]) {
-      if (y==20) for (i=0;i<4;i++) {
-         strcpy(Messages[i],Messages[i+1]);
+   } else {
+      if (HaveAbility(Play,A_NEWFIGHT)) {
+         ReceiveFightMessage(text,&AttackName,&DefendName,&DefendHealth,
+                             &DefendBitches,&BitchesKilled,&ArmPercent,
+                             &FightPoint,&RunHere,&Loot,&CanFire,&textpt);
+      } else {
+         textpt=text;
+         if (Play->Flags&FIGHTING) FightPoint=F_MSG;
+         else FightPoint=F_LASTLEAVE;
+         CanFire = (Play->Flags&CANSHOOT);
+         RunHere=FALSE;
       }
-      if (y<20) y++;
-      strncpy(Messages[y-16],textpt,78); Messages[y-16][78]='\0';
-      if (strlen(textpt)<=78) break;
-      textpt+=78;
+      while(textpt[0]) {
+         if (y==20) for (i=0;i<4;i++) {
+            strcpy(Messages[i],Messages[i+1]);
+         }
+         if (y<20) y++;
+         strncpy(Messages[y-16],textpt,78); Messages[y-16][78]='\0';
+         if (strlen(textpt)<=78) break;
+         textpt+=78;
+      }
    }
 }
 
@@ -1401,7 +1414,7 @@ static void Curses_DoGame(Player *Play) {
    OldName=g_strdup(GetPlayerName(Play));
    attrset(TextAttr); clear_screen();
    display_message(NULL);
-   DisplayFightMessage(NULL);
+   DisplayFightMessage(Play,NULL);
    print_status(Play,1);
 
    attrset(TextAttr);
@@ -1421,7 +1434,6 @@ static void Curses_DoGame(Player *Play) {
    display_message("");
 
    InitAbilities(Play);
-   SetAbility(Play,A_NEWFIGHT,FALSE);
    SendAbilities(Play);
    SetPlayerName(Play,buf);
    SendNullClientMessage(Play,C_NONE,C_NAME,NULL,buf);
@@ -1477,17 +1489,17 @@ static void Curses_DoGame(Player *Play) {
             curs_set(1);
             break;
          case DM_FIGHT:
-            DisplayFightMessage("");
+            DisplayFightMessage(Play,"");
             attrset(PromptAttr);
             g_string_assign(text,_("Do you "));
-            if (Play->Flags&CANSHOOT) {
+            if (CanFire) {
                if (TotalGunsCarried(Play)>0) {
                   g_string_append(text,_("F>ight, "));
                } else {
                   g_string_append(text,_("S>tand, "));
                }
             }
-            if (Play->Flags&FIGHTING) g_string_append(text,_("R>un, "));
+            if (FightPoint!=F_LASTLEAVE) g_string_append(text,_("R>un, "));
             dpg_string_sprintfa(text,_("D>eal %tde"),Names.Drugs);
             g_string_append(text,_(", or Q>uit? "));
             mvaddstr(22,40-strlen(text->str)/2,text->str);
@@ -1630,10 +1642,14 @@ static void Curses_DoGame(Player *Play) {
                   DisplayMode=DM_STREET;
                   break;
                case 'R':
-                  jet(Play,TRUE);
+                  if (RunHere) {
+                     SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,"R");
+                  } else {
+                     jet(Play,TRUE);
+                  }
                   break;
                case 'F':
-                  if (TotalGunsCarried(Play)>0 && Play->Flags&CANSHOOT) {
+                  if (TotalGunsCarried(Play)>0 && CanFire) {
                      buf=g_strdup_printf("%c",c);
                      Play->Flags &= ~CANSHOOT;
                      SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf);
@@ -1641,7 +1657,7 @@ static void Curses_DoGame(Player *Play) {
                   }
                   break;
                case 'S':
-                  if (TotalGunsCarried(Play)==0 && Play->Flags&CANSHOOT) {
+                  if (TotalGunsCarried(Play)==0 && CanFire) {
                      buf=g_strdup_printf("%c",c);
                      Play->Flags &= ~CANSHOOT;
                      SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf);

@@ -349,6 +349,7 @@ static void StartGame() {
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
    Play->fd=ClientSock;
+   SetAbility(Play,A_NEWFIGHT,FALSE);
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
    SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);
