@@ -58,6 +58,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 #include <winsock.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <shlwapi.h>
 
 #define LISTITEMVPACK  0
 
@@ -67,6 +68,7 @@ HICON mainIcon = NULL;
 static WNDPROC customWndProc = NULL;
 static gboolean HaveRichEdit = FALSE;
 static gchar *RichEditClass = NULL;
+static gboolean HaveXPControls = FALSE;
 
 static guint RecurseLevel = 0;
 
@@ -75,6 +77,11 @@ static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
 static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
+
+static const int ETDT_DISABLE       = 0x1;
+static const int ETDT_ENABLE        = 0x2;
+static const int ETDT_USETABTEXTURE = 0x4;
+static const int ETDT_ENABLETAB     = 0x6;
 
 static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
@@ -691,7 +698,7 @@ static void DispatchTimeoutEvent(UINT id)
   }
 }
 
-HWND gtk_get_parent_hwnd(GtkWidget *widget)
+static HWND gtk_get_window_hwnd(GtkWidget *widget)
 {
   widget = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
   if (widget) {
@@ -701,19 +708,33 @@ HWND gtk_get_parent_hwnd(GtkWidget *widget)
   }
 }
 
-static HWND gtk_get_window_or_notebook(GtkWidget *widget)
+HWND gtk_get_parent_hwnd(GtkWidget *widget)
 {
+  GtkWidget *child = NULL;
   while (widget && GTK_OBJECT(widget)->klass != GTK_TYPE_WINDOW
          && GTK_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
+    child = widget;
     widget = widget->parent;
   }
   if (widget) {
-    return widget->hWnd;
+    if (GTK_OBJECT(widget)->klass == GTK_TYPE_NOTEBOOK) {
+      GSList *children;
+      for (children = GTK_NOTEBOOK(widget)->children; children;
+           children = g_slist_next(children)) {
+        GtkNotebookChild *note_child;
+        note_child = (GtkNotebookChild *)(children->data);
+        if (note_child && note_child->child == child) {
+          return note_child->tabpage;
+        }
+      }
+      return NULL;
+    } else {
+      return widget->hWnd;
+    }
   } else {
     return NULL;
   }
 }
-
 
 static void UpdatePanedGhostRect(GtkPaned *paned, RECT *OldRect,
                                  RECT *NewRect, gint x, gint y)
@@ -1016,17 +1037,6 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   }
 
   switch (msg) {
-  case WM_CTLCOLORSTATIC:
-    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWL_USERDATA));
-    if (widget && gtk_widget_get_ancestor(widget, GTK_TYPE_NOTEBOOK)) {
-      hDC = (HDC)wParam;
-      if (GTK_OBJECT(widget)->klass == &GtkLabelClass) {
-        SetBkMode(hDC, TRANSPARENT);
-        *dodef = FALSE;
-        return (gboolean)GetStockObject(NULL_BRUSH);
-      }
-    }
-    break;
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
         && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
@@ -1153,6 +1163,59 @@ void SetCustomWndProc(WNDPROC wndproc)
   customWndProc = wndproc;
 }
 
+/*
+ * Returns TRUE if we are using version 6 of the Common Controls library
+ * (as shipped with Windows XP) and thus need to worry about visual themes
+ */
+static gboolean CheckForXPControls(void)
+{
+  HINSTANCE hDll;
+  BOOL retval = FALSE;
+
+  hDll = LoadLibrary("COMCTL32.DLL");
+  if (hDll) {
+    DLLGETVERSIONPROC getverproc;
+    getverproc = (DLLGETVERSIONPROC)GetProcAddress(hDll, "DllGetVersion");
+    if (getverproc) {
+      DLLVERSIONINFO dvi;
+      HRESULT hr;
+      ZeroMemory(&dvi, sizeof(dvi));
+      dvi.cbSize = sizeof(dvi);
+      hr = getverproc(&dvi);
+      if (SUCCEEDED(hr) && dvi.dwMajorVersion >= 6) {
+        retval = TRUE;
+      }
+    }
+    FreeLibrary(hDll);
+  }
+  return retval;
+}
+
+/*
+ * On systems with suitable DLLs, sets the background texture of the
+ * given dialog. dwFlags can be one or more of the ETDT_ constants.
+ */
+static void myEnableThemeDialogTexture(HWND hWnd, DWORD dwFlags)
+{
+  typedef HRESULT (*ENABLETHEMEDIALOGTEXTUREPROC)(HWND hWnd, DWORD dwFlags);
+  HINSTANCE module;
+
+  /* Dialog textures are only worth setting when using XP common controls */
+  if (!HaveXPControls) return;
+
+  module = LoadLibrary("UXTHEME.DLL");
+  if (module) {
+    ENABLETHEMEDIALOGTEXTUREPROC func;
+    HRESULT result;
+    func = (ENABLETHEMEDIALOGTEXTUREPROC)
+               GetProcAddress(module, "EnableThemeDialogTexture");
+    if (func) {
+      result = func(hWnd, dwFlags);
+    }
+    FreeLibrary(module);
+  }
+}
+
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 char *MainIcon)
 {
@@ -1185,6 +1248,8 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RichEditClass = "RichEdit20A";
   }
   HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
+
+  HaveXPControls = CheckForXPControls();
 
   if (!hPrevInstance) {
     wc.style = 0;
@@ -1529,21 +1594,27 @@ void gtk_widget_size_request(GtkWidget *widget,
   }
 }
 
+void MapWidgetOrigin(GtkWidget *widget, POINT *pt)
+{
+  HWND imm_parent, window_parent;
+
+  imm_parent = GetParent(widget->hWnd);
+  window_parent = gtk_get_window_hwnd(widget);
+  if (imm_parent && window_parent && imm_parent != window_parent) {
+    MapWindowPoints(window_parent, imm_parent, pt, 1);
+  }
+}
+
 void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   gtk_signal_emit(GTK_OBJECT(widget), "set_size", allocation);
   memcpy(&widget->allocation, allocation, sizeof(GtkAllocation));
   if (widget->hWnd) {
-    HWND imm_parent, window_parent;
     POINT pt;
 
     pt.x = allocation->x;
     pt.y = allocation->y;
-    imm_parent = GetParent(widget->hWnd);
-    window_parent = gtk_get_parent_hwnd(widget);
-    if (imm_parent && window_parent && imm_parent != window_parent) {
-      MapWindowPoints(window_parent, imm_parent, &pt, 1);
-    }
+    MapWidgetOrigin(widget, &pt);
     SetWindowPos(widget->hWnd, HWND_TOP, pt.x, pt.y,
                  allocation->width, allocation->height,
                  SWP_NOZORDER |
@@ -2553,7 +2624,7 @@ void gtk_frame_realize(GtkWidget *widget)
   HWND Parent;
   GtkFrame *frame = GTK_FRAME(widget);
 
-  Parent = gtk_get_window_or_notebook(widget);
+  Parent = gtk_get_parent_hwnd(widget);
   widget->hWnd = myCreateWindow("BUTTON", frame->text,
                                 WS_CHILD | BS_GROUPBOX,
                                 widget->allocation.x, widget->allocation.y,
@@ -4065,10 +4136,16 @@ void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label, gint position)
 {
   GtkNotebookChild *note_child;
+  GtkWidget *widget = GTK_WIDGET(notebook);
+
   note_child = g_new0(GtkNotebookChild, 1);
 
   note_child->child = child;
   note_child->tab_label = tab_label;
+  note_child->tabpage = myCreateDialog(hInst, "tabpage",
+                                       gtk_get_parent_hwnd(widget->parent),
+                                       MainDlgProc);
+  myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
   notebook->children =
       g_slist_insert(notebook->children, note_child, position);
   child->parent = GTK_WIDGET(notebook);
@@ -4092,10 +4169,11 @@ void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num)
          children = g_slist_next(children)) {
       note_child = (GtkNotebookChild *)(children->data);
       if (note_child && note_child->child) {
-        if (pos == page_num)
-          gtk_widget_show_all_full(note_child->child, TRUE);
-        else
-          gtk_widget_hide_all_full(note_child->child, TRUE);
+        if (pos == page_num) {
+          ShowWindow(note_child->tabpage, SW_SHOW);
+        } else {
+          ShowWindow(note_child->tabpage, SW_HIDE);
+        }
         pos++;
       }
     }
@@ -4115,7 +4193,7 @@ void gtk_notebook_realize(GtkWidget *widget)
   gint tab_pos = 0;
   TC_ITEM tie;
 
-  Parent = gtk_get_parent_hwnd(widget);
+  Parent = gtk_get_parent_hwnd(widget->parent);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
   widget->hWnd = myCreateWindow(WC_TABCONTROL, "",
                                 WS_CHILD | WS_TABSTOP, 0, 0, 0, 0,
@@ -4136,6 +4214,10 @@ void gtk_notebook_realize(GtkWidget *widget)
       else
         tie.pszText = "No label";
       myTabCtrl_InsertItem(widget->hWnd, tab_pos++, &tie);
+      note_child->tabpage = myCreateDialog(hInst, "tabpage",
+                                           gtk_get_parent_hwnd(widget->parent),
+                                           MainDlgProc);
+      myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
       if (note_child->child) {
         gtk_widget_realize(note_child->child);
       }
@@ -4171,6 +4253,7 @@ void gtk_notebook_hide_all(GtkWidget *widget, gboolean hWndOnly)
     note_child = (GtkNotebookChild *)(children->data);
     if (note_child && note_child->child)
       gtk_widget_hide_all_full(note_child->child, hWndOnly);
+    ShowWindow(note_child->tabpage, SW_HIDE);
   }
 }
 
@@ -4185,6 +4268,7 @@ void gtk_notebook_destroy(GtkWidget *widget)
     if (note_child) {
       gtk_widget_destroy(note_child->child);
       gtk_widget_destroy(note_child->tab_label);
+      DestroyWindow(note_child->tabpage);
     }
     g_free(note_child);
   }
@@ -4215,6 +4299,9 @@ void gtk_notebook_set_size(GtkWidget *widget, GtkAllocation *allocation)
        children = g_slist_next(children)) {
     note_child = (GtkNotebookChild *)(children->data);
     if (note_child && note_child->child) {
+      SetWindowPos(note_child->tabpage, HWND_TOP,
+                   rect.left, rect.top, rect.right - rect.left,
+                   rect.bottom - rect.top, SWP_NOZORDER);
       gtk_widget_set_size(note_child->child, &child_alloc);
     }
   }
@@ -4299,8 +4386,11 @@ void gtk_spin_button_set_size(GtkWidget *widget, GtkAllocation *allocation)
 
   updown = GTK_SPIN_BUTTON(widget)->updown;
   if (updown) {
-    SetWindowPos(updown, HWND_TOP,
-                 allocation->x + allocation->width, allocation->y,
+    POINT pt;
+    pt.x = allocation->x;
+    pt.y = allocation->y;
+    MapWidgetOrigin(widget, &pt);
+    SetWindowPos(updown, HWND_TOP, pt.x + allocation->width, pt.y,
                  udwidth, allocation->height, SWP_NOZORDER);
   }
 }

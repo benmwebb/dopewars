@@ -132,8 +132,11 @@ void gtk_clist_set_size(GtkWidget *widget, GtkAllocation *allocation)
 
   gtk_container_set_size(widget, allocation);
   if (clist->header) {
-    SetWindowPos(clist->header, HWND_TOP,
-                 allocation->x, allocation->y,
+    POINT pt;
+    pt.x = allocation->x;
+    pt.y = allocation->y;
+    MapWidgetOrigin(widget, &pt);
+    SetWindowPos(clist->header, HWND_TOP, pt.x, pt.y,
                  allocation->width, clist->header_size, SWP_NOZORDER);
     allocation->y += clist->header_size - 1;
     allocation->height -= clist->header_size - 1;

@@ -17,6 +17,7 @@ cvs
     - Spanish translation added by Quique
     - The Windows build of dopewars should now use Unicode throughout, on
       platforms with Unicode support (i.e. NT/2000/XP)
+    - Under Windows XP, the "pretty" new common controls are now used
 
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;

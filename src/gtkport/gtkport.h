@@ -343,6 +343,7 @@ struct _GtkVBox {
 
 struct _GtkNotebookChild {
   GtkWidget *child, *tab_label;
+  HWND tabpage;
 };
 
 struct _GtkNotebook {
@@ -717,6 +718,7 @@ void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
 
 /* Private functions */
 void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
+void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 
 #else /* CYGWIN */
 
