@@ -490,8 +490,8 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
 
 static void ReadFileToString(FILE *fp, gchar *str)
 {
-  int len, mpos;
-  gchar *match, ch;
+  int len, mpos, ch;
+  gchar *match;
   GString *file;
 
   file = g_string_new("");
