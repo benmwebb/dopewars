@@ -10,7 +10,13 @@ LINKNOO = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS)
 
 if PLUGINS
 PLUGINDIR = ${DESTDIR}${plugindir}
-PLUGINS   = .libs/libsound_sdl.so .libs/libsound_esd.so .libs/libsound_winmm.so
+if ESD
+ESD_SO = .libs/libsound_esd.so
+endif
+if SDL
+SDL_SO = .libs/libsound_sdl.so
+endif
+PLUGINS   = $(ESD_SO) $(SDL_SO)
 
 all-local: ${PLUGINS}
 

@@ -80,6 +80,7 @@ if test "$CYGWIN" = "yes" ; then
 
    dnl Add support for the Windows multimedia system
    SOUND_LIBS="$SOUND_LIBS -lwinmm"
+   PLUGOBJS="$PLUGOBJS plugins/sound_winmm.o"
    AC_DEFINE(HAVE_WINMM, 1, [Do we have the Windows multimedia system?])
 
    dnl The gtkport implementation works just fine
@@ -166,9 +167,11 @@ else
    if test "$ESD" = "yes"; then
      SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
      SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
+     PLUGOBJS="$PLUGOBJS plugins/sound_esd.o"
      AC_SUBST(ESD_LIBS)
      AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
    fi
+   AM_CONDITIONAL(ESD, test "$ESD" = "yes")
 
    dnl Add SDL_mixer sound support if available
    SDL=no
@@ -183,11 +186,13 @@ else
          SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
          SDL_LIBS="$SDL_LIBS -lSDL_mixer"
          SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
+         PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
          AC_SUBST(SDL_LIBS)
          AC_DEFINE(HAVE_SDL_MIXER, 1, [Do we have the SDL_mixer sound library?])
        fi
      fi
    fi
+   AM_CONDITIONAL(SDL, test "$SDL" = "yes")
 
    dnl Use console server by default
    if test "$GUI_SERVER" = "probe"; then
@@ -269,12 +274,12 @@ if test "$plugins" = "yes" ; then
   DP_EXPAND_DIR(PLUGINDIR, '${plugindir}')
   AC_DEFINE_UNQUOTED(PLUGINDIR, "$PLUGINDIR",
                    [The directory containing the plugins])
+  PLUGOBJS=""
 else
-  PLUGOBJS="plugins/sound_sdl.o plugins/sound_esd.o plugins/sound_winmm.o"
-  AC_SUBST(PLUGOBJS)
   PLUGLIBS="$SOUND_LIBS"
   AC_SUBST(PLUGLIBS)
 fi
+AC_SUBST(PLUGOBJS)
 AM_CONDITIONAL(PLUGINS, test "$plugins" = "yes")
 
 dnl Enable networking by default under Win32, but on Unix systems
