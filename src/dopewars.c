@@ -2016,9 +2016,9 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
 
 /*
  * Writes all of the configuration file variables that have changed
- * (together with their values) to standard output.
+ * (together with their values) to the given file.
  */
-void WriteConfigFile(void)
+void WriteConfigFile(FILE *fp)
 {
   int i, j;
 
@@ -2026,10 +2026,10 @@ void WriteConfigFile(void)
     if (Globals[i].Modified) {
       if (Globals[i].NameStruct[0]) {
         for (j = 1; j <= *Globals[i].MaxIndex; j++) {
-          WriteConfigValue(stdout, i, j);
+          WriteConfigValue(fp, i, j);
         }
       } else {
-        WriteConfigValue(stdout, i, 0);
+        WriteConfigValue(fp, i, 0);
       }
     }
   }
@@ -2275,6 +2275,50 @@ gchar *GetDocIndex(void)
   return path;
 }
 
+/*
+ * Returns the pathname of the global (all users) configuration file,
+ * as a dynamically-allocated string that must be later freed. On
+ * error, NULL is returned.
+ */
+gchar *GetGlobalConfigFile(void)
+{
+#ifdef CYGWIN
+  gchar *bindir, *conf = NULL;
+
+  /* Global configuration is in the same directory as the dopewars binary */
+  bindir = GetBinaryDir();
+  if (bindir) {
+    conf = g_strdup_printf("%s/dopewars-config.txt", conf);
+    g_free(bindir);
+  }
+  return conf;
+#else
+  return g_strdup("/etc/dopewars");
+#endif
+}
+
+/*
+ * Returns the pathname of the local (per-user) configuration file,
+ * as a dynamically-allocated string that must be later freed. On
+ * error, NULL is returned.
+ */
+gchar *GetLocalConfigFile(void)
+{
+#ifdef CYGWIN
+  return g_strdup("dopewars-config.txt");
+#else
+  gchar *home, *conf = NULL;
+
+  /* Local config is in the user's home directory */
+  home = getenv("HOME");
+  if (home) {
+    conf = g_strdup_printf("%s/.dopewars", home);
+    g_free(home);
+  }
+  return conf;
+#endif
+}
+
 /* 
  * Sets up data - such as the location of the high score file - to
  * hard-coded internal values, and then processes the global and
@@ -2282,7 +2326,7 @@ gchar *GetDocIndex(void)
  */
 void SetupParameters(void)
 {
-  char *ConfigFile, *pt;
+  gchar *conf;
   int i;
 
   /* Initialise variables */
@@ -2359,34 +2403,25 @@ void SetupParameters(void)
     AssignName(&StoppedTo[i], _(DefaultStoppedTo[i]));
   }
 
-#ifdef CYGWIN
-
-  /* Read the global configuration from the directory the binary is
-   * installed in */
-  pt = GetBinaryDir();
-  if (pt) {
-    ConfigFile = g_strdup_printf("%s/dopewars-config.txt", pt);
-    ReadConfigFile(ConfigFile);
-    g_free(ConfigFile);
-    g_free(pt);
-  }
-
-  /* Now read the local configuration from the current directory */
-  ReadConfigFile("dopewars-config.txt");
-
-#else /* CYGWIN */
+  /* FIXME: this is a bit risky; we haven't dropped privileges yet,
+   * so 1. we may be able to read files here that the user shouldn't
+   * have access to and 2. a bug in the configuration parsing code
+   * could result in a compromise. BUT we don't know where the high
+   * score file is until the config files have been parsed. */
 
   /* Now read in the global configuration file */
-  ReadConfigFile("/etc/dopewars");
-
-  /* Next, try to read in the .dopewars file in the user's home directory */
-  pt = getenv("HOME");
-  if (pt) {
-    ConfigFile = g_strdup_printf("%s/.dopewars", pt);
-    ReadConfigFile(ConfigFile);
-    g_free(ConfigFile);
+  conf = GetGlobalConfigFile();
+  if (conf) {
+    ReadConfigFile(conf);
+    g_free(conf);
   }
-#endif /* CYGWIN */
+
+  /* Finally, try the local configuration file */
+  conf = GetLocalConfigFile();
+  if (conf) {
+    ReadConfigFile(conf);
+    g_free(conf);
+  }
 }
 
 void HandleHelpTexts()

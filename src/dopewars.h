@@ -420,8 +420,10 @@ void OpenLog(void);
 void CloseLog(void);
 gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
-void WriteConfigFile(void);
+void WriteConfigFile(FILE *fp);
 gchar *GetDocIndex(void);
+gchar *GetGlobalConfigFile(void);
+gchar *GetLocalConfigFile(void);
 
 #ifndef CURSES_CLIENT
 void CursesLoop(void);

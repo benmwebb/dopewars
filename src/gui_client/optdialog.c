@@ -464,7 +464,7 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
 static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
 {
   SaveConfigWidgets();
-  WriteConfigFile();
+  WriteConfigFile(stdout);
   gtk_widget_destroy(dialog);
 }
 
