@@ -402,6 +402,7 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf) {
    guint replylen;
    gboolean retval=TRUE;
    if (NetBuf->socks->version==5) {
+g_print("Handling SOCKS5 reply\n");
       if (NetBuf->sockstat == NBSS_METHODS) {
          data = GetWaitingData(NetBuf,2);
          if (data) {
@@ -772,6 +773,9 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
       i=2;
       addpt[i++] = SM_NOAUTH;
       if (NetBuf->userpasswd) addpt[i++] = SM_USERPASSWD;
+
+   g_print("FIXME: SOCKS5 methods request sent\n");
+
       conn->DataPresent+=addlen;
 
       g_free(NetBuf->host);
