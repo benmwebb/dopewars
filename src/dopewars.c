@@ -2087,7 +2087,7 @@ int main(int argc,char *argv[]) {
             }
             g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
             /*if (fork()<=0)*/ ServerLoop();
-            fclose(logfp);
+            if (logfp) fclose(logfp);
 #endif /* GUI_SERVER */
 #else
             g_print(_("This binary has been compiled without networking "
