@@ -4711,12 +4711,26 @@ void gtk_button_set_text(GtkButton *button, gchar *text)
 static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
 {
   gint i;
+  GtkWidget *widget = GTK_WIDGET(menuitem);
 
   g_free(menuitem->text);
   menuitem->text = g_strdup(text ? text : "");
   for (i = 0; i < strlen(menuitem->text); i++) {
     if (menuitem->text[i] == '_')
       menuitem->text[i] = '&';
+  }
+
+  if (GTK_WIDGET_REALIZED(widget)) {
+    MENUITEMINFO mii;
+    HMENU parent_menu;
+
+    parent_menu = GTK_MENU_SHELL(widget->parent)->menu;
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_TYPE;
+    mii.fType = MFT_STRING;
+    mii.dwTypeData = (LPTSTR)menuitem->text;
+    mii.cch = strlen(menuitem->text);
+    SetMenuItemInfo(parent_menu, menuitem->ID, FALSE, &mii);
   }
 }
 
