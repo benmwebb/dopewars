@@ -40,15 +40,34 @@
 #include "sound.h"
 
 static SoundDriver *driver = NULL;
+static GSList *driverlist = NULL;
 typedef SoundDriver *(*InitFunc)(void);
-static void *soundmodule = NULL;
 static gboolean module_open = FALSE;
 
-static void AddPlugin(InitFunc ifunc)
+const gchar *GetPluginName(GSList **listpt)
+{
+  if (!*listpt) {
+    *listpt = driverlist;
+  } else {
+    *listpt = g_slist_next(*listpt);
+  }
+  if (*listpt) {
+    SoundDriver *drivpt = (SoundDriver *)(*listpt)->data;
+
+    if (drivpt) {
+      return drivpt->name;
+    }
+  }
+  return NULL;
+}
+
+static void AddPlugin(InitFunc ifunc, void *module)
 {
   driver = (*ifunc)();
   if (driver) {
     g_print("%s sound plugin init OK\n", driver->name);
+    driver->module = module;
+    driverlist = g_slist_append(driverlist, driver);
   }
 }
 
@@ -57,6 +76,7 @@ static void OpenModule(const gchar *modname, const gchar *fullname)
 {
   InitFunc ifunc;
   gint len = strlen(modname);
+  void *soundmodule;
 
   if (len > 6 && strncmp(modname, "lib", 3) == 0
       && strcmp(modname + len - 3, ".so") == 0) {
@@ -68,7 +88,6 @@ static void OpenModule(const gchar *modname, const gchar *fullname)
       g_print("dlopen of %s failed: %s\n", fullname, dlerror());
       return;
     }
-    g_print("%s opened OK\n", fullname);
 
     funcname = g_string_new(modname);
     g_string_truncate(funcname, len - 3);
@@ -76,9 +95,10 @@ static void OpenModule(const gchar *modname, const gchar *fullname)
     g_string_append(funcname, "_init");
     ifunc = dlsym(soundmodule, funcname->str);
     if (ifunc) {
-      AddPlugin(ifunc);
+      AddPlugin(ifunc, soundmodule);
     } else {
       g_print("dlsym (%s) failed: %s\n", funcname->str, dlerror());
+      dlclose(soundmodule);
     }
     g_string_free(funcname, TRUE);
   }
@@ -119,13 +139,13 @@ void SoundInit(void)
   ScanPluginDir("plugins/.libs");
 #else
 #ifdef HAVE_ESD
-  AddPlugin(sound_esd_init);
+  AddPlugin(sound_esd_init, NULL);
 #endif
 #ifdef HAVE_SDL_MIXER
-  AddPlugin(sound_sdl_init);
+  AddPlugin(sound_sdl_init, NULL);
 #endif
 #ifdef HAVE_WINMM
-  AddPlugin(sound_winmm_init);
+  AddPlugin(sound_winmm_init, NULL);
 #endif
 #endif
   module_open = FALSE;
@@ -141,15 +161,25 @@ void SoundOpen(gchar *drivername)
 
 void SoundClose(void)
 {
+#ifdef PLUGINS
+  GSList *listpt;
+  SoundDriver *listdriv;
+#endif
+
   if (driver && driver->close && module_open) {
     driver->close();
     module_open = FALSE;
   }
 #ifdef PLUGINS
-  if (soundmodule) {
-    dlclose(soundmodule);
+  for (listpt = driverlist; listpt; listpt = g_slist_next(listpt)) {
+    listdriv = (SoundDriver *)listpt->data;
+    if (listdriv && listdriv->module) {
+      dlclose(listdriv->module);
+    }
   }
 #endif
+  g_slist_free(driverlist);
+  driverlist = NULL;
 }
 
 void SoundPlay(const gchar *snd)
