@@ -1,5 +1,3 @@
-- Fix "glitch"; if attacked while dealing drugs, and you escape to a different
-  location, the transaction can still be completed.
 - Startscreen
 - Implement server option to buy more than one bitch at a time in the Pub.
 - Fail nicely if NumLocation (etc.) is set to zero
