@@ -180,9 +180,9 @@ void gtk_clist_realize(GtkWidget *widget)
   SendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
   clist->header_size = wp.cy;
   widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
-                                WS_CHILD | WS_TABSTOP | WS_HSCROLL
-                                | WS_VSCROLL | LBS_OWNERDRAWFIXED |
-                                LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
+                                WS_CHILD | WS_TABSTOP | WS_VSCROLL
+                                | WS_HSCROLL | LBS_OWNERDRAWFIXED
+                                | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
 
@@ -270,6 +270,22 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
     DrawFocusRect(lpdis->hDC, &lpdis->rcItem);
 }
 
+static void gtk_clist_set_extent(GtkCList *clist)
+{
+  gint i;
+  HWND hWnd;
+
+  hWnd = GTK_WIDGET(clist)->hWnd;
+  if (hWnd) {
+    int width = 0;
+
+    for (i = 0; i < clist->cols; i++) {
+      width += clist->coldata[i].width;
+    }
+    SendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
+  }
+}
+
 void gtk_clist_do_auto_resize(GtkCList *clist)
 {
   gint i;
@@ -284,9 +300,9 @@ void gtk_clist_update_all_widths(GtkCList *clist)
 {
   GSList *list;
   GtkCListRow *row;
-  gint i;
   SIZE size;
   HWND header;
+  gint i;
 
   header = clist->header;
   if (header)
@@ -302,6 +318,8 @@ void gtk_clist_update_all_widths(GtkCList *clist)
     if (row && row->text)
       gtk_clist_update_widths(clist, row->text);
   }
+
+  gtk_clist_set_extent(clist);
 }
 
 void gtk_clist_update_widths(GtkCList *clist, gchar *text[])
@@ -503,18 +521,10 @@ void gtk_clist_set_column_width_full(GtkCList *clist, gint column,
         SendMessage(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
       }
     }
+    gtk_clist_set_extent(clist);
     hWnd = GTK_WIDGET(clist)->hWnd;
     if (hWnd)
       InvalidateRect(hWnd, NULL, FALSE);
-  }
-}
-
-gint gtk_clist_optimal_column_width(GtkCList *clist, gint column)
-{
-  if (clist && column >= 0 && column < clist->cols) {
-    return clist->coldata[column].width;
-  } else {
-    return 0;
   }
 }
 
