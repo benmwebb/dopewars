@@ -844,11 +844,11 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   hbox = gtk_hbox_new(TRUE, 10);
 
-  button = gtk_button_new_with_label(_("OK"));
+  button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
   gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-  button = gtk_button_new_with_label(_("Cancel"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
