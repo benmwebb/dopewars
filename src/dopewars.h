@@ -276,7 +276,7 @@ struct _NetworkBuffer {
    ConnBuf ReadBuf;       /* New data, waiting for the application */
    ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
    gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
-   gint Error;            /* If non-NULL, any error from the last operation */
+   gint Error;            /* If non-zero, any error from the last operation */
 };
 
 struct PLAYER_T {
