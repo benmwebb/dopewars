@@ -45,6 +45,10 @@ AC_ARG_ENABLE(gui-server,
 [  --enable-gui-server     use a simple GTK+/Win32 GUI for the server],
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
 
+AC_ARG_ENABLE(glib2,
+[  --disable-glib2         use GLib/GTK+ 1.x, even if 2.x is found],
+[ USE_GLIB2="$enableval" ],[ USE_GLIB2="yes" ])
+
 dnl Test for Cygwin environment
 AC_CYGWIN
 dnl Let the user override this with the --enable-nativewin32 option
@@ -85,7 +89,10 @@ else
    AC_MSG_RESULT("Configuring for Unix binary")
 
    dnl We NEED glib - so test for it first
-   AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes", glib2_found="no")
+   glib2_found="no"
+   if test "$USE_GLIB2" = "yes" ; then
+     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
+   fi
    if test "$glib2_found" = "no" ; then
      AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
    fi
@@ -111,9 +118,13 @@ else
 
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
       dnl Tests for GTK
-      AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+      gtk2_found="no"
+      if test "$USE_GLIB2" = "yes" ; then
+        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes")
+      fi
       if test "$gtk2_found" = "yes" ; then
         HAVE_FIXED_GTK="yes"
+        AC_DEFINE(HAVE_GTK2)
       else
         AM_PATH_GTK(1.2.0,gtk_found="yes",gtk_found="no")
         if test "$gtk_found" = "no" ; then
