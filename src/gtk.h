@@ -10,6 +10,17 @@ typedef enum {
 } GtkWindowType;
 
 typedef enum {
+   GTK_ACCEL_VISIBLE        = 1 << 0,
+   GTK_ACCEL_SIGNAL_VISIBLE = 1 << 1
+} GtkAccelFlags;
+
+typedef enum {
+   GTK_VISIBILITY_NONE,
+   GTK_VISIBILITY_PARTIAL,
+   GTK_VISIBILITY_FULL
+} GtkVisibility;
+
+typedef enum {
    GTK_EXPAND = 1 << 0,
    GTK_SHRINK = 1 << 1,
    GTK_FILL   = 1 << 2
@@ -68,6 +79,7 @@ typedef struct _GtkPanedChild GtkPanedChild;
 typedef struct _GtkPaned GtkPaned;
 typedef struct _GtkVPaned GtkVPaned;
 typedef struct _GtkHPaned GtkHPaned;
+typedef struct _GtkOptionMenu GtkOptionMenu;
 
 struct _GtkAccelGroup {
    GSList *accel;
@@ -144,6 +156,7 @@ struct _GtkMenuShell {
 
 struct _GtkMenu {
    GtkMenuShell menushell;
+   guint active;
 };
 
 struct _GtkMenuBar {
@@ -158,6 +171,8 @@ typedef struct _GtkSpinButton GtkSpinButton;
 
 struct _GtkEditable {
    GtkWidget widget;
+   GString *text;
+   gint is_editable : 1;
 };
 
 struct _GtkEntry {
@@ -172,6 +187,7 @@ struct _GtkSpinButton {
 
 struct _GtkText {
    GtkEditable editable;
+   gint word_wrap : 1;
 };
 
 typedef struct _GtkLabel GtkLabel;
@@ -221,6 +237,9 @@ typedef struct _GtkCListRow GtkCListRow;
 typedef struct _GtkCListColumn GtkCListColumn;
 typedef struct _GtkItemFactoryEntry GtkItemFactoryEntry;
 typedef struct _GtkItemFactory GtkItemFactory;
+
+typedef gint (*GtkCListCompareFunc)(GtkCList *clist,gconstpointer ptr1,
+                                    gconstpointer ptr2);
 
 struct _GtkItemFactoryEntry {
    gchar *path;
@@ -289,7 +308,9 @@ struct _GtkCList {
    gint16 header_size;
    GSList *rows;
    GtkCListColumn *cols;
+   GList *selection;
    GtkSelectionMode mode;
+   gint auto_sort : 1;
 };
 
 typedef struct _GtkBin GtkBin;
@@ -314,6 +335,12 @@ struct _GtkFrame {
 struct _GtkButton {
    GtkWidget widget;
    gchar *text;
+};
+
+struct _GtkOptionMenu {
+   GtkButton button;
+   GtkWidget *menu;
+   guint selection;
 };
 
 struct _GtkToggleButton {
@@ -386,6 +413,7 @@ struct _GtkTableRowCol {
 #define GTK_TEXT(obj) ((GtkText *)(obj))
 #define GTK_WINDOW(obj) ((GtkWindow *)(obj))
 #define GTK_BUTTON(obj) ((GtkButton *)(obj))
+#define GTK_OPTION_MENU(obj) ((GtkOptionMenu *)(obj))
 #define GTK_TOGGLE_BUTTON(obj) ((GtkToggleButton *)(obj))
 #define GTK_RADIO_BUTTON(obj) ((GtkRadioButton *)(obj))
 #define GTK_CHECK_BUTTON(obj) ((GtkCheckButton *)(obj))
@@ -409,6 +437,7 @@ typedef int GdkEvent;
 
 void gtk_widget_show(GtkWidget *widget);
 void gtk_widget_show_all(GtkWidget *widget);
+void gtk_widget_hide_all(GtkWidget *widget);
 void gtk_widget_hide(GtkWidget *widget);
 void gtk_widget_destroy(GtkWidget *widget);
 void gtk_widget_realize(GtkWidget *widget);
@@ -449,12 +478,16 @@ GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
                                        const gchar *path);
 GtkWidget *gtk_clist_new(gint columns);
 GtkWidget *gtk_clist_new_with_titles(gint columns,gchar *titles[]);
+GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,gchar *titles[],
+                                              GtkWidget **pack_widg);
 gint gtk_clist_append(GtkCList *clist,gchar *text[]);
 void gtk_clist_set_column_title(GtkCList *clist,gint column,const gchar *title);
 gint gtk_clist_insert(GtkCList *clist,gint row,gchar *text[]);
 void gtk_clist_set_column_width(GtkCList *clist,gint column,gint width);
 void gtk_clist_column_title_passive(GtkCList *clist,gint column);
 void gtk_clist_column_titles_passive(GtkCList *clist);
+void gtk_clist_column_title_active(GtkCList *clist,gint column);
+void gtk_clist_column_titles_active(GtkCList *clist);
 void gtk_clist_set_selection_mode(GtkCList *clist,GtkSelectionMode mode);
 void gtk_clist_sort(GtkCList *clist);
 void gtk_clist_freeze(GtkCList *clist);
@@ -515,6 +548,7 @@ void gtk_menu_append(GtkMenu *menu,GtkWidget *child);
 void gtk_menu_prepend(GtkMenu *menu,GtkWidget *child);
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label);
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item,GtkWidget *submenu);
+void gtk_menu_set_active(GtkMenu *menu,guint index);
 GtkWidget *gtk_notebook_new();
 void gtk_notebook_append_page(GtkNotebook *notebook,GtkWidget *child,
                               GtkWidget *tab_label);
@@ -546,7 +580,8 @@ void gtk_entry_set_text(GtkEntry *entry,const gchar *text);
 void gtk_widget_add_accelerator(GtkWidget *widget,
                                 const gchar *accel_signal,
                                 GtkAccelGroup *accel_group,
-                                guint accel_key,guint accel_mods);
+                                guint accel_key,guint accel_mods,
+                                GtkAccelFlags accel_flags);
 void gtk_widget_remove_accelerator(GtkWidget *widget,
                                    GtkAccelGroup *accel_group,
                                    guint accel_key,guint accel_mods);
@@ -567,5 +602,28 @@ void gtk_paned_pack2(GtkPaned *paned,GtkWidget *child,gboolean resize,
 #define gtk_container_border_width gtk_container_set_border_width
 #define gtk_hbutton_box_new() gtk_hbox_new(TRUE,5)
 #define gtk_vbutton_box_new() gtk_vbox_new(TRUE,5)
+GtkWidget *gtk_option_menu_new();
+GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu);
+void gtk_option_menu_set_menu(GtkOptionMenu *option_menu,GtkWidget *menu);
+void gtk_option_menu_set_history(GtkOptionMenu *option_menu,guint index);
+void gtk_label_set_text(GtkLabel *label,const gchar *str);
+guint gtk_label_parse_uline(GtkLabel *label,const gchar *str);
+void gtk_clist_set_row_data(GtkCList *clist,gint row,gpointer data);
+gpointer gtk_clist_get_row_data(GtkCList *clist,gint row);
+void gtk_clist_set_auto_sort(GtkCList *clist,gboolean auto_sort);
+void gtk_clist_columns_autosize(GtkCList *clist);
+void gtk_text_set_point(GtkText *text,guint index);
+void gtk_widget_set_usize(GtkWidget *widget,gint width,gint height);
+void gtk_clist_select_row(GtkCList *clist,gint row,gint column);
+GtkVisibility gtk_clist_row_is_visible(GtkCList *clist,gint row);
+void gtk_clist_moveto(GtkCList *clist,gint row,gint column,
+                      gfloat row_align,gfloat col_align);
+void gtk_clist_set_compare_func(GtkCList *clist,GtkCListCompareFunc cmp_func);
+void gtk_clist_set_column_auto_resize(GtkCList *clist,gint column,
+                                      gboolean auto_resize);
+gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button);
+void gtk_spin_button_set_value(GtkSpinButton *spin_button,gfloat value);
+void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
+                                    GtkAdjustment *adjustment);
 
 #endif

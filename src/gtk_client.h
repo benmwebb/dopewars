@@ -26,6 +26,10 @@
 #include <config.h>
 #endif
 
+#ifdef CYGWIN
+char GtkLoop(HINSTANCE hInstance,HINSTANCE hPrevInstance);
+#else
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail);
+#endif
 
 #endif

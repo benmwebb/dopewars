@@ -1734,7 +1734,7 @@ int APIENTRY Win32Loop(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
    while (split[argc]) argc++;
-   g_set_print_handler(Win32PrintFunc);
+// g_set_print_handler(Win32PrintFunc);
    HandleCmdLine(argc,split);
    g_strfreev(split);
    if (WantVersion || WantHelp) {
@@ -1790,14 +1790,14 @@ int APIENTRY Win32Loop(HINSTANCE hInstance,HINSTANCE hPrevInstance,
          }
          StopNetworking();
          return msg.wParam;
-      }
 #elif GUI_CLIENT
-      GtkLoop(hInstance,hPrevInstance);
+         GtkLoop(hInstance,hPrevInstance);
 #else
-      g_print("No windowed client available - rebuild the binary passing the\n"
-              "--enable-win32-client option to configure, or use the curses\n"
-              "client (if available) instead!\n");
+         g_print("No windowed client available - rebuild the binary passing\n"
+                 "the --enable-win32-client option to configure, or use the\n"
+                 "curses client (if available) instead!\n");
 #endif
+      }
       StopNetworking();
    }
    if (PidFile) g_free(PidFile);

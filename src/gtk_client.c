@@ -125,10 +125,8 @@ static void Jet();
 static void DealDrugs(GtkWidget *widget,gpointer data);
 static void DealGuns(GtkWidget *widget,gpointer data);
 static void QuestionDialog(char *Data,Player *From);
-#ifndef CYGWIN
-static gint MessageBox(GtkWidget *parent,const gchar *Text,
-                       const gchar *Title,gint Options);
-#endif
+static gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                          const gchar *Title,gint Options);
 static void TransferDialog(gboolean Debt);
 static void ListPlayers(GtkWidget *widget,gpointer data);
 static void TalkToAll(GtkWidget *widget,gpointer data);
@@ -180,9 +178,9 @@ static gchar *MenuTranslate(const gchar *path,gpointer func_data) {
 
 static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                        const gchar *message,gpointer user_data) {
-   MessageBox(NULL,message,
-              log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
-              MB_OK);
+   GtkMessageBox(NULL,message,
+                 log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
+                 MB_OK);
 }
 
 #ifndef CYGWIN
@@ -201,8 +199,8 @@ static guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
 
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
-       MessageBox(ClientData.window,_("Abandon current game?"),_("Quit Game"),
-                  MB_YESNO)==IDYES) {
+      GtkMessageBox(ClientData.window,_("Abandon current game?"),
+                    _("Quit Game"),MB_YESNO)==IDYES) {
       gtk_main_quit();
    }
 }
@@ -212,15 +210,15 @@ void DestroyGtk(GtkWidget *widget,gpointer data) {
 }
 
 gint MainDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
-   return (InGame && MessageBox(ClientData.window,_("Abandon current game?"),
-                                _("Quit Game"),MB_YESNO)==IDNO);
+   return (InGame && GtkMessageBox(ClientData.window,_("Abandon current game?"),
+                                   _("Quit Game"),MB_YESNO)==IDNO);
 }
 
 
 void NewGame(GtkWidget *widget,gpointer data) {
    if (InGame) {
-      if (MessageBox(ClientData.window,_("Abandon current game?"),
-                     _("Start new game"),MB_YESNO)==IDYES) EndGame();
+      if (GtkMessageBox(ClientData.window,_("Abandon current game?"),
+                        _("Start new game"),MB_YESNO)==IDYES) EndGame();
       else return;
    }
    NewGameDialog();
@@ -548,6 +546,19 @@ static GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
    gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
    *pack_widg=hbox;
    return text;
+}
+
+static GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
+                                                     gchar *titles[],
+                                                     GtkWidget **pack_widg) {
+   GtkWidget *scrollwin,*clist;
+   clist=gtk_clist_new_with_titles(5,server_titles);
+   scrollwin=gtk_scrolled_window_new(NULL,NULL);
+   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                  GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
+   gtk_container_add(GTK_CONTAINER(scrollwin),clist);
+   *pack_widg=scrollwin;
+   return clist;
 }
 #endif
 
@@ -1156,24 +1167,24 @@ void DealGuns(GtkWidget *widget,gpointer data) {
 
    if (data!=BT_BUY && TotalGunsCarried(ClientData.Play)==0) {
       dpg_string_sprintf(text,_("You don't have any %tde!"),Names.Guns);
-      MessageBox(dialog,text->str,Title,MB_OK);
+      GtkMessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && TotalGunsCarried(ClientData.Play) >=
                               ClientData.Play->Bitches.Carried+2) { 
       dpg_string_sprintf(text,
                          _("You'll need more %tde to carry any more %tde!"),
                          Names.Bitches,Names.Guns);
-      MessageBox(dialog,text->str,Title,MB_OK);
+      GtkMessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Space > ClientData.Play->CoatSize) {
       dpg_string_sprintf(text,
                          _("You don't have enough space to carry that %tde!"),
                          Names.Gun);
-      MessageBox(dialog,text->str,Title,MB_OK);
+      GtkMessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_BUY && Gun[GunInd].Price > ClientData.Play->Cash) {
       dpg_string_sprintf(text,_("You don't have enough cash to buy that %tde!"),
                          Names.Gun);
-      MessageBox(dialog,text->str,Title,MB_OK);
+      GtkMessageBox(dialog,text->str,Title,MB_OK);
    } else if (data==BT_SELL && ClientData.Play->Guns[GunInd].Carried == 0) {
-      MessageBox(dialog,_("You don't have any to sell!"),Title,MB_OK);
+      GtkMessageBox(dialog,_("You don't have any to sell!"),Title,MB_OK);
    } else {
       g_string_sprintf(text,"gun^%d^%d",GunInd,data==BT_BUY ? 1 : -1);
       SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text->str);
@@ -1402,7 +1413,7 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
 }
 
 #ifdef CYGWIN
-char GtkLoop(HINST hInstance,HINST hPrevInstance) {
+char GtkLoop(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
 #else
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
 #endif
@@ -1466,16 +1477,12 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
 
    vpaned=gtk_vpaned_new();
 
-   hbox=gtk_hbox_new(FALSE,0);
    adj=(GtkAdjustment *)gtk_adjustment_new(0.0,0.0,100.0,1.0,10.0,10.0);
-   text=ClientData.messages=gtk_text_new(NULL,adj);
+   text=ClientData.messages=gtk_scrolled_text_new(NULL,adj,&hbox);
    gtk_widget_set_usize(text,100,80);
    gtk_text_set_point(GTK_TEXT(text),0);
    gtk_text_set_editable(GTK_TEXT(text),FALSE);
    gtk_text_set_word_wrap(GTK_TEXT(text),TRUE);
-   gtk_box_pack_start(GTK_BOX(hbox),text,TRUE,TRUE,0);
-   vscroll=gtk_vscrollbar_new(adj);
-   gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
    gtk_paned_pack1(GTK_PANED(vpaned),hbox,TRUE,TRUE);
 
    hbox=gtk_hbox_new(FALSE,7);
@@ -1838,13 +1845,12 @@ void NewGameDialog() {
 
    vbox2=gtk_vbox_new(FALSE,7);
    gtk_container_set_border_width(GTK_CONTAINER(vbox2),4);
-   scrollwin=gtk_scrolled_window_new(NULL,NULL);
-   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                  GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-   clist=widgets.metaserv=gtk_clist_new_with_titles(5,server_titles);
+
+   clist=widgets.metaserv=gtk_scrolled_clist_new_with_titles(5,server_titles,
+                                                             &scrollwin);
    gtk_clist_column_titles_passive(GTK_CLIST(clist));
    gtk_clist_set_selection_mode(GTK_CLIST(clist),GTK_SELECTION_SINGLE);
-   gtk_container_add(GTK_CONTAINER(scrollwin),clist);
+
    gtk_box_pack_start(GTK_BOX(vbox2),scrollwin,TRUE,TRUE,0);
 
    hbbox=gtk_hbutton_box_new();
@@ -1883,11 +1889,11 @@ void NewGameDialog() {
 }
 
 #ifndef CYGWIN
-static void DestroyMessageBox(GtkWidget *widget,gpointer data) {
+static void DestroyGtkMessageBox(GtkWidget *widget,gpointer data) {
    gtk_main_quit();
 }
 
-static void MessageBoxCallback(GtkWidget *widget,gpointer data) {
+static void GtkMessageBoxCallback(GtkWidget *widget,gpointer data) {
    gint *retval;
    GtkWidget *dialog;
    dialog=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
@@ -1896,8 +1902,8 @@ static void MessageBoxCallback(GtkWidget *widget,gpointer data) {
    gtk_widget_destroy(dialog);
 }
 
-gint MessageBox(GtkWidget *parent,const gchar *Text,
-                const gchar *Title,gint Options) {
+gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                   const gchar *Title,gint Options) {
    GtkWidget *dialog,*button,*label,*vbox,*hbbox,*hsep;
    GtkAccelGroup *accel_group;
    gint i;
@@ -1913,7 +1919,7 @@ gint MessageBox(GtkWidget *parent,const gchar *Text,
    if (parent) gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                             GTK_WINDOW(parent));
    gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
-                      GTK_SIGNAL_FUNC(DestroyMessageBox),NULL);
+                      GTK_SIGNAL_FUNC(DestroyGtkMessageBox),NULL);
    if (Title) gtk_window_set_title(GTK_WINDOW(dialog),Title);
 
    vbox=gtk_vbox_new(FALSE,7);
@@ -1936,7 +1942,7 @@ gint MessageBox(GtkWidget *parent,const gchar *Text,
                        "clicked",accel_group);
          gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
          gtk_signal_connect(GTK_OBJECT(button),"clicked",
-                            GTK_SIGNAL_FUNC(MessageBoxCallback),
+                            GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
                             GINT_TO_POINTER(1<<i));
          gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
       }
@@ -1946,6 +1952,12 @@ gint MessageBox(GtkWidget *parent,const gchar *Text,
    gtk_widget_show_all(dialog);
    gtk_main();
    return retval;
+}
+#else
+gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                   const gchar *Title,gint Options) {
+   return MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
+                     Text,Title,Options);
 }
 #endif
 
@@ -1982,13 +1994,13 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
          money=-money;
       }
       if (-money>ClientData.Play->Bank) {
-         MessageBox(dialog,_("There isn't that much money in the bank..."),
+         GtkMessageBox(dialog,_("There isn't that much money in the bank..."),
                     "Bank",MB_OK);
          return;
       }
    }
    if (money>ClientData.Play->Cash) {
-      MessageBox(dialog,_("You don't have that much money!"),
+      GtkMessageBox(dialog,_("You don't have that much money!"),
                  Debt ? "Pay loan" : "Bank",MB_OK);
       return;
    }
@@ -2369,7 +2381,7 @@ void SackBitch(GtkWidget *widget,gpointer data) {
    text=dpg_strdup_printf(_("Are you sure? (Any %tde or %tde carried\n"
                           "by this %tde may be lost!)"),Names.Guns,
                           Names.Drugs,Names.Bitch);
-   if (MessageBox(ClientData.window,text,title,MB_YESNO)==IDYES) {
+   if (GtkMessageBox(ClientData.window,text,title,MB_YESNO)==IDYES) {
       SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
    g_free(text); g_free(title);
@@ -2407,16 +2419,12 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
    for (i=mini;i<2;i++) {
       gtk_container_set_border_width(GTK_CONTAINER(frame[i]),5);
 
-      scrollwin=gtk_scrolled_window_new(NULL,NULL);
-      gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                     GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-      clist=gtk_clist_new_with_titles(2,titles[i]);
+      clist=gtk_scrolled_clist_new_with_titles(2,titles[i],&scrollwin);
       gtk_clist_set_column_auto_resize(GTK_CLIST(clist),0,TRUE);
       gtk_clist_set_column_auto_resize(GTK_CLIST(clist),1,TRUE);
       gtk_clist_column_titles_passive(GTK_CLIST(clist));
       gtk_clist_set_selection_mode(GTK_CLIST(clist),GTK_SELECTION_SINGLE);
       gtk_clist_set_auto_sort(GTK_CLIST(clist),FALSE);
-      gtk_container_add(GTK_CONTAINER(scrollwin),clist);
       gtk_container_add(GTK_CONTAINER(frame[i]),scrollwin);
       if (i==0) widgets->HereList=clist; else widgets->CarriedList=clist;
    }

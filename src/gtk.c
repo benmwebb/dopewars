@@ -87,6 +87,7 @@ static void gtk_box_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_table_show_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_widget_show_all_full(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_widget_show_full(GtkWidget *widget,gboolean recurse);
+static void gtk_widget_update(GtkWidget *widget,gboolean ForceResize);
 static void gtk_container_hide_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_box_hide_all(GtkWidget *widget,gboolean hWndOnly);
 static void gtk_table_hide_all(GtkWidget *widget,gboolean hWndOnly);
@@ -146,6 +147,16 @@ static void gtk_hpaned_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
 static void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation);
 static void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation);
+static void gtk_option_menu_size_request(GtkWidget *widget,
+                                         GtkRequisition *requisition);
+static void gtk_option_menu_set_size(GtkWidget *widget,
+                                     GtkAllocation *allocation);
+static void gtk_option_menu_realize(GtkWidget *widget);
+static void gtk_clist_update_selection(GtkWidget *widget);
+static void gtk_button_set_text(GtkButton *button,gchar *text);
+static void gtk_menu_item_set_text(GtkMenuItem *menuitem,gchar *text);
+static void gtk_editable_create(GtkWidget *widget);
+static void gtk_option_menu_update_selection(GtkWidget *widget);
 
 typedef struct _GdkInput GdkInput;
 
@@ -232,6 +243,7 @@ static GtkClass GtkMenuBarClass = {
 
 static GtkSignalType GtkMenuItemSignals[] = {
    { "realize",gtk_marshal_VOID__VOID,gtk_menu_item_realize },
+   { "set_text",gtk_marshal_VOID__GPOIN,gtk_menu_item_set_text },
    { "activate",gtk_marshal_VOID__VOID,NULL },
    { "enable",gtk_marshal_VOID__VOID,gtk_menu_item_enable },
    { "disable",gtk_marshal_VOID__VOID,gtk_menu_item_disable },
@@ -251,8 +263,13 @@ static GtkClass GtkMenuClass = {
    "menu",&GtkMenuShellClass,sizeof(GtkMenu),GtkMenuSignals
 };
 
+static GtkSignalType GtkEditableSignals[] = {
+   { "create",gtk_marshal_VOID__VOID,gtk_editable_create },
+   { "",NULL,NULL }
+};
+
 static GtkClass GtkEditableClass = {
-   "editable",&GtkWidgetClass,sizeof(GtkEditable),NULL
+   "editable",&GtkWidgetClass,sizeof(GtkEditable),GtkEditableSignals
 };
 
 static GtkSignalType GtkEntrySignals[] = {
@@ -292,6 +309,7 @@ static GtkClass GtkTextClass = {
 static GtkSignalType GtkLabelSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_label_size_request },
    { "set_size",gtk_marshal_VOID__GPOIN,gtk_label_set_size },
+   { "set_text",gtk_marshal_VOID__GPOIN,gtk_label_set_text },
    { "realize",gtk_marshal_VOID__VOID,gtk_label_realize },
    { "destroy",gtk_marshal_VOID__VOID,gtk_label_destroy },
    { "",NULL,NULL }
@@ -303,6 +321,7 @@ static GtkClass GtkLabelClass = {
 
 static GtkSignalType GtkButtonSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_button_size_request },
+   { "set_text",gtk_marshal_VOID__GPOIN,gtk_button_set_text },
    { "realize",gtk_marshal_VOID__VOID,gtk_button_realize },
    { "destroy",gtk_marshal_VOID__VOID,gtk_button_destroy },
    { "clicked",gtk_marshal_VOID__VOID,NULL },
@@ -311,6 +330,17 @@ static GtkSignalType GtkButtonSignals[] = {
 
 static GtkClass GtkButtonClass = {
    "button",&GtkWidgetClass,sizeof(GtkButton),GtkButtonSignals
+};
+
+static GtkSignalType GtkOptionMenuSignals[] = {
+   { "size_request",gtk_marshal_VOID__GPOIN,gtk_option_menu_size_request },
+   { "set_size",gtk_marshal_VOID__GPOIN,gtk_option_menu_set_size },
+   { "realize",gtk_marshal_VOID__VOID,gtk_option_menu_realize },
+   { "",NULL,NULL }
+};
+
+static GtkClass GtkOptionMenuClass = {
+   "optionmenu",&GtkButtonClass,sizeof(GtkOptionMenu),GtkOptionMenuSignals
 };
 
 static GtkSignalType GtkToggleButtonSignals[] = {
@@ -357,8 +387,8 @@ static GtkClass GtkContainerClass = {
 };
 
 static GtkSignalType GtkPanedSignals[] = {
-   { "show_all",gtk_marshal_VOID__VOID,gtk_paned_show_all },
-   { "hide_all",gtk_marshal_VOID__VOID,gtk_paned_hide_all },
+   { "show_all",gtk_marshal_VOID__BOOL,gtk_paned_show_all },
+   { "hide_all",gtk_marshal_VOID__BOOL,gtk_paned_hide_all },
    { "",NULL,NULL }
 };
 static GtkClass GtkPanedClass = {
@@ -431,6 +461,7 @@ static GtkSignalType GtkCListSignals[] = {
    { "size_request",gtk_marshal_VOID__GPOIN,gtk_clist_size_request },
    { "set_size",gtk_marshal_VOID__GPOIN,gtk_clist_set_size },
    { "realize",gtk_marshal_VOID__VOID,gtk_clist_realize },
+   { "click-column",gtk_marshal_VOID__GPOIN,NULL },
    { "show",gtk_marshal_VOID__VOID,gtk_clist_show },
    { "hide",gtk_marshal_VOID__VOID,gtk_clist_hide },
    { "",NULL,NULL }
@@ -570,6 +601,7 @@ LRESULT CALLBACK GtkSepProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
 
 LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    GtkWidget *window,*widget;
+   GtkClass *klass;
    RECT rect;
    GtkAllocation alloc;
    gboolean signal_return;
@@ -590,13 +622,19 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          gtk_widget_set_size(window,&alloc);
          break;
       case WM_COMMAND:
-         if (lParam && HIWORD(wParam)==BN_CLICKED) {
-            gtk_signal_emit(GTK_OBJECT(GetWindowLong((HWND)lParam,
-                                       GWL_USERDATA)),"clicked");
+         widget=GTK_WIDGET(GetWindowLong((HWND)lParam,GWL_USERDATA));
+         if (widget) klass=GTK_OBJECT(widget)->klass; else klass=NULL;
+
+         if (lParam && klass==&GtkCListClass && HIWORD(wParam)==LBN_SELCHANGE) {
+            gtk_clist_update_selection(widget);
+         } else if (lParam && klass==&GtkOptionMenuClass &&
+                    HIWORD(wParam)==CBN_SELENDOK) {
+            gtk_option_menu_update_selection(widget);
+         } else if (lParam && HIWORD(wParam)==BN_CLICKED) {
+            gtk_signal_emit(GTK_OBJECT(widget),"clicked");
          } else if (HIWORD(wParam)==0) {
-            widget=gtk_window_get_menu_ID(
-                      GTK_WINDOW(GetWindowLong(hwnd,GWL_USERDATA)),
-                      LOWORD(wParam));
+            window=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
+            widget=gtk_window_get_menu_ID(GTK_WINDOW(window),LOWORD(wParam));
             if (widget) gtk_signal_emit(GTK_OBJECT(widget),"activate");
          } else return TRUE;
          break;
@@ -682,15 +720,40 @@ void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance) {
    InitCommonControls();
 }
 
+void gtk_widget_update(GtkWidget *widget,gboolean ForceResize) {
+   GtkRequisition req;
+   GtkWidget *window;
+   GtkAllocation alloc;
+
+   if (!GTK_WIDGET_REALIZED(widget)) return;
+
+   gtk_widget_size_request(widget,&req);
+   window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+   if (window) {
+      alloc.x=alloc.y=0;
+      alloc.width=window->requisition.width;
+      alloc.height=window->requisition.height;
+      if (alloc.width < window->allocation.width) {
+         alloc.width=window->allocation.width;
+      }
+      if (alloc.height < window->allocation.height) {
+         alloc.height=window->allocation.height;
+      }
+      if (alloc.width!=window->allocation.width ||
+          alloc.height!=window->allocation.height || ForceResize) {
+         gtk_widget_set_size(window,&alloc);
+      }
+   }
+}
+
 void gtk_widget_show(GtkWidget *widget) {
    gtk_widget_show_full(widget,TRUE);
 }
 
 void gtk_widget_show_full(GtkWidget *widget,gboolean recurse) {
    GtkAllocation alloc;
-   GtkRequisition req;
-   GtkWidget *window;
 
+   if (GTK_WIDGET_VISIBLE(widget)) return;
    GTK_WIDGET_SET_FLAGS(widget,GTK_VISIBLE);
    if (recurse) gtk_widget_show_all_full(widget,TRUE);
    else gtk_signal_emit(GTK_OBJECT(widget),"show");
@@ -705,21 +768,8 @@ void gtk_widget_show_full(GtkWidget *widget,gboolean recurse) {
       ShowWindow(widget->hWnd,SW_SHOWNORMAL);
       UpdateWindow(widget->hWnd);
    } else if (GTK_WIDGET_REALIZED(widget)) {
-      gtk_widget_size_request(widget,&req);
+      gtk_widget_update(widget,TRUE);
       if (!recurse) ShowWindow(widget->hWnd,SW_SHOWNORMAL);
-      window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
-      if (window) {
-         alloc.x=alloc.y=0;
-         alloc.width=window->requisition.width;
-         alloc.height=window->requisition.height;
-         if (alloc.width < window->allocation.width) {
-            alloc.width=window->allocation.width;
-         }
-         if (alloc.height < window->allocation.height) {
-            alloc.height=window->allocation.height;
-         }
-         gtk_widget_set_size(window,&alloc);
-      }
    }
 }
 
@@ -731,6 +781,8 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
    GtkAllocation alloc;
    GtkRequisition req;
    GtkWidget *window;
+
+   if (!GTK_WIDGET_VISIBLE(widget)) return;
 
    if (recurse) gtk_widget_hide_all_full(widget,TRUE);
    else {
@@ -763,6 +815,7 @@ void gtk_widget_realize(GtkWidget *widget) {
    gtk_signal_emit(GTK_OBJECT(widget),"realize",&req);
    if (widget->hWnd) SetWindowLong(widget->hWnd,GWL_USERDATA,(LONG)widget);
    GTK_WIDGET_SET_FLAGS(widget,GTK_REALIZED);
+   gtk_widget_set_sensitive(widget,GTK_WIDGET_SENSITIVE(widget));
    gtk_widget_size_request(widget,&req);
 }
 
@@ -794,8 +847,11 @@ void gtk_widget_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    if (GTK_WIDGET_VISIBLE(widget)) {
       gtk_signal_emit(GTK_OBJECT(widget),"size_request",requisition);
    }
-   memcpy(&widget->requisition,requisition,sizeof(GtkRequisition));
-   if (widget->parent) gtk_widget_size_request(widget->parent,&req);
+   if (requisition->width != widget->requisition.width ||
+       requisition->height != widget->requisition.height) {
+      memcpy(&widget->requisition,requisition,sizeof(GtkRequisition));
+      if (widget->parent) gtk_widget_size_request(widget->parent,&req);
+   }
 }
 
 void gtk_widget_set_size(GtkWidget *widget,GtkAllocation *allocation) {
@@ -915,11 +971,24 @@ void gtk_window_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 void gtk_window_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkAllocation child_alloc;
    GtkWindow *window=GTK_WINDOW(widget);
+   RECT rect;
+
+   GetWindowRect(GetDesktopWindow(),&rect);
+
    if (allocation->width < window->default_width) {
       allocation->width=window->default_width;
    }
    if (allocation->height < window->default_height) {
       allocation->height=window->default_height;
+   }
+
+   if (widget->parent) {
+      allocation->x = rect.left+(rect.right-rect.left-allocation->width)/2;
+      allocation->y = rect.top+(rect.bottom-rect.top-allocation->height)/2;
+      if (allocation->x < 0) allocation->x = 0;
+      if (allocation->y < 0) allocation->y = 0;
+      if (widget->hWnd) SetWindowPos(widget->hWnd,HWND_TOP,allocation->x,
+                                     allocation->y,0,0,SWP_NOSIZE|SWP_NOZORDER);
    }
    child_alloc.x=child_alloc.y=0;
    child_alloc.width=allocation->width-GetSystemMetrics(SM_CXSIZEFRAME)*2;
@@ -1076,13 +1145,9 @@ GtkWidget *gtk_radio_button_new_with_label(GSList *group,const gchar *label) {
 
 GtkWidget *gtk_label_new(const gchar *text) {
    GtkLabel *label;
-   gint i;
 
    label=GTK_LABEL(GtkNewObject(&GtkLabelClass));
-   label->text = g_strdup(text);
-   for (i=0;i<strlen(label->text);i++) {
-      if (label->text[i]=='_') label->text[i]='&';
-   }
+   gtk_label_set_text(label,text);
 
    return GTK_WIDGET(label);
 }
@@ -1153,55 +1218,84 @@ GSList *gtk_radio_button_group(GtkRadioButton *radio_button) {
    return radio_button->group;
 }
 
+static void gtk_editable_sync_text(GtkEditable *editable) {
+   HWND hWnd;
+   gint textlen;
+   gchar *buffer;
+
+   hWnd=GTK_WIDGET(editable)->hWnd;
+   if (!hWnd) return;
+
+   textlen=SendMessage(hWnd,WM_GETTEXTLENGTH,0,0);
+   buffer=g_new(gchar,textlen+1);
+   SendMessage(hWnd,WM_GETTEXT,(WPARAM)(textlen+1),(LPARAM)buffer);
+   g_string_assign(editable->text,buffer);
+   g_free(buffer);
+}
+
 void gtk_editable_insert_text(GtkEditable *editable,const gchar *new_text,
                               gint new_text_length,gint *position) {
    GtkWidget *widget=GTK_WIDGET(editable);
    HWND hWnd;
-   if (!GTK_WIDGET_REALIZED(widget)) return;
+   gint i,textlen;
+
+   gtk_editable_sync_text(editable);
+   g_string_insert(editable->text,*position,new_text);
+   for (i=*position;i<*position+strlen(new_text);i++) {
+      if (editable->text->str[i]=='\r' &&
+          editable->text->str[i+1]=='\n') {
+         i++;
+      } else if (editable->text->str[i]=='\n') {
+         g_string_insert_c(editable->text,i,'\r');
+         i++;
+         (*position)++;
+      }
+   }
+
    hWnd=widget->hWnd;
-   SendMessage(hWnd,EM_SETSEL,(WPARAM)-1,(LPARAM)*position);
-   SendMessage(hWnd,EM_REPLACESEL,(WPARAM)FALSE,(LPARAM)new_text);
-   *position+=strlen(new_text);
+   if (hWnd) {
+      SendMessage(hWnd,WM_SETTEXT,0,(LPARAM)editable->text->str);
+      *position+=strlen(new_text);
+      gtk_editable_set_position(editable,*position);
+   }
 }
 
 void gtk_editable_delete_text(GtkEditable *editable,
                               gint start_pos,gint end_pos) {
    GtkWidget *widget=GTK_WIDGET(editable);
    HWND hWnd;
-   if (!GTK_WIDGET_REALIZED(widget)) return;
+
+   gtk_editable_sync_text(editable);
+   if (end_pos < 0 || end_pos >= editable->text->len)
+      end_pos=editable->text->len;
+   g_string_erase(editable->text,start_pos,end_pos-start_pos);
+
    hWnd=widget->hWnd;
-   SendMessage(hWnd,EM_SETSEL,(WPARAM)start_pos,(LPARAM)end_pos);
-   SendMessage(hWnd,EM_REPLACESEL,(WPARAM)FALSE,(LPARAM)"");
+   if (hWnd) {
+      SendMessage(hWnd,WM_SETTEXT,0,(LPARAM)editable->text->str);
+   }
 }
 
 gchar *gtk_editable_get_chars(GtkEditable *editable,
                               gint start_pos,gint end_pos) {
-   GtkWidget *widget=GTK_WIDGET(editable);
-   HWND hWnd;
-   LRESULT textlen;
-   gchar *buffer,*retbuf;
+   gchar *retbuf;
    gint copylen;
-   if (!GTK_WIDGET_REALIZED(widget)) return NULL;
-   hWnd=widget->hWnd;
-   textlen=SendMessage(hWnd,WM_GETTEXTLENGTH,0,0);
-   buffer=g_new(gchar,textlen+1);
-   SendMessage(hWnd,WM_GETTEXT,(WPARAM)(textlen+1),(LPARAM)buffer);
-   if (start_pos==0 && end_pos<0) return buffer;
-   else {
-      copylen=end_pos-start_pos;
-      retbuf=g_new(gchar,copylen+1);
-      memcpy(retbuf,&buffer[start_pos],copylen+1);
-      g_free(buffer);
-      return retbuf;
-   }
+   gtk_editable_sync_text(editable);
+   if (end_pos < 0 || end_pos >= editable->text->len)
+      end_pos=editable->text->len;
+   copylen=end_pos-start_pos+1;
+   retbuf=g_new(gchar,copylen);
+   memcpy(retbuf,&editable->text->str[start_pos],copylen);
+   retbuf[copylen]='\0';
+   return retbuf;
 }
 
 void gtk_editable_set_editable(GtkEditable *editable,gboolean is_editable) {
    GtkWidget *widget=GTK_WIDGET(editable);
    HWND hWnd;
-   if (!GTK_WIDGET_REALIZED(widget)) return;
+   editable->is_editable=is_editable;
    hWnd=widget->hWnd;
-   SendMessage(hWnd,EM_SETREADONLY,(WPARAM)(!is_editable),(LPARAM)0);
+   if (hWnd) SendMessage(hWnd,EM_SETREADONLY,(WPARAM)(!is_editable),(LPARAM)0);
 }
 
 void gtk_editable_set_position(GtkEditable *editable,gint position) {
@@ -1210,6 +1304,8 @@ void gtk_editable_set_position(GtkEditable *editable,gint position) {
    if (!GTK_WIDGET_REALIZED(widget)) return;
    hWnd=widget->hWnd;
    SendMessage(hWnd,EM_SETSEL,(WPARAM)-1,(LPARAM)position);
+   SendMessage(hWnd,EM_SCROLLCARET,0,0);
+   SendMessage(hWnd,EM_LINESCROLL,0,(LPARAM)1000);
 }
 
 gint gtk_editable_get_position(GtkEditable *editable) {
@@ -1223,13 +1319,7 @@ gint gtk_editable_get_position(GtkEditable *editable) {
 }
 
 guint gtk_text_get_length(GtkText *text) {
-   GtkWidget *widget=GTK_WIDGET(text);
-   HWND hWnd;
-   LRESULT textlen;
-   if (!GTK_WIDGET_REALIZED(widget)) return 0;
-   hWnd=widget->hWnd;
-   textlen=SendMessage(hWnd,WM_GETTEXTLENGTH,0,0);
-   return (guint)textlen;
+   return GTK_EDITABLE(text)->text->len;
 }
 
 void gtk_box_pack_start(GtkBox *box,GtkWidget *child,gboolean Expand,
@@ -1450,7 +1540,7 @@ void gtk_window_realize(GtkWidget *widget) {
    widget->hWnd = CreateWindow("mainwin",win->title,
                      win->type == GTK_WINDOW_TOPLEVEL ?
                         WS_OVERLAPPEDWINDOW|CS_HREDRAW|CS_VREDRAW|WS_SIZEBOX :
-                        WS_CAPTION|CS_HREDRAW|CS_VREDRAW,
+                        WS_CAPTION|WS_SYSMENU|CS_HREDRAW|CS_VREDRAW,
                      CW_USEDEFAULT,0,
                      widget->allocation.width,widget->allocation.height,
                      Parent,NULL,hInst,NULL);
@@ -1509,16 +1599,25 @@ void gtk_entry_realize(GtkWidget *widget) {
                             widget->allocation.width,widget->allocation.height,
                             Parent,NULL,hInst,NULL);
    gtk_set_default_font(widget->hWnd);
+   gtk_editable_set_editable(GTK_EDITABLE(widget),
+                             GTK_EDITABLE(widget)->is_editable);
+   SendMessage(widget->hWnd,WM_SETTEXT,0,
+               (LPARAM)GTK_EDITABLE(widget)->text->str);
 }
 
 void gtk_text_realize(GtkWidget *widget) {
    HWND Parent;
    Parent=gtk_get_parent_hwnd(widget);
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT","",
-                            WS_CHILD|WS_TABSTOP|ES_AUTOHSCROLL|
-                            ES_MULTILINE|ES_WANTRETURN|WS_VSCROLL,
+                            WS_CHILD|WS_TABSTOP|
+                            ES_MULTILINE|ES_WANTRETURN|WS_VSCROLL|
+                            (GTK_TEXT(widget)->word_wrap ? 0 : ES_AUTOHSCROLL),
                             0,0,0,0,Parent,NULL,hInst,NULL);
    gtk_set_default_font(widget->hWnd);
+   gtk_editable_set_editable(GTK_EDITABLE(widget),
+                             GTK_EDITABLE(widget)->is_editable);
+   SendMessage(widget->hWnd,WM_SETTEXT,0,
+               (LPARAM)GTK_EDITABLE(widget)->text->str);
 }
 
 void gtk_frame_realize(GtkWidget *widget) {
@@ -1641,7 +1740,8 @@ void gtk_clist_realize(GtkWidget *widget) {
 /* g_print("Header %p, size %d\n",header,wp.cy);*/
    widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"LISTBOX","",
                                  WS_CHILD|WS_TABSTOP|LBS_DISABLENOSCROLL|
-                                 WS_VSCROLL|LBS_USETABSTOPS|LBS_OWNERDRAWFIXED,
+                                 WS_VSCROLL|LBS_USETABSTOPS|
+                                 LBS_OWNERDRAWFIXED|LBS_NOTIFY,
                                  0,0,0,0,Parent,NULL,hInst,NULL);
    gtk_set_default_font(widget->hWnd);
 
@@ -1719,6 +1819,8 @@ gint gtk_clist_insert(GtkCList *clist,gint row,gchar *text[]) {
    GtkCListRow *new_row;
    gint i;
 
+   if (row<0) row=g_slist_length(clist->rows);
+
    new_row=g_new0(GtkCListRow,1);
    new_row->text=g_new0(gchar *,clist->ncols);
    for (i=0;i<clist->ncols;i++) {
@@ -1744,6 +1846,14 @@ GtkWidget *gtk_clist_new_with_titles(gint columns,gchar *titles[]) {
    for (i=0;i<clist->ncols;i++) {
       gtk_clist_set_column_title(clist,i,titles[i]);
    }
+   return widget;
+}
+
+GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,gchar *titles[],
+                                              GtkWidget **pack_widg) {
+   GtkWidget *widget;
+   widget=gtk_clist_new_with_titles(columns,titles);
+   *pack_widg=widget;
    return widget;
 }
 
@@ -1773,6 +1883,18 @@ void gtk_clist_column_titles_passive(GtkCList *clist) {
    gint i;
    for (i=0;i<clist->ncols;i++) {
       gtk_clist_column_title_passive(clist,i);
+   }
+}
+
+void gtk_clist_column_title_active(GtkCList *clist,gint column) {
+   if (column>=0 && column<clist->ncols)
+      clist->cols[column].button_passive=FALSE;
+}
+
+void gtk_clist_column_titles_active(GtkCList *clist) {
+   gint i;
+   for (i=0;i<clist->ncols;i++) {
+      gtk_clist_column_title_active(clist,i);
    }
 }
 
@@ -2205,7 +2327,7 @@ void gtk_main() {
       for (list=WindowList;list && !MsgDone;list=g_slist_next(list)) {
          if ((MsgDone=IsDialogMessage((HWND)list->data,&msg))==TRUE) break;
       }
-      if (!MsgDone && GTK_OBJECT(widget)->klass==&GtkWindowClass) {
+      if (!MsgDone && widget && GTK_OBJECT(widget)->klass==&GtkWindowClass) {
          hAccel=GTK_WINDOW(widget)->hAccel;
          if (hAccel) MsgDone=TranslateAccelerator(widget->hWnd,hAccel,&msg);
       }
@@ -2662,6 +2784,10 @@ void gtk_menu_realize(GtkWidget *widget) {
    gtk_menu_shell_realize(widget);
 }
 
+void gtk_menu_set_active(GtkMenu *menu,guint index) {
+   menu->active=index;
+}
+
 void gtk_menu_shell_realize(GtkWidget *widget) {
    GSList *children;
    GtkMenuShell *menu=GTK_MENU_SHELL(widget);
@@ -2894,7 +3020,7 @@ GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,gfloat climb_rate,
    GtkSpinButton *spin;
 
    spin=GTK_SPIN_BUTTON(GtkNewObject(&GtkSpinButtonClass));
-   spin->adj=adjustment;
+   gtk_spin_button_set_adjustment(spin,adjustment);
 
    return GTK_WIDGET(spin);
 }
@@ -2923,6 +3049,37 @@ void gtk_spin_button_set_size(GtkWidget *widget,
    }
 }
 
+gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button) {
+   HWND hWnd;
+   LRESULT lres;
+   hWnd=spin_button->updown;
+   if (hWnd) {
+      lres=SendMessage(hWnd,UDM_GETPOS,0,0);
+      if (HIWORD(lres) != 0) return 0;
+      else return (gint)LOWORD(lres);
+   } else return (gint)spin_button->adj->value;
+}
+
+void gtk_spin_button_set_value(GtkSpinButton *spin_button,gfloat value) {
+   HWND hWnd;
+   spin_button->adj->value=value;
+   hWnd=spin_button->updown;
+   if (hWnd) SendMessage(hWnd,UDM_SETPOS,0,(LPARAM)MAKELONG((short)value,0));
+}
+
+void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
+                                    GtkAdjustment *adjustment) {
+   HWND hWnd;
+   spin_button->adj=adjustment;
+   hWnd=spin_button->updown;
+   if (hWnd) {
+      SendMessage(hWnd,UDM_SETRANGE,0,
+          (LPARAM)MAKELONG((short)adjustment->upper,(short)adjustment->lower));
+      SendMessage(hWnd,UDM_SETPOS,0,
+          (LPARAM)MAKELONG((short)adjustment->value,0));
+   }
+}
+
 void gtk_spin_button_realize(GtkWidget *widget) {
    GtkSpinButton *spin=GTK_SPIN_BUTTON(widget);
    HWND Parent;
@@ -2932,10 +3089,9 @@ void gtk_spin_button_realize(GtkWidget *widget) {
    Parent=gtk_get_parent_hwnd(widget->parent);
    spin->updown=CreateUpDownControl(WS_CHILD|WS_BORDER|
                         UDS_SETBUDDYINT|UDS_NOTHOUSANDS|UDS_ARROWKEYS,
-                        0,0,0,0,Parent,0,hInst,widget->hWnd,
-                        (int)spin->adj->upper,(int)spin->adj->lower,
-                        (int)spin->adj->value);
+                        0,0,0,0,Parent,0,hInst,widget->hWnd,20,10,15);
    gtk_set_default_font(spin->updown);
+   gtk_spin_button_set_adjustment(spin,spin->adj);
 }
 
 void gtk_spin_button_destroy(GtkWidget *widget) {
@@ -3045,13 +3201,15 @@ void gtk_entry_set_text(GtkEntry *entry,const gchar *text) {
 guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
                      GtkWidget *sendto,gchar *signal,
                      GtkAccelGroup *accel_group) {
+   gtk_signal_emit(GTK_OBJECT(labelparent),"set_text",Text);
    return 0;
 }
 
 void gtk_widget_add_accelerator(GtkWidget *widget,
                                 const gchar *accel_signal,
                                 GtkAccelGroup *accel_group,
-                                guint accel_key,guint accel_mods) {
+                                guint accel_key,guint accel_mods,
+                                GtkAccelFlags accel_flags) {
 }
 
 void gtk_widget_remove_accelerator(GtkWidget *widget,
@@ -3173,8 +3331,6 @@ void gtk_hpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    child_alloc.height=allocation->height;
    child_alloc.width=allocation->width/numchildren;
    for (i=0;i<2;i++) if (paned->children[i].widget) {
-/*    g_print("Setting size of child to %d,%d at %d,%d\n",
-  child_alloc.width,child_alloc.height,child_alloc.x,child_alloc.y);*/
       gtk_widget_set_size(paned->children[i].widget,&child_alloc);
       child_alloc.x+=allocation->width/numchildren;
    }
@@ -3185,6 +3341,7 @@ void gtk_text_set_editable(GtkText *text,gboolean is_editable) {
 }
 
 void gtk_text_set_word_wrap(GtkText *text,gboolean word_wrap) {
+   text->word_wrap=word_wrap;
 }
 
 void gtk_text_freeze(GtkText *text) {
@@ -3203,4 +3360,222 @@ void gtk_clist_thaw(GtkCList *clist) {
 }
 
 void gtk_clist_clear(GtkCList *clist) {
+   GtkCListRow *row;
+   GSList *list;
+   gint i;
+   HWND hWnd;
+
+   for (list=clist->rows;list;list=g_slist_next(list)) {
+      row=(GtkCListRow *)list->data;
+      for (i=0;i<clist->ncols;i++) {
+         g_free(row->text[i]);
+      }
+      g_free(row);
+   }
+   g_slist_free(clist->rows);
+   clist->rows=NULL;
+
+   hWnd=GTK_WIDGET(clist)->hWnd;
+   if (hWnd) {
+      SendMessage(hWnd,LB_RESETCONTENT,0,0);
+   }
+}
+
+GtkWidget *gtk_option_menu_new() {
+   GtkOptionMenu *option_menu;
+   option_menu=GTK_OPTION_MENU(GtkNewObject(&GtkOptionMenuClass));
+   return GTK_WIDGET(option_menu);
+}
+
+GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu) {
+   return option_menu->menu;
+}
+
+void gtk_option_menu_set_menu(GtkOptionMenu *option_menu,GtkWidget *menu) {
+   GSList *list;
+   GtkMenuItem *menu_item;
+   HWND hWnd;
+
+   if (!menu) return;
+   option_menu->menu=menu;
+   hWnd=GTK_WIDGET(option_menu)->hWnd;
+
+   if (hWnd) {
+      SendMessage(hWnd,CB_RESETCONTENT,0,0);
+      for (list=GTK_MENU_SHELL(menu)->children;list;list=g_slist_next(list)) {
+         menu_item=GTK_MENU_ITEM(list->data);
+         if (menu_item && menu_item->text)
+            SendMessage(hWnd,CB_ADDSTRING,0,(LPARAM)menu_item->text);
+      }
+      SendMessage(hWnd,CB_SETCURSEL,(WPARAM)GTK_MENU(menu)->active,0);
+   }
+}
+
+void gtk_option_menu_set_history(GtkOptionMenu *option_menu,guint index) {
+   GtkWidget *menu;
+   menu=gtk_option_menu_get_menu(option_menu);
+   if (menu) gtk_menu_set_active(GTK_MENU(menu),index);
+}
+
+void gtk_option_menu_size_request(GtkWidget *widget,
+                                  GtkRequisition *requisition) {
+   SIZE size;
+
+   if (GetTextSize(widget->hWnd,"Sample text",&size)) {
+      requisition->width = size.cx+40;
+      requisition->height = size.cy+4;
+   }
+}
+
+void gtk_option_menu_set_size(GtkWidget *widget,GtkAllocation *allocation) {
+   allocation->height *= 6;
+}
+
+void gtk_option_menu_realize(GtkWidget *widget) {
+   HWND Parent;
+   GtkOptionMenu *option_menu=GTK_OPTION_MENU(widget);
+
+   Parent=gtk_get_parent_hwnd(widget);
+   widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE,"COMBOBOX","",
+                                 WS_CHILD|WS_TABSTOP|WS_VSCROLL|
+                                 CBS_HASSTRINGS|CBS_DROPDOWNLIST,
+                                 0,0,0,0,Parent,NULL,hInst,NULL);
+   gtk_set_default_font(widget->hWnd);
+   gtk_option_menu_set_menu(option_menu,option_menu->menu);
+}
+
+void gtk_label_set_text(GtkLabel *label,const gchar *str) {
+   gint i;
+   HWND hWnd;
+   g_free(label->text);
+   label->text = g_strdup(str ? str : "");
+   for (i=0;i<strlen(label->text);i++) {
+      if (label->text[i]=='_') label->text[i]='&';
+   }
+   hWnd=GTK_WIDGET(label)->hWnd;
+   if (hWnd) {
+      gtk_widget_update(GTK_WIDGET(label),FALSE);
+      SendMessage(hWnd,WM_SETTEXT,0,(LPARAM)label->text);
+   }
+}
+
+void gtk_button_set_text(GtkButton *button,gchar *text) {
+   gint i;
+   HWND hWnd;
+   g_free(button->text);
+   button->text = g_strdup(text ? text : "");
+   for (i=0;i<strlen(button->text);i++) {
+      if (button->text[i]=='_') button->text[i]='&';
+   }
+   hWnd=GTK_WIDGET(button)->hWnd;
+   if (hWnd) {
+      gtk_widget_update(GTK_WIDGET(button),FALSE);
+      SendMessage(hWnd,WM_SETTEXT,0,(LPARAM)button->text);
+   }
+}
+
+static void gtk_menu_item_set_text(GtkMenuItem *menuitem,gchar *text) {
+   gint i;
+   g_free(menuitem->text);
+   menuitem->text = g_strdup(text ? text : "");
+   for (i=0;i<strlen(menuitem->text);i++) {
+      if (menuitem->text[i]=='_') menuitem->text[i]='&';
+   }
+}
+
+guint gtk_label_parse_uline(GtkLabel *label,const gchar *str) {
+   gint i;
+   gtk_label_set_text(label,str);
+   if (str) for (i=0;i<strlen(str);i++) {
+      if (str[i]=='_') return str[i+1];
+   }
+   return 0;
+}
+
+void gtk_clist_set_row_data(GtkCList *clist,gint row,gpointer data) {
+   GtkCListRow *list_row;
+   if (row>=0 && row<g_slist_length(clist->rows)) {
+      list_row=(GtkCListRow *)g_slist_nth_data(clist->rows,row);
+      if (list_row) list_row->data=data;
+   }
+}
+
+gpointer gtk_clist_get_row_data(GtkCList *clist,gint row) {
+   GtkCListRow *list_row;
+   if (row>=0 && row<g_slist_length(clist->rows)) {
+      list_row=(GtkCListRow *)g_slist_nth_data(clist->rows,row);
+      if (list_row) return list_row->data;
+   }
+   return NULL;
+}
+
+void gtk_clist_set_auto_sort(GtkCList *clist,gboolean auto_sort) {
+   clist->auto_sort=auto_sort;
+}
+
+void gtk_clist_columns_autosize(GtkCList *clist) {
+}
+
+void gtk_text_set_point(GtkText *text,guint index) {
+   gtk_editable_set_position(GTK_EDITABLE(text),index);
+}
+
+void gtk_widget_set_usize(GtkWidget *widget,gint width,gint height) {
+}
+
+void gtk_clist_select_row(GtkCList *clist,gint row,gint column) {
+}
+
+GtkVisibility gtk_clist_row_is_visible(GtkCList *clist,gint row) {
+   return GTK_VISIBILITY_FULL;
+}
+
+void gtk_clist_moveto(GtkCList *clist,gint row,gint column,
+                      gfloat row_align,gfloat col_align) {
+}
+
+void gtk_clist_set_compare_func(GtkCList *clist,GtkCListCompareFunc cmp_func) {
+}
+
+void gtk_clist_set_column_auto_resize(GtkCList *clist,gint column,
+                                      gboolean auto_resize) {
+   if (clist && column>=0 && column<clist->ncols) {
+      clist->cols[column].auto_resize=auto_resize;
+   }
+}
+
+void gtk_clist_update_selection(GtkWidget *widget) {
+   GtkCList *clist=GTK_CLIST(widget);
+   gint i;
+   g_list_free(clist->selection);
+   clist->selection=NULL;
+   if (widget->hWnd==NULL) return;
+   for (i=0;i<g_slist_length(clist->rows);i++) {
+      if (SendMessage(widget->hWnd,LB_GETSEL,(WPARAM)i,0) > 0) {
+         clist->selection=g_list_append(clist->selection,GINT_TO_POINTER(i));
+      }
+   }
+}
+
+void gtk_editable_create(GtkWidget *widget) {
+   GtkEditable *editable=GTK_EDITABLE(widget);
+   gtk_widget_create(widget);
+   editable->is_editable=TRUE;
+   editable->text=g_string_new("");
+}
+
+void gtk_option_menu_update_selection(GtkWidget *widget) {
+   LRESULT lres;
+   GtkMenuShell *menu;
+   GtkWidget *menu_item;
+
+   if (widget->hWnd==NULL) return;
+   lres=SendMessage(widget->hWnd,CB_GETCURSEL,0,0);
+   if (lres==CB_ERR) return;
+
+   menu=GTK_MENU_SHELL(gtk_option_menu_get_menu(GTK_OPTION_MENU(widget)));
+   if (menu) {
+      menu_item=GTK_WIDGET(g_slist_nth_data(menu->children,lres));
+      if (menu_item) gtk_signal_emit(GTK_OBJECT(menu_item),"activate");
+   }
 }
