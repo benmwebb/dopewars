@@ -578,7 +578,7 @@ void NewGameDialog(Player *play)
   hbbox = my_hbbox_new();
 
   /* Button to update metaserver information */
-  button = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
+  button = NewStockButton(GTK_STOCK_REFRESH, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(UpdateMetaServerList), NULL);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -662,8 +662,12 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
                 gpointer data)
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
+  GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  accel_group = gtk_accel_group_new();
+  gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
+
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(DestroyAuthDialog), NULL);
   gtk_object_set_data(GTK_OBJECT(window), "proxy", GINT_TO_POINTER(proxy));
@@ -723,12 +727,12 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
 
   hbbox = my_hbbox_new();
 
-  button = gtk_button_new_from_stock(GTK_STOCK_OK);
+  button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKAuthDialog), (gpointer)window);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)window);
@@ -778,8 +782,12 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
                                 gpointer data)
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
+  GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  accel_group = gtk_accel_group_new();
+  gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
+
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(DestroySocksAuth), NULL);
   gtk_object_set_data(GTK_OBJECT(window), "netbuf", (gpointer)netbuf);
@@ -827,12 +835,12 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
 
   hbbox = my_hbbox_new();
 
-  button = gtk_button_new_from_stock(GTK_STOCK_OK);
+  button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKSocksAuth), (gpointer)window);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)window);

@@ -39,6 +39,15 @@
 #include "gtkport.h"
 #include "nls.h"
 
+#if CYGWIN || !HAVE_GLIB2
+const gchar *GTK_STOCK_OK = N_("_OK");
+const gchar *GTK_STOCK_CLOSE = N_("_Close");
+const gchar *GTK_STOCK_CANCEL = N_("_Cancel");
+const gchar *GTK_STOCK_REFRESH = N_("_Refresh");
+const gchar *GTK_STOCK_YES = N_("_Yes");
+const gchar *GTK_STOCK_NO = N_("_No");
+#endif
+
 #ifdef CYGWIN
 
 #include <windows.h>
@@ -5003,9 +5012,9 @@ void gtk_timeout_remove(guint timeout_handler_id)
   }
 }
 
-GtkWidget *gtk_button_new_from_stock(const gchar *label)
+GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
 {
-  return gtk_button_new_with_label(label);
+  return gtk_button_new_with_label(_(label));
 }
 
 /* We don't really handle styles, so these are just placeholder functions */
@@ -5144,7 +5153,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   gint i;
   static gint retval;
   gboolean imm_return;
-  gchar *ButtonData[MB_MAX] = {
+  const gchar *ButtonData[MB_MAX] = {
     GTK_STOCK_OK, GTK_STOCK_CANCEL, GTK_STOCK_YES, GTK_STOCK_NO
   };
 
@@ -5178,7 +5187,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   hbbox = gtk_hbutton_box_new();
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
-      button = gtk_button_new_from_stock(ButtonData[i]);
+      button = NewStockButton(ButtonData[i], accel_group);
       if (!imm_return) {
         gtk_object_set_data(GTK_OBJECT(button), "retval", &retval);
       }
@@ -5197,6 +5206,11 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
 }
 
 #ifdef HAVE_GLIB2
+
+GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
+{
+  return gtk_button_new_from_stock(label);
+}
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, GtkMessageType type, gint Options)
@@ -5231,13 +5245,12 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   return OldGtkMessageBox(parent, Text, Title, Options);
 }
 
-GtkWidget *gtk_button_new_from_stock(const gchar *label)
+GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
 {
   GtkWidget *button;
 
-/*button = gtk_button_new_with_label("");
-  SetAccelerator(button, label, button, "clicked", accel_group, TRUE);*/
-  button = gtk_button_new_with_label(label);
+  button = gtk_button_new_with_label("");
+  SetAccelerator(button, _(label), button, "clicked", accel_group, FALSE);
   return button;
 }
 

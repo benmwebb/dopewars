@@ -807,14 +807,8 @@ struct _GtkUrl {
 #endif /* CYGWIN */
 
 #if CYGWIN || !HAVE_GLIB2
-#define GTK_STOCK_OK      _("OK")
-#define GTK_STOCK_CLOSE   _("Close")
-#define GTK_STOCK_CANCEL  _("Cancel")
-#define GTK_STOCK_REFRESH _("Refresh")
-#define GTK_STOCK_YES     _("Yes")
-#define GTK_STOCK_NO      _("No")
-
-GtkWidget *gtk_button_new_from_stock(const gchar *label);
+extern const gchar *GTK_STOCK_OK, *GTK_STOCK_CLOSE, *GTK_STOCK_CANCEL, 
+                   *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO;
 
 typedef enum
 {
@@ -846,5 +840,6 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
 void TextViewClear(GtkTextView *textview);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
+GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 
 #endif /* __GTKPORT_H__ */

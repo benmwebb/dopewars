@@ -683,6 +683,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
   GtkWidget *hbox, *vbox, *hsep, *button, *hbbox;
+  GtkAccelGroup *accel_group;
 
   struct ConfigMembers locmembers[] = {
     { "Police presence", "PolicePresence" },
@@ -715,6 +716,8 @@ void OptDialog(GtkWidget *widget, gpointer data)
   };
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  accel_group = gtk_accel_group_new();
+  gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
   gtk_window_set_title(GTK_WINDOW(dialog), _("Options"));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
@@ -865,11 +868,11 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
 
-  button = gtk_button_new_from_stock(GTK_STOCK_OK);
+  button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
