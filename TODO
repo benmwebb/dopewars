@@ -1,4 +1,6 @@
 - Support for "proper" game dates, e.g. mm-dd-yy or dd-mm-yy
+- Limit rate of server connections to combat DOS attacks / players trying
+  to get a good starting day?
 - Add support for reading/writing multiple configuration files to GUI client's
   Options dialog
 - Startscreen
