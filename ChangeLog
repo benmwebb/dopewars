@@ -1,5 +1,7 @@
 cvs
-    - Basic sound support
+    - Sound support; Windows multimedia, ESD and SDL outputs are supported;
+      the individual modules can be statically linked in, or built as true
+      "plugins"
     - Version mismatches between client and server are now treated more
       sensibly (it's all done server-side, and spurious warnings are now
       removed - only an old client connecting to a new server will
