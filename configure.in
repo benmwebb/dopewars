@@ -7,6 +7,9 @@ AM_INIT_AUTOMAKE(dopewars,cvs)
 dnl Write configuration defines into config.h
 AM_CONFIG_HEADER(config.h)
 
+dnl We need this for the Darwin test, plus gettext uses it anyway
+AC_CANONICAL_HOST
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_ISC_POSIX
@@ -22,9 +25,6 @@ AC_CHECK_HEADERS(fcntl.h sys/time.h unistd.h stdlib.h)
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
 AC_STRUCT_TM
-
-dnl We need this for the Darwin test, plus gettext uses it anyway
-AC_CANONICAL_HOST
 
 dnl Fix Apple's stupid C preprocessor
 case "$host_os" in darwin*)
@@ -58,6 +58,8 @@ AC_ARG_WITH(sdl,
 [  --without-sdl           do not support SDL sound output],
 [ USE_SDL="$withval" ], [ USE_SDL="probe" ])
 
+ESD=no
+SDL=no
 
 dnl Test for Cygwin environment
 AC_CYGWIN
@@ -171,7 +173,6 @@ else
    fi
 
    dnl Add esound support if available
-   ESD=no
    if test "$USE_ESD" != "no"; then
      AM_PATH_ESD(0.0.20, ESD=yes)
      if test "$ESD" = "yes"; then
@@ -184,10 +185,8 @@ else
        AC_MSG_ERROR(Cannot find ESD library)
      fi
    fi
-   AM_CONDITIONAL(ESD, test "$ESD" = "yes")
 
    dnl Add SDL_mixer sound support if available
-   SDL=no
    if test "$USE_SDL" != "no"; then
      SDL_ALL=no
      AM_PATH_SDL(1.0.0, SDL=yes)
@@ -213,7 +212,6 @@ else
        AC_MSG_ERROR(Cannot find SDL library)
      fi
    fi
-   AM_CONDITIONAL(SDL, test "$SDL" = "yes")
 
    dnl Use console server by default
    if test "$GUI_SERVER" = "probe"; then
@@ -229,6 +227,9 @@ else
                              [Do we have the socklen_t data type?])],
                   [AC_MSG_RESULT([no])])
 fi
+
+AM_CONDITIONAL(ESD, test "$ESD" = "yes")
+AM_CONDITIONAL(SDL, test "$SDL" = "yes")
 
 dnl If probing was unsuccessful, these will be set to "no"; therefore,
 dnl if still set to "probe" then everything worked, so set to "yes"
