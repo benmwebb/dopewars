@@ -12,7 +12,7 @@ play and single-player games.
 .SH OPTIONS
 Valid commandline options:
 .TP
-\fB\-b\fR, \fB\-\-nocolor\fR, \fB\-\-nocolour\fR
+\fB\-b\fR, \fB\-\-no\-color\fR, \fB\-\-no\-colour\fR
 "black and white", i.e. do not use pretty colours
 .TP
 \fB\-n\fR, \fB\-\-single\-player\fR
@@ -23,7 +23,7 @@ Antique dopewars; stick as close as possible to the functionality of the
 original version.
 .TP
 \fB\-f\fR, \fB\-\-scorefile\fR=\fIFILE\fR
-Specify a file to use as high score table (defaults to /var/games/dopewars/dopewars.sco)
+Specify a file to use as high score table (defaults to @DPDATADIR@/dopewars.sco)
 .TP
 \fB\-o\fR, \fB\-\-hostname\fR=\fIADDR\fR
 Specify a multiplayer hostname

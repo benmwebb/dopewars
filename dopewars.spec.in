@@ -1,6 +1,6 @@
 Summary:       Drug dealing game
-Name:          dopewars
-Version:       cvs
+Name:          @PACKAGE@
+Version:       @VERSION@
 Release:       1
 Vendor:        Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
 URL:           http://dopewars.sourceforge.net/

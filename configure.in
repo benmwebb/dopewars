@@ -352,6 +352,7 @@ dnl Tell dopewars where the high scores, docs and locale files are
 DP_EXPAND_DIR(DPDATADIR, '${datadir}')
 AC_DEFINE_UNQUOTED(DPDATADIR, "$DPDATADIR",
                    [The directory containing the high score file and docs])
+AC_SUBST(DPDATADIR)
 
 localedir=${datadir}/locale
 AC_SUBST(localedir)
@@ -401,6 +402,8 @@ sounds/19.5degs/Makefile
 doc/Makefile
 doc/help/Makefile
 intl/Makefile
+dopewars.spec
+doc/dopewars.6
 po/Makefile.in],
 [sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile])
 
