@@ -35,7 +35,6 @@
 #include <signal.h>
 #include <curses_client.h>
 #include <gtk_client.h>
-#include <win32_client.h>
 #include <glib.h>
 #include "dopeos.h"
 #include "message.h"
@@ -1656,15 +1655,9 @@ void HandleCmdLine(int argc,char *argv[]) {
    }
 }
 
-#ifdef CYGWIN
+#ifndef CYGWIN
 
-int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
-                     LPSTR lpszCmdParam,int nCmdShow) {
-   return Win32Loop(hInstance,hPrevInstance,lpszCmdParam,nCmdShow);
-}
-
-#else /* !CYGWIN */
-
+/* Standard program entry - Win32 uses WinMain() instead, in winmain.c */
 int main(int argc,char *argv[]) {
 #ifdef ENABLE_NLS
    setlocale(LC_ALL,"");

@@ -27,37 +27,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef CYGWIN
-#include "gtk.h"
-#else
-#include <gtk/gtk.h>
-#include <gdk/gdkkeysyms.h>
-#endif
-
 #include "dopeos.h"
 #include "dopewars.h"
 #include "gtk_client.h"
 #include "message.h"
 #include "serverside.h"
 #include "tstring.h"
+#include "gtkport.h"
 
 #define BT_BUY  (GINT_TO_POINTER(1))
 #define BT_SELL (GINT_TO_POINTER(2))
 #define BT_DROP (GINT_TO_POINTER(3))
-
-
-#ifndef CYGWIN
-#define MB_OK     1
-#define MB_CANCEL 2
-#define MB_YES    4
-#define MB_NO     8
-#define MB_YESNO  (MB_YES|MB_NO)
-#define IDOK      1
-#define IDCANCEL  2
-#define IDYES     4
-#define IDNO      8
-#define MB_MAX    4
-#endif
 
 #define ET_SPY    0
 #define ET_TIPOFF 1
@@ -128,8 +108,6 @@ static void Jet();
 static void DealDrugs(GtkWidget *widget,gpointer data);
 static void DealGuns(GtkWidget *widget,gpointer data);
 static void QuestionDialog(char *Data,Player *From);
-static gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
-                          const gchar *Title,gint Options);
 static void TransferDialog(gboolean Debt);
 static void ListPlayers(GtkWidget *widget,gpointer data);
 static void TalkToAll(GtkWidget *widget,gpointer data);
@@ -187,20 +165,6 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                  log_level&G_LOG_LEVEL_WARNING ? _("Warning") : _("Message"),
                  MB_OK);
 }
-
-#ifndef CYGWIN
-static guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
-                            GtkWidget *sendto,gchar *signal,
-                            GtkAccelGroup *accel_group) {
-   guint AccelKey;
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(labelparent)->child),Text);
-   if (sendto && AccelKey) {
-      gtk_widget_add_accelerator(sendto,signal,accel_group,AccelKey,0,
-                                 GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
-   }
-   return AccelKey;
-}
-#endif
 
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
@@ -621,35 +585,6 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
          break;
    }
 }
-
-#ifndef CYGWIN
-static GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
-                                        GtkWidget **pack_widg) {
-   GtkWidget *hbox,*text,*vscroll;
-   GtkAdjustment *adj;
-   hbox=gtk_hbox_new(FALSE,0);
-   adj=(GtkAdjustment *)gtk_adjustment_new(0.0,0.0,100.0,1.0,10.0,10.0);
-   text=gtk_text_new(NULL,adj);
-   gtk_box_pack_start(GTK_BOX(hbox),text,TRUE,TRUE,0);
-   vscroll=gtk_vscrollbar_new(adj);
-   gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
-   *pack_widg=hbox;
-   return text;
-}
-
-static GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                                     gchar *titles[],
-                                                     GtkWidget **pack_widg) {
-   GtkWidget *scrollwin,*clist;
-   clist=gtk_clist_new_with_titles(columns,titles);
-   scrollwin=gtk_scrolled_window_new(NULL,NULL);
-   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                  GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
-   gtk_container_add(GTK_CONTAINER(scrollwin),clist);
-   *pack_widg=scrollwin;
-   return clist;
-}
-#endif
 
 static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
                                  GtkBox *box,gint Answer) {
@@ -2195,79 +2130,6 @@ void NewGameDialog() {
    gtk_notebook_set_page(GTK_NOTEBOOK(notebook),NewGameType);
 }
 
-#ifndef CYGWIN
-static void DestroyGtkMessageBox(GtkWidget *widget,gpointer data) {
-   gtk_main_quit();
-}
-
-static void GtkMessageBoxCallback(GtkWidget *widget,gpointer data) {
-   gint *retval;
-   GtkWidget *dialog;
-   dialog=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
-   retval=(gint *)gtk_object_get_data(GTK_OBJECT(widget),"retval");
-   if (retval) *retval=GPOINTER_TO_INT(data);
-   gtk_widget_destroy(dialog);
-}
-
-gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
-                   const gchar *Title,gint Options) {
-   GtkWidget *dialog,*button,*label,*vbox,*hbbox,*hsep;
-   GtkAccelGroup *accel_group;
-   gint i;
-   static gint retval;
-   gchar *ButtonData[MB_MAX] = { N_("OK"), N_("Cancel"),
-                                 N_("_Yes"), N_("_No") };
-
-   dialog=gtk_window_new(GTK_WINDOW_DIALOG);
-   accel_group=gtk_accel_group_new();
-   gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
-   gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
-   gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
-   if (parent) gtk_window_set_transient_for(GTK_WINDOW(dialog),
-                                            GTK_WINDOW(parent));
-   gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
-                      GTK_SIGNAL_FUNC(DestroyGtkMessageBox),NULL);
-   if (Title) gtk_window_set_title(GTK_WINDOW(dialog),Title);
-
-   vbox=gtk_vbox_new(FALSE,7);
-
-   if (Text) {
-      label=gtk_label_new(Text);
-      gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
-   }
-
-   hsep=gtk_hseparator_new();
-   gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
-
-   retval=MB_CANCEL;
-
-   hbbox=gtk_hbutton_box_new();
-   for (i=0;i<MB_MAX;i++) {
-      if (Options & (1<<i)) {
-         button=gtk_button_new_with_label("");
-         SetAccelerator(button,_(ButtonData[i]),button,
-                       "clicked",accel_group);
-         gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
-         gtk_signal_connect(GTK_OBJECT(button),"clicked",
-                            GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
-                            GINT_TO_POINTER(1<<i));
-         gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
-      }
-   }
-   gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
-   gtk_container_add(GTK_CONTAINER(dialog),vbox);
-   gtk_widget_show_all(dialog);
-   gtk_main();
-   return retval;
-}
-#else
-gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
-                   const gchar *Title,gint Options) {
-   return MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
-                     Text,Title,Options);
-}
-#endif
-
 static void SendDoneMessage(GtkWidget *widget,gpointer data) {
    SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL);
 }
@@ -2966,9 +2828,9 @@ void DisplaySpyReports(Player *Play) {
 
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    if (!ReturnOnFail) {
-      g_print(_("No graphical client available - rebuild the binary passing\n"
-              "the --enable-gui-client option to configure, or use the\n"
-              "curses client (if available) instead!\n"));
+      g_print(_("No graphical client available - rebuild the binary\n"
+              "passing the --enable-gui-client option to configure, or\n"
+              "use the curses client (if available) instead!\n"));
    }
    return FALSE;
 }

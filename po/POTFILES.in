@@ -4,7 +4,8 @@ src/dopewars.c
 src/dopeos.c
 src/curses_client.c
 src/gtk_client.c
-src/win32_client.c
+src/gtkport.c
+src/winmain.c
 src/serverside.c
 src/message.c
 src/AIPlayer.c

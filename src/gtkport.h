@@ -1,5 +1,13 @@
-#ifndef __GTK_H__
-#define __GTK_H__
+#ifndef __GTKPORT_H__
+#define __GTKPORT_H__
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef CYGWIN
+
+/* GTK+ emulation prototypes etc. for Win32 platform */
 
 #include <windows.h>
 #include <glib.h>
@@ -491,8 +499,6 @@ GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
                                                        const gchar *label);
 GtkWidget *gtk_frame_new(const gchar *text);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj);
-GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
-                                 GtkWidget **pack_widg);
 GtkWidget *gtk_entry_new();
 GtkWidget *gtk_table_new(guint rows,guint cols,gboolean homogeneous);
 void gtk_table_resize(GtkTable *table,guint rows,guint cols);
@@ -509,8 +515,6 @@ GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
                                        const gchar *path);
 GtkWidget *gtk_clist_new(gint columns);
 GtkWidget *gtk_clist_new_with_titles(gint columns,gchar *titles[]);
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,gchar *titles[],
-                                              GtkWidget **pack_widg);
 gint gtk_clist_append(GtkCList *clist,gchar *text[]);
 void gtk_clist_set_column_title(GtkCList *clist,gint column,const gchar *title);
 gint gtk_clist_insert(GtkCList *clist,gint row,gchar *text[]);
@@ -616,10 +620,6 @@ void gtk_widget_add_accelerator(GtkWidget *widget,
 void gtk_widget_remove_accelerator(GtkWidget *widget,
                                    GtkAccelGroup *accel_group,
                                    guint accel_key,guint accel_mods);
-guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
-                     GtkWidget *sendto,gchar *signal,
-                     GtkAccelGroup *accel_group);
-
 extern const GtkType GTK_TYPE_WINDOW,GTK_TYPE_MENU_BAR;
 GtkWidget *gtk_vpaned_new();
 GtkWidget *gtk_hpaned_new();
@@ -666,4 +666,35 @@ void gtk_progress_bar_update(GtkProgressBar *pbar,gfloat percentage);
 
 extern long AsyncSocketError;
 
-#endif
+#else   /* CYGWIN */
+
+/* Include standard GTK+ headers on Unix systems */
+#include <gtk/gtk.h>
+#include <gdk/gdkkeysyms.h>
+
+/* Defines for GtkMessageBox options */
+#define MB_OK     1
+#define MB_CANCEL 2
+#define MB_YES    4
+#define MB_NO     8
+#define MB_YESNO  (MB_YES|MB_NO)
+#define IDOK      1
+#define IDCANCEL  2
+#define IDYES     4
+#define IDNO      8
+#define MB_MAX    4
+
+#endif  /* CYGWIN */
+
+/* Global functions */
+gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                   const gchar *Title,gint Options);
+GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,gchar *titles[],
+                                              GtkWidget **pack_widg);
+guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
+                     GtkWidget *sendto,gchar *signal,
+                     GtkAccelGroup *accel_group);
+GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
+                                 GtkWidget **pack_widg);
+
+#endif /* __GTKPORT_H__ */

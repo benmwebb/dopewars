@@ -1,9 +1,58 @@
+/* gtkport.c      Portable "almost-GTK+" for Unix/Win32                 */
+/* Copyright (C)  1998-2001  Ben Webb                                   */
+/*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
+/*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
+
+/* This program is free software; you can redistribute it and/or        */
+/* modify it under the terms of the GNU General Public License          */
+/* as published by the Free Software Foundation; either version 2       */
+/* of the License, or (at your option) any later version.               */
+
+/* This program is distributed in the hope that it will be useful,      */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of       */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        */
+/* GNU General Public License for more details.                         */
+
+/* You should have received a copy of the GNU General Public License    */
+/* along with this program; if not, write to the Free Software          */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston,               */
+/*                   MA  02111-1307, USA.                               */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <glib.h>
+
+#include "gtkport.h"
+
+/* Internationalization stuff */
+
+#ifdef ENABLE_NLS
+#include <locale.h>
+#include <libintl.h>
+#define _(String) gettext (String)
+#ifdef gettext_noop
+#define N_(String) gettext_noop (String)
+#else
+#define N_(String) (String)
+#endif
+#else
+#define gettext(String) (String)
+#define dgettext(Domain,Message) (Message)
+#define dcgettext(Domain,Message,Type) (Message)
+#define _(String) (String)
+#define N_(String) (String)
+#endif
+
+#ifdef CYGWIN
+
 #include <windows.h>
 #include <winsock.h>
 #include <commctrl.h>
-#include <stdarg.h>
-#include "gtk.h"
 
 #define LISTITEMVPACK  0
 #define LISTITEMHPACK  3
@@ -4174,3 +4223,116 @@ void gtk_progress_bar_realize(GtkWidget *widget) {
    SendMessage(widget->hWnd,PBM_SETRANGE,0,MAKELPARAM(0,10000));
    SendMessage(widget->hWnd,PBM_SETPOS,(WPARAM)(10000.0*prog->position),0);
 }
+
+gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                   const gchar *Title,gint Options) {
+   return MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
+                     Text,Title,Options);
+}
+
+#else   /* CYGWIN */
+guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
+                     GtkWidget *sendto,gchar *signal,
+                     GtkAccelGroup *accel_group) {
+   guint AccelKey;
+   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(labelparent)->child),Text);
+   if (sendto && AccelKey) {
+      gtk_widget_add_accelerator(sendto,signal,accel_group,AccelKey,0,
+                                 GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   }
+   return AccelKey;
+}
+
+GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
+                                 GtkWidget **pack_widg) {
+   GtkWidget *hbox,*text,*vscroll;
+   GtkAdjustment *adj;
+   hbox=gtk_hbox_new(FALSE,0);
+   adj=(GtkAdjustment *)gtk_adjustment_new(0.0,0.0,100.0,1.0,10.0,10.0);
+   text=gtk_text_new(NULL,adj);
+   gtk_box_pack_start(GTK_BOX(hbox),text,TRUE,TRUE,0);
+   vscroll=gtk_vscrollbar_new(adj);
+   gtk_box_pack_start(GTK_BOX(hbox),vscroll,FALSE,FALSE,0);
+   *pack_widg=hbox;
+   return text;
+}
+
+GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
+                                              gchar *titles[],
+                                              GtkWidget **pack_widg) {
+   GtkWidget *scrollwin,*clist;
+   clist=gtk_clist_new_with_titles(columns,titles);
+   scrollwin=gtk_scrolled_window_new(NULL,NULL);
+   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                  GTK_POLICY_AUTOMATIC,GTK_POLICY_AUTOMATIC);
+   gtk_container_add(GTK_CONTAINER(scrollwin),clist);
+   *pack_widg=scrollwin;
+   return clist;
+}
+
+static void DestroyGtkMessageBox(GtkWidget *widget,gpointer data) {
+   gtk_main_quit();
+}
+
+static void GtkMessageBoxCallback(GtkWidget *widget,gpointer data) {
+   gint *retval;
+   GtkWidget *dialog;
+   dialog=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
+   retval=(gint *)gtk_object_get_data(GTK_OBJECT(widget),"retval");
+   if (retval) *retval=GPOINTER_TO_INT(data);
+   gtk_widget_destroy(dialog);
+}
+
+gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
+                   const gchar *Title,gint Options) {
+   GtkWidget *dialog,*button,*label,*vbox,*hbbox,*hsep;
+   GtkAccelGroup *accel_group;
+   gint i;
+   static gint retval;
+   gchar *ButtonData[MB_MAX] = { N_("OK"), N_("Cancel"),
+                                 N_("_Yes"), N_("_No") };
+
+   dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+   accel_group=gtk_accel_group_new();
+   gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
+   gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
+   gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
+   if (parent) gtk_window_set_transient_for(GTK_WINDOW(dialog),
+                                            GTK_WINDOW(parent));
+   gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
+                      GTK_SIGNAL_FUNC(DestroyGtkMessageBox),NULL);
+   if (Title) gtk_window_set_title(GTK_WINDOW(dialog),Title);
+
+   vbox=gtk_vbox_new(FALSE,7);
+
+   if (Text) {
+      label=gtk_label_new(Text);
+      gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
+   }
+
+   hsep=gtk_hseparator_new();
+   gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
+
+   retval=MB_CANCEL;
+
+   hbbox=gtk_hbutton_box_new();
+   for (i=0;i<MB_MAX;i++) {
+      if (Options & (1<<i)) {
+         button=gtk_button_new_with_label("");
+         SetAccelerator(button,_(ButtonData[i]),button,
+                       "clicked",accel_group);
+         gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
+         gtk_signal_connect(GTK_OBJECT(button),"clicked",
+                            GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
+                            GINT_TO_POINTER(1<<i));
+         gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+      }
+   }
+   gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
+   gtk_container_add(GTK_CONTAINER(dialog),vbox);
+   gtk_widget_show_all(dialog);
+   gtk_main();
+   return retval;
+}
+
+#endif  /* CYGWIN */
