@@ -2502,7 +2502,7 @@ void TransferDialog(gboolean Debt)
                        GTK_SIGNAL_FUNC(TransferPayAll), dialog);
     gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
-  button = gtk_button_new_with_label(_("Cancel"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
@@ -2826,7 +2826,7 @@ void ErrandDialog(gint ErrandType)
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(ErrandOK), (gpointer)clist);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  button = gtk_button_new_with_label(_("Cancel"));
+  button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             (gpointer)dialog);
