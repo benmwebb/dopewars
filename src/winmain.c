@@ -252,7 +252,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             "# informative messages resulting from configuration\n"
             "# file processing and the like.\n\n"));
 
+#ifdef HAVE_GLIB2
+  split = g_strsplit(lpszCmdParam, " ", 1);
+#else
   split = g_strsplit(lpszCmdParam, " ", 0);
+#endif
   argc = 0;
   while (split[argc] && split[argc][0])
     argc++;

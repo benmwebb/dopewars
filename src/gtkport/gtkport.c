@@ -4332,7 +4332,7 @@ void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible)
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
-                     GtkAccelGroup *accel_group)
+                     GtkAccelGroup *accel_group, gboolean needalt)
 {
   gtk_signal_emit(GTK_OBJECT(labelparent), "set_text", Text);
   return 0;
@@ -4974,14 +4974,15 @@ void gtk_timeout_remove(guint timeout_handler_id)
 #else /* CYGWIN */
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
-                     GtkAccelGroup *accel_group)
+                     GtkAccelGroup *accel_group, gboolean needalt)
 {
   guint AccelKey;
 
   AccelKey =
       gtk_label_parse_uline(GTK_LABEL(GTK_BIN(labelparent)->child), Text);
   if (sendto && AccelKey) {
-    gtk_widget_add_accelerator(sendto, signal, accel_group, AccelKey, 0,
+    gtk_widget_add_accelerator(sendto, signal, accel_group, AccelKey,
+                               needalt ? GDK_MOD1_MASK : 0,
                                GTK_ACCEL_VISIBLE);
   }
   return AccelKey;
@@ -5003,7 +5004,7 @@ GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
   return text;
 }
 
-#ifdef HAVE_GTK2
+#ifdef HAVE_GLIB2
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, gint Options)
@@ -5096,7 +5097,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
     if (Options & (1 << i)) {
       button = gtk_button_new_with_label("");
       SetAccelerator(button, _(ButtonData[i]), button,
-                     "clicked", accel_group);
+                     "clicked", accel_group, FALSE);
       if (!imm_return) {
         gtk_object_set_data(GTK_OBJECT(button), "retval", &retval);
       }
