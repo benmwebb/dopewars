@@ -26,6 +26,7 @@
 #include <glib.h>
 
 extern gchar *LocalCfgEncoding;
-gboolean UpdateConfigFile(const gchar *cfgfile);
+gboolean UpdateConfigFile(const gchar *cfgfile, gboolean ForceUTF8);
+gboolean IsConfigFileUTF8(void);
 
 #endif /* __DP_CONFIGFILE_H__ */

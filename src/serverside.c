@@ -971,7 +971,7 @@ static void ServerSaveConfigFile(const char *string)
     file = GetLocalConfigFile();
     string = file;
   }
-  if (UpdateConfigFile(file)) {
+  if (UpdateConfigFile(file, FALSE)) {
     g_print(_("Configuration file saved OK as %s\n"), string);
   }
   g_free(file);

@@ -31,6 +31,7 @@
 #include <ctype.h>              /* For isprint */
 #include <glib.h>
 
+#include "configfile.h"
 #include "convert.h"            /* For Converter */
 #include "dopewars.h"           /* For struct GLOBALS etc. */
 #include "nls.h"                /* For _ function */
@@ -191,10 +192,16 @@ static void ReadFileToString(FILE *fp, gchar *str, int matchlen)
  * Writes all of the configuration file variables that have changed
  * (together with their values) to the given file.
  */
-static void WriteConfigFile(FILE *fp)
+static void WriteConfigFile(FILE *fp, gboolean ForceUTF8)
 {
   int i, j;
   Converter *conv = Conv_New();
+
+  if (ForceUTF8 && !IsConfigFileUTF8()) {
+    g_free(LocalCfgEncoding);
+    LocalCfgEncoding = g_strdup("UTF-8");
+    fprintf(fp, "encoding \"UTF-8\"\n");
+  }
 
   if (LocalCfgEncoding && LocalCfgEncoding[0]) {
     Conv_SetCodeset(conv, LocalCfgEncoding);
@@ -214,7 +221,7 @@ static void WriteConfigFile(FILE *fp)
   Conv_Free(conv);
 }
 
-gboolean UpdateConfigFile(const gchar *cfgfile)
+gboolean UpdateConfigFile(const gchar *cfgfile, gboolean ForceUTF8)
 {
   FILE *fp;
   gchar *defaultfile;
@@ -246,9 +253,14 @@ gboolean UpdateConfigFile(const gchar *cfgfile)
   }
 
   ReadFileToString(fp, header, 50);
-  WriteConfigFile(fp);
+  WriteConfigFile(fp, ForceUTF8);
 
   fclose(fp);
   g_free(defaultfile);
   return TRUE;
+}
+
+gboolean IsConfigFileUTF8(void)
+{
+  return (LocalCfgEncoding && strcmp(LocalCfgEncoding, "UTF-8") == 0);
 }
