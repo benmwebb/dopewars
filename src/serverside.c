@@ -232,8 +232,9 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   gboolean retval;
   int i;
 
-  if (!MetaServer.Active || WantQuit)
+  if (!MetaServer.Active || WantQuit || !Server) {
     return;
+  }
 
   if (MetaMinTimeout > time(NULL) && RespectTimeout) {
     dopelog(3, LF_SERVER,
