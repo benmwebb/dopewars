@@ -1,26 +1,19 @@
 if GUI_CLIENT
 GUISUBDIR = gui_client
-GUILIB = gui_client/libguiclient.a
 endif
-
 if CURSES_CLIENT
 CURSESSUBDIR = curses_client
-CURSESLIB = curses_client/libcursesclient.a
 endif
-
 if GTKPORT
 GTKPORTSUBDIR = gtkport
-GTKPORTLIB = gtkport/libgtkport.a
 endif
-
 if CURSESPORT
 CURSESPORTSUBDIR = cursesport
-CURSESPORTLIB = cursesport/libcursesport.a
 endif
 
 SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR)
-dopewars_LDADD = $(GUILIB) $(CURSESLIB) $(GTKPORTLIB) $(CURSESPORTLIB) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
-dopewars_DEPENDENCIES = $(GUILIB) $(CURSESLIB) $(GTKPORTLIB) $(CURSESPORTLIB) @INTLLIBS@ @WNDRES@
+dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @INTLLIBS@ @WNDRES@
+dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @INTLLIBS@ @WNDRES@
 
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
