@@ -457,16 +457,18 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_WANTQUIT:
-    if (Play->EventNum != E_FINISH)
+    if (Play->EventNum != E_FINISH) {
       FinishGame(Play, NULL);
+    }
     break;
   case C_REQUESTJET:
     i = atoi(Data);
     if (Play->EventNum == E_FIGHT || Play->EventNum == E_FIGHTASK) {
-      if (CanRunHere(Play))
+      if (CanRunHere(Play)) {
         break;
-      else
+      } else {
         RunFromCombat(Play, i);
+      }
     }
     if (NumTurns > 0 && Play->Turn >= NumTurns
         && Play->EventNum != E_FINISH) {
@@ -3160,13 +3162,14 @@ void HandleAnswer(Player *From, Player *To, char *answer)
   if (answer[0] == 'Y' && From->EventNum == E_OFFOBJECT
       && From->Bitches.Price && From->Bitches.Price > From->Cash)
     answer[0] = 'N';
-  if ((From->EventNum == E_FIGHT || From->EventNum == E_FIGHTASK) &&
-      CanRunHere(From)) {
+  if ((From->EventNum == E_FIGHT || From->EventNum == E_FIGHTASK)
+      && CanRunHere(From)) {
     From->EventNum = E_FIGHT;
-    if (answer[0] == 'R' || answer[0] == 'Y')
+    if (answer[0] == 'R' || answer[0] == 'Y') {
       RunFromCombat(From, -1);
-    else
+    } else {
       Fire(From);
+    }
   } else if (answer[0] == 'Y')
     switch (From->EventNum) {
     case E_OFFOBJECT:
