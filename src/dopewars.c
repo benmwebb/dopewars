@@ -1243,7 +1243,6 @@ gboolean ParseNextConfig(GScanner *scanner) {
       PrintConfigValue(GlobalIndex,index,IndexGiven,scanner);
       return TRUE;
    } else if (token==G_TOKEN_EQUAL_SIGN) {
-      token=g_scanner_get_next_token(scanner);
       if (CountPlayers(FirstServer)>0) {
          g_warning(
 _("Configuration can only be changed interactively when no\n"
@@ -1359,13 +1358,13 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
    int IntVal,NewNum;
    Player *tmp;
    GSList *list,*StartList;
-   token=scanner->token;
    if (!CheckMaxIndex(scanner,GlobalIndex,StructIndex,IndexGiven)) return;
    if (Globals[GlobalIndex].NameStruct[0]) {
       GlobalName=g_strdup_printf("%s[%d].%s",Globals[GlobalIndex].NameStruct,
                                  StructIndex,Globals[GlobalIndex].Name);
    } else GlobalName=Globals[GlobalIndex].Name;
    if (Globals[GlobalIndex].IntVal) {
+      token=g_scanner_get_next_token(scanner);
       if (token==G_TOKEN_INT) {
          IntVal=(int)scanner->value.v_int;
          if (Globals[GlobalIndex].ResizeFunc) {
@@ -1386,6 +1385,7 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                                NULL,NULL,FALSE); return;
       }
    } else if (Globals[GlobalIndex].PriceVal) {
+      token=g_scanner_get_next_token(scanner);
       if (token==G_TOKEN_INT) {
          *((price_t *)GetGlobalPointer(GlobalIndex,StructIndex))=
                           (price_t)scanner->value.v_int;
@@ -1394,14 +1394,28 @@ void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                                NULL,NULL,FALSE); return;
       }
    } else if (Globals[GlobalIndex].StringVal) {
+      scanner->config->identifier_2_string=TRUE;
+      scanner->config->cset_identifier_first=
+          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+      scanner->config->cset_identifier_nth=
+          G_CSET_a_2_z " ._0123456789" G_CSET_A_2_Z G_CSET_LATINS G_CSET_LATINC;
+      token=g_scanner_get_next_token(scanner);
       if (token==G_TOKEN_STRING) {
          AssignName((gchar **)GetGlobalPointer(GlobalIndex,StructIndex),
                     scanner->value.v_string);
+      } else if (token==G_TOKEN_IDENTIFIER) {
+         AssignName((gchar **)GetGlobalPointer(GlobalIndex,StructIndex),
+                    scanner->value.v_identifier);
       } else {
          g_scanner_unexp_token(scanner,G_TOKEN_STRING,NULL,NULL,
-                               NULL,NULL,FALSE); return;
+                               NULL,NULL,FALSE);
       }
+      scanner->config->identifier_2_string=FALSE;
+      scanner->config->cset_identifier_first=G_CSET_a_2_z "_" G_CSET_A_2_Z;
+      scanner->config->cset_identifier_nth=
+              G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
    } else if (Globals[GlobalIndex].StringList) {
+      token=g_scanner_get_next_token(scanner);
       if (IndexGiven) {
          if (token==G_TOKEN_STRING) {
             AssignName(&(*(Globals[GlobalIndex].StringList))[StructIndex-1],
