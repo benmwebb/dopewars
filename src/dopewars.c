@@ -2313,7 +2313,6 @@ gchar *GetLocalConfigFile(void)
   home = getenv("HOME");
   if (home) {
     conf = g_strdup_printf("%s/.dopewars", home);
-    g_free(home);
   }
   return conf;
 #endif
