@@ -401,7 +401,11 @@ void GeneralStartup(int argc, char *argv[]);
 void ReadConfigFile(char *FileName);
 gboolean ParseNextConfig(GScanner *scanner, gboolean print);
 int GetGlobalIndex(gchar *ID1, gchar *ID2);
-void *GetGlobalPointer(int GlobalIndex, int StructIndex);
+gchar **GetGlobalString(int GlobalIndex, int StructIndex);
+gint *GetGlobalInt(int GlobalIndex, int StructIndex);
+price_t *GetGlobalPrice(int GlobalIndex, int StructIndex);
+gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex);
+gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex);
 void PrintConfigValue(int GlobalIndex, int StructIndex,
                       gboolean IndexGiven, GScanner *scanner);
 gboolean SetConfigValue(int GlobalIndex, int StructIndex,

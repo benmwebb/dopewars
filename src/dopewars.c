@@ -1877,7 +1877,7 @@ int GetGlobalIndex(gchar *ID1, gchar *ID2)
   return -1;
 }
 
-void *GetGlobalPointer(int GlobalIndex, int StructIndex)
+static void *GetGlobalPointer(int GlobalIndex, int StructIndex)
 {
   void *ValPt = NULL;
 
@@ -1901,6 +1901,41 @@ void *GetGlobalPointer(int GlobalIndex, int StructIndex)
   } else {
     return ValPt;
   }
+}
+
+gchar **GetGlobalString(int GlobalIndex, int StructIndex)
+{
+  g_assert(Globals[GlobalIndex].StringVal);
+
+  return (gchar **)GetGlobalPointer(GlobalIndex, StructIndex);
+}
+
+gint *GetGlobalInt(int GlobalIndex, int StructIndex)
+{
+  g_assert(Globals[GlobalIndex].IntVal);
+
+  return (gint *)GetGlobalPointer(GlobalIndex, StructIndex);
+}
+
+price_t *GetGlobalPrice(int GlobalIndex, int StructIndex)
+{
+  g_assert(Globals[GlobalIndex].PriceVal);
+
+  return (price_t *)GetGlobalPointer(GlobalIndex, StructIndex);
+}
+
+gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex)
+{
+  g_assert(Globals[GlobalIndex].BoolVal);
+
+  return (gboolean *)GetGlobalPointer(GlobalIndex, StructIndex);
+}
+
+gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex)
+{
+  g_assert(Globals[GlobalIndex].StringList);
+
+  return (gchar ***)GetGlobalPointer(GlobalIndex, StructIndex);
 }
 
 gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,
@@ -1943,20 +1978,19 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
 
   if (Globals[GlobalIndex].IntVal) {
     fprintf(fp, "%s = %d\n", GlobalName,
-            *((int *)GetGlobalPointer(GlobalIndex, StructIndex)));
+            *GetGlobalInt(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].BoolVal) {
     fprintf(fp, "%s = %s\n", GlobalName,
-            *((gboolean *)GetGlobalPointer(GlobalIndex, StructIndex)) ?
-                                           _("TRUE") : _("FALSE"));
+            *GetGlobalBoolean(GlobalIndex, StructIndex) ?
+            _("TRUE") : _("FALSE"));
   } else if (Globals[GlobalIndex].PriceVal) {
-    gchar *prstr = pricetostr(*((price_t *)GetGlobalPointer(GlobalIndex,
-                                                            StructIndex)));
+    gchar *prstr = pricetostr(*GetGlobalPrice(GlobalIndex, StructIndex));
 
     fprintf(fp, "%s = %s\n", GlobalName, prstr);
     g_free(prstr);
   } else if (Globals[GlobalIndex].StringVal) {
     fprintf(fp, "%s = \"%s\"\n", GlobalName,
-            *((gchar **)GetGlobalPointer(GlobalIndex, StructIndex)));
+            *GetGlobalString(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].StringList) {
     int i;
 
@@ -2011,23 +2045,23 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
   if (Globals[GlobalIndex].IntVal) {
     /* Display of a numeric config. file variable - e.g. "NumDrug is 6" */
     g_print(_("%s is %d\n"), GlobalName,
-            *((int *)GetGlobalPointer(GlobalIndex, StructIndex)));
+            *GetGlobalInt(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].BoolVal) {
     /* Display of a boolean config. file variable - e.g. "DrugValue is
      * TRUE" */
     g_print(_("%s is %s\n"), GlobalName,
-            *((gboolean *)GetGlobalPointer(GlobalIndex, StructIndex)) ?
+            *GetGlobalBoolean(GlobalIndex, StructIndex) ?
             _("TRUE") : _("FALSE"));
   } else if (Globals[GlobalIndex].PriceVal) {
     /* Display of a price config. file variable - e.g. "Bitch.MinPrice is
      * $200" */
     dpg_print(_("%s is %P\n"), GlobalName,
-              *((price_t *)GetGlobalPointer(GlobalIndex, StructIndex)));
+              *GetGlobalPrice(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].StringVal) {
     /* Display of a string config. file variable - e.g. "LoanSharkName is
      * \"the loan shark\"" */
     g_print(_("%s is \"%s\"\n"), GlobalName,
-            *((gchar **)GetGlobalPointer(GlobalIndex, StructIndex)));
+            *GetGlobalString(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].StringList) {
     if (IndexGiven) {
       /* Display of an indexed string list config. file variable - e.g.
@@ -2096,7 +2130,7 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
           UpdatePlayer(tmp);
         }
       }
-      *((int *)GetGlobalPointer(GlobalIndex, StructIndex)) = IntVal;
+      *GetGlobalInt(GlobalIndex, StructIndex) = IntVal;
     } else {
       g_scanner_unexp_token(scanner, G_TOKEN_INT, NULL, NULL,
                             NULL, NULL, FALSE);
@@ -2117,14 +2151,14 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
           g_strcasecmp(scanner->value.v_identifier, _("ON")) == 0 ||
           strcmp(scanner->value.v_identifier, "1") == 0) {
         parsed = TRUE;
-        *((gboolean *)GetGlobalPointer(GlobalIndex, StructIndex)) = TRUE;
+        *GetGlobalBoolean(GlobalIndex, StructIndex) = TRUE;
       } else if (g_strcasecmp(scanner->value.v_identifier, _("FALSE")) == 0
                  || g_strcasecmp(scanner->value.v_identifier, _("NO")) == 0
                  || g_strcasecmp(scanner->value.v_identifier,
                                  _("OFF")) == 0
                  || strcmp(scanner->value.v_identifier, "0") == 0) {
         parsed = TRUE;
-        *((gboolean *)GetGlobalPointer(GlobalIndex, StructIndex)) = FALSE;
+        *GetGlobalBoolean(GlobalIndex, StructIndex) = FALSE;
       }
     }
     if (!parsed) {
@@ -2136,7 +2170,7 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
   } else if (Globals[GlobalIndex].PriceVal) {
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_INT) {
-      *((price_t *)GetGlobalPointer(GlobalIndex, StructIndex)) =
+      *GetGlobalPrice(GlobalIndex, StructIndex) =
           (price_t)scanner->value.v_int;
     } else {
       g_scanner_unexp_token(scanner, G_TOKEN_INT, NULL, NULL,
@@ -2153,10 +2187,10 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
         G_CSET_LATINC;
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_STRING) {
-      AssignName((gchar **)GetGlobalPointer(GlobalIndex, StructIndex),
+      AssignName(GetGlobalString(GlobalIndex, StructIndex),
                  scanner->value.v_string);
     } else if (token == G_TOKEN_IDENTIFIER) {
-      AssignName((gchar **)GetGlobalPointer(GlobalIndex, StructIndex),
+      AssignName(GetGlobalString(GlobalIndex, StructIndex),
                  scanner->value.v_identifier);
     } else {
       g_scanner_unexp_token(scanner, G_TOKEN_STRING, NULL, NULL,
