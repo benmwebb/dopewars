@@ -710,8 +710,9 @@ void AddScoreToDialog(char *Data)
   gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                             1, 2, index, index + 1);
-  if (bold)
+  if (bold) {
     gtk_widget_set_style(label, style);
+  }
   gtk_widget_show(label);
 
   /* The remainder is the name, terminated with (R.I.P.) if the player
@@ -731,8 +732,9 @@ void AddScoreToDialog(char *Data)
     gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                               3, 4, index, index + 1);
-    if (bold)
+    if (bold) {
       gtk_widget_set_style(label, style);
+    }
     gtk_widget_show(label);
     spl2[1][slen - 8] = '\0';   /* Remove suffix from the player name */
   }
@@ -743,8 +745,9 @@ void AddScoreToDialog(char *Data)
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                             2, 3, index, index + 1);
-  if (bold)
+  if (bold) {
     gtk_widget_set_style(label, style);
+  }
   gtk_widget_show(label);
 
   g_strfreev(spl1);
@@ -772,8 +775,9 @@ void CompleteHighScoreDialog(gboolean AtEnd)
 
   dialog = HiScoreDialog.dialog;
 
-  if (!HiScoreDialog.dialog)
+  if (!HiScoreDialog.dialog) {
     return;
+  }
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_CLOSE, HiScoreDialog.accel_group);
@@ -825,8 +829,9 @@ static void FightCallback(GtkWidget *widget, gpointer data)
   gpointer CanRunHere = NULL;
 
   window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  if (window)
+  if (window) {
     CanRunHere = gtk_object_get_data(GTK_OBJECT(window), "CanRunHere");
+  }
 
   Answer = GPOINTER_TO_INT(data);
   Play = ClientData.Play;
@@ -990,8 +995,9 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
   combatants = (GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
                                              "combatants");
   table = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "table"));
-  if (!combatants)
+  if (!combatants) {
     return;
+  }
 
   if (DefendName[0]) {
     compt = NULL;
@@ -1003,8 +1009,9 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
         continue;
       }
       gtk_label_get(GTK_LABEL(compt->name), &name);
-      if (name && strcmp(name, DefendName) == 0)
+      if (name && strcmp(name, DefendName) == 0) {
         break;
+      }
       compt = NULL;
     }
     if (!compt) {
@@ -1085,10 +1092,9 @@ static void FreeCombatants(void)
 
   combatants = (GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
                                              "combatants");
-  if (!combatants)
-    return;
-
-  g_array_free(combatants, TRUE);
+  if (combatants) {
+    g_array_free(combatants, TRUE);
+  }
 }
 
 static void EnableFightButton(GtkWidget *button, gboolean enable)
@@ -1138,8 +1144,9 @@ void DisplayFightMessage(char *Data)
   } else {
     CreateFightDialog();
   }
-  if (!FightDialog || !Data[0])
+  if (!FightDialog || !Data[0]) {
     return;
+  }
 
   Deal = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "deal"));
   Fight = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "fight"));
@@ -1306,17 +1313,15 @@ void UpdateInventory(struct InventoryWidgets *Inven,
   herelist = Inven->HereList;
   carrylist = Inven->CarriedList;
 
-  if (herelist)
-    numlist = 2;
-  else
-    numlist = 1;
+  numlist = (herelist ? 2 : 1);
 
   /* Make lists of the current selections */
   clist[0] = GTK_CLIST(carrylist);
-  if (herelist)
+  if (herelist) {
     clist[1] = GTK_CLIST(herelist);
-  else
+  } else {
     clist[1] = NULL;
+  }
 
   for (i = 0; i < numlist; i++) {
     glist[i] = NULL;
@@ -1361,10 +1366,11 @@ void UpdateInventory(struct InventoryWidgets *Inven,
     }
 
     if (Objects[i].Carried > 0) {
-      if (price > 0)
+      if (price > 0) {
         CanSell = TRUE;
-      else
+      } else {
         CanDrop = TRUE;
+      }
       if (HaveAbility(ClientData.Play, A_DRUGVALUE) && AreDrugs) {
         titles[1] = dpg_strdup_printf("%d @ %P", Objects[i].Carried,
                                       Objects[i].TotalValue /
@@ -1385,17 +1391,18 @@ void UpdateInventory(struct InventoryWidgets *Inven,
   }
 
   for (i = 0; i < numlist; i++) {
-    if (selectrow[i] != -1 && gtk_clist_row_is_visible(clist[i],
-                                                       selectrow[i]) !=
-        GTK_VISIBILITY_FULL) {
+    if (selectrow[i] != -1
+        && gtk_clist_row_is_visible(clist[i], selectrow[i])
+            != GTK_VISIBILITY_FULL) {
       gtk_clist_moveto(clist[i], selectrow[i], 0, 0.0, 0.0);
     }
     g_list_free(glist[i]);
   }
 
   gtk_clist_thaw(GTK_CLIST(carrylist));
-  if (herelist)
+  if (herelist) {
     gtk_clist_thaw(GTK_CLIST(herelist));
+  }
 
   if (Inven->vbbox) {
     gtk_widget_set_sensitive(Inven->BuyButton, CanBuy);
@@ -1458,24 +1465,27 @@ void Jet(GtkWidget *parent)
 
   /* Generate a square box of buttons for all locations */
   boxsize = 1;
-  while (boxsize * boxsize < NumLocation)
+  while (boxsize * boxsize < NumLocation) {
     boxsize++;
+  }
   col = boxsize;
   row = 1;
 
   /* Avoid creating a box with an entire row empty at the bottom */
-  while (row * col < NumLocation)
+  while (row * col < NumLocation) {
     row++;
+  }
 
   table = gtk_table_new(row, col, TRUE);
 
   for (i = 0; i < NumLocation; i++) {
-    if (i < 9)
+    if (i < 9) {
       AccelChar = '1' + i;
-    else if (i < 35)
+    } else if (i < 35) {
       AccelChar = 'A' + i - 9;
-    else
+    } else {
       AccelChar = '\0';
+    }
 
     row = i / boxsize;
     col = i % boxsize;
@@ -1555,8 +1565,9 @@ static void UpdateDealDialog(void)
     g_string_sprintf(text, _("You can afford %d"), CanAfford);
     gtk_label_set_text(GTK_LABEL(DealDialog.afford), text->str);
     MaxDrug = MIN(CanCarry, CanAfford);
-  } else
+  } else {
     MaxDrug = CanDrop;
+  }
 
   spin_adj = (GtkAdjustment *)gtk_adjustment_new(MaxDrug, 1.0, MaxDrug,
                                                  1.0, 10.0, 10.0);
@@ -1611,13 +1622,13 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   g_assert(!IsShowingDealDrugs);
 
   /* Action in 'Deal Drugs' dialog - "Buy/Sell/Drop Drugs" */
-  if (data == BT_BUY)
+  if (data == BT_BUY) {
     Action = _("Buy");
-  else if (data == BT_SELL)
+  } else if (data == BT_SELL) {
     Action = _("Sell");
-  else if (data == BT_DROP)
+  } else if (data == BT_DROP) {
     Action = _("Drop");
-  else {
+  } else {
     g_warning("Bad DealDrug type");
     return;
   }
@@ -1625,17 +1636,18 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   DealDialog.Type = data;
   Play = ClientData.Play;
 
-  if (data == BT_BUY)
+  if (data == BT_BUY) {
     clist = ClientData.Drug.HereList;
-  else
+  } else {
     clist = ClientData.Drug.CarriedList;
+  }
   selection = GTK_CLIST(clist)->selection;
   if (selection) {
     row = GPOINTER_TO_INT(selection->data);
-    DrugInd =
-        GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
-  } else
+    DrugInd = GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
+  } else {
     DrugInd = -1;
+  }
 
   DrugIndOK = FALSE;
   FirstInd = -1;
@@ -1645,17 +1657,20 @@ void DealDrugs(GtkWidget *widget, gpointer data)
         || (data == BT_SELL && Play->Drugs[i].Carried > 0
          && Play->Drugs[i].Price != 0)
         || (data == BT_BUY && Play->Drugs[i].Price != 0)) {
-      if (FirstInd == -1)
+      if (FirstInd == -1) {
         FirstInd = i;
-      if (DrugInd == i)
+      }
+      if (DrugInd == i) {
         DrugIndOK = TRUE;
+      }
     }
   }
   if (!DrugIndOK) {
-    if (FirstInd == -1)
+    if (FirstInd == -1) {
       return;
-    else
+    } else {
       DrugInd = FirstInd;
+    }
   }
 
   text = g_string_new(NULL);
@@ -1693,8 +1708,9 @@ void DealDrugs(GtkWidget *widget, gpointer data)
                          GTK_SIGNAL_FUNC(DealSelectCallback),
                          GINT_TO_POINTER(i));
       gtk_menu_append(GTK_MENU(menu), menuitem);
-      if (DrugInd >= i)
+      if (DrugInd >= i) {
         SelIndex++;
+      }
     }
   }
   gtk_menu_set_active(GTK_MENU(menu), SelIndex);
@@ -1772,34 +1788,37 @@ void DealGuns(GtkWidget *widget, gpointer data)
   GString *text;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  if (data == BT_BUY)
+  if (data == BT_BUY) {
     Action = _("Buy");
-  else if (data == BT_SELL)
+  } else if (data == BT_SELL) {
     Action = _("Sell");
-  else
+  } else {
     Action = _("Drop");
+  }
 
-  if (data == BT_BUY)
+  if (data == BT_BUY) {
     clist = ClientData.Gun.HereList;
-  else
+  } else {
     clist = ClientData.Gun.CarriedList;
+  }
   selection = GTK_CLIST(clist)->selection;
   if (selection) {
     row = GPOINTER_TO_INT(selection->data);
-    GunInd =
-        GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
-  } else
+    GunInd = GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
+  } else {
     return;
+  }
 
 
   /* Title of 'gun shop' dialog (%tde="guns" by default) "Buy/Sell/Drop
    * Guns" */
-  if (data == BT_BUY)
+  if (data == BT_BUY) {
     Title = dpg_strdup_printf(_("Buy %tde"), Names.Guns);
-  else if (data == BT_SELL)
+  } else if (data == BT_SELL) {
     Title = dpg_strdup_printf(_("Sell %tde"), Names.Guns);
-  else
+  } else {
     Title = dpg_strdup_printf(_("Drop %tde"), Names.Guns);
+  }
 
   text = g_string_new("");
 
@@ -2001,8 +2020,9 @@ static gint DrugSortFunc(GtkCList *clist, gconstpointer ptr1,
 
   index1 = GPOINTER_TO_INT(((const GtkCListRow *)ptr1)->data);
   index2 = GPOINTER_TO_INT(((const GtkCListRow *)ptr2)->data);
-  if (index1 < 0 || index1 >= NumDrug || index2 < 0 || index2 >= NumDrug)
+  if (index1 < 0 || index1 >= NumDrug || index2 < 0 || index2 >= NumDrug) {
     return 0;
+  }
 
   switch (DrugSortMethod) {
   case DS_ATOZ:
@@ -2027,8 +2047,7 @@ void UpdateMenus(void)
   gint Bitches;
 
   MultiPlayer = (FirstClient && FirstClient->next != NULL);
-  Bitches = InGame
-      && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
+  Bitches = InGame && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
 
   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
                                                        "<main>/Talk"),
@@ -2224,8 +2243,9 @@ gboolean GtkLoop(int *argc, char **argv[],
                     G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING |
                     G_LOG_LEVEL_CRITICAL, LogMessage, NULL);
 
-  if (!CheckHighScoreFileConfig())
+  if (!CheckHighScoreFileConfig()) {
     return TRUE;
+  }
 
   SoundOpen(cmdline->plugin);
 
@@ -2506,8 +2526,9 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     /* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
     title = dpg_strdup_printf(_("%/LoanShark window title/%Tde"),
                               Names.LoanSharkName);
-    if (money > ClientData.Play->Debt)
+    if (money > ClientData.Play->Debt) {
       money = ClientData.Play->Debt;
+    }
   } else {
     /* Title of bank dialog - (%Tde="The Bank" by default) */
     title = dpg_strdup_printf(_("%/BankName window title/%Tde"),
@@ -2727,9 +2748,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
     for (selection = GTK_CLIST(TalkData->clist)->selection; selection;
          selection = g_list_next(selection)) {
       row = GPOINTER_TO_INT(selection->data);
-      Play =
-          (Player *)gtk_clist_get_row_data(GTK_CLIST(TalkData->clist),
-                                           row);
+      Play = (Player *)gtk_clist_get_row_data(GTK_CLIST(TalkData->clist), row);
       if (Play) {
         SendClientMessage(ClientData.Play, C_NONE, C_MSGTO, Play, text);
         g_string_sprintf(msg, "%s->%s: %s", GetPlayerName(ClientData.Play),
@@ -3043,10 +3062,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   widgets->CarriedFrame = frame[1] = gtk_frame_new(text->str);
 
   widgets->HereList = widgets->CarriedList = NULL;
-  if (CreateHere)
-    mini = 0;
-  else
-    mini = 1;
+  mini = (CreateHere ? 0 : 1);
   for (i = mini; i < 2; i++) {
     GtkWidget *hbox2 = gtk_hbox_new(TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(frame[i]), 3);
@@ -3068,8 +3084,9 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
       widgets->CarriedList = clist;
     }
   }
-  if (CreateHere)
+  if (CreateHere) {
     gtk_box_pack_start(GTK_BOX(hbox), frame[0], TRUE, TRUE, 0);
+  }
 
   if (CreateButtons) {
     widgets->vbbox = vbbox = gtk_vbutton_box_new();
@@ -3078,17 +3095,19 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
       button[i] = gtk_button_new_with_label("");
       SetAccelerator(button[i], _(button_text[i]), button[i],
                      "clicked", accel_group, FALSE);
-      if (CallBack)
+      if (CallBack) {
         gtk_signal_connect(GTK_OBJECT(button[i]), "clicked",
                            GTK_SIGNAL_FUNC(CallBack), button_type[i]);
+      }
       gtk_box_pack_start(GTK_BOX(vbbox), button[i], TRUE, TRUE, 0);
     }
     widgets->BuyButton = button[0];
     widgets->SellButton = button[1];
     widgets->DropButton = button[2];
     gtk_box_pack_start(GTK_BOX(hbox), vbbox, FALSE, FALSE, 0);
-  } else
+  } else {
     widgets->vbbox = NULL;
+  }
 
   gtk_box_pack_start(GTK_BOX(hbox), frame[1], TRUE, TRUE, 0);
   g_string_free(text, TRUE);
@@ -3107,8 +3126,9 @@ void DestroyShowing(GtkWidget *widget, gpointer data)
 {
   gboolean *IsShowing = (gboolean *)data;
 
-  if (IsShowing)
+  if (IsShowing) {
     *IsShowing = FALSE;
+  }
 }
 
 static void NewNameOK(GtkWidget *widget, GtkWidget *window)
@@ -3177,7 +3197,7 @@ void NewNameDialog(void)
 
 gint DisallowDelete(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
-  return (TRUE);
+  return TRUE;
 }
 
 void GunShopDialog(void)
@@ -3233,10 +3253,12 @@ void GunShopDialog(void)
 
 void UpdatePlayerLists(void)
 {
-  if (IsShowingPlayerList)
+  if (IsShowingPlayerList) {
     UpdatePlayerList(ClientData.PlayerList, FALSE);
-  if (IsShowingTalkList)
+  }
+  if (IsShowingTalkList) {
     UpdatePlayerList(ClientData.TalkList, FALSE);
+  }
 }
 
 void GetSpyReports(GtkWidget *Widget, gpointer data)
@@ -3297,11 +3319,9 @@ void DisplaySpyReports(Player *Play)
   if (!SpyReportsDialog)
     CreateSpyReports();
   dialog = SpyReportsDialog;
-  notebook =
-      GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog), "notebook"));
+  notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog), "notebook"));
   accel_group =
-      (GtkAccelGroup
-       *)(gtk_object_get_data(GTK_OBJECT(dialog), "accel_group"));
+      (GtkAccelGroup *)(gtk_object_get_data(GTK_OBJECT(dialog), "accel_group"));
   vbox = gtk_vbox_new(FALSE, 5);
   frame = gtk_frame_new("Stats");
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
