@@ -29,6 +29,7 @@
 #include <glib.h>
 
 struct _SoundDriver {
+  void *module;
   gchar *name;
   gboolean (*open) (void);
   void (*close) (void);
@@ -36,6 +37,7 @@ struct _SoundDriver {
 };
 typedef struct _SoundDriver SoundDriver;
 
+const gchar *GetPluginName(GSList **listpt);
 void SoundInit(void);
 void SoundOpen(gchar *drivername);
 void SoundClose(void);
