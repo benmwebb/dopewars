@@ -1,23 +1,25 @@
-/* dopeos.h         dopewars - operating system-specific function       */
-/*                             definitions                              */
-/* Copyright (C)  1998-2002  Ben Webb                                   */
-/*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
-/*                WWW: http://dopewars.sourceforge.net/                 */
-
-/* This program is free software; you can redistribute it and/or        */
-/* modify it under the terms of the GNU General Public License          */
-/* as published by the Free Software Foundation; either version 2       */
-/* of the License, or (at your option) any later version.               */
-
-/* This program is distributed in the hope that it will be useful,      */
-/* but WITHOUT ANY WARRANTY; without even the implied warranty of       */
-/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        */
-/* GNU General Public License for more details.                         */
-
-/* You should have received a copy of the GNU General Public License    */
-/* along with this program; if not, write to the Free Software          */
-/* Foundation, Inc., 59 Temple Place - Suite 330, Boston,               */
-/*                   MA  02111-1307, USA.                               */
+/************************************************************************
+ * dopeos.h       dopewars - operating system-specific function         *
+ *                           definitions                                *
+ * Copyright (C)  1998-2002  Ben Webb                                   *
+ *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
+ *                WWW: http://dopewars.sourceforge.net/                 *
+ *                                                                      *
+ * This program is free software; you can redistribute it and/or        *
+ * modify it under the terms of the GNU General Public License          *
+ * as published by the Free Software Foundation; either version 2       *
+ * of the License, or (at your option) any later version.               *
+ *                                                                      *
+ * This program is distributed in the hope that it will be useful,      *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of       *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+ * GNU General Public License for more details.                         *
+ *                                                                      *
+ * You should have received a copy of the GNU General Public License    *
+ * along with this program; if not, write to the Free Software          *
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston,               *
+ *                   MA  02111-1307, USA.                               *
+ ************************************************************************/
 
 #ifndef __DOPEOS_H__
 #define __DOPEOS_H__
@@ -26,16 +28,17 @@
 #include <config.h>
 #endif
 
-#ifdef CYGWIN   /* Definitions for native Win32 build */
+#ifdef CYGWIN                   /* Definitions for native Win32 build */
 #include <windows.h>
 #include <string.h>
 
 #include <stdio.h>
 
 void refresh();
-HANDLE WINAPI GetConHandle (TCHAR * pszName);
-extern WORD TextAttr,PromptAttr,TitleAttr,LocationAttr,StatsAttr,DebtAttr;
-extern int Width,Depth;
+HANDLE WINAPI GetConHandle(TCHAR *pszName);
+extern WORD TextAttr, PromptAttr, TitleAttr;
+extern WORD LocationAttr, StatsAttr, DebtAttr;
+extern int Width, Depth;
 
 #define COLOR_MAGENTA 1
 #define COLOR_BLACK   2
@@ -43,70 +46,72 @@ extern int Width,Depth;
 #define COLOR_BLUE    4
 #define COLOR_RED     5
 
-#define SIGWINCH 0
-#define SIGPIPE  0
-#define SIG_BLOCK 0
-#define SIG_UNBLOCK 0
+#define SIGWINCH      0
+#define SIGPIPE       0
+#define SIG_BLOCK     0
+#define SIG_UNBLOCK   0
 
 struct sigaction {
-	void *sa_handler;
-	int sa_flags;
-	int sa_mask;
+  void *sa_handler;
+  int sa_flags;
+  int sa_mask;
 };
 
 void sigemptyset(int *mask);
-void sigaddset(int *mask,int sig);
-int sigaction(int sig,struct sigaction *sact,char *pt);
-void sigprocmask(int flag,int *mask,char *pt);
+void sigaddset(int *mask, int sig);
+int sigaction(int sig, struct sigaction *sact, char *pt);
+void sigprocmask(int flag, int *mask, char *pt);
 
 #define COLS  Width
 #define LINES Depth
 
-#define ACS_VLINE		179
-#define ACS_ULCORNER	218
-#define ACS_HLINE		196
-#define ACS_URCORNER	191
-#define ACS_TTEE		194
-#define ACS_LLCORNER	192
-#define ACS_LRCORNER	217
-#define ACS_BTEE		193
-#define ACS_LTEE		195
-#define ACS_RTEE		180
+#define ACS_VLINE       179
+#define ACS_ULCORNER    218
+#define ACS_HLINE       196
+#define ACS_URCORNER    191
+#define ACS_TTEE        194
+#define ACS_LLCORNER    192
+#define ACS_LRCORNER    217
+#define ACS_BTEE        193
+#define ACS_LTEE        195
+#define ACS_RTEE        180
 
 typedef int SCREEN;
-#define stdscr 0
-#define curscr 0
+
+#define stdscr        0
+#define curscr        0
 #define KEY_ENTER     13
 #define KEY_BACKSPACE 8
 #define A_BOLD        0
 
-SCREEN *newterm(void *,void *,void *);
+SCREEN *newterm(void *, void *, void *);
 void start_color();
-void init_pair(int index,WORD fg,WORD bg);
+void init_pair(int index, WORD fg, WORD bg);
 void cbreak();
 void noecho();
-void nodelay(void *,char);
-void keypad(void *,char);
+void nodelay(void *, char);
+void keypad(void *, char);
 void curs_set(BOOL visible);
 void endwin();
-void move(int y,int x);
+void move(int y, int x);
 void attrset(WORD newAttr);
 void addstr(char *str);
 void addch(int ch);
-void mvaddstr(int x,int y,char *str);
-void mvaddch(int x,int y,int ch);
+void mvaddstr(int x, int y, char *str);
+void mvaddch(int x, int y, int ch);
 int bgetch();
+
 #define erase() clear_screen()
-char *index(const char *str,int ch);
-int getopt(int argc,char * const argv[],const char *str);
+char *index(const char *str, int ch);
+int getopt(int argc, char *const argv[], const char *str);
 extern char *optarg;
 
 typedef int ssize_t;
 void standout();
 void standend();
 void endwin();
-int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfs,
-		struct timeval *tm);
+int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfs,
+            struct timeval *tm);
 
 #else /* Definitions for Unix build */
 
@@ -129,7 +134,7 @@ int bselect(int nfds,fd_set *readfds,fd_set *writefds,fd_set *exceptfs,
 #include <curses_colr/curses.h>
 #endif
 
-extern int Width,Depth;
+extern int Width, Depth;
 
 #define PromptAttr   (COLOR_PAIR(1))
 #define TextAttr     (COLOR_PAIR(2))
@@ -151,9 +156,9 @@ int bgetch(void);
 
 void MicroSleep(int microsec);
 
-int ReadLock(FILE *fp); 
-int WriteLock(FILE *fp); 
-void ReleaseLock(FILE *fp);
+int ReadLock(FILE * fp);
+int WriteLock(FILE * fp);
+void ReleaseLock(FILE * fp);
 
 /* Now make definitions if they haven't been done properly */
 #ifndef WEXITSTATUS
