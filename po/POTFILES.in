@@ -5,6 +5,7 @@ src/dopeos.c
 src/curses_client/curses_client.c
 src/gui_client/gtk_client.c
 src/gui_client/optdialog.c
+src/gui_client/newgamedia.c
 src/gtkport/gtkport.c
 src/winmain.c
 src/serverside.c
