@@ -530,7 +530,7 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
 /* into the read buffer. Returns FALSE if the connection was closed, or   */
 /* if the read buffer's maximum size was reached.                         */
    ConnBuf *conn;
-   int CurrentPosition,BytesRead;
+   int CurrentPosition,BytesRead,Error;
    conn=&NetBuf->ReadBuf;
    CurrentPosition=conn->DataPresent;
    while(1) {
@@ -545,10 +545,13 @@ gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
       BytesRead=recv(NetBuf->fd,&conn->Data[CurrentPosition],
                      conn->Length-CurrentPosition,0);
       if (BytesRead==SOCKET_ERROR) {
+         Error = GetSocketError();
 #ifdef CYGWIN
-         if (GetSocketError()==WSAEWOULDBLOCK) break; else return FALSE;
+         if (Error==WSAEWOULDBLOCK) break;
+         else { NetBuf->Error = Error; return FALSE; }
 #else
-         if (GetSocketError()==EAGAIN) break; else return FALSE;
+         if (Error==EAGAIN) break;
+         else if (Error!=EINTR) { NetBuf->Error = Error; return FALSE; }
 #endif
       } else if (BytesRead==0) {
          return FALSE;
@@ -1105,8 +1108,6 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
    struct sockaddr_in ClientAddr;
    struct hostent *he;
    static char NoHost[]= N_("Could not find host");
-   static char NoSocket[]= N_("Could not create network socket");
-   static char NoConnect[]= N_("Connection refused or no server present");
 
    if ((he=gethostbyname(RemoteHost))==NULL) {
       return NoHost;
@@ -1114,7 +1115,6 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
    *fd=socket(AF_INET,SOCK_STREAM,0);
    if (*fd==SOCKET_ERROR) {
       return strerror(errno);
-/*    return NoSocket;*/
    }
 
    ClientAddr.sin_family=AF_INET;
@@ -1132,7 +1132,6 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
 #endif
       CloseSocket(*fd); *fd=-1;
       return strerror(errno);
-/*    return NoConnect;*/
    } else {
       fcntl(*fd,F_SETFL,O_NONBLOCK);
    }
@@ -1140,26 +1139,24 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
 }
 
 char *FinishConnect(int fd) {
-   static char NoConnect[]= N_("Connection refused or no server present");
+   int Error;
 #ifdef CYGWIN
-   if (GetSocketError()!=0) return NoConnect;
-   else return NULL;
+   Error = GetSocketError();
+   if (Error==0) return NULL;
+   else return strerror(Error);
 #else
-   int optval;
 #ifdef HAVE_SOCKLEN_T
    socklen_t optlen;
 #else
    int optlen;
 #endif
 
-   optlen=sizeof(optval);
-   if (getsockopt(fd,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
-      return strerror(errno);
-/*    return NoConnect;*/
+   optlen=sizeof(Error);
+   if (getsockopt(fd,SOL_SOCKET,SO_ERROR,&Error,&optlen)==-1) {
+      Error = errno;
    }
-   if (optval==0) return NULL;
-   else return strerror(optval);
-/* else return NoConnect;*/
+   if (Error==0) return NULL;
+   else return strerror(Error);
 #endif /* CYGWIN */
 }
 
