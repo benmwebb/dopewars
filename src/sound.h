@@ -20,8 +20,8 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __SOUND_H__
-#define __SOUND_H__
+#ifndef __DP_SOUND_H__
+#define __DP_SOUND_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -30,4 +30,4 @@
 void SoundInit(void);
 void SoundClose(void);
 
-#endif /* __SOUND_H__ */
+#endif /* __DP_SOUND_H__ */
