@@ -93,6 +93,8 @@ gboolean MinToSysTray = TRUE;
 gboolean Daemonize = TRUE;
 #endif
 
+#define SNDPATH "sounds/19.5degs/"
+
 gchar *WebBrowser = NULL;
 gint ConfigErrors = 0;
 
@@ -2422,14 +2424,24 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
                             _("Currency.Prefix=TRUE")) == 0);
 
   /* Set hard-coded default values */
-  g_free(ServerName);
-  g_free(ServerMOTD);
-  g_free(BindAddress);
-  ServerName = g_strdup("localhost");
-  ServerMOTD = g_strdup("");
-  BindAddress = g_strdup("");
-  g_free(WebBrowser);
-  WebBrowser = g_strdup("/usr/bin/mozilla");
+  AssignName(&ServerName, "localhost");
+  AssignName(&ServerMOTD, "");
+  AssignName(&BindAddress, "");
+  AssignName(&WebBrowser, "/usr/bin/mozilla");
+
+#ifdef CYGWIN
+  AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
+  AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");
+  AssignName(&Sounds.BitchKilled, SNDPATH"losebitch.wav");
+  AssignName(&Sounds.EnemyKilled, SNDPATH"shotdown.wav");
+  AssignName(&Sounds.Killed, SNDPATH"die.wav");
+  AssignName(&Sounds.EnemyFlee, SNDPATH"run.wav");
+  AssignName(&Sounds.Flee, SNDPATH"run.wav");
+  AssignName(&Sounds.Jet, SNDPATH"train.wav");
+  AssignName(&Sounds.TalkPrivate, SNDPATH"murmur.wav");
+  AssignName(&Sounds.TalkToAll, SNDPATH"message.wav");
+  AssignName(&Sounds.EndGame, SNDPATH"bye.wav");
+#endif
 
   LoanSharkLoc = DEFLOANSHARK;
   BankLoc = DEFBANK;
