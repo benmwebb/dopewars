@@ -30,7 +30,6 @@ make DESTDIR=${RPM_BUILD_ROOT}
 
 %install
 make DESTDIR=${RPM_BUILD_ROOT} install-strip
-${RPM_BUILD_ROOT}/usr/bin/dopewars -C ${RPM_BUILD_ROOT}/usr/share/dopewars.sco
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
