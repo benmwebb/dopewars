@@ -92,9 +92,16 @@ void SendClientMessage(Player *From,char AICode,char Code,
    Player *ServerFrom;
    g_assert(BufOwn!=NULL);
    text=g_string_new(NULL);
-   g_string_sprintf(text,"%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
-                    To ? GetPlayerName(To) : "",AICode,Code,
-                    Data ? Data : "");
+   if (HaveAbility(BufOwn,A_PLAYERID)) {
+      if (From) g_string_sprintf(text,"%d",From->ID);
+      g_string_append_c(text,'^');
+      if (To) g_string_sprintfa(text,"%d",To->ID);
+      g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
+   } else {
+      g_string_sprintf(text,"%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
+                       To ? GetPlayerName(To) : "",AICode,Code,
+                       Data ? Data : "");
+   }
 
 #if NETWORKING
    if (!Network) {
@@ -135,15 +142,17 @@ void SendServerMessage(Player *From,char AICode,char Code,
 /* Sends a message from the server to client player "To" with computer    */
 /* code "AICode", human-readable code "Code" and data "Data". The message */
 /* will claim to be from or on behalf of player "From"                    */
-   gchar *text;
+   GString *text;
    if (!Network) {
-      text=g_strdup_printf("%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
-                           To ? GetPlayerName(To) : "",AICode,Code,
-                           Data ? Data : "");
+      text=g_string_new("");
+      if (From) g_string_sprintf(text,"%d",From->ID);
+      g_string_append_c(text,'^');
+      if (To) g_string_sprintfa(text,"%d",To->ID);
+      g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
       if (ClientMessageHandlerPt) {
-         (*ClientMessageHandlerPt)(text,(Player *)(FirstClient->data));
+         (*ClientMessageHandlerPt)(text->str,(Player *)(FirstClient->data));
       }
-      g_free(text);
+      g_string_free(text,TRUE);
    } else SendClientMessage(From,AICode,Code,To,Data,To);
 }
 
@@ -191,7 +200,7 @@ void CombineAbilities(Player *Play) {
 
 gboolean HaveAbility(Player *Play,gint Type) {
    if (Type<0 || Type>=A_NUM) return FALSE;
-   else return (Play->Abil.Shared[Type]=='1');
+   else return (Play->Abil.Shared[Type]);
 }
 
 #if NETWORKING
@@ -404,17 +413,19 @@ void SendSpyReport(Player *To,Player *SpiedOn) {
 }
 
 void SendInitialData(Player *To) {
-   gchar *text;
+   GString *text;
    if (!Network) return;
-   text=g_strdup_printf("%s^%d^%d^%d^%s^%s^%s^%s^%s^%s^%s^%s^",
-                        VERSION,NumLocation,NumGun,NumDrug,
-                        Names.Bitch,Names.Bitches,Names.Gun,Names.Guns,
-                        Names.Drug,Names.Drugs,Names.Month,Names.Year);
-   SendServerMessage(NULL,C_NONE,C_INIT,To,text);
-   g_free(text);
+   text=g_string_new("");
+   g_string_sprintf(text,"%s^%d^%d^%d^%s^%s^%s^%s^%s^%s^%s^%s^",
+                         VERSION,NumLocation,NumGun,NumDrug,
+                         Names.Bitch,Names.Bitches,Names.Gun,Names.Guns,
+                         Names.Drug,Names.Drugs,Names.Month,Names.Year);
+   if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
+   SendServerMessage(NULL,C_NONE,C_INIT,To,text->str);
+   g_string_free(text,TRUE);
 }
 
-void ReceiveInitialData(char *Data) {
+void ReceiveInitialData(Player *Play,char *Data) {
    char *pt,*ServerVersion;
    GSList *list;
    pt=Data;
@@ -433,6 +444,7 @@ void ReceiveInitialData(char *Data) {
    AssignName(&Names.Drugs,GetNextWord(&pt,""));
    AssignName(&Names.Month,GetNextWord(&pt,""));
    AssignName(&Names.Year,GetNextWord(&pt,""));
+   if (HaveAbility(Play,A_PLAYERID)) Play->ID=GetNextInt(&pt,0);
    if (strcmp(VERSION,ServerVersion)!=0) {
       g_message(_("This server is version %s, while your client is "
 "version %s.\nBe warned that different versions may not be fully compatible!\n"
@@ -663,33 +675,50 @@ void ShutdownNetwork() {
    Client=Network=Server=FALSE;
 }
 
-int ProcessMessage(char *Msg,Player **From,char *AICode,char *Code,
+int ProcessMessage(char *Msg,Player *Play,Player **From,char *AICode,char *Code,
                    Player **To,char **Data,GSList *First) {
 /* Given a "raw" message in "Msg" and a pointer to the start of the linked   */
 /* list of known players in "First", sets the other arguments to the message */
-/* fields. Data is a dynamically-allocated buffer, which must be g_free'd by */
-/* the caller. Returns 0 on success, -1 on failure.                          */
-   gchar **split;
-   Player *tmp;
+/* fields. Data is returned as a pointer into the message "Msg", and should  */
+/* therefore NOT be g_free'd. "Play" is a pointer to the player which is     */
+/* receiving the message. Returns 0 on success, -1 on failure.               */
+   gchar *pt,*buf;
+   guint ID;
 
-   *Data=NULL;
-   split=g_strsplit(Msg,"^",2);
-   if (split[0]) {
-      tmp=GetPlayerByName(split[0],First);
-      if (tmp && split[1]) {
-         *From=tmp;
-         tmp=GetPlayerByName(split[1],First);
-         if (tmp && split[2]) {
-            *To=tmp;
-            *AICode=split[2][0];
-            *Code=split[2][1];
-            *Data=g_strdup(split[2]+2);
-            g_strfreev(split);
-            return 0;
-         }
+   *AICode=*Code=C_NONE;
+   pt=Msg;
+   buf=GetNextWord(&pt,NULL);
+   if (From) {
+      if (HaveAbility(Play,A_PLAYERID)) {
+         if (buf[0]) {
+            ID=atoi(buf);
+            *From=GetPlayerByID(ID,First);
+         } else *From=&Noone;
+      } else {
+         *From=GetPlayerByName(buf,First);
       }
+      if (!(*From)) return -1;
    }
-   g_strfreev(split);
+
+   buf=GetNextWord(&pt,NULL);
+   if (To) {
+      if (HaveAbility(Play,A_PLAYERID)) {
+         if (buf[0]) {
+            ID=atoi(buf);
+            *To=GetPlayerByID(ID,First);
+         } else *To=&Noone;
+      } else {
+         *To=GetPlayerByName(buf,First);
+      }
+      if (!(*To)) return -1;
+   }
+
+   if (strlen(pt)>=2) {
+      *AICode=pt[0];
+      *Code=pt[1];
+      *Data=&pt[2];
+      return 0;
+   }
    return -1;
 }
 
@@ -707,20 +736,23 @@ void ReceiveDrugsHere(char *text,Player *To) {
 }
 
 gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
-                               Player *To,char *Data,char *DisplayMode) {
+                                    Player *To,char *Data,char *DisplayMode) {
 /* Handles messages that both human clients and AI players deal with in the */
 /* same way.                                                                */
    Player *tmp;
+   gchar *pt;
    switch(Code) {
       case C_LIST: case C_JOIN:
          tmp=g_new(Player,1);
          FirstClient=AddPlayer(0,tmp,FirstClient);
-         SetPlayerName(tmp,Data);
+         pt=Data;
+         SetPlayerName(tmp,GetNextWord(&pt,NULL));
+         if (HaveAbility(To,A_PLAYERID)) tmp->ID=GetNextInt(&pt,0);
          break;
       case C_DATA:
          ReceiveMiscData(Data); break;
       case C_INIT:
-         ReceiveInitialData(Data); break;
+         ReceiveInitialData(To,Data); break;
       case C_ABILITIES:
          ReceiveAbilities(To,Data); CombineAbilities(To);
          break;

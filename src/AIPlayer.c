@@ -121,7 +121,8 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
    gchar *prstr,*prstr2;
    struct timeval tv;
    gboolean Handled;
-   if (ProcessMessage(Message,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
+   if (ProcessMessage(Message,AIPlay,&From,&AICode,&Code,&To,
+                      &Data,FirstClient)==-1) {
       g_warning("Bad network message. Oops."); return 0;
    }
    Handled=HandleGenericClientMessage(From,AICode,Code,To,Data,NULL);
@@ -189,7 +190,6 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          }
          if (AIPlay->Health==0) {
             g_print(_("AI Player killed. Terminating normally.\n"));
-            g_free(Data);
             return 1;
          }
          break;
@@ -210,22 +210,18 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          break;
       case C_ENDHISCORE:
          g_print(_("Game time is up. Leaving game.\n"));
-         g_free(Data);
          return 1;
       case C_PUSH:
          g_print(_("AI Player pushed from the server.\n"));
-         g_free(Data);
          return 1;
       case C_QUIT:
          g_print(_("The server has terminated.\n"));
-         g_free(Data);
          return 1;
       default:
          if (!Handled) g_message("%s^%c^%s%s\n",GetPlayerName(From),Code,
                                                 GetPlayerName(To),Data);
          break;
    }
-   g_free(Data);
    return 0;
 }
 

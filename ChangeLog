@@ -3,7 +3,8 @@
     - Networking revamped - now uses nonblocking sockets to improve server
       responsiveness and to remove deadlocks (previously, any client could
       halt server by sending an unterminated message); "abilities" added to
-      allow backwards-compatible protocol extensions
+      allow backwards-compatible protocol extensions; player IDs used rather
+      than player names to save bandwidth, with newer client+server
     - Longer T>alk and P>age messages allowed in curses client
     - Minor bug fixes to configure options
     - Client-side code moved out of clientside.c and dopewars.c;

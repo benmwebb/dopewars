@@ -490,6 +490,21 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
 /* start of the list. If this function is called by the server, then  */
 /* it should pass the file descriptor of the socket used to           */
 /* communicate with the client player.                                */
+   Player *tmp;
+   GSList *list;
+   list=First;
+   NewPlayer->ID=0;
+/* Generate a unique player ID, if we're the server (clients get their IDs
+   from the server, so don't need to generate IDs) */
+   if (Server) while (list) {
+      tmp=(Player *)list->data;
+      if (tmp->ID==NewPlayer->ID) {
+         NewPlayer->ID++;
+         list=First;
+      } else {
+         list=g_slist_next(list);
+      }
+   }
    NewPlayer->fd=-1;
    NewPlayer->Name=NULL;
    SetPlayerName(NewPlayer,NULL);
@@ -571,6 +586,19 @@ void SetPlayerName(Player *Play,char *Name) {
    if (Play->Name) g_free(Play->Name);
    if (!Name) Play->Name=g_strdup("");
    else Play->Name = g_strdup(Name);
+}
+
+Player *GetPlayerByID(guint ID,GSList *First) {
+/* Searches the linked list starting at "First" for a Player structure */
+/* with the given ID. Returns a pointer to this structure, or NULL if  */
+/* no match can be found.                                              */
+   GSList *list;
+   Player *Play;
+   for (list=First;list;list=g_slist_next(list)) {
+      Play=(Player *)list->data;
+      if (Play->ID==ID) return Play;
+   }
+   return NULL;
 }
 
 Player *GetPlayerByName(char *Name,GSList *First) {

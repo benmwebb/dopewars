@@ -283,6 +283,7 @@ typedef struct tagConnBuf {
 } ConnBuf;            
 
 struct PLAYER_T {
+   guint ID;
    int Turn;
    price_t Cash,Debt,Bank;
    int Health;
@@ -338,6 +339,7 @@ extern GSList *ServerList;
 extern GScannerConfig ScannerConfig;
 
 GSList *RemovePlayer(Player *Play,GSList *First);
+Player *GetPlayerByID(guint ID,GSList *First);
 Player *GetPlayerByName(gchar *Name,GSList *First);
 int CountPlayers(GSList *First);
 GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First);

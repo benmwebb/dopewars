@@ -241,8 +241,8 @@ static void HandleClientMessage(char *pt,Player *Play) {
    gchar *text;
    LRESULT Answer;
    GSList *list;
-/* Ignore server's To: field (bin it in tmp); use "Play" instead */
-   if (ProcessMessage(pt,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
+/* Ignore server's To: field; use "Play" instead */
+   if (ProcessMessage(pt,Play,&From,&AICode,&Code,NULL,&Data,FirstClient)==-1) {
       return;
    }
    Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);

@@ -122,7 +122,7 @@ void SendPlayerData(Player *To);
 void SendSpyReport(Player *To,Player *SpiedOn);
 void ReceivePlayerData(char *text,Player *From);
 void SendInitialData(Player *To);
-void ReceiveInitialData(char *data);
+void ReceiveInitialData(Player *Play,char *data);
 void SendMiscData(Player *To);
 void ReceiveMiscData(char *Data);
 gchar *GetNextWord(gchar **Data,gchar *Default);
@@ -133,7 +133,7 @@ char *SetupNetwork(gboolean NonBlocking);
 char *FinishSetupNetwork();
 void ShutdownNetwork();
 void SwitchToSinglePlayer(Player *Play);
-int ProcessMessage(char *Msg,Player **From,char *AICode,char *Code,
+int ProcessMessage(char *Msg,Player *Play,Player **From,char *AICode,char *Code,
                    Player **To,char **Data,GSList *First);
 void ReceiveDrugsHere(char *text,Player *To);
 gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,

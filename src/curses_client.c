@@ -587,9 +587,9 @@ void HandleClientMessage(char *Message,Player *Play) {
    int i;
    gboolean Handled;
 
-/* Ignore To: field (use tmp Player pointer for this) - all messages
-   will be for Player "Play" */
-   if (ProcessMessage(Message,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
+/* Ignore To: field - all messages will be for Player "Play" */
+   if (ProcessMessage(Message,Play,&From,&AICode,&Code,NULL,
+                      &Data,FirstClient)==-1) {
       return;
    }
 
@@ -732,7 +732,6 @@ void HandleClientMessage(char *Message,Player *Play) {
          }
          break;
    }
-   g_free(Data);
 }
 
 void PrepareHighScoreScreen() {

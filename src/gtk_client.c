@@ -287,8 +287,8 @@ void HandleClientMessage(char *pt,Player *Play) {
    GtkWidget *MenuItem;
    GSList *list;
 
-/* Ignore To: field (bin it in "tmp") as all messages should be for "Play" */
-   if (ProcessMessage(pt,&From,&AICode,&Code,&tmp,&Data,FirstClient)==-1) {
+/* Ignore To: field as all messages should be for "Play" */
+   if (ProcessMessage(pt,Play,&From,&AICode,&Code,NULL,&Data,FirstClient)==-1) {
       return;
    }
 
@@ -388,7 +388,6 @@ void HandleClientMessage(char *pt,Player *Play) {
          }
          break;
    }
-   g_free(Data);
 }
 
 struct HiScoreDiaStruct {

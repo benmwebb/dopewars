@@ -187,6 +187,18 @@ void HandleServerPlayer(Player *Play) {
    }
 }
 
+void SendPlayerDetails(Player *Play,Player *To,char Code) {
+/* Sends details (name, ID) about player "Play" to player "To", using */
+/* message code "Code"                                                */
+   GString *text;
+   text=g_string_new(GetPlayerName(Play));
+   if (HaveAbility(To,A_PLAYERID)) {
+      g_string_sprintfa(text,"^%d",Play->ID);
+   }
+   SendServerMessage(NULL,C_NONE,Code,To,text->str);
+   g_string_free(text,TRUE);
+}
+
 void HandleServerMessage(gchar *buf,Player *Play) {
 /* Given a message "buf", from player "Play", performs processing and */
 /* sends suitable replies.                                            */
@@ -198,8 +210,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
    int i;
    price_t money;
 
-/* Ignore client's From: field (bin it in tmp) - should always be "Play" */
-   if (ProcessMessage(buf,&tmp,&AICode,&Code,&To,&Data,FirstServer)==-1) {
+/* Ignore client's From: field - should always be "Play" */
+   if (ProcessMessage(buf,Play,NULL,&AICode,&Code,&To,&Data,FirstServer)==-1) {
       g_warning("Bad message");
       return;
    }
@@ -237,10 +249,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SetPlayerName(Play,Data);
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=Play) {
-                     SendServerMessage(NULL,C_NONE,C_LIST,Play,
-                                       GetPlayerName(pt));
-                  }
+                  if (pt!=Play) SendPlayerDetails(pt,Play,C_LIST);
                }
                SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
                RegisterWithMetaServer(TRUE,FALSE);
@@ -249,7 +258,10 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                if (Network) {
                   g_message(_("%s joins the game!"),GetPlayerName(Play));
                }
-               BroadcastToClients(C_NONE,C_JOIN,GetPlayerName(Play),NULL,Play);
+               for (list=FirstServer;list;list=g_slist_next(list)) {
+                  pt=(Player *)list->data;
+                  if (pt!=Play) SendPlayerDetails(Play,pt,C_JOIN);
+               }
                Play->EventNum=E_ARRIVE;
                SendPlayerData(Play);
                SendEvent(Play);
@@ -398,7 +410,6 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                                  GetPlayerName(To),Data);
          break;
    }
-   g_free(Data);
 }
 
 void ClientLeftServer(Player *Play) {
