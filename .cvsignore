@@ -12,3 +12,4 @@ config.status
 stamp-h
 stamp-h.in
 dopewars.sco
+libtool
