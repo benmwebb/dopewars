@@ -108,27 +108,6 @@ static char HelpText[] = {
 int SendSingleHighScore(Player *Play,struct HISCORE *Score,
                         int index,char Bold);
 
-int SendToMetaServer(char Up,int MetaSock,char *data,
-                     struct sockaddr_in *MetaAddr) {
-/* Sends server details, and any additional data, to the metaserver */
-   GString *text;
-   int numbytes;
-   text=g_string_new("");
-   g_string_sprintf(text,"R:%d\n%d\n%s\n%s",
-                    METAVERSION,Port,MetaServer.LocalName,MetaServer.Password);
-   if (data) { g_string_append(text,"\n"); g_string_append(text,data); }
-   numbytes=sendto(MetaSock,text->str,strlen(text->str),0,
-                   (struct sockaddr *)MetaAddr,sizeof(struct sockaddr));
-   g_string_free(text,TRUE);
-   if (numbytes==-1) {
-/* Warning message displayed if data was not properly sent over the
-   network to the metaserver */
-      g_warning(_("cannot send data to metaserver\n"));
-      return 0;
-   }
-   return 1;
-}
-
 void RegisterWithMetaServer(gboolean Up,gboolean SendData,
                             gboolean RespectTimeout) {
 /* Sends server details to the metaserver, if specified. If "Up" is  */
@@ -182,6 +161,15 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    g_string_sprintfa(query,"&players=%d&maxplay=%d&comment=",
                      CountPlayers(FirstServer),MaxClients);
    AddURLEnc(query,MetaServer.Comment);
+
+   if (MetaServer.LocalName[0]) {
+      g_string_append(query,"&hostname=");
+      AddURLEnc(query,MetaServer.LocalName);
+   }
+   if (MetaServer.Password[0]) {
+      g_string_append(query,"&password=");
+      AddURLEnc(query,MetaServer.Password);
+   }
 
    if (SendData && HighScoreRead(MultiScore,AntiqueScore)) {
       for (i=0;i<NUMHISCORE;i++) {
