@@ -2214,11 +2214,15 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   gtk_box_pack_start(GTK_BOX(ClientData.Drug.vbbox), button, TRUE, TRUE, 0);
   SetJetButtonTitle(accel_group);
 
+#ifdef CYGWIN
+  /* GtkFrames don't look quite right in Win32 yet */
+  gtk_paned_pack2(GTK_PANED(vpaned), hbox, TRUE, TRUE);
+#else
   frame = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
   gtk_container_add(GTK_CONTAINER(frame), hbox);
-
   gtk_paned_pack2(GTK_PANED(vpaned), frame, TRUE, TRUE);
+#endif
 
   gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
 
