@@ -1,4 +1,7 @@
 cvs
+    - French translation added by leonard
+
+1.5.1   19-06-2001
     - Improved logging in server via. LogLevel and LogTimestamp variables
     - Metaserver (both client and server) moved to SourceForge
     - Icons (courtesy of Ocelot Mantis) and GNOME desktop entry added

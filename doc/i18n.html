@@ -45,8 +45,9 @@ under /usr/local/share/locale/
 properly on Unix systems - not Windows)
 <li>You haven't set an environment variable to specify your locale (usually
 this is done automatically). For example, if you're using the <tt>bash</tt>
-shell and want a German translation, the command "<tt>export LANG=de</tt>"
-should fix the problem.
+shell and want a German translation, the command "<tt>export LANG=de_DE</tt>"
+should ensure that dopewars (and all other i18n-aware programs launched from
+this shell) will use the German language.
 </ul>
 
 <h2><a name="adding">Adding a new translation</a></h2>
@@ -159,6 +160,12 @@ contributed to the main dopewars distribution!</p>
 <h2><a name="current">Currently available translations</a></h2>
 
 <ul>
+<li>French (<tt>fr.po</tt>)
+<ul>
+<li>Maintained by: <a href="mailto:triton@madchat.org">leonard</a>
+<li>Version required: <b>cvs</b>
+</ul>
+
 <li>German (<tt>de.po</tt>)
 <ul>
 <li>Maintained by: <a href="mailto:tobi@radical-linux.de">Tobias Mathes</a>
@@ -183,7 +190,7 @@ Molenda</a>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>17-06-2001</b></p>
+<p>Last update: <b>07-08-2001</b></p>
 
 </body>
 </html>
