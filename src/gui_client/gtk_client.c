@@ -2097,9 +2097,9 @@ static void make_tags(GtkTextView *textview)
 
   gtk_text_buffer_create_tag(buffer, "jet", "foreground", "blue", NULL);
   gtk_text_buffer_create_tag(buffer, "talk", "foreground", "red", NULL);
-  gtk_text_buffer_create_tag(buffer, "page", "foreground", "green", NULL);
-  gtk_text_buffer_create_tag(buffer, "join", "foreground", "cyan", NULL);
-  gtk_text_buffer_create_tag(buffer, "leave", "foreground", "cyan", NULL);
+  gtk_text_buffer_create_tag(buffer, "page", "foreground", "magenta", NULL);
+  gtk_text_buffer_create_tag(buffer, "join", "foreground", "darkblue", NULL);
+  gtk_text_buffer_create_tag(buffer, "leave", "foreground", "darkred", NULL);
 }
 
 #ifdef CYGWIN
