@@ -79,6 +79,7 @@ static gboolean InGame = FALSE;
 static GtkWidget *FightDialog = NULL, *SpyReportsDialog;
 static gboolean IsShowingPlayerList = FALSE, IsShowingTalkList = FALSE;
 static gboolean IsShowingInventory = FALSE, IsShowingGunShop = FALSE;
+static gboolean IsShowingDealDrugs = FALSE;
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -127,6 +128,7 @@ static void SpyOnPlayer(GtkWidget *widget, gpointer data);
 static void ErrandDialog(gint ErrandType);
 static void SackBitch(GtkWidget *widget, gpointer data);
 static void DestroyShowing(GtkWidget *widget, gpointer data);
+static void SetShowing(GtkWidget *window, gboolean *showing);
 static gint DisallowDelete(GtkWidget *widget, GdkEvent * event,
                            gpointer data);
 static void GunShopDialog(void);
@@ -276,12 +278,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
   /* Title of inventory window */
   gtk_window_set_title(GTK_WINDOW(window), _("Inventory"));
 
-  IsShowingInventory = TRUE;
-  gtk_window_set_modal(GTK_WINDOW(window), FALSE);
-  gtk_object_set_data(GTK_OBJECT(window), "IsShowing",
-                      (gpointer)&IsShowingInventory);
-  gtk_signal_connect(GTK_OBJECT(window), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyShowing), NULL);
+  SetShowing(window, &IsShowingInventory);
 
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
@@ -1536,6 +1533,8 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   gint DrugInd, i, SelIndex, FirstInd;
   gboolean DrugIndOK;
 
+  g_assert(!IsShowingDealDrugs);
+
   /* Action in 'Deal Drugs' dialog - "Buy/Sell/Drop Drugs" */
   if (data == BT_BUY)
     Action = _("Buy");
@@ -1586,6 +1585,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
   text = g_string_new(NULL);
   accel_group = gtk_accel_group_new();
+
   dialog = DealDialog.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(dialog), Action);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
@@ -1593,6 +1593,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
+  SetShowing(dialog, &IsShowingDealDrugs);
 
   vbox = gtk_vbox_new(FALSE, 7);
 
@@ -2532,15 +2533,10 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 180);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
 
-  IsShowingPlayerList = TRUE;
   gtk_window_set_modal(GTK_WINDOW(dialog), FALSE);
-  gtk_object_set_data(GTK_OBJECT(dialog), "IsShowing",
-                      (gpointer)&IsShowingPlayerList);
-  gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyShowing), NULL);
-
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
+  SetShowing(dialog, &IsShowingPlayerList);
 
   vbox = gtk_vbox_new(FALSE, 7);
 
@@ -2635,15 +2631,10 @@ void TalkDialog(gboolean TalkToAll)
   gtk_window_set_default_size(GTK_WINDOW(dialog), 200, 190);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
 
-  IsShowingTalkList = TRUE;
   gtk_window_set_modal(GTK_WINDOW(dialog), FALSE);
-  gtk_object_set_data(GTK_OBJECT(dialog), "IsShowing",
-                      (gpointer)&IsShowingTalkList);
-  gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyShowing), NULL);
-
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
+  SetShowing(dialog, &IsShowingTalkList);
 
   vbox = gtk_vbox_new(FALSE, 7);
 
@@ -2951,12 +2942,19 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   g_string_free(text, TRUE);
 }
 
+void SetShowing(GtkWidget *window, gboolean *showing)
+{
+  g_assert(showing);
+
+  *showing = TRUE;
+  gtk_signal_connect(GTK_OBJECT(window), "destroy",
+                     GTK_SIGNAL_FUNC(DestroyShowing), (gpointer)showing);
+}
+
 void DestroyShowing(GtkWidget *widget, gpointer data)
 {
-  gboolean *IsShowing;
+  gboolean *IsShowing = (gboolean *)data;
 
-  IsShowing =
-      (gboolean *)gtk_object_get_data(GTK_OBJECT(widget), "IsShowing");
   if (IsShowing)
     *IsShowing = FALSE;
 }
@@ -3048,11 +3046,7 @@ void GunShopDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-  IsShowingGunShop = TRUE;
-  gtk_object_set_data(GTK_OBJECT(window), "IsShowing",
-                      (gpointer)&IsShowingGunShop);
-  gtk_signal_connect(GTK_OBJECT(window), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyShowing), NULL);
+  SetShowing(window, &IsShowingGunShop);
 
   vbox = gtk_vbox_new(FALSE, 7);
 
