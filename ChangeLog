@@ -1,4 +1,5 @@
 cvs
+    - Annoying flashing on closure of modal windows in Win32 fixed
     - Icon added for GTK+ client
     - Bug with withdrawing cash from the bank fixed
     - URL in GTK+ client "About" box is now clickable

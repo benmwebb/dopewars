@@ -236,6 +236,7 @@ static void gtk_progress_bar_size_request(GtkWidget *widget,
 static void gtk_progress_bar_realize(GtkWidget *widget);
 static gint gtk_accel_group_add(GtkAccelGroup *accel_group,ACCEL *newaccel);
 static void gtk_accel_group_set_id(GtkAccelGroup *accel_group,gint ind,gint ID);
+static void EnableParent(GtkWindow *window);
 
 typedef struct _GdkInput GdkInput;
 
@@ -1311,6 +1312,15 @@ void gtk_widget_create(GtkWidget *widget) {
 
 void gtk_widget_destroy(GtkWidget *widget) {
    if (!widget) return;
+
+   /* If we're closing a modal window, reactivate the parent
+    * _before_ calling DestroyWindow, to avoid annoying
+    * flicker caused if Windows chooses to reactivate another
+    * application when we close the modal dialog */
+   if (GTK_OBJECT(widget)->klass == &GtkWindowClass) {
+     EnableParent(GTK_WINDOW(widget));
+   }
+
    gtk_widget_lose_focus(widget);
    if (widget->hWnd) DestroyWindow(widget->hWnd);
    widget->hWnd=NULL;
@@ -1884,31 +1894,40 @@ void gtk_box_destroy(GtkWidget *widget) {
 }
 
 static void EnableParent(GtkWindow *window) {
-   GSList *list;
-   GtkWidget *parent;
-   GtkWindow *listwin;
+  GtkWidget *parent;
 
-   parent=GTK_WIDGET(window)->parent;
-   if (window->modal && parent) {
-      for (list=WindowList;list;list=g_slist_next(list)) {
-         listwin=GTK_WINDOW(list->data);
-         if (listwin!=window && listwin->modal &&
-             GTK_WIDGET_VISIBLE(GTK_WIDGET(listwin)) &&
-             GTK_WIDGET(listwin)->parent==parent) return;
-      }
-      gtk_widget_set_sensitive(parent,TRUE);
-   }
+  parent=GTK_WIDGET(window)->parent;
+
+  if (window->modal && parent) {
+    GSList *list;
+    GtkWindow *listwin;
+    HWND ourhWnd, parenthWnd;
+
+    ourhWnd = GTK_WIDGET(window)->hWnd;
+    parenthWnd = parent->hWnd;
+    for (list=WindowList;list;list=g_slist_next(list)) {
+      listwin=GTK_WINDOW(list->data);
+      if (listwin!=window && listwin->modal
+          && GTK_WIDGET_VISIBLE(GTK_WIDGET(listwin))
+          && GTK_WIDGET(listwin)->parent==parent) return;
+    }
+    gtk_widget_set_sensitive(parent,TRUE);
+
+    if (ourhWnd && parenthWnd && ourhWnd == GetActiveWindow()) {
+      SetActiveWindow(parenthWnd);
+    }
+  }
 }
 
 void gtk_window_destroy(GtkWidget *widget) {
    GtkWindow *window=GTK_WINDOW(widget);
+// EnableParent(window);
 // g_print("gtk_window_destroy on widget %p\n",widget);
    WindowList=g_slist_remove(WindowList,(gpointer)window);
    gtk_container_destroy(widget);
    if (window->accel_group) gtk_accel_group_destroy(window->accel_group);
    if (window->hAccel) DestroyAcceleratorTable(window->hAccel);
    g_free(window->title);
-   EnableParent(window);
 // if (widget->hWnd) DestroyWindow(widget->hWnd);
 // widget->hWnd=NULL;
 }
