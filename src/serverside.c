@@ -953,7 +953,7 @@ void ServerLoop() {
       if (MetaConn) {
          if (RespondToSelect(&MetaConn->NetBuf,&readfs,&writefs,
                              &errorfs,&DoneOK)) {
-            while ((buf=ReadHttpResponse(MetaConn))) {
+            while ((buf=ReadHttpResponse(MetaConn,&DoneOK))) {
                gboolean ReadingBody = (MetaConn->Status==HS_READBODY);
                if (buf[0] || !ReadingBody) {
                   dopelog(ReadingBody ? 2 : 4,"MetaServer: %s",buf);
@@ -1072,7 +1072,7 @@ void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
    if (!MetaConn) return;
    if (NetBufHandleNetwork(&MetaConn->NetBuf,condition&GDK_INPUT_READ,
                            condition&GDK_INPUT_WRITE,&DoneOK)) {
-      while ((buf=ReadHttpResponse(MetaConn))) {
+      while ((buf=ReadHttpResponse(MetaConn,&DoneOK))) {
          gboolean ReadingBody = (MetaConn->Status==HS_READBODY);
          if (buf[0] || !ReadingBody) {
             dopelog(ReadingBody ? 2 : 4,"MetaServer: %s",buf);

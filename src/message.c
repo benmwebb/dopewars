@@ -352,23 +352,23 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
       if (CountWaitingMessages(&conn->NetBuf)<8) return FALSE;
 
       NewServer=g_new0(ServerData,1);
-      NewServer->Name=ReadHttpResponse(conn);
-      msg=ReadHttpResponse(conn);
+      NewServer->Name=ReadHttpResponse(conn,doneOK);
+      msg=ReadHttpResponse(conn,doneOK);
       NewServer->Port=atoi(msg); g_free(msg);
-      NewServer->Version=ReadHttpResponse(conn);
-      msg=ReadHttpResponse(conn);
+      NewServer->Version=ReadHttpResponse(conn,doneOK);
+      msg=ReadHttpResponse(conn,doneOK);
       if (msg[0]) NewServer->CurPlayers=atoi(msg);
       else NewServer->CurPlayers=-1;
       g_free(msg);
-      msg=ReadHttpResponse(conn);
+      msg=ReadHttpResponse(conn,doneOK);
       NewServer->MaxPlayers=atoi(msg); g_free(msg);
-      NewServer->Update=ReadHttpResponse(conn);
-      NewServer->Comment=ReadHttpResponse(conn);
-      NewServer->UpSince=ReadHttpResponse(conn);
+      NewServer->Update=ReadHttpResponse(conn,doneOK);
+      NewServer->Comment=ReadHttpResponse(conn,doneOK);
+      NewServer->UpSince=ReadHttpResponse(conn,doneOK);
       *listpt=g_slist_append(*listpt,NewServer);
    } else if (conn->Status==HS_READSEPARATOR && conn->StatusCode==200) {
       /* This should be the first line of the body, the "MetaServer:" line */
-      msg=ReadHttpResponse(conn);
+      msg=ReadHttpResponse(conn,doneOK);
       if (!msg) return FALSE;
       if (strlen(msg)>=14 && strncmp(msg,"FATAL ERROR:",12)==0) {
          SetError(&conn->NetBuf.error,&ETMeta,MEC_INTERNAL,g_strdup(&msg[13]));
@@ -382,7 +382,7 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt,
       }
       g_free(msg);
    } else {
-      msg=ReadHttpResponse(conn);
+      msg=ReadHttpResponse(conn,doneOK);
       if (!msg) return FALSE;
       g_free(msg);
    }

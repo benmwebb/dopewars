@@ -340,6 +340,9 @@ static ErrorType ETSocks = { SocksAppendError,NULL };
 
 typedef enum {
   HEC_TRIESEX   = 1,
+  HEC_BADAUTH,
+  HEC_BADREDIR,
+  HEC_BADSTATUS,
   HEC_OK        = 200,
   HEC_REDIRECT  = 300,
   HEC_MOVEPERM  = 301,
@@ -355,7 +358,18 @@ typedef enum {
 static void HTTPAppendError(GString *str,LastError *error) {
   switch (error->code) {
     case HEC_TRIESEX:
+/* Various HTTP error messages */
       g_string_append(str,_("Number of tries exceeded"));
+      break;
+    case HEC_BADAUTH:
+      g_string_sprintfa(str,_("Bad auth header: %s"),(gchar *)error->data);
+      break;
+    case HEC_BADREDIR:
+      g_string_sprintfa(str,_("Bad redirect: %s"),(gchar *)error->data);
+      break;
+    case HEC_BADSTATUS:
+      g_string_sprintfa(str,_("Invalid HTTP status line: %s"),
+                        (gchar *)error->data);
       break;
     case HEC_FORBIDDEN:
       g_string_append(str,_("403: forbidden"));
@@ -454,7 +468,6 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf) {
    memcpy(&addpt[5+hostlen],&netport,sizeof(netport));
 
    NetBuf->sockstat = NBSS_CONNECT;
-/* g_print("FIXME: SOCKS5 CONNECT request sent\n");*/
 
    CommitWriteBuffer(NetBuf,conn,addpt,addlen);
 
@@ -1133,7 +1146,8 @@ static gboolean ParseHtmlLocation(gchar *uri,gchar **host,unsigned *port,
   return TRUE;
 }
 
-static void StartHttpAuth(HttpConnection *conn,gboolean proxy,gchar *header) {
+static void StartHttpAuth(HttpConnection *conn,gboolean proxy,gchar *header,
+                          gboolean *doneOK) {
    gchar *realm,**split;
 
    if (!conn->authfunc) return;
@@ -1146,13 +1160,14 @@ static void StartHttpAuth(HttpConnection *conn,gboolean proxy,gchar *header) {
      conn->waitinput=TRUE;
      (*conn->authfunc)(conn,proxy,realm,conn->authdata);
    } else {
-     g_print("FIXME: Bad HTTP auth header\n");
+     *doneOK=FALSE;
+     SetError(&conn->NetBuf.error,&ETHTTP,HEC_BADAUTH,g_strdup(header));
    }
 
    g_strfreev(split);
 }
 
-static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
+static void ParseHtmlHeader(gchar *line,HttpConnection *conn,gboolean *doneOK) {
   gchar **split,*host,*query;
   unsigned port;
 
@@ -1161,27 +1176,27 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     if (g_strcasecmp(split[0],"Location:")==0 &&
         (conn->StatusCode==HEC_MOVETEMP || conn->StatusCode==HEC_MOVEPERM)) {
       if (ParseHtmlLocation(split[1],&host,&port,&query)) {
-        g_print("FIXME: Redirect to %s:%u%s\n",host,port,query);
         g_free(conn->RedirHost); g_free(conn->RedirQuery);
         conn->RedirHost=host; conn->RedirQuery=query;
         conn->RedirPort=port;
       } else {
-        g_print("FIXME: Bad redirect\n");
+        *doneOK=FALSE;
+        SetError(&conn->NetBuf.error,&ETHTTP,HEC_BADREDIR,g_strdup(line));
       }
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==HEC_AUTHREQ) {
-      StartHttpAuth(conn,FALSE,split[1]);
+      StartHttpAuth(conn,FALSE,split[1],doneOK);
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
     } else if (g_strcasecmp(split[0],"Proxy-Authenticate:")==0 &&
                conn->StatusCode==HEC_PROXYAUTH) {
-      StartHttpAuth(conn,TRUE,split[1]);
+      StartHttpAuth(conn,TRUE,split[1],doneOK);
     }
   }
   g_strfreev(split);
 }
 
-gchar *ReadHttpResponse(HttpConnection *conn) {
+gchar *ReadHttpResponse(HttpConnection *conn,gboolean *doneOK) {
    gchar *msg,**split;
 
    msg=GetWaitingMessage(&conn->NetBuf);
@@ -1191,12 +1206,15 @@ gchar *ReadHttpResponse(HttpConnection *conn) {
          split=g_strsplit(msg," ",2);
          if (split[0] && split[1]) {
             conn->StatusCode=atoi(split[1]);
-         } else g_warning("Invalid HTTP status line %s",msg);
+         } else {
+            *doneOK=FALSE;
+            SetError(&conn->NetBuf.error,&ETHTTP,HEC_BADSTATUS,g_strdup(msg));
+         }
          g_strfreev(split);
          break;
       case HS_READHEADERS:
          if (msg[0]==0) conn->Status=HS_READSEPARATOR;
-         else ParseHtmlHeader(msg,conn);
+         else ParseHtmlHeader(msg,conn,doneOK);
          break;
       case HS_READSEPARATOR:
          conn->Status=HS_READBODY;

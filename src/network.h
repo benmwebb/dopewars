@@ -194,7 +194,7 @@ gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             gchar *Method,gchar *Query,
                             gchar *Headers,gchar *Body);
 void CloseHttpConnection(HttpConnection *conn);
-gchar *ReadHttpResponse(HttpConnection *conn);
+gchar *ReadHttpResponse(HttpConnection *conn,gboolean *doneOK);
 void SetHttpAuthentication(HttpConnection *conn,gboolean proxy,
                            gchar *user,gchar *password);
 void SetHttpAuthFunc(HttpConnection *conn,HCAuthFunc authfunc,gpointer data);

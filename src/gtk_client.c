@@ -2156,9 +2156,6 @@ static void HandleMetaSock(gpointer data,gint socket,
    NBStatus oldstatus;
    NBSocksStatus oldsocks;
 
-/*g_print("HandleMetaSock: read %d, write %d\n",
-        condition&GDK_INPUT_READ,
-        condition&GDK_INPUT_WRITE);*/
    widgets=(struct StartGameStruct *)data;
    if (!widgets->MetaConn) return;
 
