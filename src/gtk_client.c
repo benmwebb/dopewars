@@ -169,6 +169,20 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
               message,MB_OK);
 }
 
+#ifndef CYGWIN
+static guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
+                            GtkWidget *sendto,gchar *signal,
+                            GtkAccelGroup *accel_group) {
+   guint AccelKey;
+   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(labelparent)->child),Text);
+   if (sendto && AccelKey) {
+      gtk_widget_add_accelerator(sendto,signal,accel_group,AccelKey,0,
+                                 GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   }
+   return AccelKey;
+}
+#endif
+
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
        MessageBox(ClientData.window,_("Quit Game"),_("Abandon current game?"),
@@ -363,12 +377,12 @@ void HandleClientMessage(char *pt,Player *Play) {
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Spy");
          text=dpg_strdup_printf(_("_Spy\t(%P)"),Prices.Spy);
-         gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
+         SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
          text=dpg_strdup_printf(_("_Tipoff\t(%P)"),Prices.Tipoff);
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Tipoff");
-         gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
+         SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
          if (FirstClient->next) ListPlayers(NULL,NULL);
          break;
@@ -508,11 +522,8 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
 static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
                                  GtkBox *box,gint Answer) {
    GtkWidget *button;
-   guint AccelKey;
    button=gtk_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),Text);
-   gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(button,Text,button,"clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(FightCallback),
                       GINT_TO_POINTER(Answer));
@@ -829,7 +840,6 @@ void Jet() {
    GtkAccelGroup *accel_group;
    gint boxsize,i,row,col;
    gchar *name,AccelChar;
-   guint AccelKey;
 
    accel_group=gtk_accel_group_new();
 
@@ -867,9 +877,7 @@ void Jet() {
       } else {
          button=gtk_button_new_with_label("");
          name=g_strdup_printf("_%c. %s",AccelChar,Location[i].Name);
-         AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),name);
-         gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                        GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+         SetAccelerator(button,name,button,"clicked",accel_group);
          g_free(name);
       }
       gtk_widget_set_sensitive(button,i != ClientData.Play->IsAt);
@@ -1167,7 +1175,6 @@ static void QuestionCallback(GtkWidget *widget,gpointer data) {
 void QuestionDialog(char *Data,Player *From) {
    GtkWidget *dialog,*label,*vbox,*hsep,*hbbox,*button;
    GtkAccelGroup *accel_group;
-   guint AccelKey;
    gchar *Responses,**split,*LabelText;
    gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
                       N_("_Fight"), N_("_Attack"), N_("_Evade") };
@@ -1210,10 +1217,7 @@ void QuestionDialog(char *Data,Player *From) {
       if (Answer=='_' && strlen(Words[i])>=2) Answer=(gint)Words[i][1];
       if (strchr(Responses,Answer)) {
          button=gtk_button_new_with_label("");
-         AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                        _(Words[i]));
-         gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+         SetAccelerator(button,_(Words[i]),button,"clicked",accel_group);
          gtk_object_set_data(GTK_OBJECT(button),"dialog",(gpointer)dialog);
          gtk_signal_connect(GTK_OBJECT(button),"clicked",
                             GTK_SIGNAL_FUNC(QuestionCallback),
@@ -1366,12 +1370,9 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group) {
       gtk_widget_remove_accelerator(button,accel_group,accel_key,0);
    }
    
-   accel_key=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
+   ClientData.JetAccel=SetAccelerator(button,
                 (ClientData.Play && ClientData.Play->Flags & FIGHTING) ?
-                _("_Fight") : _("_Jet!"));
-   gtk_widget_add_accelerator(button,"clicked",accel_group,accel_key,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
-   ClientData.JetAccel=accel_key;
+                _("_Fight") : _("_Jet!"),button,"clicked",accel_group);
 }
 
 char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
@@ -1693,10 +1694,10 @@ void NewGameDialog() {
    GtkWidget *vbox,*vbox2,*hbox,*label,*entry,*notebook,*frame,*button;
    GtkWidget *table,*clist,*scrollwin,*dialog,*hbbox;
    GtkAccelGroup *accel_group;
-   guint AccelKey;
    gchar *text;
    gchar *server_titles[5];
    static struct StartGameStruct widgets;
+   guint AccelKey;
 
    server_titles[0]=_("Server");
    server_titles[1]=_("Port");
@@ -1768,10 +1769,7 @@ void NewGameDialog() {
    gtk_box_pack_start(GTK_BOX(vbox2),table,FALSE,FALSE,0);
 
    button=gtk_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                  _("_Connect"));
-   gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(button,_("_Connect"),button,"clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(ConnectToServer),
                       (gpointer)&widgets);
@@ -1787,17 +1785,13 @@ void NewGameDialog() {
    vbox2=gtk_vbox_new(FALSE,7);
    gtk_container_set_border_width(GTK_CONTAINER(vbox2),4);
    widgets.antique=gtk_check_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(widgets.antique)->child),
-                                 _("_Antique mode"));
-   gtk_widget_add_accelerator(widgets.antique,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(widgets.antique,_("_Antique mode"),widgets.antique,
+                  "clicked",accel_group);
    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widgets.antique),WantAntique);
    gtk_box_pack_start(GTK_BOX(vbox2),widgets.antique,FALSE,FALSE,0);
    button=gtk_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                  _("_Start single-player game"));
-   gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(button,_("_Start single-player game"),button,
+                  "clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(StartSinglePlayer),
                       (gpointer)&widgets);
@@ -1821,20 +1815,16 @@ void NewGameDialog() {
 
    hbbox=gtk_hbutton_box_new();
    button=gtk_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                  _("_Update"));
-   gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(button,_("_Update"),button,
+                  "clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(UpdateMetaServerList),
                       (gpointer)&widgets);
    gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
 
    button=gtk_button_new_with_label("");
-   AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                  _("_Connect"));
-   gtk_widget_add_accelerator(button,"clicked",accel_group,AccelKey,0,
-                              GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+   SetAccelerator(button,_("_Connect"),button,
+                  "clicked",accel_group);
    gtk_signal_connect(GTK_OBJECT(button),"clicked",
                       GTK_SIGNAL_FUNC(MetaServerConnect),
                       (gpointer)&widgets);
@@ -1877,7 +1867,6 @@ gint MessageBox(GtkWidget *parent,const gchar *Title,
    GtkAccelGroup *accel_group;
    gint i;
    static gint retval;
-   guint AccelKey;
    gchar *ButtonData[MB_MAX] = { N_("OK"), N_("Cancel"),
                                  N_("_Yes"), N_("_No") };
 
@@ -1908,11 +1897,8 @@ gint MessageBox(GtkWidget *parent,const gchar *Title,
    for (i=0;i<MB_MAX;i++) {
       if (Options & (1<<i)) {
          button=gtk_button_new_with_label("");
-         AccelKey=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button)->child),
-                                        _(ButtonData[i]));
-         if (AccelKey) gtk_widget_add_accelerator(button,"clicked",
-                                  accel_group,AccelKey,0,
-                                  GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+         SetAccelerator(button,_(ButtonData[i]),button,
+                       "clicked",accel_group);
          gtk_object_set_data(GTK_OBJECT(button),"retval",&retval);
          gtk_signal_connect(GTK_OBJECT(button),"clicked",
                             GTK_SIGNAL_FUNC(MessageBoxCallback),
@@ -2359,7 +2345,6 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
                      struct InventoryWidgets *widgets,GtkSignalFunc CallBack) {
    GtkWidget *scrollwin,*clist,*vbbox,*frame[2],*button[3];
    gint i,mini;
-   guint accel_key;
    GString *text;
    gchar *titles[2][2];
    gchar *button_text[3];
@@ -2407,10 +2392,8 @@ void CreateInventory(GtkWidget *hbox,gchar *Objects,GtkAccelGroup *accel_group,
 
       for (i=0;i<3;i++) {
          button[i]=gtk_button_new_with_label("");
-         accel_key=gtk_label_parse_uline(GTK_LABEL(GTK_BIN(button[i])->child),
-                                         button_text[i]);
-         gtk_widget_add_accelerator(button[i],"clicked",accel_group,accel_key,0,
-                                  GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+         SetAccelerator(button[i],_(button_text[i]),button[i],
+                        "clicked",accel_group);
          if (CallBack) gtk_signal_connect(GTK_OBJECT(button[i]),"clicked",
                                           GTK_SIGNAL_FUNC(CallBack),
                                           button_type[i]);
