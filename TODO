@@ -1,3 +1,4 @@
+- Prevent dopewars from overwriting other high score files via. -f option
 - Fix problem with dialogs popping up while menus are open
 - Fix problem with Jet dialog during fights
 - Increase difficulty of escaping from another player - impose penalty on
