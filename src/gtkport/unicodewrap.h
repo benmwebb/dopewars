@@ -49,9 +49,23 @@ BOOL WINAPI mySetMenuItemInfo(HMENU hMenu, UINT uItem, BOOL fByPosition,
 BOOL WINAPI myInsertMenuItem(HMENU hMenu, UINT uItem, BOOL fByPosition,
                              LPMENUITEMINFO lpmii);
 int myHeader_InsertItem(HWND hWnd, int index, const HD_ITEM *phdi);
+int myTabCtrl_InsertItem(HWND hWnd, int index, const TC_ITEM *pitem);
 ATOM myRegisterClass(CONST WNDCLASS *lpWndClass);
 HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                     DLGPROC lpDialogFunc);
+LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam);
+LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong);
+LONG myGetWindowLong(HWND hWnd, int nIndex);
+LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
+                         WPARAM wParam, LPARAM lParam);
+LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
+int myMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType);
+BOOL myGetMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin,
+                  UINT wMsgFilterMax);
+LONG myDispatchMessage(CONST MSG *lpmsg);
+BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg);
+size_t myw32strlen(const char *str);
 
 #endif /* CYGWIN */
 

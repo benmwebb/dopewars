@@ -634,7 +634,7 @@ static WNDPROC wpOrigEntryProc, wpOrigTextProc;
 
 void gtk_set_default_font(HWND hWnd)
 {
-  SendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
+  mySendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
 }
 
 GtkObject *GtkNewObject(GtkClass *klass)
@@ -741,7 +741,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
   gint newpos;
   GtkPaned *paned;
 
-  paned = GTK_PANED(GetWindowLong(hwnd, GWL_USERDATA));
+  paned = GTK_PANED(myGetWindowLong(hwnd, GWL_USERDATA));
   switch (msg) {
   case WM_PAINT:
     if (GetUpdateRect(hwnd, NULL, TRUE)) {
@@ -809,7 +809,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
     gtk_paned_set_position(paned, newpos);
     return TRUE;
   default:
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return myDefWindowProc(hwnd, msg, wParam, lParam);
   }
   return FALSE;
 }
@@ -830,7 +830,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     HDC hDC;
     HFONT oldFont;
 
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
     text = GTK_LABEL(widget)->text;
     if (text && BeginPaint(hwnd, &ps)) {
       hDC = ps.hdc;
@@ -845,12 +845,12 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     }
     return TRUE;
   } else if (msg == WM_LBUTTONUP) {
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
 
     DisplayHTML(widget, NULL, GTK_URL(widget)->target);
     return FALSE;
   } else
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return myDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
@@ -895,7 +895,7 @@ LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     }
     return TRUE;
   } else
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return myDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
@@ -975,10 +975,10 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   *dodef = TRUE;
 
   if (customWndProc
-      && CallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
+      && myCallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
     return TRUE;
 
-  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
   if (widget && (klass = GTK_OBJECT(widget)->klass)
       && klass->wndproc) {
     retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -987,7 +987,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   switch (msg) {
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
-        && (widget = GTK_WIDGET(GetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
+        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
         && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1005,7 +1005,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     }
     break;
   case WM_COMMAND:
-    widget = GTK_WIDGET(GetWindowLong((HWND)lParam, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWL_USERDATA));
     klass = NULL;
     if (widget && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
@@ -1026,7 +1026,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     if (!nmhdr)
       break;
 
-    widget = GTK_WIDGET(GetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
     if (widget && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1061,7 +1061,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
   retval = HandleWinMessage(hwnd, msg, wParam, lParam, &dodef);
   if (dodef) {
-    return DefWindowProc(hwnd, msg, wParam, lParam);
+    return myDefWindowProc(hwnd, msg, wParam, lParam);
   } else {
     return retval;
   }
@@ -1084,12 +1084,12 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_KEYUP && wParam == VK_RETURN) {
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
     if (widget)
       gtk_signal_emit(GTK_OBJECT(widget), "activate");
     return FALSE;
   }
-  return CallWindowProc(wpOrigEntryProc, hwnd, msg, wParam, lParam);
+  return myCallWindowProc(wpOrigEntryProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
@@ -1098,12 +1098,12 @@ LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_GETDLGCODE) {
-    widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
     if (!GTK_EDITABLE(widget)->is_editable) {
       return DLGC_HASSETSEL | DLGC_WANTARROWS;
     }
   }
-  return CallWindowProc(wpOrigTextProc, hwnd, msg, wParam, lParam);
+  return myCallWindowProc(wpOrigTextProc, hwnd, msg, wParam, lParam);
 }
 
 void SetCustomWndProc(WNDPROC wndproc)
@@ -1131,6 +1131,8 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   } else {
     mainIcon = LoadIcon(NULL, IDI_APPLICATION);
   }
+
+  InitCommonControls();
   if (!hPrevInstance) {
     wc.style = 0;
     wc.lpfnWndProc = MainWndProc;
@@ -1204,8 +1206,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKURL;
     myRegisterClass(&wc);
   }
-
-  InitCommonControls();
 }
 
 guint gtk_main_level(void)
@@ -1341,7 +1341,7 @@ static BOOL CALLBACK SetFocusEnum(HWND hWnd, LPARAM data)
   GtkWidget *widget;
   GtkWindow *window = GTK_WINDOW(data);
 
-  widget = GTK_WIDGET(GetWindowLong(hWnd, GWL_USERDATA));
+  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWL_USERDATA));
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget) ||
       window->focus == widget) {
@@ -1384,7 +1384,7 @@ void gtk_window_update_focus(GtkWindow *window)
   FocusWnd = GetFocus();
   window->focus = NULL;
   if (FocusWnd) {
-    widget = GTK_WIDGET(GetWindowLong(FocusWnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWL_USERDATA));
     if (widget && GTK_WIDGET(window)->hWnd &&
         GetParent(FocusWnd) == GTK_WIDGET(window)->hWnd) {
       window->focus = widget;
@@ -1400,7 +1400,7 @@ void gtk_widget_realize(GtkWidget *widget)
     return;
   gtk_signal_emit(GTK_OBJECT(widget), "realize", &req);
   if (widget->hWnd)
-    SetWindowLong(widget->hWnd, GWL_USERDATA, (LONG)widget);
+    mySetWindowLong(widget->hWnd, GWL_USERDATA, (LONG)widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
   gtk_widget_set_sensitive(widget, GTK_WIDGET_SENSITIVE(widget));
 
@@ -1908,8 +1908,8 @@ void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
 
   hWnd = widget->hWnd;
   if (hWnd) {
-    SendMessage(hWnd, EM_SETSEL, (WPARAM)*position, (LPARAM)*position);
-    SendMessage(hWnd, EM_REPLACESEL, (WPARAM)FALSE, (LPARAM)newstr->str);
+    mySendMessage(hWnd, EM_SETSEL, (WPARAM)*position, (LPARAM)*position);
+    myEditReplaceSel(hWnd, FALSE, newstr->str);
     *position += newstr->len;
     gtk_editable_set_position(editable, *position);
   }
@@ -1958,7 +1958,7 @@ void gtk_editable_set_editable(GtkEditable *editable, gboolean is_editable)
   editable->is_editable = is_editable;
   hWnd = widget->hWnd;
   if (hWnd)
-    SendMessage(hWnd, EM_SETREADONLY, (WPARAM)(!is_editable), (LPARAM)0);
+    mySendMessage(hWnd, EM_SETREADONLY, (WPARAM)(!is_editable), (LPARAM)0);
 }
 
 void gtk_editable_set_position(GtkEditable *editable, gint position)
@@ -1969,8 +1969,8 @@ void gtk_editable_set_position(GtkEditable *editable, gint position)
   if (!GTK_WIDGET_REALIZED(widget))
     return;
   hWnd = widget->hWnd;
-  SendMessage(hWnd, EM_SETSEL, (WPARAM)position, (LPARAM)position);
-  SendMessage(hWnd, EM_SCROLLCARET, 0, 0);
+  mySendMessage(hWnd, EM_SETSEL, (WPARAM)position, (LPARAM)position);
+  mySendMessage(hWnd, EM_SCROLLCARET, 0, 0);
 }
 
 gint gtk_editable_get_position(GtkEditable *editable)
@@ -1982,7 +1982,7 @@ gint gtk_editable_get_position(GtkEditable *editable)
   if (!GTK_WIDGET_REALIZED(widget))
     return 0;
   hWnd = widget->hWnd;
-  SendMessage(hWnd, EM_GETSEL, (WPARAM)NULL, (LPARAM)&EndPos);
+  mySendMessage(hWnd, EM_GETSEL, (WPARAM)NULL, (LPARAM)&EndPos);
   return (gint)EndPos;
 }
 
@@ -2396,9 +2396,9 @@ void gtk_entry_realize(GtkWidget *widget)
                                   hInst, NULL);
   /* Subclass the window (we assume that all edit boxes have the same
    * window procedure) */
-  wpOrigEntryProc = (WNDPROC)SetWindowLong(widget->hWnd,
-                                           GWL_WNDPROC,
-                                           (LONG)EntryWndProc);
+  wpOrigEntryProc = (WNDPROC)mySetWindowLong(widget->hWnd,
+                                             GWL_WNDPROC,
+                                             (LONG)EntryWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -2423,9 +2423,9 @@ void gtk_text_realize(GtkWidget *widget)
                                   0, Parent, NULL, hInst, NULL);
   /* Subclass the window (we assume that all multiline edit boxes have the 
    * same window procedure) */
-  wpOrigTextProc = (WNDPROC)SetWindowLong(widget->hWnd,
-                                          GWL_WNDPROC,
-                                          (LONG)TextWndProc);
+  wpOrigTextProc = (WNDPROC)mySetWindowLong(widget->hWnd,
+                                            GWL_WNDPROC,
+                                            (LONG)TextWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -3062,8 +3062,8 @@ void gtk_check_button_toggled(GtkCheckButton *check_button, gpointer data)
 
   hWnd = GTK_WIDGET(check_button)->hWnd;
   if (hWnd) {
-    SendMessage(hWnd, BM_SETCHECK,
-                is_active ? BST_CHECKED : BST_UNCHECKED, 0);
+    mySendMessage(hWnd, BM_SETCHECK,
+                  is_active ? BST_CHECKED : BST_UNCHECKED, 0);
   }
 }
 
@@ -3086,8 +3086,8 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button, gpointer data)
 
   hWnd = GTK_WIDGET(radio_button)->hWnd;
   if (hWnd) {
-    SendMessage(hWnd, BM_SETCHECK,
-                is_active ? BST_CHECKED : BST_UNCHECKED, 0);
+    mySendMessage(hWnd, BM_SETCHECK,
+                  is_active ? BST_CHECKED : BST_UNCHECKED, 0);
   }
   if (is_active) {
     for (group = radio_button->group; group; group = g_slist_next(group)) {
@@ -3096,7 +3096,7 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button, gpointer data)
         GTK_TOGGLE_BUTTON(radio)->toggled = FALSE;
         hWnd = GTK_WIDGET(radio)->hWnd;
         if (hWnd)
-          SendMessage(hWnd, BM_SETCHECK, BST_UNCHECKED, 0);
+          mySendMessage(hWnd, BM_SETCHECK, BST_UNCHECKED, 0);
       }
     }
   }
@@ -3131,9 +3131,9 @@ void gtk_main()
 
   RecurseLevel++;
 
-  while (GetMessage(&msg, NULL, 0, 0)) {
+  while (myGetMessage(&msg, NULL, 0, 0)) {
     MsgDone = FALSE;
-    widget = GTK_WIDGET(GetWindowLong(msg.hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWL_USERDATA));
     window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     if (window) {
       hAccel = GTK_WINDOW(window)->hAccel;
@@ -3145,12 +3145,12 @@ void gtk_main()
       for (list = WindowList; list && !MsgDone; list = g_slist_next(list)) {
         widget = GTK_WIDGET(list->data);
         if (widget && widget->hWnd
-            && (MsgDone = IsDialogMessage(widget->hWnd, &msg)) == TRUE)
+            && (MsgDone = myIsDialogMessage(widget->hWnd, &msg)) == TRUE)
           break;
       }
     if (!MsgDone) {
       TranslateMessage(&msg);
-      DispatchMessage(&msg);
+      myDispatchMessage(&msg);
     }
   }
   RecurseLevel--;
@@ -3812,7 +3812,7 @@ void gtk_menu_item_realize(GtkWidget *widget)
   }
   mii.wID = menu_item->ID;
   mii.dwTypeData = (LPTSTR)menu_item->text;
-  mii.cch = strlen(menu_item->text);
+  mii.cch = myw32strlen(menu_item->text);
   myInsertMenuItem(parent_menu, pos, TRUE, &mii);
 }
 
@@ -3962,7 +3962,7 @@ void gtk_notebook_realize(GtkWidget *widget)
         tie.pszText = GTK_LABEL(note_child->tab_label)->text;
       else
         tie.pszText = "No label";
-      TabCtrl_InsertItem(widget->hWnd, tab_pos++, &tie);
+      myTabCtrl_InsertItem(widget->hWnd, tab_pos++, &tie);
       if (note_child->child) {
         gtk_widget_realize(note_child->child);
       }
@@ -4139,7 +4139,7 @@ gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button)
 
   hWnd = spin_button->updown;
   if (hWnd) {
-    lres = SendMessage(hWnd, UDM_GETPOS, 0, 0);
+    lres = mySendMessage(hWnd, UDM_GETPOS, 0, 0);
     if (HIWORD(lres) != 0)
       return 0;
     else
@@ -4155,7 +4155,7 @@ void gtk_spin_button_set_value(GtkSpinButton *spin_button, gfloat value)
   spin_button->adj->value = value;
   hWnd = spin_button->updown;
   if (hWnd)
-    SendMessage(hWnd, UDM_SETPOS, 0, (LPARAM)MAKELONG((short)value, 0));
+    mySendMessage(hWnd, UDM_SETPOS, 0, (LPARAM)MAKELONG((short)value, 0));
 }
 
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
@@ -4166,11 +4166,11 @@ void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
   spin_button->adj = adjustment;
   hWnd = spin_button->updown;
   if (hWnd) {
-    SendMessage(hWnd, UDM_SETRANGE, 0,
-                (LPARAM)MAKELONG((short)adjustment->upper,
-                                 (short)adjustment->lower));
-    SendMessage(hWnd, UDM_SETPOS, 0,
-                (LPARAM)MAKELONG((short)adjustment->value, 0));
+    mySendMessage(hWnd, UDM_SETRANGE, 0,
+                  (LPARAM)MAKELONG((short)adjustment->upper,
+                                   (short)adjustment->lower));
+    mySendMessage(hWnd, UDM_SETPOS, 0,
+                  (LPARAM)MAKELONG((short)adjustment->value, 0));
   }
 }
 
@@ -4368,7 +4368,7 @@ void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible)
   entry->is_visible = visible;
   hWnd = GTK_WIDGET(entry)->hWnd;
   if (hWnd)
-    SendMessage(hWnd, EM_SETPASSWORDCHAR, visible ? 0 : (WPARAM)'*', 0);
+    mySendMessage(hWnd, EM_SETPASSWORDCHAR, visible ? 0 : (WPARAM)'*', 0);
 }
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
@@ -4654,14 +4654,14 @@ void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu)
   hWnd = GTK_WIDGET(option_menu)->hWnd;
 
   if (hWnd) {
-    SendMessage(hWnd, CB_RESETCONTENT, 0, 0);
+    mySendMessage(hWnd, CB_RESETCONTENT, 0, 0);
     for (list = GTK_MENU_SHELL(menu)->children; list;
          list = g_slist_next(list)) {
       menu_item = GTK_MENU_ITEM(list->data);
       if (menu_item && menu_item->text)
-        SendMessage(hWnd, CB_ADDSTRING, 0, (LPARAM)menu_item->text);
+        mySendMessage(hWnd, CB_ADDSTRING, 0, (LPARAM)menu_item->text);
     }
-    SendMessage(hWnd, CB_SETCURSEL, (WPARAM)GTK_MENU(menu)->active, 0);
+    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)GTK_MENU(menu)->active, 0);
   }
 }
 
@@ -4750,7 +4750,7 @@ static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
     mii.fMask = MIIM_TYPE;
     mii.fType = MFT_STRING;
     mii.dwTypeData = (LPTSTR)menuitem->text;
-    mii.cch = strlen(menuitem->text);
+    mii.cch = myw32strlen(menuitem->text);
     mySetMenuItemInfo(parent_menu, menuitem->ID, FALSE, &mii);
   }
 }
@@ -4802,7 +4802,7 @@ void gtk_option_menu_update_selection(GtkWidget *widget)
 
   if (widget->hWnd == NULL)
     return;
-  lres = SendMessage(widget->hWnd, CB_GETCURSEL, 0, 0);
+  lres = mySendMessage(widget->hWnd, CB_GETCURSEL, 0, 0);
   if (lres == CB_ERR)
     return;
 
@@ -4917,8 +4917,8 @@ void gtk_progress_bar_update(GtkProgressBar *pbar, gfloat percentage)
   widget = GTK_WIDGET(pbar);
   pbar->position = percentage;
   if (GTK_WIDGET_REALIZED(widget)) {
-    SendMessage(widget->hWnd, PBM_SETPOS,
-                (WPARAM)(10000.0 * pbar->position), 0);
+    mySendMessage(widget->hWnd, PBM_SETPOS,
+                  (WPARAM)(10000.0 * pbar->position), 0);
   }
 }
 
@@ -4947,8 +4947,9 @@ void gtk_progress_bar_realize(GtkWidget *widget)
                                   widget->allocation.height, Parent, NULL,
                                   hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  SendMessage(widget->hWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 10000));
-  SendMessage(widget->hWnd, PBM_SETPOS, (WPARAM)(10000.0 * prog->position), 0);
+  mySendMessage(widget->hWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 10000));
+  mySendMessage(widget->hWnd, PBM_SETPOS, (WPARAM)(10000.0 * prog->position),
+                0);
 }
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
@@ -4968,8 +4969,8 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   default:
   }
 
-  retval = MessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
-                      Text, Title, Options);
+  retval = myMessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
+                        Text, Title, Options);
   RecurseLevel--;
 
   return retval;

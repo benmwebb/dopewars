@@ -75,7 +75,8 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
                            LPARAM lParam, gboolean *dodef)
 {
   LPDRAWITEMSTRUCT lpdis;
-  HD_NOTIFY FAR *phdr;
+  HD_NOTIFYA FAR *phdr;
+  HD_NOTIFYW FAR *phdrw;
   NMHDR *nmhdr;
 
   switch(msg) {
@@ -94,14 +95,29 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     break;
   case WM_NOTIFY:
     nmhdr = (NMHDR *)lParam;
-    phdr = (HD_NOTIFY FAR *)lParam;
-    if (nmhdr && nmhdr->code == HDN_ENDTRACK) {
-      gtk_clist_set_column_width_full(GTK_CLIST(widget), phdr->iItem,
-                                      phdr->pitem->cxy, FALSE);
-      return FALSE;
-    } else if (nmhdr && nmhdr->code == HDN_ITEMCLICK) {
-      gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdr->iItem);
-      return FALSE;
+    if (nmhdr) {
+      switch(nmhdr->code) {
+      case HDN_ENDTRACKA:
+        phdr = (HD_NOTIFYA FAR *)lParam;
+        gtk_clist_set_column_width_full(GTK_CLIST(widget), phdr->iItem,
+                                        phdr->pitem->cxy, FALSE);
+        return FALSE;
+      case HDN_ENDTRACKW:
+        phdrw = (HD_NOTIFYW FAR *)lParam;
+        gtk_clist_set_column_width_full(GTK_CLIST(widget), phdrw->iItem,
+                                        phdrw->pitem->cxy, FALSE);
+        return FALSE;
+      case HDN_ITEMCLICKA:
+        phdr = (HD_NOTIFYA FAR *)lParam;
+        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdr->iItem);
+        return FALSE;
+      case HDN_ITEMCLICKW:
+        phdrw = (HD_NOTIFYW FAR *)lParam;
+        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdrw->iItem);
+        return FALSE;
+      default:
+        break;
+      }
     }
     break;
   }
@@ -180,7 +196,7 @@ void gtk_clist_realize(GtkWidget *widget)
   gtk_set_default_font(header);
   hdl.prc = &rcParent;
   hdl.pwpos = &wp;
-  SendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
+  mySendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
   clist->header_size = wp.cy;
   widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
                                   WS_CHILD | WS_TABSTOP | WS_VSCROLL
@@ -193,7 +209,7 @@ void gtk_clist_realize(GtkWidget *widget)
   for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
     row = (GtkCListRow *)rows->data;
     if (row) {
-      SendMessage(widget->hWnd, LB_ADDSTRING, 0, 1);
+      mySendMessage(widget->hWnd, LB_ADDSTRING, 0, 1);
     }
   }
 
@@ -305,7 +321,7 @@ static void gtk_clist_set_extent(GtkCList *clist)
     for (i = 0; i < clist->cols; i++) {
       width += clist->coldata[i].width;
     }
-    SendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
+    mySendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
   }
 }
 
@@ -392,7 +408,7 @@ gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[])
 
   if (GTK_WIDGET_REALIZED(widget)) {
     hWnd = widget->hWnd;
-    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, 1);
+    mySendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, 1);
   }
 
   return row;
@@ -440,7 +456,7 @@ void gtk_clist_remove(GtkCList *clist, gint row)
     if (GTK_WIDGET_REALIZED(GTK_WIDGET(clist))) {
       HWND hWnd = GTK_WIDGET(clist)->hWnd;
 
-      SendMessage(hWnd, LB_DELETESTRING, (WPARAM)row, 0);
+      mySendMessage(hWnd, LB_DELETESTRING, (WPARAM)row, 0);
     }
   }
 }
@@ -543,11 +559,11 @@ void gtk_clist_set_column_width_full(GtkCList *clist, gint column,
       if (column == clist->cols - 1)
         width = 9000;
       hdi.cxy = width;
-      if (SendMessage(header, HDM_GETITEM, (WPARAM)column, (LPARAM)&hdi) &&
-          hdi.cxy != width) {
+      if (mySendMessage(header, HDM_GETITEM, (WPARAM)column, (LPARAM)&hdi)
+          && hdi.cxy != width) {
         hdi.mask = HDI_WIDTH;
         hdi.cxy = width;
-        SendMessage(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
+        mySendMessage(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
       }
     }
     gtk_clist_set_extent(clist);
@@ -598,14 +614,14 @@ void gtk_clist_sort(GtkCList *clist)
           rowind = GPOINTER_TO_INT(sel->data);
         else
           rowind = -1;
-        SendMessage(hWnd, LB_SETCURSEL, (WPARAM)rowind, 0);
+        mySendMessage(hWnd, LB_SETCURSEL, (WPARAM)rowind, 0);
       } else {
         for (rowind = 0; rowind < clist->rows; rowind++) {
-          SendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)rowind);
+          mySendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)rowind);
         }
         for (sel = clist->selection; sel; sel = g_list_next(sel)) {
           rowind = GPOINTER_TO_INT(sel->data);
-          SendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)rowind);
+          mySendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)rowind);
         }
       }
       InvalidateRect(hWnd, NULL, FALSE);
@@ -643,7 +659,7 @@ void gtk_clist_clear(GtkCList *clist)
   gtk_clist_update_all_widths(clist);
   hWnd = GTK_WIDGET(clist)->hWnd;
   if (hWnd) {
-    SendMessage(hWnd, LB_RESETCONTENT, 0, 0);
+    mySendMessage(hWnd, LB_RESETCONTENT, 0, 0);
   }
 }
 
@@ -686,9 +702,9 @@ void gtk_clist_select_row(GtkCList *clist, gint row, gint column)
   hWnd = GTK_WIDGET(clist)->hWnd;
   if (hWnd) {
     if (clist->mode == GTK_SELECTION_SINGLE) {
-      SendMessage(hWnd, LB_SETCURSEL, (WPARAM)row, 0);
+      mySendMessage(hWnd, LB_SETCURSEL, (WPARAM)row, 0);
     } else {
-      SendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)row);
+      mySendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)row);
     }
     gtk_clist_update_selection(GTK_WIDGET(clist));
   }
@@ -701,9 +717,9 @@ void gtk_clist_unselect_row(GtkCList *clist, gint row, gint column)
   hWnd = GTK_WIDGET(clist)->hWnd;
   if (hWnd) {
     if (clist->mode == GTK_SELECTION_SINGLE) {
-      SendMessage(hWnd, LB_SETCURSEL, (WPARAM)(-1), 0);
+      mySendMessage(hWnd, LB_SETCURSEL, (WPARAM)(-1), 0);
     } else {
-      SendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)row);
+      mySendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)row);
     }
     gtk_clist_update_selection(GTK_WIDGET(clist));
   }
@@ -744,7 +760,7 @@ void gtk_clist_update_selection(GtkWidget *widget)
   clist->selection = NULL;
   if (widget->hWnd) {
     for (i = 0; i < clist->rows; i++) {
-      if (SendMessage(widget->hWnd, LB_GETSEL, (WPARAM)i, 0) > 0) {
+      if (mySendMessage(widget->hWnd, LB_GETSEL, (WPARAM)i, 0) > 0) {
         clist->selection = g_list_append(clist->selection, GINT_TO_POINTER(i));
       }
     }

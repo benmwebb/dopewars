@@ -253,8 +253,7 @@ static BOOL makeHeaderItemW(HD_ITEMW *phdiw, const HD_ITEM *phdi)
 {
   BOOL strdata;
 
-//strdata = phdi->mask & HDI_TEXT;
-  strdata = FALSE;
+  strdata = phdi->mask & HDI_TEXT;
 
   phdiw->mask = phdi->mask;
   phdiw->cxy = phdi->cxy;
@@ -267,6 +266,20 @@ static BOOL makeHeaderItemW(HD_ITEMW *phdiw, const HD_ITEM *phdi)
   return strdata;
 }
 
+static BOOL makeTabItemW(TC_ITEMW *tiew, const TC_ITEM *tie)
+{
+  BOOL strdata;
+
+  strdata = tie->mask & TCIF_TEXT;
+  tiew->mask = tie->mask;
+  tiew->pszText = strdata ? strtow32(tie->pszText, -1)
+                          : (LPWSTR)tie->pszText;
+  tiew->cchTextMax = tie->cchTextMax;
+  tiew->iImage = tie->iImage;
+  tiew->lParam = tie->lParam;
+  return strdata;
+}
+
 int myHeader_InsertItem(HWND hWnd, int index, const HD_ITEM *phdi)
 {
   int retval;
@@ -275,14 +288,33 @@ int myHeader_InsertItem(HWND hWnd, int index, const HD_ITEM *phdi)
     BOOL strdata;
 
     strdata = makeHeaderItemW(&hdiw, phdi);
-    retval = (int)SendMessage(hWnd, HDM_INSERTITEM, (WPARAM)index,
-                              (LPARAM)&hdiw);
+    retval = (int)SendMessageW(hWnd, HDM_INSERTITEMW, (WPARAM)index,
+                               (LPARAM)&hdiw);
     if (strdata) {
       g_free(hdiw.pszText);
     }
   } else {
-    retval = (int)SendMessage(hWnd, HDM_INSERTITEM, (WPARAM)index,
-                              (LPARAM)phdi);
+    retval = (int)SendMessageA(hWnd, HDM_INSERTITEM, (WPARAM)index,
+                               (LPARAM)phdi);
+  }
+  return retval;
+}
+
+int myTabCtrl_InsertItem(HWND hWnd, int index, const TC_ITEM *pitem)
+{
+  int retval;
+  if (unicode_support) {
+    TC_ITEMW tiew;
+    BOOL strdata;
+    strdata = makeTabItemW(&tiew, pitem);
+    retval = (int)SendMessageW(hWnd, TCM_INSERTITEMW, (WPARAM)index,
+                               (LPARAM)&tiew);
+    if (strdata) {
+      g_free(tiew.pszText);
+    }
+  } else {
+    retval = (int)SendMessageA(hWnd, TCM_INSERTITEMW, (WPARAM)index,
+                               (LPARAM)pitem);
   }
   return retval;
 }
@@ -291,7 +323,7 @@ ATOM myRegisterClass(CONST WNDCLASS *lpWndClass)
 {
   ATOM retval;
 
-  if (0 && unicode_support) {
+  if (unicode_support) {
     WNDCLASSW wcw;
 
     wcw.style = lpWndClass->style;
@@ -327,6 +359,118 @@ HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
     retval = CreateDialogA(hInstance, lpTemplate, hWndParent, lpDialogFunc);
   }
   return retval;
+}
+
+LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+  if (unicode_support) {
+    return SendMessageW(hWnd, Msg, wParam, lParam);
+  } else {
+    return SendMessageA(hWnd, Msg, wParam, lParam);
+  }
+}
+
+void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam)
+{
+  if (unicode_support) {
+    gunichar2 *text;
+    text = strtow32(lParam, -1);
+    SendMessageW(hWnd, EM_REPLACESEL, (WPARAM)fCanUndo, (LPARAM)text);
+    g_free(text);
+  } else {
+    SendMessageA(hWnd, EM_REPLACESEL, (WPARAM)fCanUndo, (LPARAM)lParam);
+  }
+}
+
+LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong)
+{
+  if (unicode_support) {
+    return SetWindowLongW(hWnd, nIndex, dwNewLong);
+  } else {
+    return SetWindowLongA(hWnd, nIndex, dwNewLong);
+  }
+}
+
+LONG myGetWindowLong(HWND hWnd, int nIndex)
+{
+  if (unicode_support) {
+    return GetWindowLongW(hWnd, nIndex);
+  } else {
+    return GetWindowLongA(hWnd, nIndex);
+  }
+}
+
+LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
+                         WPARAM wParam, LPARAM lParam)
+{
+  if (unicode_support) {
+    return CallWindowProcW(lpPrevWndProc, hWnd, Msg, wParam, lParam);
+  } else {
+    return CallWindowProcA(lpPrevWndProc, hWnd, Msg, wParam, lParam);
+  }
+}
+
+LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
+{
+  if (unicode_support) {
+    return DefWindowProcW(hWnd, Msg, wParam, lParam);
+  } else {
+    return DefWindowProcA(hWnd, Msg, wParam, lParam);
+  }
+}
+
+int myMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
+{
+  int retval;
+
+  if (unicode_support) {
+    gunichar2 *text, *caption;
+    text = strtow32(lpText, -1);
+    caption = strtow32(lpCaption, -1);
+    retval = MessageBoxW(hWnd, text, caption, uType);
+    g_free(text);
+    g_free(caption);
+  } else {
+    retval = MessageBoxA(hWnd, lpText, lpCaption, uType);
+  }
+  return retval;
+}
+
+BOOL myGetMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin,
+                  UINT wMsgFilterMax)
+{
+  if (unicode_support) {
+    return GetMessageW(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
+  } else {
+    return GetMessageA(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
+  }
+}
+
+LONG myDispatchMessage(CONST MSG *lpmsg)
+{
+  if (unicode_support) {
+    return DispatchMessageW(lpmsg);
+  } else {
+    return DispatchMessageA(lpmsg);
+  }
+}
+
+BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg)
+{
+  if (unicode_support) {
+    return IsDialogMessageW(hDlg, lpMsg);
+  } else {
+    return IsDialogMessageA(hDlg, lpMsg);
+  }
+}
+
+size_t myw32strlen(const char *str)
+{
+  if (unicode_support) {
+    return g_utf8_strlen(str, -1);
+  } else {
+    return strlen(str);
+  }
 }
 
 #endif /* CYGWIN */
