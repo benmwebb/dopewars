@@ -8,3 +8,8 @@ install-data-local:
 	for doc in ${DOCS}; do \
 	  ${INSTALL} -m 0644 ${srcdir}/$${doc} ${DOCPATH}; \
 	done
+
+uninstall-local:
+	for doc in ${DOCS}; do \
+	  /bin/rm -f ${DOCPATH}/$${doc}; \
+	done

@@ -52,5 +52,10 @@ install-data-local:
 	  ${INSTALL} -m 0644 ${srcdir}/$${pix} ${PIXDIR}; \
 	done
 
+uninstall-local:
+	for pix in ${PIXMAPS}; do \
+	  /bin/rm -f ${PIXDIR}/$${pix}; \
+	done
+
 %.res: %.rc
 	windres -O coff -o $@ $<

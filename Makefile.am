@@ -23,3 +23,6 @@ install-data-local:
 	chmod 0660 ${SCORE}
 	${mkinstalldirs} ${DESKTOPDIR}
 	${INSTALL} -m 0644 ${srcdir}/${DESKTOP} ${DESKTOPDIR}
+
+uninstall-local:
+	/bin/rm -f ${SCORE} ${DESKTOPDIR}/${DESKTOP}
