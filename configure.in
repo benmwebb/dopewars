@@ -85,7 +85,10 @@ else
    AC_MSG_RESULT("Configuring for Unix binary")
 
    dnl We NEED glib - so test for it first
-   AM_PATH_GLIB(1.2.0,,[AC_MSG_ERROR(Cannot find glib - aborting)])
+   AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes", glib2_found="no")
+   if test "$glib2_found" = "no" ; then
+     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
+   fi
 
    dnl On true Unix systems, test for valid curses-like libraries
    if test "$CURSES_CLIENT" != "no" ; then
@@ -108,36 +111,37 @@ else
 
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
       dnl Tests for GTK
-      AM_PATH_GTK(1.2.0,gtk_found="yes",gtk_found="no")
-      if test "$gtk_found" = "no" ; then
-         if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-           AC_MSG_ERROR(Cannot find GTK+)
-         else
-           AC_MSG_WARN(Cannot find GTK+)
-           GUI_CLIENT="no"
-           GUI_SERVER="no"
-         fi
+      AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+      if test "$gtk2_found" = "yes" ; then
+        HAVE_FIXED_GTK="yes"
       else
-         AC_MSG_CHECKING([for non-buggy GTK+ ( >= 1.2.10 )])
-         dnl Versions older than 1.2.10 are buggy
-         if test "$gtk_config_major_version" -gt 1 ; then
-            HAVE_FIXED_GTK="yes"
-         elif test "$gtk_config_major_version" -eq 1 ; then
-            if test "$gtk_config_minor_version" -gt 2 ; then
-               dnl We assume all 1.3.x releases are OK
-               HAVE_FIXED_GTK="yes"
-            elif test "$gtk_config_minor_version" -eq 2 -a \
-                      "$gtk_config_micro_version" -ge 10 ; then
-               HAVE_FIXED_GTK="yes"
-            fi
-         fi
-         AC_MSG_RESULT("$HAVE_FIXED_GTK")
-      fi
+        AM_PATH_GTK(1.2.0,gtk_found="yes",gtk_found="no")
+        if test "$gtk_found" = "no" ; then
+           if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+             AC_MSG_ERROR(Cannot find GTK+)
+           else
+             AC_MSG_WARN(Cannot find GTK+)
+             GUI_CLIENT="no"
+             GUI_SERVER="no"
+           fi
+        else
+           AC_MSG_CHECKING([for non-buggy GTK+ ( >= 1.2.10 )])
+           dnl Versions older than 1.2.10 are buggy
+           if test "$gtk_config_major_version" -gt 1 ; then
+              HAVE_FIXED_GTK="yes"
+           elif test "$gtk_config_major_version" -eq 1 ; then
+              if test "$gtk_config_minor_version" -gt 2 ; then
+                 dnl We assume all 1.3.x releases are OK
+                 HAVE_FIXED_GTK="yes"
+              elif test "$gtk_config_minor_version" -eq 2 -a \
+                        "$gtk_config_micro_version" -ge 10 ; then
+                 HAVE_FIXED_GTK="yes"
+              fi
+           fi
+           AC_MSG_RESULT("$HAVE_FIXED_GTK")
+        fi
+     fi
    fi
-
-   dnl Glib stuff
-   CFLAGS="$CFLAGS `glib-config --cflags`"
-   LDFLAGS="$LDFLAGS `glib-config --libs`"
 
    dnl Use console server by default
    if test "$GUI_SERVER" = "probe"; then

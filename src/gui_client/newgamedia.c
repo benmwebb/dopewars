@@ -441,7 +441,7 @@ void NewGameDialog(Player *play)
 #endif /* NETWORKING */
 
   stgam.play = play;
-  stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
                      GTK_SIGNAL_FUNC(CloseNewGameDia), NULL);
 
@@ -470,7 +470,7 @@ void NewGameDialog(Player *play)
 
   entry = stgam.name = gtk_entry_new();
   gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey, 0,
-                             GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+                             GTK_ACCEL_VISIBLE);
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(stgam.play));
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
@@ -661,7 +661,7 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
 
-  window = gtk_window_new(GTK_WINDOW_DIALOG);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(DestroyAuthDialog), NULL);
   gtk_object_set_data(GTK_OBJECT(window), "proxy", GINT_TO_POINTER(proxy));
@@ -777,7 +777,7 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
 
-  window = gtk_window_new(GTK_WINDOW_DIALOG);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(DestroySocksAuth), NULL);
   gtk_object_set_data(GTK_OBJECT(window), "netbuf", (gpointer)netbuf);

@@ -24,6 +24,8 @@
 #include <config.h>
 #endif
 
+#define GTK_ENABLE_BROKEN
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -249,7 +251,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
 
   if (IsShowingInventory)
     return;
-  window = gtk_window_new(GTK_WINDOW_DIALOG);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), 550, 120);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
@@ -542,7 +544,7 @@ void PrepareHighScoreDialog(void)
   if (HiScoreDialog.dialog)
     return;
 
-  HiScoreDialog.dialog = dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  HiScoreDialog.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of the GTK+ high score dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("High Scores"));
@@ -820,7 +822,7 @@ static void CreateFightDialog(void)
   GArray *combatants;
   gchar *buf;
 
-  FightDialog = dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  FightDialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 300);
   gtk_signal_connect(GTK_OBJECT(dialog), "delete_event",
                      GTK_SIGNAL_FUNC(DisallowDelete), NULL);
@@ -1354,7 +1356,7 @@ void Jet(GtkWidget *parent)
 
   accel_group = gtk_accel_group_new();
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   /* Title of 'Jet' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Jet to location"));
 
@@ -1407,8 +1409,7 @@ void Jet(GtkWidget *parent)
       if (i < 9) {
         gtk_widget_add_accelerator(button, "clicked", accel_group,
                                    GDK_KP_1 + i, 0,
-                                   GTK_ACCEL_VISIBLE |
-                                   GTK_ACCEL_SIGNAL_VISIBLE);
+                                   GTK_ACCEL_VISIBLE);
       }
       g_free(name);
     }
@@ -1572,7 +1573,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
   text = g_string_new(NULL);
   accel_group = gtk_accel_group_new();
-  dialog = DealDialog.dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = DealDialog.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title(GTK_WINDOW(dialog), Action);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
@@ -1786,7 +1787,7 @@ void QuestionDialog(char *Data, Player *From)
   Responses = split[0];
   LabelText = split[1];
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
   gtk_signal_connect(GTK_OBJECT(dialog), "delete_event",
                      GTK_SIGNAL_FUNC(DisallowDelete), NULL);
@@ -2208,7 +2209,7 @@ void display_intro(GtkWidget *widget, gpointer data)
     {N_("Unconstructive Criticism"), "James Matthews", NULL}
   };
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of GTK+ 'about' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("About dopewars"));
@@ -2362,7 +2363,7 @@ void TransferDialog(gboolean Debt)
 
   text = g_string_new("");
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
                      GTK_SIGNAL_FUNC(SendDoneMessage), NULL);
   if (Debt) {
@@ -2469,7 +2470,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
 
   if (IsShowingPlayerList)
     return;
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of player list dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Player List"));
@@ -2569,7 +2570,7 @@ void TalkDialog(gboolean TalkToAll)
 
   if (IsShowingTalkList)
     return;
-  dialog = TalkData.dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = TalkData.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of talk dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Talk to player(s)"));
@@ -2706,7 +2707,7 @@ void ErrandDialog(gint ErrandType)
   GtkWidget *dialog, *clist, *button, *vbox, *hbbox, *hsep, *label;
   gchar *text;
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -2921,7 +2922,7 @@ void NewNameDialog(void)
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry;
 
-  window = gtk_window_new(GTK_WINDOW_DIALOG);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of dialog for changing a player's name */
   gtk_window_set_title(GTK_WINDOW(window), _("Change Name"));
@@ -2972,7 +2973,7 @@ void GunShopDialog(void)
   GtkAccelGroup *accel_group;
   gchar *text;
 
-  window = gtk_window_new(GTK_WINDOW_DIALOG);
+  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), 600, 190);
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(SendDoneMessage), NULL);
@@ -3043,7 +3044,7 @@ static void CreateSpyReports(void)
   GtkWidget *window, *button, *vbox, *notebook;
   GtkAccelGroup *accel_group;
 
-  SpyReportsDialog = window = gtk_window_new(GTK_WINDOW_DIALOG);
+  SpyReportsDialog = window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
   gtk_object_set_data(GTK_OBJECT(window), "accel_group", accel_group);
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);

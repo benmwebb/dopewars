@@ -25,6 +25,7 @@
 #endif
 
 #ifndef CYGWIN
+#define GTK_ENABLE_BROKEN
 #include <sys/types.h>          /* For pid_t (fork) */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>             /* For fork and execv */
@@ -4981,7 +4982,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
       gtk_label_parse_uline(GTK_LABEL(GTK_BIN(labelparent)->child), Text);
   if (sendto && AccelKey) {
     gtk_widget_add_accelerator(sendto, signal, accel_group, AccelKey, 0,
-                               GTK_ACCEL_VISIBLE | GTK_ACCEL_SIGNAL_VISIBLE);
+                               GTK_ACCEL_VISIBLE);
   }
   return AccelKey;
 }
@@ -5032,7 +5033,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   };
 
   imm_return = Options & MB_IMMRETURN;
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_POPUP);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);

@@ -699,7 +699,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
     { NULL, NULL }
   };
 
-  dialog = gtk_window_new(GTK_WINDOW_DIALOG);
+  dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   gtk_window_set_title(GTK_WINDOW(dialog), _("Options"));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
