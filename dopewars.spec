@@ -39,6 +39,10 @@ make install-strip
 /usr/bin/dopewars
 %config /usr/share/dopewars.sco
 /usr/man/man6/dopewars.6
+/usr/share/gnome/apps/Games/dopewars.desktop
+/usr/share/pixmaps/dopewars-pill.png
+/usr/share/pixmaps/dopewars-weed.png
+/usr/share/pixmaps/dopewars-shot.png
 /usr/share/locale/de/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pl/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
