@@ -41,6 +41,8 @@
 #define MYWM_TASKBAR    (WM_USER+101)
 #define MYWM_SERVICE    (WM_USER+102)
 
+#define GDK_MOD1_MASK 0
+
 extern HICON mainIcon;
 
 typedef enum {
@@ -51,6 +53,21 @@ typedef enum {
   GTK_ACCEL_VISIBLE        = 1 << 0,
   GTK_ACCEL_SIGNAL_VISIBLE = 1 << 1
 } GtkAccelFlags;
+
+typedef enum {
+  GTK_BUTTONBOX_SPREAD,
+  GTK_BUTTONBOX_EDGE,
+  GTK_BUTTONBOX_START,
+  GTK_BUTTONBOX_END
+} GtkButtonBoxStyle;
+
+typedef enum {
+  GTK_STATE_NORMAL,
+  GTK_STATE_ACTIVE,
+  GTK_STATE_PRELIGHT,
+  GTK_STATE_SELECTED,
+  GTK_STATE_INSENSITIVE
+} GtkStateType;
 
 typedef enum {
   GTK_VISIBILITY_NONE,
@@ -128,6 +145,8 @@ typedef void (*GtkSignalMarshaller) (GtkObject *object, GSList *actions,
                                      GtkSignalFunc default_action,
                                      va_list args);
 
+typedef struct _GdkColor GdkColor;
+typedef struct _GtkStyle GtkStyle;
 typedef struct _GtkMenuShell GtkMenuShell;
 typedef struct _GtkMenuBar GtkMenuBar;
 typedef struct _GtkMenuItem GtkMenuItem;
@@ -154,6 +173,18 @@ struct _GtkSignalType {
   gchar *name;
   GtkSignalMarshaller marshaller;
   GtkSignalFunc default_action;
+};
+
+struct _GdkColor {
+  gulong  pixel;
+  gushort red;
+  gushort green;
+  gushort blue;
+};
+
+struct _GtkStyle {
+  GdkColor fg[5];
+  GdkColor bg[5];
 };
 
 typedef gboolean (*GtkWndProc) (GtkWidget *widget, UINT msg,
@@ -591,6 +622,7 @@ void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
 void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
                         gboolean Fill, gint Padding);
+void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child);
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button);
 gboolean gtk_toggle_button_get_active(GtkToggleButton *toggle_button);
 void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,
@@ -673,9 +705,13 @@ void gtk_paned_pack2(GtkPaned *paned, GtkWidget *child, gboolean resize,
 void gtk_paned_set_position(GtkPaned *paned, gint position);
 
 #define gtk_container_border_width gtk_container_set_border_width
-#define gtk_hbutton_box_new() gtk_hbox_new(TRUE, 5)
+GtkWidget *gtk_hbutton_box_new();
+void gtk_hbutton_box_set_spacing_default(gint spacing);
 #define gtk_vbutton_box_new() gtk_vbox_new(TRUE, 5)
-GtkWidget *gtk_option_menu_new();
+#define gtk_hbutton_box_set_layout_default(layout) {}
+#define gtk_vbutton_box_set_spacing_default(spacing) {}
+#define gtk_vbutton_box_set_layout_default(layout) {}
+GtkWidget *gtk_option_menu_new(void);
 GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu);
 void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu);
 void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index);
@@ -703,6 +739,8 @@ BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
 void gtk_container_realize(GtkWidget *widget);
 void gtk_set_default_font(HWND hWnd);
 HWND gtk_get_parent_hwnd(GtkWidget *widget);
+GtkStyle *gtk_style_new(void);
+void gtk_widget_set_style(GtkWidget *widget, GtkStyle *style);
 
 /* Functions for handling emitted signals */
 void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
@@ -759,7 +797,16 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 /* Other flags */
 #define MB_IMMRETURN 16
 
-#ifndef HAVE_GLIB2
+typedef struct _GtkUrl GtkUrl;
+
+struct _GtkUrl {
+  GtkLabel *label;
+  gchar *target, *bin;
+};
+
+#endif /* CYGWIN */
+
+#if CYGWIN || !HAVE_GLIB2
 #define GTK_STOCK_OK      _("OK")
 #define GTK_STOCK_CLOSE   _("Close")
 #define GTK_STOCK_CANCEL  _("Cancel")
@@ -777,15 +824,6 @@ typedef enum
   GTK_MESSAGE_ERROR
 } GtkMessageType;
 #endif
-
-typedef struct _GtkUrl GtkUrl;
-
-struct _GtkUrl {
-  GtkLabel *label;
-  gchar *target, *bin;
-};
-
-#endif /* CYGWIN */
 
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,

@@ -20,6 +20,7 @@ endif
 
 SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR)
 dopewars_LDADD = $(GUILIB) $(CURSESLIB) $(GTKPORTLIB) $(CURSESPORTLIB) @GTK_LIBS@ @INTLLIBS@ @WNDRES@
+dopewars_DEPENDENCIES = @WNDRES@
 
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \

@@ -1609,12 +1609,16 @@ void gtk_window_set_size(GtkWidget *widget, GtkAllocation *allocation)
 void gtk_button_size_request(GtkWidget *widget,
                              GtkRequisition *requisition)
 {
-  SIZE size;
+  SIZE size, minsize;
   GtkButton *but = GTK_BUTTON(widget);
 
   gtk_container_size_request(widget, requisition);
 
-  if (GetTextSize(widget->hWnd, but->text, &size, defFont)) {
+  /* Without minsize, an unexpanded "OK" button looks silly... */
+  if (GetTextSize(widget->hWnd, but->text, &size, defFont)
+      && GetTextSize(widget->hWnd, "Cancel", &minsize, defFont)) {
+    size.cx = MAX(size.cx, minsize.cx);
+    size.cy = MAX(size.cy, minsize.cy);
     requisition->width = size.cx + 15;
     requisition->height = size.cy + 10;
   }
@@ -1999,6 +2003,11 @@ void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
   }
 }
 
+void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
+{
+  gtk_box_pack_start(box, child, FALSE, FALSE, 0);
+}
+
 void gtk_button_destroy(GtkWidget *widget)
 {
   g_free(GTK_BUTTON(widget)->text);
@@ -2295,16 +2304,16 @@ void gtk_window_realize(GtkWidget *widget)
     resize = WS_SIZEBOX;
 
   Parent = gtk_get_parent_hwnd(widget->parent);
-  if (win->type == GTK_WINDOW_TOPLEVEL) {
+  if (Parent) {
+    widget->hWnd = CreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
+    SetWindowText(widget->hWnd, win->title);
+  } else {
     widget->hWnd = CreateWindow("mainwin", win->title,
                                 WS_OVERLAPPEDWINDOW | CS_HREDRAW |
                                 CS_VREDRAW | resize, CW_USEDEFAULT, 0, 0,
                                 0, Parent, NULL, hInst, NULL);
     if (!TopLevel)
       TopLevel = widget->hWnd;
-  } else {
-    widget->hWnd = CreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
-    SetWindowText(widget->hWnd, win->title);
   }
   WindowList = g_slist_append(WindowList, (gpointer)win);
   gtk_set_default_font(widget->hWnd);
@@ -4978,6 +4987,39 @@ void gtk_timeout_remove(guint timeout_handler_id)
       break;
     }
   }
+}
+
+GtkWidget *gtk_button_new_from_stock(const gchar *label)
+{
+  return gtk_button_new_with_label(label);
+}
+
+/* We don't really handle styles, so these are just placeholder functions */
+static GtkStyle statstyle;
+GtkStyle *gtk_style_new(void)
+{
+  return &statstyle;
+}
+
+void gtk_widget_set_style(GtkWidget *widget, GtkStyle *style)
+{
+}
+
+static gint hbbox_spacing = 0;
+
+GtkWidget *gtk_hbutton_box_new()
+{
+  GtkWidget *hbbox, *spacer;
+
+  hbbox = gtk_hbox_new(TRUE, hbbox_spacing);
+  spacer = gtk_label_new("");
+  gtk_box_pack_start(GTK_BOX(hbbox), spacer, TRUE, TRUE, 0);
+  return hbbox;
+}
+
+void gtk_hbutton_box_set_spacing_default(gint spacing)
+{
+  hbbox_spacing = spacing;
 }
 
 #else /* CYGWIN */
