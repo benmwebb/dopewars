@@ -1,4 +1,4 @@
-cvs
+1.5.1   16-10-2001
     - Slightly easier-to-use "run from fight" Jet dialog (avoids the crazy
       "windows pop up faster than you can close them" syndrome)
     - Support for HTTP proxies and authentication
