@@ -635,6 +635,7 @@ static void CreateFightDialog() {
 void DisplayFightMessage(char *Data) {
    Player *Play;
    gint EditPos;
+   GtkAccelGroup *accel_group;
    GtkWidget *Deal,*Fight,*Stand,*Run,*Text;
    char cr[] = "\n";
    gchar *AttackName,*DefendName,FightPoint,*Message;
@@ -652,7 +653,7 @@ void DisplayFightMessage(char *Data) {
    } else {
       CreateFightDialog();
    }
-   if (!FightDialog) return;
+   if (!FightDialog || !Data[0]) return;
 
    Deal=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"deal"));
    Fight=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"fight"));
@@ -666,6 +667,14 @@ void DisplayFightMessage(char *Data) {
       ReceiveFightMessage(Data,&AttackName,&DefendName,&DefendHealth,
                           &DefendBitches,&BitchesKilled,&ArmPercent,
                           &FightPoint,&CanRunHere,&Loot,&CanFire,&Message);
+      if (FightPoint==F_LASTLEAVE) {
+         Play->Flags&= ~FIGHTING;
+      } else {
+         Play->Flags|=FIGHTING;
+      }
+      accel_group=(GtkAccelGroup *)
+             gtk_object_get_data(GTK_OBJECT(ClientData.window),"accel_group");
+      SetJetButtonTitle(accel_group);
    } else {
       Message=Data;
       if (Play->Flags&FIGHTING) FightPoint=F_MSG; else FightPoint=F_LASTLEAVE;

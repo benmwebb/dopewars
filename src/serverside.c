@@ -1226,29 +1226,30 @@ void AttackPlayer(Player *Play,Player *Attacked) {
 
    if (Play->FightArray) {
       FightArray=Play->FightArray;
-      AddPlayerToFight(Attacked,FightArray,Play);
+      AddPlayerToFight(Attacked,FightArray,Play,TRUE);
    } else if (Attacked->FightArray) {
       FightArray=Attacked->FightArray;
-      AddPlayerToFight(Play,FightArray,Attacked);
+      AddPlayerToFight(Play,FightArray,Attacked,TRUE);
    } else {
       FightArray=g_ptr_array_new();
-      AddPlayerToFight(Attacked,FightArray,Play);
-      AddPlayerToFight(Play,FightArray,Attacked);
+      AddPlayerToFight(Attacked,FightArray,Play,TRUE);
+      AddPlayerToFight(Play,FightArray,Attacked,FALSE);
    }
    
    Fire(Play);
 }
 
-void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other) {
+void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other,
+                      gboolean Inform) {
 /* Adds the player "NewPlay" to the fight "Fight", and informs any      */
-/* players already in the fight of the new player's arrival. "Other" is */
-/* a player already in the fight                                        */
+/* players already in the fight of the new player's arrival, if         */
+/* "Inform" is TRUE. "Other" is a player already in the fight.          */
    NewPlay->FightArray=Fight;
    NewPlay->ResyncNum=NewPlay->EventNum;
    NewPlay->EventNum=E_FIGHT;
 
    g_ptr_array_add(Fight,NewPlay);
-   SendFightMessage(NewPlay,Other,0,F_ARRIVED,FALSE,TRUE,NULL);
+   if (Inform) SendFightMessage(NewPlay,Other,0,F_ARRIVED,FALSE,TRUE,NULL);
 }
 
 gboolean IsOpponent(Player *Play,Player *Other) {

@@ -121,7 +121,7 @@ void CheckForResize(Player *Play) {
       Width=COLS; Depth=LINES;
       attrset(TextAttr); clear_screen();
       display_message("");
-      DisplayFightMessage(Play,NULL);
+      DisplayFightMessage(Play,"");
       print_status(Play,1);
    }
    sigprocmask(SIG_UNBLOCK,&sigset,NULL);
