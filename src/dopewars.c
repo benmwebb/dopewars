@@ -1234,19 +1234,32 @@ void CopyDrugs(struct DRUGS *dest,struct DRUGS *src) {
 }
 
 void ReadConfigFile(char *FileName) {
+/* Read a configuration file given by "FileName"; GScanner under Win32 */
+/* doesn't work properly with files, so we use a nasty workaround      */
    FILE *fp;
+#ifdef CYGWIN
+   char *buf;
+#endif
    GScanner *scanner;
    fp=fopen(FileName,"r");
    if (fp) {
       scanner=g_scanner_new(&ScannerConfig);
       scanner->input_name=FileName;
+#ifdef CYGWIN
+      read_string(fp,&buf); if (!buf) { fclose(fp); return; }
+      g_scanner_input_text(scanner,buf,strlen(buf));
+#else
       g_scanner_input_file(scanner,fileno(fp));
+#endif
       while (!g_scanner_eof(scanner)) if (!ParseNextConfig(scanner)) {
          g_scanner_error(scanner,
                          _("Unable to process configuration file line"));
       }
       g_scanner_destroy(scanner);
       fclose(fp);
+#ifdef CYGWIN
+      g_free(buf);
+#endif
    }
 }
 
