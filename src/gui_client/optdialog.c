@@ -712,7 +712,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   notebook = gtk_notebook_new();
 
-  table = gtk_table_new(5, 4, FALSE);
+  table = gtk_table_new(7, 3, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
@@ -750,6 +750,18 @@ void OptDialog(GtkWidget *widget, gpointer data)
   check = NewConfigCheck("Currency.Prefix", _("Symbol prefixes prices"));
   gtk_table_attach_defaults(GTK_TABLE(table), check, 2, 3, 4, 5);
 
+  label = gtk_label_new(_("Name of one bitch"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("Names.Bitch");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 5, 6);
+
+  label = gtk_label_new(_("Name of several bitches"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 6, 7,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("Names.Bitches");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 6, 7);
+
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("General"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
@@ -774,6 +786,54 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_container_set_border_width(GTK_CONTAINER(hbox), 7);
   label = gtk_label_new(_("Cops"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
+
+  table = gtk_table_new(5, 4, FALSE);
+  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+
+  check = NewConfigCheck("MetaServer.Active",
+                         _("Server reports to metaserver"));
+  gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 4, 0, 1);
+
+  label = gtk_label_new(_("Metaserver hostname"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.Name");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
+
+  label = gtk_label_new(_("Port"));
+  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 1, 2,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.Port");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 1, 2);
+
+  label = gtk_label_new(_("Web proxy hostname"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.ProxyName");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
+
+  label = gtk_label_new(_("Port"));
+  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 2, 3,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.ProxyPort");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 2, 3);
+
+  label = gtk_label_new(_("Script path"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.Path");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 3, 4);
+
+  label = gtk_label_new(_("Comment"));
+  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
+                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  entry = NewConfigEntry("MetaServer.Comment");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 4, 5);
+
+  gtk_container_set_border_width(GTK_CONTAINER(table), 7);
+  label = gtk_label_new(_("Metaserver"));
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 
   gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
 
