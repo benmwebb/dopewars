@@ -190,6 +190,13 @@ static gchar *GetWindowsLocale(void)
   case LANG_POLISH:
     strcat(langenv, "pl");
     break;
+  case LANG_NORWEGIAN:
+    if (sublang == SUBLANG_NORWEGIAN_NYNORSK) {
+      strcat(langenv, "nn");
+    } else {
+      strcat(langenv, "no");
+    }
+    break;
   case LANG_PORTUGUESE:
     strcat(langenv, "pt");
     if (sublang == SUBLANG_PORTUGUESE_BRAZILIAN)
