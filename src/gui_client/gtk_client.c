@@ -104,7 +104,7 @@ static void HandleClientMessage(char *buf, Player *Play);
 static void PrepareHighScoreDialog(void);
 static void AddScoreToDialog(char *Data);
 static void CompleteHighScoreDialog(gboolean AtEnd);
-static void PrintMessage(char *Data);
+static void PrintMessage(char *Data, char *tagname);
 static void DisplayFightMessage(char *Data);
 static GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status);
 static void DisplayStats(Player *Play, struct StatusWidgets *Status);
@@ -418,7 +418,7 @@ void HandleClientMessage(char *pt, Player *Play)
     CompleteHighScoreDialog((strcmp(Data, "end") == 0));
     break;
   case C_PRINTMESSAGE:
-    PrintMessage(Data);
+    PrintMessage(Data, NULL);
     break;
   case C_FIGHTPRINT:
     DisplayFightMessage(Data);
@@ -454,18 +454,18 @@ void HandleClientMessage(char *pt, Player *Play)
     break;
   case C_MSG:
     text = g_strdup_printf("%s: %s", GetPlayerName(From), Data);
-    PrintMessage(text);
+    PrintMessage(text, "talk");
     g_free(text);
     break;
   case C_MSGTO:
     text = g_strdup_printf("%s->%s: %s", GetPlayerName(From),
                            GetPlayerName(Play), Data);
-    PrintMessage(text);
+    PrintMessage(text, "page");
     g_free(text);
     break;
   case C_JOIN:
     text = g_strdup_printf(_("%s joins the game!"), Data);
-    PrintMessage(text);
+    PrintMessage(text, "join");
     g_free(text);
     UpdatePlayerLists();
     UpdateMenus();
@@ -473,7 +473,7 @@ void HandleClientMessage(char *pt, Player *Play)
   case C_LEAVE:
     if (From != &Noone) {
       text = g_strdup_printf(_("%s has left the game."), Data);
-      PrintMessage(text);
+      PrintMessage(text, "leave");
       g_free(text);
       UpdatePlayerLists();
       UpdateMenus();
@@ -491,7 +491,7 @@ void HandleClientMessage(char *pt, Player *Play)
     /* Message displayed when the player "jets" to a new location */
     text = dpg_strdup_printf(_("Jetting to %tde"),
                              Location[(int)Play->IsAt].Name);
-    PrintMessage(text);
+    PrintMessage(text, "jet");
     g_free(text);
     break;
   case C_ENDLIST:
@@ -753,25 +753,26 @@ void CompleteHighScoreDialog(gboolean AtEnd)
  * This area is used for displaying drug busts, messages from other
  * players, etc. The message is passed in as the string "text".
  */
-void PrintMessage(char *text)
+void PrintMessage(char *text, char *tagname)
 {
   gint EditPos;
-  char *cr = "\n";
-  GtkEditable *messages;
+  GtkTextView *messages;
+  GtkTextBuffer *buffer;
+  GtkTextIter iter;
+  GtkTextMark *insert;
 
-  messages = GTK_EDITABLE(ClientData.messages);
+  messages = GTK_TEXT_VIEW(ClientData.messages);
+  buffer = gtk_text_view_get_buffer(messages);
 
-  gtk_text_freeze(GTK_TEXT(messages));
   g_strdelimit(text, "^", '\n');
-  EditPos = gtk_text_get_length(GTK_TEXT(ClientData.messages));
-  while (*text == '\n')
-    text++;
-  gtk_editable_insert_text(messages, text, strlen(text), &EditPos);
-  if (text[strlen(text) - 1] != '\n') {
-    gtk_editable_insert_text(messages, cr, strlen(cr), &EditPos);
-  }
-  gtk_text_thaw(GTK_TEXT(messages));
-  gtk_editable_set_position(messages, EditPos);
+  gtk_text_buffer_get_end_iter(buffer, &iter);
+  gtk_text_buffer_insert_with_tags_by_name(buffer, &iter, text, -1,
+                                           tagname, NULL);
+  gtk_text_buffer_insert(buffer, &iter, "\n", -1);
+
+  gtk_text_buffer_place_cursor(buffer, &iter);
+  insert = gtk_text_buffer_get_mark(buffer, "insert");
+  gtk_text_view_scroll_mark_onscreen(messages, insert);
 }
 
 /* 
@@ -1902,7 +1903,7 @@ void EndGame(void)
 {
   DisplayFightMessage(NULL);
   gtk_widget_hide_all(ClientData.vbox);
-  gtk_editable_delete_text(GTK_EDITABLE(ClientData.messages), 0, -1);
+//gtk_editable_delete_text(GTK_EDITABLE(ClientData.messages), 0, -1);
   ShutdownNetwork(ClientData.Play);
   UpdatePlayerLists();
   CleanUpServer();
@@ -2090,6 +2091,17 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 #endif
 }
 
+static void make_tags(GtkTextView *textview)
+{
+  GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
+
+  gtk_text_buffer_create_tag(buffer, "jet", "foreground", "blue", NULL);
+  gtk_text_buffer_create_tag(buffer, "talk", "foreground", "red", NULL);
+  gtk_text_buffer_create_tag(buffer, "page", "foreground", "green", NULL);
+  gtk_text_buffer_create_tag(buffer, "join", "foreground", "cyan", NULL);
+  gtk_text_buffer_create_tag(buffer, "leave", "foreground", "cyan", NULL);
+}
+
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                  gboolean ReturnOnFail)
@@ -2181,13 +2193,19 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 
   vpaned = gtk_vpaned_new();
 
-  adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0,
+/*adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0,
                                             1.0, 10.0, 10.0);
   text = ClientData.messages = gtk_scrolled_text_new(NULL, adj, &hbox);
   gtk_widget_set_usize(text, 100, 80);
   gtk_text_set_point(GTK_TEXT(text), 0);
   gtk_text_set_editable(GTK_TEXT(text), FALSE);
-  gtk_text_set_word_wrap(GTK_TEXT(text), TRUE);
+  gtk_text_set_word_wrap(GTK_TEXT(text), TRUE);*/
+
+  text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
+  make_tags(GTK_TEXT_VIEW(text));
+  gtk_widget_set_usize(text, 100, 80);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_paned_pack1(GTK_PANED(vpaned), hbox, TRUE, TRUE);
 
   hbox = gtk_hbox_new(FALSE, 7);
@@ -2595,7 +2613,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
   if (AllPlayers) {
     SendClientMessage(ClientData.Play, C_NONE, C_MSG, NULL, text);
     g_string_sprintf(msg, "%s: %s", GetPlayerName(ClientData.Play), text);
-    PrintMessage(msg->str);
+    PrintMessage(msg->str, "talk");
   } else {
     for (selection = GTK_CLIST(TalkData->clist)->selection; selection;
          selection = g_list_next(selection)) {
@@ -2607,7 +2625,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
         SendClientMessage(ClientData.Play, C_NONE, C_MSGTO, Play, text);
         g_string_sprintf(msg, "%s->%s: %s", GetPlayerName(ClientData.Play),
                          GetPlayerName(Play), text);
-        PrintMessage(msg->str);
+        PrintMessage(msg->str, "page");
       }
     }
   }
