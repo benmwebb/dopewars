@@ -9,6 +9,8 @@
 #define LISTITEMHPACK  3
 #define LISTHEADERPACK 6
 
+#define PANED_STARTPOS 200
+
 #define WM_SOCKETDATA (WM_USER+100)
 
 static const gchar *WC_GTKSEP    = "WC_GTKSEP";
@@ -3583,6 +3585,7 @@ GtkWidget *gtk_vpaned_new() {
    GtkVPaned *vpaned;
    vpaned=GTK_VPANED(GtkNewObject(&GtkVPanedClass));
    GTK_PANED(vpaned)->handle_size=5;
+   GTK_PANED(vpaned)->handle_pos=PANED_STARTPOS;
    return GTK_WIDGET(vpaned);
 }
 
@@ -3590,6 +3593,7 @@ GtkWidget *gtk_hpaned_new() {
    GtkHPaned *hpaned;
    hpaned=GTK_HPANED(GtkNewObject(&GtkHPanedClass));
    GTK_PANED(hpaned)->handle_size=5;
+   GTK_PANED(hpaned)->handle_pos=PANED_STARTPOS;
    return GTK_WIDGET(hpaned);
 }
 
@@ -3661,25 +3665,31 @@ void gtk_hpaned_realize(GtkWidget *widget) {
 void gtk_vpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    GtkPaned *paned=GTK_PANED(widget);
    gint i;
+   gint16 req[2] = { 0,0 };
    requisition->width=requisition->height=0;
    for (i=0;i<2;i++) if (paned->children[i].widget) {
       if (paned->children[i].widget->requisition.width > requisition->width)
          requisition->width = paned->children[i].widget->requisition.width;
-      requisition->height += paned->children[i].widget->requisition.height;
+      req[i]=paned->children[i].widget->requisition.height;
+      requisition->height += req[i];
    }
    requisition->height += paned->handle_size;
+   if (req[0] && req[1]) paned->handle_pos=req[0]*100/(req[0]+req[1]);
 }
 
 void gtk_hpaned_size_request(GtkWidget *widget,GtkRequisition *requisition) {
    GtkPaned *paned=GTK_PANED(widget);
    gint i;
+   gint16 req[2] = { 0,0 };
    requisition->width=requisition->height=0;
    for (i=0;i<2;i++) if (paned->children[i].widget) {
       if (paned->children[i].widget->requisition.height > requisition->height)
          requisition->height = paned->children[i].widget->requisition.height;
-      requisition->width += paned->children[i].widget->requisition.width;
+      req[i]=paned->children[i].widget->requisition.width;
+      requisition->width += req[i];
    }
    requisition->width += paned->handle_size;
+   if (req[0] && req[1]) paned->handle_pos=req[0]*100/(req[0]+req[1]);
 }
 
 void gtk_vpaned_set_size(GtkWidget *widget,GtkAllocation *allocation) {
