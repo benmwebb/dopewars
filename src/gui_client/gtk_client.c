@@ -268,7 +268,11 @@ void AbandonGame(GtkWidget *widget, gpointer data)
 
 void ListScores(GtkWidget *widget, gpointer data)
 {
-  SendClientMessage(ClientData.Play, C_NONE, C_REQUESTSCORE, NULL, NULL);
+  if (InGame) {
+    SendClientMessage(ClientData.Play, C_NONE, C_REQUESTSCORE, NULL, NULL);
+  } else {
+    SendNullClientMessage(ClientData.Play, C_NONE, C_REQUESTSCORE, NULL, NULL);
+  }
 }
 
 void ListInventory(GtkWidget *widget, gpointer data)
@@ -1992,7 +1996,8 @@ void UpdateMenus(void)
                            (ClientData.Menu, "<main>/Game/Abandon..."),
                            InGame);
   gtk_widget_set_sensitive(gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/List"), InGame);
+                           (ClientData.Menu, "<main>/List/Inventory..."),
+			   InGame);
   gtk_widget_set_sensitive(gtk_item_factory_get_widget
                            (ClientData.Menu, "<main>/List/Players..."),
                            InGame && Network);

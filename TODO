@@ -1,4 +1,3 @@
-- Make List/Scores work before game start
 - Proper support for UTF-8 network messages and configuration files (e.g
   a "UTF8" variable in the configuration file, and a "utf8" network ability)
 - Support for "proper" game dates, e.g. mm-dd-yy or dd-mm-yy
