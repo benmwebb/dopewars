@@ -207,29 +207,28 @@ void display_intro(void)
 
   /* Curses client introduction screen */
   text = g_string_new(_("D O P E W A R S"));
-  mvaddstr(0, (Width - text->len) / 2, text->str);
+  mvaddcentstr(0, text->str);
 
   attrset(TextAttr);
 
-  mvaddstr(2, 1, _("Based on John E. Dell's old Drug Wars game, dopewars "
-                   "is a simulation of an"));
-  mvaddstr(3, 1, _("imaginary drug market.  dopewars is an All-American "
-                   "game which features"));
-  mvaddstr(4, 1, _("buying, selling, and trying to get past the cops!"));
+  mvaddcentstr(2, _("Based on John E. Dell's old Drug Wars game, dopewars "
+                    "is a simulation of an"));
+  mvaddcentstr(3, _("imaginary drug market.  dopewars is an All-American "
+                    "game which features"));
+  mvaddcentstr(4, _("buying, selling, and trying to get past the cops!"));
 
-  mvaddstr(6, 1, _("The first thing you need to do is pay off your "
-                   "debt to the Loan Shark. After"));
-  mvaddstr(7, 1, _("that, your goal is to make as much money as "
-                   "possible (and stay alive)! You"));
-  mvaddstr(8, 1, _("have one month of game time to make your fortune."));
+  mvaddcentstr(6, _("The first thing you need to do is pay off your "
+                    "debt to the Loan Shark. After"));
+  mvaddcentstr(7, _("that, your goal is to make as much money as "
+                    "possible (and stay alive)!"));
+  mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
-  mvaddstr(10, 18, _("Copyright (C) 1998-2002  Ben Webb "
-                     "ben@bellatrix.pcl.ox.ac.uk"));
-  g_string_sprintf(text, _("Version %s"), VERSION);
-  mvaddstr(10, 2, text->str);
+  g_string_sprintf(text, _("Version %-8s Copyright (C) 1998-2002  Ben Webb "
+                           "ben@bellatrix.pcl.ox.ac.uk"), VERSION);
+  mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
                           "General Public Licence"));
-  mvaddstr(11, (Width - text->len) / 2, text->str);
+  mvaddcentstr(11, text->str);
 
   mvaddstr(13, 7, _("Icons and Graphics            Ocelot Mantis"));
   mvaddstr(14, 7, _("Sounds                        Robin Kohli, 19.5degs.com"));
@@ -242,11 +241,10 @@ void display_intro(void)
                     "Pete Winn"));
   mvaddstr(19, 7, _("Unconstructive Criticism      James Matthews"));
 
-  mvaddstr(21, 3, _("For information on the command line options, type "
-                    "dopewars -h at your"));
-  mvaddstr(22, 1,
-           _("Unix prompt. This will display a help screen, listing "
-             "the available options."));
+  mvaddcentstr(21, _("For information on the command line options, type "
+                     "dopewars -h at your"));
+  mvaddcentstr(22, _("Unix prompt. This will display a help screen, listing "
+                     "the available options."));
 
   g_string_free(text, TRUE);
   nice_wait();
