@@ -1166,7 +1166,11 @@ int SendCopOffer(Player *To,char Force) {
 /* If Force==FORCECOPS, engage in combat with the cops for certain */
 /* If Force==FORCEBITCH, offer the client a bitch for certain      */
    int i;
-   i=brandom(0,100);
+
+   /* The cops are more likely to attack in locations with higher
+      police presence ratings */
+   i=brandom(0,80+Location[(int)To->IsAt].PolicePresence);
+
    if (Force==FORCECOPS) i=100;
    else if (Force==FORCEBITCH) i=0;
    else To->OnBehalfOf=NULL;
@@ -1577,6 +1581,7 @@ void WithdrawFromCombat(Player *Play) {
    gboolean FightDone;
    Player *Attack,*Defend;
    GSList *list;
+   gchar *text;
 
    if (!Play->FightArray) return;
 
@@ -1609,6 +1614,16 @@ void WithdrawFromCombat(Player *Play) {
             FirstServer=RemovePlayer(Defend,FirstServer);
          } else if (Defend->Health==0) {
             FinishGame(Defend,_("You're dead! Game over."));
+         } else if (CanRunHere(Defend) &&
+                    brandom(0,100)>Location[(int)Defend->IsAt].PolicePresence) {
+            Defend->EventNum=E_DOCTOR;
+            Defend->DocPrice=brandom(Bitch.MinPrice,Bitch.MaxPrice)*
+                             Defend->Health/500;
+            text=dpg_strdup_printf(
+                    _("YN^Do you pay a doctor %P to sew you up?"),
+                    Defend->DocPrice);
+            SendQuestion(NULL,C_ASKSEW,Defend,text);
+            g_free(text);
          } else {
             Defend->EventNum=Defend->ResyncNum; SendEvent(Defend);
          }
@@ -1903,7 +1918,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             From->Health=100;
             SendPlayerData(From);
          }
-/*       FinishFightWithHardass(From,NULL);*/
+         From->EventNum=From->ResyncNum; SendEvent(From);
          break;
    } else if (From->EventNum==E_ARRIVE) {
       if ((answer[0]=='A' || answer[0]=='T') && 
@@ -1933,7 +1948,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          From->EventNum++; SendEvent(From);
          break;
       case E_DOCTOR:
-/*       FinishFightWithHardass(From,NULL);*/
+         From->EventNum=From->ResyncNum; SendEvent(From);
          break;
       case E_HIREBITCH: case E_GUNSHOP: case E_BANK: case E_LOANSHARK:
       case E_OFFOBJECT: case E_WEED:
@@ -1941,7 +1956,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             g_message(_("%s: offer was on behalf of %s"),GetPlayerName(From),
                       GetPlayerName(From->OnBehalfOf));
             if (From->Bitches.Price && From->EventNum==E_OFFOBJECT) {
-               text=g_strdup_printf(_("%s has rejected your %s!"),
+               text=dpg_strdup_printf(_("%s has rejected your %tde!"),
                                     GetPlayerName(From),Names.Bitch);
                GainBitch(From->OnBehalfOf);
                SendPlayerData(From->OnBehalfOf);
@@ -2089,15 +2104,21 @@ int LoseBitch(Player *Play,Inventory *Guns,Inventory *Drugs) {
 }
 
 void SetFightTimeout(Player *Play) {
+/* If fight timeouts are in force, sets the timeout for the given player. */
    if (FightTimeout) Play->FightTimeout=time(NULL)+(time_t)FightTimeout;
    else Play->FightTimeout=0;
 }
 
 void ClearFightTimeout(Player *Play) {
+/* Removes any fight timeout for the given player. */
    Play->FightTimeout=0;
 }
 
 int AddTimeout(time_t timeout,time_t timenow,int *mintime) {
+/* Given the time of a pending event in "timeout" and the current time in */
+/* "timenow", updates "mintime" with the number of seconds to that event, */
+/* unless "mintime" is already smaller (as long as it's not -1, which     */
+/* means "uninitialized"). Returns 1 if the timeout has already expired.  */
    if (timeout==0) return 0;
    else if (timeout<=timenow) return 1;
    else {
@@ -2107,6 +2128,9 @@ int AddTimeout(time_t timeout,time_t timenow,int *mintime) {
 }
 
 int GetMinimumTimeout(GSList *First) {
+/* Returns the number of seconds until the next scheduled event. If such */
+/* an event has already expired, returns 0. If no events are pending,    */
+/* returns -1. "First" should point to a list of valid players.          */
    Player *Play;
    GSList *list;
    int mintime=-1;
@@ -2124,6 +2148,10 @@ int GetMinimumTimeout(GSList *First) {
 }
 
 GSList *HandleTimeouts(GSList *First) {
+/* Given a list of players in "First", checks to see if any events  */
+/* have timed out, and if so, performs the necessary actions. The   */
+/* new start of the list is returned, since a player may be removed */
+/* if their ConnectTimeout has expired.                             */
    GSList *list,*nextlist;
    Player *Play;
    time_t timenow;
