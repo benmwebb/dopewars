@@ -2211,7 +2211,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
   gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);
 
-#ifndef HAVE_GLIB2
+#if CYGWIN || !HAVE_GLIB2
   gtk_hbutton_box_set_spacing_default(8);
 #endif
 
