@@ -902,6 +902,8 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     alloc.height = rect.bottom - rect.top;
     gtk_window_handle_user_size(GTK_WINDOW(widget), &alloc);
     gtk_widget_set_size(widget, &alloc);
+    InvalidateRect(widget->hWnd, NULL, TRUE);
+    UpdateWindow(widget->hWnd);
     return FALSE;
   case WM_GETMINMAXINFO:
     gtk_window_handle_minmax_size(GTK_WINDOW(widget), (LPMINMAXINFO)lParam);
@@ -937,7 +939,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
   return TRUE;
 }
 
-LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   GtkWidget *widget;
   GtkClass *klass;
@@ -1024,10 +1026,26 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
   case WM_TIMER:
     DispatchTimeoutEvent((UINT)wParam);
     return FALSE;
-  default:
-    return DefWindowProc(hwnd, msg, wParam, lParam);
   }
   return FALSE;
+}
+
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  if (!HandleWinMessage(hwnd, msg, wParam, lParam)) {
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+  } else {
+    return TRUE;
+  }
+}
+
+BOOL APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+  if (msg == WM_INITDIALOG) {
+    return TRUE;
+  } else {
+    return HandleWinMessage(hwnd, msg, wParam, lParam);
+  }
 }
 
 LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
@@ -1083,7 +1101,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     mainIcon = LoadIcon(NULL, IDI_APPLICATION);
   }
   if (!hPrevInstance) {
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = MainWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -1095,7 +1113,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = "mainwin";
     RegisterClass(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = MainWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -1107,7 +1125,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKDIALOG;
     RegisterClass(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = GtkPanedProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -1119,7 +1137,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKHPANED;
     RegisterClass(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = GtkPanedProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -1131,7 +1149,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKVPANED;
     RegisterClass(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = GtkSepProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -1143,7 +1161,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKSEP;
     RegisterClass(&wc);
 
-    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.style = 0;
     wc.lpfnWndProc = GtkUrlProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
@@ -2272,10 +2290,8 @@ void gtk_window_realize(GtkWidget *widget)
     if (!TopLevel)
       TopLevel = widget->hWnd;
   } else {
-    widget->hWnd = CreateWindow(WC_GTKDIALOG, win->title,
-                                WS_CAPTION | WS_SYSMENU | CS_HREDRAW |
-                                CS_VREDRAW | resize, CW_USEDEFAULT, 0, 0,
-                                0, Parent, NULL, hInst, NULL);
+    widget->hWnd = CreateDialog(hInst, "gtkdialog", Parent, MainDlgProc);
+    SetWindowText(widget->hWnd, win->title);
   }
   WindowList = g_slist_append(WindowList, (gpointer)win);
   gtk_set_default_font(widget->hWnd);

@@ -1,1 +1,9 @@
+#include <windows.h>
+
 mainicon ICON pill.ico
+
+gtkdialog DIALOG 40, 40, 40, 40
+STYLE WS_POPUP | WS_CAPTION | WS_THICKFRAME | DS_MODALFRAME
+CAPTION ""
+BEGIN
+END
