@@ -53,7 +53,7 @@ version_check ()
 	return 1
   }
   # the following line is carefully crafted sed magic
-  pkg_version=`$PACKAGE --version|head -n 1|sed 's/^[a-zA-z\.\ ()]*//;s/ .*$//'`
+  pkg_version=`$PACKAGE --version|head -n 1|sed 's/^[a-zA-z\.\ ()]*//;s/^.* //'`
   debug "pkg_version $pkg_version"
   pkg_major=`echo $pkg_version | cut -d. -f1`
   pkg_minor=`echo $pkg_version | cut -d. -f2 | cut -d- -f1`
