@@ -40,9 +40,9 @@ faults due to library conflicts.
 
 <ol>
 <li>Download the 
-<a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.4.8-1.alpha.rpm">
+<a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.5.0-1.alpha.rpm">
 Alpha</a> or 
-<a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.4.8-1.i386.rpm">
+<a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.5.0-1.i386.rpm">
 i386 (Intel)</a> RPM with your web browser. (If your browser is incorrectly set
 up, it may try and display the file, in which case tell it explicitly to save
 the file - Shift+Mouse button 1 in Netscape.)
@@ -51,10 +51,10 @@ probably not be able to use RPM installation, depending on how "rpm" is set
 up).
 <li>Change to the directory containing the dopewars rpm, and install it with
 the command <br>
-<b>rpm -i dopewars-1.4.8-1.<i>xxx</i>.rpm</b><br>
+<b>rpm -i dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
 (where <b><i>xxx</i></b> is i386 or alpha). If you have a previous version 
 of dopewars installed, upgrade it instead with<br>
-<b>rpm -U dopewars-1.4.8-1.<i>xxx</i>.rpm</b>
+<b>rpm -U dopewars-1.5.0-1.<i>xxx</i>.rpm</b>
 </ol>
 
 <a name="rpmsource"><h2>RPM source installation</h2></a>
@@ -64,18 +64,18 @@ for example). It involves obtaining the RPM of the source code, and then
 building the binaries from it on your system.
 
 <ol>
-<li>Download the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.4.8-1.src.rpm">source code RPM</a>.
+<li>Download the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.5.0-1.src.rpm">source code RPM</a>.
 <li>Become root and change to the directory containing the new rpm.
 <li>Build a binary rpm with the command<br>
-<b>rpm --rebuild dopewars-1.4.8-1.src.rpm</b>
+<b>rpm --rebuild dopewars-1.5.0-1.src.rpm</b>
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 <i>xxx</i> is your machine type - for example, "i386" on Intel machines,
 "alpha" on Alphas)
 <li>Install the binary rpm with the command<br>
-<b>rpm -i dopewars-1.4.8-1.<i>xxx</i>.rpm</b><br>
+<b>rpm -i dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
 or upgrade an existing version with<br>
-<b>rpm -U dopewars-1.4.8-1.<i>xxx</i>.rpm</b><br>
+<b>rpm -U dopewars-1.5.0-1.<i>xxx</i>.rpm</b><br>
 </ol>
 
 <a name="tarball"><h2>Tarball installation</h2></a>
@@ -85,12 +85,12 @@ is also usually a necessity if you cannot become root (the superuser) on your
 Unix box.
 
 <ol>
-<li>Download the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.4.8.tar.gz">source code tarball</a>.
+<li>Download the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/dopewars-1.5.0.tar.gz">source code tarball</a>.
 <li>Change to the directory containing the tarball and extract the contents
 with the command <br>
-<b>tar -xvzf dopewars-1.4.8.tar.gz</b><br>
+<b>tar -xvzf dopewars-1.5.0.tar.gz</b><br>
 (or similar).
-<li>Change into the dopewars-1.4.8 directory, and read all the important
+<li>Change into the dopewars-1.5.0 directory, and read all the important
 documentation in there ;)
 <li>Build the binary with the commands<br>
 <b>./configure</b><br>
@@ -102,7 +102,7 @@ should compile cleanly. If you are running the Cygwin tools under Microsoft
 Windows, the script should detect this and allow you to build a native
 Windows binary; this will then run on any Win32 system, even one without Cygwin
 installed. The configure script supports a number of configurable options; for
-more details, read the INSTALL file in the dopewars-1.4.8 directory.<p>
+more details, read the INSTALL file in the dopewars-1.5.0 directory.<p>
 
 If you cannot become root, run the configure script specifying directories for
 which you have write access for both the dopewars binary and high score file

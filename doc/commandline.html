@@ -105,6 +105,19 @@ server and join in the multiplayer game going on there. When the player
 finishes the game (or is eliminated by the other players or the server) the
 program finishes.
 
+<a name="gui-client"><dt><b>-w</b></a>
+<dd>If running a dopewars client, then this forces the use of a graphical
+user interface. Under Microsoft Windows, this is an "ordinary" window, while
+under Unix, this uses GTK+. If a suitable environment is not present (e.g.
+the binary was compiled without graphical support, or - in the case of GTK+ -
+you are not running X) then dopewars will quit with an error. By default,
+if neither -w or -t are specified, then a graphical user interface will be
+used where available, falling back to a text-mode client in case of error.
+
+<a name="text-client"><dt><b>-t</b></a>
+<dd>When running a dopewars client, forces the use of a text-mode (curses
+or console mode) interface, even if graphics are available.
+
 <dt><b>-h</b>
 <dd>Displays a brief description of the available command line options, and
 contact details.
@@ -118,6 +131,6 @@ contact details.
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>06-05-2000</b>
+Last update: <b>29-04-2001</b>
 </body>
 </html>

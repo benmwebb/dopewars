@@ -6,39 +6,41 @@
 <body>
 <h1>dopewars and Microsoft Windows</h1>
 
-dopewars now runs natively on Win32 systems (95, 98, NT). It runs as a console
-application, so if you want a pretty pointy-clicky dopewars client, you'll have
-to write your own - but feel free to
-<a href="mailto:ben@bellatrix.pcl.ox.ac.uk">email me</a> if you want to tackle
-such a project!<p>
+dopewars now runs natively on Win32 systems (95, 98, NT, 2000). It runs by
+default as a dopewars client, using the familiar Windows interface. However,
+if you prefer the "original look" text mode interface, this is still
+available; just right click on a shortcut to dopewars, and add <tt>-t</tt> to
+the end of the command line. To run a dopewars server, add <tt>-s</tt>
+instead.<p>
 
 Binaries can be obtained from the main
 <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/download.html">download
 site</a>, or dopewars will compile with the free
 <a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> tools under Win32.
-The installation procedure is the same as <a href="installation.html">that for
-Unix systems</a> - download the tarball, extract the files, change into the
-created directory, run the <b>configure</b> script, and then <b>make</b>. This
-builds a native Win32 binary, which does not need the Cygwin libraries to
-run.<p>
+dopewars uses the <a href="http://www.gtk.org/">GLib</a> library, which can
+be obtained for Windows from <a href="http://user.sgic.fi/~tml/gimp/win32/">
+http://user.sgic.fi/~tml/gimp/win32/</a>. The installation procedure is the
+same as <a href="installation.html">that for Unix systems</a> - download the
+tarball, extract the files, change into the created directory, run the
+<b>configure</b> script, and then <b>make</b>. This builds a native Win32
+binary, which does not need the Cygwin libraries to run.<p>
 
 In virtually all respects, the Unix and Win32 versions of dopewars should be
 identical. Both will accept the same command line parameters and configuration
-options. Be aware that unless you change the directories with configure before
-you build, however, the Win32 port will attempt to locate the high score file
-in its standard Unix location, which will almost certainly fail to be found on a
-Windows machine. The dopewars configuration file will still be read from
-$HOME/.dopewars or /etc/dopewars, so one can still be used under Windows by
-creating a file "C:\etc\dopewars" (or similar - but take care that Windows
-doesn't helpfully add a ".txt" extension to it for you; create it from a DOS
-prompt to be sure) or by setting the environment variable HOME to a sensible
-directory and placing a configuration file ".dopewars" within that directory.<p>
+options. However, since the standard Unix paths for the high score file and
+configuration files do not translate well to Windows, by default the program
+will look for both the configuration file <b>dopewars-config.txt</b> and the
+high score file <b>dopewars.sco</b> in the current directory. (N.B. The 
+standard Unix-like configuration files \Etc\Dopewars and $HOME\.Dopewars will
+be read before dopewars-config.txt if they are present, and if you build
+the program by hand, you'll need to use --datadir="." as an option to
+configure in order to get this behaviour for the high score file.)<p>
 
 <hr><br>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-Last update: <b>09-07-2000</b>
+Last update: <b>29-04-2001</b>
 
 </body>
 </html>

@@ -1215,6 +1215,7 @@ void SendEvent(Player *To) {
             SendServerMessage(NULL,C_NONE,C_SUBWAYFLASH,To,NULL);
             break;
          case E_OFFOBJECT:
+            To->OnBehalfOf=NULL;
             for (i=0;i<To->TipList.Number;i++) {
                g_message(_("%s: Tipoff from %s"),GetPlayerName(To),
                          GetPlayerName(To->TipList.Data[i].Play));
@@ -1224,6 +1225,8 @@ void SendEvent(Player *To) {
             }
             for (i=0;i<To->SpyList.Number;i++) {
                if (To->SpyList.Data[i].Turns<0) {
+                  g_message(_("%s: Spy offered by %s"),GetPlayerName(To),
+                            GetPlayerName(To->SpyList.Data[i].Play));
                   To->OnBehalfOf=To->SpyList.Data[i].Play;
                   SendCopOffer(To,FORCEBITCH);
                   return;
@@ -1581,6 +1584,7 @@ void RunFromCombat(Player *Play,int ToLocation) {
    } else {
       SendFightMessage(Play,NULL,0,F_FAILFLEE,FALSE,TRUE,NULL);
       AllowNextShooter(Play);
+      if (FightTimeout) SetFightTimeout(Play);
       DoReturnFire(Play);
    }
 }
@@ -1723,21 +1727,30 @@ gboolean CanRunHere(Player *Play) {
 }
 
 Player *GetNextShooter(Player *Play) {
+/* To avoid boring waits, return the player who is next in line to be */
+/* able to shoot (i.e. with the smallest FightTimeout) so that this   */
+/* player can be allowed to shoot immediately. If a player is already */
+/* eligible to shoot, or there is a tie for "first place" then do     */
+/* nothing (i.e. return NULL)                                         */
    Player *MinPlay,*Defend;
    time_t MinTimeout;
    int ArrayInd;
+   gboolean Tie=FALSE;
 
    if (!FightTimeout) return NULL;
 
    MinPlay=NULL; MinTimeout=0;
    for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
       Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
-      if (Defend!=Play &&
-          (MinTimeout==0 || Defend->FightTimeout<MinTimeout)) {
+      if (Defend==Play) continue;
+      if (Defend->FightTimeout==0) return NULL;
+      if (MinTimeout==0 || Defend->FightTimeout<=MinTimeout) {
+         Tie = (Defend->FightTimeout==MinTimeout);
          MinPlay=Defend; MinTimeout=Defend->FightTimeout;
       }
    }
-   return MinPlay;
+
+   return (Tie ? NULL : MinPlay);
 }
 
 void ResolveTipoff(Player *Play) {
