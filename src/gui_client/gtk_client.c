@@ -1904,9 +1904,9 @@ void GuiStartGame(void)
 {
   Player *Play = ClientData.Play;
 
+  StripTerminators(GetPlayerName(Play));
   InitAbilities(Play);
   SendAbilities(Play);
-  StripTerminators(GetPlayerName(Play));
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, GetPlayerName(Play));
   InGame = TRUE;
   UpdateMenus();
