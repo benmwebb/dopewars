@@ -1243,7 +1243,7 @@ void gtk_editable_insert_text(GtkEditable *editable,const gchar *new_text,
                               gint new_text_length,gint *position) {
    GtkWidget *widget=GTK_WIDGET(editable);
    HWND hWnd;
-   gint i,textlen;
+   gint i;
 
    gtk_editable_sync_text(editable);
    g_string_insert(editable->text,*position,new_text);
@@ -1373,14 +1373,30 @@ void gtk_box_destroy(GtkWidget *widget) {
    g_list_free(GTK_BOX(widget)->children);
 }
 
+static void EnableParent(GtkWindow *window) {
+   GSList *list;
+   GtkWidget *parent;
+   GtkWindow *listwin;
+
+   parent=GTK_WIDGET(window)->parent;
+   if (window->modal && parent) {
+      for (list=WindowList;list;list=g_slist_next(list)) {
+         listwin=GTK_WINDOW(list->data);
+         if (listwin!=window && listwin->modal &&
+             GTK_WIDGET_VISIBLE(GTK_WIDGET(listwin)) &&
+             GTK_WIDGET(listwin)->parent==parent) return;
+      }
+      gtk_widget_set_sensitive(parent,TRUE);
+   }
+}
+
 void gtk_window_destroy(GtkWidget *widget) {
    GtkWindow *window=GTK_WINDOW(widget);
 // g_print("gtk_window_destroy on widget %p\n",widget);
-   WindowList=g_slist_remove(WindowList,(gpointer)widget->hWnd);
+   WindowList=g_slist_remove(WindowList,(gpointer)window);
    gtk_container_destroy(widget);
    g_free(GTK_WINDOW(widget)->title);
-   if (window->modal && widget->parent)
-      gtk_widget_set_sensitive(widget->parent,TRUE);
+   EnableParent(window);
    if (widget->hWnd) DestroyWindow(widget->hWnd);
    widget->hWnd=NULL;
 }
@@ -1393,8 +1409,7 @@ void gtk_window_show(GtkWidget *widget) {
 
 void gtk_window_hide(GtkWidget *widget) {
    GtkWindow *window=GTK_WINDOW(widget);
-   if (window->modal && widget->parent)
-      gtk_widget_set_sensitive(widget->parent,TRUE);
+   EnableParent(window);
 }
 
 void gtk_hbox_size_request(GtkWidget *widget,
@@ -1551,7 +1566,7 @@ void gtk_window_realize(GtkWidget *widget) {
                      widget->allocation.width,widget->allocation.height,
                      Parent,NULL,hInst,NULL);
    if (win->type==GTK_WINDOW_TOPLEVEL && !TopLevel) TopLevel=widget->hWnd;
-   WindowList=g_slist_append(WindowList,(gpointer)widget->hWnd);
+   WindowList=g_slist_append(WindowList,(gpointer)win);
    gtk_set_default_font(widget->hWnd);
 /* g_print("Window window %p created\n",widget->hWnd);*/
    gtk_container_realize(widget);
@@ -2393,10 +2408,12 @@ void gtk_main() {
 
    while (GetMessage(&msg,NULL,0,0)) {
       MsgDone=FALSE;
-      widget=GTK_WIDGET(GetWindowLong(msg.hwnd,GWL_USERDATA));
       for (list=WindowList;list && !MsgDone;list=g_slist_next(list)) {
-         if ((MsgDone=IsDialogMessage((HWND)list->data,&msg))==TRUE) break;
+         widget=GTK_WIDGET(list->data);
+         if (widget && widget->hWnd &&
+             (MsgDone=IsDialogMessage(widget->hWnd,&msg))==TRUE) break;
       }
+      widget=GTK_WIDGET(GetWindowLong(msg.hwnd,GWL_USERDATA));
       if (!MsgDone && widget && GTK_OBJECT(widget)->klass==&GtkWindowClass) {
          hAccel=GTK_WINDOW(widget)->hAccel;
          if (hAccel) MsgDone=TranslateAccelerator(widget->hWnd,hAccel,&msg);
