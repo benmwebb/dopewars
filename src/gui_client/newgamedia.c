@@ -256,16 +256,23 @@ void DisplayConnectStatus(gboolean meta,
   case NBS_SOCKSCONNECT:
     switch (sockstat) {
     case NBSS_METHODS:
+      /* Tell the user that we've successfully connected to a SOCKS server,
+       * and are now ready to tell it to initiate the "real" connection */
       text = g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
                              Socks.name);
       SetStartGameStatus(text);
       g_free(text);
       break;
     case NBSS_USERPASSWD:
+      /* Tell the user that the SOCKS server is asking us for a username
+       * and password */
       SetStartGameStatus(_("Status: Authenticating with SOCKS server"));
       break;
     case NBSS_CONNECT:
       text =
+      /* Tell the user that all necessary SOCKS authentication has been
+       * completed, and now we're going to try to have it connect to
+       * the final destination */
           g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
                           meta ? MetaServer.Name : ServerName);
       SetStartGameStatus(text);

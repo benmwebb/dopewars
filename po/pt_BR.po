@@ -2969,7 +2969,7 @@ msgstr ""
 
 #: src/serverside.c:297
 #, c-format
-msgid "Waiting for metaserver connect to %s:%u..."
+msgid "Waiting for connect to metaserver at %s:%u..."
 msgstr ""
 
 #: src/serverside.c:366

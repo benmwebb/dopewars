@@ -296,7 +296,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   g_string_free(body, TRUE);
 
   if (retval) {
-    dopelog(2, LF_SERVER, _("Waiting for metaserver connect to %s:%u..."),
+    dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s:%u..."),
             MetaServer.Name, MetaServer.Port);
   } else {
     MetaConnectError(MetaConn);
@@ -1014,6 +1014,8 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
     } else if (g_strncasecmp(string, "kill ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
       if (tmp) {
+        /* The named user has been removed from the server following
+         * a "kill" command */
         g_print(_("%s killed\n"), GetPlayerName(tmp));
         BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp,
                            (Player *)FirstServer->data);
@@ -3033,6 +3035,8 @@ int RandomOffer(Player *To)
     SendPlayerData(To);
     SendPrintMessage(NULL, C_NONE, To, text->str);
   } else if (Sanitized) {
+    /* Debugging message: we would normally have a random drug-related
+     * event here, but "Sanitized" mode is turned on */
     dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
   } else if (r < 50) {
     amount = brandom(3, 7);

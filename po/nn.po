@@ -3095,7 +3095,7 @@ msgstr "Prøver for ofte å kopla til metatenaren - venter på neste tidsavbrot"
 
 #: src/serverside.c:299
 #, fuzzy, c-format
-msgid "Waiting for metaserver connect to %s:%u..."
+msgid "Waiting for connect to metaserver at %s:%u..."
 msgstr "Ventar på metatenar-samband til %s:%u..."
 
 #: src/serverside.c:368
