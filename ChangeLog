@@ -1,4 +1,5 @@
 cvs
+    - Windows graphical server can be minimized to the System Tray
     - Keyboard shortcuts for menu items in Windows client
     - Default buttons for Windows client, bank bug (hopefully) fixed
     - RPM build/make install can now be run as non-superuser

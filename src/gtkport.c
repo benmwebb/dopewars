@@ -42,7 +42,8 @@
 
 #define PANED_STARTPOS 200
 
-#define WM_SOCKETDATA (WM_USER+100)
+HICON mainIcon=NULL;
+static WNDPROC customWndProc=NULL;
 
 static gint RecurseLevel=0;
 
@@ -836,6 +837,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
    LPDRAWITEMSTRUCT lpdis;
    HD_NOTIFY FAR* phdr;
    NMHDR *nmhdr;
+   if (customWndProc &&
+       CallWindowProc(customWndProc,hwnd,msg,wParam,lParam)) return TRUE;
+
    switch(msg) {
       case WM_SIZE:
          window=GTK_WIDGET(GetWindowLong(hwnd,GWL_USERDATA));
@@ -925,7 +929,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
             return FALSE;
          }
          break;
-      case WM_SOCKETDATA:
+      case MYWM_SOCKETDATA:
 /* Ignore network messages if in recursive message loops, to avoid dodgy
    race conditions */
          if (RecurseLevel<=1) {
@@ -966,23 +970,29 @@ LRESULT APIENTRY TextWndProc(HWND hwnd,UINT msg,WPARAM wParam,
    return CallWindowProc(wpOrigTextProc,hwnd,msg,wParam,lParam);
 }
 
+void SetCustomWndProc(WNDPROC wndproc) {
+  customWndProc = wndproc;
+}
+
 void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon) {
    WNDCLASS wc;
    hInst=hInstance;
    hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
    WindowList=NULL;
    RecurseLevel=0;
+   customWndProc = NULL;
+   if (MainIcon) {
+     mainIcon	= LoadIcon(hInstance,MainIcon);
+   } else {
+     mainIcon	= LoadIcon(NULL,IDI_APPLICATION);
+   }
    if (!hPrevInstance) {
       wc.style		= CS_HREDRAW|CS_VREDRAW;
       wc.lpfnWndProc	= MainWndProc;
       wc.cbClsExtra	= 0;
       wc.cbWndExtra	= 0;
       wc.hInstance	= hInstance;
-      if (MainIcon) {
-        wc.hIcon	= LoadIcon(hInstance,MainIcon);
-      } else {
-        wc.hIcon	= LoadIcon(NULL,IDI_APPLICATION);
-      }
+      wc.hIcon = mainIcon;
       wc.hCursor	= LoadCursor(NULL,IDC_ARROW);
       wc.hbrBackground	= (HBRUSH)(1+COLOR_BTNFACE);
       wc.lpszMenuName	= NULL;
@@ -3816,7 +3826,7 @@ gint gdk_input_add(gint source,GdkInputCondition condition,
    input->condition=condition;
    input->function=function;
    input->data=data;
-   rc=WSAAsyncSelect(source,TopLevel,WM_SOCKETDATA,
+   rc=WSAAsyncSelect(source,TopLevel,MYWM_SOCKETDATA,
                   (condition&GDK_INPUT_READ ? FD_READ|FD_CLOSE|FD_ACCEPT:0) |
                   (condition&GDK_INPUT_WRITE ? FD_WRITE|FD_CONNECT:0));
    GdkInputs=g_slist_append(GdkInputs,input);

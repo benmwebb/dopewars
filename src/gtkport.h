@@ -35,6 +35,11 @@
 
 #define MB_IMMRETURN 0
 
+#define MYWM_SOCKETDATA (WM_USER+100)
+#define MYWM_TASKBAR    (WM_USER+101)
+
+extern HICON mainIcon;
+
 typedef enum {
    GTK_WINDOW_TOPLEVEL, GTK_WINDOW_DIALOG, GTK_WINDOW_POPUP
 } GtkWindowType;
@@ -609,6 +614,7 @@ guint gtk_signal_connect(GtkObject *object,const gchar *name,
 guint gtk_signal_connect_object(GtkObject *object,const gchar *name,
                                 GtkSignalFunc func,GtkObject *slot_object);
 void gtk_signal_emit(GtkObject *object,const gchar *name, ...);
+void SetCustomWndProc(WNDPROC wndproc);
 void win32_init(HINSTANCE hInstance,HINSTANCE hPrevInstance,char *MainIcon);
 void gtk_menu_shell_insert(GtkMenuShell *menu_shell,GtkWidget *child,
                            gint position);
