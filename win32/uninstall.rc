@@ -1,1 +1,14 @@
+#include <windows.h>
+#include "contid.h"
+
 mainicon ICON "setup.ico"
+
+1 DIALOG 17, 40, 190, 115
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Uninstall"
+BEGIN
+	CONTROL "", 101, "WC_GTKSEP", 2 | WS_CHILD | WS_VISIBLE, 8, 88, 174, 2
+	DEFPUSHBUTTON "OK", BT_DELOK, 75, 96, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
+	LTEXT "Deleting file: dopewars.exe", ST_DELSTAT, 15, 14, 159, 17, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "All files successfully uninstalled.", ST_DELDONE, 15, 51, 159, 25, WS_CHILD | WS_VISIBLE | WS_GROUP
+END
