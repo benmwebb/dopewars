@@ -93,6 +93,7 @@ extern GSList *FirstClient;
 
 extern void (*ClientMessageHandlerPt) (char *, Player *);
 
+void InitNetwork(void);
 void AddURLEnc(GString *str, gchar *unenc);
 void chomp(char *str);
 void BroadcastToClients(AICode AI, MsgCode Code, char *Data, Player *From,

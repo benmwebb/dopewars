@@ -280,7 +280,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     WindowPrintEnd();
 #ifdef NETWORKING
   } else if (is_service) {
-    StartNetworking();
+    InitNetwork();
     Network = Server = TRUE;
     win32_init(hInstance, hPrevInstance, "mainicon");
     ServiceMain();
@@ -292,9 +292,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ConvertHighScoreFile();
     WindowPrintEnd();
   } else {
-#ifdef NETWORKING
-    StartNetworking();
-#endif
+    InitNetwork();
     if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER

@@ -36,6 +36,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <glib.h>
+
+#include "convert.h"
 #include "dopewars.h"
 #include "message.h"
 #include "network.h"
@@ -99,6 +101,8 @@
 /* *INDENT-ON* */
 
 GSList *FirstClient;
+
+static Converter *netconv = NULL;
 
 void (*ClientMessageHandlerPt)(char *, Player *) = NULL;
 
@@ -247,7 +251,11 @@ void InitAbilities(Player *Play)
   Play->Abil.Local[A_DRUGVALUE] = (DrugValue ? TRUE : FALSE);
   Play->Abil.Local[A_TSTRING] = TRUE;
   Play->Abil.Local[A_DONEFIGHT] = TRUE;
+#ifdef HAVE_GLIB2
+  Play->Abil.Local[A_UTF8] = TRUE;
+#else
   Play->Abil.Local[A_UTF8] = FALSE;
+#endif
 
   if (!Network) {
     for (i = 0; i < A_NUM; i++) {
@@ -310,6 +318,10 @@ void CombineAbilities(Player *Play)
   for (i = 0; i < A_NUM; i++) {
     Play->Abil.Shared[i] = (Play->Abil.Remote[i] && Play->Abil.Local[i]);
   }
+
+  if (HaveAbility(Play, A_UTF8)) {
+    Conv_SetCodeset(netconv, "UTF-8");
+  }
 }
 
 /* 
@@ -362,7 +374,16 @@ gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
 
 gchar *GetWaitingPlayerMessage(Player *Play)
 {
-  return GetWaitingMessage(&Play->NetBuf);
+  gchar *unconv, *conv;
+
+  unconv = GetWaitingMessage(&Play->NetBuf);
+  if (unconv && Conv_Needed(netconv)) {
+    conv = Conv_ToInternal(netconv, unconv, -1);
+    g_free(unconv);
+    return conv;
+  } else {
+    return unconv;
+  }
 }
 
 gboolean ReadPlayerDataFromWire(Player *Play)
@@ -372,7 +393,13 @@ gboolean ReadPlayerDataFromWire(Player *Play)
 
 void QueuePlayerMessageForSend(Player *Play, gchar *data)
 {
-  QueueMessageForSend(&Play->NetBuf, data);
+  if (Conv_Needed(netconv)) {
+    gchar *conv = Conv_ToExternal(netconv, data, -1);
+    QueueMessageForSend(&Play->NetBuf, conv);
+    g_free(conv);
+  } else {
+    QueueMessageForSend(&Play->NetBuf, data);
+  }
 }
 
 gboolean WritePlayerDataToWire(Player *Play)
@@ -933,6 +960,14 @@ void SwitchToSinglePlayer(Player *Play)
     NewPlayer->EventNum = E_ARRIVE;
     SendEvent(NewPlayer);
   }
+}
+
+void InitNetwork(void)
+{
+  netconv = Conv_New();
+#ifdef NETWORKING
+  StartNetworking();
+#endif
 }
 
 /* 

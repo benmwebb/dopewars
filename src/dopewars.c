@@ -2750,9 +2750,7 @@ int main(int argc, char *argv[])
   } else if (WantConvert) {
     ConvertHighScoreFile();
   } else {
-#ifdef NETWORKING
-    StartNetworking();
-#endif
+    InitNetwork();
     if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
