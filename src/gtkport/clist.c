@@ -329,8 +329,8 @@ void gtk_clist_update_all_widths(GtkCList *clist)
   if (header)
     for (i = 0; i < clist->cols; i++) {
       if (GetTextSize(header, clist->coldata[i].title, &size, defFont) &&
-          clist->coldata[i].width < size.cx + 2 * LISTHEADERPACK) {
-        clist->coldata[i].width = size.cx + 2 * LISTHEADERPACK;
+          clist->coldata[i].width < size.cx + 4 + 2 * LISTHEADERPACK) {
+        clist->coldata[i].width = size.cx + 4 + 2 * LISTHEADERPACK;
       }
     }
 
@@ -355,8 +355,8 @@ void gtk_clist_update_widths(GtkCList *clist, gchar *text[])
   for (i = 0; i < clist->cols; i++) {
     if (clist->coldata[i].auto_resize
         && GetTextSize(hWnd, text[i], &size, defFont)
-        && size.cx + 2 * LISTITEMHPACK > clist->coldata[i].width) {
-      clist->coldata[i].width = size.cx + 2 * LISTITEMHPACK;
+        && size.cx + 4 + 2 * LISTITEMHPACK > clist->coldata[i].width) {
+      clist->coldata[i].width = size.cx + 4 + 2 * LISTITEMHPACK;
     }
   }
 }
