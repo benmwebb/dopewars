@@ -544,9 +544,13 @@ static void BrowseSound(GtkWidget *entry)
 static void TestPlaySound(GtkWidget *entry)
 {
   gchar *text;
+  gboolean sound_enabled;
 
   text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+  sound_enabled = IsSoundEnabled();
+  SoundEnable(TRUE);
   SoundPlay(text);
+  SoundEnable(sound_enabled);
   g_free(text);
 }
 

@@ -232,3 +232,8 @@ void SoundEnable(gboolean enable)
 {
   sound_enabled = enable;
 }
+
+gboolean IsSoundEnabled(void)
+{
+  return sound_enabled;
+}
