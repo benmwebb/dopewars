@@ -1823,8 +1823,8 @@ void gtk_entry_size_request(GtkWidget *widget, GtkRequisition *requisition)
 {
   SIZE size;
 
-  if (GetTextSize(widget->hWnd, "Sample text", &size, defFont)) {
-    requisition->width = size.cx;
+  if (GetTextSize(widget->hWnd, "text", &size, defFont)) {
+    requisition->width = size.cx * 6;
     requisition->height = size.cy + 8;
   }
 }
