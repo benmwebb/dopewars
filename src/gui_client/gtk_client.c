@@ -24,8 +24,6 @@
 #include <config.h>
 #endif
 
-#define GTK_ENABLE_BROKEN
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -2100,7 +2098,6 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
       *vpaned, *button, *clist;
   GtkAccelGroup *accel_group;
   GtkItemFactory *item_factory;
-  GtkAdjustment *adj;
   gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
 #ifdef CYGWIN
@@ -2179,14 +2176,6 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
   vpaned = gtk_vpaned_new();
-
-/*adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0,
-                                            1.0, 10.0, 10.0);
-  text = ClientData.messages = gtk_scrolled_text_new(NULL, adj, &hbox);
-  gtk_widget_set_usize(text, 100, 80);
-  gtk_text_set_point(GTK_TEXT(text), 0);
-  gtk_text_set_editable(GTK_TEXT(text), FALSE);
-  gtk_text_set_word_wrap(GTK_TEXT(text), TRUE);*/
 
   text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
   make_tags(GTK_TEXT_VIEW(text));

@@ -25,7 +25,6 @@
 #endif
 
 #ifndef CYGWIN
-#define GTK_ENABLE_BROKEN
 #include <sys/types.h>          /* For pid_t (fork) */
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>             /* For fork and execv */
