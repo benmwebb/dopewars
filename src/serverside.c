@@ -2715,7 +2715,7 @@ void CheckForKilledPlayers(Player *Play)
     }
   }
 
-  g_ptr_array_free(KilledPlayers, FALSE);
+  g_ptr_array_free(KilledPlayers, TRUE);
 }
 
 /* 
