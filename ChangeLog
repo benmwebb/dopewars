@@ -12,6 +12,7 @@ cvs
     - Keyboard shortcuts for menu items in Windows client
     - Default buttons (ENTER -> "OK") for Windows client
     - RPM build/make install can now be run as non-superuser
+    - Win32 install for current user/all users
     - Code cleanups
 
 1.5.2   16-10-2001

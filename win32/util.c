@@ -323,6 +323,16 @@ void FreeInstData(InstData *idata,BOOL freepts) {
   bfree(idata);
 }
 
+void WriteInstFlags(HANDLE fout, InstFlags flags) {
+  DWORD bytes_written;
+  char str[3];
+
+  str[0] = (char)flags;
+  if (!WriteFile(fout,str,1,&bytes_written,NULL)) {
+    printf("Write error\n");
+  }
+}
+
 void WriteServiceDetails(HANDLE fout,NTService *service) {
   DWORD bytes_written;
   char str[]="";
@@ -412,19 +422,19 @@ static char *GetSpecialDir(int dirtype) {
   return (doneOK ? bstrdup(szDir) : NULL);
 }
 
-char *GetStartMenuTopDir(void) {
-  return GetSpecialDir(CSIDL_STARTMENU);
+char *GetStartMenuTopDir(BOOL AllUsers) {
+  return GetSpecialDir(AllUsers ? CSIDL_COMMON_STARTMENU : CSIDL_STARTMENU);
 }
 
 char *GetDesktopDir(void) {
   return GetSpecialDir(CSIDL_DESKTOPDIRECTORY);
 }
 
-char *GetStartMenuDir(InstData *idata) {
+char *GetStartMenuDir(BOOL AllUsers, InstData *idata) {
   bstr *str;
   char *topdir,*retval;
 
-  topdir=GetStartMenuTopDir();
+  topdir=GetStartMenuTopDir(AllUsers);
 
   str = bstr_new();
   
@@ -563,6 +573,18 @@ InstLink *ReadLinkList(HANDLE fin) {
   return first;
 }
 
+InstFlags ReadInstFlags(HANDLE fin) {
+  DWORD bytes_read;
+  char buf[3];
+
+  buf[0] = 0;
+  if (!ReadFile(fin,buf,1,&bytes_read,NULL)) {
+    printf("Read error\n");
+  }
+
+  return (InstFlags)buf[0];
+}
+
 NTService *ReadServiceDetails(HANDLE fin) {
   NTService *service=NULL;
   char *name,*disp,*desc,*exe;
@@ -645,12 +667,14 @@ InstData *ReadOldInstData(HANDLE fin,char *product,char *installdir) {
 
   idata->instfiles = ReadFileList(fin);
   idata->extrafiles = ReadFileList(fin);
+  idata->keepfiles = NULL;
 
   idata->startmenu = ReadLinkList(fin);
   idata->desktop = ReadLinkList(fin);
 
   idata->service = ReadServiceDetails(fin);
-  idata->keepfiles = ReadFileList(fin);
+
+  idata->flags = ReadInstFlags(fin);
 
   return idata;
 }

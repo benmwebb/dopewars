@@ -14,3 +14,5 @@
 #define ST_DELSTAT  214
 #define ST_DELDONE  215
 #define BT_DELOK    216
+#define RB_ALLUSERS 217
+#define RB_ONEUSER  218

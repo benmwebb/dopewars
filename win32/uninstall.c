@@ -70,7 +70,7 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
     DeleteFileList(idata->instfiles,delstat,NULL);
     DeleteFileList(idata->extrafiles,delstat,NULL);
 
-    startmenu = GetStartMenuDir(idata);
+    startmenu = GetStartMenuDir(idata->flags & IF_ALLUSERS, idata);
     desktop = GetDesktopDir();
     DeleteLinkList(startmenu,idata->startmenu,delstat);
     DeleteLinkList(desktop,idata->desktop,delstat);

@@ -46,6 +46,10 @@ typedef struct _NTService {
   char *exe;
 } NTService;
 
+typedef enum {
+  IF_ALLUSERS = 1
+} InstFlags;
+
 typedef struct _InstData {
   char *product;
   char *installdir,*startmenudir;
@@ -56,6 +60,7 @@ typedef struct _InstData {
   InstFiles *keepfiles;
   InstLink *startmenu;
   InstLink *desktop;
+  InstFlags flags;
 } InstData;
 
 extern const char *UninstallKey;
@@ -93,10 +98,11 @@ void AddServiceDetails(char *servicename,char *servicedisp,
                        NTService **service);
 void FreeServiceDetails(NTService *service,BOOL freepts);
 void WriteServiceDetails(HANDLE fout,NTService *service);
+void WriteInstFlags(HANDLE fout, InstFlags flags);
 void WriteLinkList(HANDLE fout,InstLink *listpt);
 void WriteFileList(HANDLE fout,InstFiles *listpt);
-char *GetStartMenuTopDir(void);
-char *GetStartMenuDir(InstData *idata);
+char *GetStartMenuTopDir(BOOL AllUsers);
+char *GetStartMenuDir(BOOL AllUsers, InstData *idata);
 char *GetDesktopDir(void);
 BOOL CreateWholeDirectory(char *path);
 BOOL RemoveWholeDirectory(char *path);

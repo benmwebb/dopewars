@@ -40,24 +40,31 @@ HWND mainDlg[DL_NUM];
 DialogType CurrentDialog;
 HINSTANCE hInst=NULL;
 char *oldversion=NULL;
+BOOL services_supported, have_admin_rights, install_all_users;
 
 DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
+static void FillFolderList(void);
 
-/* Returns TRUE if this operating system version supports NT Services */
-BOOL ServicesSupported(void) {
+/* Does this OS version support NT services? If so, do we have the 
+ * necessary (administrator) rights to use them?
+ */
+void ServiceCheck(BOOL *hasServices, BOOL *isAdmin) {
   SC_HANDLE scManager;
 
-  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_CONNECT);
+  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_CREATE_SERVICE);
   if (scManager) {
+    *hasServices = *isAdmin = TRUE;
     CloseServiceHandle(scManager);
   } else if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED) {
-    return FALSE;
+    *hasServices = *isAdmin = FALSE;
+  } else {
+    *hasServices = TRUE;
+    *isAdmin = FALSE;
   } 
-  return TRUE;
 }
 
-void InstallService(InstData *idata) {
+BOOL InstallService(InstData *idata) {
   SC_HANDLE scManager,scService;
   HKEY key;
   bstr *str;
@@ -65,13 +72,13 @@ void InstallService(InstData *idata) {
   NTService *service;
 
   service = idata->service;
-  if (!service) return;
+  if (!service) return FALSE;
 
-  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
+  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_CREATE_SERVICE);
 
   if (!scManager) {
     DisplayError("Cannot connect to service manager",TRUE,FALSE);
-    return;
+    return FALSE;
   }
 
   str = bstr_new();
@@ -85,7 +92,7 @@ void InstallService(InstData *idata) {
   if (!scService) {
     DisplayError("Cannot create service",TRUE,FALSE);
     bstr_free(str,TRUE);
-    return;
+    return FALSE;
   }
 
   bstr_assign(str,keyprefix);
@@ -99,6 +106,7 @@ void InstallService(InstData *idata) {
 
   CloseServiceHandle(scService);
   CloseServiceHandle(scManager);
+  return TRUE;
 }
 
 BOOL CheckCreateDir(void) {
@@ -117,7 +125,7 @@ BOOL CheckCreateDir(void) {
       if (CreateWholeDirectory(instdir)) {
         return TRUE;
       } else {
-        DisplayError("Could not create directory",FALSE,FALSE);
+        DisplayError("Could not create directory",TRUE,FALSE);
       }
     }
     return FALSE;
@@ -132,8 +140,20 @@ void ShowNewDialog(DialogType NewDialog) {
   DWORD threadID;
   if (NewDialog<0 || NewDialog>=DL_NUM) return;
 
-  if (NewDialog > CurrentDialog && CurrentDialog==DL_INSTALLDIR) {
-    if (!CheckCreateDir()) return;
+  if (NewDialog > CurrentDialog) {
+    switch(CurrentDialog) {
+    case DL_INSTALLDIR:
+      if (!CheckCreateDir()) return;
+      break;
+    case DL_INTRO:
+      install_all_users = (services_supported
+                           && IsDlgButtonChecked(mainDlg[DL_INTRO],
+                                                 RB_ALLUSERS)==BST_CHECKED);
+      FillFolderList();
+      break;
+    default:
+      break;
+    }
   }
 
   hWnd=mainDlg[NewDialog];
@@ -253,13 +273,13 @@ LPVOID GetResource(LPCTSTR resname,LPCTSTR restype) {
   LPVOID respt;
 
   hrsrc = FindResource(NULL,resname,restype);
-  if (!hrsrc) DisplayError("Could not find resource: ",TRUE,TRUE);
+  if (!hrsrc) DisplayError("Could not find resource",TRUE,TRUE);
 
   hglobal = LoadResource(NULL,hrsrc);
-  if (!hglobal) DisplayError("Could not load resource: ",TRUE,TRUE);
+  if (!hglobal) DisplayError("Could not load resource",TRUE,TRUE);
 
   respt = LockResource(hglobal);
-  if (!respt) DisplayError("Could not lock resource: ",TRUE,TRUE);
+  if (!respt) DisplayError("Could not lock resource",TRUE,TRUE);
 
   return respt;
 }
@@ -277,6 +297,7 @@ InstData *ReadInstData() {
   pt=instdata;
 
   idata = bmalloc(sizeof(InstData));
+  idata->flags = 0;
   idata->service = NULL;
   idata->totalsize = atol(pt);
   pt += strlen(pt)+1;
@@ -515,16 +536,19 @@ void SetupShortcuts(HANDLE fout) {
   char *startmenu,*desktop;
   BOOL dodesktop;
 
-  startmenu = GetStartMenuDir(idata);
+  startmenu = GetStartMenuDir(install_all_users, idata);
   desktop = GetDesktopDir();
 
   dodesktop=(IsDlgButtonChecked(mainDlg[DL_SHORTCUTS],CB_DESKTOP)==BST_CHECKED);
 
   if (startmenu) {
-    CreateDirectory(startmenu,NULL);
-
-    CreateLinks(startmenu,idata->startmenu);
-    WriteLinkList(fout,idata->startmenu);
+    if (CreateDirectory(startmenu,NULL)) {
+      CreateLinks(startmenu,idata->startmenu);
+      WriteLinkList(fout,idata->startmenu);
+    } else {
+      DisplayError("Could not create Start Menu directory",TRUE,FALSE);
+      WriteLinkList(fout,NULL);
+    }
   } else {
     WriteLinkList(fout,NULL);
   }
@@ -564,7 +588,7 @@ void SetupUninstall() {
   bstr_appendpath(str,idata->product);
   
   if (RegCreateKeyEx(HKEY_LOCAL_MACHINE,str->text,0,NULL,0,
-                     KEY_ALL_ACCESS,NULL,&key,&disp)==ERROR_SUCCESS) {
+                     KEY_WRITE,NULL,&key,&disp)==ERROR_SUCCESS) {
     RegSetValueEx(key,"DisplayName",0,REG_SZ,idata->product,
                   strlen(idata->product));
     bstr_assign_windir(str);
@@ -576,7 +600,7 @@ void SetupUninstall() {
     RegSetValueEx(key,"InstallDirectory",0,REG_SZ,str->text,str->length);
     RegCloseKey(key);
   } else {
-    DisplayError("Cannot create registry key: ",TRUE,FALSE);
+    DisplayError("Cannot create registry key for uninstall",TRUE,FALSE);
   }
 
   bstr_assign_windir(str);
@@ -587,11 +611,11 @@ void SetupUninstall() {
   bstr_appendpath(uninstexe,"uninstall.exe");
 
   if (!MoveFile(uninstexe->text,str->text)) {
-    DisplayError("Unable to create uninstall program: ",TRUE,FALSE);
+    DisplayError("Unable to create uninstall program",TRUE,FALSE);
   }
   DeleteFile(uninstexe->text);
 
-  startmenu = GetStartMenuDir(idata);
+  startmenu = GetStartMenuDir(install_all_users, idata);
   bstr_assign(link,startmenu);
   bstr_appendpath(link,"Uninstall ");
   bstr_append(link,idata->product);
@@ -636,7 +660,7 @@ void StartRemoveOldVersion(char *oldversion,InstData *idata,
     DeleteFileList(old->instfiles,hwnd,idata->keepfiles);
     DeleteFileList(old->extrafiles,hwnd,idata->keepfiles);
 
-    startmenu = GetStartMenuDir(old);
+    startmenu = GetStartMenuDir(old->flags & IF_ALLUSERS, old);
     desktop = GetDesktopDir();
     DeleteLinkList(startmenu,old->startmenu,hwnd);
     DeleteLinkList(desktop,old->desktop,hwnd);
@@ -682,7 +706,7 @@ void FinishRemoveOldVersion(char *oldversion,InstData *idata,
 
   if (strcmp(idata->startmenudir,oldidata->startmenudir)!=0) {
     SetCurrentDirectory(desktop); /* Make sure we're not in the menu dir */
-    startmenu = GetStartMenuDir(oldidata);
+    startmenu = GetStartMenuDir(oldidata->flags & IF_ALLUSERS, oldidata);
     if (!RemoveWholeDirectory(startmenu)) {
       bstr_assign(str,"Could not remove old Start Menu directory:\n");
       bstr_append(str,startmenu);
@@ -707,7 +731,7 @@ void FinishRemoveOldVersion(char *oldversion,InstData *idata,
 DWORD WINAPI DoInstall(LPVOID lpParam) {
   HANDLE fout,logf,fin;
   DWORD bytes_written,fileleft;
-  BOOL skipfile;
+  BOOL skipfile, service_installed;
   char *inbuf,*outbuf;
   int status,count;
   z_stream z;
@@ -807,14 +831,34 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   FinishRemoveOldVersion(oldversion,idata,oldidata);
 
-  InstallService(idata);
+  if (services_supported) {
+    service_installed = InstallService(idata);
+  } else {
+    service_installed = FALSE; 
+  }
+
+  if (service_installed) {
+    MessageBox(mainDlg[CurrentDialog],
+               "The dopewars server has been installed as an NT Service, "
+               "and configured\nfor manual startup. To start or stop this "
+               "service, or to configure it to run\nautomatically when "
+               "you turn on your computer, see the \"Services\" application\n"
+               "from Control Panel. You can also run an interactive server "
+               "by using\nthe \"dopewars server\" shortcut from the desktop "
+               "and/or Start Menu.","Service Installed",MB_OK);
+  }
 
   CoInitialize(NULL);
   SetupShortcuts(logf);
   SetupUninstall();
   CoUninitialize();
 
-  WriteServiceDetails(logf,idata->service);
+  WriteServiceDetails(logf,service_installed ? idata->service : NULL);
+
+  if (install_all_users) {
+    idata->flags |= IF_ALLUSERS;
+  }
+  WriteInstFlags(logf, idata->flags);
 
   CloseHandle(logf);
 
@@ -836,9 +880,11 @@ void FillFolderList(void) {
   folderlist = GetDlgItem(mainDlg[DL_SHORTCUTS],LB_FOLDLIST);
   if (!folderlist) return;
 
+  SendMessage(folderlist,LB_RESETCONTENT,0,0);
+
   str=bstr_new();
 
-  startdir=GetStartMenuTopDir();
+  startdir=GetStartMenuTopDir(install_all_users);
   bstr_assign(str,startdir);
   bfree(startdir);
   bstr_appendpath(str,"Programs\\*");
@@ -856,6 +902,17 @@ void FillFolderList(void) {
     FindClose(findfile);
   }
   bstr_free(str,TRUE);
+}
+
+BOOL CheckAdminRights(void) {
+  return (!services_supported || have_admin_rights ||
+          MessageBox(NULL,
+                     "To successfully install all components of this "
+                     "program Administrator\nrights are required, and you "
+                     "do not appear to have them. Do you want\nto attempt "
+                     "to continue the installation anyway?",
+                     "Administrator rights not found",
+                     MB_YESNO | MB_DEFBUTTON2)==IDYES);
 }
 
 BOOL CheckExistingInstall(InstData *idata) {
@@ -924,6 +981,22 @@ BOOL CheckExistingInstall(InstData *idata) {
   return retval;
 }
 
+BOOL SetDefaultInstall(void) {
+  HWND dlg;
+
+  dlg = mainDlg[DL_INTRO];
+
+  if (services_supported) {
+    CheckRadioButton(dlg, RB_ALLUSERS, RB_ONEUSER,
+                     have_admin_rights ? RB_ALLUSERS : RB_ONEUSER);
+  } else {
+    ShowWindow(GetDlgItem(dlg, RB_ALLUSERS), SW_HIDE);
+    ShowWindow(GetDlgItem(dlg, RB_ONEUSER), SW_HIDE);
+  }
+
+  return have_admin_rights;
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
   MSG msg;
@@ -941,10 +1014,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
     mainDlg[i] = CreateDialog(hInst,MAKEINTRESOURCE(i+1),NULL,MainDlgProc);
   }
 
+  ServiceCheck(&services_supported,&have_admin_rights);
+
+  install_all_users = SetDefaultInstall();
+
   CheckDlgButton(mainDlg[DL_SHORTCUTS],CB_DESKTOP,BST_CHECKED);
   EnableWindow(GetDlgItem(mainDlg[DL_DOINSTALL],BT_FINISH),FALSE);
-
-  FillFolderList();
 
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_COMPLETE),SW_HIDE);
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_EXIT),SW_HIDE);
@@ -966,7 +1041,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
   for (i=0;i<DL_NUM;i++) SetGuiFont(mainDlg[i]);
 
-  if (CheckExistingInstall(idata)) {
+  if (CheckAdminRights() && CheckExistingInstall(idata)) {
     CurrentDialog=DL_NUM;
     ShowNewDialog(DL_INTRO);
 
