@@ -582,7 +582,7 @@ GtkWidget *gtk_radio_button_new_with_label(GSList *group,
 GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
                                                        const gchar *label);
 GtkWidget *gtk_frame_new(const gchar *text);
-void gtk_frame_set_shadow_type (GtkFrame *frame, GtkShadowType type);
+void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj);
 GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
