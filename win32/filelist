@@ -28,8 +28,9 @@ index.html
 ../doc/server.html -> server.html
 ../doc/servercommands.html -> servercommands.html
 ../doc/windows.html -> windows.html
-../doc/help/general.html -> help/general.html
-../doc/help/locations.html -> help/locations.html
+../doc/help/general.html -> help\general.html
+../doc/help/locations.html -> help\locations.html
+../doc/help/server.html -> help\server.html
 ../../auxdope/dopewars-config.txt -> dopewars-config.txt
 ../src/dopewars.exe -> dopewars.exe
 example-cfg.txt
