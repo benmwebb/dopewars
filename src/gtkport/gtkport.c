@@ -1950,8 +1950,8 @@ gchar *gtk_editable_get_chars(GtkEditable *editable,
   gtk_editable_sync_text(editable);
   if (end_pos < 0 || end_pos >= editable->text->len)
     end_pos = editable->text->len;
-  copylen = end_pos - start_pos + 1;
-  retbuf = g_new(gchar, copylen);
+  copylen = end_pos - start_pos;
+  retbuf = g_new(gchar, copylen + 1);
 
   memcpy(retbuf, &editable->text->str[start_pos], copylen);
   retbuf[copylen] = '\0';
