@@ -48,12 +48,13 @@ static void PrintEscaped(FILE *fp, gchar *str)
   guint i;
 
   for (i = 0; i < strlen(str); i++) {
-    switch(str[i]) {
+    int ch = (int)(guchar)str[i];
+    switch(ch) {
     case '"':
     case '\'':
     case '\\':
       fputc('\\', fp);
-      fputc(str[i], fp);
+      fputc(ch, fp);
       break;
     case '\n':
       fputs("\\n", fp);
@@ -71,10 +72,10 @@ static void PrintEscaped(FILE *fp, gchar *str)
       fputs("\\f", fp);
       break;
     default:
-      if (isprint(str[i])) {
-        fputc(str[i], fp);
+      if (isascii(ch) && isprint(ch)) {
+        fputc(ch, fp);
       } else {
-        fprintf(fp, "\\%o", (int)(guchar)str[i]);
+        fprintf(fp, "\\%o", ch);
       }
     }
   }
