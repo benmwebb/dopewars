@@ -1,6 +1,8 @@
 # Nasty hack; there seems to be no way of disabling libtool for the link
 # of the main executable...
-if NOPLUGINS
+if PLUGINS
+LIBTOOL = $(SHELL) $(top_builddir)/libtool
+else
 LIBTOOL = ./fakelibtool.sh
 endif
 
