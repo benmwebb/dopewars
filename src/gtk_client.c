@@ -1702,7 +1702,7 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    SocketWriteTestPt = SetSocketWriteTest;
 
 /* Have the GLib log messages pop up in a nice dialog box */
-   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                      LogMessage,NULL);
 
    ClientData.PlayerName=NULL;

@@ -127,6 +127,10 @@ extern struct NAMES Names;
 extern struct METASERVER MetaServer;
 extern int NumTurns;
 extern int PlayerArmour,BitchArmour;
+extern int LogLevel;
+extern gchar *LogTimestamp;
+
+#define MAXLOG        6
 
 #define DM_NONE       0
 #define DM_STREET     1
@@ -284,6 +288,7 @@ typedef struct tagConnBuf {
 typedef struct tagNetworkBuffer {
    int fd;                /* File descriptor of the socket */
    char Terminator;       /* Character that separates messages */
+   char StripChar;        /* Character that should be removed from messages */
    ConnBuf ReadBuf;       /* New data, waiting for the application */
    ConnBuf WriteBuf;      /* Data waiting to be written to the wire */
    gboolean WaitConnect;  /* TRUE if a non-blocking connect is in progress */
@@ -332,7 +337,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 87
+#define NUMGLOB 89
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;
@@ -418,4 +423,7 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
 void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                     GScanner *scanner);
 gboolean IsCop(Player *Play);
+void dopelog(int loglevel,const gchar *format,...);
+GLogLevelFlags LogMask();
+GString *GetLogString(GLogLevelFlags log_level,const gchar *message);
 #endif

@@ -119,7 +119,7 @@ char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
                    gboolean NonBlocking);
 char *FinishConnect(int fd);
 
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator);
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar);
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,

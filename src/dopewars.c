@@ -37,6 +37,7 @@
 #include <curses_client.h>
 #include <gtk_client.h>
 #include <glib.h>
+#include <stdarg.h>
 #include "dopeos.h"
 #include "message.h"
 #include "serverside.h"
@@ -161,6 +162,9 @@ int NumTurns=31;
 
 int PlayerArmour=100,BitchArmour=50;
 
+int LogLevel=2;
+gchar *LogTimestamp=NULL;
+
 struct GLOBALS Globals[NUMGLOB] = {
 /* The following strings are the helptexts for all the options that can be
    set in a dopewars configuration file, or in the server. See
@@ -201,6 +205,12 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("Program used to display multi-page output"),NULL,NULL,0,"",NULL,NULL },
    { &NumTurns,NULL,NULL,NULL,"NumTurns",
      N_("No. of game turns (if 0, game never ends)"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &LogLevel,NULL,NULL,NULL,"LogLevel",
+     N_("Controls the number of log messages produced"),
+     NULL,NULL,0,"",NULL,NULL },
+   { NULL,NULL,&LogTimestamp,NULL,"LogTimestamp",
+     N_("strftime() format string for log timestamps"),
      NULL,NULL,0,"",NULL,NULL },
    { &Sanitized,NULL,NULL,NULL,"Sanitized",N_("Random events are sanitized"),
      NULL,NULL,0,"",NULL,NULL },
@@ -622,7 +632,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
 #if NETWORKING
-   InitNetworkBuffer(&NewPlayer->NetBuf,'\n');
+   InitNetworkBuffer(&NewPlayer->NetBuf,'\n','\r');
    if (Server) BindNetworkBufferToSocket(&NewPlayer->NetBuf,fd);
 #endif
    InitAbilities(NewPlayer);
@@ -1055,6 +1065,21 @@ void RemoveAllEntries(DopeList *List,Player *Play) {
       if (i==-1) break;
       RemoveListEntry(List,i);
    }
+}
+
+void dopelog(int loglevel,const gchar *format,...) {
+/* General logging function. All messages should be given a loglevel, */
+/* from 0 to 5 (0=vital, 2=normal, 5=maximum debugging output). This  */
+/* is essentially just a wrapper around the GLib g_log function.      */
+   va_list args;
+   va_start (args,format);
+   g_logv(G_LOG_DOMAIN,1<<(loglevel+G_LOG_LEVEL_USER_SHIFT),format,args);
+   va_end (args);
+}
+
+GLogLevelFlags LogMask() {
+/* Returns the bitmask necessary to catch all custom log messages */
+   return ((1<<(MAXLOG))-1) << G_LOG_LEVEL_USER_SHIFT;
 }
      
 void ResizeLocations(int NewNum) {
@@ -1575,9 +1600,11 @@ void SetupParameters() {
 
 /* Set hard-coded default values */
    g_free(HiScoreFile); g_free(ServerName); g_free(Pager);
+   g_free(LogTimestamp);
    HiScoreFile=g_strdup_printf("%s/dopewars.sco",DATADIR);
    ServerName=g_strdup("localhost");
    Pager=g_strdup("more");
+   LogTimestamp=g_strdup("[%H:%M:%S] ");
 
    CopyNames(&Names,&DefaultNames);
    CopyMetaServer(&MetaServer,&DefaultMetaServer);
@@ -1695,7 +1722,41 @@ int GeneralStartup(int argc,char *argv[]) {
    return 0;
 }
 
+GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
+/* Returns the text to be displayed in a log message, if any. */
+   GString *text;
+   gchar TimeBuf[80];
+   gint i;
+   time_t tim;
+   struct tm *timep;
+
+   text=g_string_new("");
+   if (LogTimestamp) {
+      tim=time(NULL);
+      timep=localtime(&tim);
+      strftime(TimeBuf,80,LogTimestamp,timep);
+      TimeBuf[79]='\0';
+      g_string_append(text,TimeBuf);
+   }
+
+   for (i=0;i<MAXLOG;i++) if (log_level&(1<<(G_LOG_LEVEL_USER_SHIFT+i))) {
+      if (i>LogLevel) { g_string_free(text,TRUE); return NULL; }
+      g_string_sprintfa(text,"%d: ",i);
+   }
+   g_string_append(text,message);
+   return text;
+}
+
 #ifndef CYGWIN
+
+static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
+                             const gchar *message,gpointer user_data) {
+   GString *text;
+   text=GetLogString(log_level,message);
+   if (text) {
+      g_print("%s\n",text->str); g_string_free(text,TRUE);
+   }
+}
 
 /* Standard program entry - Win32 uses WinMain() instead, in winmain.c */
 int main(int argc,char *argv[]) {
@@ -1715,6 +1776,8 @@ int main(int argc,char *argv[]) {
             gtk_init(&argc,&argv);
             GuiServerLoop();
 #else
+/* Deal with dopelog() stuff nicely */
+            g_log_set_handler(NULL,LogMask(),ServerLogMessage,NULL);
             ServerLoop();
 #endif
          } else if (AIPlayer) {

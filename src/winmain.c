@@ -42,11 +42,14 @@
 static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                              const gchar *message,gpointer user_data) {
    DWORD NumChar;
-   gchar *text;
-   text=g_strdup_printf("%s\n",message);
-   WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE),text,strlen(text),
-                &NumChar,NULL);
-   g_free(text);
+   GString *text;
+   text=GetLogString(log_level,message);
+   if (text) {
+      g_string_append(text,"\n");
+      WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE),text->str,strlen(text->str),
+                   &NumChar,NULL);
+      g_string_free(text,TRUE);
+   }
 }
 
 static void ServerPrintFunc(const gchar *string) {
@@ -99,7 +102,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    bindtextdomain(PACKAGE,LOCALEDIR);
    textdomain(PACKAGE);
 #endif
-   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
                      G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
    split=g_strsplit(lpszCmdParam," ",0);
    argc=0;
@@ -129,7 +132,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 #else
             AllocConsole();
             SetConsoleTitle(_("dopewars server"));
-            g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+            g_log_set_handler(NULL,
+                              LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                               ServerLogMessage,NULL);
             g_set_print_handler(ServerPrintFunc);
             newterm(NULL,NULL,NULL);
@@ -141,7 +145,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 /* Title of the Windows window used for AI player output */
             SetConsoleTitle(_("dopewars AI"));
 
-            g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+            g_log_set_handler(NULL,
+                              LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                               ServerLogMessage,NULL);
             g_set_print_handler(ServerPrintFunc);
             newterm(NULL,NULL,NULL);

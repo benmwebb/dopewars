@@ -279,12 +279,14 @@ gboolean HaveAbility(Player *Play,gint Type) {
 }
 
 #if NETWORKING
-void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator) {
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar) {
 /* Initialises the passed network buffer, ready for use. Messages sent */
 /* or received on the buffered connection will be terminated by the    */
-/* given character.                                                    */
+/* given character, and if they end in "StripChar" it will be removed  */
+/* before the messages are sent or received.                           */
    NetBuf->fd=-1;
    NetBuf->Terminator=Terminator;
+   NetBuf->StripChar=StripChar;
    NetBuf->ReadBuf.Data=NetBuf->WriteBuf.Data=NULL;
    NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
    NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
@@ -329,7 +331,7 @@ void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
 
    g_free(NetBuf->ReadBuf.Data);
    g_free(NetBuf->WriteBuf.Data);
-   InitNetworkBuffer(NetBuf,NetBuf->Terminator);
+   InitNetworkBuffer(NetBuf,NetBuf->Terminator,NetBuf->StripChar);
 }
 
 void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
@@ -445,6 +447,8 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
    if (!SepPt) return NULL;
    *SepPt='\0';
    MessageLen=SepPt-conn->Data+1;
+   SepPt--;
+   if (NetBuf->StripChar && *SepPt==NetBuf->StripChar) *SepPt='\0';
    NewMessage=g_new(gchar,MessageLen);
    memcpy(NewMessage,conn->Data,MessageLen);
    if (MessageLen<conn->DataPresent) {

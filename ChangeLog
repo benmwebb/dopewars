@@ -1,4 +1,5 @@
 cvs
+    - Improved logging in server via. LogLevel and LogTimestamp variables
     - Metaserver (both client and server) moved to SourceForge
     - Icons (courtesy of Ocelot Mantis) and GNOME desktop entry added
 

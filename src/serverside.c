@@ -149,7 +149,8 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    if (!MetaServer.Active || !NotifyMetaServer || WantQuit) return;
 
    if (MetaMinTimeout > time(NULL) && RespectTimeout) {
-      g_print("Attempt to connect to metaserver too frequently - waiting for next timeout\n");
+      dopelog(3,_("Attempt to connect to metaserver too frequently "
+                  "- waiting for next timeout"));
       MetaPlayerPending=TRUE;
       return;
    }
@@ -167,7 +168,8 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    }
 
    if (StartNetworkBufferConnect(&MetaNetBuf,MetaName,MetaPort)) {
-      g_print("Waiting for metaserver connect to %s:%d...\n",MetaName,MetaPort);
+      dopelog(2,_("Waiting for metaserver connect to %s:%d..."),MetaName,
+              MetaPort);
    } else return;
    MetaPlayerPending=FALSE;
    text=g_string_new("");
@@ -247,12 +249,12 @@ void HandleServerMessage(gchar *buf,Player *Play) {
    switch(Code) {
       case C_MSGTO:
          if (Network) {
-            g_message("%s->%s: %s",GetPlayerName(Play),GetPlayerName(To),Data);
+            dopelog(3,"%s->%s: %s",GetPlayerName(Play),GetPlayerName(To),Data);
          }
          SendServerMessage(Play,AICode,Code,To,Data);
          break;
       case C_NETMESSAGE:
-         g_message("Net:%s\n",Data);
+         dopelog(1,"Net:%s\n",Data);
 /*       shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
          if (ConnectTimeout) {
@@ -285,7 +287,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                Play->ConnectTimeout=0;
 
                if (Network) {
-                  g_message(_("%s joins the game!"),GetPlayerName(Play));
+                  dopelog(2,_("%s joins the game!"),GetPlayerName(Play));
                }
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
@@ -296,8 +298,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SendEvent(Play);
             } else {
 /* Message displayed in the server when too many players try to connect */
-               g_message(_("MaxClients (%d) exceeded - dropping connection"),
-                         MaxClients);
+               dopelog(2,_("MaxClients (%d) exceeded - dropping connection"),
+                       MaxClients);
                if (MaxClients==1) {
                   text=g_strdup_printf(
 /* Message sent to a player if the server is full */
@@ -322,7 +324,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          } else {
 /* A player changed their name during the game (unusual, and not really
    properly supported anyway) - notify all players of the change */
-            g_message(_("%s will now be known as %s"),GetPlayerName(Play),Data);
+            dopelog(2,_("%s will now be known as %s"),GetPlayerName(Play),Data);
             BroadcastToClients(C_NONE,C_RENAME,Data,Play,Play);
             SetPlayerName(Play,Data);
          }
@@ -341,6 +343,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
             FinishGame(Play,_("Your dealing time is up..."));
          } else if (i!=Play->IsAt && (NumTurns==0 || Play->Turn<NumTurns) && 
                     Play->EventNum==E_NONE && Play->Health>0) {
+            dopelog(4,"%s jets to %s",GetPlayerName(Play),Location[i].Name);
             Play->IsAt=(char)i;
             Play->Turn++;
             Play->Debt=(price_t)((float)Play->Debt*1.1);
@@ -351,7 +354,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          } else {
 /* A player has tried to jet to a new location, but we don't allow them to.
    (e.g. they're still fighting someone, or they're supposed to be dead) */
-            g_warning(_("%s: DENIED jet to %s"),GetPlayerName(Play),
+            dopelog(3,_("%s: DENIED jet to %s"),GetPlayerName(Play),
                                                 Location[i].Name);
          }
          break;
@@ -397,8 +400,8 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          break;
       case C_SPYON:
          if (Play->Cash >= Prices.Spy) {
-            g_message(_("%s now spying on %s"),GetPlayerName(Play),
-                                            GetPlayerName(To));
+            dopelog(3,_("%s now spying on %s"),GetPlayerName(Play),
+                                               GetPlayerName(To));
             Play->Cash -= Prices.Spy;
             LoseBitch(Play,NULL,NULL);
             NewEntry.Play=Play; NewEntry.Turns=-1;
@@ -411,7 +414,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          break;
       case C_TIPOFF:
          if (Play->Cash >= Prices.Tipoff) {
-            g_message(_("%s tipped off the cops to %s"),GetPlayerName(Play),
+            dopelog(3,_("%s tipped off the cops to %s"),GetPlayerName(Play),
                                                         GetPlayerName(To));
             Play->Cash -= Prices.Tipoff;
             LoseBitch(Play,NULL,NULL);
@@ -430,7 +433,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          }
          break;
       case C_MSG:
-         if (Network) g_message("%s: %s",GetPlayerName(Play),Data);
+         if (Network) dopelog(3,"%s: %s",GetPlayerName(Play),Data);
          BroadcastToClients(C_NONE,C_MSG,Data,Play,Play);
          break;
       default:
@@ -554,7 +557,7 @@ void CreatePidFile() {
    if (!PidFile) return;
    fp=fopen(PidFile,"w");
    if (fp) {
-      g_message(_("Maintaining pid file %s"),PidFile);
+      dopelog(1,_("Maintaining pid file %s"),PidFile);
       fprintf(fp,"%ld\n",(long)getpid());
       fclose(fp);
       chmod(PidFile,S_IREAD|S_IWRITE);
@@ -722,17 +725,17 @@ void HandleServerCommand(char *string) {
                tmp=(Player *)list->data;
                if (!IsCop(tmp)) g_print("%s\n",GetPlayerName(tmp));
             }
-         } else g_message(_("No users currently logged on!"));
+         } else g_print(_("No users currently logged on!\n"));
       } else if (strncasecmp(string,"push ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
-            g_message(_("Pushing %s"),GetPlayerName(tmp));
+            dopelog(0,_("Pushing %s"),GetPlayerName(tmp));
             SendServerMessage(NULL,C_NONE,C_PUSH,tmp,NULL);
          } else g_warning(_("No such user!"));
       } else if (strncasecmp(string,"kill ",5)==0) {
          tmp=GetPlayerByName(string+5,FirstServer);
          if (tmp) {
-            g_message(_("%s killed"),GetPlayerName(tmp));
+            dopelog(0,_("%s killed"),GetPlayerName(tmp));
             BroadcastToClients(C_NONE,C_KILL,GetPlayerName(tmp),tmp,
                                (Player *)FirstServer->data);
             FirstServer=RemovePlayer(tmp,FirstServer);
@@ -754,7 +757,7 @@ Player *HandleNewConnection() {
       perror("accept socket"); bgetch(); exit(1);
    }
    fcntl(ClientSock,F_SETFL,O_NONBLOCK);
-   g_message(_("got connection from %s"),inet_ntoa(ClientAddr.sin_addr));
+   dopelog(2,_("got connection from %s"),inet_ntoa(ClientAddr.sin_addr));
    tmp=g_new(Player,1);
    FirstServer=AddPlayer(ClientSock,tmp,FirstServer);
    if (ConnectTimeout) {
@@ -774,7 +777,7 @@ void RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
    if (Play->InputTag) gdk_input_remove(Play->InputTag);
 #endif
    if (!WantQuit && strlen(GetPlayerName(Play))>0) {
-      g_message(_("%s leaves the server!"),GetPlayerName(Play));
+      dopelog(2,_("%s leaves the server!"),GetPlayerName(Play));
       ClientLeftServer(Play);
 /* Blank the name, so that CountPlayers ignores this player */
       SetPlayerName(Play,NULL);
@@ -797,13 +800,14 @@ void ServerLoop() {
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean EndOfLine,DoneOK;
+   gboolean EndOfLine,DoneOK,ReadingHeaders;
    gchar *buf;
 
-   InitNetworkBuffer(&MetaNetBuf,'\n');
+   InitNetworkBuffer(&MetaNetBuf,'\n','\r');
 
    StartServer();
 
+   ReadingHeaders=TRUE;
    LineBuf=g_string_new("");
    while (1) {
       FD_ZERO(&readfs);
@@ -849,7 +853,7 @@ void ServerLoop() {
                RequestServerShutdown();
                if (IsServerShutdown()) break;
             } else {
-               g_message(_("Standard input closed."));
+               dopelog(0,_("Standard input closed."));
                InputClosed=TRUE;
             }
          } else if (EndOfLine) {
@@ -861,14 +865,18 @@ void ServerLoop() {
       if (FD_ISSET(ListenSock,&readfs)) {
          HandleNewConnection();
       }
+      if (MetaNetBuf.WaitConnect) ReadingHeaders=TRUE;
       if (RespondToSelect(&MetaNetBuf,&readfs,&writefs,&errorfs,&DoneOK)) {
          while ((buf=GetWaitingMessage(&MetaNetBuf))) {
-            g_print("Meta: %s\n",buf);
+            if (buf[0] || ReadingHeaders) {
+               dopelog(ReadingHeaders ? 4 : 2,"MetaServer: %s",buf);
+            }
+            if (buf[0]==0) ReadingHeaders=FALSE;
             g_free(buf);
          }
       }
       if (!DoneOK) {
-         g_print("Meta: (closed)\n");
+         dopelog(4,"MetaServer: (closed)\n");
          ShutdownNetworkBuffer(&MetaNetBuf);
          if (IsServerShutdown()) break;
       }
@@ -944,10 +952,13 @@ static void GuiServerPrintFunc(const gchar *string) {
 static void GuiServerLogMessage(const gchar *log_domain,
                                 GLogLevelFlags log_level,const gchar *message,
                                 gpointer user_data) {
-   gchar *text;
-   text = g_strdup_printf("Message: %s\n",message);
-   GuiServerPrintFunc(text);
-   g_free(text);
+   GString *text;
+   text=GetLogString(log_level,message);
+   if (text) {
+      g_string_append(text,"\n");
+      GuiServerPrintFunc(text->str);
+      g_string_free(text,TRUE);
+   }
 }
 
 static void GuiQuitServer() {
@@ -1048,7 +1059,7 @@ void GuiServerLoop() {
    gtk_widget_show_all(window);
 
    g_set_print_handler(GuiServerPrintFunc);
-   g_log_set_handler(NULL,G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                      GuiServerLogMessage,NULL);
    StartServer();
 
@@ -1189,6 +1200,7 @@ void SendHighScores(Player *Play,char EndGame,char *Message) {
       timep=gmtime(&tim);
       Score.Time=g_new(char,80); /* Yuck! */
       strftime(Score.Time,80,"%d-%m-%Y",timep);
+      Score.Time[79]='\0';
       for (i=0;i<NUMHISCORE;i++) {
          if (InList==-1 && (Score.Money > HiScore[i].Money ||
              !HiScore[i].Time || HiScore[i].Time[0]==0)) {
@@ -1276,16 +1288,16 @@ void SendEvent(Player *To) {
          case E_OFFOBJECT:
             To->OnBehalfOf=NULL;
             for (i=0;i<To->TipList.Number;i++) {
-               g_message(_("%s: Tipoff from %s"),GetPlayerName(To),
-                         GetPlayerName(To->TipList.Data[i].Play));
+               dopelog(3,_("%s: Tipoff from %s"),GetPlayerName(To),
+                       GetPlayerName(To->TipList.Data[i].Play));
                To->OnBehalfOf=To->TipList.Data[i].Play;
                SendCopOffer(To,FORCECOPS);
                return;
             }
             for (i=0;i<To->SpyList.Number;i++) {
                if (To->SpyList.Data[i].Turns<0) {
-                  g_message(_("%s: Spy offered by %s"),GetPlayerName(To),
-                            GetPlayerName(To->SpyList.Data[i].Play));
+                  dopelog(3,_("%s: Spy offered by %s"),GetPlayerName(To),
+                          GetPlayerName(To->SpyList.Data[i].Play));
                   To->OnBehalfOf=To->SpyList.Data[i].Play;
                   SendCopOffer(To,FORCEBITCH);
                   return;
@@ -1820,8 +1832,8 @@ void ResolveTipoff(Player *Play) {
    if (IsCop(Play) || !CanRunHere(Play)) return;
 
    if (g_slist_find(FirstServer,(gpointer)Play->OnBehalfOf)) {
-      g_message(_("%s: tipoff by %s finished OK."),GetPlayerName(Play),
-                GetPlayerName(Play->OnBehalfOf));
+      dopelog(4,_("%s: tipoff by %s finished OK."),GetPlayerName(Play),
+              GetPlayerName(Play->OnBehalfOf));
       RemoveListPlayer(&(Play->TipList),Play->OnBehalfOf);
       text=g_string_new("");
       if (Play->Health==0) {
@@ -1937,7 +1949,7 @@ int RandomOffer(Player *To) {
       SendPlayerData(To);
       SendPrintMessage(NULL,C_NONE,To,text->str);
    } else if (Sanitized) {
-      g_message(_("Sanitized away a RandomOffer"));
+      dopelog(3,_("Sanitized away a RandomOffer"));
    } else if (r<50) {
       amount=brandom(3,7);
       ind=IsCarryingRandom(To,amount);
@@ -2128,8 +2140,8 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
    } else if (answer[0]=='Y') switch (From->EventNum) { 
       case E_OFFOBJECT:
          if (g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
-            g_message(_("%s: offer was on behalf of %s"),GetPlayerName(From),
-                   GetPlayerName(From->OnBehalfOf));
+            dopelog(3,_("%s: offer was on behalf of %s"),GetPlayerName(From),
+                    GetPlayerName(From->OnBehalfOf));
             if (From->Bitches.Price) {
                text=dpg_strdup_printf(_("%s has accepted your %tde!"
                                       "^Use the G key to contact your spy."),
@@ -2224,8 +2236,8 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
       case E_HIREBITCH: case E_GUNSHOP: case E_BANK: case E_LOANSHARK:
       case E_OFFOBJECT: case E_WEED:
          if (g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
-            g_message(_("%s: offer was on behalf of %s"),GetPlayerName(From),
-                      GetPlayerName(From->OnBehalfOf));
+            dopelog(3,_("%s: offer was on behalf of %s"),GetPlayerName(From),
+                    GetPlayerName(From->OnBehalfOf));
             if (From->Bitches.Price && From->EventNum==E_OFFOBJECT) {
                text=dpg_strdup_printf(_("%s has rejected your %tde!"),
                                     GetPlayerName(From),Names.Bitch);
@@ -2431,9 +2443,13 @@ GSList *HandleTimeouts(GSList *First) {
    timenow=time(NULL);
    if (MetaMinTimeout<=timenow) {
       MetaMinTimeout=0;
-      if (MetaPlayerPending) RegisterWithMetaServer(TRUE,TRUE,FALSE);
+      if (MetaPlayerPending) {
+         dopelog(3,_("Sending pending updates to the metaserver..."));
+         RegisterWithMetaServer(TRUE,TRUE,FALSE);
+      }
    }
    if (MetaUpdateTimeout!=0 && MetaUpdateTimeout<=timenow) {
+      dopelog(3,_("Sending reminder message to the metaserver..."));
       RegisterWithMetaServer(TRUE,FALSE,FALSE);
    }
    list=First;
@@ -2442,7 +2458,7 @@ GSList *HandleTimeouts(GSList *First) {
       Play=(Player *)list->data;
       if (Play->IdleTimeout!=0 && Play->IdleTimeout<=timenow) {
          Play->IdleTimeout=0;
-         g_message(_("Player removed due to idle timeout"));
+         dopelog(1,_("Player removed due to idle timeout"));
          SendPrintMessage(NULL,C_NONE,Play,"Disconnected due to idle timeout");
          ClientLeftServer(Play);
 /*       shutdown(Play->fd,SD_RECV);*/
@@ -2452,7 +2468,7 @@ GSList *HandleTimeouts(GSList *First) {
          }
       } else if (Play->ConnectTimeout!=0 && Play->ConnectTimeout<=timenow) {
          Play->ConnectTimeout=0;
-         g_message(_("Player removed due to connect timeout"));
+         dopelog(1,_("Player removed due to connect timeout"));
          First=RemovePlayer(Play,First);
       } else if (Play->FightTimeout!=0 && Play->FightTimeout<=timenow) {
          ClearFightTimeout(Play);
