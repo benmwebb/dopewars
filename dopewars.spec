@@ -1,11 +1,10 @@
 Summary: Drug dealing game
-Name: dopewars
+Name:    dopewars
 Version: cvs
 Release: 1
-Distribution: Red Hat Linux
-Vendor: Ben Webb
-Copyright: GPL
-Group: Games
+Vendor:  Ben Webb
+License: GPL
+Group:   Games
 Source0: dopewars-cvs.tar.gz
 
 %description
@@ -38,8 +37,10 @@ make install-strip
 %doc doc/servercommands.html doc/windows.html
 
 /usr/bin/dopewars
-/usr/share/dopewars.sco
+%config /usr/share/dopewars.sco
 /usr/man/man6/dopewars.6
 /usr/share/locale/de/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pl/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
+
+%changelog
