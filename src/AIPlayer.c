@@ -60,6 +60,56 @@ static void AIHandleQuestion(char *Data,AICode AI,Player *AIPlay,Player *From);
 /*       out where these locations are for itself.          */
 int RealLoanShark,RealBank,RealGunShop,RealPub;
 
+static void AIConnectFailed(NetworkBuffer *netbuf) {
+  GString *errstr;
+
+  errstr = g_string_new(_("Connection closed by remote host"));
+  if (netbuf->error) g_string_assign_error(errstr,netbuf->error);
+  g_log(NULL,G_LOG_LEVEL_CRITICAL,
+        _("Could not connect to dopewars server\n(%s)\n"
+          "AI Player terminating abnormally."),errstr->str);
+  g_string_free(errstr,TRUE);
+}
+
+static void AIStartGame(Player *AIPlay) {
+  Client=Network=TRUE;
+  InitAbilities(AIPlay);
+  SendAbilities(AIPlay);
+
+  AISetName(AIPlay);
+  g_message(_("Connection established\n"));
+}
+
+static void DisplayConnectStatus(NetworkBuffer *netbuf,NBStatus oldstatus,
+                                 NBSocksStatus oldsocks) {
+  NBStatus status;
+  NBSocksStatus sockstat;
+
+  status = netbuf->status;
+  sockstat = netbuf->sockstat;
+  if (oldstatus==status && oldsocks==sockstat) return;
+
+  switch(status) {
+    case NBS_PRECONNECT:
+      break;
+    case NBS_SOCKSCONNECT:
+      switch(sockstat) {
+        case NBSS_METHODS:
+          g_print(_("Connected to SOCKS server %s...\n"),Socks.name);
+          break;
+        case NBSS_USERPASSWD:
+          g_print(_("Authenticating with SOCKS server\n"));
+          break;
+        case NBSS_CONNECT:
+          g_print(_("Asking SOCKS for connect to %s...\n"),ServerName);
+          break;
+      }
+      break;
+    case NBS_CONNECTED:
+      break;
+  }
+}
+
 void AIPlayerLoop() {
 /* Main loop for AI players. Connects to server, plays game, */
 /* and then disconnects.                                     */
@@ -67,45 +117,59 @@ void AIPlayerLoop() {
    gchar *msg;
    Player *AIPlay;
    fd_set readfs,writefs;
-   gboolean DoneOK,QuitRequest;
+   gboolean DoneOK,QuitRequest,datawaiting;
    int MaxSock;
+   NBStatus oldstatus;
+   NBSocksStatus oldsocks;
+   NetworkBuffer *netbuf;
 
    errstr=g_string_new("");
    AIPlay=g_new(Player,1);
    FirstClient=AddPlayer(0,AIPlay,FirstClient);
    g_message(_("AI Player started; attempting to contact server at %s:%d..."),
              ServerName,Port);
-   if (!SetupNetwork(errstr)) {
-      g_log(NULL,G_LOG_LEVEL_CRITICAL,
-            _("Could not connect to dopewars server\n(%s)\n"
-              "AI Player terminating abnormally."),errstr->str);
-      g_string_free(errstr,TRUE);
-      return;
-   }
-   BindNetworkBufferToSocket(&AIPlay->NetBuf,ClientSock);
-
-   InitAbilities(AIPlay);
-   SendAbilities(AIPlay);
-
-   AISetName(AIPlay);
-   g_message(_("Connection established\n"));
 
    /* Forget where the "special" locations are */
    RealLoanShark=RealBank=RealGunShop=RealPub=-1;
+
+   netbuf = &AIPlay->NetBuf;
+   oldstatus = netbuf->status;
+   oldsocks  = netbuf->sockstat;
+
+   if (!StartNetworkBufferConnect(netbuf,ServerName,Port)) {
+     AIConnectFailed(netbuf); return;
+   } else if (netbuf->status==NBS_CONNECTED) {
+     AIStartGame(AIPlay);
+   } else {
+     DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+   }
 
    while (1) {
       FD_ZERO(&readfs);
       FD_ZERO(&writefs);
       MaxSock=0;
 
-      SetSelectForNetworkBuffer(&AIPlay->NetBuf,&readfs,&writefs,NULL,&MaxSock);
+      SetSelectForNetworkBuffer(netbuf,&readfs,&writefs,NULL,&MaxSock);
 
+      oldstatus = netbuf->status;
+      oldsocks  = netbuf->sockstat;
       if (bselect(MaxSock,&readfs,&writefs,NULL,NULL)==-1) {
          if (errno==EINTR) continue;
          printf("Error in select\n"); exit(1);
       }
 
-      if (RespondToSelect(&AIPlay->NetBuf,&readfs,&writefs,NULL,&DoneOK)) {
+      datawaiting=RespondToSelect(netbuf,&readfs,&writefs,NULL,&DoneOK);
+
+      if (oldstatus!=NBS_CONNECTED &&
+          (netbuf->status==NBS_CONNECTED || !DoneOK)) {
+        if (DoneOK) AIStartGame(AIPlay);
+        else {
+          AIConnectFailed(netbuf); break;
+        }
+      } else if (netbuf->status!=NBS_CONNECTED) {
+        DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+      }
+      if (datawaiting && netbuf->status==NBS_CONNECTED) {
          QuitRequest=FALSE;
          while ((msg=GetWaitingPlayerMessage(AIPlay))!=NULL) {
             if (HandleAIMessage(msg,AIPlay)) {
@@ -113,7 +177,10 @@ void AIPlayerLoop() {
                break;
             }
          }
-         if (QuitRequest) break;
+         if (QuitRequest) {
+           g_print(_("AI Player terminated OK.\n"));
+           break;
+         }
       }
       if (!DoneOK) {
          g_print(_("Connection to server lost!\n"));
@@ -123,7 +190,6 @@ void AIPlayerLoop() {
    ShutdownNetwork(AIPlay);
    g_string_free(errstr,TRUE);
    FirstClient=RemovePlayer(AIPlay,FirstClient);
-   g_print(_("AI Player terminated OK.\n"));
 }
 
 void AISetName(Player *AIPlay) {

@@ -714,27 +714,6 @@ price_t GetNextPrice(gchar **Data,price_t Default) {
    if (Word) return strtoprice(Word); else return Default;
 }
 
-#if NETWORKING
-gboolean SetupNetwork(GString *errstr) {
-/* Sets up the connection from the client to the server. If the connection */
-/* is successful, Network and Client are set to TRUE, and ClientSock is a  */
-/* file descriptor for the newly-opened socket. TRUE is returned. If the   */
-/* connection fails, FALSE is returned, and errstr (if non-NULL) is filled */
-/* with a descriptive error message.                                       */
-   LastError *err;
-
-   Network=Client=Server=FALSE;
-   if (StartConnect(&ClientSock,ServerName,Port,FALSE,&err)) {
-     Client=Network=TRUE;
-     return TRUE;
-   } else {
-     if (errstr) g_string_assign_error(errstr,err);
-     FreeError(err);
-     return FALSE;
-   }
-}
-#endif /* NETWORKING */
-
 void SwitchToSinglePlayer(Player *Play) {
 /* Called when the client is pushed off the server, or the server  */
 /* terminates. Using the client information, starts a local server */

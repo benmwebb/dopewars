@@ -73,13 +73,16 @@ static void display_message(char *buf);
 static void print_location(char *text);
 static void print_status(Player *Play,gboolean DispDrug);
 static char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
-                        char *displaystr);
+                        char *displaystr,char passwdchar);
 static Player *ListPlayers(Player *Play,gboolean Select,char *Prompt);
 static void HandleClientMessage(char *buf,Player *Play);
 static void PrintMessage(const gchar *text);
 static void GunShop(Player *Play);
 static void LoanShark(Player *Play);
 static void Bank(Player *Play);
+static void HttpAuthFunc(HttpConnection *conn,gboolean proxyauth,
+                         gchar *realm,gpointer data);
+static void SocksAuthFunc(NetworkBuffer *netbuf,gpointer data);
 
 static DispMode DisplayMode;
 static gboolean QuitRequest;
@@ -208,10 +211,10 @@ static void SelectServerManually(void) {
    mvaddstr(17,1,
 /* Prompts for hostname and port when selecting a server manually */
             _("Please enter the hostname and port of a dopewars server:-"));
-   text=nice_input(_("Hostname: "),18,1,FALSE,ServerName);
+   text=nice_input(_("Hostname: "),18,1,FALSE,ServerName,'\0');
    AssignName(&ServerName,text); g_free(text);
    PortText=g_strdup_printf("%d",Port);
-   text=nice_input(_("Port: "),19,1,TRUE,PortText);
+   text=nice_input(_("Port: "),19,1,TRUE,PortText,'\0');
    Port=atoi(text);
    g_free(text); g_free(PortText);
 }
@@ -228,7 +231,7 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    gint index;
    fd_set readfds,writefds;
    int maxsock;
-   gboolean DoneOK;
+   gboolean DoneOK,authOK;
    HttpConnection *MetaConn;
 
    attrset(TextAttr);
@@ -236,7 +239,10 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    mvaddstr(17,1,_("Please wait... attempting to contact metaserver..."));
    refresh();
 
-   if (!OpenMetaHttpConnection(&MetaConn)) {
+   if (OpenMetaHttpConnection(&MetaConn)) {
+      SetHttpAuthFunc(MetaConn,HttpAuthFunc,&authOK);
+      SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf,SocksAuthFunc,&authOK);
+   } else {
       g_string_assign_error(errstr,MetaConn->NetBuf.error);
       CloseHttpConnection(MetaConn);
       return FALSE;
@@ -260,10 +266,11 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
         if (c=='\f') wrefresh(curscr);
 #endif
       }
+      authOK=TRUE; /* Gets set to FALSE if authentication fails */
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
          while (HandleWaitingMetaServerData(MetaConn,&ServerList,&DoneOK)) {}
       }
-      if (!DoneOK && HandleHttpCompletion(MetaConn)) {
+      if ((!DoneOK || !authOK) && HandleHttpCompletion(MetaConn)) {
          if (IsHttpError(MetaConn)) {
             g_string_assign_error(errstr,MetaConn->NetBuf.error);
             CloseHttpConnection(MetaConn);
@@ -331,11 +338,141 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
    return TRUE;
 }
 
+static void DisplayConnectStatus(NetworkBuffer *netbuf,
+                                 NBStatus oldstatus,NBSocksStatus oldsocks) {
+  NBStatus status;
+  NBSocksStatus sockstat;
+  GString *text;
+
+  status = netbuf->status;
+  sockstat = netbuf->sockstat;
+
+  if (oldstatus==status && oldsocks==sockstat) return;
+
+  text=g_string_new("");
+
+  switch(status) {
+    case NBS_PRECONNECT:
+      break;
+    case NBS_SOCKSCONNECT:
+      switch(sockstat) {
+        case NBSS_METHODS:
+          g_string_sprintf(text,_("Connected to SOCKS server %s..."),
+                           Socks.name);
+          break;
+        case NBSS_USERPASSWD:
+          g_string_assign(text,_("Authenticating with SOCKS server"));
+          break;
+        case NBSS_CONNECT:
+          g_string_sprintf(text,_("Asking SOCKS for connect to %s..."),
+                           ServerName);
+          break;
+      }
+      break;
+    case NBS_CONNECTED:
+      break;
+  }
+  if (text->str[0]) {
+    mvaddstr(17,1,text->str);
+    refresh();
+  }
+  g_string_free(text,TRUE);
+}
+
+void HttpAuthFunc(HttpConnection *conn,gboolean proxyauth,
+                  gchar *realm,gpointer data) {
+  gchar *text,*user,*password;
+  gboolean *authOK;
+
+  authOK = (gboolean *)data;
+
+  attrset(TextAttr);
+  clear_bottom();
+  if (proxyauth) {
+    text = g_strdup_printf(_("Proxy authentication required for realm %s"),
+                           realm);
+  } else {
+    text = g_strdup_printf(_("Authentication required for realm %s"),realm);
+  }
+  mvaddstr(17,1,text);
+  g_free(text);
+  
+  user=nice_input(_("User name: "),18,1,FALSE,NULL,'\0');
+  password=nice_input(_("Password: "),19,1,FALSE,NULL,'*');
+
+  *authOK = SetHttpAuthentication(conn,proxyauth,user,password);
+  g_free(user); g_free(password);
+}
+
+void SocksAuthFunc(NetworkBuffer *netbuf,gpointer data) {
+  gchar *user,*password;
+  gboolean *authOK;
+
+  authOK = (gboolean *)data;
+
+  attrset(TextAttr);
+  clear_bottom();
+  mvaddstr(17,1,_("SOCKS authentication required"));
+  
+  user=nice_input(_("User name: "),18,1,FALSE,NULL,'\0');
+  password=nice_input(_("Password: "),19,1,FALSE,NULL,'*');
+
+  *authOK = SendSocks5UserPasswd(netbuf,user,password);
+  g_free(user); g_free(password);
+}
+
+static gboolean DoConnect(Player *Play,GString *errstr) {
+  NetworkBuffer *netbuf;
+  fd_set readfds,writefds;
+  int maxsock,c;
+  gboolean doneOK=TRUE,authOK=TRUE;
+  NBStatus oldstatus;
+  NBSocksStatus oldsocks;
+
+  netbuf=&Play->NetBuf;
+  oldstatus = netbuf->status;
+  oldsocks  = netbuf->sockstat;
+
+  if (!StartNetworkBufferConnect(netbuf,ServerName,Port)) {
+    doneOK=FALSE;
+  } else {
+    SetNetworkBufferUserPasswdFunc(netbuf,SocksAuthFunc,&authOK);
+    if (netbuf->status!=NBS_CONNECTED) {
+      DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+      do {
+        FD_ZERO(&readfds); FD_ZERO(&writefds);
+        FD_SET(0,&readfds); maxsock=1;
+        SetSelectForNetworkBuffer(netbuf,&readfds,&writefds,NULL,&maxsock);
+        if (bselect(maxsock,&readfds,&writefds,NULL,NULL)==-1) {
+           if (errno==EINTR) { CheckForResize(Play); continue; }
+           perror("bselect"); exit(1);
+        }
+        if (FD_ISSET(0,&readfds)) {
+          /* So that Ctrl-L works */
+          c = getch();
+#ifndef CYGWIN
+          if (c=='\f') wrefresh(curscr);
+#endif
+        }
+        oldstatus = netbuf->status;
+        oldsocks  = netbuf->sockstat;
+        authOK=TRUE;
+        RespondToSelect(netbuf,&readfds,&writefds,NULL,&doneOK);
+        if (netbuf->status==NBS_CONNECTED) break;
+        DisplayConnectStatus(netbuf,oldstatus,oldsocks);
+      } while (doneOK && authOK);
+    }
+  }
+
+  if (!doneOK || !authOK) g_string_assign_error(errstr,netbuf->error);
+  return (doneOK && authOK);
+}
+
 static gboolean ConnectToServer(Player *Play) {
 /* Connects to a dopewars server. Prompts the user to select a server */
 /* if necessary. Returns TRUE, unless the user elected to quit the    */
 /* program rather than choose a valid server.                         */
-   gboolean MetaOK=TRUE,NetOK=TRUE;
+   gboolean MetaOK=TRUE,NetOK=TRUE,firstrun=FALSE;
    GString *errstr;
    gchar *text;
    int c;
@@ -354,24 +491,27 @@ static gboolean ConnectToServer(Player *Play) {
       ConnectMethod=CM_SINGLE;
       g_string_free(errstr,TRUE);
       return TRUE;
-   }
+   } else firstrun=TRUE;
+
    while (1) {
       attrset(TextAttr);
       clear_bottom();
-      if (MetaOK) {
+      if (MetaOK && !firstrun) {
          mvaddstr(17,1,
                   _("Please wait... attempting to contact dopewars server..."));
          refresh();
-         NetOK=SetupNetwork(errstr);
+         NetOK=DoConnect(Play,errstr);
       }
-      if (!NetOK || !MetaOK) {
+      if (!NetOK || !MetaOK || firstrun) {
+         firstrun=FALSE;
+         clear_line(16);
          clear_line(17);
          if (!MetaOK) {
 /* Display of an error while contacting the metaserver */
             mvaddstr(16,1,_("Cannot get metaserver details"));
             text=g_strdup_printf("   (%s)",errstr->str);
             mvaddstr(17,1,text); g_free(text);
-         } else {
+         } else if (!NetOK) {
 /* Display of an error message while trying to contact a dopewars server
    (the error message itself is displayed on the next screen line) */
             mvaddstr(16,1,_("Could not start multiplayer dopewars"));
@@ -381,16 +521,14 @@ static gboolean ConnectToServer(Player *Play) {
          MetaOK=NetOK=TRUE;
          attrset(PromptAttr);
          mvaddstr(18,1,
-                  _("Will you... C>onnect to a different host and/or port"));
+                  _("Will you... C>onnect to a named dopewars server"));
          mvaddstr(19,1,
                   _("            L>ist the servers on the metaserver, and "
                     "select one"));
          mvaddstr(20,1,
-                  _("            Q>uit (where you can start a server by "
-                    "typing "));
-         mvaddstr(21,1,
-                  _("                   dopewars -s < /dev/null & )"));
-         mvaddstr(22,1,_("         or P>lay single-player ? "));
+                  _("            Q>uit (where you can start a server "
+                    "by typing \"dopewars -s\")"));
+         mvaddstr(21,1,_("         or P>lay single-player ? "));
          attrset(TextAttr);
 
 /* Translate these 4 keys in line with the above options, keeping the order
@@ -399,19 +537,17 @@ static gboolean ConnectToServer(Player *Play) {
          switch(c) {
             case 'Q': g_string_free(errstr,TRUE);
                       return FALSE;
-            case 'P': ConnectMethod=CM_SINGLE;
-                      g_string_free(errstr,TRUE);
+            case 'P': g_string_free(errstr,TRUE);
                       return TRUE;
-            case 'L': ConnectMethod=CM_META;
-                      MetaOK=SelectServerFromMetaServer(Play,errstr);
+            case 'L': MetaOK=SelectServerFromMetaServer(Play,errstr);
                       break;
-            case 'C': ConnectMethod=CM_PROMPT;
-                      SelectServerManually();
+            case 'C': SelectServerManually();
                       break;
          }
       } else break;
    }
    g_string_free(errstr,TRUE);
+   Client=Network=TRUE;
    return TRUE;
 }
 #endif /* NETWORKING */
@@ -493,7 +629,7 @@ static void DropDrugs(Player *Play) {
          c--;
          if (c<'A') {
             addstr(Drug[i].Name);
-            buf=nice_input(_("How many do you drop? "),23,8,TRUE,NULL);
+            buf=nice_input(_("How many do you drop? "),23,8,TRUE,NULL,'\0');
             c=atoi(buf); g_free(buf);
             if (c>0) {
                g_string_sprintf(text,"drug^%d^%d",i,-c);
@@ -547,7 +683,7 @@ static void DealDrugs(Player *Play,gboolean Buy) {
                               CanAfford,CanCarry);
          mvaddstr(23,2,text);
          input=nice_input(_("How many do you buy? "),23,2+strlen(text),
-                          TRUE,NULL);
+                          TRUE,NULL,'\0');
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,c);
@@ -559,7 +695,7 @@ static void DealDrugs(Player *Play,gboolean Buy) {
          text=g_strdup_printf(_("You have %d. "),Play->Drugs[DrugNum].Carried);
          mvaddstr(23,2,text);
          input=nice_input(_("How many do you sell? "),23,2+strlen(text),
-                          TRUE,NULL);
+                          TRUE,NULL,'\0');
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,-c);
@@ -655,7 +791,7 @@ static void change_name(Player *Play,gboolean nullname) {
    gchar *NewName;
 
 /* Prompt for player to change his/her name */
-   NewName=nice_input(_("New name: "),23,0,FALSE,NULL);
+   NewName=nice_input(_("New name: "),23,0,FALSE,NULL,'\0');
 
    if (NewName[0]) {
       if (nullname) {
@@ -990,7 +1126,8 @@ void LoanShark(Player *Play) {
       attrset(PromptAttr);
 
 /* Prompt for paying back loans from the loan shark */
-      text=nice_input(_("How much money do you pay back? "),19,1,TRUE,NULL);
+      text=nice_input(_("How much money do you pay back? "),19,1,
+                      TRUE,NULL,'\0');
       attrset(TextAttr);
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
@@ -1029,7 +1166,7 @@ void Bank(Player *Play) {
       if (c=='L') return;
 
 /* Prompt for putting money in or taking money out of the bank */
-      text=nice_input(_("How much money? "),19,1,TRUE,NULL);
+      text=nice_input(_("How much money? "),19,1,TRUE,NULL,'\0');
 
       money=strtoprice(text); g_free(text);
       if (money<0) money=0;
@@ -1482,7 +1619,7 @@ Player *ListPlayers(Player *Play,gboolean Select,char *Prompt) {
 }
 
 char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
-                 char *displaystr) {
+                 char *displaystr,char passwdchar) {
 /* Displays the given "prompt" (if non-NULL) at coordinates sx,sy and   */
 /* allows the user to input a string, which is returned. This is a      */
 /* dynamically allocated string, and so must be freed by the calling    */
@@ -1491,6 +1628,8 @@ char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
 /* strtoprice routine understands this notation for a 1000000 or 1000   */
 /* multiplier) as well as a decimal point (. or ,)                      */
 /* If "displaystr" is non-NULL, it is taken as a default response.      */
+/* If "passwdchar" is non-zero, it is displayed instead of the user's   */
+/* keypresses (e.g. for entering passwords)                             */
    int i,c,x;
    gboolean DecimalPoint,Suffix;
    GString *text;
@@ -1505,7 +1644,11 @@ char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
    }
    attrset(TextAttr);
    if (displaystr) {
-      addstr(displaystr);
+      if (passwdchar) {
+        for (i=strlen(displaystr);i;i--) addch((guint)passwdchar);
+      } else {
+        addstr(displaystr);
+      }
       i=strlen(displaystr);
       text=g_string_new(displaystr);
    } else {
@@ -1530,16 +1673,16 @@ char *nice_input(char *prompt,int sy,int sx,gboolean digitsonly,
                  (!digitsonly && c>=32 && c!='^' && c<127)) {
             g_string_append_c(text,c);
             i++;
-            addch((guint)c);
+            addch((guint)passwdchar ? passwdchar : c);
          } else if (digitsonly && (c=='.' || c==',') && !DecimalPoint) {
             g_string_append_c(text,'.');
-            addch((guint)c);
+            addch((guint)passwdchar ? passwdchar : c);
             DecimalPoint=TRUE;
          } else if (digitsonly && (c=='M' || c=='m' || c=='k' || c=='K')
                     && !Suffix) {
             g_string_append_c(text,c);
             i++;
-            addch((guint)c);
+            addch((guint)passwdchar ? passwdchar : c);
             Suffix=TRUE;
          }
       }
@@ -1574,6 +1717,7 @@ static void Curses_DoGame(Player *Play) {
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
+   gboolean justconnected=FALSE;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
@@ -1596,12 +1740,12 @@ static void Curses_DoGame(Player *Play) {
    buf=NULL;
    do {
       g_free(buf);
-      buf=nice_input(_("Hey dude, what's your name? "),17,1,FALSE,OldName);
+      buf=nice_input(_("Hey dude, what's your name? "),17,1,FALSE,OldName,'\0');
    } while (buf[0]==0);
 #if NETWORKING
    if (WantNetwork) {
       if (!ConnectToServer(Play)) { end_curses(); exit(1); }
-      BindNetworkBufferToSocket(&Play->NetBuf,ClientSock);
+      justconnected=TRUE;
    }
 #endif /* NETWORKING */
    print_status(Play,TRUE);
@@ -1710,6 +1854,15 @@ static void Curses_DoGame(Player *Play) {
       FD_ZERO(&writefs);
       FD_SET(0,&readfs); MaxSock=1;
       if (Client) {
+         if (justconnected) {
+/* Deal with any messages that came in while we were connect()ing */
+           justconnected=FALSE;
+           while ((pt=GetWaitingPlayerMessage(Play))!=NULL) {
+             HandleClientMessage(pt,Play);
+             g_free(pt);
+           }
+           if (QuitRequest) return;
+         }
          SetSelectForNetworkBuffer(&Play->NetBuf,&readfs,&writefs,
                                    NULL,&MaxSock);
       }
@@ -1803,7 +1956,7 @@ static void Curses_DoGame(Player *Play) {
                if (tmp) {
                   attrset(TextAttr); clear_line(22);
 /* Prompt for sending player-player messages */
-                  TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL);
+                  TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL,'\0');
                   if (TalkMsg[0]) {
                      SendClientMessage(Play,C_NONE,C_MSGTO,tmp,TalkMsg);
                      buf=g_strdup_printf("%s->%s: %s",GetPlayerName(Play),
@@ -1815,7 +1968,7 @@ static void Curses_DoGame(Player *Play) {
                }
             } else if (c=='T' && Client) {
                attrset(TextAttr); clear_line(22);
-               TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL);
+               TalkMsg=nice_input(_("Talk: "),22,0,FALSE,NULL,'\0');
                if (TalkMsg[0]) {
                   SendClientMessage(Play,C_NONE,C_MSG,NULL,TalkMsg);
                   buf=g_strdup_printf("%s: %s",GetPlayerName(Play),TalkMsg);

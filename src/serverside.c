@@ -138,6 +138,7 @@ static void MetaSocketStatus(NetworkBuffer *NetBuf,
                              gboolean Read,gboolean Write);
 #endif
 
+#ifdef NETWORKING
 static gboolean MetaConnectError(HttpConnection *conn) {
    GString *errstr;
    if (!IsHttpError(conn)) return FALSE;
@@ -148,6 +149,7 @@ static gboolean MetaConnectError(HttpConnection *conn) {
    g_string_free(errstr,TRUE);
    return TRUE;
 }
+#endif
 
 void RegisterWithMetaServer(gboolean Up,gboolean SendData,
                             gboolean RespectTimeout) {
@@ -808,7 +810,6 @@ Player *HandleNewConnection(void) {
        &cadsize))==-1) {
       perror("accept socket"); bgetch(); exit(1);
    }
-   SetBlocking(ClientSock,FALSE);
    dopelog(2,_("got connection from %s"),inet_ntoa(ClientAddr.sin_addr));
    tmp=g_new(Player,1);
    FirstServer=AddPlayer(ClientSock,tmp,FirstServer);

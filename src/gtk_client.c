@@ -94,12 +94,17 @@ static void ListInventory(GtkWidget *widget,gpointer data);
 static void NewGameDialog(void);
 static void StartGame(void);
 static void EndGame(void);
+static void Jet(GtkWidget *parent);
 static void UpdateMenus(void);
+
+#ifdef NETWORKING
+static void DisplayConnectStatus(struct StartGameStruct *widgets,gboolean meta,
+                                 NBStatus oldstatus,NBSocksStatus oldsocks);
 static void AuthDialog(HttpConnection *conn,
                        gboolean proxyauth,gchar *realm,
                        gpointer data);
-
-#ifdef NETWORKING
+static void MetaSocksAuthDialog(NetworkBuffer *netbuf,gpointer data);
+static void SocksAuthDialog(NetworkBuffer *netbuf,gpointer data);
 static void GetClientMessage(gpointer data,gint socket,
                              GdkInputCondition condition);
 static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
@@ -127,7 +132,6 @@ static void UpdateInventory(struct InventoryWidgets *Inven,
                             Inventory *Objects,int NumObjects,
                             gboolean AreDrugs);
 static void JetButtonPressed(GtkWidget *widget,gpointer data);
-static void Jet(void);
 static void DealDrugs(GtkWidget *widget,gpointer data);
 static void DealGuns(GtkWidget *widget,gpointer data);
 static void QuestionDialog(char *Data,Player *From);
@@ -170,7 +174,9 @@ static GtkItemFactoryEntry menu_items[] = {
    { N_("/_Errands"),NULL,NULL,0,"<Branch>" },
    { N_("/Errands/_Spy..."),NULL,SpyOnPlayer,0,NULL },
    { N_("/Errands/_Tipoff..."),NULL,TipOff,0,NULL },
-   { N_("/Errands/Sack _Bitch..."),NULL,SackBitch,0,NULL },
+/* N.B. "Sack Bitch" has to be recreated (and thus translated) at the start
+   of each game, below, so is not marked for gettext here */
+   { "/Errands/S_ack Bitch...",NULL,SackBitch,0,NULL },
    { N_("/Errands/_Get spy reports..."),NULL,GetSpyReports,0,NULL },
    { N_("/_Help"),NULL,NULL,0,"<LastBranch>" },
    { N_("/Help/_About..."),"F1",display_intro,0,NULL }
@@ -282,33 +288,45 @@ void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
    NetworkBuffer *NetBuf;
-   gboolean DoneOK,Connecting;
+   gboolean DoneOK,datawaiting;
+   NBStatus status,oldstatus;
+   NBSocksStatus oldsocks;
 
    NetBuf = &ClientData.Play->NetBuf;
-   Connecting = NetBuf->status != NBS_CONNECTED;
-   if (PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
-                           condition&GDK_INPUT_WRITE,&DoneOK) && !Connecting) {
-      while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
-         HandleClientMessage(pt,ClientData.Play);
-         g_free(pt);
-      }
+
+   oldstatus = NetBuf->status;
+   oldsocks = NetBuf->sockstat;
+
+   datawaiting = PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
+                                     condition&GDK_INPUT_WRITE,&DoneOK);
+
+   status = NetBuf->status;
+
+   if (status!=NBS_CONNECTED) {
+/* The start game dialog isn't visible once we're connected... */
+     DisplayConnectStatus((struct StartGameStruct *)data,FALSE,
+                          oldstatus,oldsocks);
    }
-   if (Connecting && (NetBuf->status==NBS_CONNECTED || !DoneOK)) {
-      FinishServerConnect(data,DoneOK);
-      if (DoneOK) {   /* Just in case, clean up any messages that came in */
-         while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
-            HandleClientMessage(pt,ClientData.Play);
-            g_free(pt);
-         }
-      }
-   } else if (!DoneOK) {
-      if (InGame) {
+
+   if (oldstatus!=NBS_CONNECTED && (status==NBS_CONNECTED || !DoneOK)) {
+     FinishServerConnect(data,DoneOK);
+   }
+   if (status==NBS_CONNECTED && datawaiting) {
+     while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
+       HandleClientMessage(pt,ClientData.Play);
+       g_free(pt);
+     }
+   }
+   if (!DoneOK) {
+     if (status==NBS_CONNECTED) {
 /* The network connection to the server was dropped unexpectedly */
-         g_warning(_("Connection to server lost - switching to "
-                   "single player mode"));
-         SwitchToSinglePlayer(ClientData.Play);
-         UpdateMenus();
-      }
+       g_warning(_("Connection to server lost - switching to "
+                 "single player mode"));
+       SwitchToSinglePlayer(ClientData.Play);
+       UpdateMenus();
+     } else {
+       ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
+     }
    }
 }
 
@@ -355,7 +373,6 @@ void HandleClientMessage(char *pt,Player *Play) {
          DisplayFightMessage(Data); break;
       case C_PUSH:
 /* The server admin has asked us to leave - so warn the user, and do so */
-         ShutdownNetworkBuffer(&Play->NetBuf);
          g_warning(_("You have been pushed from the server.\n"
                      "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
@@ -363,7 +380,6 @@ void HandleClientMessage(char *pt,Player *Play) {
          break;
       case C_QUIT:
 /* The server has sent us notice that it is shutting down */
-         ShutdownNetworkBuffer(&Play->NetBuf);
          g_warning(_("The server has terminated.\n"
                      "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
@@ -415,6 +431,15 @@ void HandleClientMessage(char *pt,Player *Play) {
          PrintMessage(text); g_free(text);
          break;
       case C_ENDLIST:
+         MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
+                                              "<main>/Errands/Sack Bitch...");
+
+/* Text for the Errands/Sack Bitch menu item */
+         text=dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde"),
+                                Names.Bitch);
+         SetAccelerator(MenuItem,text,NULL,NULL,NULL);
+         g_free(text);
+
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Spy...");
 
@@ -656,8 +681,8 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
          if (CanRunHere) {
             SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,"R");
          } else {
-            gtk_widget_hide(FightDialog);
-            Jet();
+/*          gtk_widget_hide(FightDialog);*/
+            Jet(FightDialog);
          }
          break;
       case 'F': case 'S':
@@ -1135,11 +1160,11 @@ void JetButtonPressed(GtkWidget *widget,gpointer data) {
    if (ClientData.Play->Flags & FIGHTING) {
       DisplayFightMessage(NULL);
    } else {
-      Jet();
+      Jet(NULL);
    }
 }
 
-void Jet(void) {
+void Jet(GtkWidget *parent) {
    GtkWidget *dialog,*table,*button,*label,*vbox;
    GtkAccelGroup *accel_group;
    gint boxsize,i,row,col;
@@ -1155,7 +1180,8 @@ void Jet(void) {
    gtk_window_add_accel_group(GTK_WINDOW(dialog),accel_group);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
-                                GTK_WINDOW(ClientData.window));
+                                parent ? GTK_WINDOW(parent)
+                                       : GTK_WINDOW(ClientData.window));
 
    vbox=gtk_vbox_new(FALSE,7);
 
@@ -1901,7 +1927,10 @@ _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 /* Label at the bottom of GTK+ 'about' dialog */
 _("\nFor information on the command line options, type dopewars -h at your\n"
 "Unix prompt. This will display a help screen, listing the available "
-"options."));
+"options.\n"));
+   gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
+
+   label=gtk_label_new("http://dopewars.sourceforge.net/");
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 
    hsep=gtk_hseparator_new();
@@ -1934,12 +1963,12 @@ static gboolean GetStartGamePlayerName(struct StartGameStruct *widgets,
    }
 }
 
-#ifdef NETWORKING
 static void SetStartGameStatus(struct StartGameStruct *widgets,gchar *msg) {
    gtk_label_set_text(GTK_LABEL(widgets->status),
                       msg ? msg : _("Status: Waiting for user input"));
 }
 
+#ifdef NETWORKING
 static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
    GString *neterr;
    gchar *text;
@@ -1948,10 +1977,13 @@ static void ConnectError(struct StartGameStruct *widgets,gboolean meta) {
    if (meta) error=widgets->MetaConn->NetBuf.error;
    else error=ClientData.Play->NetBuf.error;
 
-   if (!error) return;
-
    neterr = g_string_new("");
-   g_string_assign_error(neterr,error);
+
+   if (error) {
+     g_string_assign_error(neterr,error);
+   } else {
+     g_string_assign(neterr,_("Connection closed by remote host"));
+   }
 
    if (meta) {
 /* Error: GTK+ client could not connect to the metaserver */
@@ -1978,19 +2010,28 @@ void FinishServerConnect(struct StartGameStruct *widgets,gboolean ConnectOK) {
 
 static void DoConnect(struct StartGameStruct *widgets) {
    gchar *text;
+   NetworkBuffer *NetBuf;
+   NBStatus oldstatus;
+   NBSocksStatus oldsocks;
+
+   NetBuf=&ClientData.Play->NetBuf;
+
 /* Message displayed during the attempted connect to a dopewars server */
    text=g_strdup_printf(_("Status: Attempting to contact %s..."),ServerName);
    SetStartGameStatus(widgets,text); g_free(text);
 
 /* Terminate any existing connection attempts */
-   ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
+   ShutdownNetworkBuffer(NetBuf);
    if (widgets->MetaConn) {
       CloseHttpConnection(widgets->MetaConn); widgets->MetaConn=NULL;
    }
 
-   if (StartNetworkBufferConnect(&ClientData.Play->NetBuf,ServerName,Port)) {
-      SetNetworkBufferCallBack(&ClientData.Play->NetBuf,SocketStatus,
-                               (gpointer)widgets);
+   oldstatus = NetBuf->status;
+   oldsocks = NetBuf->sockstat;
+   if (StartNetworkBufferConnect(NetBuf,ServerName,Port)) {
+      DisplayConnectStatus(widgets,FALSE,oldstatus,oldsocks);
+      SetNetworkBufferUserPasswdFunc(NetBuf,SocksAuthDialog,(gpointer)widgets);
+      SetNetworkBufferCallBack(NetBuf,SocketStatus,(gpointer)widgets);
    } else {
       ConnectError(widgets,FALSE);
    }
@@ -2051,15 +2092,19 @@ static void FillMetaServerList(struct StartGameStruct *widgets,
    gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
-static void DisplayConnectStatus(struct StartGameStruct *widgets,
-                                 gboolean meta,
-                                 NBStatus oldstatus,NBSocksStatus oldsocks) {
+void DisplayConnectStatus(struct StartGameStruct *widgets,gboolean meta,
+                          NBStatus oldstatus,NBSocksStatus oldsocks) {
   NBStatus status;
   NBSocksStatus sockstat;
   gchar *text;
 
-  status = widgets->MetaConn->NetBuf.status;
-  sockstat = widgets->MetaConn->NetBuf.sockstat;
+  if (meta) {
+    status = widgets->MetaConn->NetBuf.status;
+    sockstat = widgets->MetaConn->NetBuf.sockstat;
+  } else {
+    status = ClientData.Play->NetBuf.status;
+    sockstat = ClientData.Play->NetBuf.sockstat;
+  }
   if (oldstatus==status && sockstat==oldsocks) return;
 
   switch (status) {
@@ -2078,13 +2123,13 @@ static void DisplayConnectStatus(struct StartGameStruct *widgets,
           break;
         case NBSS_CONNECT:
           text=g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
-                               MetaServer.Name);
+                               meta ? MetaServer.Name : ServerName);
           SetStartGameStatus(widgets,text); g_free(text);
           break;
       }
       break;
     case NBS_CONNECTED:
-      SetStartGameStatus(widgets,
+      if (meta) SetStartGameStatus(widgets,
            _("Status: Obtaining server information from metaserver..."));
       break;
   }
@@ -2162,6 +2207,8 @@ static void UpdateMetaServerList(GtkWidget *widget,
    if (OpenMetaHttpConnection(&widgets->MetaConn)) {
       metaserv=widgets->metaserv;
       SetHttpAuthFunc(widgets->MetaConn,AuthDialog,(gpointer)widgets);
+      SetNetworkBufferUserPasswdFunc(&widgets->MetaConn->NetBuf,
+                                     MetaSocksAuthDialog,(gpointer)widgets);
       SetNetworkBufferCallBack(&widgets->MetaConn->NetBuf,
                                MetaSocketStatus,(gpointer)widgets);
    } else {
@@ -2875,7 +2922,8 @@ void SackBitch(GtkWidget *widget,gpointer data) {
    if (ClientData.Play->Bitches.Carried<=0) return;
 
 /* Title of dialog to sack a bitch (%Tde = "Bitch" by default) */
-   title=dpg_strdup_printf(_("Sack %Tde"),Names.Bitch);
+   title=dpg_strdup_printf(_("%/Sack Bitch dialog title/Sack %Tde"),
+                           Names.Bitch);
 
 /* Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
    "bitch", respectively, by default) */
@@ -3168,6 +3216,7 @@ void DisplaySpyReports(Player *Play) {
    gtk_widget_show_all(notebook);
 }
 
+#ifdef NETWORKING
 static void OKAuthDialog(GtkWidget *widget,GtkWidget *window) {
    gtk_object_set_data(GTK_OBJECT(window),"authok",GINT_TO_POINTER(TRUE));
    gtk_widget_destroy(window);
@@ -3239,7 +3288,7 @@ void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm,
 
    vbox=gtk_vbox_new(FALSE,7);
 
-   table=gtk_table_new(3,3,FALSE);
+   table=gtk_table_new(3,2,FALSE);
    gtk_table_set_row_spacings(GTK_TABLE(table),10);
    gtk_table_set_col_spacings(GTK_TABLE(table),5);
 
@@ -3292,6 +3341,128 @@ void AuthDialog(HttpConnection *conn,gboolean proxy,gchar *realm,
    gtk_container_add(GTK_CONTAINER(window),vbox);
    gtk_widget_show_all(window);
 }
+
+static void OKSocksAuth(GtkWidget *widget,GtkWidget *window) {
+   gtk_object_set_data(GTK_OBJECT(window),"authok",GINT_TO_POINTER(TRUE));
+   gtk_widget_destroy(window);
+}
+
+static void DestroySocksAuth(GtkWidget *window,gpointer data) {
+   GtkWidget *userentry,*passwdentry;
+   gchar *username=NULL,*password=NULL;
+   gpointer authok,meta;
+   NetworkBuffer *netbuf;
+   struct StartGameStruct *widgets;
+   NBStatus oldstatus;
+   NBSocksStatus oldsocks;
+
+   authok = gtk_object_get_data(GTK_OBJECT(window),"authok");
+   meta = gtk_object_get_data(GTK_OBJECT(window),"meta");
+   userentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),"username");
+   passwdentry = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window),
+                                                  "password");
+   netbuf = (NetworkBuffer *)gtk_object_get_data(GTK_OBJECT(window),"netbuf");
+   widgets = (struct StartGameStruct *)gtk_object_get_data(GTK_OBJECT(window),
+                                                           "widgets");
+
+   g_assert(userentry && passwdentry && netbuf);
+
+   if (authok) {
+     username = gtk_editable_get_chars(GTK_EDITABLE(userentry),0,-1);
+     password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry),0,-1);
+   }
+
+   oldstatus = netbuf->status;
+   oldsocks = netbuf->sockstat;
+   if (!SendSocks5UserPasswd(netbuf,username,password)) {
+     if (meta) MetaDone(widgets); else ConnectError(widgets,FALSE);
+   } else {
+     DisplayConnectStatus(widgets,GPOINTER_TO_INT(meta),oldstatus,oldsocks);
+   }
+   g_free(username); g_free(password);
+}
+
+static void RealSocksAuthDialog(NetworkBuffer *netbuf,gboolean meta,
+                                gpointer data) {
+   GtkWidget *window,*button,*hsep,*vbox,*label,*entry,*table,*hbbox;
+   struct StartGameStruct *widgets;
+
+   widgets = (struct StartGameStruct *)data;
+
+   window=gtk_window_new(GTK_WINDOW_DIALOG);
+   gtk_signal_connect(GTK_OBJECT(window),"destroy",
+                      GTK_SIGNAL_FUNC(DestroySocksAuth),NULL);
+   gtk_object_set_data(GTK_OBJECT(window),"netbuf",(gpointer)netbuf);
+   gtk_object_set_data(GTK_OBJECT(window),"meta",GINT_TO_POINTER(meta));
+   gtk_object_set_data(GTK_OBJECT(window),"widgets",(gpointer)widgets);
+
+/* Title of dialog for authenticating with a SOCKS server */
+   gtk_window_set_title(GTK_WINDOW(window),_("SOCKS Authentication Required"));
+
+   gtk_window_set_modal(GTK_WINDOW(window),TRUE);
+   gtk_window_set_transient_for(GTK_WINDOW(window),
+                                GTK_WINDOW(ClientData.window));
+   gtk_container_set_border_width(GTK_CONTAINER(window),7);
+
+   vbox=gtk_vbox_new(FALSE,7);
+
+   table=gtk_table_new(2,2,FALSE);
+   gtk_table_set_row_spacings(GTK_TABLE(table),10);
+   gtk_table_set_col_spacings(GTK_TABLE(table),5);
+
+   label=gtk_label_new("User name:");
+   gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,0,1);
+
+   entry=gtk_entry_new();
+   gtk_object_set_data(GTK_OBJECT(window),"username",(gpointer)entry);
+   gtk_table_attach_defaults(GTK_TABLE(table),entry,1,2,0,1);
+
+   label=gtk_label_new("Password:");
+   gtk_table_attach_defaults(GTK_TABLE(table),label,0,1,1,2);
+
+   entry=gtk_entry_new();
+   gtk_object_set_data(GTK_OBJECT(window),"password",(gpointer)entry);
+
+#ifdef HAVE_FIXED_GTK
+   /* GTK+ versions earlier than 1.2.10 do bad things with this */
+   gtk_entry_set_visibility(GTK_ENTRY(entry),FALSE);
+#endif
+
+   gtk_table_attach_defaults(GTK_TABLE(table),entry,1,2,1,2);
+
+   gtk_box_pack_start(GTK_BOX(vbox),table,TRUE,TRUE,0);
+
+   hsep=gtk_hseparator_new();
+   gtk_box_pack_start(GTK_BOX(vbox),hsep,FALSE,FALSE,0);
+
+   hbbox = gtk_hbutton_box_new();
+
+   button=gtk_button_new_with_label(_("OK"));
+   gtk_signal_connect(GTK_OBJECT(button),"clicked",
+                      GTK_SIGNAL_FUNC(OKSocksAuth),(gpointer)window);
+   gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+
+   button=gtk_button_new_with_label(_("Cancel"));
+   gtk_signal_connect_object(GTK_OBJECT(button),"clicked",
+                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                             (gpointer)window);
+   gtk_box_pack_start(GTK_BOX(hbbox),button,TRUE,TRUE,0);
+
+   gtk_box_pack_start(GTK_BOX(vbox),hbbox,TRUE,TRUE,0);
+
+   gtk_container_add(GTK_CONTAINER(window),vbox);
+   gtk_widget_show_all(window);
+}
+
+void MetaSocksAuthDialog(NetworkBuffer *netbuf,gpointer data) {
+  RealSocksAuthDialog(netbuf,TRUE,data);
+}
+
+void SocksAuthDialog(NetworkBuffer *netbuf,gpointer data) {
+  RealSocksAuthDialog(netbuf,FALSE,data);
+}
+
+#endif /* NETWORKING */
 
 #else
 

@@ -109,7 +109,6 @@ gchar *GetNextWord(gchar **Data,gchar *Default);
 void AssignNextWord(gchar **Data,gchar **Dest);
 int GetNextInt(gchar **Data,int Default);
 price_t GetNextPrice(gchar **Data,price_t Default);
-gboolean SetupNetwork(GString *errstr);
 void ShutdownNetwork(Player *Play);
 void SwitchToSinglePlayer(Player *Play);
 int ProcessMessage(char *Msg,Player *Play,Player **Other,AICode *AI,

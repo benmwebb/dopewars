@@ -65,7 +65,7 @@ typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack)(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
 
-typedef void (*NBUserPasswd)(NetworkBuffer *NetBuf);
+typedef void (*NBUserPasswd)(NetworkBuffer *NetBuf,gpointer data);
 
 /* Information about a SOCKS server */
 typedef struct _SocksServer {
@@ -108,6 +108,7 @@ struct _NetworkBuffer {
    SocksServer *socks;      /* If non-NULL, a SOCKS server to use */
    NBUserPasswd userpasswd; /* Function to supply username and password for
                                SOCKS5 authentication */  
+   gpointer userpasswddata; /* data to pass to the above function */
    gchar *host;             /* If non-NULL, the host to connect to */
    unsigned port;           /* If non-NULL, the port to connect to */
    LastError *error;        /* Any error from the last operation */
@@ -160,7 +161,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator,char StripChar,
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf,NBCallBack CallBack,
                               gpointer CallBackData);
 void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
-                                    NBUserPasswd userpasswd);
+                                    NBUserPasswd userpasswd,gpointer data);
 gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,gchar *RemoteHost,
@@ -180,6 +181,11 @@ gint CountWaitingMessages(NetworkBuffer *NetBuf);
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
 gboolean SendSocks5UserPasswd(NetworkBuffer *NetBuf,gchar *user,
                               gchar *password);
+gchar *GetWaitingData(NetworkBuffer *NetBuf,int numbytes);
+gchar *PeekWaitingData(NetworkBuffer *NetBuf,int numbytes);
+gchar *ExpandWriteBuffer(ConnBuf *conn,int numbytes,LastError **error);
+void CommitWriteBuffer(NetworkBuffer *NetBuf,ConnBuf *conn,
+                       gchar *addpt,guint addlen);
 
 gboolean OpenHttpConnection(HttpConnection **conn,gchar *HostName,
                             unsigned Port,gchar *Proxy,unsigned ProxyPort,
@@ -196,8 +202,6 @@ gboolean IsHttpError(HttpConnection *conn);
 
 int CreateTCPSocket(LastError **error);
 gboolean BindTCPSocket(int sock,unsigned port,LastError **error);
-gboolean StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
-                      gboolean NonBlocking,LastError **error);
 void StartNetworking(void);
 void StopNetworking(void);
 
