@@ -44,6 +44,19 @@ char *oldversion=NULL;
 DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
 
+/* Returns TRUE if this operating system version supports NT Services */
+BOOL ServicesSupported(void) {
+  SC_HANDLE scManager;
+
+  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_CONNECT);
+  if (scManager) {
+    CloseServiceHandle(scManager);
+  } else if (GetLastError()==ERROR_CALL_NOT_IMPLEMENTED) {
+    return FALSE;
+  } 
+  return TRUE;
+}
+
 void InstallService(InstData *idata) {
   SC_HANDLE scManager,scService;
   HKEY key;
