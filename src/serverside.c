@@ -1365,6 +1365,11 @@ void CheckForKilledPlayers(Player *Play) {
    for (ArrayInd=0;ArrayInd<KilledPlayers->len;ArrayInd++) {
       Defend=(Player *)g_ptr_array_index(KilledPlayers,ArrayInd);
       WithdrawFromCombat(Defend);
+      if (Defend->IsCop) {
+         FirstServer=RemovePlayer(Defend,FirstServer);
+      } else {
+         FinishGame(Defend,_("You're dead! Game over."));
+      }
    }
 
    g_ptr_array_free(KilledPlayers,FALSE);
@@ -1464,6 +1469,8 @@ void WithdrawFromCombat(Player *Play) {
          Defend->FightArray=NULL;
          if (Defend->IsCop) {
             FirstServer=RemovePlayer(Defend,FirstServer);
+         } else if (Defend->Health==0) {
+            FinishGame(Defend,_("You're dead! Game over."));
          } else {
             Defend->EventNum=Defend->ResyncNum; SendEvent(Defend);
          }
