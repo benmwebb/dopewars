@@ -154,10 +154,6 @@ typedef enum {
   PEYOTE, SHROOMS, SPEED, WEED
 } DrugIndex;
 
-typedef enum {
-  LF_SERVER = (1 << 0)
-} LogFlags;
-
 struct LOG {
   gchar *File;
   gint Level;
@@ -428,14 +424,8 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
 gboolean SetConfigValue(int GlobalIndex, int StructIndex,
                         gboolean IndexGiven, GScanner *scanner);
 gboolean IsCop(Player *Play);
-void dopelog(const int loglevel, const LogFlags flags,
-             const gchar *format, ...);
-GLogLevelFlags LogMask(void);
-GString *GetLogString(GLogLevelFlags log_level, const gchar *message);
 void RestoreConfig(void);
 void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error);
-void OpenLog(void);
-void CloseLog(void);
 gboolean IsConnectedPlayer(Player *play);
 void BackupConfig(void);
 void WriteConfigFile(FILE *fp);

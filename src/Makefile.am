@@ -25,9 +25,9 @@ dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @INTLL
 
 bin_PROGRAMS = dopewars
 dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
-                   dopewars.c dopewars.h error.c error.h message.c message.h \
-                   network.c network.h nls.h serverside.c serverside.h \
-                   sound.c sound.h \
+                   dopewars.c dopewars.h error.c error.h log.c log.h \
+                   message.c message.h network.c network.h nls.h \
+                   serverside.c serverside.h sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
 INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@
 DEFS       = @DEFS@ -DLOCALEDIR=\"${localedir}\" @PLUGINDEF@
