@@ -175,7 +175,7 @@ void SendServerMessage(Player *From,char AICode,char Code,
 /* code "AICode", human-readable code "Code" and data "Data", claiming    */
 /* to be from player "From"                                               */
    GString *text;
-   if (To->IsCop) return;
+   if (IsCop(To)) return;
    text=g_string_new(NULL);
    if (HaveAbility(To,A_PLAYERID)) {
       if (From) g_string_sprintfa(text,"%d",From->ID);
@@ -1093,9 +1093,9 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
    int Health,Bitches;
    gchar *BitchName,*BitchesName;
 
-   if (Defender && Defender->IsCop) {
-      BitchName=Cop[Defender->IsCop-1].DeputyName;
-      BitchesName=Cop[Defender->IsCop-1].DeputiesName;
+   if (Defender && IsCop(Defender)) {
+      BitchName=Cop[Defender->CopIndex-1].DeputyName;
+      BitchesName=Cop[Defender->CopIndex-1].DeputiesName;
    } else {
       BitchName=Names.Bitch;
       BitchesName=Names.Bitches;

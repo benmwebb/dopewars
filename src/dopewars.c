@@ -103,8 +103,7 @@ GScannerConfig ScannerConfig = {
 struct LOCATION StaticLocation,*Location=NULL;
 struct DRUG StaticDrug,*Drug=NULL;
 struct GUN StaticGun,*Gun=NULL;
-struct COP *Cop=NULL;
-struct COPS Cops = { 70,2,65,2,5,2,30 };
+struct COP StaticCop,*Cop=NULL;
 struct NAMES Names = { NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
                        NULL,NULL,NULL,NULL };
 struct NAMES DefaultNames = {
@@ -164,7 +163,7 @@ struct GLOBALS Globals[NUMGLOB] = {
    { &Sanitized,NULL,NULL,NULL,"Sanitized",N_("Random events are sanitized"),
      NULL,NULL,0,"",NULL,NULL },
    { &DrugValue,NULL,NULL,NULL,"DrugValue",
-     N_("Non-zero if the total value of bought drugs should be stored"),
+     N_("Non-zero if the value of bought drugs should be saved"),
      NULL,NULL,0,"",NULL,NULL },
    { &ConfigVerbose,NULL,NULL,NULL,"ConfigVerbose",
      N_("Be verbose in processing config file"),NULL,NULL,0,"",NULL,NULL },
@@ -172,6 +171,9 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("Number of locations in the game"),
      (void **)(&Location),NULL,sizeof(struct LOCATION),"",NULL,
      ResizeLocations },
+   { &NumCop,NULL,NULL,NULL,"NumCop",
+     N_("Number of types of cop in the game"),
+     (void **)(&Cop),NULL,sizeof(struct COP),"",NULL,ResizeCops },
    { &NumGun,NULL,NULL,NULL,"NumGun",N_("Number of guns in the game"),
      (void **)(&Gun),NULL,sizeof(struct GUN),"",NULL,ResizeGuns },
    { &NumDrug,NULL,NULL,NULL,"NumDrug",N_("Number of drugs in the game"),
@@ -231,6 +233,36 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("Maximum number of drugs at each location"),
      (void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
+   { NULL,NULL,&StaticCop.Name,NULL,"Name",
+     N_("Name of each cop"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { NULL,NULL,&StaticCop.DeputyName,NULL,"DeputyName",
+     N_("Name of each cop's deputy"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { NULL,NULL,&StaticCop.DeputiesName,NULL,"DeputiesName",
+     N_("Name of each cop's deputies"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.Health,NULL,NULL,NULL,"Health",
+     N_("Health of each cop"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.DeputyHealth,NULL,NULL,NULL,"DeputyHealth",
+     N_("Health of each cop's deputy"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.AttackPenalty,NULL,NULL,NULL,"AttackPenalty",
+     N_("Attack penalty relative to a player"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.DefendPenalty,NULL,NULL,NULL,"DefendPenalty",
+     N_("Defend penalty relative to a player"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.MinDeputies,NULL,NULL,NULL,"MinDeputies",
+     N_("Minimum number of accompanying deputies"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.MaxDeputies,NULL,NULL,NULL,"MaxDeputies",
+     N_("Maximum number of accompanying deputies"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.GunIndex,NULL,NULL,NULL,"GunIndex",
+     N_("Zero-based index of the gun that cops are armed with"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
    { NULL,NULL,&StaticDrug.Name,NULL,"Name",
      N_("Name of each drug"),
      (void **)(&Drug),&StaticDrug,
@@ -283,27 +315,6 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("Damage done by each gun"),
      (void **)(&Gun),&StaticGun,
      sizeof(struct GUN),"Gun",&NumGun,NULL },
-   { &(Cops.EscapeProb),NULL,NULL,NULL,"Cops.EscapeProb",
-     N_("% probability of escaping from Officer Hardass"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.DeputyEscape),NULL,NULL,NULL,"Cops.DeputyEscape",
-     N_("Modifier to EscapeProb for each extra deputy"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.HitProb),NULL,NULL,NULL,"Cops.HitProb",
-     N_("% probability that Officer Hardass hits you"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.DeputyHit),NULL,NULL,NULL,"Cops.DeputyHit",
-     N_("Modifier to HitProb for each extra deputy"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.Damage),NULL,NULL,NULL,"Cops.Damage",
-     N_("Maximum damage done to you by each cop"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.Toughness),NULL,NULL,NULL,"Cops.Toughness",
-     N_("Toughness of (difficulty of hitting) each cop"),
-     NULL,NULL,0,"",NULL,NULL },
-   { &(Cops.DropProb),NULL,NULL,NULL,"Cops.DropProb",
-     N_("% probability that the cops catch you dropping drugs"),
-     NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&Names.Bitch,NULL,"Names.Bitch",
      N_("Word used to denote a single \"bitch\""),NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&Names.Bitches,NULL,"Names.Bitches",
@@ -396,8 +407,9 @@ char *DefaultStoppedTo[NUMSTOPPEDTO] = {
 };
 
 struct COP DefaultCop[NUMCOP] = {
-   { N_("Officer Hardass"),N_("deputy"),N_("deputies") },
-   { N_("Officer Bob"),N_("deputy"),N_("deputies") }
+   { N_("Officer Hardass"),N_("deputy"),N_("deputies"),2,2,30,30,2,8,0 },
+   { N_("Officer Bob"),N_("deputy"),N_("deputies"),6,4,30,20,4,10,0 },
+   { N_("Agent Smith"),N_("cop"),N_("cops"),20,6,20,20,6,18,1 }
 };
 
 struct GUN DefaultGun[NUMGUN] = {
@@ -491,7 +503,7 @@ int CountPlayers(GSList *First) {
    int count=0;
    for (list=First;list;list=g_slist_next(list)) {
       Play=(Player *)list->data;
-      if (strlen(GetPlayerName(Play))>0 && !Play->IsCop) count++;
+      if (strlen(GetPlayerName(Play))>0 && !IsCop(Play)) count++;
    }
    return count;
 }
@@ -532,7 +544,7 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->Debt=StartDebt;
    NewPlayer->Bank=0;
    NewPlayer->Bitches.Carried=8;
-   NewPlayer->IsCop=FALSE;
+   NewPlayer->CopIndex=0;
    NewPlayer->Health=MaxHealth(NewPlayer,NewPlayer->Bitches.Carried);
    NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
@@ -559,7 +571,7 @@ GSList *RemovePlayer(Player *Play,GSList *First) {
    g_assert(First);
 
    First=g_slist_remove(First,(gpointer)Play);
-   if (Server && !Play->IsCop && Play->fd>=0) {
+   if (Server && !IsCop(Play) && Play->fd>=0) {
       CloseSocket(Play->fd);
    }
    ClearList(&(Play->SpyList));
@@ -591,10 +603,15 @@ void CopyPlayer(Player *Dest,Player *Src) {
 }
 
 int MaxHealth(Player *Play,int NumBitches) {
-   if (Play->IsCop)
-      return (5+NumBitches*2);
+   if (IsCop(Play))
+      return (Cop[Play->CopIndex-1].Health+
+              NumBitches*Cop[Play->CopIndex-1].DeputyHealth);
    else
       return (80+NumBitches*20);
+}
+
+gboolean IsCop(Player *Play) {
+   return (Play->CopIndex>0);
 }
 
 char *GetPlayerName(Player *Play) {
@@ -630,7 +647,7 @@ Player *GetPlayerByName(char *Name,GSList *First) {
    if (Name==NULL || Name[0]==0) return &Noone;
    for (list=First;list;list=g_slist_next(list)) {
       Play=(Player *)list->data;
-      if (!Play->IsCop && strcmp(GetPlayerName(Play),Name)==0) return Play;
+      if (!IsCop(Play) && strcmp(GetPlayerName(Play),Name)==0) return Play;
    }
    return NULL;
 }
@@ -1121,6 +1138,13 @@ void CopyCop(struct COP *dest,struct COP *src) {
    AssignName(&dest->Name,_(src->Name));
    AssignName(&dest->DeputyName,_(src->DeputyName));
    AssignName(&dest->DeputiesName,_(src->DeputiesName));
+   dest->Health=src->Health;
+   dest->DeputyHealth=src->DeputyHealth;
+   dest->AttackPenalty=src->AttackPenalty;
+   dest->DefendPenalty=src->DefendPenalty;
+   dest->MinDeputies=src->MinDeputies;
+   dest->MaxDeputies=src->MaxDeputies;
+   dest->GunIndex=src->GunIndex;
 }
 
 void CopyGun(struct GUN *dest,struct GUN *src) {

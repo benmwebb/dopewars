@@ -80,11 +80,6 @@ typedef struct ABILITIES {
    gboolean Shared[A_NUM];
 } Abilities;
 
-struct COPS {
-   int EscapeProb,DeputyEscape,HitProb,DeputyHit,Damage,
-       Toughness,DropProb;
-};
-
 struct NAMES {
    gchar *Bitch,*Bitches,*Gun,*Guns,*Drug,*Drugs,*Month,*Year,
          *Officer,*ReserveOfficer,*LoanSharkName,*BankName,
@@ -122,7 +117,6 @@ extern int MaxClients,AITurnPause;
 extern struct PRICES Prices;
 extern struct BITCH Bitch;
 extern price_t StartCash,StartDebt;
-extern struct COPS Cops;
 extern struct NAMES Names;
 extern struct METASERVER MetaServer;
 extern int NumTurns;
@@ -146,7 +140,7 @@ extern int NumTurns;
 
 #define NUMDRUG      12
 #define NUMGUN       4
-#define NUMCOP       2
+#define NUMCOP       3
 #define NUMLOCATION  8
 
 #define ESCAPE  0
@@ -185,11 +179,6 @@ extern int NumTurns;
 #define CANSHOOT    64
 #define TRADING     128
 
-#define LISTONLY    0
-#define PAGETO      1
-#define SELECTTIP   2
-#define SELECTSPY   3
-
 #define E_NONE       0
 #define E_SUBWAY     1
 #define E_OFFOBJECT  2
@@ -213,6 +202,10 @@ extern int NumTurns;
 
 struct COP {
    gchar *Name,*DeputyName,*DeputiesName;
+   gint Health,DeputyHealth;
+   gint AttackPenalty,DefendPenalty;
+   gint MinDeputies,MaxDeputies;
+   gint GunIndex;
 };
 extern struct COP DefaultCop[NUMCOP],*Cop;
 
@@ -298,7 +291,11 @@ struct PLAYER_T {
    ConnBuf ReadBuf,WriteBuf;
    Abilities Abil;
    GPtrArray *FightArray;
-   gint IsCop;
+   gint CopIndex;  /* if >0,  then this player is a cop, described
+                              by Cop[CopIndex-1]
+                      if ==0, this is a normal player that has killed no cops
+                      if <0,  then this is a normal player, who has killed
+                              cops up to Cop[-1-CopIndex] */
 };
 
 #define CM_SERVER 0
@@ -312,7 +309,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 80
+#define NUMGLOB 84
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;
@@ -397,4 +394,5 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                       GScanner *scanner);
 void SetConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                     GScanner *scanner);
+gboolean IsCop(Player *Play);
 #endif

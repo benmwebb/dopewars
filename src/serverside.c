@@ -249,7 +249,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SetPlayerName(Play,Data);
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=Play && !pt->IsCop) SendPlayerDetails(pt,Play,C_LIST);
+                  if (pt!=Play && !IsCop(pt)) SendPlayerDetails(pt,Play,C_LIST);
                }
                SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
                RegisterWithMetaServer(TRUE,FALSE);
@@ -664,7 +664,7 @@ gboolean HandleServerCommand(char *string) {
             g_print(_("Users currently logged on:-\n"));
             for (list=FirstServer;list;list=g_slist_next(list)) {
                tmp=(Player *)list->data;
-               if (!tmp->IsCop) g_print("%s\n",GetPlayerName(tmp));
+               if (!IsCop(tmp)) g_print("%s\n",GetPlayerName(tmp));
             }
          } else g_message(_("No users currently logged on!"));
       } else if (strncasecmp(string,"push ",5)==0) {
@@ -754,7 +754,7 @@ void ServerLoop() {
       topsock=ListenSock+1;
       for (list=FirstServer;list;list=g_slist_next(list)) {
          tmp=(Player *)list->data;
-         if (!tmp->IsCop && tmp->fd>0) {
+         if (!IsCop(tmp) && tmp->fd>0) {
             FD_SET(tmp->fd,&readfs);
             if (tmp->WriteBuf.DataPresent) FD_SET(tmp->fd,&writefs);
             FD_SET(tmp->fd,&errorfs);
@@ -1184,18 +1184,23 @@ int SendCopOffer(Player *To,char Force) {
 void CopsAttackPlayer(Player *Play) {
 /* Has the cops attack player "Play"                                */
    Player *Cops;
-   gint CopIndex;
+   gint CopIndex,NumDeputy,GunIndex;
 
-   CopIndex=brandom(1,NumCop+1);
+   CopIndex=1-Play->CopIndex;
+   if (CopIndex > NumCop) CopIndex=NumCop;
    Cops=g_new(Player,1);
    FirstServer=AddPlayer(0,Cops,FirstServer);
    SetPlayerName(Cops,Cop[CopIndex-1].Name);
-   Cops->IsCop=CopIndex;
+   Cops->CopIndex=CopIndex;
    Cops->Cash=Cops->Debt=0;
 
-   Cops->Bitches.Carried=10;
-   Cops->Guns[0].Carried=5;
-   Cops->Health=MaxHealth(Cops,Cops->Bitches.Carried);
+   NumDeputy=brandom(Cop[CopIndex-1].MinDeputies,
+                     Cop[CopIndex-1].MaxDeputies);
+   Cops->Bitches.Carried=NumDeputy;
+   GunIndex=Cop[CopIndex-1].GunIndex;
+   if (GunIndex>=NumGun) GunIndex=NumGun-1;
+   Cops->Guns[GunIndex].Carried=NumDeputy+1;
+   Cops->Health=MaxHealth(Cops,NumDeputy);
 
    Play->EventNum++;
    AttackPlayer(Cops,Play);
@@ -1302,10 +1307,10 @@ void GetFightRatings(Player *Attack,Player *Defend,
    for (i=0;i<NumGun;i++) {
       *AttackRating+=Gun[i].Damage*Attack->Guns[i].Carried;
    }
-   if (Attack->IsCop) *AttackRating-=30;
+   if (IsCop(Attack)) *AttackRating-=Cop[Attack->CopIndex-1].AttackPenalty;
 
    *DefendRating-=5*Defend->Bitches.Carried;
-   if (Defend->IsCop) *DefendRating-=30;
+   if (IsCop(Defend)) *DefendRating-=Cop[Defend->CopIndex-1].DefendPenalty;
 
    *DefendRating=MAX(*DefendRating,10);
    *AttackRating=MAX(*AttackRating,10);
@@ -1327,11 +1332,11 @@ void DoReturnFire(Player *Play) {
 
    if (!Play || !Play->FightArray) return;
 
-   if (FightTimeout!=0 || !Play->IsCop) {
+   if (FightTimeout!=0 || !IsCop(Play)) {
       for (ArrayInd=0;Play->FightArray && ArrayInd<Play->FightArray->len;
            ArrayInd++) {
          Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
-         if (Defend->IsCop && CanPlayerFire(Defend)) Fire(Defend);
+         if (IsCop(Defend) && CanPlayerFire(Defend)) Fire(Defend);
       }
    }
 }
@@ -1340,6 +1345,9 @@ void RunFromCombat(Player *Play) {
 /* Withdraws player "Play" from combat, and levies any penalties on */
 /* the player for this cowardly act, if applicable                  */
    int EscapeProb,RandNum;
+   int ArrayInd;
+   gboolean FightingCop=FALSE;
+   Player *Defend;
 
    if (!Play || !Play->FightArray) return;
 
@@ -1347,6 +1355,13 @@ void RunFromCombat(Player *Play) {
    RandNum=brandom(0,100);
 
    if (RandNum<EscapeProb) {
+      if (!IsCop(Play) && brandom(0,100)<30) {
+         for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+            Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+            if (IsCop(Defend)) { FightingCop=TRUE; break; }
+         }
+         if (FightingCop) Play->CopIndex--;
+      }
       WithdrawFromCombat(Play);
       Play->EventNum=Play->ResyncNum; SendEvent(Play);
    } else {
@@ -1373,7 +1388,8 @@ void CheckForKilledPlayers(Player *Play) {
    for (ArrayInd=0;ArrayInd<KilledPlayers->len;ArrayInd++) {
       Defend=(Player *)g_ptr_array_index(KilledPlayers,ArrayInd);
       WithdrawFromCombat(Defend);
-      if (Defend->IsCop) {
+      if (IsCop(Defend)) {
+         if (!IsCop(Play)) Play->CopIndex=-Defend->CopIndex;
          FirstServer=RemovePlayer(Defend,FirstServer);
       } else {
          FinishGame(Defend,_("You're dead! Game over."));
@@ -1454,7 +1470,7 @@ Player *GetNextShooter(Player *Play) {
 void ResolveTipoff(Player *Play) {
    GString *text;
 
-   if (Play->IsCop || !CanRunHere(Play)) return;
+   if (IsCop(Play) || !CanRunHere(Play)) return;
 
    if (g_slist_find(FirstServer,(gpointer)Play->OnBehalfOf)) {
       g_message(_("%s: tipoff by %s finished OK."),GetPlayerName(Play),
@@ -1507,7 +1523,7 @@ void WithdrawFromCombat(Player *Play) {
          Defend=(Player *)g_ptr_array_index(Play->FightArray,i);
          Defend->FightArray=NULL;
          ResolveTipoff(Defend);
-         if (Defend->IsCop) {
+         if (IsCop(Defend)) {
             FirstServer=RemovePlayer(Defend,FirstServer);
          } else if (Defend->Health==0) {
             FinishGame(Defend,_("You're dead! Game over."));
@@ -1884,7 +1900,7 @@ void BuyObject(Player *From,char *data) {
          SendPlayerData(From); 
 
          if (!Sanitized && (From->Drugs[index].Price==0 &&
-                            brandom(0,100)<Cops.DropProb)) {
+             brandom(0,100)<Location[(int)From->IsAt].PolicePresence)) {
             lone=g_strdup_printf(_("YN^Officer %%s spots you dropping %s, and "
                                  "chases you!"),Names.Drugs);
             deputy=g_strdup_printf(_("YN^Officer %%s and %%d of his deputies "
@@ -2060,7 +2076,7 @@ GSList *HandleTimeouts(GSList *First) {
          First=RemovePlayer(Play,First);
       } else if (Play->FightTimeout!=0 && Play->FightTimeout<=timenow) {
          ClearFightTimeout(Play);
-         if (Play->IsCop) Fire(Play);
+         if (IsCop(Play)) Fire(Play);
          else SendFightReload(Play);
       }
       list=nextlist;
