@@ -346,12 +346,14 @@ void HandleClientMessage(char *pt,Player *Play) {
          text=g_strdup_printf(_("%s joins the game!"),Data);
          PrintMessage(text); g_free(text);
          UpdatePlayerLists();
+         UpdateMenus();
          break;
       case C_LEAVE:
          if (From!=&Noone) {
             text=g_strdup_printf(_("%s has left the game."),Data);
             PrintMessage(text); g_free(text);
             UpdatePlayerLists();
+            UpdateMenus();
          }
          break;
       case C_QUESTION:
@@ -384,6 +386,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          SetAccelerator(MenuItem,text,NULL,NULL,NULL);
          g_free(text);
          if (FirstClient->next) ListPlayers(NULL,NULL);
+         UpdateMenus();
          break;
       case C_UPDATE:
          if (From==&Noone) {
@@ -1520,12 +1523,25 @@ static gint DrugSortFunc(GtkCList *clist,gconstpointer ptr1,
 }
 
 void UpdateMenus() {
+   gboolean MultiPlayer;
+
+   MultiPlayer = (FirstClient && FirstClient->next!=NULL);
+
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   "<main>/Talk"),InGame);
+                            "<main>/Talk"),InGame && Network);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   "<main>/List"),InGame);
+                            "<main>/List"),InGame);
    gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
-                                                   "<main>/Errands"),InGame);
+                            "<main>/List/Players"),InGame && Network);
+   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
+                            "<main>/Errands"),InGame);
+   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
+                            "<main>/Errands/Spy"),InGame && MultiPlayer);
+   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
+                            "<main>/Errands/Tipoff"),InGame && MultiPlayer);
+   gtk_widget_set_sensitive(gtk_item_factory_get_widget(ClientData.Menu,
+                            "<main>/Errands/Get spy reports"),
+                            InGame && MultiPlayer);
 }
 
 GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status) {

@@ -1,4 +1,6 @@
 cvs
+    - Multiplayer menus (spy on player, etc.) are now greyed out in GTK+ client
+      when in single-player mode
     - Manpage (courtesy of Leon Breedt) added in doc/
     - Fix for missing "bgetch" when configured with --disable-curses-client
     - Broken "trenchcoat" message fixed
