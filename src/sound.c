@@ -37,6 +37,7 @@
 #include "plugins/sound_winmm.h"
 #endif
 
+#include "dopewars.h"
 #include "nls.h"
 #include "sound.h"
 
@@ -70,7 +71,7 @@ static void AddPlugin(InitFunc ifunc, void *module)
   SoundDriver *newdriver = (*ifunc)();
 
   if (newdriver) {
-    g_print("%s sound plugin init OK\n", newdriver->name);
+    dopelog(5, 0, "%s sound plugin init OK\n", newdriver->name);
     newdriver->module = module;
     driverlist = g_slist_append(driverlist, newdriver);
   }
@@ -90,7 +91,7 @@ static void OpenModule(const gchar *modname, const gchar *fullname)
     soundmodule = dlopen(fullname, RTLD_NOW);
     if (!soundmodule) {
       /* FIXME: using dlerror() here causes a segfault later in the program */
-      g_print("dlopen of %s failed: %s\n", fullname, dlerror());
+      dopelog(3, 0, "dlopen of %s failed: %s\n", fullname, dlerror());
       return;
     }
 
@@ -102,7 +103,7 @@ static void OpenModule(const gchar *modname, const gchar *fullname)
     if (ifunc) {
       AddPlugin(ifunc, soundmodule);
     } else {
-      g_print("dlsym (%s) failed: %s\n", funcname->str, dlerror());
+      dopelog(3, 0, "dlsym (%s) failed: %s\n", funcname->str, dlerror());
       dlclose(soundmodule);
     }
     g_string_free(funcname, TRUE);
@@ -131,7 +132,7 @@ static void ScanPluginDir(const gchar *dirname)
     g_string_free(modname, TRUE);
     closedir(dir);
   } else {
-    g_print("Cannot open dir %s\n", dirname);
+    dopelog(5, 0, "Cannot open dir %s\n", dirname);
   }
 }
 #endif
@@ -177,7 +178,7 @@ void SoundOpen(gchar *drivername)
     driver = GetPlugin(drivername);
     if (driver) {
       if (driver->open) {
-        g_print("Using plugin %s\n", driver->name);
+        dopelog(3, 0, "Using plugin %s\n", driver->name);
         driver->open();
       }
     } else if (drivername) {
