@@ -261,6 +261,7 @@ int bgetch()
   c = getch();
   while (c == '\f') {
     wrefresh(curscr);
+    c = getch();
   }
   return c;
 }
