@@ -81,8 +81,8 @@ static gboolean IsShowingPlayerList=FALSE,IsShowingTalkList=FALSE,
                 IsShowingInventory=FALSE,IsShowingGunShop=FALSE;
 
 static void display_intro(GtkWidget *widget,gpointer data);
-static void DestroyGtk(GtkWidget *widget,gpointer data);
 static void QuitGame(GtkWidget *widget,gpointer data);
+static void DestroyGtk(GtkWidget *widget,gpointer data);
 static void NewGame(GtkWidget *widget,gpointer data);
 static void ListScores(GtkWidget *widget,gpointer data);
 static void ListInventory(GtkWidget *widget,gpointer data);
@@ -163,10 +163,6 @@ static void LogMessage(const gchar *log_domain,GLogLevelFlags log_level,
               message,MB_OK);
 }
 
-void DestroyGtk(GtkWidget *widget,gpointer data) {
-   gtk_main_quit();
-}
-
 void QuitGame(GtkWidget *widget,gpointer data) {
    if (!InGame ||
        MessageBox(ClientData.window,_("Quit Game"),_("Abandon current game?"),
@@ -174,6 +170,16 @@ void QuitGame(GtkWidget *widget,gpointer data) {
       gtk_main_quit();
    }
 }
+
+void DestroyGtk(GtkWidget *widget,gpointer data) {
+   gtk_main_quit();
+}
+
+gint MainDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
+   return (InGame && MessageBox(ClientData.window,_("Quit Game"),
+           _("Abandon current game?"),MB_YES|MB_NO)==MB_NO);
+}
+
 
 void NewGame(GtkWidget *widget,gpointer data) {
    if (InGame) {
@@ -280,6 +286,10 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
    gboolean Handled;
    GtkWidget *MenuItem;
    GSList *list;
+
+/* Handle events first */
+   while (gtk_main_iteration_do(FALSE));
+
    if (ProcessMessage(pt,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
       return;
    }
@@ -379,6 +389,9 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
    }
    g_free(Data);
+
+/* Handle events again */
+   while (gtk_main_iteration_do(FALSE));
 }
 
 struct HiScoreDiaStruct {
@@ -442,6 +455,7 @@ void PrintMessage(char *text) {
 
    messages=GTK_EDITABLE(ClientData.messages);
 
+   gtk_text_freeze(GTK_TEXT(messages));
    g_strdelimit(text,"^",'\n');
    EditPos=gtk_text_get_length(GTK_TEXT(ClientData.messages));
    while (*text=='\n') text++;
@@ -449,6 +463,8 @@ void PrintMessage(char *text) {
    if (text[strlen(text)-1]!='\n') {
       gtk_editable_insert_text(messages,cr,1,&EditPos);
    }
+   gtk_text_thaw(GTK_TEXT(messages));
+   gtk_editable_set_position(messages,EditPos);
 }
 
 static void FightCallback(GtkWidget *widget,gpointer data) {
@@ -758,14 +774,11 @@ static void JetCallback(GtkWidget *widget,gpointer data) {
 
    JetDialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget),"dialog"));
    NewLocation = GPOINTER_TO_INT(data);
+   gtk_widget_destroy(JetDialog);
    text=g_strdup_printf("%d",NewLocation);
    SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,
                      text,ClientData.Play);
    g_free(text);
-   gtk_widget_destroy(JetDialog);
-   if (Network) {
-      SetSocketWriteTest(ClientData.Play,TRUE);
-   }
 }
 
 void JetButtonPressed(GtkWidget *widget,gpointer data) {
@@ -785,8 +798,6 @@ void Jet() {
 
    accel_group=gtk_accel_group_new();
 
-   if (Network) gdk_input_remove(ClientData.GdkInputTag);
-
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_window_set_title(GTK_WINDOW(dialog),_("Jet to location"));
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
@@ -803,8 +814,12 @@ void Jet() {
    /* Generate a square box of buttons for all locations */
    boxsize=1;
    while (boxsize*boxsize < NumLocation) boxsize++;
+   col=boxsize; row=1;
 
-   table=gtk_table_new(boxsize,boxsize,TRUE);
+   /* Avoid creating a box with an entire row empty at the bottom */
+   while (row*col < NumLocation) row++;
+
+   table=gtk_table_new(row,col,TRUE);
 
    for (i=0;i<NumLocation;i++) {
       if (i<9) AccelChar='1'+i;
@@ -1105,9 +1120,6 @@ static void QuestionCallback(GtkWidget *widget,gpointer data) {
    SendClientMessage(ClientData.Play,C_NONE,C_ANSWER,To,text,ClientData.Play);
 
    gtk_widget_destroy(dialog);
-   if (Network) {
-      SetSocketWriteTest(ClientData.Play,TRUE);
-   }
 }
 
 void QuestionDialog(char *Data,Player *From) {
@@ -1129,7 +1141,6 @@ void QuestionDialog(char *Data,Player *From) {
 
    Responses=split[0]; LabelText=split[1];
 
-   if (Network) gdk_input_remove(ClientData.GdkInputTag);
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    accel_group=gtk_accel_group_new();
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
@@ -1346,6 +1357,8 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    window=ClientData.window=gtk_window_new(GTK_WINDOW_TOPLEVEL);
    gtk_window_set_title(GTK_WINDOW(window),_("dopewars"));
    gtk_window_set_default_size(GTK_WINDOW(window),450,390);
+   gtk_signal_connect(GTK_OBJECT(window),"delete_event",
+                      GTK_SIGNAL_FUNC(MainDelete),NULL);
    gtk_signal_connect(GTK_OBJECT(window),"destroy",
                       GTK_SIGNAL_FUNC(DestroyGtk),NULL);
 
