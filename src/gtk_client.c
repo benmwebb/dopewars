@@ -1291,6 +1291,8 @@ void DealDrugs(GtkWidget *widget,gpointer data) {
    gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
    spin_adj=(GtkAdjustment *)gtk_adjustment_new(1.0,1.0,2.0,1.0,10.0,10.0);
    spinner=DealDialog.amount=gtk_spin_button_new(spin_adj,1.0,0);
+   gtk_signal_connect(GTK_OBJECT(spinner),"activate",
+                      GTK_SIGNAL_FUNC(DealOKCallback),data);
    gtk_box_pack_start(GTK_BOX(hbox),spinner,FALSE,FALSE,0);
    gtk_box_pack_start(GTK_BOX(vbox),hbox,FALSE,FALSE,0);
 

@@ -1335,7 +1335,9 @@ void SendEvent(Player *To) {
                   text=g_strdup_printf(_("AE^%s is already here!^"
                                          "Do you Attack, or Evade?"),
                                        GetPlayerName(Play));
+/* Steal this to keep track of the potential defender */
                   To->OnBehalfOf=Play;
+
                   SendDrugsHere(To,TRUE);
                   SendQuestion(NULL,C_MEETPLAYER,To,text);
                   g_free(text);
@@ -2056,6 +2058,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
 /* intended for player "To".                                       */
    int i;
    gchar *text;
+   Player *Defender;
    if (!From || From->EventNum==E_NONE) return;
    if (answer[0]=='Y' && From->EventNum==E_OFFOBJECT && From->Bitches.Price
        && From->Bitches.Price>From->Cash) answer[0]='N';
@@ -2130,10 +2133,12 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
    } else if (From->EventNum==E_ARRIVE) {
       if ((answer[0]=='A' || answer[0]=='T') && 
           g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
-         if (From->OnBehalfOf->IsAt==From->IsAt) {
+         Defender=From->OnBehalfOf;
+         From->OnBehalfOf=NULL; /* So we don't think it was a tipoff */
+         if (Defender->IsAt==From->IsAt) {
             if (answer[0]=='A') {
-               From->EventNum=From->OnBehalfOf->EventNum=E_NONE;
-               AttackPlayer(From,From->OnBehalfOf);
+               From->EventNum=Defender->EventNum=E_NONE;
+               AttackPlayer(From,Defender);
 /*          } else if (answer[0]=='T') {
                From->Flags |= TRADING;
                SendPlayerData(From);
@@ -2141,7 +2146,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             }
          } else {
             text=g_strdup_printf(_("Too late - %s has just left!"),
-                                 GetPlayerName(From->OnBehalfOf));
+                                 GetPlayerName(Defender));
             SendPrintMessage(NULL,C_NONE,From,text);
             g_free(text);
             From->EventNum++; SendEvent(From);
@@ -2149,6 +2154,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
       } else {
          From->EventNum++; SendEvent(From);
       }
+      From->OnBehalfOf=NULL;
    } else switch(From->EventNum) { 
       case E_ROUGHPUB:
          From->EventNum++;
