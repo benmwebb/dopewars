@@ -3,6 +3,8 @@ DOCS= aiplayer.html configfile.html index.html i18n.html server.html \
       clientplay.html credits.html installation.html \
       servercommands.html commandline.html developer.html \
       metaserver.html windows.html
+man_MANS = dopewars.6
+EXTRA_DIST = ${man_MANS}
 
 install-data-local:
 	${INSTALL} -d -o root -g root -m 0755 ${DESTDIR}${DOCPATH}

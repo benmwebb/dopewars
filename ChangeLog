@@ -1,4 +1,7 @@
 cvs
+    - Manpage (courtesy of Leon Breedt) added in doc/
+    - Fix for missing "bgetch" when configured with --disable-curses-client
+    - Broken "trenchcoat" message fixed
     - Value of bought drugs now displayed in curses client
     - AI players now are at least partially functional
     - Fix for server segfault on invalid short network messages

@@ -1,0 +1,57 @@
+.TH DOPEWARS 6
+.SH NAME
+dopewars \- drug dealing game
+.SH SYNOPSIS
+.B dopewars
+.I "[OPTIONS] ..."
+.SH "DESCRIPTION"
+.B dopewars
+is a ncurses-based drug dealing game based in New York, with you as
+the drug dealer striving to become filthy rich. It supports network
+play and single-player games.
+.SH OPTIONS
+Valid commandline options:
+.TP
+.B \-b
+"black and white", i.e. do not use pretty colours
+.TP
+.B \-n
+Do not connect to any available dopewars servers
+.TP
+.B \-a
+Antique dopewars, stick as close as possible to the functionality of the
+original version.
+.TP
+.B \-f file
+Specify a file to use as high score table (defaults to /var/games/dopewars/dopewars.sco)
+.TP
+.B \-o addr
+Specify a multiplayer hostname
+.TP
+.B \-s
+Run in server mode. If you want a non-interactive server, use the command:
+dopewars -s < /dev/null >>logfile &
+.TP
+.B \-S
+Run as a "private" server
+.TP
+.B \-p port
+Specify the network port to use
+.TP
+.B \-g file
+Specify the pathname of a dopewars configuration file
+.TP
+.B \-r file
+Specify the pathname of a PID file to maintain while running as a server
+.TP
+.B \-c
+Create and run a computer player
+.TP
+.B \-h
+Display a help screen
+.TP
+.B \-v
+Output version information and exit.
+.SH AUTHOR
+This manual page was written by Leon Breedt <ljb@debian.org>,
+for the Debian GNU/Linux system (but may be used by others).

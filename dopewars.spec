@@ -39,6 +39,7 @@ make install-strip
 
 /usr/bin/dopewars
 /usr/share/dopewars.sco
+/usr/man/man6/dopewars.6
 /usr/share/locale/de/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pl/LC_MESSAGES/dopewars.mo
 /usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
