@@ -2111,6 +2111,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   FirstClient = AddPlayer(0, ClientData.Play, FirstClient);
 
   gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
+  gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);
 
   window = MainWindow = ClientData.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
