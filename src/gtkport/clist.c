@@ -90,7 +90,8 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     lpdis = (LPDRAWITEMSTRUCT)lParam;
     if (lpdis) {
       gtk_clist_draw_row(GTK_CLIST(widget), lpdis);
-      return FALSE;
+      *dodef = FALSE;
+      return TRUE;
     }
     break;
   case WM_NOTIFY:
@@ -247,7 +248,8 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
   HBRUSH bkgrnd;
   COLORREF textcol, oldtextcol;
   RECT rcCol;
-  gint i, CurrentX;
+  int oldbkmode;
+  gint i, CurrentX, right;
   GtkCListRow *row;
 
   if (lpdis->itemState & ODS_SELECTED) {
@@ -258,19 +260,17 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
     textcol = (COLORREF)GetSysColor(COLOR_WINDOWTEXT);
   }
   oldtextcol = SetTextColor(lpdis->hDC, textcol);
-  SetBkMode(lpdis->hDC, TRANSPARENT);
+  oldbkmode = SetBkMode(lpdis->hDC, TRANSPARENT);
   FillRect(lpdis->hDC, &lpdis->rcItem, bkgrnd);
 
   if (lpdis->itemID >= 0 && lpdis->itemID < clist->rows) {
     int width;
     row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, lpdis->itemID);
-    lpdis->rcItem.left = 0;
-    width = 0;
+    width = CurrentX = 0;
     for (i = 0; i < clist->cols; i++) {
       width += clist->coldata[i].width;
     }
-    lpdis->rcItem.right = MAX(lpdis->rcItem.right, width);
-    CurrentX = lpdis->rcItem.left;
+    right = MAX(lpdis->rcItem.right, width);
     rcCol.top = lpdis->rcItem.top;
     rcCol.bottom = lpdis->rcItem.bottom;
     if (row->text)
@@ -278,12 +278,12 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
         rcCol.left = CurrentX + LISTITEMHPACK;
         CurrentX += clist->coldata[i].width;
         rcCol.right = CurrentX - LISTITEMHPACK;
-        if (rcCol.left > lpdis->rcItem.right)
-          rcCol.left = lpdis->rcItem.right;
-        if (rcCol.right > lpdis->rcItem.right - LISTITEMHPACK)
-          rcCol.right = lpdis->rcItem.right - LISTITEMHPACK;
+        if (rcCol.left > right)
+          rcCol.left = right;
+        if (rcCol.right > right - LISTITEMHPACK)
+          rcCol.right = right - LISTITEMHPACK;
         if (i == clist->cols - 1)
-          rcCol.right = lpdis->rcItem.right - LISTITEMHPACK;
+          rcCol.right = right - LISTITEMHPACK;
         if (row->text[i]) {
           UINT align;
           switch(clist->coldata[i].justification) {
@@ -304,9 +304,10 @@ void gtk_clist_draw_row(GtkCList *clist, LPDRAWITEMSTRUCT lpdis)
   }
 
   SetTextColor(lpdis->hDC, oldtextcol);
-  SetBkMode(lpdis->hDC, OPAQUE);
-  if (lpdis->itemState & ODS_FOCUS)
+  SetBkMode(lpdis->hDC, oldbkmode);
+  if (lpdis->itemState & ODS_FOCUS) {
     DrawFocusRect(lpdis->hDC, &lpdis->rcItem);
+  }
 }
 
 static void gtk_clist_set_extent(GtkCList *clist)
