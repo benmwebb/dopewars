@@ -55,19 +55,30 @@
 #define SD_RECV 0
 #endif
 
-/* Maximum time, in seconds, between reports from this server to the   */
-/* metaserver. Setting this to be too small will most likely annoy the */
-/* metaserver maintainer, and result in your host being blocked... ;)  */
-#define METATIME (1200)
+/* If we haven't talked to the metaserver for 3 hours, then remind it that */
+/* we still exist, so we don't get wiped from the list of active servers   */
+#define METAUPDATETIME  (10800)
+
+/* Don't report players logging in/out to the metaserver more frequently */
+/* than once every 5 minutes (so as not to overload the metaserver, or   */
+/* slow down our own server).                                            */
+#define METAMINTIME (300)
 
 int TerminateRequest,ReregisterRequest;
 
-int MetaTimeout;
-char WantQuit=FALSE;
+int MetaUpdateTimeout;
+int MetaMinTimeout;
+gboolean WantQuit=FALSE;
+
+/* Do we want to talk to the metaserver when the timeout expires? */
+gboolean MetaPending=FALSE;
 
 GSList *FirstServer=NULL;
 
 static GScanner *Scanner;
+
+/* Data waiting to be sent to/read from the metaserver */
+NetworkBuffer MetaNetBuf;
 
 /* Handle to the high score file */
 static FILE *ScoreFP=NULL;
@@ -117,7 +128,7 @@ int SendToMetaServer(char Up,int MetaSock,char *data,
    return 1;
 }
 
-void RegisterWithMetaServer(char Up,char SendData) {
+void RegisterWithMetaServer(gboolean Up,gboolean SendData) {
 /* Sends server details to the metaserver, if specified. If "Up" is  */
 /* TRUE, informs the metaserver that the server is now accepting     */
 /* connections - otherwise tells the metaserver that this server is  */
@@ -126,69 +137,51 @@ void RegisterWithMetaServer(char Up,char SendData) {
 /* does nothing.                                                     */
 #if NETWORKING
    struct HISCORE MultiScore[NUMHISCORE],AntiqueScore[NUMHISCORE];
-   struct sockaddr_in MetaAddr;
-   struct hostent *he;
-   int MetaSock;
-   gchar *text,*prstr;
+   GString *text;
+   gchar *prstr;
    int i;
+
    if (!MetaServer.Active || !NotifyMetaServer) return;
-   if (SendData) {
-/* Message displayed when high scores (etc.) are sent to the metaserver */
-      g_message(_("Sending data to metaserver at %s\n"),MetaServer.Name);
-   } else {
-/* Message displayed when the metaserver is only told whether our server
-   is up or down */
-      g_message(_("Notifying metaserver at %s\n"),MetaServer.Name);
-   }
-   if ((he=gethostbyname(MetaServer.Name))==NULL) {
-/* Warning message displayed if we cannot do a DNS lookup for the metaserver */
-      g_warning(_("cannot locate metaserver\n"));
+   if (MetaMinTimeout > time(NULL)) {
+      MetaPending=TRUE;
       return;
    }
-   MetaSock=socket(AF_INET,SOCK_DGRAM,0);
-   if (MetaSock==-1) {
-/* Warning message displayed if the socket() call failed for any reason */
-      g_warning(_("cannot create socket for metaserver communication\n"));
-      return;
-   }
-   memset(&MetaAddr,0,sizeof(struct sockaddr_in));
-   MetaAddr.sin_family=AF_INET;
-   MetaAddr.sin_port=htons(MetaServer.UdpPort);
-   MetaAddr.sin_addr=*((struct in_addr *)he->h_addr);
 
-   text=g_strdup_printf("report\n%d\n%s\n%d\n%d\n%s",
-                        Up ? 1 : 0,VERSION,CountPlayers(FirstServer),
-                        MaxClients,MetaServer.Comment);
-   if (!SendToMetaServer(Up,MetaSock,text,&MetaAddr)) {
-      g_free(text);
-      return;
-   }
-   g_free(text);
+/* If the previous connect hung for so long that it's still pending, then
+   break the connection before we start a new one */
+   ShutdownNetworkBuffer(&MetaNetBuf);
 
-   if (SendData) {
-      if (HighScoreRead(MultiScore,AntiqueScore)) {
-         for (i=0;i<NUMHISCORE;i++) {
-            text=g_strdup_printf("multi\n%d\n%s^%s^%s^%c",
-                    i,prstr=FormatPrice(MultiScore[i].Money),MultiScore[i].Time,
-                    MultiScore[i].Name ? MultiScore[i].Name : "",
-                    MultiScore[i].Dead ? '1':'0');
-            g_free(prstr);
-            if (!SendToMetaServer(Up,MetaSock,text,&MetaAddr)) {
-               g_free(text);
-               return;
-            }
-            g_free(text);
-         }
-         for (i=0;i<NUMHISCORE;i++) {
-            g_free(MultiScore[i].Name); g_free(MultiScore[i].Time);
-            g_free(AntiqueScore[i].Name); g_free(AntiqueScore[i].Time);
-         }
-/* Warning message displayed if we failed to read the data from the
-   high score file */
-      } else { g_warning(_("cannot read high score file\n")); }
+   if (StartNetworkBufferConnect(&MetaNetBuf,"dopewars.sourceforge.net",80)) {
+      g_print("Waiting for metaserver connect...\n");
    }
-   CloseSocket(MetaSock);
-   MetaTimeout=time(NULL)+METATIME;
+   MetaPending=FALSE;
+   text=g_string_new("");
+
+   g_string_sprintf(text,"GET /metaserver.php?");
+
+   g_string_sprintfa(text,"port=%d&version=%s&players=%d&maxplay=%d&comment=%s",
+                    Port,VERSION,CountPlayers(FirstServer),MaxClients,
+                    MetaServer.Comment);
+
+
+   if (HighScoreRead(MultiScore,AntiqueScore)) {
+      for (i=0;i<NUMHISCORE;i++) if (MultiScore[i].Name && MultiScore[i].Name[0]) {
+         g_string_sprintfa(text,"&nm[%d]=%s&dt[%d]=%s&st[%d]=%s&sc[%d]=%s",
+                           i,MultiScore[i].Name,i,MultiScore[i].Time,
+                           i,MultiScore[i].Dead ? "dead" : "alive",
+                           i,prstr=FormatPrice(MultiScore[i].Money));
+         g_free(prstr);
+      }
+   }
+
+   g_string_sprintfa(text," HTTP/1.1");
+   QueueMessageForSend(&MetaNetBuf,text->str);
+   g_string_sprintf(text,"Host: dopewars.sourceforge.net\n");
+   QueueMessageForSend(&MetaNetBuf,text->str);
+   g_string_free(text,TRUE);
+   
+   MetaUpdateTimeout=time(NULL)+METAUPDATETIME;
+   MetaMinTimeout=time(NULL)+METAMINTIME;
 #endif /* NETWORKING */
 }
 
@@ -640,7 +633,7 @@ void StartServer() {
       perror("listen socket"); exit(1);
    }
 
-   MetaTimeout=0;
+   MetaUpdateTimeout=MetaMinTimeout=0;
 
    TerminateRequest=ReregisterRequest=0;
 
@@ -773,14 +766,9 @@ void ServerLoop() {
    int MinTimeout;
    GString *LineBuf;
    gboolean EndOfLine,DataWaiting;
-   NetworkBuffer MetaNetBuf;
    gchar *buf;
 
    InitNetworkBuffer(&MetaNetBuf,'\n');
-/* if (StartNetworkBufferConnect(&MetaNetBuf,"bellatrix.pcl.ox.ac.uk",80)) {
-      g_print("Waiting for metaserver connect...\n");
-      QueueMessageForSend(&MetaNetBuf,"GET /~ben/cgi-bin/server.pl?getlist=1&output=text HTTP/1.0\n");
-   }*/
 
    StartServer();
 
@@ -837,7 +825,7 @@ void ServerLoop() {
       }
       if (!RespondToSelect(&MetaNetBuf,&readfs,&writefs,
                            &errorfs,&DataWaiting)) {
-/*       g_warning("Metaserver connection closed");*/
+         g_warning("Metaserver connection closed");
          ShutdownNetworkBuffer(&MetaNetBuf);
       } else if (DataWaiting) {
          while ((buf=GetWaitingMessage(&MetaNetBuf))) {
@@ -2375,7 +2363,8 @@ int GetMinimumTimeout(GSList *First) {
    time_t timenow;
 
    timenow=time(NULL);
-   if (AddTimeout(MetaTimeout,timenow,&mintime)) return 0;
+   if (AddTimeout(MetaMinTimeout,timenow,&mintime)) return 0;
+   if (AddTimeout(MetaUpdateTimeout,timenow,&mintime)) return 0;
    for (list=First;list;list=g_slist_next(list)) {
       Play=(Player *)list->data;
       if (AddTimeout(Play->FightTimeout,timenow,&mintime) ||
@@ -2395,8 +2384,12 @@ GSList *HandleTimeouts(GSList *First) {
    time_t timenow;
 
    timenow=time(NULL);
-   if (MetaTimeout!=0 && MetaTimeout<=timenow) {
-      MetaTimeout=0;
+   if (MetaMinTimeout!=0 && MetaMinTimeout<=timenow) {
+      MetaMinTimeout=0;
+      if (MetaPending) RegisterWithMetaServer(TRUE,FALSE);
+   }
+   if (MetaUpdateTimeout!=0 && MetaUpdateTimeout<=timenow) {
+      MetaUpdateTimeout=0;
       RegisterWithMetaServer(TRUE,FALSE);
    }
    list=First;
