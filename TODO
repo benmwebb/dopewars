@@ -1,3 +1,6 @@
+- Win32 install for current user/all users
+- Test code under Win98
+- Document new server interface
 - Admin of running NT Service servers
 - Configuration file editor thingy in the client?
 - GSS_API SOCKS support?

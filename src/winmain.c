@@ -1,4 +1,4 @@
-/* winmain.c      Startup code for dopewars on the Win32 platform       */
+/* winmain.c      Startup code and support for the Win32 platform       */
 /* Copyright (C)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://dopewars.sourceforge.net/                 */
@@ -39,6 +39,7 @@
 #include "message.h"
 #include "serverside.h"
 #include "gtkport.h"
+#include "winmain.h"
 
 static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                              const gchar *message,gpointer user_data) {
@@ -98,6 +99,31 @@ static void LogFileEnd(void) {
   if (LogFile) fclose(LogFile);
 }
 
+gchar *GetBinaryDir(void) {
+  gchar *filename=NULL,*lastslash;
+  gint filelen=80;
+  DWORD retval;
+
+  while(1) {
+    filename = g_realloc(filename,filelen);
+    filename[filelen-1]='\0';
+    retval = GetModuleFileName(NULL,filename,filelen);
+
+    if (retval==0) {
+      g_free(filename); filename=NULL; break;
+    } else if (filename[filelen-1]) {
+      filelen*=2;
+    } else break;
+  }
+
+  if (filename) {
+    lastslash=strrchr(filename,'\\');
+    if (lastslash) *lastslash='\0';
+  }
+
+  return filename;
+}
+
 #ifdef ENABLE_NLS
 static gchar *GetWindowsLocale(void) {
   LCID userID;
@@ -148,7 +174,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
   gchar **split;
   int argc;
   gboolean is_service;
-  gchar modpath[300],*lastslash;
+  gchar *modpath;
 #ifdef ENABLE_NLS
   gchar *winlocale;
 #endif
@@ -157,11 +183,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
   is_service = (lpszCmdParam && strncmp(lpszCmdParam,"-N",2)==0);
 
   if (is_service) {
-    modpath[0]='\0';
-    GetModuleFileName(NULL,modpath,300);
-    lastslash=strrchr(modpath,'\\');
-    if (lastslash) *lastslash='\0';
+    modpath=GetBinaryDir();
     SetCurrentDirectory(modpath);
+    g_free(modpath);
   }
 
   LogFileStart();

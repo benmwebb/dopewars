@@ -49,6 +49,7 @@
 #include "serverside.h"
 #include "tstring.h"
 #include "AIPlayer.h"
+#include "winmain.h"
 
 #ifdef GUI_SERVER
 #include "gtkport.h"
@@ -1849,22 +1850,34 @@ void SetupParameters(void) {
       AssignName(&StoppedTo[i],_(DefaultStoppedTo[i]));
    }
 
+#ifdef CYGWIN
+
+/* Read the global configuration from the directory the binary is
+   installed in */
+  pt=GetBinaryDir();
+  if (pt) {
+    ConfigFile=g_strdup_printf("%s/dopewars-config.txt",pt);
+    ReadConfigFile(ConfigFile);
+    g_free(ConfigFile); g_free(pt);
+  }
+
+/* Now read the local configuration from the current directory */
+  ReadConfigFile("dopewars-config.txt");
+
+#else /* CYGWIN */
+
 /* Now read in the global configuration file */
-   ReadConfigFile("/etc/dopewars");
+  ReadConfigFile("/etc/dopewars");
 
 /* Next, try to read in the .dopewars file in the user's home directory */
-   pt=getenv("HOME");
-   if (pt) {
-      ConfigFile=g_strdup_printf("%s/.dopewars",pt);
-      ReadConfigFile(ConfigFile);
-      g_free(ConfigFile);
-   }
+  pt=getenv("HOME");
+  if (pt) {
+    ConfigFile=g_strdup_printf("%s/.dopewars",pt);
+    ReadConfigFile(ConfigFile);
+    g_free(ConfigFile);
+  }
 
-#ifdef CYGWIN
-/* Finally, try dopewars-config.txt in the current directory (Windows
-   systems only) */
-   ReadConfigFile("dopewars-config.txt");
-#endif
+#endif /* CYGWIN */
 
 /* Save this configuration, so we can restore those elements that get
    overwritten when we connect to a dopewars server */
