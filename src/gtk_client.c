@@ -1758,12 +1758,17 @@ static void FillMetaServerList(struct StartGameStruct *widgets) {
       titles[0]=ThisServer->Name;
       titles[1]=g_strdup_printf("%d",ThisServer->Port);
       titles[2]=ThisServer->Version;
-      titles[3]=g_strdup_printf(_("%d of %d"),ThisServer->CurPlayers,
-                                           ThisServer->MaxPlayers);
+      if (ThisServer->CurPlayers==-1) {
+         titles[3]=_("Unknown");
+      } else {
+         titles[3]=g_strdup_printf(_("%d of %d"),ThisServer->CurPlayers,
+                                                 ThisServer->MaxPlayers);
+      }
       titles[4]=ThisServer->Comment;
       row=gtk_clist_append(GTK_CLIST(metaserv),titles);
       gtk_clist_set_row_data(GTK_CLIST(metaserv),row,(gpointer)ThisServer);
-      g_free(titles[1]); g_free(titles[3]);
+      g_free(titles[1]);
+      if (ThisServer->CurPlayers!=-1) g_free(titles[3]);
    }
    gtk_clist_thaw(GTK_CLIST(metaserv));
 }
@@ -1837,6 +1842,7 @@ void NewGameDialog() {
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                 GTK_WINDOW(ClientData.window));
+   gtk_window_set_default_size(GTK_WINDOW(dialog),400,250);
    accel_group=gtk_accel_group_new();
 
    gtk_window_set_title(GTK_WINDOW(widgets.dialog),_("New Game"));
@@ -1932,6 +1938,8 @@ void NewGameDialog() {
                                                              &scrollwin);
    gtk_clist_column_titles_passive(GTK_CLIST(clist));
    gtk_clist_set_selection_mode(GTK_CLIST(clist),GTK_SELECTION_SINGLE);
+   gtk_clist_set_column_width(GTK_CLIST(clist),0,100);
+   gtk_clist_set_column_width(GTK_CLIST(clist),1,35);
 
    gtk_box_pack_start(GTK_BOX(vbox2),scrollwin,TRUE,TRUE,0);
 
