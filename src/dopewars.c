@@ -2319,7 +2319,7 @@ void SetupParameters(void)
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
   Log.File = g_strdup("");
 
-  Currency.Symbol = g_strdup("$");
+  Currency.Symbol = g_strdup(_("$"));
   Currency.Prefix = TRUE;
 
   /* Set hard-coded default values */
