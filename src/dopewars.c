@@ -26,8 +26,6 @@
 #include <config.h>
 #endif
 
-#include "dopewars.h"
-
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +40,8 @@
 #include <errno.h>
 #include <glib.h>
 #include <stdarg.h>
+
+#include "dopewars.h"
 #include "admin.h"
 #include "log.h"
 #include "message.h"
