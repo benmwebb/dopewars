@@ -721,6 +721,9 @@ void StopServer() {
 }
 
 gboolean RemovePlayerFromServer(Player *Play,gboolean WantQuit) {
+#ifdef GUI_SERVER
+   if (Play->InputTag) gdk_input_remove(Play->InputTag);
+#endif
    if (!WantQuit && strlen(GetPlayerName(Play))>0) {
       g_message(_("%s leaves the server!"),GetPlayerName(Play));
       ClientLeftServer(Play);
