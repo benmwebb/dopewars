@@ -300,7 +300,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          i=atoi(Data);
          if (Play->EventNum==E_FIGHT || Play->EventNum==E_FIGHTASK) {
             if (CanRunHere(Play)) break;
-            else RunFromCombat(Play);
+            else RunFromCombat(Play,i);
          }
          if (NumTurns>0 && Play->Turn>=NumTurns && Play->EventNum!=E_FINISH) {
             FinishGame(Play,_("Your dealing time is up..."));
@@ -348,7 +348,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          BuyObject(Play,Data);
          break;
       case C_FIGHTACT:
-         if (Data[0]=='R') RunFromCombat(Play); else Fire(Play);
+         if (Data[0]=='R') RunFromCombat(Play,-1); else Fire(Play);
          break;
       case C_ANSWER:
          HandleAnswer(Play,To,Data);
@@ -1196,14 +1196,16 @@ void CopsAttackPlayer(Player *Play) {
    FirstServer=AddPlayer(0,Cops,FirstServer);
    SetPlayerName(Cops,Cop[CopIndex-1].Name);
    Cops->CopIndex=CopIndex;
-   Cops->Cash=Cops->Debt=0;
+   Cops->Cash=brandom(100,2000);
+   Cops->Debt=Cops->Bank=0;
 
    NumDeputy=brandom(Cop[CopIndex-1].MinDeputies,
                      Cop[CopIndex-1].MaxDeputies);
    Cops->Bitches.Carried=NumDeputy;
    GunIndex=Cop[CopIndex-1].GunIndex;
    if (GunIndex>=NumGun) GunIndex=NumGun-1;
-   Cops->Guns[GunIndex].Carried=NumDeputy+1;
+   Cops->Guns[GunIndex].Carried=(NumDeputy*Cop[CopIndex-1].DeputyGun)+
+                                Cop[CopIndex-1].CopGun;
    Cops->Health=100;
 
    Play->EventNum++;
@@ -1221,10 +1223,14 @@ void AttackPlayer(Player *Play,Player *Attacked) {
 
    if (Play->FightArray && Attacked->FightArray) {
       if (Play->FightArray==Attacked->FightArray) {
-         g_warning(_("Players are already in a fight!"));
+         g_error(_("Players are already in a fight!"));
       } else {
-         g_warning(_("Players are already in separate fights!"));
+         g_error(_("Players are already in separate fights!"));
       }
+      return;
+   }
+   if (NumGun==0) {
+      g_error(_("Cannot start fight - no guns to use!"));
       return;
    }
 
@@ -1258,7 +1264,7 @@ gboolean IsOpponent(Player *Play,Player *Other) {
 }
 
 void HandleDamage(Player *Defend,Player *Attack,int Damage,
-                  int *BitchesKilled,gboolean *Loot) {
+                  int *BitchesKilled,price_t *Loot) {
    Inventory *Guns,*Drugs;
    price_t Bounty;
 
@@ -1274,7 +1280,8 @@ void HandleDamage(Player *Defend,Player *Attack,int Damage,
       Defend->Health=0;
    } else if (Defend->Bitches.Carried>0 &&
               Defend->Health<=Damage) {
-      LoseBitch(Defend,Guns,Drugs);
+      if (IsCop(Defend)) LoseBitch(Defend,NULL,NULL);
+      else LoseBitch(Defend,Guns,Drugs);
       Defend->Health=100;
       *BitchesKilled=1;
    } else {
@@ -1290,7 +1297,7 @@ void HandleDamage(Player *Defend,Player *Attack,int Damage,
    }
    Attack->Cash+=Bounty;
    if (Bounty>0 || !IsInventoryClear(Guns,Drugs)) {
-      *Loot=TRUE;
+      if (Bounty>0) *Loot=Bounty; else *Loot=-1;
       SendPlayerData(Attack);
    }
    g_free(Guns); g_free(Drugs);
@@ -1341,13 +1348,16 @@ void DoReturnFire(Player *Play) {
    }
 }
 
-void RunFromCombat(Player *Play) {
+void RunFromCombat(Player *Play,int ToLocation) {
 /* Withdraws player "Play" from combat, and levies any penalties on */
-/* the player for this cowardly act, if applicable                  */
+/* the player for this cowardly act, if applicable. If "ToLocation" */
+/* is >=0, then it identifies the location that the player is       */
+/* trying to run to.                                                */
    int EscapeProb,RandNum;
    int ArrayInd;
    gboolean FightingCop=FALSE;
    Player *Defend;
+   char BackupAt;
 
    if (!Play || !Play->FightArray) return;
 
@@ -1366,10 +1376,13 @@ void RunFromCombat(Player *Play) {
          }
          if (FightingCop) Play->CopIndex--;
       }
+      BackupAt=Play->IsAt;
+      Play->IsAt=(char)ToLocation;
       WithdrawFromCombat(Play);
+      Play->IsAt=BackupAt;
       Play->EventNum=Play->ResyncNum; SendEvent(Play);
    } else {
-      SendFightMessage(Play,NULL,0,F_MSG,FALSE,FALSE,_("You can't get away!"));
+      SendFightMessage(Play,NULL,0,F_FAILFLEE,FALSE,TRUE,NULL);
       AllowNextShooter(Play);
       DoReturnFire(Play);
    }
@@ -1450,13 +1463,16 @@ static Player *GetFireTarget(Player *Play) {
 }
 
 static int GetArmour(Player *Play) {
+   int Armour;
    if (IsCop(Play)) {
-      if (Play->Bitches.Carried==0) return Cop[Play->CopIndex-1].Armour;
-      else return Cop[Play->CopIndex-1].DeputyArmour;
+      if (Play->Bitches.Carried==0) Armour=Cop[Play->CopIndex-1].Armour;
+      else Armour=Cop[Play->CopIndex-1].DeputyArmour;
    } else {
-      if (Play->Bitches.Carried==0) return PlayerArmour;
-      else return BitchArmour;
+      if (Play->Bitches.Carried==0) Armour=PlayerArmour;
+      else Armour=BitchArmour;
    }
+   if (Armour==0) Armour=1;
+   return Armour;
 }
 
 void Fire(Player *Play) {
@@ -1465,7 +1481,7 @@ void Fire(Player *Play) {
    int Damage,i,j;
    int AttackRating,DefendRating;
    int BitchesKilled;
-   gboolean Loot;
+   price_t Loot;
    gchar FightPoint;
    Player *Defend;
 
@@ -1477,14 +1493,15 @@ void Fire(Player *Play) {
 
    Defend = GetFireTarget(Play);
    if (Defend) {
-      Damage=0; BitchesKilled=0; Loot=FALSE;
+      Damage=0; BitchesKilled=0; Loot=0;
       if (TotalGunsCarried(Play)>0) {
          GetFightRatings(Play,Defend,&AttackRating,&DefendRating);
          if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
             FightPoint=F_HIT;
             for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
-               Damage+=brandom(0,Gun[i].Damage)*100/GetArmour(Play);
+               Damage+=brandom(0,Gun[i].Damage);
             }
+            Damage=Damage*100/GetArmour(Defend);
             if (Damage==0) Damage=1;
             HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
          } else FightPoint=F_MISS;
@@ -1823,7 +1840,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
    if ((From->EventNum==E_FIGHT || From->EventNum==E_FIGHTASK) &&
        CanRunHere(From)) {
       From->EventNum=E_FIGHT;
-      if (answer[0]=='R' || answer[0]=='Y') RunFromCombat(From);
+      if (answer[0]=='R' || answer[0]=='Y') RunFromCombat(From,-1);
       else Fire(From);
    } else if (answer[0]=='Y') switch (From->EventNum) { 
       case E_OFFOBJECT:
@@ -1944,7 +1961,6 @@ void BuyObject(Player *From,char *data) {
 /* Objects can be sold if the amount given in "data" is negative, and */
 /* given away if their current price is zero.                         */
    char *cp,*type;
-   gchar *lone,*deputy;
    int index,i,amount;
    cp=data;
    type=GetNextWord(&cp,"");
@@ -1967,14 +1983,9 @@ void BuyObject(Player *From,char *data) {
 
          if (!Sanitized && (From->Drugs[index].Price==0 &&
              brandom(0,100)<Location[(int)From->IsAt].PolicePresence)) {
-            lone=g_strdup_printf(_("YN^Officer %%s spots you dropping %s, and "
-                                 "chases you!"),Names.Drugs);
-            deputy=g_strdup_printf(_("YN^Officer %%s and %%d of his deputies "
-                                   "spot you dropping %s, and chase you!"),
-                                   Names.Drugs);
+            SendPrintMessage(NULL,C_NONE,From,
+                             _("The cops spot you dropping drugs!"));
             CopsAttackPlayer(From);
-/*          StartOfficerHardass(From,From->EventNum,lone,deputy);*/
-            g_free(lone); g_free(deputy);
          }
       }
    } else if (strcmp(type,"gun")==0) {

@@ -72,7 +72,7 @@ void AttackPlayer(Player *Play,Player *Attacked);
 gboolean IsOpponent(Player *Play,Player *Other);
 void Fire(Player *Play);
 void WithdrawFromCombat(Player *Play);
-void RunFromCombat(Player *Play);
+void RunFromCombat(Player *Play,int ToLocation);
 gboolean CanPlayerFire(Player *Play);
 gboolean CanRunHere(Player *Play);
 Player *GetNextShooter(Player *Play);

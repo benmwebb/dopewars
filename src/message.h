@@ -100,6 +100,7 @@
 #define F_RELOAD       'R'
 #define F_LEAVE        'L'
 #define F_LASTLEAVE    'D'
+#define F_FAILFLEE     'F'
 #define F_MSG          'G'
 
 void SendClientMessage(Player *From,char AICode,char Code,
@@ -168,13 +169,14 @@ void SendOldFightPrint(Player *To,GString *text,gboolean FightOver);
 void SendFightLeave(Player *Play,gboolean FightOver);
 void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
                          int *DefendHealth,int *DefendBitches,
+                         gchar **BitchName,
                          int *BitchesKilled,int *ArmPercent,
                          gchar *FightPoint,gboolean *CanRunHere,
                          gboolean *Loot,gboolean *CanFire,gchar **Message);
 void SendFightMessage(Player *Attacker,Player *Defender,
                       int BitchesKilled,gchar FightPoint,
-                      gboolean Loot,gboolean Broadcast,gchar *Msg);
+                      price_t Loot,gboolean Broadcast,gchar *Msg);
 void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         Player *Defender,int BitchesKilled,int ArmPercent,
-                        gchar FightPoint,gboolean Loot);
+                        gchar FightPoint,price_t Loot);
 #endif

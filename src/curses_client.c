@@ -1038,7 +1038,7 @@ void DisplayFightMessage(Player *Play,char *text) {
    static int x,y;
    char *textpt;
    int i;
-   gchar *AttackName,*DefendName;
+   gchar *AttackName,*DefendName,*BitchName;
    int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
    gboolean Loot;
 
@@ -1056,7 +1056,8 @@ void DisplayFightMessage(Player *Play,char *text) {
    } else {
       if (HaveAbility(Play,A_NEWFIGHT)) {
          ReceiveFightMessage(text,&AttackName,&DefendName,&DefendHealth,
-                             &DefendBitches,&BitchesKilled,&ArmPercent,
+                             &DefendBitches,&BitchName,&BitchesKilled,
+                             &ArmPercent,
                              &FightPoint,&RunHere,&Loot,&CanFire,&textpt);
       } else {
          textpt=text;

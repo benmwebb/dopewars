@@ -645,13 +645,18 @@ static GtkWidget *AddFightButton(gchar *Text,GtkAccelGroup *accel_group,
    return button;
 }
 
+struct combatant {
+   GtkWidget *name,*bitches,*healthprog,*healthlabel;
+};
+
 static void CreateFightDialog() {
-   GtkWidget *dialog,*vbox,*button,*hbox,*hbbox,*hsep,*text;
+   GtkWidget *dialog,*vbox,*button,*hbox,*hbbox,*hsep,*text,*table;
    GtkAccelGroup *accel_group;
+   GArray *combatants;
    gchar *buf;
 
    FightDialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
-   gtk_window_set_default_size(GTK_WINDOW(dialog),450,300);
+   gtk_window_set_default_size(GTK_WINDOW(dialog),500,300);
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
                       GTK_SIGNAL_FUNC(DisallowDelete),NULL);
    gtk_window_set_default_size(GTK_WINDOW(dialog),240,130);
@@ -666,7 +671,22 @@ static void CreateFightDialog() {
 
    vbox=gtk_vbox_new(FALSE,7);
 
+   table=gtk_table_new(2,4,FALSE);
+   gtk_table_set_row_spacings(GTK_TABLE(table),5);
+   gtk_table_set_col_spacings(GTK_TABLE(table),5);
+
+   hsep=gtk_hseparator_new();
+   gtk_table_attach_defaults(GTK_TABLE(table),hsep,0,4,1,2);
+   gtk_widget_show_all(table);
+   gtk_box_pack_start(GTK_BOX(vbox),table,FALSE,FALSE,0);
+   gtk_object_set_data(GTK_OBJECT(dialog),"table",table);
+
+   combatants = g_array_new(FALSE,TRUE,sizeof(struct combatant));
+   g_array_set_size(combatants,1);
+   gtk_object_set_data(GTK_OBJECT(dialog),"combatants",combatants);
+
    text=gtk_scrolled_text_new(NULL,NULL,&hbox);
+   gtk_widget_set_usize(text,150,120);
 
    gtk_text_set_editable(GTK_TEXT(text),FALSE);
    gtk_text_set_word_wrap(GTK_TEXT(text),TRUE);
@@ -702,18 +722,101 @@ static void CreateFightDialog() {
    gtk_widget_show(dialog);
 }
 
+static void UpdateCombatant(gchar *DefendName,int DefendBitches,
+                            gchar *BitchName,int DefendHealth) {
+   gint i,RowIndex;
+   gchar *name;
+   struct combatant *compt;
+   GArray *combatants;
+   GtkWidget *table;
+   gchar *BitchText,*HealthText;
+   gfloat ProgPercent;
+
+   combatants=(GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
+                                            "combatants");
+   table=GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog),"table"));
+   if (!combatants) return;
+
+   if (DefendName[0]) {
+      compt=NULL;
+      for (i=1,RowIndex=2;i<combatants->len;i++,RowIndex++) {
+         compt=&g_array_index(combatants,struct combatant,i);
+         if (!compt || !compt->name) { compt=NULL; continue; }
+         gtk_label_get(GTK_LABEL(compt->name),&name);
+         if (name && strcmp(name,DefendName)==0) break;
+         compt=NULL;
+      }
+      if (!compt) {
+         i=combatants->len;
+         g_array_set_size(combatants,i+1);
+         compt=&g_array_index(combatants,struct combatant,i);
+         gtk_table_resize(GTK_TABLE(table),i+2,4);
+         RowIndex=i+1;
+      }
+   } else {
+      compt=&g_array_index(combatants,struct combatant,0);
+      RowIndex=0;
+   }
+
+   BitchText=dpg_strdup_printf(_("%d %tde"),DefendBitches,BitchName);
+   HealthText=g_strdup_printf(_("Health: %d"),DefendHealth);
+
+   ProgPercent=(gfloat)DefendHealth/100.0;
+
+   if (compt->name) {
+      if (DefendName[0]) gtk_label_set_text(GTK_LABEL(compt->name),DefendName);
+      gtk_label_set_text(GTK_LABEL(compt->bitches),BitchText);
+      gtk_label_set_text(GTK_LABEL(compt->healthlabel),HealthText);
+      gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
+                              ProgPercent);
+   } else {
+      compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
+      gtk_table_attach_defaults(GTK_TABLE(table),compt->name,0,1,
+                                RowIndex,RowIndex+1);
+      compt->bitches = gtk_label_new(BitchText);
+      gtk_table_attach_defaults(GTK_TABLE(table),compt->bitches,1,2,
+                                RowIndex,RowIndex+1);
+      compt->healthprog = gtk_progress_bar_new();
+      gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(compt->healthprog),
+                                    GTK_PROGRESS_LEFT_TO_RIGHT);
+      gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
+                              ProgPercent);
+      gtk_table_attach_defaults(GTK_TABLE(table),compt->healthprog,2,3,
+                                RowIndex,RowIndex+1);
+      compt->healthlabel = gtk_label_new(HealthText);
+      gtk_table_attach_defaults(GTK_TABLE(table),compt->healthlabel,3,4,
+                                RowIndex,RowIndex+1);
+      gtk_widget_show(compt->name);
+      gtk_widget_show(compt->bitches);
+      gtk_widget_show(compt->healthprog);
+      gtk_widget_show(compt->healthlabel);
+   }
+
+   g_free(BitchText); g_free(HealthText);
+}
+
+static void FreeCombatants() {
+   GArray *combatants;
+   combatants=(GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
+                                            "combatants");
+   if (!combatants) return;
+
+   g_array_free(combatants,TRUE);
+}
+
 void DisplayFightMessage(char *Data) {
    Player *Play;
    gint EditPos;
    GtkAccelGroup *accel_group;
    GtkWidget *Deal,*Fight,*Stand,*Run,*Text;
    char cr[] = "\n";
-   gchar *AttackName,*DefendName,FightPoint,*Message;
+   gchar *AttackName,*DefendName,*BitchName,FightPoint,*Message;
    int DefendHealth,DefendBitches,BitchesKilled,ArmPercent;
    gboolean CanRunHere,Loot,CanFire;
 
    if (!Data) {
       if (FightDialog) {
+         FreeCombatants();
          gtk_widget_destroy(FightDialog); FightDialog=NULL;
       }
       return;
@@ -735,8 +838,11 @@ void DisplayFightMessage(char *Data) {
 
    if (HaveAbility(Play,A_NEWFIGHT)) {
       ReceiveFightMessage(Data,&AttackName,&DefendName,&DefendHealth,
-                          &DefendBitches,&BitchesKilled,&ArmPercent,
+                          &DefendBitches,&BitchName,&BitchesKilled,&ArmPercent,
                           &FightPoint,&CanRunHere,&Loot,&CanFire,&Message);
+      if (FightPoint==F_HIT || FightPoint==F_ARRIVED || FightPoint==F_MISS) {
+         UpdateCombatant(DefendName,DefendBitches,BitchName,DefendHealth);
+      }
       if (FightPoint==F_LASTLEAVE) {
          Play->Flags&= ~FIGHTING;
       } else {
@@ -952,7 +1058,7 @@ static void JetCallback(GtkWidget *widget,gpointer data) {
 
 void JetButtonPressed(GtkWidget *widget,gpointer data) {
    if (ClientData.Play->Flags & FIGHTING) {
-      DisplayFightMessage("");
+      DisplayFightMessage(NULL);
    } else {
       Jet();
    }

@@ -125,7 +125,7 @@ struct METASERVER DefaultMetaServer = {
 };
 int NumTurns=31;
 
-int PlayerArmour=100,BitchArmour=60;
+int PlayerArmour=100,BitchArmour=50;
 
 struct GLOBALS Globals[NUMGLOB] = {
    { &Port,NULL,NULL,NULL,"Port",N_("Network port to connect to"),
@@ -271,6 +271,12 @@ struct GLOBALS Globals[NUMGLOB] = {
    { &StaticCop.GunIndex,NULL,NULL,NULL,"GunIndex",
      N_("Zero-based index of the gun that cops are armed with"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.CopGun,NULL,NULL,NULL,"CopGun",
+     N_("Number of guns that each cop carries"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
+   { &StaticCop.DeputyGun,NULL,NULL,NULL,"DeputyGun",
+     N_("Number of guns that each deputy carries"),
+     (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
    { NULL,NULL,&StaticDrug.Name,NULL,"Name",
      N_("Name of each drug"),
      (void **)(&Drug),&StaticDrug,
@@ -415,9 +421,9 @@ char *DefaultStoppedTo[NUMSTOPPEDTO] = {
 };
 
 struct COP DefaultCop[NUMCOP] = {
-   { N_("Officer Hardass"),N_("deputy"),N_("deputies"),2,2,30,30,2,8,0 },
-   { N_("Officer Bob"),N_("deputy"),N_("deputies"),6,4,30,20,4,10,0 },
-   { N_("Agent Smith"),N_("cop"),N_("cops"),20,6,20,20,6,18,1 }
+   { N_("Officer Hardass"),N_("deputy"),N_("deputies"),4,3,30,30,2,8,0,1,1 },
+   { N_("Officer Bob"),N_("deputy"),N_("deputies"),15,4,30,20,4,10,0,2,1 },
+   { N_("Agent Smith"),N_("cop"),N_("cops"),50,6,20,20,6,18,1,3,2 }
 };
 
 struct GUN DefaultGun[NUMGUN] = {
@@ -1151,6 +1157,8 @@ void CopyCop(struct COP *dest,struct COP *src) {
    dest->MinDeputies=src->MinDeputies;
    dest->MaxDeputies=src->MaxDeputies;
    dest->GunIndex=src->GunIndex;
+   dest->CopGun=src->CopGun;
+   dest->DeputyGun=src->DeputyGun;
 }
 
 void CopyGun(struct GUN *dest,struct GUN *src) {

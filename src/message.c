@@ -1058,6 +1058,7 @@ void SendFightLeave(Player *Play,gboolean FightOver) {
 
 void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
                          int *DefendHealth,int *DefendBitches,
+                         gchar **BitchName,
                          int *BitchesKilled,int *ArmPercent,
                          gchar *FightPoint,gboolean *CanRunHere,
                          gboolean *Loot,gboolean *CanFire,gchar **Message) {
@@ -1068,6 +1069,7 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
    *DefendName=GetNextWord(&pt,"");
    *DefendHealth=GetNextInt(&pt,0);
    *DefendBitches=GetNextInt(&pt,0);
+   *BitchName=GetNextWord(&pt,"");
    *BitchesKilled=GetNextInt(&pt,0);
    *ArmPercent=GetNextInt(&pt,0);
 
@@ -1086,10 +1088,11 @@ void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
 
 void SendFightMessage(Player *Attacker,Player *Defender,
                       int BitchesKilled,gchar FightPoint,
-                      gboolean Loot,gboolean Broadcast,gchar *Msg) {
+                      price_t Loot,gboolean Broadcast,gchar *Msg) {
    int ArrayInd,ArmPercent,Damage,MaxDamage,i;
    Player *To;
    GString *text;
+   gchar *BitchName;
 
    if (!Attacker->FightArray) return;
 
@@ -1108,12 +1111,28 @@ void SendFightMessage(Player *Attacker,Player *Defender,
       if (!Broadcast && To!=Attacker) continue;
       g_string_truncate(text,0);
       if (HaveAbility(To,A_NEWFIGHT)) {
-         g_string_sprintf(text,"%s^%s^%d^%d^%d^%d^%c%c%c%c^",
+         if (Defender) {
+            if (IsCop(Defender)) {
+               if (Defender->Bitches.Carried==1) {
+                  BitchName=Cop[Defender->CopIndex-1].DeputyName;
+               } else {
+                  BitchName=Cop[Defender->CopIndex-1].DeputiesName;
+               }
+            } else {
+               if (Defender->Bitches.Carried==1) {
+                  BitchName=Names.Bitch;
+               } else {
+                  BitchName=Names.Bitches;
+               }
+            }
+         } else BitchName="";
+         g_string_sprintf(text,"%s^%s^%d^%d^%s^%d^%d^%c%c%c%c^",
                           Attacker==To ? "" : GetPlayerName(Attacker),
                           (Defender==To || Defender==NULL)
                                        ? "" : GetPlayerName(Defender),
                           Defender ? Defender->Health : 0,
                           Defender ? Defender->Bitches.Carried : 0,
+                          BitchName,
                           BitchesKilled,ArmPercent,
                           FightPoint,CanRunHere(To) ? '1' : '0',
                           Loot ? '1' : '0',
@@ -1144,7 +1163,7 @@ void SendFightMessage(Player *Attacker,Player *Defender,
 
 void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                         Player *Defender,int BitchesKilled,int ArmPercent,
-                        gchar FightPoint,gboolean Loot) {
+                        gchar FightPoint,price_t Loot) {
    gchar *Armament,*DefendName,*AttackName;
    int Health,Bitches;
    gchar *BitchName,*BitchesName;
@@ -1192,10 +1211,23 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
             g_string_append(text,_("You stand there like a dummy."));
          }
          break;
+      case F_FAILFLEE:
+         if (AttackName[0]) {
+            g_string_sprintfa(text,_("%s tries to get away, but fails."),
+                              AttackName);
+         } else {
+            g_string_append(text,_("Panic! You can't get away!"));
+         }
+         break;
       case F_LEAVE: case F_LASTLEAVE:
          if (Attacker->Health>0) {
             if (AttackName[0]) {
-               g_string_sprintfa(text,_("%s has got away!"),AttackName);
+               if (!IsCop(Attacker) && brandom(0,100)<70 && Attacker->IsAt>=0) {
+                  g_string_sprintfa(text,_("%s has got away to %s!"),AttackName,
+                                    Location[(int)Attacker->IsAt].Name);
+               } else {
+                  g_string_sprintfa(text,_("%s has got away!"),AttackName);
+               }
             } else {
                g_string_sprintfa(text,_("You got away!"));
             }
@@ -1249,7 +1281,9 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
             } else {
                g_string_sprintfa(text,_("You hit %s!"),DefendName);
             }
-            if (Loot) {
+            if (Loot>0) {
+               dpg_string_sprintfa(text,_(" You find %P on the body!"),Loot);
+            } else if (Loot<0) {
                g_string_append(text,_(" You loot the body!"));
             }
          }

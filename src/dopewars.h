@@ -211,6 +211,7 @@ struct COP {
    gint AttackPenalty,DefendPenalty;
    gint MinDeputies,MaxDeputies;
    gint GunIndex;
+   gint CopGun,DeputyGun;
 };
 extern struct COP DefaultCop[NUMCOP],*Cop;
 
@@ -320,7 +321,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 86
+#define NUMGLOB 88
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;
