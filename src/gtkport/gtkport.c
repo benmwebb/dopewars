@@ -4681,6 +4681,7 @@ void gtk_entry_set_text(GtkEntry *entry, const gchar *text)
 {
   int pos = 0;
 
+  gtk_editable_delete_text(GTK_EDITABLE(entry), 0, -1);
   gtk_editable_insert_text(GTK_EDITABLE(entry), text, strlen(text), &pos);
 }
 
