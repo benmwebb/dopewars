@@ -22,6 +22,7 @@
 
 #include <windows.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "zlib/zlib.h"
 #include "util.h"
 
@@ -110,7 +111,7 @@ InstData *ReadInstallData()
       switch (section) {
       case S_NONE:
         printf("Bad line %s\n", line);
-        exit(1);
+        exit(EXIT_FAILURE);
       case S_PRODUCT:
         printf("product ID = %s\n", line);
         idata->product = line;
@@ -160,7 +161,7 @@ InstData *ReadInstallData()
     return idata;
   } else {
     printf("No directories specified\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 

@@ -182,7 +182,7 @@ void AIPlayerLoop()
       if (errno == EINTR)
         continue;
       printf("Error in select\n");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
 
     datawaiting =

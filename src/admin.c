@@ -53,7 +53,7 @@ static int OpenSocket(void)
   sock = socket(PF_UNIX, SOCK_STREAM, 0);
   if (sock == -1) {
     perror("socket");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   addr.sun_family = AF_UNIX;
@@ -63,7 +63,7 @@ static int OpenSocket(void)
   if (connect(sock, (struct sockaddr *)&addr,
               sizeof(struct sockaddr_un)) == -1) {
     perror("connect");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   g_print(_("Connection established; use Ctrl-D to "

@@ -326,7 +326,7 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
         continue;
       }
       perror("bselect");
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     if (FD_ISSET(0, &readfds)) {
       /* So that Ctrl-L works */
@@ -538,7 +538,7 @@ static gboolean DoConnect(Player *Play, GString *errstr)
           continue;
         }
         perror("bselect");
-        exit(1);
+        exit(EXIT_FAILURE);
       }
       if (FD_ISSET(0, &readfds)) {
         /* So that Ctrl-L works */

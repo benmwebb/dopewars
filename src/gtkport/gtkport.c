@@ -5321,9 +5321,9 @@ static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
       if (pid == 0) {
         execv(bin, args);
         g_print("dopewars: cannot execute %s\n", bin);
-        _exit(1);
+        _exit(EXIT_FAILURE);
       } else {
-        _exit(0);
+        _exit(EXIT_SUCCESS);
       }
     }
   }

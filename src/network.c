@@ -104,7 +104,7 @@ void StartNetworking()
           errstr->str);
     g_string_free(errstr, TRUE);
     FreeError(error);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 
@@ -120,7 +120,7 @@ void SetReuse(SOCKET sock)
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&i,
                  sizeof(i)) == -1) {
     perror("setsockopt");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 
@@ -148,7 +148,7 @@ void SetReuse(int sock)
 
   if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &i, sizeof(i)) == -1) {
     perror("setsockopt");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 }
 

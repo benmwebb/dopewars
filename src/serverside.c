@@ -851,7 +851,7 @@ static gboolean StartServer(void)
           errstr->str);
     g_string_free(errstr, TRUE);
     FreeError(sockerr);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   /* This doesn't seem to work properly under Win32 */
@@ -868,13 +868,13 @@ static gboolean StartServer(void)
           _("Cannot bind to port %u (%s) Aborting."), Port, errstr->str);
     g_string_free(errstr, TRUE);
     FreeError(sockerr);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   if (listen(ListenSock, 10) == SOCKET_ERROR) {
     g_log(NULL, G_LOG_LEVEL_CRITICAL,
           _("Cannot listen to network socket. Aborting."));
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   /* Initial startup message for the server */
@@ -1041,7 +1041,7 @@ Player *HandleNewConnection(void)
   if ((ClientSock = accept(ListenSock, (struct sockaddr *)&ClientAddr,
                            &cadsize)) == -1) {
     perror("accept socket");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   dopelog(2, LF_SERVER, _("got connection from %s"),
           inet_ntoa(ClientAddr.sin_addr));
@@ -1823,13 +1823,13 @@ void DropPrivileges()
   setregid(getgid(), getgid());
   if (getgid() != getegid()) {
     perror("setregid");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   setreuid(getuid(), getuid());
   if (getuid() != geteuid()) {
     perror("setreuid");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 #endif
 }
