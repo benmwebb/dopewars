@@ -95,6 +95,14 @@ else
 
    dnl Use console server by default
    GUI_SERVER="no"
+
+   dnl Some systems use int rather than socklen_t as an argument to getsockopt
+   AC_MSG_CHECKING([for socklen_t data type])
+   AC_TRY_COMPILE([#include <sys/types.h>
+                   #include <sys/socket.h>],[socklen_t val],
+                  [AC_MSG_RESULT([yes])
+                   AC_DEFINE(HAVE_SOCKLEN_T)],
+                  [AC_MSG_RESULT([no])])
 fi
 
 if test "$GUI_CLIENT" = "yes" ; then

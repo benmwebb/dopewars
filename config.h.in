@@ -75,6 +75,9 @@
 /* Use a graphical server? */
 #undef GUI_SERVER
 
+/* Do we have the socklen_t data type? */
+#undef HAVE_SOCKLEN_T
+
 #undef ENABLE_NLS
 #undef HAVE_CATGETS
 #undef HAVE_GETTEXT

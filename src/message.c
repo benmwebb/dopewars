@@ -776,7 +776,11 @@ char *FinishSetupNetwork() {
    return NULL;
 #else
    int optval;
+#ifdef HAVE_SOCKLEN_T
    socklen_t optlen;
+#else
+   int optlen;
+#endif
 
    optlen=sizeof(optval);
    if (getsockopt(ClientSock,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
@@ -788,7 +792,7 @@ char *FinishSetupNetwork() {
    } else {
       return NoConnect;
    }
-#endif
+#endif /* CYGWIN */
 }
 
 #endif /* NETWORKING */
