@@ -248,8 +248,8 @@ mostlyclean distclean maintainer-clean
 
 
 install-data-local:
-	${INSTALL} -d -o root -g 0 -m 0755 ${DOCPATH}
-	${INSTALL} -o root -g 0 -m 0644 ${DOCS} ${DOCPATH}
+	${INSTALL} -d -m 0755 ${DOCPATH}
+	${INSTALL} -m 0644 ${DOCS} ${DOCPATH}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -12,13 +12,14 @@ DOPEDIR    = ${DESTDIR}${bindir}
 DOPEBIN    = ${DOPEDIR}/dopewars
 
 install-exec-hook:
-	chown root:games ${DOPEBIN} || \
-	    chown root:wheel ${DOPEBIN}
+	@chgrp games ${DOPEBIN} || chgrp wheel ${DOPEBIN} || \
+	  ( echo "WARNING: Cannot change group of dopewars binary - the high"; \
+	    echo "score file may be unreadable or unwriteable by some users" )
 	chmod 2755 ${DOPEBIN}
 
 install-data-local:
 	${mkinstalldirs} ${PIXDIR}
-	${INSTALL} -o root -g 0 -m 0644 ${PIXMAPS} ${PIXDIR}
+	${INSTALL} -m 0644 ${PIXMAPS} ${PIXDIR}
 
 %.res: %.rc
 	windres -O coff -o $@ $<

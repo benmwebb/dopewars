@@ -8,8 +8,8 @@ SCORE      = ${SCOREDIR}/dopewars.sco
 install-data-local:
 	${mkinstalldirs} ${SCOREDIR}
 	touch ${SCORE}
-	chown root:games ${SCORE} || \
-	   chown root:wheel ${SCORE}
+	@chgrp games ${SCORE} || chgrp wheel ${SCORE} || \
+	  echo "Unable to change group ownership of the high score file"
 	chmod 0660 ${SCORE}
 	${mkinstalldirs} ${DESKTOPDIR}
-	${INSTALL} -o root -g 0 -m 0644 ${DESKTOP} ${DESKTOPDIR}
+	${INSTALL} -m 0644 ${DESKTOP} ${DESKTOPDIR}
