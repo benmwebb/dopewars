@@ -14,5 +14,6 @@ src/error.c
 src/message.c
 src/network.c
 src/admin.c
+src/configfile.c
 src/AIPlayer.c
 src/sound.c
