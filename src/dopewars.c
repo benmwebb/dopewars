@@ -476,13 +476,14 @@ int brandom(int bot,int top) {
 
 int CountPlayers(GSList *First) {
 /* Returns the total numbers of players in the list starting at "First"; */
-/* players still in the process of connecting or leaving are ignored.    */
+/* players still in the process of connecting or leaving, and those that */
+/* are actually cops (server-created internal AI players) are ignored.   */
    GSList *list;
    Player *Play;
    int count=0;
    for (list=First;list;list=g_slist_next(list)) {
       Play=(Player *)list->data;
-      if (strlen(GetPlayerName(Play))>0) count++;
+      if (strlen(GetPlayerName(Play))>0 && !Play->IsCop) count++;
    }
    return count;
 }
@@ -512,7 +513,6 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->Name=NULL;
    SetPlayerName(NewPlayer,NULL);
    NewPlayer->IsAt=0;
-   NewPlayer->Attacked=NULL;
    NewPlayer->EventNum=E_NONE;
    NewPlayer->FightTimeout=NewPlayer->ConnectTimeout=NewPlayer->IdleTimeout=0;
    NewPlayer->Guns=(Inventory *)g_malloc0(NumGun*sizeof(Inventory));
@@ -523,15 +523,17 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->Cash=StartCash;
    NewPlayer->Debt=StartDebt;
    NewPlayer->Bank=0;
-   NewPlayer->Health=100;
-   NewPlayer->CoatSize=100;
    NewPlayer->Bitches.Carried=8;
+   NewPlayer->IsCop=FALSE;
+   NewPlayer->Health=MaxHealth(NewPlayer,NewPlayer->Bitches.Carried);
+   NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
    NewPlayer->ReadBuf.Data=NewPlayer->WriteBuf.Data=NULL;
    NewPlayer->ReadBuf.Length=NewPlayer->WriteBuf.Length=0;
    NewPlayer->ReadBuf.DataPresent=NewPlayer->WriteBuf.DataPresent=0;
    InitAbilities(NewPlayer);
    if (Server) NewPlayer->fd=fd;
+   NewPlayer->FightArray=NULL;
    return g_slist_append(First,(gpointer)NewPlayer);
 }
 
@@ -549,7 +551,7 @@ GSList *RemovePlayer(Player *Play,GSList *First) {
    g_assert(First);
 
    First=g_slist_remove(First,(gpointer)Play);
-   if (Server && Play->fd>=0) {
+   if (Server && !Play->IsCop && Play->fd>=0) {
       CloseSocket(Play->fd);
    }
    ClearList(&(Play->SpyList));
@@ -578,6 +580,13 @@ void CopyPlayer(Player *Dest,Player *Src) {
    Dest->Name=g_strdup(Src->Name);
    Dest->Bitches.Carried=Src->Bitches.Carried;
    Dest->Flags=Src->Flags;
+}
+
+int MaxHealth(Player *Play,int NumBitches) {
+   if (Play->IsCop)
+      return (5+NumBitches*2);
+   else
+      return (80+NumBitches*20);
 }
 
 char *GetPlayerName(Player *Play) {
@@ -613,7 +622,7 @@ Player *GetPlayerByName(char *Name,GSList *First) {
    if (Name==NULL || Name[0]==0) return &Noone;
    for (list=First;list;list=g_slist_next(list)) {
       Play=(Player *)list->data;
-      if (strcmp(GetPlayerName(Play),Name)==0) return Play;
+      if (!Play->IsCop && strcmp(GetPlayerName(Play),Name)==0) return Play;
    }
    return NULL;
 }

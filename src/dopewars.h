@@ -72,7 +72,8 @@ typedef long long price_t;
 
 #define A_PLAYERID      0
 #define A_DRUGVALUE     1
-#define A_NUM           2
+#define A_NEWFIGHT      2
+#define A_NUM           3
 typedef struct ABILITIES {
    gboolean Local[A_NUM];
    gboolean Remote[A_NUM];
@@ -188,10 +189,6 @@ extern int NumTurns;
 #define SELECTTIP   2
 #define SELECTSPY   3
 
-#define F_STAND     0
-#define F_FIGHT     1
-#define F_RUN       2
-
 #define E_NONE       0
 #define E_SUBWAY     1
 #define E_OFFOBJECT  2
@@ -208,13 +205,10 @@ extern int NumTurns;
 #define E_FINISH     100
 
 #define E_OUTOFSYNC  120
-#define E_ATTACK     121
-#define E_WAITATTACK 122
-#define E_FREEFORALL 123
-#define E_DEFEND     124
-#define E_COPS       125
-#define E_DOCTOR     126
-#define E_MAXOOS     127
+#define E_FIGHT      121
+#define E_FIGHTASK   122
+#define E_DOCTOR     123
+#define E_MAXOOS     124
 
 struct GUN {
    gchar *Name;
@@ -291,13 +285,14 @@ struct PLAYER_T {
    Inventory *Guns,*Drugs,Bitches;
    int fd;
    int EventNum,ResyncNum;
-   int Cops;
    time_t FightTimeout,IdleTimeout,ConnectTimeout;
    price_t DocPrice;
    DopeList SpyList,TipList;
-   Player *OnBehalfOf,*Attacked;
+   Player *OnBehalfOf;
    ConnBuf ReadBuf,WriteBuf;
    Abilities Abil;
+   GPtrArray *FightArray;
+   gboolean IsCop;
 };
 
 #define CM_SERVER 0
@@ -342,6 +337,7 @@ int CountPlayers(GSList *First);
 GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First);
 void UpdatePlayer(Player *Play);
 void CopyPlayer(Player *Dest,Player *Src);
+int MaxHealth(Player *Play,int NumBitches);
 void ClearInventory(Inventory *Guns,Inventory *Drugs);
 int IsCarryingRandom(Player *Play,int amount);
 void ChangeSpaceForInventory(Inventory *Guns,Inventory *Drugs,

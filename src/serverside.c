@@ -1,5 +1,5 @@
 /* serverside.c   Handles the server side of dopewars                   */
-/* copyright (c)  1998-2000  ben webb                                   */
+/* Copyright (c)  1998-2000  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
 
@@ -248,7 +248,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
                SetPlayerName(Play,Data);
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=Play) SendPlayerDetails(pt,Play,C_LIST);
+                  if (pt!=Play && !pt->IsCop) SendPlayerDetails(pt,Play,C_LIST);
                }
                SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
                RegisterWithMetaServer(TRUE,FALSE);
@@ -297,9 +297,9 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          break;
       case C_REQUESTJET:
          i=atoi(Data);
-         if (Play->EventNum==E_ATTACK || Play->EventNum==E_DEFEND ||
-             Play->EventNum==E_WAITATTACK || Play->EventNum==E_FREEFORALL) {
-             BreakoffCombat(Play,FALSE);
+         if (Play->EventNum==E_FIGHT || Play->EventNum==E_FIGHTASK) {
+            if (CanRunHere(Play)) break;
+            else RunFromCombat(Play);
          }
          if (NumTurns>0 && Play->Turn>=NumTurns && Play->EventNum!=E_FINISH) {
             FinishGame(Play,_("Your dealing time is up..."));
@@ -347,19 +347,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
          BuyObject(Play,Data);
          break;
       case C_FIGHTACT:
-         if (Play->EventNum==E_ATTACK || Play->EventNum==E_FREEFORALL) {
-            AttackPlayer(Play,Play->Attacked,
-               TotalGunsCarried(Play)>0 ? AT_SHOOT : 0);
-         } else if (Play->EventNum==E_DEFEND) {
-            for (list=FirstServer;list;list=g_slist_next(list)) {
-               tmp=(Player *)list->data;
-               if ((tmp->EventNum==E_FREEFORALL || tmp->EventNum==E_WAITATTACK) 
-                   && tmp->Attacked==Play) {
-                  AttackPlayer(Play,tmp,
-                               TotalGunsCarried(Play)>0 ? AT_SHOOT : 0);
-               }
-            }
-         }
+         if (Data[0]=='F') Fire(Play); else RunFromCombat(Play);
          break;
       case C_ANSWER:
          HandleAnswer(Play,To,Data);
@@ -417,9 +405,8 @@ void ClientLeftServer(Player *Play) {
 /* cleans up after them if necessary.                            */
    Player *tmp;
    GSList *list;
-   if (Play->EventNum==E_ATTACK || Play->EventNum==E_DEFEND ||
-       Play->EventNum==E_WAITATTACK || Play->EventNum==E_FREEFORALL) {
-      BreakoffCombat(Play,TRUE);
+   if (Play->EventNum==E_FIGHT || Play->EventNum==E_FIGHTASK) {
+      WithdrawFromCombat(Play);
    }
    for (list=FirstServer;list;list=g_slist_next(list)) {
       tmp=(Player *)list->data;
@@ -766,7 +753,7 @@ void ServerLoop() {
       topsock=ListenSock+1;
       for (list=FirstServer;list;list=g_slist_next(list)) {
          tmp=(Player *)list->data;
-         if (tmp->fd>0) {
+         if (!tmp->IsCop && tmp->fd>0) {
             FD_SET(tmp->fd,&readfs);
             if (tmp->WriteBuf.DataPresent) FD_SET(tmp->fd,&writefs);
             FD_SET(tmp->fd,&errorfs);
@@ -1155,7 +1142,7 @@ void SendEvent(Player *To) {
                   text=g_strdup_printf(_("AE^%s is already here!^"
                                          "Do you Attack, or Evade?"),
                                        GetPlayerName(Play));
-                  To->Attacked=Play;
+                  To->OnBehalfOf=Play;
                   SendDrugsHere(To,TRUE);
                   SendQuestion(NULL,C_MEETPLAYER,To,text);
                   g_free(text);
@@ -1188,231 +1175,279 @@ int SendCopOffer(Player *To,char Force) {
    } else if (i<50) { return(RandomOffer(To));
    } else if (Sanitized) { return 0;
    } else {
-      StartOfficerHardass(To,To->EventNum+1,NULL,NULL);
+      CopsAttackPlayer(To);
+      return 1;
    }
    return 1;
 }
 
-void StartOfficerHardass(Player *Play,int ResyncNum,
-                         char *LoneMessage,char *DeputyMessage) {
-/* Starts combat between player "Play" and the cops. "ResyncNum" is */
-/* the event number to be returned to after combat is complete.     */
-/* "LoneMessage" and "DeputyMessage" are the format strings passed  */
-/* to OfficerHardass if they are non-NULL.                          */
-   price_t Money;
-   if (!Play) return;
-   Money=Play->Cash+Play->Bank-Play->Debt;
-   if (Money>3000000) Play->Cops=brandom(11,27);
-   else if (Money>1000000) Play->Cops=brandom(7,14);
-   else if (Money>500000) Play->Cops=brandom(6,12);
-   else if (Money>100000) Play->Cops=brandom(2,8);
-   else Play->Cops=brandom(1,5);
+void CopsAttackPlayer(Player *Play) {
+/* Has the cops attack player "Play"                                */
+   Player *Cops;
+   Cops=g_new(Player,1);
+   FirstServer=AddPlayer(0,Cops,FirstServer);
+   SetPlayerName(Cops,"Officer Hardass");
+   Cops->IsCop=TRUE;
+   Cops->Cash=Cops->Debt=0;
 
-   Play->ResyncNum=ResyncNum;
-   Play->EventNum=E_COPS;
-   if (Play->ResyncNum==E_MAX || Play->ResyncNum==E_NONE) {
-      SendServerMessage(NULL,C_NONE,C_CHANGEDISP,Play,"N");
-   }
-   OfficerHardass(Play,LoneMessage,DeputyMessage);
+   Cops->Bitches.Carried=10;
+   Cops->Guns[0].Carried=5;
+   Cops->Health=MaxHealth(Cops,Cops->Bitches.Carried);
+
+   Play->EventNum++;
+   AttackPlayer(Cops,Play);
 }
 
-void OfficerHardass(Player *Play,char *LoneMessage,char *DeputyMessage) {
-/* Send client "Play" a message announcing the attack of the cops */
-/* The format string used for this purpose can be altered by      */
-/* passing non-NULL "LoneMessage" (for unaccompanied Officer      */
-/* Hardass) and/or "DeputyMessage" (for him with x deputies)      */
-   char LoneDefault[] = { N_("YN^Officer %s is chasing you!") };
-   char DeputyDefault[] = { 
-      N_("YN^Officer %s and %d of his deputies are chasing you!")
-   };
-   char *OfficerName;
-   GString *text;
-   
-   if (!Play || Play->EventNum!=E_COPS) return;
-   if (Play->Cops==0) { 
-      Play->EventNum=Play->ResyncNum; SendEvent(Play); return; 
-   }
-   text=g_string_new(NULL);
-   OfficerName=(Play->Flags&DEADHARDASS ? Names.ReserveOfficer : 
-                                          Names.Officer);
-   if (Play->Cops==1) {
-      g_string_sprintf(text,LoneMessage ? LoneMessage : _(LoneDefault),
-                       OfficerName);
-   } else {
-      g_string_sprintf(text,DeputyMessage ? DeputyMessage : _(DeputyDefault),
-	               OfficerName, Play->Cops - 1);
-   }
-   SendPlayerData(Play);
-   if (TotalGunsCarried(Play)==0) {
-      g_string_append(text,_("^Do you run?"));
-      SendQuestion(NULL,C_ASKRUN,Play,text->str);
-   } else {
-      g_string_append(text,_("^Do you Run, or Fight?"));
-      if (strlen(text->str)>=2) {
-         text->str[0]='R'; text->str[1]='F';
-      }
-      SendQuestion(NULL,C_ASKRUNFIGHT,Play,text->str);
-   }
-   g_string_free(text,TRUE);
-}
+void AttackPlayer(Player *Play,Player *Attacked) {
+/* Starts combat between player "Play" and player "Attacked"; if    */
+/* either player is currently engaged in combat, add the other      */
+/* player to the existing combat. If neither player is currently    */
+/* fighting, start a new combat between them. Either player can be  */
+/* the cops.                                                        */
+   GPtrArray *FightArray;
+   g_assert(Play && Attacked);
 
-void FinishFightWithHardass(Player *Play,char *Message) {
-/* Clean up after a fight between "Play" and the cops. If the cops were */
-/* tipped off by another player, inform them of the results.            */
-/* If the player died, pass "Message" to the FinishGame subroutine.     */
-   GString *text;
-   if (g_slist_find(FirstServer,(gpointer)Play->OnBehalfOf)) {
-      g_message(_("%s: tipoff by %s finished OK."),GetPlayerName(Play),
-                GetPlayerName(Play->OnBehalfOf));
-      RemoveListPlayer(&(Play->TipList),Play->OnBehalfOf);
-      text=g_string_new(NULL);
-      if (Play->Health==0) {
-         g_string_sprintf(text,
-           _("Following your tipoff, the cops ambushed %s, who was shot dead"),
-           GetPlayerName(Play));
+   if (Play->FightArray && Attacked->FightArray) {
+      if (Play->FightArray==Attacked->FightArray) {
+         g_warning("Players are already in a fight!");
       } else {
-         g_string_sprintf(text,
-                _("Following your tipoff, the cops ambushed %s, who escaped "
-                "with %d %s. "),GetPlayerName(Play),
-                Play->Bitches.Carried,Names.Bitches);
+         g_warning("Players are already in separate fights!");
       }
-      GainBitch(Play->OnBehalfOf);
-      SendPlayerData(Play->OnBehalfOf);
-      SendPrintMessage(NULL,C_NONE,Play->OnBehalfOf,text->str);
-      g_string_free(text,TRUE);
+      return;
    }
-   Play->OnBehalfOf=NULL;
-   if (Play->Health==0) FinishGame(Play,Message);
-   else {
-      Play->EventNum=Play->ResyncNum; 
-      if (Play->ResyncNum==E_MAX || Play->ResyncNum==E_NONE) {
-         SendServerMessage(NULL,C_NONE,C_CHANGEDISP,Play,"Y");
-      }
-      SendEvent(Play);
+
+   if (Play->FightArray) {
+      FightArray=Play->FightArray;
+      AddPlayerToFight(Attacked,FightArray,Play);
+   } else if (Attacked->FightArray) {
+      FightArray=Attacked->FightArray;
+      AddPlayerToFight(Play,FightArray,Attacked);
+   } else {
+      FightArray=g_ptr_array_new();
+      AddPlayerToFight(Attacked,FightArray,Play);
+      AddPlayerToFight(Play,FightArray,Attacked);
+   }
+   
+   Fire(Play);
+}
+
+void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other) {
+/* Adds the player "NewPlay" to the fight "Fight", and informs any      */
+/* players already in the fight of the new player's arrival. "Other" is */
+/* a player already in the fight                                        */
+   NewPlay->FightArray=Fight;
+   NewPlay->ResyncNum=NewPlay->EventNum;
+   NewPlay->EventNum=E_FIGHT;
+
+   g_ptr_array_add(Fight,NewPlay);
+   SendFightMessage(NewPlay,Other,0,F_ARRIVED,FALSE,TRUE,NULL);
+}
+
+gboolean IsOpponent(Player *Play,Player *Other) {
+/* Returns TRUE if player "Other" is not allied with player "Play"  */
+   return TRUE;
+}
+
+void HandleDamage(Player *Defend,Player *Attack,int Damage,
+                  int *BitchesKilled,gboolean *Loot) {
+   Inventory *Guns,*Drugs;
+   price_t Bounty;
+
+   Guns=(Inventory *)g_malloc0(sizeof(Inventory)*NumGun);
+   Drugs=(Inventory *)g_malloc0(sizeof(Inventory)*NumDrug);
+   ClearInventory(Guns,Drugs);
+
+   Bounty=0;
+   if (Defend->Health<=Damage && Defend->Bitches.Carried==0) {
+      Bounty=Defend->Cash+Defend->Bank-Defend->Debt;
+      AddInventory(Guns,Defend->Guns,NumGun);
+      AddInventory(Drugs,Defend->Drugs,NumDrug);
+      Defend->Health=0;
+   } else if (Defend->Bitches.Carried>0 &&
+              Defend->Health-Damage <=
+              MaxHealth(Defend,Defend->Bitches.Carried-1)) {
+      LoseBitch(Defend,Guns,Drugs);
+      Defend->Health=MaxHealth(Defend,Defend->Bitches.Carried);
+      *BitchesKilled=1;
+   } else {
+      Defend->Health-=Damage;
+   }
+   SendPlayerData(Defend);
+   if (Bounty<0) Bounty=0;
+   TruncateInventoryFor(Guns,Drugs,Attack);
+   if (!IsInventoryClear(Guns,Drugs)) {
+      AddInventory(Attack->Guns,Guns,NumGun);
+      AddInventory(Attack->Drugs,Drugs,NumDrug);
+      ChangeSpaceForInventory(Guns,Drugs,Attack);
+   }
+   Attack->Cash+=Bounty;
+   if (Bounty>0 || !IsInventoryClear(Guns,Drugs)) {
+      *Loot=TRUE;
+      SendPlayerData(Attack);
+   }
+   g_free(Guns); g_free(Drugs);
+}
+
+void GetFightRatings(Player *Attack,Player *Defend,
+                     int *AttackRating,int *DefendRating) {
+   int i;
+
+/* Base values */
+   *AttackRating=80;
+   *DefendRating=100;
+
+   for (i=0;i<NumGun;i++) {
+      *AttackRating+=Gun[i].Damage*Attack->Guns[i].Carried;
+   }
+   if (Attack->IsCop) *AttackRating-=30;
+
+   *DefendRating-=5*Defend->Bitches.Carried;
+   if (Defend->IsCop) *DefendRating-=30;
+
+   *DefendRating=MAX(*DefendRating,10);
+   *AttackRating=MAX(*AttackRating,10);
+}
+
+void AllowNextShooter(Player *Play) {
+   Player *NextShooter;
+   if (FightTimeout) {
+      NextShooter=GetNextShooter(Play);
+      if (NextShooter) NextShooter->FightTimeout=time(NULL);
    }
 }
 
-void FireAtHardass(Player *Play,char FireType) {
-/* Have player "Play" attack the cops.                   */
-/* FireType is F_STAND: Player has no gun and didn't run */
-/*             F_RUN:   Player chose to run              */
-/*             F_FIGHT: Player chose to fire back        */
-   int Damage,i,j;
-   char *OfficerName;
-   gchar *prstr;
-   GString *text;
+void DoReturnFire(Player *Play) {
+   int ArrayInd;
+   Player *Defend;
 
-   if (!Play || Play->EventNum!=E_COPS) return;
-   if (Play->Cops==0) { FinishFightWithHardass(Play,NULL); return; }
-   
-   text=g_string_new("^");
-   OfficerName=(Play->Flags&DEADHARDASS ? Names.ReserveOfficer : 
-                                          Names.Officer);
-   if (FireType==F_STAND) {
-      g_string_append(text,_("^You stand there like an idiot."));
-   } else if (FireType==F_RUN) {
-      if (brandom(0,100) < Cops.EscapeProb-(Play->Cops-1)*Cops.DeputyEscape) {
-         if (Play->Cops==1) {
-            g_string_append(text,_("^You lose him in the alleys."));
-         } else {
-            g_string_append(text,_("^You lose them in the alleys."));
-         }
-         SendPrintMessage(NULL,C_COPSDONE,Play,text->str);
-         FinishFightWithHardass(Play,NULL);
-         g_string_free(text,TRUE);
-         return;
-      } else {
-         if (Play->Cops==1) {
-            g_string_append(text,_("^You can\'t shake him, man!"));
-         } else {
-            g_string_append(text,_("^You can\'t shake them, man!"));
-         }
+   if (!Play || !Play->FightArray) return;
+
+   if (FightTimeout!=0 || !Play->IsCop) {
+      for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+         if (Defend->IsCop && CanPlayerFire(Defend)) Fire(Defend);
       }
-   } else if (FireType==F_FIGHT) {
-      Damage=100-brandom(0,Play->Cops)*Cops.Toughness;
-      for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
-         Damage+=brandom(0,Gun[i].Damage);
-      }
-      if (Damage>=100) {
-         if (Play->Cops==1) {
-            i=brandom(1500,3000);
-            g_string_sprintfa(text,_("^You killed Officer %s! "
-                              "You find %s on his corpse!"),
-                              OfficerName,prstr=FormatPrice(i));
-            g_free(prstr);
-            Play->Cash += i;
-            Play->Flags |= DEADHARDASS;
-            SendPlayerData(Play);
-            Play->DocPrice=brandom(1000,2000-5*Play->Health);
-            if (brandom(0,100)<75 && Play->DocPrice<=Play->Cash &&
-                Play->Health<100) {
-               SendPrintMessage(NULL,C_COPSMESG,Play,text->str);
-               Play->EventNum=E_DOCTOR;
-	       if (Play->Bitches.Carried && !WantAntique) {
-                  g_string_sprintf(text,
-                         _("YN^^^^Do you pay a doctor %s to sew your %s up?"),
-                        prstr=FormatPrice(Play->DocPrice),Names.Bitches);
-               } else {
-                  g_string_sprintf(text,
-                         _("YN^^^^Do you pay a doctor %s to sew you up?"),
-                        prstr=FormatPrice(Play->DocPrice));
+   }
+}
+
+void RunFromCombat(Player *Play) {
+/* Withdraws player "Play" from combat, and levies any penalties on */
+/* the player for this cowardly act, if applicable                  */
+   int EscapeProb,RandNum;
+
+   EscapeProb=50;
+   RandNum=brandom(0,100);
+
+   if (RandNum<EscapeProb) {
+      WithdrawFromCombat(Play);
+      Play->EventNum=Play->ResyncNum; SendEvent(Play);
+   } else {
+      SendFightMessage(Play,NULL,0,F_MSG,FALSE,FALSE,"You can't get away!");
+      AllowNextShooter(Play);
+      DoReturnFire(Play);
+   }
+}
+
+void Fire(Player *Play) {
+/* Fires all weapons of player "Play" at all opponents, and resets  */
+/* the fight timeout (the reload time)                              */
+   int Damage,ArrayInd,i,j;
+   int AttackRating,DefendRating;
+   int BitchesKilled;
+   gboolean Loot;
+   gchar FightPoint;
+   Player *Defend;
+
+   if (!Play->FightArray) return;
+   if (!CanPlayerFire(Play)) return;
+
+   AllowNextShooter(Play);
+   if (FightTimeout) SetFightTimeout(Play);
+
+   for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+      Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+
+      if (Defend && Defend!=Play && IsOpponent(Play,Defend)) {
+         Damage=0; BitchesKilled=0; Loot=FALSE;
+         if (TotalGunsCarried(Play)>0) {
+            GetFightRatings(Play,Defend,&AttackRating,&DefendRating);
+            if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
+               FightPoint=F_HIT;
+               for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
+                  Damage+=brandom(0,Gun[i].Damage);
                }
-               g_free(prstr);
-               SendQuestion(NULL,C_ASKSEW,Play,text->str);
-            } else {
-               SendPrintMessage(NULL,C_COPSDONE,Play,text->str);
-               FinishFightWithHardass(Play,NULL);
-            }
-            g_string_free(text,TRUE);
-            return;
-         } else {
-            g_string_append(text,_("^You got one, man!"));
-            Play->Cops--;
-         }
-      } else g_string_append(text,_("^You missed!"));
+               if (Damage==0) Damage=1;
+               HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
+            } else FightPoint=F_MISS;
+         } else FightPoint=F_STAND;
+         SendFightMessage(Play,Defend,BitchesKilled,FightPoint,Loot,TRUE,NULL);
+      }
+   }
+   DoReturnFire(Play);
+}
+
+gboolean CanPlayerFire(Player *Play) {
+   return (FightTimeout==0 || Play->FightTimeout==0 ||
+           Play->FightTimeout<=time(NULL));
+}
+
+gboolean CanRunHere(Player *Play) {
+   return (Play->ResyncNum < E_ARRIVE && Play->ResyncNum!=E_NONE);
+}
+
+Player *GetNextShooter(Player *Play) {
+   Player *MinPlay,*Defend;
+   time_t MinTimeout;
+   int ArrayInd;
+
+   if (!FightTimeout) return NULL;
+
+   MinPlay=NULL; MinTimeout=0;
+   for (ArrayInd=0;ArrayInd<Play->FightArray->len;ArrayInd++) {
+      Defend=(Player *)g_ptr_array_index(Play->FightArray,ArrayInd);
+      if (Defend!=Play &&
+          (MinTimeout==0 || Defend->FightTimeout<MinTimeout)) {
+         MinPlay=Defend; MinTimeout=Defend->FightTimeout;
+      }
+   }
+   return MinPlay;
+}
+
+void WithdrawFromCombat(Player *Play) {
+/* Cleans up combat after player "Play" has left                    */
+   int i,j;
+   gboolean FightDone;
+   Player *Attack,*Defend;
+
+   if (!Play->FightArray) return;
+
+   FightDone=TRUE;
+   for (i=0;i<Play->FightArray->len;i++) {
+      Attack=(Player *)g_ptr_array_index(Play->FightArray,i);
+      for (j=0;j<i;j++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,j);
+         if (Attack!=Play && Defend!=Play &&
+             IsOpponent(Attack,Defend)) { FightDone=FALSE; break; }
+      }
+      if (!FightDone) break;
    }
 
-   if (Play->Cops==1) {
-      g_string_append(text,_("^He's firing on you, man! "));
-   } else {
-      g_string_append(text,_("^They're firing on you, man! "));
-   }
-   if (brandom(0,100) < Cops.HitProb+(Play->Cops-1)*Cops.DeputyHit) {
-      g_string_append(text,_("You've been hit! "));
-      Damage=0;
-      for (i=0;i<Play->Cops;i++) Damage+=brandom(0,Cops.Damage);
-      if (Damage==0) Damage=1;
-      if (Damage>Play->Health) {
-         if (Play->Bitches.Carried==0 || WantAntique) {
-            if (Play->Cops==1) {
-               g_string_append(text,_("He wasted you, man! What a drag!"));
-            } else {
-               g_string_append(text,_("They wasted you, man! What a drag!"));
-            }
-            Play->Health=0;
-            SendPlayerData(Play);
-            FinishFightWithHardass(Play,text->str);
-            g_string_free(text,TRUE);
-            return;
+   SendFightLeave(Play,FightDone);
+   g_ptr_array_remove(Play->FightArray,(gpointer)Play);
+
+   if (FightDone) {
+      for (i=0;i<Play->FightArray->len;i++) {
+         Defend=(Player *)g_ptr_array_index(Play->FightArray,i);
+         Defend->FightArray=NULL;
+         if (Defend->IsCop) {
+            FirstServer=RemovePlayer(Defend,FirstServer);
          } else {
-            g_string_sprintfa(text,_("You lost one of your %s!"),Names.Bitches);
-            LoseBitch(Play,NULL,NULL);
-            Play->Health=100;
+            Defend->EventNum=Defend->ResyncNum; SendEvent(Defend);
          }
-      } else {
-         Play->Health-=Damage;
       }
-   } else {
-      if (Play->Cops==1) {
-         g_string_append(text,_("He missed!"));
-      } else {
-         g_string_append(text,_("They missed!"));
-      }
+      g_ptr_array_free(Play->FightArray,TRUE);
    }
-   SendPlayerData(Play);
-   SendPrintMessage(NULL,C_COPSMESG,Play,text->str);
-   g_string_free(text,TRUE);
-   OfficerHardass(Play,NULL,NULL);
+   Play->FightArray=NULL;
 }
 
 int RandomOffer(Player *To) {
@@ -1637,7 +1672,12 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
    if (!From || From->EventNum==E_NONE) return;
    if (answer[0]=='Y' && From->EventNum==E_OFFOBJECT && From->Bitches.Price
        && From->Bitches.Price>From->Cash) answer[0]='N';
-   if (answer[0]=='Y') switch (From->EventNum) { 
+   if ((From->EventNum==E_FIGHT || From->EventNum==E_FIGHTASK) &&
+       CanRunHere(From)) {
+      From->EventNum=E_FIGHT;
+      if (answer[0]=='R' || answer[0]=='Y') RunFromCombat(From);
+      else Fire(From);
+   } else if (answer[0]=='Y') switch (From->EventNum) { 
       case E_OFFOBJECT:
          if (g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
             g_message(_("%s: offer was on behalf of %s"),GetPlayerName(From),
@@ -1692,36 +1732,21 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          FinishGame(From,_("You hallucinated for three days on the wildest "
 "trip you ever imagined!^Then you died because your brain disintegrated!")); 
          break;
-      case E_COPS:
-         FireAtHardass(From,F_RUN);
-         break;
       case E_DOCTOR:
          if (From->Cash >= From->DocPrice) {
             From->Cash -= From->DocPrice;
-            From->Health=100;
+            From->Health=MaxHealth(From,From->Bitches.Carried);
             SendPlayerData(From);
          }
-         FinishFightWithHardass(From,NULL);
+/*       FinishFightWithHardass(From,NULL);*/
          break;
-   } else if (From->EventNum==E_COPS && 
-              (answer[0]=='F' || answer[0]=='R')) {
-      FireAtHardass(From,answer[0]=='F' ? F_FIGHT : F_RUN);
    } else if (From->EventNum==E_ARRIVE) {
       if ((answer[0]=='A' || answer[0]=='T') && 
-          g_slist_find(FirstServer,(gpointer)From->Attacked)) {
-         if (From->Attacked->IsAt==From->IsAt) {
+          g_slist_find(FirstServer,(gpointer)From->OnBehalfOf)) {
+         if (From->OnBehalfOf->IsAt==From->IsAt) {
             if (answer[0]=='A') {
-               if (From->Attacked->EventNum<E_MAX) {
-                  From->Attacked->ResyncNum=From->Attacked->EventNum;
-               }
-               From->Attacked->Flags |= FIGHTING;
-               SendPlayerData(From->Attacked);
-               From->Flags |= FIGHTING;
-               SendPlayerData(From);
-               From->Attacked->EventNum=E_DEFEND;
-               From->ResyncNum=E_ARRIVE+1;
-               From->EventNum=E_ATTACK;
-               AttackPlayer(From,From->Attacked,AT_FIRST | AT_SHOOT);
+               From->EventNum=From->OnBehalfOf->EventNum=E_NONE;
+               AttackPlayer(From,From->OnBehalfOf);
 /*          } else if (answer[0]=='T') {
                From->Flags |= TRADING;
                SendPlayerData(From);
@@ -1729,7 +1754,7 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
             }
          } else {
             text=g_strdup_printf(_("Too late - %s has just left!"),
-                                 GetPlayerName(From->Attacked));
+                                 GetPlayerName(From->OnBehalfOf));
             SendPrintMessage(NULL,C_NONE,From,text);
             g_free(text);
             From->EventNum++; SendEvent(From);
@@ -1742,11 +1767,8 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          From->EventNum++;
          From->EventNum++; SendEvent(From);
          break;
-      case E_COPS:
-         FireAtHardass(From,F_STAND);
-         break;
       case E_DOCTOR:
-         FinishFightWithHardass(From,NULL);
+/*       FinishFightWithHardass(From,NULL);*/
          break;
       case E_HIREBITCH: case E_GUNSHOP: case E_BANK: case E_LOANSHARK:
       case E_OFFOBJECT: case E_WEED:
@@ -1766,252 +1788,6 @@ void HandleAnswer(Player *From,Player *To,char *answer) {
          From->EventNum++; SendEvent(From);
          break;
    }
-}
-
-void BreakoffCombat(Player *Attack,char LeftGame) {
-/* Withdraws from player-player combat that player "Attack" is     */
-/* currently involved in. "LeftGame" is TRUE if "Attack" has just  */
-/* left the game, in which case no more messages are sent to this  */
-/* player (just the other side of the fight is cleaned up)         */
-   Player *Defend,*Play,*Victor;
-   GSList *list;
-   gchar *text;
-   char FightDone;
-   if (!g_slist_find(FirstServer,(gpointer)Attack)) {
-      g_warning("Players involved in a fight are not valid!");
-      return;
-   }
-   if (Attack->EventNum!=E_DEFEND && Attack->EventNum!=E_ATTACK &&
-        Attack->EventNum!=E_FREEFORALL && Attack->EventNum!=E_WAITATTACK) {
-      g_warning("Players in fight are not attack/defending!");
-      return;
-   }
-   Victor=NULL;
-
-   if (Attack->EventNum==E_DEFEND) {
-      text=g_strdup_printf(_("%s has got away!"),GetPlayerName(Attack));
-      for (list=FirstServer;list;list=g_slist_next(list)) {
-         Play=(Player *)list->data;
-         if (Play->Attacked==Attack && (Play->EventNum==E_ATTACK ||
-             Play->EventNum==E_WAITATTACK || Play->EventNum==E_FREEFORALL)) {
-            ClearFightTimeout(Play);
-            Play->Attacked=NULL;
-            Play->Flags &= ~FIGHTING;
-            SendPlayerData(Play);
-            if (Attack->Health!=0) {
-               SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Play,text);
-            }
-            Victor=Play;
-            Play->EventNum=Play->ResyncNum; SendEvent(Play);
-         } 
-      }
-      g_free(text);
-   } else {
-      ClearFightTimeout(Attack);
-      Victor=Attack;
-      Defend=Attack->Attacked;
-      if (!g_slist_find(FirstServer,(gpointer)Defend)) {
-         g_warning("Players involved in a fight are not valid!");
-         return;
-      }
-      if (Defend->EventNum!=E_DEFEND) {
-         g_warning("Players in fight are not attack/defending!");
-         return;
-      }
- 
-      Attack->Attacked=NULL;
-      FightDone=TRUE;
-      for (list=FirstServer;list;list=g_slist_next(list)) {
-         Play=(Player *)list->data;
-         if (Play->Attacked==Defend && (Play->EventNum==E_ATTACK ||
-             Play->EventNum==E_WAITATTACK || Play->EventNum==E_FREEFORALL)) { 
-            FightDone=FALSE; 
-            break; 
-         }
-      }
-      if (Attack->Health>0) {
-         text=g_strdup_printf(_("%s has run off!"),GetPlayerName(Attack));
-         SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Defend,text);
-         g_free(text);
-      }
-      if (FightDone) {
-         Defend->Flags &= ~FIGHTING;
-         SendPlayerData(Defend);
-         Defend->EventNum=Defend->ResyncNum; SendEvent(Defend);
-      }
-   }
-   if (!LeftGame) { 
-      if (Attack->Health>0) SendPrintMessage(NULL,C_NONE,Attack,
-         _("Coward! You successfully escaped from the fight."));
-      Attack->Flags &= ~FIGHTING; SendPlayerData(Attack);
-      Attack->EventNum=Attack->ResyncNum; SendEvent(Attack);
-   }
-}
-
-void AttackPlayer(Player *Attack,Player *Defend,char AttackType) {
-/* Processes a player-player attack from player "Attack" to player "Defend" */
-/* AttackType is the type of attack, and may contain the following flags:-  */
-/*  AT_FIRST: Set if this is the first attack                               */
-/*  AT_SHOOT: Set if this is an 'active' attack - i.e. player "Attack" is   */
-/*            actually shooting, not just "not running"                     */
-   int i,j;
-   Inventory *Guns,*Drugs;
-   price_t Bounty;
-   int Damage,MaxDamage;
-   GString *DefendText,*AttackText;
-   gchar *prstr,*ActionText,*ArmamentText;
- 
-   if (!g_slist_find(FirstServer,(gpointer)Attack) || 
-       !g_slist_find(FirstServer,(gpointer)Defend)) {
-      g_warning("Players involved in a fight are not valid!");
-      return;
-   }
-   if (Attack->EventNum!=E_DEFEND && Attack->EventNum!=E_ATTACK &&
-       Attack->EventNum!=E_FREEFORALL) {
-      g_warning("%s is in wrong state (%d) to attack!",
-                GetPlayerName(Attack),Attack->EventNum);
-      return;
-   }
-   if ((Attack->EventNum==E_ATTACK || Attack->EventNum==E_FREEFORALL) && 
-       Defend->EventNum!=E_DEFEND) {
-      g_warning("%s is trying to attack %s, who is in wrong state (%d)!",
-                GetPlayerName(Attack),GetPlayerName(Defend),Defend->EventNum);
-      return;
-   }
-   if (Attack->EventNum==E_DEFEND && Defend->EventNum!=E_WAITATTACK &&
-       Defend->EventNum!=E_FREEFORALL) {
-      g_warning("%s is trying to defend against %s, who is in wrong \
-state (%d)!",GetPlayerName(Attack),GetPlayerName(Defend),Defend->EventNum);
-      return;
-   }
-   MaxDamage=0;
-   Damage=0;
-   AttackText=g_string_new(NULL);
-   DefendText=g_string_new(NULL);
-   for (i=0;i<NumGun;i++) {
-      if (Gun[i].Damage>MaxDamage) MaxDamage=Gun[i].Damage;
-      Damage+=Gun[i].Damage*Attack->Guns[i].Carried;
-   }
-   MaxDamage *= (Attack->Bitches.Carried+2);
-   MaxDamage = Damage*100/MaxDamage;
-
-   Guns=(Inventory *)g_malloc0(sizeof(Inventory)*NumGun);
-   Drugs=(Inventory *)g_malloc0(sizeof(Inventory)*NumDrug);
-   ClearInventory(Guns,Drugs);
-   ArmamentText= MaxDamage<10 ? _("pitifully armed")       :
-                 MaxDamage<25 ? _("lightly armed")         :
-                 MaxDamage<60 ? _("moderately well armed") :
-                 MaxDamage<80 ? _("heavily armed")         :
-                                _("armed to the teeth");
-   ActionText=AttackType&AT_SHOOT ? _(" fires and ") :
-                                     _(" stands and takes it.");
-   if (AttackType&AT_FIRST) {
-      if (Attack->Bitches.Carried>0) {
-         g_string_sprintf(DefendText,_("%s arrives, with %d %s, %s,^%s"),
-                          GetPlayerName(Attack),Attack->Bitches.Carried,
-                          Names.Bitches,ArmamentText,ActionText);
-      } else {
-         g_string_sprintf(DefendText,_("%s arrives, %s,^%s"),
-                          GetPlayerName(Attack),ArmamentText,ActionText);
-      }
-   } else {
-      if (AttackType&AT_SHOOT) {
-         g_string_sprintf(DefendText,_("%s fires and "),GetPlayerName(Attack));
-      } else {
-         g_string_sprintf(DefendText,_("%s stands and takes it."),
-                          GetPlayerName(Attack));
-      }
-   }
-   Damage=0;
-   if (AttackType&AT_SHOOT) {
-      for (i=0;i<NumGun;i++) for (j=0;j<Attack->Guns[i].Carried;j++) {
-         Damage+=brandom(0,Gun[i].Damage);
-      }
-   }
-   if (Damage==0) {
-      if (AttackType & AT_SHOOT) {
-         g_string_append(DefendText,_("misses you!"));
-         g_string_sprintf(AttackText,_("You failed to hit %s."),
-                          GetPlayerName(Defend));
-      } else {
-         g_string_assign(AttackText,_("You stand and take it."));
-      }
-      SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Attack,AttackText->str);
-   } else {
-      g_string_append(DefendText,_("hits you, man!"));
-      if (Damage>=Defend->Health) {
-         if (Defend->Bitches.Carried==0) {
-            g_string_append(DefendText,_(" You've been wasted! What a drag!"));
-            g_string_sprintf(AttackText,_("You hit and killed %s"),
-                             GetPlayerName(Defend));
-            Defend->Health=0;
-            Bounty=Defend->Cash+Defend->Bank-Defend->Debt;
-            if (Bounty>0) Attack->Cash+=Bounty;
-            SendPlayerData(Defend);
-            SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Defend,DefendText->str);
-            AddInventory(Guns,Defend->Guns,NumGun);
-            AddInventory(Drugs,Defend->Drugs,NumDrug);
-            TruncateInventoryFor(Guns,Drugs,Attack);
-            if (!IsInventoryClear(Guns,Drugs)) {
-               AddInventory(Attack->Guns,Guns,NumGun);
-               AddInventory(Attack->Drugs,Drugs,NumDrug);
-               ChangeSpaceForInventory(Guns,Drugs,Attack);
-               SendPlayerData(Attack);
-               g_string_append(AttackText,_(", and loot the body!"));
-            } else g_string_append_c(AttackText,'!');
-            SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Attack,AttackText->str);
-            g_free(Guns); g_free(Drugs); 
-            g_string_free(AttackText,TRUE);
-            FinishGame(Defend,DefendText->str);
-            g_string_free(DefendText,TRUE);
-            return;
-         } else {
-            g_string_sprintfa(DefendText,_("^You lost a %s, man!"),
-                                         Names.Bitch);
-            Bounty=(Defend->Cash+Defend->Bank-Defend->Debt)*
-                   Defend->Bitches.Carried/1000L;
-            if (Bounty>0) {
-               g_string_sprintf(AttackText,_("You are paid a bounty of %s in "
-                                "reward for killing^one of %s's %s"),
-                                prstr=FormatPrice(Bounty),
-                                GetPlayerName(Defend),Names.Bitches);
-               g_free(prstr);
-               Attack->Cash+=Bounty;
-               SendPlayerData(Attack);
-            } else {
-               g_string_sprintf(AttackText,_("You killed one of %s's %s "
-                                "(%d left)"),GetPlayerName(Defend),
-                                Names.Bitches,Defend->Bitches.Carried-1);
-            }
-            LoseBitch(Defend,Guns,Drugs);
-            TruncateInventoryFor(Guns,Drugs,Attack);
-            if (!IsInventoryClear(Guns,Drugs)) {
-               AddInventory(Attack->Guns,Guns,NumGun);
-               AddInventory(Attack->Drugs,Drugs,NumDrug);
-               ChangeSpaceForInventory(Guns,Drugs,Attack);
-               SendPlayerData(Attack);
-               g_string_append(AttackText,_(", and loot the body!"));
-            } else g_string_append_c(AttackText,'!');
-            SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Attack,AttackText->str);
-            Defend->Health=100;
-         }
-      } else {
-         Defend->Health-=Damage;
-         g_string_sprintf(AttackText,_("You fire, and hit %s!"),
-                          GetPlayerName(Defend));
-         SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,Attack,AttackText->str);
-      }
-   }
-   if (Attack->EventNum==E_ATTACK || Attack->EventNum==E_FREEFORALL) {
-      Attack->EventNum=E_WAITATTACK; SetFightTimeout(Attack);
-   } else if (Attack->EventNum==E_DEFEND) {
-      Defend->EventNum=E_ATTACK; SetFightTimeout(Defend);
-   }
-   SendPlayerData(Defend);
-   SendServerMessage(Attack,C_NONE,C_FIGHTPRINT,Defend,DefendText->str);
-   g_string_free(AttackText,TRUE);
-   g_string_free(DefendText,TRUE);
-   g_free(Guns); g_free(Drugs);
 }
 
 void BuyObject(Player *From,char *data) {
@@ -2048,7 +1824,8 @@ void BuyObject(Player *From,char *data) {
             deputy=g_strdup_printf(_("YN^Officer %%s and %%d of his deputies "
                                    "spot you dropping %s, and chase you!"),
                                    Names.Drugs);
-            StartOfficerHardass(From,From->EventNum,lone,deputy);
+            CopsAttackPlayer(From);
+/*          StartOfficerHardass(From,From->EventNum,lone,deputy);*/
             g_free(lone); g_free(deputy);
          }
       }
@@ -2190,7 +1967,6 @@ int GetMinimumTimeout(GSList *First) {
 GSList *HandleTimeouts(GSList *First) {
    GSList *list,*nextlist;
    Player *Play;
-   gchar *text;
    time_t timenow;
 
    timenow=time(NULL);
@@ -2218,19 +1994,8 @@ GSList *HandleTimeouts(GSList *First) {
          First=RemovePlayer(Play,First);
       } else if (Play->FightTimeout!=0 && Play->FightTimeout<=timenow) {
          ClearFightTimeout(Play);
-         if (Play->EventNum==E_WAITATTACK) {
-            Play->EventNum=E_FREEFORALL;
-            text=g_strdup_printf(_("%s fails to return fire..."),
-                                 GetPlayerName(Play->Attacked));
-            SendServerMessage(Play->Attacked,C_NONE,C_FIGHTPRINT,Play,text);
-            g_free(text);
-         } else if (Play->EventNum==E_ATTACK) {
-            Play->EventNum=E_FREEFORALL;
-            text=g_strdup_printf(_("%s fails to return fire..."),
-                                 GetPlayerName(Play));
-            SendServerMessage(Play,C_NONE,C_FIGHTPRINT,Play->Attacked,text);
-            g_free(text);
-         }
+         if (Play->IsCop) Fire(Play);
+         else SendFightReload(Play);
       }
       list=nextlist;
    }

@@ -306,7 +306,8 @@ void HandleClientMessage(char *pt,Player *Play) {
          if (strcmp(Data,"end")==0) EndGame();
          break;
       case C_PRINTMESSAGE:
-         PrintMessage(Data); break;
+         PrintMessage(Data);
+         break;
       case C_FIGHTPRINT:
          DisplayFightMessage(Data); break;
       case C_PUSH:
@@ -349,7 +350,8 @@ void HandleClientMessage(char *pt,Player *Play) {
          }
          break;
       case C_QUESTION:
-         QuestionDialog(Data,From==&Noone ? NULL : From); break;
+         QuestionDialog(Data,From==&Noone ? NULL : From);
+         break;
       case C_SUBWAYFLASH:
          DisplayFightMessage(NULL);
          for (list=FirstClient;list;list=g_slist_next(list)) {
@@ -1342,6 +1344,7 @@ char GtkLoop(int *argc,char **argv[],char ReturnOnFail) {
    gchar *buf;
    gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
+   gtk_set_locale();
    if (ReturnOnFail && !gtk_init_check(argc,argv)) return FALSE;
    else if (!ReturnOnFail) gtk_init(argc,argv);
 
@@ -1486,7 +1489,7 @@ _("Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 
    label=gtk_label_new(
 _("\nFor information on the command line options, type dopewars -h at your\n"
-"Unix prompt. This will display a help screen, listing the available"
+"Unix prompt. This will display a help screen, listing the available "
 "options."));
    gtk_box_pack_start(GTK_BOX(vbox),label,FALSE,FALSE,0);
 

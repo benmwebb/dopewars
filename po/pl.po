@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "POT-Creation-Date: 2000-09-14 23:22+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2000-09-16 22:00+02000\n"
+"Last-Translator: Slawomir Molenda <jeszua@panda.bg.univ.gda.pl>\n"
+"Language-Team: Polish <pl@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -712,7 +712,7 @@ msgstr "Zajeb gline, dla Chrystusa!"
 
 #: src/dopewars.c:460
 msgid "I am the walrus!"
-msgstr "Jestem jebanym cieciem!"
+msgstr "Jestem zajebist± prostytutk±!"
 
 #: src/dopewars.c:461
 msgid "Jesus loves you more than you will know"
@@ -740,49 +740,52 @@ msgstr "Dragi to twój najlepszy przyjaciel, pamiêtaj!"
 
 #: src/dopewars.c:1102
 msgid "Unable to process configuration file line"
-msgstr ""
+msgstr "Nie mo¿na przetworzyæ linii w pliku konfiguracyjnym."
 
 #: src/dopewars.c:1163
 msgid ""
 "Configuration can only be changed interactively when no\n"
 "players are logged on. Wait for all players to log off, or remove\n"
 "them with the push or kill commands, and try again."
-msgstr ""
+msgstr "" 
+"Konfiguracja mo¿e byæ zmieniona interaktywnie tylko, gdy\n"
+"¿aden z graczy nie jest zalogowany. Zaczekaj, a¿ wszyscy siê wyloguj±\n"
+"lub usuñ ich komendami \"push\" albo \"kill\" i spróbuj jeszcze raz." 
 
 #: src/dopewars.c:1224
 #, c-format
 msgid "Index into %s array should be between 1 and %d"
-msgstr ""
+msgstr "Indeks w tablicy %s powinien byæ pomiêdzy 1 i %d"
 
 #: src/dopewars.c:1243
 #, fuzzy, c-format
 msgid "%s is %d\n"
-msgstr ""
+msgstr "%s jest %d\n"
 
 #: src/dopewars.c:1248
 #, fuzzy, c-format
 msgid "%s is %s\n"
-msgstr ""
+msgstr "%s jest %s\n"
 
 #: src/dopewars.c:1251
 #, c-format
 msgid "%s is \"%s\"\n"
-msgstr ""
+msgstr "%s jest \"%s\"\n"
 
 #: src/dopewars.c:1255
 #, c-format
 msgid "%s[%d] is %s\n"
-msgstr ""
+msgstr "%s[%d] jest %s\n"
 
 #: src/dopewars.c:1258
 #, fuzzy, c-format
 msgid "%s is { "
-msgstr ""
+msgstr "%s jest { "
 
 #: src/dopewars.c:1289
 #, c-format
 msgid "Resized structure list to %d elements\n"
-msgstr ""
+msgstr "Zmieniono strukturê listy do %d elementów\n"
 
 #: src/dopewars.c:1432
 #, c-format
@@ -1542,7 +1545,7 @@ msgstr "_Uciekaj"
 
 #: src/gtk_client.c:800
 msgid "Jet to location"
-msgstr ""
+msgstr "Podró¿"
 
 #: src/gtk_client.c:869
 #, c-format
@@ -1552,7 +1555,7 @@ msgstr "za %s"
 #: src/gtk_client.c:874
 #, c-format
 msgid "You are currently carrying %d %s"
-msgstr "%s: Na stanie %d"
+msgstr "%2$s: Na stanie %1$d"
 
 #: src/gtk_client.c:879
 #, c-format
@@ -1593,19 +1596,19 @@ msgstr "Nie masz ¿adnej %s do sprzedania!"
 
 #: src/gtk_client.c:1126 src/gtk_client.c:1836
 msgid "_Yes"
-msgstr ""
+msgstr "_Tak"
 
 #: src/gtk_client.c:1126 src/gtk_client.c:1836
 msgid "_No"
-msgstr ""
+msgstr "_Nie"
 
 #: src/gtk_client.c:1127
 msgid "_Attack"
-msgstr ""
+msgstr "_Atakuj"
 
 #: src/gtk_client.c:1127
 msgid "_Evade"
-msgstr ""
+msgstr "_Ewakuuj siê"
 
 #: src/gtk_client.c:1145
 msgid "Question"
@@ -1649,7 +1652,7 @@ msgstr "Testowanie gry"
 
 #: src/gtk_client.c:1439
 msgid "Extensive Play Testing"
-msgstr ""
+msgstr "Ekstensywne testowanie gry"
 
 #: src/gtk_client.c:1441
 msgid "Constructive Criticism"
@@ -1709,7 +1712,7 @@ msgstr "Status: Nie mogê siê po³±czyæ (%s)"
 #: src/gtk_client.c:1531
 #, fuzzy, c-format
 msgid "Status: Attempting to contact %s..."
-msgstr ""
+msgstr "Status: Próba kontaktu z %s..."
 
 #: src/gtk_client.c:1591
 #, c-format
@@ -1839,7 +1842,11 @@ msgid ""
 "you will be able to view the player's stats with the\n"
 "\"Get spy reports\" menu. Remember that the %s will leave\n"
 "you, so any %s or %s that he's carrying may be lost!"
-msgstr ""
+msgstr "Wybierz gracza, którego chcesz szpiegowaæ. Twoja %s\n"
+"zaoferuje wtedy swoje us³ugi temu graczowi, i je¿eli on siê zgodzi,\n"
+"bêdziesz w stanie zobaczyæ jego statystyki poprzez opcjê\n"
+"\"Raport szpiegowski\" w menu. Pamiêtaj, ¿e %s ciê opu¶ci\n"
+"i jakikolwiek %s albo %s, któr± niesie, mo¿e straciæ!"
 
 #: src/gtk_client.c:2255
 msgid "Tip Off The Cops"
@@ -1852,7 +1859,10 @@ msgid ""
 "help the cops to attack that player, and then report back to you\n"
 "on the encounter. Remember that the %s will leave you temporarily,\n"
 "so any %s or %s that he's carrying may be lost!"
-msgstr ""
+msgstr "Wybierz gracza, na którego chcesz napu¶ciæ gliny. Twoja %s\n"
+"pomo¿e gliniarzom zaatakowaæ gracza i potem wróci, aby zdaæ raport\n"
+"co siê sta³o. Pamiêtaj, ¿e %s opu¶ci ciê tymczasowo, tak¿e\n"
+"jakikolwiek %s albo %s, któr± niesie, mo¿e straciæ!"
 
 #: src/gtk_client.c:2297
 #, c-format
@@ -1864,11 +1874,12 @@ msgstr "Wyrzuæ %s"
 msgid ""
 "Are you sure? (Any %s or %s carried\n"
 "by this %s may be lost!)"
-msgstr ""
+msgstr "Jeste¶ pewien? (%s albo %s niesiona\n"
+"przez t± %s mog± byæ utracone!)"
 
 #: src/gtk_client.c:2318
 msgid "Name"
-msgstr "Nick"
+msgstr "Nazwa"
 
 #: src/gtk_client.c:2319
 msgid "Price"
@@ -1876,7 +1887,7 @@ msgstr "Cena"
 
 #: src/gtk_client.c:2320
 msgid "Number"
-msgstr "Numer"
+msgstr "Ilo¶æ"
 
 #: src/gtk_client.c:2322
 msgid "_Buy ->"
@@ -1923,7 +1934,9 @@ msgid ""
 "No GTK+ client available - rebuild the binary passing the\n"
 "--enable-gtk-client option to configure, or use the curses\n"
 "client (if available) instead!\n"
-msgstr ""
+msgstr "Klient GTK+ niedostêpny - skompiluj grê dodaj±c opcjê\n"
+"--enable-gtk-client do skryptu konfiguracyjnego, albo u¿yj\n"
+"zamiast tego (je¿eli jest dostêpny) klienta opartego na curses.\n"
 
 #: src/serverside.c:71
 #, c-format
@@ -1945,7 +1958,21 @@ msgid ""
 "\n"
 "Valid variables are listed below:-\n"
 "\n"
-msgstr ""
+msgstr "komendy i ustawienia serwera dopewars w wersji %s\n"
+"\n"
+"help                       Wy¶wietla ten ekran pomocy\n"
+"list                       Listuje zalogowanych graczy\n"
+"push <gracz>               Grzecznie prosi danego gracza o opuszczenie serwera\n"
+"kill <gracz>               Natychmiast zrywa po³±czenie z danym graczem\n"
+"msg:<wiadomo¶æ>            Wysy³a wiadomo¶æ do wszystkich graczy\n"
+"quit                       Wyj¶cie po uprzednim poinformowaniu o tym graczy\n"
+"<zmienna>=<warto¶æ>        Ustawienie dla zmiennej podanej warto¶ci\n"
+"<zmienna>                  Wy¶wietlenie waroto¶ci danej zmiennej\n"
+"<list>[x].<zmienna>=<war.> Ustawia zmiennej z listy o indeksie x, dan± warto¶æ\n"
+"<list>[x].<zmienna>        Wy¶wietla warto¶æ danej zmiennej z listy\n"
+"\n"
+"Prawid³owe zmienne s± poni¿ej:-\n"
+"\n"
 
 #: src/serverside.c:103
 msgid "cannot send data to metaserver\n"
@@ -1983,14 +2010,16 @@ msgstr "MaxClients (%d) przekoroczona warto¶æ - zrywam po³±czenie"
 msgid ""
 "Sorry, but this server has a limit of 1 player, which has been "
 "reached.^Please try connecting again later."
-msgstr ""
+msgstr "Przykro mi, ale serwer ma limit do 1 gracza, który zosta³ "
+"osi±gniêty. ^Proszê spróbowaæ po³±czyæ siê pó¼niej."
 
 #: src/serverside.c:277
 #, fuzzy, c-format
 msgid ""
 "Sorry, but this server has a limit of %d players, which has been "
 "reached.^Please try connecting again later."
-msgstr ""
+msgstr "Przykro mi, ale serwer ma limit % graczy, który zosta³ "
+"osi±gniêty.^Proszê spróbowaæ po³±czyæ siê pó¼niej."
 
 #: src/serverside.c:290
 #, c-format
@@ -2050,14 +2079,17 @@ msgid ""
 "Cannot open high score file %s.\n"
 "Either ensure you have permissions to access this file and directory, or\n"
 "specify an alternate high score file with the -f command line option."
-msgstr ""
+msgstr "Nie mo¿na otworzyæ pliku z najlepszymi wynikami %s.\n"
+"Upewnij siê, ¿e masz dostêp do pliku i katalogu, albo podaj nazwê\n"
+"alternatywnego pliku poprzez opcjê -f z linni poleceñ." 
 
 #: src/serverside.c:618
 #, c-format
 msgid ""
 "dopewars server version %s ready and waiting for connections\n"
 "on port %d. For assistance with server commands, enter the command \"help\"\n"
-msgstr ""
+msgstr "serwer dopewars w wersji %s gotowy i oczekuje po³±czeñ"
+"na porcie %d. Komendy serwera wy¶wietla siê pisz±c \"help\"\n"
 
 #: src/serverside.c:635
 msgid "Cannot install SIGUSR1 interrupt handler!"
@@ -2159,7 +2191,7 @@ msgstr "Twój szpieg pracuj±cy nad %s zosta³ odkryty!^Szpieg %s!"
 #: src/serverside.c:1089
 #, c-format
 msgid " The lady next to you on the subway said,^ \"%s\"%s"
-msgstr " Jaka¶ kobieta stoj±ca obok na dworcu powiedzia³a,^\"%s\"%s"
+msgstr " Jaka¶ kobieta stoj±ca obok na dworcu powiedzia³a^\"%s\"%s"
 
 #: src/serverside.c:1092
 msgid "^    (at least, you -think- that's what she said)"
@@ -2224,14 +2256,12 @@ msgstr "%s: kablowanie %s zakoñczone OK."
 #: src/serverside.c:1270
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who was shot dead"
-msgstr ""
-"Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który zosta³ zastrzelony"
+msgstr "Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który zosta³ zastrzelony"
 
 #: src/serverside.c:1274
 #, c-format
 msgid "Following your tipoff, the cops ambushed %s, who escaped with %d %s. "
-msgstr ""
-"Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który uciek³ z %d %s. "
+msgstr "Dziêki twoim wskazówkom gliny zasadzi³y siê na %s, który uciek³ z %d %s. "
 
 #: src/serverside.c:1311
 msgid "^You stand there like an idiot."
@@ -2240,22 +2270,22 @@ msgstr "^Stoisz tam jak idiota."
 #: src/serverside.c:1315
 #, fuzzy
 msgid "^You lose him in the alleys."
-msgstr ""
+msgstr "^Uda³o ci siê zgubiæ %s w ciemnych alejkach."
 
 #: src/serverside.c:1317
 #, fuzzy
 msgid "^You lose them in the alleys."
-msgstr ""
+msgstr "^Uda³o ci siê ich zgubiæ w alejkach"
 
 #: src/serverside.c:1325
 #, fuzzy
 msgid "^You can't shake him, man!"
-msgstr ""
+msgstr "^Nie mo¿esz zgubiæ %s, dresie!"
 
 #: src/serverside.c:1327
 #, fuzzy
 msgid "^You can't shake them, man!"
-msgstr ""
+msgstr "^Nie mo¿esz ich zgubiæ, dresie!"
 
 #: src/serverside.c:1338
 #, c-format
@@ -2283,12 +2313,12 @@ msgstr "^Chybi³e¶!"
 #: src/serverside.c:1375
 #, fuzzy
 msgid "^He's firing on you, man! "
-msgstr ""
+msgstr "^On do ciebie strzela, cz³owieku! "
 
 #: src/serverside.c:1377
 #, fuzzy
 msgid "^They're firing on you, man! "
-msgstr ""
+msgstr "Strzelaj± do ciebie, dresie! "
 
 #: src/serverside.c:1380
 msgid "You've been hit! "
@@ -2297,12 +2327,12 @@ msgstr "Zosta³e¶ trafiony! "
 #: src/serverside.c:1387
 #, fuzzy
 msgid "He wasted you, man! What a drag!"
-msgstr ""
+msgstr "Oszczêdzi³ ciê! Ale zadyma!"
 
 #: src/serverside.c:1389
 #, fuzzy
 msgid "They wasted you, man! What a drag!"
-msgstr ""
+msgstr "Oszczêdzili ciê! Niez³a zadyma!"
 
 #: src/serverside.c:1397
 #, c-format
@@ -2312,12 +2342,12 @@ msgstr "Straci³e¶ jedn± ze swoich dziwek!"
 #: src/serverside.c:1406
 #, fuzzy
 msgid "He missed!"
-msgstr ""
+msgstr "Chybi³!"
 
 #: src/serverside.c:1408
 #, fuzzy
 msgid "They missed!"
-msgstr ""
+msgstr "Nie trafili!"
 
 #: src/serverside.c:1428
 msgid "You were mugged in the subway!"
@@ -2335,7 +2365,7 @@ msgstr "Spotka³e¶ przyjaciela! Dajesz mu %d %s."
 
 #: src/serverside.c:1451
 msgid "Sanitized away a RandomOffer"
-msgstr ""
+msgstr "Wy³±czono RandomOffer"
 
 #: src/serverside.c:1456
 #, c-format
@@ -2555,7 +2585,10 @@ msgid ""
 "Be warned that different versions may not be fully compatible!\n"
 "Refer to the website at http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/\n"
 "for the latest version."
-msgstr ""
+msgstr "Serwer jest w wersji %s, ale twój klient posiada wersjê %s.\n"
+"Zosta³e¶ ostrze¿ony, ¿e te wersj± nie musz± byæ w pe³ni kompatybilne!\n"
+"Ze strony http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/ mo¿esz ¶ci±gn±æ\n"
+"najnowsz± wersjê."
 
 #: src/message.c:656
 msgid "Could not find host"

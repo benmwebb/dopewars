@@ -172,6 +172,7 @@ void SendServerMessage(Player *From,char AICode,char Code,
 /* code "AICode", human-readable code "Code" and data "Data", claiming    */
 /* to be from player "From"                                               */
    GString *text;
+   if (To->IsCop) return;
    text=g_string_new(NULL);
    if (HaveAbility(To,A_PLAYERID)) {
       if (From) g_string_sprintfa(text,"%d",From->ID);
@@ -926,5 +927,201 @@ void ReadMetaServerData(int HttpSock) {
          if (strncmp(buf,"MetaServer:",11)==0) HeaderDone=TRUE;
          g_free(buf);
       }
+   }
+}
+
+void SendFightReload(Player *To) {
+   SendFightMessage(To,NULL,0,F_RELOAD,FALSE,FALSE,NULL);
+}
+
+void SendOldCanFireMessage(Player *To,GString *text) {
+   if (To->EventNum==E_FIGHT) {
+      To->EventNum=E_FIGHTASK;
+      if (CanRunHere(To) && !HaveAbility(To,A_NEWFIGHT)) {
+         if (text->len>0) g_string_append_c(text,'^');
+         if (TotalGunsCarried(To)==0) {
+            g_string_prepend(text,"YN^");
+            g_string_append(text,_("Do you run?"));
+         } else {
+            g_string_prepend(text,"RF^");
+            g_string_append(text,_("Do you run, or fight?"));
+         }
+         SendQuestion(NULL,C_NONE,To,text->str);
+      } else {
+         SendOldFightPrint(To,text,FALSE);
+      }
+   }
+}
+
+void SendOldFightPrint(Player *To,GString *text,gboolean FightOver) {
+   gboolean Fighting,CanShoot;
+
+   Fighting=!FightOver;
+   CanShoot=CanPlayerFire(To);
+
+   To->Flags &= ~(CANSHOOT+FIGHTING);
+   if (Fighting) To->Flags |= FIGHTING;
+   if (Fighting && CanShoot) To->Flags |= CANSHOOT;
+   SendPlayerData(To);
+   To->Flags &= ~(CANSHOOT+FIGHTING);
+
+   SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,To,text->str);
+}
+
+void SendFightLeave(Player *Play,gboolean FightOver) {
+   SendFightMessage(Play,NULL,0,FightOver ? F_LASTLEAVE : F_LEAVE,
+                    FALSE,TRUE,NULL);
+}
+
+void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
+                         int *BitchesKilled,gchar *FightPoint,gboolean *Loot) {
+}
+
+void SendFightMessage(Player *Attacker,Player *Defender,
+                      int BitchesKilled,gchar FightPoint,
+                      gboolean Loot,gboolean Broadcast,gchar *Msg) {
+   int ArrayInd,ArmPercent,Damage,MaxDamage,i;
+   Player *To;
+   GString *text;
+
+   if (!Attacker->FightArray) return;
+
+   MaxDamage=Damage=0;
+   for (i=0;i<NumGun;i++) {
+      if (Gun[i].Damage>MaxDamage) MaxDamage=Gun[i].Damage;
+      Damage+=Gun[i].Damage*Attacker->Guns[i].Carried;
+   }
+   MaxDamage *= (Attacker->Bitches.Carried+2);
+   ArmPercent = Damage*100/MaxDamage;
+
+   text=g_string_new("");
+
+   for (ArrayInd=0;ArrayInd<Attacker->FightArray->len;ArrayInd++) {
+      To=(Player *)g_ptr_array_index(Attacker->FightArray,ArrayInd);
+      if (!Broadcast && To!=Attacker) continue;
+      g_string_truncate(text,0);
+      if (HaveAbility(To,A_NEWFIGHT)) {
+         g_string_sprintf(text,"%s^%s^%d^%d^%d^%d^%c%c%c%c^",
+                          Attacker==To ? "" : GetPlayerName(Attacker),
+                          (Defender==To || Defender==NULL)
+                                       ? "" : GetPlayerName(Defender),
+                          Defender ? Defender->Health : 0,
+                          Defender ? Defender->Bitches.Carried : 0,
+                          BitchesKilled,ArmPercent,
+                          FightPoint,CanRunHere(To) ? '1' : '0',
+                          Loot ? '1' : '0',
+                          FightPoint!=F_ARRIVED &&
+                                 CanPlayerFire(To) ? '1' : '0');
+      }
+      if (Msg) {
+         g_string_append(text,Msg);
+      } else {
+         FormatFightMessage(To,text,Attacker==To ? "" : GetPlayerName(Attacker),
+                            (Defender==To || Defender==NULL)
+                                         ? "" : GetPlayerName(Defender),
+                            Defender ? Defender->Health : 0,
+                            Defender ? Defender->Bitches.Carried : 0,
+                            BitchesKilled,ArmPercent,FightPoint,Loot);
+      }
+      if (HaveAbility(To,A_NEWFIGHT)) {
+         SendServerMessage(NULL,C_NONE,C_FIGHTPRINT,To,text->str);
+      } else if (CanRunHere(To)) {
+         if (FightPoint!=F_ARRIVED && FightPoint!=F_MSG &&
+             FightPoint!=F_LASTLEAVE && 
+             (FightPoint!=F_LEAVE || Attacker!=To) &&
+             CanPlayerFire(To) && To->EventNum==E_FIGHT) {
+            SendOldCanFireMessage(To,text);
+         } else if (text->len>0) SendPrintMessage(NULL,C_NONE,To,text->str);
+      } else {
+         SendOldFightPrint(To,text,FightPoint==F_LASTLEAVE);
+      }
+   }
+   g_string_free(text,TRUE);
+}
+
+void FormatFightMessage(Player *To,GString *text,
+                        gchar *AttackName,gchar *DefendName,int Health,
+                        int Bitches,int BitchesKilled,int ArmPercent,
+                        gchar FightPoint,gboolean Loot) {
+   gchar *Armament;
+   switch(FightPoint) {
+      case F_ARRIVED:
+         Armament= ArmPercent<10 ? _("pitifully armed")       :
+                   ArmPercent<25 ? _("lightly armed")         :
+                   ArmPercent<60 ? _("moderately well armed") :
+                   ArmPercent<80 ? _("heavily armed")         :
+                                   _("armed to the teeth");
+         if (DefendName[0]) {
+            g_string_sprintfa(text,_("%s arrives with %d %s, %s!"),
+                              DefendName,Bitches,Names.Bitches,Armament);
+         }
+         break;
+      case F_STAND:
+         if (AttackName[0]) {
+            g_string_sprintfa(text,_("%s stands and takes it"),AttackName);
+         } else {
+            g_string_append(text,_("You stand there like a dummy."));
+         }
+         break;
+      case F_LEAVE: case F_LASTLEAVE:
+         if (AttackName[0]) {
+            g_string_sprintfa(text,_("%s has got away!"),AttackName);
+         } else {
+            g_string_sprintfa(text,_("You got away!"));
+         }
+         break;
+      case F_RELOAD:
+         if (!AttackName[0]) {
+            g_string_append(text,_("Guns reloaded..."));
+         }
+         break;
+      case F_MISS:
+         if (AttackName[0] && DefendName[0]) {
+            g_string_sprintfa(text,_("%s shoots at %s... and misses!"),
+                              AttackName,DefendName);
+         } else if (AttackName[0]) {
+            g_string_sprintfa(text,_("%s shoots at you... and misses!"),
+                              AttackName);
+         } else if (DefendName[0]) {
+            g_string_sprintfa(text,_("You missed %s!"),DefendName);
+         }
+         break;
+      case F_HIT:
+         if (AttackName[0] && DefendName[0]) {
+            if (Health==0 && Bitches==0) {
+               g_string_sprintfa(text,_("%s shoots %s dead."),
+                                 AttackName,DefendName);
+            } else if (BitchesKilled) {
+               g_string_sprintfa(text,_("%s shoots at %s and kills a %s!"),
+                                 AttackName,DefendName,Names.Bitch);
+             } else {
+               g_string_sprintfa(text,_("%s shoots at %s."),
+                                 AttackName,DefendName);
+            }
+         } else if (AttackName[0]) {
+            if (Health==0 && Bitches==0) {
+               g_string_sprintfa(text,_("%s wasted you, man! What a drag!"),
+                                 AttackName);
+            } else if (BitchesKilled) {
+               g_string_sprintfa(text,_("%s shoots at you... and kills a %s!"),
+                                 AttackName,Names.Bitch);
+            } else {
+               g_string_sprintfa(text,_("%s hits you, man!"),AttackName);
+            }
+         } else if (DefendName[0]) {
+            if (Health==0 && Bitches==0) {
+               g_string_sprintfa(text,_("You killed %s!"),DefendName);
+            } else if (BitchesKilled) {
+               g_string_sprintfa(text,_("You hit %s, and killed a %s!"),
+                                 DefendName,Names.Bitch);
+            } else {
+               g_string_sprintfa(text,_("You hit %s!"),DefendName);
+            }
+            if (Loot) {
+               g_string_append(text,_(" You loot the body!"));
+            }
+         }
+         if (Health>0) g_string_sprintfa(text,_(" (Health: %d)"),Health);
+         break;
    }
 }

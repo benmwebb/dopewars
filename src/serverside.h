@@ -59,20 +59,23 @@ void BuyObject(Player *From,char *data);
 int RandomOffer(Player *To);
 void HandleAnswer(Player *From,Player *To,char *answer);
 void ClearPrices(Player *Play);
-void StartOfficerHardass(Player *Play,int ResyncNum,
-                         char *LoneMessage,char *DeputyMessage);
-void OfficerHardass(Player *Play,char *LoneMessage,char *DeputyMessage);
-void FireAtHardass(Player *Play,char FireType);
-void FinishFightWithHardass(Player *Play,char *Message);
 int LoseBitch(Player *Play,Inventory *Guns,Inventory *Drugs);
 void GainBitch(Player *Play);
-void AttackPlayer(Player *Attack,Player *Defend,char AttackType);
-void BreakoffCombat(Player *Attack,char LeftGame);
 void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
 int GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
 gboolean CheckHighScoreFile();
 int HighScoreRead(struct HISCORE *MultiScore,struct HISCORE *AntiqueScore);
+void CopsAttackPlayer(Player *Play);
+void AttackPlayer(Player *Play,Player *Attacked);
+void AddPlayerToFight(Player *NewPlay,GPtrArray *Fight,Player *Other);
+gboolean IsOpponent(Player *Play,Player *Other);
+void Fire(Player *Play);
+void WithdrawFromCombat(Player *Play);
+void RunFromCombat(Player *Play);
+gboolean CanPlayerFire(Player *Play);
+gboolean CanRunHere(Player *Play);
+Player *GetNextShooter(Player *Play);
 
 #endif

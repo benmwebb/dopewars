@@ -1,4 +1,5 @@
 1.4.9
+    - Completely rewritten fighting code
     - Internationalization (i18n) support
     - Networking revamped - now uses nonblocking sockets to improve server
       responsiveness and to remove deadlocks (previously, any client could

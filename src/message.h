@@ -72,6 +72,10 @@
 #define C_CHANGEDISP   'p'
 #define C_NETMESSAGE   'q'
 #define C_ABILITIES    'r'
+#define C_FIGHTARRIVE  's'
+#define C_FIGHTSHOOT   't'
+#define C_FIGHTLEAVE   'u'
+#define C_FIGHTRELOAD  'v'
 
 #define C_NONE        'A'
 #define C_ASKLOAN     'B'
@@ -85,12 +89,22 @@
 #define C_ASKRUNFIGHT 'J'
 #define C_ASKSEW      'K'
 #define C_MEETPLAYER  'L'
-#define C_COPSDONE    'M'
+#define C_FIGHT       'M'
+#define C_FIGHTDONE   'N'
 
 #define DT_LOCATION    'A'
 #define DT_DRUG        'B'
 #define DT_GUN         'C'
 #define DT_PRICES      'D'
+
+#define F_ARRIVED      'A'
+#define F_STAND        'S'
+#define F_HIT          'H'
+#define F_MISS         'M'
+#define F_RELOAD       'R'
+#define F_LEAVE        'L'
+#define F_LASTLEAVE    'D'
+#define F_MSG          'G'
 
 void SendClientMessage(Player *From,char AICode,char Code,
                        Player *To,char *Data);
@@ -151,5 +165,17 @@ void SendAbilities(Player *Play);
 void ReceiveAbilities(Player *Play,gchar *Data);
 void CombineAbilities(Player *Play);
 gboolean HaveAbility(Player *Play,gint Type);
-
+void SendFightReload(Player *To);
+void SendOldCanFireMessage(Player *To,GString *text);
+void SendOldFightPrint(Player *To,GString *text,gboolean FightOver);
+void SendFightLeave(Player *Play,gboolean FightOver);
+void ReceiveFightMessage(gchar *Data,gchar **AttackName,gchar **DefendName,
+                         int *BitchesKilled,gchar *FightPoint,gboolean *Loot);
+void SendFightMessage(Player *Attacker,Player *Defender,
+                      int BitchesKilled,gchar FightPoint,
+                      gboolean Loot,gboolean Broadcast,gchar *Msg);
+void FormatFightMessage(Player *To,GString *text,
+                        gchar *AttackName,gchar *DefendName,int Health,
+                        int Bitches,int BitchesKilled,int ArmPercent,
+                        gchar FightPoint,gboolean Loot);
 #endif
