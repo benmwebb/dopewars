@@ -1,8 +1,8 @@
 [product]
-dopewars-1.5.7
+dopewars-1.5.8
 
 [instdir]
-C:\Program Files\dopewars-1.5.7
+C:\Program Files\dopewars-1.5.8
 
 [NT Service]
 dopewars-server
@@ -54,7 +54,7 @@ dopewars-log.txt
 dopewars.sco
 
 [startmenudir]
-dopewars-1.5.7
+dopewars-1.5.8
 
 [startmenu]
 dopewars.lnk
