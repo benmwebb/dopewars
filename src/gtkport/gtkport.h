@@ -744,7 +744,7 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define MB_MAX    4
 #define MB_YESNO  (MB_YES|MB_NO)
 
-#ifdef HAVE_GTK2
+#ifdef HAVE_GLIB2
 #define IDOK      GTK_RESPONSE_OK
 #define IDCANCEL  GTK_RESPONSE_CANCEL
 #define IDYES     GTK_RESPONSE_YES
@@ -759,7 +759,7 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 /* Other flags */
 #define MB_IMMRETURN 16
 
-#ifndef HAVE_GTK2
+#ifndef HAVE_GLIB2
 #define GTK_STOCK_OK     _("OK")
 #define GTK_STOCK_CLOSE  _("Close")
 #define GTK_STOCK_CANCEL _("Cancel")
@@ -784,7 +784,7 @@ GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
                                               GtkWidget **pack_widg);
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
-                     GtkAccelGroup *accel_group);
+                     GtkAccelGroup *accel_group, gboolean needalt);
 GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
                                  GtkWidget **pack_widg);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
