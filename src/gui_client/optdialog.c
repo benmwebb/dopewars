@@ -454,6 +454,7 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
       } else {
         conf->data[row] = gtk_editable_get_chars(GTK_EDITABLE(conf->widget),
                                                  0, -1);
+        gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
       }
       if (strcmp(gvar->Name, "Name") == 0) {
         gtk_clist_set_text(clist, row, 0, conf->data[row]);
