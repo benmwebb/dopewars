@@ -885,10 +885,9 @@ static void CreateFightDialog(void)
   gchar *buf;
 
   FightDialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_default_size(GTK_WINDOW(dialog), 500, 300);
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 350, 250);
   gtk_signal_connect(GTK_OBJECT(dialog), "delete_event",
                      GTK_SIGNAL_FUNC(DisallowDelete), NULL);
-  gtk_window_set_default_size(GTK_WINDOW(dialog), 240, 130);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_window_set_title(GTK_WINDOW(dialog), _("Fight"));
