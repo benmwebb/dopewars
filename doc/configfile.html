@@ -25,9 +25,12 @@ directory
 <li>Options specified on the <a href="commandline.html">command line</a>
 </ol>
 
-<p>Settings in a configuration file can set numbers, strings or "string lists".
-A numerical value is set with a command such as <b>Port=7902</b> (which sets
-the TCP port for mulitplayer connections to 7902).</p>
+<p>Settings in a configuration file can set numbers, booleans, strings or
+"string lists". A numerical value is set with a command such as
+<b>Port=7902</b> (which sets the TCP port for mulitplayer connections to
+7902). Booleans are "on/off" or "true/false" variables, set with commands
+such as <b>Sanitized=TRUE</b> (which removes drug references from random
+events in the game).</p>
 
 <p>String (text) values are set with commands such as <b>BankName='the bank'</b>
 (which sets the name of the bank). Notice that string values <b>must</b> be
@@ -94,19 +97,19 @@ to store high scores. This can be overridden with the -f
 <dd>Sets the pager used to display multi-page output in an interactive server
 to <i>more</i>. ("less" is a popular alternative)
 
-<dt><b>ConfigVerbose=<i>0</i></b>
+<dt><b>ConfigVerbose=<i>FALSE</i></b>
 <dd>Prints extra feedback information when processing the config. file if set
-to 1; this only takes affect, of course, after the ConfigVerbose variable is
+to TRUE; this only takes affect, of course, after the ConfigVerbose variable is
 set, and then remains in force until it is reset again.
 </dl>
 
 <h2><a name="metaserver">Metaserver configuration</a></h2>
 <dl>
-<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>1</i></b></a>
+<dt><a name="MetaServerActive"><b>MetaServer.Active=<i>TRUE</i></b></a>
 <dd>Tells the dopewars server to report its status to the
-<a href="metaserver.html">metaserver</a>. If <i>1</i>
-is replaced by <i>0</i> (zero) the server will not report to the metaserver.
-This setting, if set to 1, can be overridden by the -S
+<a href="metaserver.html">metaserver</a>. If <i>TRUE</i>
+is replaced by <i>FALSE</i> the server will not report to the metaserver.
+This setting, if set to TRUE, can be overridden by the -S
 <a href="commandline.html#privateserver">command line option</a>.
 
 <dt><b>MetaServer.Name=<i>"dopewars.sourceforge.net"</i></b>
@@ -228,9 +231,9 @@ the game.
 <dt><b>Drug[<i>6</i>].MaxPrice=<i>4400</i></b>
 <dd>Sets the usual maximum price of drug number <i>6</i> to be <i>$4,400</i>.
 
-<dt><b>Drug[<i>1</i>].Cheap=<i>1</i></b>
+<dt><b>Drug[<i>1</i>].Cheap=<i>TRUE</i></b>
 <dd>Tells dopewars that drug <i>1</i> (by default, Acid) can occasionally
-be especially cheap (if this is set to 0, zero, this does not happen).
+be especially cheap (if this is set to FALSE, this does not happen).
 
 <dt><b>Drug[<i>1</i>].CheapStr=<i>"The market is flooded with cheap
 home-made acid!"</i></b>
@@ -242,9 +245,9 @@ is especially cheap.
 normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 <i>4</i>.
 
-<dt><b>Drug[<i>4</i>].Expensive=<i>1</i></b>
+<dt><b>Drug[<i>4</i>].Expensive=<i>TRUE</i></b>
 <dd>Tells dopewars that drug <i>4</i> (normally Heroin) can occasionally be
-particuarly expensive (0, zero, cancels this).
+particuarly expensive (FALSE cancels this).
 
 <dt><b>Drugs.ExpensiveStr1=<i>"Cops made a big %s bust! Prices are
 outrageous!"</i></b>
@@ -360,8 +363,8 @@ timestamp is added to log messages.
 <dd>Defines the game to end after <i>31</i> "days" or turns. If this is set
 to 0 (zero) the game never ends for a player, unless they quit or are killed.
 
-<dt><b>Sanitized=<i>0</i></b>
-<dd>If set to 1, this "sanitizes" the game by removing all drug references
+<dt><b>Sanitized=<i>FALSE</i></b>
+<dd>If set to TRUE, this "sanitizes" the game by removing all drug references
 from the random events. To completely remove drug references, of course, you
 must also alter the drug names above.
 
@@ -490,8 +493,8 @@ see <b>SubwaySaying</b> for more details.
 <dt><b>NumStoppedTo=<i>5</i></b>
 <dd>Sets there to be <i>5</i> distinct things which you can stop to do.
 
-<dt><b>DrugValue=<i>1</i></b>
-<dd>If non-zero, then the server will keep track of the price you paid for
+<dt><b>DrugValue=<i>TRUE</i></b>
+<dd>If TRUE, then the server will keep track of the price you paid for
 any drugs, and clients will display this information if available.
 
 </dl>
@@ -500,6 +503,6 @@ any drugs, and clients will display this information if available.
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>17-06-2001</b></p>
+<p>Last update: <b>23-09-2001</b></p>
 </body>
 </html>
