@@ -576,6 +576,7 @@ void AddScoreToDialog(char *Data)
   gchar **spl1, **spl2;
   int index, slen;
   gboolean bold;
+  GtkStyle *style = NULL;
 
   if (!HiScoreDialog.dialog)
     return;
@@ -604,6 +605,16 @@ void AddScoreToDialog(char *Data)
   gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                             0, 1, index, index + 1);
+  if (bold) {
+    GdkColor color;
+
+    color.red = 0;
+    color.green = 0;
+    color.blue = 0xDDDD;
+    style = gtk_style_new();
+    style->fg[GTK_STATE_NORMAL] = color;
+    gtk_widget_set_style(label, style);
+  }
   gtk_widget_show(label);
 
   /* Remove any leading whitespace from the remainder, since g_strsplit
@@ -621,6 +632,8 @@ void AddScoreToDialog(char *Data)
   gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                             1, 2, index, index + 1);
+  if (bold)
+    gtk_widget_set_style(label, style);
   gtk_widget_show(label);
 
   /* The remainder is the name, terminated with (R.I.P.) if the player
@@ -640,6 +653,8 @@ void AddScoreToDialog(char *Data)
     gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                               3, 4, index, index + 1);
+    if (bold)
+      gtk_widget_set_style(label, style);
     gtk_widget_show(label);
     spl2[1][slen - 8] = '\0';   /* Remove suffix from the player name */
   }
@@ -650,6 +665,8 @@ void AddScoreToDialog(char *Data)
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
   gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
                             2, 3, index, index + 1);
+  if (bold)
+    gtk_widget_set_style(label, style);
   gtk_widget_show(label);
 
   g_strfreev(spl1);
