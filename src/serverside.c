@@ -708,7 +708,12 @@ static gboolean StartServer(void) {
      FreeError(sockerr);
      exit(1);
    }
+
+/* This doesn't seem to work properly under Win32 */
+#ifndef CYGWIN
    SetReuse(ListenSock);
+#endif
+
    SetBlocking(ListenSock,FALSE);
 
    if (!BindTCPSocket(ListenSock,Port,&sockerr)) {
