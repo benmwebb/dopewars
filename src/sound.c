@@ -27,6 +27,9 @@
 #include <glib.h>
 
 #ifdef PLUGINS
+#include <sys/types.h>
+#include <dirent.h>
+#include <string.h>
 #include <dlfcn.h>
 #else
 #include "plugins/sound_sdl.h"
@@ -48,23 +51,69 @@ static void AddPlugin(InitFunc ifunc)
   }
 }
 
+#ifdef PLUGINS
+static void OpenModule(const gchar *modname, const gchar *fullname)
+{
+  InitFunc ifunc;
+  gint len = strlen(modname);
+
+  if (len > 6 && strncmp(modname, "lib", 3) == 0
+      && strcmp(modname + len - 3, ".so") == 0) {
+    GString *funcname;
+
+    soundmodule = dlopen(fullname, RTLD_NOW);
+    if (!soundmodule) {
+      /* FIXME: using dlerror() here causes a segfault later in the program */
+      g_print("dlopen of %s failed: %s\n", fullname, dlerror());
+      return;
+    }
+    g_print("%s opened OK\n", fullname);
+
+    funcname = g_string_new(modname);
+    g_string_truncate(funcname, len - 3);
+    g_string_erase(funcname, 0, 3);
+    g_string_append(funcname, "_init");
+    ifunc = dlsym(soundmodule, funcname->str);
+    if (ifunc) {
+      AddPlugin(ifunc);
+    } else {
+      g_print("dlsym (%s) failed: %s\n", funcname->str, dlerror());
+    }
+    g_string_free(funcname, TRUE);
+  }
+}
+
+static void ScanPluginDir(const gchar *dirname)
+{
+  DIR *dir;
+
+  dir = opendir(dirname);
+  if (dir) {
+    struct dirent *fileinfo;
+    GString *modname;
+
+    modname = g_string_new("");
+    do {
+      fileinfo = readdir(dir);
+      if (fileinfo) {
+        g_string_assign(modname, dirname);
+	g_string_append_c(modname, G_DIR_SEPARATOR);
+	g_string_append(modname, fileinfo->d_name);
+        OpenModule(fileinfo->d_name, modname->str);
+      }
+    } while (fileinfo);
+    g_string_free(modname, TRUE);
+    closedir(dir);
+  } else {
+    g_print("Cannot open dir %s\n", dirname);
+  }
+}
+#endif
+
 void SoundInit(void)
 {
 #ifdef PLUGINS
-  InitFunc ifunc;
-  
-  soundmodule = dlopen("libsound_esd.so", RTLD_NOW);
-  if (!soundmodule) {
-    /* FIXME: using dlerror() here causes a segfault later in the program */
-    g_print("dlopen failed\n");
-    return;
-  }
-  ifunc = dlsym(soundmodule, "sound_esd_init");
-  if (ifunc) {
-    AddPlugin(ifunc);
-  } else {
-    g_print("dlsym failed: %s\n", dlerror());
-  }
+  ScanPluginDir("src/plugins/.libs");
 #else
 #ifdef HAVE_ESD
   AddPlugin(sound_esd_init);
