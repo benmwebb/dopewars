@@ -1625,7 +1625,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
               (by default, a windowed client is used when possible)\n\
   -h       display this help information\n\
   -v       output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2000, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU GPL\n\
 Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 }
 
