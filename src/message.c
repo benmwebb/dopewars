@@ -782,6 +782,7 @@ void SwitchToSinglePlayer(Player *Play) {
    CloseSocket(ClientSock);
    CleanUpServer();
    Network=Server=Client=FALSE;
+   InitAbilities(Play);
    NewPlayer=g_new(Player,1);
    FirstServer=AddPlayer(0,NewPlayer,FirstServer);
    CopyPlayer(NewPlayer,Play);
