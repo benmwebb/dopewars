@@ -20,7 +20,7 @@ uninstall.exe
 ../doc/credits.html -> credits.html
 ../doc/developer.html -> developer.html
 ../doc/i18n.html -> i18n.html
-../doc/index.html -> index.html
+index.html
 ../doc/installation.html -> installation.html
 ../doc/metaserver.html -> metaserver.html
 ../doc/protocol.html -> protocol.html

@@ -28,7 +28,9 @@ guifunc.o: guifunc.c guifunc.h
 	gcc -Wall -mno-cygwin -c guifunc.c
 
 manifest installfiles.gz: filelist makeinstall uninstall
+	sed -e 's/LICENCE/licence.txt/' < ../doc/index.html > index.html
 	./makeinstall
+	/bin/rm -f index.html
 
 setup.res: setup.rc dialogs.rc contid.h manifest installfiles.gz
 	windres -O coff -o setup.res setup.rc
