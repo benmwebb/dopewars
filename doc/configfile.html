@@ -109,26 +109,31 @@ is replaced by <i>0</i> (zero) the server will not report to the metaserver.
 This setting, if set to 1, can be overridden by the -S
 <a href="commandline.html#privateserver">command line option</a>.
 
-<dt><b>MetaServer.Name=<i>"bellatrix.pcl.ox.ac.uk"</i></b>
+<dt><b>MetaServer.Name=<i>"dopewars.sourceforge.net"</i></b>
 <dd>Tells dopewars that the metaserver is located at
-<i>bellatrix.pcl.ox.ac.uk</i>. See the <a href="metaserver.html">metaserver</a>
-page for information about connecting to the dopewars metaserver via. a
-proxy web server.
+<i>dopewars.sourceforge.net</i>. See the
+<a href="metaserver.html">metaserver</a> page, and below, for information
+about connecting to the dopewars metaserver via. a proxy web server.
 
-<dt><b>MetaServer.HttpPort=<i>80</i></b>
-<dd>Instructs the dopewars client that the metaserver can be found on TCP port
-<i>80</i>. This is the standard HTTP port for Web access, but you may need to
-change this if you are connecting via. a proxy web server.
+<dt><b>MetaServer.Port=<i>80</i></b>
+<dd>Instructs dopewarsclient that the metaserver can be found on TCP port
+<i>80</i>. This is the standard HTTP port for Web access. (You shouldn't need
+to change this, even if you connect via. a proxy.)
 
-<dt><b>MetaServer.UdpPort=<i>7802</i></b>
-<dd>Instructs the dopewars server that the metaserver can be found on UDP port
-<i>7802</i>. The server utilises UDP as oppposed to the TCP connection used
-by the client due to its much lower overhead.
+<dt><b>MetaServer.ProxyName=<i>"proxy.com"</i></b>
+<dd>Sends all requests to the metaserver via. the web proxy at <i>proxy.com</i>.
+If this is set to a blank string (the default) then the connection to the
+metaserver is made directly.
 
-<dt><b>MetaServer.Path=<i>"/~ben/cgi-bin/server.pl"</i></b>
-<dd>Tells dopewars that the CGI script on the metaserver, for server
+<dt><b>MetaServer.ProxyPort=<i>8080</i></b>
+<dd>Connects to the web proxy on port <i>8080</i>. (It then connects to the
+metaserver on the port specified by MetaServer.Port.) This variable is ignored
+if MetaServer.ProxyName is blank.
+
+<dt><b>MetaServer.Path=<i>"/metaserver.php"</i></b>
+<dd>Tells dopewars that the PHP script on the metaserver, for server
 registration (server mode) or listing the available servers (client mode) is
-<i>/~ben/cgi-bin/server.pl</i>.
+<i>/metaserver.php</i>.
 
 <dt><a name="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
 server"</i></b></a>
@@ -340,6 +345,17 @@ against a player.
 
 <h2><a name="advanced">Advanced configuration</a></h2>
 <dl>
+<dt><b>LogLevel=<i>2</i></b>
+<dd>Most server log messages are given a priority level, from 0 (most urgent)
+to 5 (most verbose). This setting instructs the server only to log messages
+from level 0 up to <i>2</i>, inclusive.
+
+<dt><b>LogTimestamp=<i>"[%H:%M:%S] "</i></b>
+<dd>Prefixes all log messages with a timestamp of the form (e.g.)
+<i>[16:34:49]</i>. This is a string which is passed as input to the
+<tt>strftime(3)</tt> function. If this is set to a blank string, then no
+timestamp is added to log messages.
+
 <dt><b>NumTurns=<i>31</i></b>
 <dd>Defines the game to end after <i>31</i> "days" or turns. If this is set
 to 0 (zero) the game never ends for a player, unless they quit or are killed.
@@ -484,6 +500,6 @@ any drugs, and clients will display this information if available.
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>13-05-2001</b></p>
+<p>Last update: <b>17-06-2001</b></p>
 </body>
 </html>

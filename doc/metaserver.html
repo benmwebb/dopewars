@@ -18,34 +18,39 @@ pick the game that most suits them. This is the function of the dopewars
 
 <ul>
 <li><a href="#location">Metaserver location</a>
+<li><a href="#oldmeta">The "old" metaserver</a>
 <li><a href="#client">Using the metaserver from the client</a>
 <li><a href="#server">Using the metaserver from the server</a>
 <ul>
-<li><a href="#wrongip">But it's displaying the wrong IP address!</a>
+<li><a href="#wrongip">But it's displaying the wrong name!</a>
 <li><a href="#dynamicip">But my server has a dynamic IP...</a>
 </ul>
 </ul>
 
 <h2><a name="location">Metaserver location</a></h2>
-<p>The metaserver has a CGI (web) interface for humans and dopewars clients to 
-read from, and a UDP interface for servers to report to. It lives at the
-same place as the <a href="http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/">
-main dopewars page</a>; the CGI interface listens on TCP port 80, and the
-UDP interface on port 7802. These are the default settings which all
-dopewars servers and clients use for metaserver communication.</p>
+<p>The metaserver is a <a href="http://www.php.net/">PHP</a> script which lives
+at <a href="http://sourceforge.net/">SourceForge</a>. It is accessed by both
+dopewars servers and clients via. TCP connection to port 80, by standard
+HTTP.</p>
+
+<h2><a name="oldmeta">The "old" metaserver</a></h2>
+<p>Versions of dopewars prior to 1.5.1 used a different metaserver system,
+which is now deprecated. Although the old system will continue to run for some
+time, it will eventually be discontinued, so it is recommended that dopewars
+servers and clients are upgraded to the latest version.</p>
 
 <h2><a name="client">Using the metaserver from the client</a></h2>
 <p>Players who want to use the metaserver to list the currently available
 servers should go to
-<a href="http://bellatrix.pcl.ox.ac.uk/~ben/cgi-bin/serverlist.pl">this
-link</a>, or just follow the "Servers" link from the main dopewars web page.
-It cannot be guaranteed that all the listed servers are functional - they
+<a href="http://dopewars.sourceforge.net/metaserver.php?getlist=2">this
+link</a>, or just follow the "Active servers" link from the main dopewars web
+page. It cannot be guaranteed that all the listed servers are functional - they
 may, for example, have been registered in error, or a server may have crashed
 since being added to the list - but the list is checked daily for service,
 and so there is at least a good chance that the servers listed there will
 be working.</p>
 
-<p>The metaserver, being a collection of CGI scripts, should work happily on
+<p>The metaserver, being an ordinary web page, should work happily on
 most machines which have web access. A problem occurs, however, if your
 connection to the Web is via. an enforced proxy server (i.e. traffic on
 port 80 from your machine is blocked by firewall). dopewars can be
@@ -53,9 +58,8 @@ configured to connect via. a proxy server without too much difficulty; if
 your proxy server is at <i>proxy.com</i> on port <i>8080</i> then you should
 add the following lines to your dopewars <a href="configfile.html">
 configuration file</a>:-<br>
-<b>MetaServer.Name=proxy.com<br>
-MetaServer.Port=8080<br>
-MetaServer.Path=http://bellatrix.pcl.ox.ac.uk/~ben/cgi-bin/server.pl</b></p>
+<b>MetaServer.ProxyName="proxy.com"<br>
+MetaServer.ProxyPort=8080</b></p>
 
 <h2><a name="server">Using the metaserver from the server</a></h2>
 <p>People running servers who <b>do not</b> want their details listed by the
@@ -71,10 +75,20 @@ MetaServer.Comment</a> configuration file setting.</p>
 sends this data on startup and shutdown, and when players leave or join the
 game. See the <a href="server.html">server page</a> for more details.</p>
 
-<h3><a name="wrongip">But it's displaying the wrong IP address!</a></h3>
-<p>Once connected to the metaserver, you may find that it incorrectly
-displays the domain name of your server machine. This is usually because the
-metaserver cannot resolve your IP address to a domain name.</p>
+<p>The server, just like the client, may have trouble connecting to the
+metaserver if you are using a web proxy; see the information
+<a href="#client">above</a> for fixing this problem.</p>
+
+<h3><a name="wrongip">But it's displaying the wrong name!</a></h3>
+<p>Once connected to the metaserver, you may find that it displays the IP
+address of your server and not its domain name. This is usually because your
+DNS is not set up to translate your IP into a domain name, and can be
+remedied by <a href="mailto:ben@bellatrix.pcl.ox.ac.uk>mailing</a> the
+metaserver maintainer, who can add a suitable mapping for you.</p>
+
+<p>On other occasions, the metaserver will display a domain name, but it'll
+be incorrect. This is usually because you are connecting via. a proxy, and
+the metaserver cannot determine your true IP address.</p>
 
 <p>In this case, you will need to override the hostname that the metaserver
 guesses for your machine with one you choose yourself. This is done by
@@ -90,8 +104,8 @@ variable in the dopewars configuration file.</p>
 <p>For example, if you wish your server to be known as <b>dope-serv.com</b> and
 you have emailed the maintainer, receiving the password <b>Dope-Auth</b>, then
 add the following to the dopewars configuration file:-<br>
-<b>MetaServer.LocalName=dope-serv.com<br>
-MetaServer.Password=Dope-Auth</b></p>
+<b>MetaServer.LocalName="dope-serv.com"<br>
+MetaServer.Password="Dope-Auth"</b></p>
 
 <p>Restart your dopewars server, or send it a SIGUSR1 signal, for the change to
 take effect. Bear in mind that if you make up a non-existent or invalid domain
@@ -116,6 +130,6 @@ will automatically replace the "old" one.</p>
 <ul>
 <li><a href="index.html">Main index</a>
 </ul>
-<p>Last update: <b>13-05-2001</b></p>
+<p>Last update: <b>17-06-2001</b></p>
 </body>
 </html>

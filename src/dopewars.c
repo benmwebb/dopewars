@@ -1072,6 +1072,8 @@ void dopelog(int loglevel,const gchar *format,...) {
 /* from 0 to 5 (0=vital, 2=normal, 5=maximum debugging output). This  */
 /* is essentially just a wrapper around the GLib g_log function.      */
    va_list args;
+   if (!Network) return; /* Don't print server log messages when
+                            running standalone */
    va_start (args,format);
    g_logv(G_LOG_DOMAIN,1<<(loglevel+G_LOG_LEVEL_USER_SHIFT),format,args);
    va_end (args);
