@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-09-13 16:56+0100\n"
+"POT-Creation-Date: 2000-09-14 20:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2501,7 +2501,7 @@ msgstr ""
 msgid "%s fails to return fire..."
 msgstr ""
 
-#: src/message.c:467
+#: src/message.c:517
 #, c-format
 msgid ""
 "This server is version %s, while your client is version %s.\n"
@@ -2510,27 +2510,27 @@ msgid ""
 "for the latest version."
 msgstr ""
 
-#: src/message.c:606
+#: src/message.c:656
 msgid "Could not find host"
 msgstr ""
 
-#: src/message.c:607
+#: src/message.c:657
 msgid "Could not create network socket"
 msgstr ""
 
-#: src/message.c:608 src/message.c:641
+#: src/message.c:658 src/message.c:691
 msgid "Connection refused or no server present"
 msgstr ""
 
-#: src/message.c:800
+#: src/message.c:850
 msgid "Cannot locate metaserver"
 msgstr ""
 
-#: src/message.c:801
+#: src/message.c:851
 msgid "Cannot create socket"
 msgstr ""
 
-#: src/message.c:803
+#: src/message.c:853
 msgid "Metaserver not running HTTP or connection denied"
 msgstr ""
 

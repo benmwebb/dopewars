@@ -25,7 +25,7 @@ srcdir = .
 top_srcdir = ..
 top_builddir = ..
 
-prefix = /usr/local
+prefix = /usr
 exec_prefix = ${prefix}
 transform = s,x,x,
 libdir = $(exec_prefix)/lib
@@ -51,8 +51,8 @@ RANLIB = ranlib
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DGNULOCALEDIR=\"$(gnulocaledir)\" \
 -DLOCALE_ALIAS_PATH=\"$(aliaspath)\" -DHAVE_CONFIG_H
 CPPFLAGS = 
-CFLAGS = -g -O2 -I/usr/lib/glib/include -Wall -DDATADIR=\"${prefix}/share\"
-LDFLAGS =  -L/usr/lib -lglib
+CFLAGS = -g -O2 -I/usr/local/lib/glib/include -I/usr/local/include -Wall -DDATADIR=\"${prefix}/share\"
+LDFLAGS =  -L/usr/local/lib -lglib
 
 COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
 
