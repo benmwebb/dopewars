@@ -172,6 +172,23 @@ else
      AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
    fi
 
+   dnl Add SDL_mixer sound support if available
+   SDL=no
+   AM_PATH_SDL(1.0.0, SDL=yes)
+   if test "$SDL" = "yes"; then
+     headers=no
+     libs=no
+     AC_CHECK_HEADER(SDL/SDL_mixer.h, headers=yes)
+     AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+     if test "$libs" = "yes"; then
+       if test "$headers" = "yes"; then
+         SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
+         SOUND_LIBS="$SOUND_LIBS $SDL_LIBS -lSDL_mixer"
+         AC_DEFINE(HAVE_SDL_MIXER, 1, [Do we have the SDL_mixer sound library?])
+       fi
+     fi
+   fi
+
    dnl Use console server by default
    if test "$GUI_SERVER" = "probe"; then
      GUI_SERVER="no"
