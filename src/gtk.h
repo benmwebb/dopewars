@@ -268,6 +268,7 @@ struct _GtkBox {
    GtkContainer container;
    GList *children;
    guint16 spacing;
+   gint maxreq;
    guint homogeneous : 1;
 };
 

@@ -167,6 +167,12 @@ static void gtk_widget_set_focus(GtkWidget *widget);
 static void gtk_widget_lose_focus(GtkWidget *widget);
 static void gtk_window_update_focus(GtkWindow *window);
 static void gtk_window_set_focus(GtkWindow *window);
+static void gtk_window_handle_user_size(GtkWindow *window,
+                                        GtkAllocation *allocation);
+static void gtk_window_handle_auto_size(GtkWindow *window,
+                                        GtkAllocation *allocation);
+static void gtk_window_set_initial_position(GtkWindow *window,
+                                            GtkAllocation *allocation);
 
 typedef struct _GdkInput GdkInput;
 
@@ -629,6 +635,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
          alloc.x=rect.left; alloc.y=rect.top;
          alloc.width=rect.right-rect.left;
          alloc.height=rect.bottom-rect.top;
+         gtk_window_handle_user_size(GTK_WINDOW(window),&alloc);
          gtk_widget_set_size(window,&alloc);
          break;
       case WM_ACTIVATE:
@@ -761,12 +768,7 @@ void gtk_widget_update(GtkWidget *widget,gboolean ForceResize) {
       alloc.x=alloc.y=0;
       alloc.width=window->requisition.width;
       alloc.height=window->requisition.height;
-      if (alloc.width < window->allocation.width) {
-         alloc.width=window->allocation.width;
-      }
-      if (alloc.height < window->allocation.height) {
-         alloc.height=window->allocation.height;
-      }
+      gtk_window_handle_auto_size(GTK_WINDOW(window),&alloc);
       if (alloc.width!=window->allocation.width ||
           alloc.height!=window->allocation.height || ForceResize) {
          gtk_widget_set_size(window,&alloc);
@@ -793,10 +795,12 @@ void gtk_widget_show_full(GtkWidget *widget,gboolean recurse) {
       alloc.x=alloc.y=0;
       alloc.width=widget->requisition.width;
       alloc.height=widget->requisition.height;
+      gtk_window_set_initial_position(GTK_WINDOW(widget),&alloc);
       gtk_widget_set_size(widget,&alloc);
       ShowWindow(widget->hWnd,SW_SHOWNORMAL);
       UpdateWindow(widget->hWnd);
-   } else if (GTK_WIDGET_REALIZED(widget)) {
+   } else if (GTK_WIDGET_REALIZED(widget) &&
+             GTK_OBJECT(widget)->klass!=&GtkWindowClass) {
       gtk_widget_update(widget,TRUE);
       if (!recurse) ShowWindow(widget->hWnd,SW_SHOWNORMAL);
    }
@@ -816,8 +820,6 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
 
    if (!GTK_WIDGET_VISIBLE(widget)) return;
 
-   gtk_widget_lose_focus(widget);
-
    if (recurse) gtk_widget_hide_all_full(widget,TRUE);
    else {
       gtk_signal_emit(GTK_OBJECT(widget),"hide");
@@ -825,6 +827,9 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
    }
 
    GTK_WIDGET_UNSET_FLAGS(widget,GTK_VISIBLE);
+
+   gtk_widget_lose_focus(widget);
+
    gtk_widget_size_request(widget,&req);
    if (GTK_WIDGET_REALIZED(widget)) {
       window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
@@ -832,12 +837,7 @@ void gtk_widget_hide_full(GtkWidget *widget,gboolean recurse) {
          alloc.x=alloc.y=0;
          alloc.width=window->requisition.width;
          alloc.height=window->requisition.height;
-         if (alloc.width < window->allocation.width) {
-            alloc.width=window->allocation.width;
-         }
-         if (alloc.height < window->allocation.height) {
-            alloc.height=window->allocation.height;
-         }
+         gtk_window_handle_auto_size(GTK_WINDOW(window),&alloc);
          gtk_widget_set_size(window,&alloc);
       }
    }
@@ -883,8 +883,7 @@ void gtk_window_set_focus(GtkWindow *window) {
 
 void gtk_widget_lose_focus(GtkWidget *widget) {
    GtkWidget *window;
-   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
-       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget)) return;
+   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget)) return;
    window=gtk_widget_get_ancestor(widget,GTK_TYPE_WINDOW);
    gtk_window_update_focus(GTK_WINDOW(window));
    if (GTK_WINDOW(window)->focus==widget) {
@@ -938,8 +937,8 @@ void gtk_widget_set_sensitive(GtkWidget *widget,gboolean sensitive) {
       if (widget->hWnd) EnableWindow(widget->hWnd,sensitive);
       gtk_widget_set_focus(widget);
    } else {
-      gtk_widget_lose_focus(widget);
       GTK_WIDGET_UNSET_FLAGS(widget,GTK_SENSITIVE);
+      gtk_widget_lose_focus(widget);
       if (widget->hWnd) EnableWindow(widget->hWnd,sensitive);
    }
 
@@ -1078,25 +1077,7 @@ void gtk_window_size_request(GtkWidget *widget,GtkRequisition *requisition) {
 void gtk_window_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkAllocation child_alloc;
    GtkWindow *window=GTK_WINDOW(widget);
-   RECT rect;
 
-   GetWindowRect(GetDesktopWindow(),&rect);
-
-   if (allocation->width < window->default_width) {
-      allocation->width=window->default_width;
-   }
-   if (allocation->height < window->default_height) {
-      allocation->height=window->default_height;
-   }
-
-   if (widget->parent) {
-      allocation->x = rect.left+(rect.right-rect.left-allocation->width)/2;
-      allocation->y = rect.top+(rect.bottom-rect.top-allocation->height)/2;
-      if (allocation->x < 0) allocation->x = 0;
-      if (allocation->y < 0) allocation->y = 0;
-      if (widget->hWnd) SetWindowPos(widget->hWnd,HWND_TOP,allocation->x,
-                                     allocation->y,0,0,SWP_NOSIZE|SWP_NOZORDER);
-   }
    child_alloc.x=child_alloc.y=0;
    child_alloc.width=allocation->width-GetSystemMetrics(SM_CXSIZEFRAME)*2;
    child_alloc.height=allocation->height-GetSystemMetrics(SM_CYSIZEFRAME)*2
@@ -1518,19 +1499,30 @@ void gtk_hbox_size_request(GtkWidget *widget,
    GtkBoxChild *child;
    GList *children;
    GtkRequisition *child_req;
-   gint spacing=GTK_BOX(widget)->spacing;
-   gtk_container_size_request(widget,requisition);
+   gint spacing=GTK_BOX(widget)->spacing,numchildren=0;
+   gint maxreq=0;
+   gboolean homogeneous=GTK_BOX(widget)->homogeneous;
+
    for (children=GTK_BOX(widget)->children;children;
         children=g_list_next(children)) {
       child=(GtkBoxChild *)(children->data);
       if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
          child_req=&child->widget->requisition;
-         requisition->width+=child_req->width;
+         if (homogeneous) {
+            numchildren++;
+            if (child_req->width > maxreq) maxreq=child_req->width;
+         } else {
+            requisition->width+=child_req->width;
+         }
          if (g_list_next(children)) requisition->width+=spacing;
          if (child_req->height > requisition->height)
             requisition->height=child_req->height;
       }
    }
+   if (homogeneous) requisition->width+=numchildren*maxreq;
+   GTK_BOX(widget)->maxreq=maxreq;
+   requisition->width+=2*GTK_CONTAINER(widget)->border_width;
+   requisition->height+=2*GTK_CONTAINER(widget)->border_width;
 }
 
 void gtk_vbox_size_request(GtkWidget *widget,
@@ -1538,19 +1530,30 @@ void gtk_vbox_size_request(GtkWidget *widget,
    GtkBoxChild *child;
    GList *children;
    GtkRequisition *child_req;
-   gint spacing=GTK_BOX(widget)->spacing;
-   gtk_container_size_request(widget,requisition);
+   gint spacing=GTK_BOX(widget)->spacing,numchildren=0;
+   gint maxreq=0;
+   gboolean homogeneous=GTK_BOX(widget)->homogeneous;
+
    for (children=GTK_BOX(widget)->children;children;
         children=g_list_next(children)) {
       child=(GtkBoxChild *)(children->data);
       if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
          child_req=&child->widget->requisition;
-         requisition->height+=child_req->height;
+         if (homogeneous) {
+            numchildren++;
+            if (child_req->height > maxreq) maxreq=child_req->height;
+         } else {
+            requisition->height+=child_req->height;
+         }
          if (g_list_next(children)) requisition->height+=spacing;
          if (child_req->width > requisition->width)
             requisition->width=child_req->width;
       }
    }
+   if (homogeneous) requisition->height+=numchildren*maxreq;
+   GTK_BOX(widget)->maxreq=maxreq;
+   requisition->width+=2*GTK_CONTAINER(widget)->border_width;
+   requisition->height+=2*GTK_CONTAINER(widget)->border_width;
 }
 
 static void gtk_box_count_children(GtkBox *box,gint16 allocation,
@@ -1604,23 +1607,28 @@ void gtk_hbox_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkAllocation child_alloc;
    gint extra;
    gint16 curpos;
+   gint maxpos,height,border_width;
+
+   border_width=GTK_CONTAINER(widget)->border_width;
+   maxpos=allocation->x+allocation->width-border_width;
+   height=allocation->height-2*border_width;
 
    box=GTK_BOX(widget);
-   gtk_container_set_size(widget,allocation);
 
-   curpos = allocation->x;
+   curpos = allocation->x+border_width;
    gtk_box_count_children(box,allocation->width,widget->requisition.width,
                           &extra);
 
    for (children=box->children;children;children=g_list_next(children)) {
       child=(GtkBoxChild *)(children->data);
       if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
-         gtk_box_size_child(box,child,extra,allocation->width,
-                            child->widget->requisition.width,
+         gtk_box_size_child(box,child,extra,maxpos,
+                            box->homogeneous ? box->maxreq :
+                                child->widget->requisition.width,
                             &child_alloc.x,&child_alloc.width,
                             children,&curpos);
-         child_alloc.y = allocation->y;
-         child_alloc.height = allocation->height;
+         child_alloc.y = allocation->y+border_width;
+         child_alloc.height = height;
          gtk_widget_set_size(child->widget,&child_alloc);
       }
    }
@@ -1633,23 +1641,28 @@ void gtk_vbox_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkAllocation child_alloc;
    gint extra;
    gint16 curpos;
+   gint width,maxpos,border_width;
+
+   border_width=GTK_CONTAINER(widget)->border_width;
+   width=allocation->width-2*border_width;
+   maxpos=allocation->y+allocation->height-border_width;
 
    box=GTK_BOX(widget);
-   gtk_container_set_size(widget,allocation);
 
-   curpos = allocation->y;
+   curpos = allocation->y+border_width;
    gtk_box_count_children(box,allocation->height,widget->requisition.height,
                           &extra);
 
    for (children=box->children;children;children=g_list_next(children)) {
       child=(GtkBoxChild *)(children->data);
       if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
-         gtk_box_size_child(box,child,extra,allocation->height,
-                            child->widget->requisition.height,
+         gtk_box_size_child(box,child,extra,maxpos,
+                            box->homogeneous ? box->maxreq :
+                                child->widget->requisition.height,
                             &child_alloc.y,&child_alloc.height,
                             children,&curpos);
-         child_alloc.x = allocation->x;
-         child_alloc.width = allocation->width;
+         child_alloc.x = allocation->x+border_width;
+         child_alloc.width = width;
          gtk_widget_set_size(child->widget,&child_alloc);
       }
    }
@@ -2097,7 +2110,7 @@ void gtk_clist_set_column_width_full(GtkCList *clist,gint column,gint width,
          }
       }
       hWnd=GTK_WIDGET(clist)->hWnd;
-      if (hWnd && clist->cols[column].width!=width)
+      if (hWnd /*&& clist->cols[column].width!=width*/)
          InvalidateRect(hWnd,NULL,FALSE);
    }
 }
@@ -2189,17 +2202,34 @@ void gtk_widget_show_all(GtkWidget *widget) {
 }
 
 void gtk_widget_show_all_full(GtkWidget *widget,gboolean hWndOnly) {
+   GtkAllocation alloc;
+   gboolean InitWindow=FALSE;
+
    if (!GTK_WIDGET_REALIZED(widget) &&
-       GTK_OBJECT(widget)->klass==&GtkWindowClass) {
-      gtk_widget_realize(widget);
-   }
+       GTK_OBJECT(widget)->klass==&GtkWindowClass) InitWindow=TRUE;
+
+   if (InitWindow) gtk_widget_realize(widget);
+  
    gtk_signal_emit(GTK_OBJECT(widget),"show_all",hWndOnly);
+
    if (hWndOnly) {
       if (GTK_WIDGET_VISIBLE(widget)) {
          gtk_signal_emit(GTK_OBJECT(widget),"show");
          if (widget->hWnd) ShowWindow(widget->hWnd,SW_SHOWNORMAL);
       }
    } else gtk_widget_show_full(widget,FALSE);
+
+   if (InitWindow) {
+      gtk_widget_update(widget,TRUE);
+      alloc.x=alloc.y=0;
+      alloc.width=widget->requisition.width;
+      alloc.height=widget->requisition.height;
+      gtk_window_set_initial_position(GTK_WINDOW(widget),&alloc);
+//    gtk_widget_set_size(widget,&alloc);
+      ShowWindow(widget->hWnd,SW_SHOWNORMAL);
+      UpdateWindow(widget->hWnd);
+   }
+
 }
 
 GtkWidget *gtk_widget_get_ancestor(GtkWidget *widget,GtkType type) {
@@ -2362,12 +2392,13 @@ void gtk_table_size_request(GtkWidget *widget,GtkRequisition *requisition) {
       for (i=0;i<table->nrows;i++) table->rows[i].requisition=MaxReq;
    }
 
-   requisition->width=requisition->height=0;
+   requisition->width=requisition->height=2*GTK_CONTAINER(widget)->border_width;
 
    for (i=0;i<table->ncols;i++) requisition->width+=table->cols[i].requisition;
    for (i=0;i<table->ncols-1;i++) requisition->width+=table->cols[i].spacing;
    for (i=0;i<table->nrows;i++) requisition->height+=table->rows[i].requisition;
    for (i=0;i<table->nrows-1;i++) requisition->height+=table->rows[i].spacing;
+
 }
 
 void gtk_table_set_size(GtkWidget *widget,GtkAllocation *allocation) {
@@ -2376,9 +2407,10 @@ void gtk_table_set_size(GtkWidget *widget,GtkAllocation *allocation) {
    GtkAllocation child_alloc;
    GList *children;
    GtkTableChild *child;
+   gint border_width;
 
    table=GTK_TABLE(widget);
-   gtk_container_set_size(widget,allocation);
+   border_width=GTK_CONTAINER(widget)->border_width;
 
    if (table->ncols) {
       col_extra = (allocation->width-widget->requisition.width)/table->ncols;
@@ -2396,8 +2428,8 @@ void gtk_table_set_size(GtkWidget *widget,GtkAllocation *allocation) {
       child=(GtkTableChild *)(children->data);
       if (!child || !child->widget ||
           !GTK_WIDGET_VISIBLE(child->widget)) continue;
-      child_alloc.x = allocation->x;
-      child_alloc.y = allocation->y;
+      child_alloc.x = allocation->x+border_width;
+      child_alloc.y = allocation->y+border_width;
       child_alloc.width = child_alloc.height = 0;
       for (i=0;i<child->left_attach;i++) {
          child_alloc.x+=table->cols[i].allocation+table->cols[i].spacing;
@@ -3789,5 +3821,42 @@ void gtk_option_menu_update_selection(GtkWidget *widget) {
    if (menu) {
       menu_item=GTK_WIDGET(g_slist_nth_data(menu->children,lres));
       if (menu_item) gtk_signal_emit(GTK_OBJECT(menu_item),"activate");
+   }
+}
+
+void gtk_window_handle_user_size(GtkWindow *window,
+                                 GtkAllocation *allocation) {
+}
+
+void gtk_window_set_initial_position(GtkWindow *window,
+                                     GtkAllocation *allocation) {
+   RECT rect;
+   GtkWidget *widget=GTK_WIDGET(window);
+   GetWindowRect(GetDesktopWindow(),&rect);
+
+   if (widget->parent) {
+      allocation->x = rect.left+(rect.right-rect.left-allocation->width)/2;
+      allocation->y = rect.top+(rect.bottom-rect.top-allocation->height)/2;
+      if (allocation->x < 0) allocation->x = 0;
+      if (allocation->y < 0) allocation->y = 0;
+      if (widget->hWnd) SetWindowPos(widget->hWnd,HWND_TOP,allocation->x,
+                                     allocation->y,0,0,SWP_NOSIZE|SWP_NOZORDER);
+   }
+}
+
+void gtk_window_handle_auto_size(GtkWindow *window,
+                                 GtkAllocation *allocation) {
+   GtkWidget *widget=GTK_WIDGET(window);
+   if (allocation->width < window->default_width) {
+      allocation->width=window->default_width;
+   }
+   if (allocation->height < window->default_height) {
+      allocation->height=window->default_height;
+   }
+   if (allocation->width < widget->allocation.width) {
+      allocation->width=widget->allocation.width;
+   }
+   if (allocation->height < widget->allocation.height) {
+      allocation->height=widget->allocation.height;
    }
 }
