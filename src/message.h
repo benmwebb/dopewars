@@ -127,7 +127,8 @@ gchar *GetNextWord(gchar **Data,gchar *Default);
 void AssignNextWord(gchar **Data,gchar **Dest);
 int GetNextInt(gchar **Data,int Default);
 price_t GetNextPrice(gchar **Data,price_t Default);
-char *SetupNetwork();
+char *SetupNetwork(gboolean NonBlocking);
+char *FinishSetupNetwork();
 void ShutdownNetwork();
 void SwitchToSinglePlayer(Player *Play);
 int ProcessMessage(char *Msg,Player **From,char *AICode,char *Code,

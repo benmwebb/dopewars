@@ -287,9 +287,6 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
    GtkWidget *MenuItem;
    GSList *list;
 
-/* Handle events first */
-   while (gtk_main_iteration_do(FALSE));
-
    if (ProcessMessage(pt,&From,&AICode,&Code,&To,&Data,FirstClient)==-1) {
       return;
    }
@@ -389,9 +386,6 @@ void HandleClientMessage(char *pt,Player *ReallyTo) {
          break;
    }
    g_free(Data);
-
-/* Handle events again */
-   while (gtk_main_iteration_do(FALSE));
 }
 
 struct HiScoreDiaStruct {
@@ -1510,10 +1504,51 @@ _("\nFor information on the command line options, type dopewars -h at your\n"
 
 struct StartGameStruct {
    GtkWidget *dialog,*name,*hostname,*port,*antique,*status,*metaserv;
+   gint ConnectTag;
 };
 
-static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
+static void FinishConnect(gpointer data,gint socket,
+                          GdkInputCondition condition) {
    gchar *text,*NetworkError;
+   struct StartGameStruct *widgets;
+
+   widgets=(struct StartGameStruct *)data;
+
+   gdk_input_remove(widgets->ConnectTag);
+   widgets->ConnectTag=0;
+   NetworkError=FinishSetupNetwork();
+   if (NetworkError) {
+      text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
+      gtk_label_set_text(GTK_LABEL(widgets->status),text);
+      g_free(text);
+   } else {
+      gtk_widget_destroy(widgets->dialog);
+      StartGame();
+   } 
+}
+
+static void DoConnect(struct StartGameStruct *widgets) {
+   gchar *text,*NetworkError;
+   text=g_strdup_printf(_("Status: Attempting to contact %s..."),ServerName);
+   gtk_label_set_text(GTK_LABEL(widgets->status),text); g_free(text);
+
+   if (widgets->ConnectTag!=0) {
+      gdk_input_remove(widgets->ConnectTag); CloseSocket(ClientSock);
+      widgets->ConnectTag=0;
+   }
+   NetworkError=SetupNetwork(TRUE);
+   if (!NetworkError) {
+      widgets->ConnectTag=gdk_input_add(ClientSock,GDK_INPUT_WRITE,
+                                        FinishConnect,(gpointer)widgets);
+   } else {
+      text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
+      gtk_label_set_text(GTK_LABEL(widgets->status),text);
+      g_free(text);
+   }
+}
+
+static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
+   gchar *text;
    g_free(ServerName);
    ServerName=gtk_editable_get_chars(GTK_EDITABLE(widgets->hostname),0,-1);
    text=gtk_editable_get_chars(GTK_EDITABLE(widgets->port),0,-1);
@@ -1523,17 +1558,7 @@ static void ConnectToServer(GtkWidget *widget,struct StartGameStruct *widgets) {
    ClientData.PlayerName=gtk_editable_get_chars(GTK_EDITABLE(widgets->name),
                                                 0,-1);
    if (!ClientData.PlayerName || !ClientData.PlayerName[0]) return;
-   gtk_label_set_text(GTK_LABEL(widgets->status),
-                      _("Status: Attempting to contact server..."));
-   NetworkError=SetupNetwork();
-   if (!NetworkError) {
-      gtk_widget_destroy(widgets->dialog);
-      StartGame();
-   } else {
-      text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
-      gtk_label_set_text(GTK_LABEL(widgets->status),text);
-      g_free(text);
-   }
+   DoConnect(widgets);
 }
 
 static void StartSinglePlayer(GtkWidget *widget,
@@ -1595,7 +1620,6 @@ static void MetaServerConnect(GtkWidget *widget,
    gint row;
    GtkWidget *clist;
    ServerData *ThisServer;
-   gchar *text,*NetworkError;
 
    clist=widgets->metaserv;
    selection=GTK_CLIST(clist)->selection;
@@ -1608,17 +1632,15 @@ static void MetaServerConnect(GtkWidget *widget,
       ClientData.PlayerName=gtk_editable_get_chars(GTK_EDITABLE(widgets->name),
                                                    0,-1);
       if (!ClientData.PlayerName || !ClientData.PlayerName[0]) return;
-      gtk_label_set_text(GTK_LABEL(widgets->status),
-                         _("Status: Attempting to contact server..."));
-      NetworkError=SetupNetwork();
-      if (!NetworkError) {
-         gtk_widget_destroy(widgets->dialog);
-         StartGame();
-      } else {
-         text=g_strdup_printf(_("Status: Could not connect (%s)"),NetworkError);
-         gtk_label_set_text(GTK_LABEL(widgets->status),text);
-         g_free(text);
-      }
+      DoConnect(widgets);
+   }
+}
+
+static void CloseNewGameDia(GtkWidget *widget,
+                            struct StartGameStruct *widgets) {
+   if (widgets->ConnectTag!=0) {
+      gdk_input_remove(widgets->ConnectTag); CloseSocket(ClientSock);
+      widgets->ConnectTag=0;
    }
 }
 
@@ -1637,7 +1659,11 @@ void NewGameDialog() {
    server_titles[3]=_("Players");
    server_titles[4]=_("Comment");
 
+   widgets.ConnectTag=0;
    widgets.dialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+   gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
+                      GTK_SIGNAL_FUNC(CloseNewGameDia),
+                      (gpointer)&widgets);
    
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),

@@ -253,7 +253,7 @@ static char *SelectServerFromMetaServer() {
       switch(c) {
          case 'S': AssignName(&ServerName,ThisServer->Name);
                    Port=ThisServer->Port;
-                   ThisServer=NULL;
+                   ListPt=NULL;
                    break;
          case 'N': ListPt=g_slist_next(ListPt);
                    if (!ListPt) ListPt=ServerList;
@@ -297,7 +297,7 @@ static char ConnectToServer(Player *Play) {
          mvaddstr(17,1,
                   _("Please wait... attempting to contact dopewars server..."));
          refresh();
-         pt=SetupNetwork();
+         pt=SetupNetwork(FALSE);
       }
       if (pt || MetaError) {
          clear_line(17);

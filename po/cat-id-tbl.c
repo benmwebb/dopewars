@@ -452,8 +452,8 @@ dopewars is released under the GNU General Public Licence\n", 386},
 \n\
 For information on the command line options, type dopewars -h at your\n\
 Unix prompt. This will display a help screen, listing the availableoptions.", 387},
-  {"Status: Attempting to contact server...", 388},
-  {"Status: Could not connect (%s)", 389},
+  {"Status: Could not connect (%s)", 388},
+  {"Status: Attempting to contact %s...", 389},
   {"%d of %d", 390},
   {"Server", 391},
   {"Port", 392},

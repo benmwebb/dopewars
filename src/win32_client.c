@@ -1196,7 +1196,7 @@ static BOOL CALLBACK NewGameWndProc(HWND hwnd,UINT msg,UINT wParam,
             buflen=GetWindowTextLength(GetDlgItem(hwnd,ED_HOSTNAME));
             GetDlgItemText(hwnd,ED_HOSTNAME,ServerName,buflen+1);
             Port=GetDlgItemInt(hwnd,ED_PORT,NULL,FALSE);
-            NetworkError=SetupNetwork();
+            NetworkError=SetupNetwork(FALSE);
             if (!NetworkError) {
                EndDialog(hwnd,1);
                StartGame();

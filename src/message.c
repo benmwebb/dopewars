@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
 #include <glib.h>
@@ -509,11 +511,15 @@ price_t GetNextPrice(gchar **Data,price_t Default) {
 }
 
 #if NETWORKING
-char *SetupNetwork() {
+char *SetupNetwork(gboolean NonBlocking) {
 /* Sets up the connection from the client to the server. If the connection */
 /* is successful, Network and Client are set to TRUE, and ClientSock is a  */
 /* file descriptor for the newly-opened socket. NULL is returned. If the   */
 /* connection fails, a pointer to an error message is returned.            */
+/* If "NonBlocking" is TRUE, a non-blocking connect() is carried out. In   */
+/* this case, the routine returns successfully after initiating the        */
+/* connect call; the caller should then select() the socket for writing,   */
+/* before calling FinishSetupNetwork()                                     */
    struct sockaddr_in ClientAddr;
    struct hostent *he;
    static char NoHost[]= N_("Could not find host");
@@ -535,8 +541,10 @@ char *SetupNetwork() {
    ClientAddr.sin_addr=*((struct in_addr *)he->h_addr);
    memset(ClientAddr.sin_zero,0,sizeof(ClientAddr.sin_zero));
 
+   if (NonBlocking) fcntl(ClientSock,F_SETFL,O_NONBLOCK);
    if (connect(ClientSock,(struct sockaddr *)&ClientAddr,
        sizeof(struct sockaddr))==-1) {
+      if (errno==EINPROGRESS) return NULL;
       CloseSocket(ClientSock);
       return NoConnect;
    } else {
@@ -545,6 +553,24 @@ char *SetupNetwork() {
    Client=TRUE; Network=TRUE;
    return NULL;
 }
+
+char *FinishSetupNetwork() {
+   socklen_t optlen;
+   int optval;
+   static char NoConnect[]= N_("Connection refused or no server present");
+
+   optlen=sizeof(optval);
+   if (getsockopt(ClientSock,SOL_SOCKET,SO_ERROR,&optval,&optlen)==-1) {
+      return NoConnect;
+   }
+   if (optval==0) {
+      Client=TRUE; Network=TRUE;
+      return NULL;
+   } else {
+      return NoConnect;
+   }
+}
+
 #endif /* NETWORKING */
 
 void SwitchToSinglePlayer(Player *Play) {
