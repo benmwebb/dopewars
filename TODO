@@ -1,5 +1,6 @@
 - Fail nicely if NumLocation (etc.) is set to zero
 - Impose sensible limits on numbers in Options dialog (e.g. percentages)
+  (should also enforce this for config file / server admin)
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
 - Fix problem with dialogs popping up while menus are open
