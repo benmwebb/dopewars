@@ -225,6 +225,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   int argc;
   gboolean is_service;
   gchar *modpath;
+  struct CMDLINE *cmdline;
 
 #ifdef ENABLE_NLS
   gchar *winlocale;
@@ -275,35 +276,36 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   while (split[argc] && split[argc][0])
     argc++;
 
-  SoundInit();
-  GeneralStartup(argc, split);
+  cmdline = GeneralStartup(argc, split);
   OpenLog();
-  if (WantVersion || WantHelp) {
+  SoundInit();
+  if (cmdline->version || cmdline->help) {
     WindowPrintStart();
     g_set_print_handler(WindowPrintFunc);
-    HandleHelpTexts();
+    HandleHelpTexts(cmdline->help);
     WindowPrintEnd();
 #ifdef NETWORKING
   } else if (is_service) {
     InitNetwork();
     Network = Server = TRUE;
     win32_init(hInstance, hPrevInstance, "mainicon");
-    ServiceMain();
+    ServiceMain(cmdline);
     StopNetworking();
 #endif
-  } else if (WantConvert) {
+  } else if (cmdline->convert) {
     WindowPrintStart();
     g_set_print_handler(WindowPrintFunc);
-    ConvertHighScoreFile();
+    ConvertHighScoreFile(cmdline->convertfile);
     WindowPrintEnd();
   } else {
     InitNetwork();
-    if (Server) {
+    if (cmdline->server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
+      Server = TRUE;
       g_log_set_handler(NULL, G_LOG_LEVEL_CRITICAL, LogMessage, NULL);
       win32_init(hInstance, hPrevInstance, "mainicon");
-      GuiServerLoop(FALSE);
+      GuiServerLoop(cmdline, FALSE);
 #else
       AllocConsole();
       SetConsoleTitle(_("dopewars server"));
@@ -312,7 +314,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                         G_LOG_LEVEL_WARNING, ServerLogMessage, NULL);
       g_set_print_handler(ServerPrintFunc);
       newterm(NULL, NULL, NULL);
-      ServerLoop();
+      ServerLoop(cmdline);
 #endif /* GUI_SERVER */
 #else
       WindowPrintStart();
@@ -323,7 +325,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 "configure script.\n"));
       WindowPrintEnd();
 #endif /* NETWORKING */
-    } else if (AIPlayer) {
+    } else if (cmdline->ai) {
       AllocConsole();
 
       /* Title of the Windows window used for AI player output */
@@ -333,23 +335,23 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                         LogMask() | G_LOG_LEVEL_MESSAGE |
                         G_LOG_LEVEL_WARNING, ServerLogMessage, NULL);
       g_set_print_handler(ServerPrintFunc);
-      AIPlayerLoop();
+      AIPlayerLoop(cmdline);
     } else {
-      switch (WantedClient) {
+      switch (cmdline->client) {
       case CLIENT_AUTO:
-        if (!GtkLoop(hInstance, hPrevInstance, TRUE)) {
+        if (!GtkLoop(hInstance, hPrevInstance, cmdline, TRUE)) {
           AllocConsole();
           SetConsoleTitle(_("dopewars"));
-          CursesLoop();
+          CursesLoop(cmdline);
         }
         break;
       case CLIENT_WINDOW:
-        GtkLoop(hInstance, hPrevInstance, FALSE);
+        GtkLoop(hInstance, hPrevInstance, cmdline, FALSE);
         break;
       case CLIENT_CURSES:
         AllocConsole();
         SetConsoleTitle(_("dopewars"));
-        CursesLoop();
+        CursesLoop(cmdline);
         break;
       }
     }
@@ -357,13 +359,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     StopNetworking();
 #endif
   }
+  FreeCmdLine(cmdline);
   CloseLog();
   LogFileEnd();
   g_strfreev(split);
   CloseHighScoreFile();
   g_free(PidFile);
   g_free(Log.File);
-  g_free(ConvertFile);
   SoundClose();
   return 0;
 }

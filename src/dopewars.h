@@ -43,6 +43,7 @@
 #endif
 
 #include <glib.h>
+#include "convert.h"
 #include "error.h"
 #include "network.h"
 #include "util.h"
@@ -169,25 +170,23 @@ struct DATE {
   int day, month, year;
 };
 
+extern gboolean WantAntique;
 extern struct DATE StartDate;
 extern int ClientSock, ListenSock;
-extern gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
+extern gboolean Network, Client, Server;
 extern unsigned Port;
 extern gboolean Sanitized, ConfigVerbose, DrugValue;
 extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
 extern int DebtInterest, BankInterest;
 extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
-	     *WantedPlugin, *BindAddress, *Encoding;
-extern gboolean WantHelp, WantVersion, WantAntique, WantColour,
-                WantNetwork, WantConvert, WantAdmin;
+	     *BindAddress;
 #ifdef CYGWIN
 extern gboolean MinToSysTray;
 #else
 extern gboolean Daemonize;
 #endif
 extern gchar *WebBrowser;
-extern ClientType WantedClient;
 extern int LoanSharkLoc, BankLoc, GunShopLoc, RoughPubLoc;
 extern int DrugSortMethod, FightTimeout, IdleTimeout, ConnectTimeout;
 extern int MaxClients, AITurnPause;
@@ -353,6 +352,16 @@ struct GLOBALS {
   int MinVal;
 };
 
+struct CMDLINE { 
+  gboolean help, version, antique, colour, network;
+  gboolean convert, admin, ai, server, notifymeta;
+  gboolean setport;
+  gchar *scorefile, *servername, *pidfile, *logfile, *plugin, *convertfile;
+  unsigned port;
+  ClientType client;
+  GSList *configs;
+};  
+
 extern const int NUMGLOB;
 extern struct GLOBALS Globals[];
 
@@ -417,12 +426,14 @@ gchar *InitialCaps(gchar *string);
 char StartsWithVowel(char *string);
 char *GetPlayerName(Player *Play);
 void SetPlayerName(Player *Play, char *Name);
-void HandleCmdLine(int argc, char *argv[]);
-void SetupParameters(void);
-void HandleHelpTexts(void);
-void GeneralStartup(int argc, char *argv[]);
+struct CMDLINE *ParseCmdLine(int argc, char *argv[]);
+void FreeCmdLine(struct CMDLINE *cmdline);
+void InitConfiguration(struct CMDLINE *cmdline);
+void HandleHelpTexts(gboolean fullhelp);
+struct CMDLINE *GeneralStartup(int argc, char *argv[]);
 void StripTerminators(gchar *str);
-gboolean ParseNextConfig(GScanner *scanner, gboolean print);
+gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
+                         gchar **encoding, gboolean print);
 int GetGlobalIndex(gchar *ID1, gchar *ID2);
 gchar **GetGlobalString(int GlobalIndex, int StructIndex);
 gint *GetGlobalInt(int GlobalIndex, int StructIndex);
@@ -431,8 +442,6 @@ gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex);
 gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex);
 void PrintConfigValue(int GlobalIndex, int StructIndex,
                       gboolean IndexGiven, GScanner *scanner);
-gboolean SetConfigValue(int GlobalIndex, int StructIndex,
-                        gboolean IndexGiven, GScanner *scanner);
 gboolean IsCop(Player *Play);
 void RestoreConfig(void);
 void GetDateString(GString *str, Player *Play);

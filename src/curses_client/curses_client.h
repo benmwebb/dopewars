@@ -27,6 +27,8 @@
 #include <config.h>
 #endif
 
-void CursesLoop(void);
+struct CMDLINE;
+
+void CursesLoop(struct CMDLINE *cmdline);
 
 #endif

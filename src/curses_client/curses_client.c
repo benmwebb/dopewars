@@ -100,7 +100,7 @@ static void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data);
 #endif
 
 static DispMode DisplayMode;
-static gboolean QuitRequest;
+static gboolean QuitRequest, WantColour = TRUE, WantNetwork = TRUE;
 
 /* 
  * Initialises the curses library for accessing the screen.
@@ -2418,7 +2418,7 @@ static void Curses_DoGame(Player *Play)
   g_string_free(text, TRUE);
 }
 
-void CursesLoop(void)
+void CursesLoop(struct CMDLINE *cmdline)
 {
   char c;
   Player *Play;
@@ -2426,7 +2426,9 @@ void CursesLoop(void)
   if (!CheckHighScoreFileConfig())
     return;
 
-  ConvertConfigFile();
+  InitConfiguration(cmdline);
+  WantColour = cmdline->colour;
+  WantNetwork = cmdline->network;
 
   /* Save the configuration, so we can restore those elements that get
    * overwritten when we connect to a dopewars server */
@@ -2444,7 +2446,7 @@ void CursesLoop(void)
                     G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                     LogMessage, NULL);
 
-  SoundOpen(WantedPlugin);
+  SoundOpen(cmdline->plugin);
 
   display_intro();
 

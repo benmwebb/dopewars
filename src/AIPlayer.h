@@ -27,6 +27,7 @@
 #include <config.h>
 #endif
 
-void AIPlayerLoop(void);
+struct CMDLINE;
+void AIPlayerLoop(struct CMDLINE *cmdline);
 
 #endif /* __DP_AIPLAYER_H__ */

@@ -1,6 +1,3 @@
-- Fix the Encoding variable so that a) it works only on the current file
-  (not on _all_ config files) and b) it only translates config file variables,
-  not the defaults (which could be in a different codeset)
 - Limit rate of server connections to combat DOS attacks / players trying
   to get a good starting day?
 - Add support for reading/writing multiple configuration files to GUI client's

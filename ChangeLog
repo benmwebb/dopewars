@@ -11,8 +11,9 @@ cvs
     - Names.Month and Names.Year have been replaced with StartDate.Day,
       StartDate.Month, StartDate.Year and Names.Date; these can be used to
       handle the date display properly after the turn number exceeds 31
-    - Encoding config variable added, to allow the config file's encoding
-      (usually taken from the locale) to be overridden
+    - encoding and include config directives added, to allow the config file's
+      encoding (usually taken from the locale) to be overridden, and to allow
+      the inclusion of other config files
     - Spanish translation added by Quique
 
 1.5.7   25-06-2002

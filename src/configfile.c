@@ -36,6 +36,8 @@
 #include "nls.h"                /* For _ function */
 #include "error.h"              /* For ErrStrFromErrno */
 
+gchar *LocalCfgEncoding = NULL;
+
 /*
  * Prints the given string to a file, converting control characters
  * and escaping other special characters.
@@ -194,8 +196,8 @@ static void WriteConfigFile(FILE *fp)
   int i, j;
   Converter *conv = Conv_New();
 
-  if (Encoding && Encoding[0]) {
-    Conv_SetCodeset(conv, Encoding);
+  if (LocalCfgEncoding && LocalCfgEncoding[0]) {
+    Conv_SetCodeset(conv, LocalCfgEncoding);
   }
 
   for (i = 0; i < NUMGLOB; i++) {
@@ -249,41 +251,4 @@ gboolean UpdateConfigFile(const gchar *cfgfile)
   fclose(fp);
   g_free(defaultfile);
   return TRUE;
-}
-
-static void ConvertString(Converter *conv, gchar **str)
-{
-  AssignName(str, Conv_ToInternal(conv, *str, -1));
-}
-
-void ConvertConfigFile(void)
-{
-  int i, j;
-  struct GLOBALS *gvar;
-  Converter *conv = Conv_New();
-
-  if (Encoding && Encoding[0]) {
-    Conv_SetCodeset(conv, Encoding);
-  }
-
-  if (Conv_Needed(conv)) {
-    for (i = 0; i < NUMGLOB; i++) {
-      gvar = &Globals[i];
-      if (gvar->StringVal) {
-        if (gvar->StructListPt) {
-          for (j = 1; j <= *gvar->MaxIndex; j++) {
-            ConvertString(conv, GetGlobalString(i, j));
-          }
-        } else {
-          ConvertString(conv, GetGlobalString(i, 0));
-        }
-      } else if (gvar->StringList) {
-        for (j = 0; j < *gvar->MaxIndex; j++) {
-          ConvertString(conv, (*gvar->StringList) + j);
-        }
-      }
-    }
-  }
-
-  Conv_Free(conv);
 }

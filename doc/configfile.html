@@ -68,6 +68,7 @@ locations</a></li>
 <li><a href="#drugs">Basic configuration: drug prices</a></li>
 <li><a href="#combat">Basic configuration: guns and fighting</a></li>
 <li><a href="#advanced">Advanced configuration</a></li>
+<li><a href="#commands">Special configuration file commands</a></li>
 </ul>
 
 <h2><a id="fileloc">General configuration: file and server locations</a></h2>
@@ -645,15 +646,6 @@ feature.)</dd>
 <dd>If TRUE, then the server will keep track of the price you paid for
 any drugs, and clients will display this information if available.</dd>
 
-<dt><b>Encoding=<i>"UTF-8"</i></b></dt>
-<dd>Specifies that any text in the configuration files is in <i>"UTF-8"</i>
-encoding. This variable is only supported if dopewars is built on a Unix
-system and linked against GLib version 2. This influences both how the file
-is read and written. If this variable is set to a blank string (the default)
-then it will be assumed that your configuration files are in the locale's
-default encoding - e.g. ISO-8859-1 for C or POSIX locales, ISO-8859-2 for pl_PL,
-ISO-8859-15 for es_ES@euro, or UTF-8 for en_GB.UTF-8.</dd>
-
 <dt><b>Sounds.FightHit=<i>"hit.wav"</i></b></dt>
 <dd>Plays the sound file <i>"hit.wav"</i> when you fire a gun and hit your
 target. The sound must be installed on your system, and you must be using
@@ -661,6 +653,21 @@ a functioning sound system, in order to hear anything. Other sounds that
 can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <b>Jet</b>, <b>TalkToAll</b>, <b>TalkPrivate</b>, <b>JoinGame</b>, and
 <b>LeaveGame</b>.</dd>
+
+</dl>
+
+<h2><a id="commands">Special configuration file commands</a></h2>
+<dl>
+<dt><b>include <i>"foo"</i></b></dt>
+<dd>Reads in the additional configuration file, <i>"foo"</i>.</dd>
+
+<dt><b>encoding <i>"UTF-8"</i></b></dt>
+<dd>Specifies that any text following this directive (in this configuration
+file only) is in <i>"UTF-8"</i> encoding. This directive is only supported
+if dopewars is built on a Unix system and linked against GLib version 2.
+If unspecifed, then it will be assumed that your configuration files are
+in the locale's default encoding - e.g. ISO-8859-1 for C or POSIX locales,
+ISO-8859-2 for pl_PL, ISO-8859-15 for es_ES@euro, or UTF-8 for en_GB.UTF-8.</dd>
 
 </dl>
 

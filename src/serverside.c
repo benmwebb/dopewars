@@ -232,7 +232,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   gboolean retval;
   int i;
 
-  if (!MetaServer.Active || !NotifyMetaServer || WantQuit)
+  if (!MetaServer.Active || WantQuit)
     return;
 
   if (MetaMinTimeout > time(NULL) && RespectTimeout) {
@@ -830,7 +830,6 @@ static gboolean StartServer(void)
   Scanner->msg_handler = ScannerErrorHandler;
   Scanner->input_name = "(stdin)";
   CreatePidFile();
-  ConvertConfigFile();
 
   /* Make the output line-buffered, so that the log file (if used) is
    * updated regularly */
@@ -983,11 +982,13 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
   GSList *list;
   Player *tmp;
   GPrintFunc oldprint;
+  Converter *conv;
 
   oldprint = StartServerReply(netbuf);
 
+  conv = Conv_New();
   g_scanner_input_text(Scanner, string, strlen(string));
-  if (!ParseNextConfig(Scanner, TRUE)) {
+  if (!ParseNextConfig(Scanner, conv, NULL, TRUE)) {
     if (g_strcasecmp(string, "help") == 0 || g_strcasecmp(string, "h") == 0
         || strcmp(string, "?") == 0) {
       ServerHelp();
@@ -1032,6 +1033,7 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf)
       g_print(_("Unknown command - try \"help\" for help...\n"));
     }
   }
+  Conv_Free(conv);
   FinishServerReply(oldprint);
 }
 
@@ -1148,7 +1150,7 @@ static int SetupLocalSocket(void)
  * Initialises server, processes network and interactive messages, and
  * finally cleans up the server on exit.
  */
-void ServerLoop()
+void ServerLoop(struct CMDLINE *cmdline)
 {
   Player *tmp;
   GSList *list, *listcp;
@@ -1166,6 +1168,8 @@ void ServerLoop()
   GPrintFunc oldprint;
   GSList *localconn = NULL;
 #endif
+
+  InitConfiguration(cmdline);
 
   if (!StartServer())
     return;
@@ -1609,7 +1613,7 @@ static VOID WINAPI ServiceInit(DWORD argc, LPTSTR * argv)
     return;
   }
 
-  GuiServerLoop(TRUE);
+  GuiServerLoop(NULL, TRUE);
 
   if (!RegisterStatus(SERVICE_STOPPED)) {
     dopelog(0, LF_SERVER, _("Failed to set NT Service status"));
@@ -1617,12 +1621,14 @@ static VOID WINAPI ServiceInit(DWORD argc, LPTSTR * argv)
   }
 }
 
-void ServiceMain(void)
+void ServiceMain(struct CMDLINE *cmdline)
 {
   SERVICE_TABLE_ENTRY services[] = {
     {"dopewars-server", ServiceInit},
     {NULL, NULL}
   };
+
+  InitConfiguration(cmdline);
 
   if (!StartServiceCtrlDispatcher(services)) {
     dopelog(0, LF_SERVER, _("Failed to start NT Service"));
@@ -1678,9 +1684,13 @@ static void SetupTaskBarIcon(GtkWidget *widget)
 }
 #endif /* CYGWIN */
 
-void GuiServerLoop(gboolean is_service)
+void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 {
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
+
+  if (cmdline) {
+    InitConfiguration(cmdline);
+  }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_signal_connect(GTK_OBJECT(window), "delete_event",
@@ -1871,7 +1881,7 @@ static void HighScoreWriteHeader(FILE *fp)
 /* 
  * Converts an old format high score file to the new format.
  */
-void ConvertHighScoreFile(void)
+void ConvertHighScoreFile(const gchar *convertfile)
 {
   FILE *old, *backup;
   gchar *BackupFile;
@@ -1879,9 +1889,9 @@ void ConvertHighScoreFile(void)
   gchar *OldError = NULL, *BackupError = NULL;
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
 
-  BackupFile = g_strdup_printf("%s.bak", ConvertFile);
+  BackupFile = g_strdup_printf("%s.bak", convertfile);
 
-  old = fopen(ConvertFile, "r+");
+  old = fopen(convertfile, "r+");
   if (!old) {
     OldError = ErrStrFromErrno(errno);
   }
@@ -1899,7 +1909,7 @@ void ConvertHighScoreFile(void)
     if (HighScoreReadHeader(old, NULL)) {
       g_log(NULL, G_LOG_LEVEL_CRITICAL,
             _("The high score file %s\n"
-              "is already in the new format! Aborting."), ConvertFile);
+              "is already in the new format! Aborting."), convertfile);
       fclose(old);
       fclose(backup);
     } else {
@@ -1920,14 +1930,14 @@ void ConvertHighScoreFile(void)
        * the header */
       if (!HighScoreRead(old, MultiScore, AntiqueScore, FALSE)) {
         g_log(NULL, G_LOG_LEVEL_CRITICAL,
-              _("Error reading scores from %s."), ConvertFile);
+              _("Error reading scores from %s."), convertfile);
       } else {
         ftruncate(fileno(old), 0);
         rewind(old);
         if (HighScoreWrite(old, MultiScore, AntiqueScore)) {
           g_message(_("The high score file %s has been converted to the "
                       "new format.\nA backup of the old file has been "
-                      "created as %s.\n"), ConvertFile, BackupFile);
+                      "created as %s.\n"), convertfile, BackupFile);
         }
       }
       fclose(old);
@@ -1936,7 +1946,7 @@ void ConvertHighScoreFile(void)
     if (!old) {
       g_log(NULL, G_LOG_LEVEL_CRITICAL,
             _("Cannot open high score file %s: %s."),
-            ConvertFile, OldError);
+            convertfile, OldError);
     } else if (!backup) {
       g_log(NULL, G_LOG_LEVEL_CRITICAL,
             _("Cannot create backup (%s) of the\nhigh score file: %s."),

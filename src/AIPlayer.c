@@ -132,7 +132,7 @@ static void NetBufAuth(NetworkBuffer *netbuf, gpointer data)
  * Main loop for AI players. Connects to server, plays game,
  * and then disconnects.
  */
-void AIPlayerLoop()
+void AIPlayerLoop(struct CMDLINE *cmdline)
 {
   GString *errstr;
   gchar *msg;
@@ -144,7 +144,7 @@ void AIPlayerLoop()
   NBSocksStatus oldsocks;
   NetworkBuffer *netbuf;
 
-  ConvertConfigFile();
+  InitConfiguration(cmdline);
 
   errstr = g_string_new("");
   AIPlay = g_new(Player, 1);

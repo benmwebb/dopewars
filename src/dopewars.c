@@ -41,6 +41,8 @@
 #include <glib.h>
 #include <stdarg.h>
 
+#include "configfile.h"
+#include "convert.h"
 #include "dopewars.h"
 #include "admin.h"
 #include "log.h"
@@ -66,7 +68,7 @@
 #endif
 
 int ClientSock, ListenSock;
-gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
+gboolean Network, Client, Server, WantAntique = FALSE;
 
 /* 
  * dopewars acting as standalone TCP server:
@@ -77,12 +79,9 @@ gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
  *           Network=Server=Client=FALSE
  */
 unsigned Port = 7902;
-gboolean Sanitized, ConfigVerbose, DrugValue;
+gboolean Sanitized, ConfigVerbose, DrugValue, Antique = FALSE;
 gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
-gchar *ServerMOTD = NULL, *WantedPlugin = NULL, *BindAddress = NULL;
-gchar *Encoding = NULL;
-gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
-gboolean WantConvert, WantAdmin;
+gchar *ServerMOTD = NULL, *BindAddress = NULL;
 
 struct DATE StartDate = {
   1, 12, 1984
@@ -97,7 +96,6 @@ gboolean Daemonize = TRUE;
 gchar *WebBrowser = NULL;
 gint ConfigErrors = 0;
 
-ClientType WantedClient;
 int NumLocation = 0, NumGun = 0, NumCop = 0, NumDrug = 0, NumSubway = 0;
 int NumPlaying = 0, NumStoppedTo = 0;
 int DebtInterest = 10, BankInterest = 5;
@@ -228,11 +226,6 @@ struct GLOBALS Globals[] = {
   /* The following strings are the helptexts for all the options that can
    * be set in a dopewars configuration file, or in the server. See
    * doc/configfile.html for more detailed explanations. */
-#ifdef HAVE_GLIB2
-  {NULL, NULL, NULL, &Encoding, NULL, "Encoding",
-   N_("Charset encoding of the config file (e.g. UTF-8)"), NULL, NULL,
-   0, "", NULL, NULL, FALSE, 0},
-#endif
   {&Port, NULL, NULL, NULL, NULL, "Port", N_("Network port to connect to"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &HiScoreFile, NULL, "HiScoreFile",
@@ -770,6 +763,9 @@ char *DefaultSubwaySaying[] = {
   N_("Drugs can be your friend!")
 };
 
+static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
+                               gboolean IndexGiven, Converter *conv,
+                               GScanner *scanner);
 /* 
  * Returns a random integer not less than bot and less than top.
  */
@@ -1786,9 +1782,10 @@ void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
  * Read a configuration file given by "FileName"; GScanner under Win32
  * doesn't work properly with files, so we use a nasty workaround.
  */
-static gboolean ReadConfigFile(char *FileName)
+static gboolean ReadConfigFile(char *FileName, gchar **encoding)
 {
   FILE *fp;
+  Converter *conv;
 
 #ifdef CYGWIN
   char *buf;
@@ -1797,6 +1794,10 @@ static gboolean ReadConfigFile(char *FileName)
 
   fp = fopen(FileName, "r");
   if (fp) {
+    conv = Conv_New();
+    if (encoding) {
+      *encoding = NULL;
+    }
     scanner = g_scanner_new(&ScannerConfig);
     scanner->input_name = FileName;
     scanner->msg_handler = ScannerErrorHandler;
@@ -1810,14 +1811,16 @@ static gboolean ReadConfigFile(char *FileName)
 #else
     g_scanner_input_file(scanner, fileno(fp));
 #endif
-    while (!g_scanner_eof(scanner))
-      if (!ParseNextConfig(scanner, FALSE)) {
+    while (!g_scanner_eof(scanner)) {
+      if (!ParseNextConfig(scanner, conv, encoding, FALSE)) {
         ConfigErrors++;
         g_scanner_error(scanner,
                         _("Unable to process configuration file %s, line %d"),
                         FileName, g_scanner_cur_line(scanner));
       }
+    }
     g_scanner_destroy(scanner);
+    Conv_Free(conv);
     fclose(fp);
 #ifdef CYGWIN
     g_free(buf);
@@ -1828,7 +1831,8 @@ static gboolean ReadConfigFile(char *FileName)
   }
 }
 
-gboolean ParseNextConfig(GScanner *scanner, gboolean print)
+gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
+                         gchar **encoding, gboolean print)
 {
   GTokenType token;
   gchar *ID1, *ID2;
@@ -1849,9 +1853,23 @@ gboolean ParseNextConfig(GScanner *scanner, gboolean print)
   if (g_strcasecmp(scanner->value.v_identifier, "include") == 0) {
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_STRING) {
-      if (!ReadConfigFile(scanner->value.v_string)) {
+      if (!ReadConfigFile(scanner->value.v_string, NULL)) {
         g_scanner_error(scanner, _("Unable to open file %s"),
                         scanner->value.v_string);
+      }
+      return TRUE;
+    } else {
+      g_scanner_unexp_token(scanner, G_TOKEN_STRING, NULL, NULL,
+                            NULL, NULL, FALSE);
+      return FALSE;
+    }
+  } else if (g_strcasecmp(scanner->value.v_identifier, "encoding") == 0) {
+    token = g_scanner_get_next_token(scanner);
+    if (token == G_TOKEN_STRING) {
+      Conv_SetCodeset(conv, scanner->value.v_string);
+      if (encoding) {
+	g_free(*encoding);
+	*encoding = g_strdup(scanner->value.v_string);
       }
       return TRUE;
     } else {
@@ -1905,7 +1923,7 @@ gboolean ParseNextConfig(GScanner *scanner, gboolean print)
                   "players to log off, or remove\nthem with the "
                   "push or kill commands, and try again."));
     } else {
-      if (SetConfigValue(GlobalIndex, (int)ind, IndexGiven, scanner)
+      if (SetConfigValue(GlobalIndex, (int)ind, IndexGiven, conv, scanner)
           && print) {
         PrintConfigValue(GlobalIndex, (int)ind, IndexGiven, scanner);
       }
@@ -2088,8 +2106,9 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
     g_free(GlobalName);
 }
 
-gboolean SetConfigValue(int GlobalIndex, int StructIndex,
-                        gboolean IndexGiven, GScanner *scanner)
+static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
+                               gboolean IndexGiven, Converter *conv,
+                               GScanner *scanner)
 {
   gchar *GlobalName, *tmpstr;
   GTokenType token;
@@ -2199,11 +2218,13 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
         G_CSET_LATINC;
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_STRING) {
-      AssignName(GetGlobalString(GlobalIndex, StructIndex),
-                 scanner->value.v_string);
+      tmpstr = Conv_ToInternal(conv, scanner->value.v_string, -1);
+      AssignName(GetGlobalString(GlobalIndex, StructIndex), tmpstr);
+      g_free(tmpstr);
     } else if (token == G_TOKEN_IDENTIFIER) {
-      AssignName(GetGlobalString(GlobalIndex, StructIndex),
-                 scanner->value.v_identifier);
+      tmpstr = Conv_ToInternal(conv, scanner->value.v_identifier, -1);
+      AssignName(GetGlobalString(GlobalIndex, StructIndex), tmpstr);
+      g_free(tmpstr);
     } else {
       g_scanner_unexp_token(scanner, G_TOKEN_STRING, NULL, NULL,
                             NULL, NULL, FALSE);
@@ -2216,8 +2237,10 @@ gboolean SetConfigValue(int GlobalIndex, int StructIndex,
     token = g_scanner_get_next_token(scanner);
     if (IndexGiven) {
       if (token == G_TOKEN_STRING) {
+        tmpstr = Conv_ToInternal(conv, scanner->value.v_string, -1);
         AssignName(&(*(Globals[GlobalIndex].StringList))[StructIndex - 1],
-                   scanner->value.v_string);
+                   tmpstr);
+        g_free(tmpstr);
       } else {
         g_scanner_unexp_token(scanner, G_TOKEN_STRING, NULL, NULL,
                               NULL, NULL, FALSE);
@@ -2339,9 +2362,10 @@ gchar *GetLocalConfigFile(void)
  * hard-coded internal values, and then processes the global and
  * user-specific configuration files.
  */
-void SetupParameters(void)
+static void SetupParameters(GSList *extraconfigs)
 {
   gchar *conf;
+  GSList *list;
   int i;
 
   /* Initialise variables */
@@ -2357,14 +2381,7 @@ void SetupParameters(void)
   NumLocation = NumGun = NumDrug = 0;
   FirstClient = FirstServer = NULL;
   Noone.Name = g_strdup("Noone");
-  WantColour = WantNetwork = TRUE;
-  WantHelp = WantConvert = WantVersion = WantAntique = WantAdmin = FALSE;
-  WantedClient = CLIENT_AUTO;
-  Server = AIPlayer = Client = Network = FALSE;
-
-  Log.Level = 2;
-  Log.Timestamp = g_strdup("[%H:%M:%S] ");
-  Log.File = g_strdup("");
+  Server = Client = Network = FALSE;
 
   /* The currency symbol */
   Currency.Symbol = g_strdup(_("$"));
@@ -2376,11 +2393,9 @@ void SetupParameters(void)
   /* Set hard-coded default values */
   g_free(ServerName);
   g_free(ServerMOTD);
-  g_free(Encoding);
   g_free(BindAddress);
   ServerName = g_strdup("localhost");
   ServerMOTD = g_strdup("");
-  Encoding = g_strdup("");
   BindAddress = g_strdup("");
   g_free(WebBrowser);
   WebBrowser = g_strdup("/usr/bin/mozilla");
@@ -2436,15 +2451,20 @@ void SetupParameters(void)
   /* Now read in the global configuration file */
   conf = GetGlobalConfigFile();
   if (conf) {
-    ReadConfigFile(conf);
+    ReadConfigFile(conf, NULL);
     g_free(conf);
   }
 
-  /* Finally, try the local configuration file */
+  /* Next, try the local configuration file */
   conf = GetLocalConfigFile();
   if (conf) {
-    ReadConfigFile(conf);
+    ReadConfigFile(conf, &LocalCfgEncoding);
     g_free(conf);
+  }
+
+  /* Finally, any configuration files named on the command line */
+  for (list = extraconfigs; list; list = g_slist_next(list)) {
+    ReadConfigFile(list->data, NULL);
   }
 }
 
@@ -2481,11 +2501,12 @@ static void PluginHelp(void)
   g_free(plugins);
 }
 
-void HandleHelpTexts(void)
+void HandleHelpTexts(gboolean fullhelp)
 {
   g_print(_("dopewars version %s\n"), VERSION);
-  if (!WantHelp)
+  if (!fullhelp) {
     return;
+  }
 
   g_print(
 #ifdef HAVE_GETOPT_LONG
@@ -2561,9 +2582,10 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"));
 #endif
 }
 
-void HandleCmdLine(int argc, char *argv[])
+struct CMDLINE *ParseCmdLine(int argc, char *argv[])
 {
   int c;
+  struct CMDLINE *cmdline = g_new0(struct CMDLINE, 1);
   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NAu:";
 
 #ifdef HAVE_GETOPT_LONG
@@ -2592,6 +2614,12 @@ void HandleCmdLine(int argc, char *argv[])
   };
 #endif
 
+  cmdline->scorefile = cmdline->servername = cmdline->pidfile
+      = cmdline->logfile = cmdline->plugin = cmdline->convertfile = NULL;
+  cmdline->configs = NULL;
+  cmdline->colour = cmdline->network = TRUE;
+  cmdline->client = CLIENT_AUTO;
+
   do {
 #ifdef HAVE_GETOPT_LONG
     c = getopt_long(argc, argv, options, long_options, NULL);
@@ -2600,80 +2628,101 @@ void HandleCmdLine(int argc, char *argv[])
 #endif
     switch (c) {
     case 'n':
-      WantNetwork = FALSE;
+      cmdline->network = FALSE;
       break;
     case 'b':
-      WantColour = FALSE;
+      cmdline->colour = FALSE;
       break;
     case 'c':
-      AIPlayer = TRUE;
+      cmdline->ai = TRUE;
       break;
     case 'a':
-      WantAntique = TRUE;
-      WantNetwork = FALSE;
+      cmdline->antique = TRUE;
+      cmdline->network = FALSE;
       break;
     case 'v':
-      WantVersion = TRUE;
+      cmdline->version = TRUE;
       break;
     case 'h':
     case 0:
     case '?':
-      WantHelp = TRUE;
+      cmdline->help = TRUE;
       break;
     case 'f':
-      AssignName(&HiScoreFile, optarg);
+      AssignName(&cmdline->scorefile, optarg);
       break;
     case 'o':
-      AssignName(&ServerName, optarg);
+      AssignName(&cmdline->servername, optarg);
       break;
     case 's':
-      Server = TRUE;
-      NotifyMetaServer = TRUE;
+      cmdline->server = TRUE;
+      cmdline->notifymeta = TRUE;
       break;
     case 'S':
-      Server = TRUE;
-      NotifyMetaServer = FALSE;
+      cmdline->server = TRUE;
+      cmdline->notifymeta = FALSE;
       break;
     case 'p':
-      Port = atoi(optarg);
+      cmdline->setport = TRUE;
+      cmdline->port = atoi(optarg);
       break;
     case 'g':
-      ReadConfigFile(optarg);
+      cmdline->configs = g_slist_append(cmdline->configs, g_strdup(optarg));
       break;
     case 'r':
-      AssignName(&PidFile, optarg);
+      AssignName(&cmdline->pidfile, optarg);
       break;
     case 'l':
-      AssignName(&Log.File, optarg);
+      AssignName(&cmdline->logfile, optarg);
       break;
     case 'u':
-      AssignName(&WantedPlugin, optarg);
+      AssignName(&cmdline->plugin, optarg);
       break;
     case 'w':
-      WantedClient = CLIENT_WINDOW;
+      cmdline->client = CLIENT_WINDOW;
       break;
     case 't':
-      WantedClient = CLIENT_CURSES;
+      cmdline->client = CLIENT_CURSES;
       break;
     case 'C':
-      AssignName(&ConvertFile, optarg);
-      WantConvert = TRUE;
+      AssignName(&cmdline->convertfile, optarg);
+      cmdline->convert = TRUE;
       break;
     case 'A':
-      WantAdmin = TRUE;
+      cmdline->admin = TRUE;
       break;
     }
   } while (c != -1);
+
+  return cmdline;
 }
 
-/* 
- * Does general startup stuff (config. files, command line, and high
- * score init.)
- */
-void GeneralStartup(int argc, char *argv[])
+void FreeCmdLine(struct CMDLINE *cmdline)
 {
-  gchar *priv_hiscore;
+  GSList *list;
 
+  g_free(cmdline->scorefile);
+  g_free(cmdline->servername);
+  g_free(cmdline->pidfile);
+  g_free(cmdline->logfile);
+  g_free(cmdline->plugin);
+  g_free(cmdline->convertfile);
+
+  for (list = cmdline->configs; list; list = g_slist_next(list)) {
+    g_free(list->data);
+  }
+  g_slist_free(list);
+  g_free(cmdline);
+}
+
+static gchar *priv_hiscore = NULL;
+
+/* 
+ * Does general startup stuff (command line, dropping privileges,
+ * and high score init; config files are handled later)
+ */
+struct CMDLINE *GeneralStartup(int argc, char *argv[])
+{
   /* First, open the hard-coded high score file with possibly
    * elevated privileges */
   priv_hiscore = g_strdup_printf("%s/dopewars.sco", DATADIR);
@@ -2681,11 +2730,40 @@ void GeneralStartup(int argc, char *argv[])
   OpenHighScoreFile();
   DropPrivileges();
 
-  ConfigErrors = 0;
-  SetupParameters();
-  HandleCmdLine(argc, argv);
+  Log.File = g_strdup("");
+  Log.Level = 2;
+  Log.Timestamp = g_strdup("[%H:%M:%S] ");
 
-  if (!WantVersion && !WantHelp && !AIPlayer && !WantConvert && !WantAdmin) {
+  return ParseCmdLine(argc, argv);
+}
+
+void InitConfiguration(struct CMDLINE *cmdline)
+{
+  ConfigErrors = 0;
+  SetupParameters(cmdline->configs);
+
+  if (cmdline->scorefile) {
+    AssignName(&HiScoreFile, cmdline->scorefile);
+  }
+  if (cmdline->servername) {
+    AssignName(&ServerName, cmdline->servername);
+  }
+  if (cmdline->pidfile) {
+    AssignName(&PidFile, cmdline->pidfile);
+  }
+  if (cmdline->logfile) {
+    AssignName(&Log.File, cmdline->logfile);
+  }
+  if (cmdline->setport) {
+    Port = cmdline->port;
+  }
+  if (cmdline->server) {
+    MetaServer.Active = cmdline->notifymeta;
+  }
+  WantAntique = cmdline->antique;
+
+  if (!cmdline->version && !cmdline->help && !cmdline->ai
+      && !cmdline->convert && !cmdline->admin) {
     /* Open a user-specified high score file with no privileges, if one
      * was given */
     if (strcmp(priv_hiscore, HiScoreFile) != 0) {
@@ -2695,7 +2773,6 @@ void GeneralStartup(int argc, char *argv[])
   } else {
     CloseHighScoreFile();
   }
-  g_free(priv_hiscore);
 }
 
 /*
@@ -2790,6 +2867,7 @@ static void DefaultLogMessage(const gchar *log_domain,
  */
 int main(int argc, char *argv[])
 {
+  struct CMDLINE *cmdline;
 #ifdef ENABLE_NLS
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
@@ -2797,26 +2875,27 @@ int main(int argc, char *argv[])
 #endif
   WantUTF8Errors(FALSE);
   g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);
-  GeneralStartup(argc, argv);
+  cmdline = GeneralStartup(argc, argv);
   OpenLog();
   SoundInit();
-  if (WantVersion || WantHelp) {
-    HandleHelpTexts();
-  } else if (WantAdmin) {
-    AdminServer();
-  } else if (WantConvert) {
-    ConvertHighScoreFile();
+  if (cmdline->version || cmdline->help) {
+    HandleHelpTexts(cmdline->help);
+  } else if (cmdline->admin) {
+    AdminServer(cmdline);
+  } else if (cmdline->convert) {
+    ConvertHighScoreFile(cmdline->convertfile);
   } else {
     InitNetwork();
-    if (Server) {
+    if (cmdline->server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
+      Server = TRUE;
       gtk_set_locale();
       gtk_init(&argc, &argv);
-      GuiServerLoop(FALSE);
+      GuiServerLoop(cmdline, FALSE);
 #else
       g_log_set_handler(NULL, LogMask(), ServerLogMessage, NULL);
-      ServerLoop();
+      ServerLoop(cmdline);
 #endif /* GUI_SERVER */
 #else
       g_print(_("This binary has been compiled without networking "
@@ -2824,30 +2903,30 @@ int main(int argc, char *argv[])
                 "Recompile passing --enable-networking to the "
                 "configure script.\n"));
 #endif /* NETWORKING */
-    } else if (AIPlayer) {
-      AIPlayerLoop();
+    } else if (cmdline->ai) {
+      AIPlayerLoop(cmdline);
     } else
-      switch (WantedClient) {
+      switch (cmdline->client) {
       case CLIENT_AUTO:
-        if (!GtkLoop(&argc, &argv, TRUE))
-          CursesLoop();
+        if (!GtkLoop(&argc, &argv, cmdline, TRUE))
+          CursesLoop(cmdline);
         break;
       case CLIENT_WINDOW:
-        GtkLoop(&argc, &argv, FALSE);
+        GtkLoop(&argc, &argv, cmdline, FALSE);
         break;
       case CLIENT_CURSES:
-        CursesLoop();
+        CursesLoop(cmdline);
         break;
       }
 #ifdef NETWORKING
     StopNetworking();
 #endif
   }
+  FreeCmdLine(cmdline);
   CloseLog();
   CloseHighScoreFile();
   g_free(PidFile);
   g_free(Log.File);
-  g_free(ConvertFile);
   SoundClose();
   return 0;
 }

@@ -37,7 +37,7 @@ void BreakHandle(int sig);
 void ClientLeftServer(Player *Play);
 void StopServer(void);
 Player *HandleNewConnection(void);
-void ServerLoop(void);
+void ServerLoop(struct CMDLINE *cmdline);
 void HandleServerPlayer(Player *Play);
 void HandleServerMessage(gchar *buf, Player *ReallyFrom);
 void FinishGame(Player *Play, char *Message);
@@ -54,7 +54,7 @@ void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
 int GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
-void ConvertHighScoreFile(void);
+void ConvertHighScoreFile(const gchar *convertfile);
 void OpenHighScoreFile(void);
 gboolean CheckHighScoreFileConfig(void);
 void CloseHighScoreFile(void);
@@ -72,9 +72,9 @@ Player *GetNextShooter(Player *Play);
 void DropPrivileges(void);
 
 #ifdef GUI_SERVER
-void GuiServerLoop(gboolean is_service);
+void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service);
 #ifdef CYGWIN
-void ServiceMain(void);
+void ServiceMain(struct CMDLINE *cmdline);
 #endif
 #endif
 #ifndef CYGWIN

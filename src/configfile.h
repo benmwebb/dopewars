@@ -25,7 +25,7 @@
 
 #include <glib.h>
 
+extern gchar *LocalCfgEncoding;
 gboolean UpdateConfigFile(const gchar *cfgfile);
-void ConvertConfigFile(void);
 
 #endif /* __DP_CONFIGFILE_H__ */

@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <glib.h>
 
+#include "dopewars.h"
 #include "network.h"
 #include "nls.h"
 #include "serverside.h"
@@ -73,13 +74,15 @@ static int OpenSocket(void)
   return sock;
 }
 
-void AdminServer(void)
+void AdminServer(struct CMDLINE *cmdline)
 {
   int sock, topsock;
   NetworkBuffer *netbuf;
   fd_set readfds, writefds, errorfds;
   gchar *msg, inbuf[200];
   gboolean doneOK;
+
+  InitConfiguration(cmdline);
 
   sock = OpenSocket();
   netbuf = g_new(NetworkBuffer, 1);

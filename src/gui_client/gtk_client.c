@@ -2134,9 +2134,10 @@ static void make_tags(GtkTextView *textview)
 
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 gboolean ReturnOnFail)
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #else
-gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
+gboolean GtkLoop(int *argc, char **argv[],
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #endif
 {
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
@@ -2161,9 +2162,9 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   bind_textdomain_codeset(PACKAGE, "UTF-8");
 
   Conv_SetInternalCodeset("UTF-8");
-  ConvertConfigFile();
   WantUTF8Errors(TRUE);
 #endif
+  InitConfiguration(cmdline);
 
   /* Set up message handlers */
   ClientMessageHandlerPt = HandleClientMessage;
@@ -2176,7 +2177,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   if (!CheckHighScoreFileConfig())
     return TRUE;
 
-  SoundOpen(WantedPlugin);
+  SoundOpen(cmdline->plugin);
 
   /* Create the main player */
   ClientData.Play = g_new(Player, 1);

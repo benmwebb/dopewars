@@ -31,11 +31,14 @@
 
 extern GtkWidget *MainWindow;
 
+struct CMDLINE;
+
 #ifdef CYGWIN
 gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 gboolean ReturnOnFail);
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail);
 #else
-gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail);
+gboolean GtkLoop(int *argc, char **argv[],
+                 struct CMDLINE *cmdline, gboolean ReturnOnFail);
 #endif
 
 void GuiStartGame(void);

@@ -29,7 +29,8 @@
 
 #ifndef CYGWIN
 
-void AdminServer(void);
+struct CMDLINE;
+void AdminServer(struct CMDLINE *cmdline);
 
 #endif /* CYGWIN */
 
