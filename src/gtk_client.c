@@ -257,26 +257,20 @@ void ListInventory(GtkWidget *widget,gpointer data) {
 void GetClientMessage(gpointer data,gint socket,
                       GdkInputCondition condition) {
    gchar *pt;
-   gboolean ReadOK;
-   if (condition&GDK_INPUT_WRITE) {
-      WriteConnectionBufferToWire(ClientData.Play);
-      if (ClientData.Play->WriteBuf.DataPresent==0) {
-         SetSocketWriteTest(ClientData.Play,FALSE);
-      }
-   }
-   if (condition&GDK_INPUT_READ) {
-      ReadOK=ReadConnectionBufferFromWire(ClientData.Play);
-      while ((pt=ReadFromConnectionBuffer(ClientData.Play))!=NULL) {
-         HandleClientMessage(pt,ClientData.Play); g_free(pt);
-      }
-      if (!ReadOK) {
-         if (Network) gdk_input_remove(ClientData.GdkInputTag);
-         if (InGame) {
+   gboolean DataWaiting;
+   if (!PlayerHandleNetwork(ClientData.Play,condition&GDK_INPUT_READ,
+                            condition&GDK_INPUT_WRITE,&DataWaiting)) {
+      if (Network) gdk_input_remove(ClientData.GdkInputTag);
+      if (InGame) {
 /* The network connection to the server was dropped unexpectedly */
-            g_warning(_("Connection to server lost - switching to "
-                      "single player mode"));
-            SwitchToSinglePlayer(ClientData.Play);
-         }
+         g_warning(_("Connection to server lost - switching to "
+                   "single player mode"));
+         SwitchToSinglePlayer(ClientData.Play);
+      }
+   } else if (DataWaiting) {
+      while ((pt=GetWaitingPlayerMessage(ClientData.Play))!=NULL) {
+         HandleClientMessage(pt,ClientData.Play);
+         g_free(pt);
       }
    }
 }
@@ -284,7 +278,7 @@ void GetClientMessage(gpointer data,gint socket,
 void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
    if (Network) {
       if (ClientData.GdkInputTag) gdk_input_remove(ClientData.GdkInputTag);
-      ClientData.GdkInputTag=gdk_input_add(Play->fd,
+      ClientData.GdkInputTag=gdk_input_add(Play->NetBuf.fd,
                              GDK_INPUT_READ|(WriteTest ? GDK_INPUT_WRITE : 0),
                              GetClientMessage,NULL);
    }
@@ -1513,7 +1507,7 @@ void StartGame() {
    Player *Play;
    Play=ClientData.Play=g_new(Player,1);
    FirstClient=AddPlayer(0,Play,FirstClient);
-   Play->fd=ClientSock;
+   BindNetworkBufferToSocket(&Play->NetBuf,ClientSock);
    InitAbilities(Play);
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);

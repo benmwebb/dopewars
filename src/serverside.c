@@ -195,7 +195,7 @@ void RegisterWithMetaServer(char Up,char SendData) {
 void HandleServerPlayer(Player *Play) {
    gchar *buf;
    gboolean MessageRead=FALSE;
-   while ((buf=ReadFromConnectionBuffer(Play))!=NULL) {
+   while ((buf=GetWaitingPlayerMessage(Play))!=NULL) {
       MessageRead=TRUE;
       HandleServerMessage(buf,Play);
       g_free(buf);
@@ -772,7 +772,7 @@ void ServerLoop() {
    struct timeval timeout;
    int MinTimeout;
    GString *LineBuf;
-   gboolean EndOfLine;
+   gboolean EndOfLine,DataWaiting;
 
    StartServer();
 
@@ -787,11 +787,9 @@ void ServerLoop() {
       topsock=ListenSock+1;
       for (list=FirstServer;list;list=g_slist_next(list)) {
          tmp=(Player *)list->data;
-         if (!IsCop(tmp) && tmp->fd>0) {
-            FD_SET(tmp->fd,&readfs);
-            if (tmp->WriteBuf.DataPresent) FD_SET(tmp->fd,&writefs);
-            FD_SET(tmp->fd,&errorfs);
-            if (tmp->fd>=topsock) topsock=tmp->fd+1;
+         if (!IsCop(tmp)) {
+            SetSelectForNetworkBuffer(&tmp->NetBuf,&readfs,&writefs,
+                                      &errorfs,&topsock);
          }
       }
       MinTimeout=GetMinimumTimeout(FirstServer);
@@ -831,28 +829,14 @@ void ServerLoop() {
       while (list) {
          nextlist=g_slist_next(list);
          tmp=(Player *)list->data;
-         if (tmp && FD_ISSET(tmp->fd,&errorfs)) {
-            g_warning("socket error from client: %d",tmp->fd);
-            CleanUpServer(); bgetch(); break;
-         }
-         if (tmp && FD_ISSET(tmp->fd,&writefs)) {
-/* Try and empty the player's write buffer */
-            if (!WriteConnectionBufferToWire(tmp)) {
+         if (tmp && !RespondToSelect(&tmp->NetBuf,&readfs,&writefs,&errorfs,
+                                     &DataWaiting)) {
 /* The socket has been shut down, or the buffer was filled - remove player */
-               if (RemovePlayerFromServer(tmp,WantQuit)) break;
-               tmp=NULL;
-            }
-         }
-         if (tmp && FD_ISSET(tmp->fd,&readfs)) {
-/* Read any waiting data into the player's read buffer */
-            if (!ReadConnectionBufferFromWire(tmp)) {
-/* remove player! */
-               if (RemovePlayerFromServer(tmp,WantQuit)) break;
-               tmp=NULL;
-            } else {
+            if (RemovePlayerFromServer(tmp,WantQuit)) break;
+            tmp=NULL;
+         } else if (tmp && DataWaiting) {
 /* If any complete messages were read, process them */
-               HandleServerPlayer(tmp);
-            }
+            HandleServerPlayer(tmp);
          }
          list=nextlist;
       }
@@ -933,31 +917,24 @@ static void GuiDoCommand(GtkWidget *widget,gpointer data) {
 static void GuiHandleSocket(gpointer data,gint socket,
                             GdkInputCondition condition) {
    Player *Play;
+   gboolean DataWaiting;
    Play = (Player *)data;
 
    /* Sanity check - is the player still around? */
    if (!g_slist_find(FirstServer,(gpointer)Play)) return;
 
-   if (condition&GDK_INPUT_WRITE) {
-      if (!WriteConnectionBufferToWire(Play)) {
-         if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
-      } else if (Play->WriteBuf.DataPresent==0) {
-         SetSocketWriteTest(Play,FALSE);
-      }
-   }
-   if (condition&GDK_INPUT_READ) {
-      if (!ReadConnectionBufferFromWire(Play)) {
-         if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
-      } else {
-         HandleServerPlayer(Play);
-         GuiSetTimeouts();  /* We may have set some new timeouts */
-      }
+   if (!PlayerHandleNetwork(Play,condition&GDK_INPUT_READ,
+                            condition&GDK_INPUT_WRITE,&DataWaiting)) {
+      if (RemovePlayerFromServer(Play,WantQuit)) GuiQuitServer();
+   } else if (DataWaiting) {
+      HandleServerPlayer(Play);
+      GuiSetTimeouts();  /* We may have set some new timeouts */
    }
 }
 
 void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
    if (Play->InputTag) gdk_input_remove(Play->InputTag);
-   Play->InputTag=gdk_input_add(Play->fd,
+   Play->InputTag=gdk_input_add(Play->NetBuf.fd,
                       GDK_INPUT_READ|(WriteTest ? GDK_INPUT_WRITE : 0),
                       GuiHandleSocket,(gpointer)Play);
 }

@@ -115,10 +115,26 @@ void SendPrintMessage(Player *From,char AICode,Player *To,char *Data);
 void SendQuestion(Player *From,char AICode,Player *To,char *Data);
 
 #if NETWORKING
-gchar *ReadFromConnectionBuffer(Player *Play);
-gboolean ReadConnectionBufferFromWire(Player *Play);
-void WriteToConnectionBuffer(Player *Play,gchar *data);
-gboolean WriteConnectionBufferToWire(Player *Play);
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator);
+void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd);
+void ShutdownNetworkBuffer(NetworkBuffer *NetBuf);
+void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
+                               fd_set *writefds,fd_set *errorfds,int *MaxSock);
+gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
+                         fd_set *writefds,fd_set *errorfds,
+                         gboolean *DataWaiting);
+gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
+                             gboolean WriteReady,gboolean *DataWaiting);
+gboolean ReadPlayerDataFromWire(Player *Play);
+void QueuePlayerMessageForSend(Player *Play,gchar *data);
+gboolean WritePlayerDataToWire(Player *Play);
+gchar *GetWaitingPlayerMessage(Player *Play);
+
+gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
+gboolean WriteDataToWire(NetworkBuffer *NetBuf);
+void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data);
+gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
+
 gchar *bgets(int fd);
 #endif /* NETWORKING */
 

@@ -147,7 +147,7 @@ void DoSendClientMessage(Player *From,char AICode,char Code,
       HandleServerMessage(text->str,ServerFrom);
 #if NETWORKING
    } else {
-      WriteToConnectionBuffer(BufOwn,text->str);
+      QueuePlayerMessageForSend(BufOwn,text->str);
       if (SocketWriteTestPt) (*SocketWriteTestPt)(BufOwn,TRUE);
    }
 #endif /* NETWORKING */
@@ -193,7 +193,7 @@ void SendServerMessage(Player *From,char AICode,char Code,
       }
 #if NETWORKING
    } else {
-      WriteToConnectionBuffer(To,text->str);
+      QueuePlayerMessageForSend(To,text->str);
       if (SocketWriteTestPt) (*SocketWriteTestPt)(To,TRUE);
    }
 #endif
@@ -279,19 +279,117 @@ gboolean HaveAbility(Player *Play,gint Type) {
 }
 
 #if NETWORKING
-gchar *ReadFromConnectionBuffer(Player *Play) {
-/* Reads a newline-terminated message from "Play"'s read buffer. The message */
-/* is removed from the buffer, and returned as a null-terminated string (the */
-/* terminating newline is removed). If no complete message is waiting, NULL  */
-/* is returned. The string is dynamically allocated, and must be g_free'd by */
-/* the caller.                                                               */
+void InitNetworkBuffer(NetworkBuffer *NetBuf,char Terminator) {
+/* Initialises the passed network buffer, ready for use. Messages sent */
+/* or received on the buffered connection will be terminated by the    */
+/* given character.                                                    */
+   NetBuf->fd=-1;
+   NetBuf->Terminator=Terminator;
+   NetBuf->ReadBuf.Data=NetBuf->WriteBuf.Data=NULL;
+   NetBuf->ReadBuf.Length=NetBuf->WriteBuf.Length=0;
+   NetBuf->ReadBuf.DataPresent=NetBuf->WriteBuf.DataPresent=0;
+}
+
+void BindNetworkBufferToSocket(NetworkBuffer *NetBuf,int fd) {
+/* Sets up the given network buffer to handle data being sent/received */
+/* through the given socket                                            */
+   NetBuf->fd=fd;
+}
+
+void ShutdownNetworkBuffer(NetworkBuffer *NetBuf) {
+/* Frees the network buffer's data structures (leaving it in the  */
+/* 'initialised' state) and closes the accompanying socket.       */
+   if (NetBuf->fd>0) CloseSocket(NetBuf->fd);
+
+   g_free(NetBuf->ReadBuf.Data);
+   g_free(NetBuf->WriteBuf.Data);
+   InitNetworkBuffer(NetBuf,NetBuf->Terminator);
+}
+
+void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
+                               fd_set *writefds,fd_set *errorfds,int *MaxSock) {
+/* Updates the sets of read and write file descriptors to monitor    */
+/* input to/output from the given network buffer. MaxSock is updated */
+/* with the highest-numbered file descriptor (plus 1) for use in a   */
+/* later select() call.                                              */
+   if (!NetBuf || NetBuf->fd<=0) return;
+   FD_SET(NetBuf->fd,readfds);
+   if (errorfds) FD_SET(NetBuf->fd,errorfds);
+   if (NetBuf->fd >= *MaxSock) *MaxSock=NetBuf->fd+1;
+   if (NetBuf->WriteBuf.DataPresent) FD_SET(NetBuf->fd,writefds);
+}
+
+static gboolean DoNetworkBufferStuff(NetworkBuffer *NetBuf,gboolean ReadReady,
+                                     gboolean WriteReady,gboolean ErrorReady,
+                                     gboolean *ReadOK,gboolean *WriteOK,
+                                     gboolean *ErrorOK) {
+/* Reads and writes data if the network connection is ready. Sets the  */
+/* various OK variables to TRUE if no errors occurred in the relevant  */
+/* operations, and returns TRUE if data was read and is waiting for    */
+/* processing.                                                         */
+   gboolean DataWaiting=FALSE;
+   *ReadOK=*WriteOK=*ErrorOK=TRUE;
+
+   if (ErrorReady) *ErrorOK=FALSE;
+
+   if (WriteReady) *WriteOK=WriteDataToWire(NetBuf);
+
+   if (ReadReady) {
+      *ReadOK=ReadDataFromWire(NetBuf);
+      if (ReadOK) DataWaiting=TRUE;
+   }
+   return DataWaiting;
+}
+
+gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
+                         fd_set *writefds,fd_set *errorfds,
+                         gboolean *DataWaiting) {
+/* Responds to a select() call by reading/writing data as necessary.   */
+/* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
+/* a fatal error (i.e. the connection was broken) occurred.            */
+   gboolean ReadOK,WriteOK,ErrorOK;
+   *DataWaiting=DoNetworkBufferStuff(NetBuf,FD_ISSET(NetBuf->fd,readfds),
+                        FD_ISSET(NetBuf->fd,writefds),
+                        errorfds ? FD_ISSET(NetBuf->fd,errorfds) : FALSE,
+                        &ReadOK,&WriteOK,&ErrorOK);
+   return (WriteOK && ErrorOK && ReadOK);
+}
+
+gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
+                             gboolean WriteReady,gboolean *DataWaiting) {
+/* Reads and writes player data from/to the network if it is ready.    */
+/* If any data were read, DataWaiting is set TRUE. Returns TRUE unless */
+/* a fatal error (i.e. the connection was broken) occurred.            */
+   gboolean ReadOK,WriteOK,ErrorOK;
+   *DataWaiting=DoNetworkBufferStuff(&Play->NetBuf,ReadReady,WriteReady,FALSE,
+                                     &ReadOK,&WriteOK,&ErrorOK);
+
+/* If we've written out everything, then ask not to be notified of
+   socket write-ready status in future */
+   if (WriteReady && Play->NetBuf.WriteBuf.DataPresent==0 &&
+       SocketWriteTestPt) {
+      (*SocketWriteTestPt)(Play,FALSE);
+   }
+   return (WriteOK && ErrorOK && ReadOK);
+}
+
+gchar *GetWaitingPlayerMessage(Player *Play) {
+   return GetWaitingMessage(&Play->NetBuf);
+}
+
+gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
+/* Reads a complete (terminated) message from the network buffer. The    */
+/* message is removed from the buffer, and returned as a null-terminated */
+/* string (the network terminator is removed). If no complete message is */
+/* waiting, NULL is returned. The string is dynamically allocated, and   */
+/* so must be g_free'd by the caller.                                    */
    ConnBuf *conn;
    int MessageLen;
    char *SepPt;
    gchar *NewMessage;
-   conn=&Play->ReadBuf;
+   conn=&NetBuf->ReadBuf;
    if (!conn->Data || !conn->DataPresent) return NULL;
-   SepPt=memchr(conn->Data,'\n',conn->DataPresent);
+   SepPt=memchr(conn->Data,NetBuf->Terminator,conn->DataPresent);
    if (!SepPt) return NULL;
    *SepPt='\0';
    MessageLen=SepPt-conn->Data+1;
@@ -305,13 +403,17 @@ gchar *ReadFromConnectionBuffer(Player *Play) {
    return NewMessage;
 }
 
-gboolean ReadConnectionBufferFromWire(Player *Play) {
-/* Reads any waiting data on the TCP/IP connection for player "Play" into */
-/* the player's read buffer. Returns FALSE if the connection was closed,  */
-/* or if the read buffer's maximum size was reached.                      */
+gboolean ReadPlayerDataFromWire(Player *Play) {
+  return ReadDataFromWire(&Play->NetBuf);
+}
+
+gboolean ReadDataFromWire(NetworkBuffer *NetBuf) {
+/* Reads any waiting data on the given network buffer's TCP/IP connection */
+/* into the read buffer. Returns FALSE if the connection was closed, or   */
+/* if the read buffer's maximum size was reached.                         */
    ConnBuf *conn;
    int CurrentPosition,BytesRead;
-   conn=&Play->ReadBuf;
+   conn=&NetBuf->ReadBuf;
    CurrentPosition=conn->DataPresent;
    while(1) {
       if (CurrentPosition>=conn->Length) {
@@ -322,7 +424,7 @@ gboolean ReadConnectionBufferFromWire(Player *Play) {
          if (conn->Length>MAXREADBUF) conn->Length=MAXREADBUF;
          conn->Data=g_realloc(conn->Data,conn->Length);
       }
-      BytesRead=recv(Play->fd,&conn->Data[CurrentPosition],
+      BytesRead=recv(NetBuf->fd,&conn->Data[CurrentPosition],
                      conn->Length-CurrentPosition,0);
       if (BytesRead==SOCKET_ERROR) {
 #ifdef CYGWIN
@@ -340,15 +442,19 @@ gboolean ReadConnectionBufferFromWire(Player *Play) {
    return TRUE;
 }
 
-void WriteToConnectionBuffer(Player *Play,gchar *data) {
-/* Writes the null-terminated string "data" to "Play"'s connection buffer. */
-/* The message is automatically newline-terminated. Fails to write the     */
-/* message without error if the buffer reaches its maximum size (although  */
-/* this error will be detected when the buffer is attempted to be written  */
-/* to the wire, below)                                                     */
+void QueuePlayerMessageForSend(Player *Play,gchar *data) {
+   QueueMessageForSend(&Play->NetBuf,data);
+}
+
+void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data) {
+/* Writes the null-terminated string "data" to the network buffer, ready   */
+/* to be sent to the wire when the network connection becomes free. The    */
+/* message is automatically terminated. Fails to write the message without */
+/* error if the buffer reaches its maximum size (although this error will  */
+/* be detected when an attempt is made to write the buffer to the wire).   */
    int AddLength,NewLength;
    ConnBuf *conn;
-   conn=&Play->WriteBuf;
+   conn=&NetBuf->WriteBuf;
    AddLength=strlen(data)+1;
    NewLength=conn->DataPresent+AddLength;
    if (NewLength > conn->Length) {
@@ -360,21 +466,25 @@ void WriteToConnectionBuffer(Player *Play,gchar *data) {
    }
    memcpy(&conn->Data[conn->DataPresent],data,AddLength);
    conn->DataPresent=NewLength;
-   conn->Data[NewLength-1]='\n';
+   conn->Data[NewLength-1]=NetBuf->Terminator;
 }
 
-gboolean WriteConnectionBufferToWire(Player *Play) {
-/* Writes any waiting data in "Play"'s connection buffer to the wire.  */
-/* Returns TRUE on success, or FALSE if the buffer's maximum length is */
-/* reached, or the remote end has closed the connection.               */
+gboolean WritePlayerDataToWire(Player *Play) {
+   return WriteDataToWire(&Play->NetBuf);
+}
+
+gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
+/* Writes any waiting data in the network buffer to the wire. Returns */
+/* TRUE on success, or FALSE if the buffer's maximum length is        */
+/* reached, or the remote end has closed the connection.              */
    ConnBuf *conn;
    int CurrentPosition,BytesSent;
-   conn=&Play->WriteBuf;
+   conn=&NetBuf->WriteBuf;
    if (!conn->Data || !conn->DataPresent) return TRUE;
    if (conn->Length==MAXWRITEBUF) return FALSE;
    CurrentPosition=0;
    while (CurrentPosition<conn->DataPresent) {
-      BytesSent=send(Play->fd,&conn->Data[CurrentPosition],
+      BytesSent=send(NetBuf->fd,&conn->Data[CurrentPosition],
                      conn->DataPresent-CurrentPosition,0);
       if (BytesSent==SOCKET_ERROR) {
 #ifdef CYGWIN

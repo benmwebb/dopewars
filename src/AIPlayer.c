@@ -54,7 +54,8 @@ void AIPlayerLoop() {
    gchar *pt;
    Player *AIPlay;
    fd_set readfs,writefs;
-   gboolean ReadOK,QuitRequest;
+   gboolean DataWaiting,QuitRequest;
+   int MaxSock;
 
    AIPlay=g_new(Player,1);
    FirstClient=AddPlayer(0,AIPlay,FirstClient);
@@ -67,7 +68,7 @@ void AIPlayerLoop() {
               "AI Player terminating abnormally."),_(pt));
       return;
    }
-   AIPlay->fd=ClientSock;
+   BindNetworkBufferToSocket(&AIPlay->NetBuf,ClientSock);
 
    InitAbilities(AIPlay);
    SendAbilities(AIPlay);
@@ -81,31 +82,28 @@ void AIPlayerLoop() {
    while (1) {
       FD_ZERO(&readfs);
       FD_ZERO(&writefs);
-      FD_SET(ClientSock,&readfs);
-      if (AIPlay->WriteBuf.DataPresent) FD_SET(ClientSock,&writefs);
-      if (bselect(ClientSock+1,&readfs,&writefs,NULL,NULL)==-1) {
+      MaxSock=0;
+
+      SetSelectForNetworkBuffer(&AIPlay->NetBuf,&readfs,&writefs,NULL,&MaxSock);
+
+      if (bselect(MaxSock,&readfs,&writefs,NULL,NULL)==-1) {
          if (errno==EINTR) continue;
          printf("Error in select\n"); exit(1);
       }
-      if (FD_ISSET(ClientSock,&writefs)) {
-         WriteConnectionBufferToWire(AIPlay);
-      }
-      if (FD_ISSET(ClientSock,&readfs)) {
-         QuitRequest=FALSE;
-         ReadOK=ReadConnectionBufferFromWire(AIPlay);
 
-         while ((pt=ReadFromConnectionBuffer(AIPlay))!=NULL) {
+      if (!RespondToSelect(&AIPlay->NetBuf,&readfs,&writefs,
+                           NULL,&DataWaiting)) {
+         g_print(_("Connection to server lost!\n"));
+         break;
+      } else if (DataWaiting) {
+         QuitRequest=FALSE;
+         while ((pt=GetWaitingPlayerMessage(AIPlay))!=NULL) {
             if (HandleAIMessage(pt,AIPlay)) {
                QuitRequest=TRUE;
                break;
             }
          }
          if (QuitRequest) break;
-
-         if (!ReadOK) {
-            g_print(_("Connection to server lost!\n"));
-            break;
-         }
       }
    }
    ShutdownNetwork();

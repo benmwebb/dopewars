@@ -1507,7 +1507,7 @@ static void Curses_DoGame(Player *Play) {
    char HaveWorthless;
    Player *tmp;
    struct sigaction sact;
-   gboolean ReadOK;
+   gboolean DataWaiting;
 
    DisplayMode=DM_NONE;
    QuitRequest=FALSE;
@@ -1535,7 +1535,7 @@ static void Curses_DoGame(Player *Play) {
 #if NETWORKING
    if (WantNetwork) {
       if (!ConnectToServer(Play)) { end_curses(); exit(1); }
-      Play->fd=ClientSock;
+      BindNetworkBufferToSocket(&Play->NetBuf,ClientSock);
    }
 #endif /* NETWORKING */
    print_status(Play,TRUE);
@@ -1642,9 +1642,8 @@ static void Curses_DoGame(Player *Play) {
       FD_ZERO(&writefs);
       FD_SET(0,&readfs); MaxSock=1;
       if (Client) {
-         FD_SET(Play->fd,&readfs);
-         if (Play->WriteBuf.DataPresent) FD_SET(Play->fd,&writefs);
-         MaxSock=ClientSock+2;
+         SetSelectForNetworkBuffer(&Play->NetBuf,&readfs,&writefs,
+                                   NULL,&MaxSock);
       }
       if (bselect(MaxSock,&readfs,&writefs,NULL,NULL)==-1) {
          if (errno==EINTR) {
@@ -1653,16 +1652,9 @@ static void Curses_DoGame(Player *Play) {
          }
          perror("bselect"); exit(1);
       }
-      if (Client && FD_ISSET(Play->fd,&readfs)) {
-         ReadOK=ReadConnectionBufferFromWire(Play);
-
-         while ((pt=ReadFromConnectionBuffer(Play))!=NULL) {
-            HandleClientMessage(pt,Play);
-            g_free(pt);
-         }
-         if (QuitRequest) return;
-
-         if (!ReadOK) {
+      if (Client) {
+         if (!RespondToSelect(&Play->NetBuf,&readfs,&writefs,
+                              NULL,&DataWaiting)) {
             attrset(TextAttr);
             clear_line(22);
             mvaddstr(22,0,_("Connection to server lost! "
@@ -1670,10 +1662,13 @@ static void Curses_DoGame(Player *Play) {
             nice_wait();
             SwitchToSinglePlayer(Play);
             print_status(Play,TRUE);
+         } else if (DataWaiting) {
+            while ((pt=GetWaitingPlayerMessage(Play))!=NULL) {
+               HandleClientMessage(pt,Play);
+               g_free(pt);
+            }
+            if (QuitRequest) return;
          }
-      }
-      if (Client && FD_ISSET(Play->fd,&writefs)) {
-         WriteConnectionBufferToWire(Play);
       }
       if (FD_ISSET(0,&readfs)) {
 #elif HAVE_SELECT

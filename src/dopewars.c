@@ -600,7 +600,6 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
          list=g_slist_next(list);
       }
    }
-   NewPlayer->fd=-1;
    NewPlayer->Name=NULL;
    SetPlayerName(NewPlayer,NULL);
    NewPlayer->IsAt=0;
@@ -619,11 +618,11 @@ GSList *AddPlayer(int fd,Player *NewPlayer,GSList *First) {
    NewPlayer->Health=100;
    NewPlayer->CoatSize=100;
    NewPlayer->Flags=0;
-   NewPlayer->ReadBuf.Data=NewPlayer->WriteBuf.Data=NULL;
-   NewPlayer->ReadBuf.Length=NewPlayer->WriteBuf.Length=0;
-   NewPlayer->ReadBuf.DataPresent=NewPlayer->WriteBuf.DataPresent=0;
+#if NETWORKING
+   InitNetworkBuffer(&NewPlayer->NetBuf,'\n');
+   if (Server) BindNetworkBufferToSocket(&NewPlayer->NetBuf,fd);
+#endif
    InitAbilities(NewPlayer);
-   if (Server) NewPlayer->fd=fd;
    NewPlayer->FightArray=NULL;
    NewPlayer->Attacking=NULL;
    return g_slist_append(First,(gpointer)NewPlayer);
@@ -643,13 +642,11 @@ GSList *RemovePlayer(Player *Play,GSList *First) {
    g_assert(First);
 
    First=g_slist_remove(First,(gpointer)Play);
-   if (Server && !IsCop(Play) && Play->fd>=0) {
-      CloseSocket(Play->fd);
-   }
+#if NETWORKING
+   if (!IsCop(Play)) ShutdownNetworkBuffer(&Play->NetBuf);
+#endif
    ClearList(&(Play->SpyList));
    ClearList(&(Play->TipList));
-   g_free(Play->ReadBuf.Data);
-   g_free(Play->WriteBuf.Data);
    g_free(Play->Name);
    g_free(Play);
    return First;

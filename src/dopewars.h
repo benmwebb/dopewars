@@ -277,6 +277,14 @@ typedef struct tagConnBuf {
    int DataPresent; /* number of bytes currently in "Data"   */
 } ConnBuf;            
 
+/* Handles reading and writing messages from/to a network connection */
+typedef struct tagNetworkBuffer {
+   int fd;              /* File descriptor of the socket */
+   char Terminator;     /* Character that separates messages */
+   ConnBuf ReadBuf;     /* New data, waiting for the application */
+   ConnBuf WriteBuf;    /* Data waiting to be written to the wire */
+} NetworkBuffer;
+
 struct PLAYER_T {
    guint ID;
    int Turn;
@@ -287,13 +295,12 @@ struct PLAYER_T {
    char Flags;
    gchar *Name;
    Inventory *Guns,*Drugs,Bitches;
-   int fd;
    int EventNum,ResyncNum;
    time_t FightTimeout,IdleTimeout,ConnectTimeout;
    price_t DocPrice;
    DopeList SpyList,TipList;
    Player *OnBehalfOf;
-   ConnBuf ReadBuf,WriteBuf;
+   NetworkBuffer NetBuf;
    Abilities Abil;
    gint InputTag;
    GPtrArray *FightArray; /* If non-NULL, a list of players in a fight */
