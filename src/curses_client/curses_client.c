@@ -186,7 +186,7 @@ static int get_ui_area_top(void)
 
 static int get_ui_area_bottom(void)
 {
-  return Depth;
+  return Depth - 1;
 }
 
 static int get_prompt_line(void)
