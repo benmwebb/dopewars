@@ -2912,7 +2912,6 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button,gpointer data) {
    GtkRadioButton *radio;
    gboolean is_active = GTK_TOGGLE_BUTTON(radio_button)->toggled;
    hWnd=GTK_WIDGET(radio_button)->hWnd;
-g_print("radio_button_toggled\n");
    if (hWnd) {
       SendMessage(hWnd,BM_SETCHECK,is_active ? BST_CHECKED : BST_UNCHECKED,0);
    }
