@@ -124,6 +124,7 @@ extern price_t StartCash,StartDebt;
 extern struct NAMES Names;
 extern struct METASERVER MetaServer;
 extern int NumTurns;
+extern int PlayerArmour,BitchArmour;
 
 #define DM_NONE       0
 #define DM_STREET     1
@@ -206,7 +207,7 @@ extern int NumTurns;
 
 struct COP {
    gchar *Name,*DeputyName,*DeputiesName;
-   gint Health,DeputyHealth;
+   gint Armour,DeputyArmour;
    gint AttackPenalty,DefendPenalty;
    gint MinDeputies,MaxDeputies;
    gint GunIndex;
@@ -319,7 +320,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 84
+#define NUMGLOB 86
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;

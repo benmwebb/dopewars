@@ -125,6 +125,8 @@ struct METASERVER DefaultMetaServer = {
 };
 int NumTurns=31;
 
+int PlayerArmour=100,BitchArmour=60;
+
 struct GLOBALS Globals[NUMGLOB] = {
    { &Port,NULL,NULL,NULL,"Port",N_("Network port to connect to"),
      NULL,NULL,0,"",NULL,NULL },
@@ -233,6 +235,12 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("Maximum number of drugs at each location"),
      (void **)(&Location),&StaticLocation,
      sizeof(struct LOCATION),"Location",&NumLocation,NULL },
+   { &PlayerArmour,NULL,NULL,NULL,"PlayerArmour",
+     N_("% resistance to gunshots of each player"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &BitchArmour,NULL,NULL,NULL,"BitchArmour",
+     N_("% resistance to gunshots of each bitch"),
+     NULL,NULL,0,"",NULL,NULL },
    { NULL,NULL,&StaticCop.Name,NULL,"Name",
      N_("Name of each cop"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
@@ -242,11 +250,11 @@ struct GLOBALS Globals[NUMGLOB] = {
    { NULL,NULL,&StaticCop.DeputiesName,NULL,"DeputiesName",
      N_("Name of each cop's deputies"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.Health,NULL,NULL,NULL,"Health",
-     N_("Health of each cop"),
+   { &StaticCop.Armour,NULL,NULL,NULL,"Armour",
+     N_("% resistance to gunshots of each cop"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
-   { &StaticCop.DeputyHealth,NULL,NULL,NULL,"DeputyHealth",
-     N_("Health of each cop's deputy"),
+   { &StaticCop.DeputyArmour,NULL,NULL,NULL,"DeputyArmour",
+     N_("% resistance to gunshots of each deputy"),
      (void **)(&Cop),&StaticCop,sizeof(struct COP),"Cop",&NumCop,NULL },
    { &StaticCop.AttackPenalty,NULL,NULL,NULL,"AttackPenalty",
      N_("Attack penalty relative to a player"),
@@ -1136,8 +1144,8 @@ void CopyCop(struct COP *dest,struct COP *src) {
    AssignName(&dest->Name,_(src->Name));
    AssignName(&dest->DeputyName,_(src->DeputyName));
    AssignName(&dest->DeputiesName,_(src->DeputiesName));
-   dest->Health=src->Health;
-   dest->DeputyHealth=src->DeputyHealth;
+   dest->Armour=src->Armour;
+   dest->DeputyArmour=src->DeputyArmour;
    dest->AttackPenalty=src->AttackPenalty;
    dest->DefendPenalty=src->DefendPenalty;
    dest->MinDeputies=src->MinDeputies;

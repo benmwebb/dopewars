@@ -651,6 +651,7 @@ static void CreateFightDialog() {
    gchar *buf;
 
    FightDialog=dialog=gtk_window_new(GTK_WINDOW_DIALOG);
+   gtk_window_set_default_size(GTK_WINDOW(dialog),450,300);
    gtk_signal_connect(GTK_OBJECT(dialog),"delete_event",
                       GTK_SIGNAL_FUNC(DisallowDelete),NULL);
    gtk_window_set_default_size(GTK_WINDOW(dialog),240,130);

@@ -1449,6 +1449,16 @@ static Player *GetFireTarget(Player *Play) {
    return NULL;
 }
 
+static int GetArmour(Player *Play) {
+   if (IsCop(Play)) {
+      if (Play->Bitches.Carried==0) return Cop[Play->CopIndex-1].Armour;
+      else return Cop[Play->CopIndex-1].DeputyArmour;
+   } else {
+      if (Play->Bitches.Carried==0) return PlayerArmour;
+      else return BitchArmour;
+   }
+}
+
 void Fire(Player *Play) {
 /* Fires all weapons of player "Play" at an opponent, and resets  */
 /* the fight timeout (the reload time)                            */
@@ -1473,7 +1483,7 @@ void Fire(Player *Play) {
          if (brandom(0,AttackRating)>brandom(0,DefendRating)) {
             FightPoint=F_HIT;
             for (i=0;i<NumGun;i++) for (j=0;j<Play->Guns[i].Carried;j++) {
-               Damage+=brandom(0,Gun[i].Damage);
+               Damage+=brandom(0,Gun[i].Damage)*100/GetArmour(Play);
             }
             if (Damage==0) Damage=1;
             HandleDamage(Defend,Play,Damage,&BitchesKilled,&Loot);
