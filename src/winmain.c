@@ -218,10 +218,29 @@ static gchar *GetWindowsLocale(void)
 }
 #endif /* ENABLE_NLS */
 
+/*
+ * Converts the passed lpszCmdParam WinMain-style command line into
+ * Unix-style (argc, argv) parameters (returned).
+ */
+void get_cmdline(const LPSTR lpszCmdParam, int *argc, gchar ***argv)
+{
+  gchar **split;
+  gchar *tmp_cmdline;
+
+  tmp_cmdline = g_strdup_printf("%s %s", PACKAGE, lpszCmdParam);
+  split = g_strsplit(tmp_cmdline, " ", 0);
+  *argc = 0;
+  while (split[*argc] && split[*argc][0]) {
+    (*argc)++;
+  }
+  *argv = split;
+  g_free(tmp_cmdline);
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam, int nCmdShow)
 {
-  gchar **split;
+  gchar **argv;
   int argc;
   gboolean is_service;
   gchar *modpath;
@@ -267,12 +286,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             "# informative messages resulting from configuration\n"
             "# file processing and the like.\n\n"));
 
-  split = g_strsplit(lpszCmdParam, " ", 0);
-  argc = 0;
-  while (split[argc] && split[argc][0])
-    argc++;
+  get_cmdline(lpszCmdParam, &argc, &argv);
 
-  cmdline = GeneralStartup(argc, split);
+  cmdline = GeneralStartup(argc, argv);
   OpenLog();
   SoundInit();
   if (cmdline->version || cmdline->help) {
@@ -358,7 +374,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   FreeCmdLine(cmdline);
   CloseLog();
   LogFileEnd();
-  g_strfreev(split);
+  g_strfreev(argv);
   CloseHighScoreFile();
   g_free(PidFile);
   g_free(Log.File);
