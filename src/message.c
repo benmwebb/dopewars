@@ -442,6 +442,21 @@ gchar *GetWaitingPlayerMessage(Player *Play) {
    return GetWaitingMessage(&Play->NetBuf);
 }
 
+gint CountWaitingMessages(NetworkBuffer *NetBuf) {
+/* Returns the number of complete (terminated) messages waiting in the   */
+/* given network buffer. This is the number of times that                */
+/* GetWaitingMessage() can be safely called without it returning NULL.   */
+   ConnBuf *conn;
+   gint i,msgs=0;
+
+   conn=&NetBuf->ReadBuf;
+
+   if (conn->Data) for (i=0;i<conn->DataPresent;i++) {
+      if (conn->Data[i]==NetBuf->Terminator) msgs++;
+   }
+   return msgs;
+}
+
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf) {
 /* Reads a complete (terminated) message from the network buffer. The    */
 /* message is removed from the buffer, and returned as a null-terminated */
@@ -568,6 +583,148 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf) {
               conn->DataPresent-CurrentPosition);
    }
    conn->DataPresent-=CurrentPosition;
+   return TRUE;
+}
+
+HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
+                                   gchar *Proxy,unsigned ProxyPort,
+                                   gchar *Method,gchar *Query,
+                                   gchar *Headers,gchar *Body) {
+   HttpConnection *conn;
+   gchar *ConnectHost;
+   unsigned ConnectPort;
+   GString *text;
+   g_assert(HostName && Method && Query);
+
+   conn=g_new0(HttpConnection,1);
+   InitNetworkBuffer(&conn->NetBuf,'\n','\r');
+   conn->HostName=g_strdup(HostName);
+   if (Proxy && Proxy[0]) conn->Proxy=g_strdup(Proxy);
+   conn->Method=g_strdup(Method);
+   conn->Query=g_strdup(Query);
+   if (Headers && Headers[0]) conn->Headers=g_strdup(Headers);
+   if (Body && Body[0]) conn->Body=g_strdup(Body);
+   conn->Port = Port;
+   conn->ProxyPort = ProxyPort;
+
+   if (conn->Proxy) {
+      ConnectHost=conn->Proxy; ConnectPort=conn->ProxyPort;
+   } else {
+      ConnectHost=conn->HostName; ConnectPort=conn->Port;
+   }
+      
+   if (!StartNetworkBufferConnect(&conn->NetBuf,ConnectHost,ConnectPort)) {
+      CloseHttpConnection(conn);
+      return NULL;
+   }
+   conn->Tries++;
+   conn->StatusCode=0;
+   conn->Status=HS_CONNECTING;
+
+   text=g_string_new("");
+
+   g_string_sprintf(text,"%s http://%s:%u%s HTTP/1.0",
+                    conn->Method,conn->HostName,conn->Port,conn->Query);
+   QueueMessageForSend(&conn->NetBuf,text->str);
+
+   if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
+   QueueMessageForSend(&conn->NetBuf,"\n");
+   if (conn->Body) QueueMessageForSend(&conn->NetBuf,conn->Body);
+
+   g_string_free(text,TRUE);
+
+   return conn;
+}
+
+HttpConnection *OpenMetaHttpConnection() {
+   gchar *query;
+   HttpConnection *retval;
+
+   query = g_strdup_printf("%s?output=text&getlist=%d",
+                           MetaServer.Path,METAVERSION);
+   retval = OpenHttpConnection(MetaServer.Name,MetaServer.Port,
+                               MetaServer.ProxyName,MetaServer.ProxyPort,
+                               "GET",query,NULL,NULL);
+   if (retval) g_print("HTTP connection successfully established\n");
+   g_free(query);
+   return retval;
+}
+
+void CloseHttpConnection(HttpConnection *conn) {
+   ShutdownNetworkBuffer(&conn->NetBuf);
+   g_free(conn->HostName);
+   g_free(conn->Proxy);
+   g_free(conn->Method);
+   g_free(conn->Query);
+   g_free(conn->Headers);
+   g_free(conn->Body);
+   g_free(conn);
+}
+
+gchar *ReadHttpResponse(HttpConnection *conn) {
+   gchar *msg,**split;
+
+   msg=GetWaitingMessage(&conn->NetBuf);
+   if (msg) switch(conn->Status) {
+      case HS_CONNECTING:    /* OK, we should have the HTTP status line */
+         conn->Status=HS_READHEADERS;
+         split=g_strsplit(msg," ",2);
+         if (split[0] && split[1]) {
+            conn->StatusCode=atoi(split[1]);
+            g_print("HTTP status code %d returned\n",conn->StatusCode);
+         } else g_warning("Invalid HTTP status line %s",msg);
+         g_strfreev(split);
+         break;
+      case HS_READHEADERS:
+         if (msg[0]==0) conn->Status=HS_READSEPARATOR;
+         break;
+      case HS_READSEPARATOR:
+         conn->Status=HS_READBODY;
+         break;
+      case HS_READBODY:   /* At present, we do nothing special with the body */
+         break;
+   }
+   return msg;
+}
+
+gboolean HandleWaitingMetaServerData(HttpConnection *conn) {
+   gchar *msg;
+   ServerData *NewServer;
+
+/* If we're done reading the headers, only read if the data for a whole
+   server is available (8 lines) N.B. "Status" is from the _last_ read */
+   if (conn->Status==HS_READBODY) {
+      if (CountWaitingMessages(&conn->NetBuf)<8) return FALSE;
+
+      NewServer=g_new0(ServerData,1);
+      NewServer->Name=ReadHttpResponse(conn);
+      g_print("Server name %s read from metaserver\n",NewServer->Name);
+      msg=ReadHttpResponse(conn);
+      NewServer->Port=atoi(msg); g_free(msg);
+      NewServer->Version=ReadHttpResponse(conn);
+      msg=ReadHttpResponse(conn);
+      if (msg[0]) NewServer->CurPlayers=atoi(msg);
+      else NewServer->CurPlayers=-1;
+      g_free(msg);
+      msg=ReadHttpResponse(conn);
+      NewServer->MaxPlayers=atoi(msg); g_free(msg);
+      NewServer->Update=ReadHttpResponse(conn);
+      NewServer->Comment=ReadHttpResponse(conn);
+      NewServer->UpSince=ReadHttpResponse(conn);
+      ServerList=g_slist_append(ServerList,NewServer);
+   } else if (conn->Status==HS_READSEPARATOR) {
+      /* This should be the first line of the body, the "MetaServer:" line */
+      msg=ReadHttpResponse(conn);
+      if (!msg) return FALSE;
+      if (strncmp(msg,"MetaServer:",11)!=0) {
+         g_warning("Bad reply from metaserver: %s",msg);
+      }
+      g_free(msg);
+   } else {
+      msg=ReadHttpResponse(conn);
+      if (!msg) return FALSE;
+      g_free(msg);
+   }
    return TRUE;
 }
 

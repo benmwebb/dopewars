@@ -115,6 +115,27 @@ void SendPrintMessage(Player *From,char AICode,Player *To,char *Data);
 void SendQuestion(Player *From,char AICode,Player *To,char *Data);
 
 #if NETWORKING
+/* Keeps track of the progress of an HTTP connection */
+typedef enum _HttpStatus {
+   HS_CONNECTING,HS_READHEADERS,HS_READSEPARATOR,HS_READBODY
+} HttpStatus;
+
+/* A structure used to keep track of an HTTP connection */
+typedef struct _HttpConnection {
+   gchar *HostName;       /* The machine on which the desired page resides */
+   unsigned Port;         /* The port */
+   gchar *Proxy;          /* If non-NULL, a web proxy to use */
+   unsigned ProxyPort;    /* The port to use for talking to the proxy */
+   gchar *Method;         /* e.g. GET, POST */
+   gchar *Query;          /* e.g. the path of the desired webpage */
+   gchar *Headers;        /* if non-NULL, e.g. Content-Type */
+   gchar *Body;           /* if non-NULL, data to send */
+   NetworkBuffer NetBuf;  /* The actual network connection itself */
+   gint Tries;            /* Number of requests actually sent so far */
+   gint StatusCode;       /* 0=no status yet, otherwise an HTTP status code */
+   HttpStatus Status;
+} HttpConnection;
+
 char *StartConnect(int *fd,gchar *RemoteHost,unsigned RemotePort,
                    gboolean NonBlocking);
 char *FinishConnect(int fd);
@@ -142,7 +163,17 @@ gchar *GetWaitingPlayerMessage(Player *Play);
 gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
 gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf,gchar *data);
+gint CountWaitingMessages(NetworkBuffer *NetBuf);
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
+
+HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
+                                   gchar *Proxy,unsigned ProxyPort,
+                                   gchar *Method,gchar *Query,
+                                   gchar *Headers,gchar *Body);
+HttpConnection *OpenMetaHttpConnection(void);
+void CloseHttpConnection(HttpConnection *conn);
+gchar *ReadHttpResponse(HttpConnection *conn);
+gboolean HandleWaitingMetaServerData(HttpConnection *conn);
 
 gchar *bgets(int fd);
 #endif /* NETWORKING */
