@@ -50,7 +50,7 @@ char *read_line(HANDLE hin) {
 
 InstData *ReadInstallData() {
   HANDLE fin;
-  char *line,*line2,*line3;
+  char *line,*line2,*line3,*line4;
   InstFiles *lastinst=NULL,*lastextra=NULL;
   InstLink *lastmenu=NULL,*lastdesktop=NULL;
   InstData *idata;
@@ -69,6 +69,7 @@ InstData *ReadInstallData() {
   idata->installdir = idata->startmenudir = NULL;
   idata->instfiles = idata->extrafiles = NULL;
   idata->startmenu = idata->desktop = NULL;
+  idata->service = NULL;
 
   fin = CreateFile("filelist",GENERIC_READ,0,NULL,OPEN_EXISTING,0,NULL);
 
@@ -107,6 +108,11 @@ printf("start menu dir = %s\n",line);
           line2=read_line(fin); line3=read_line(fin);
 printf("start menu entry = %s/%s/%s\n",line,line2,line3);
           AddInstLink(line,line2,line3,&lastmenu,&idata->startmenu);
+          break;
+        case S_NTSERVICE:
+          line2=read_line(fin); line3=read_line(fin); line4=read_line(fin);
+printf("NT Service = %s/%s/%s/%s\n",line,line2,line3,line4);
+          AddServiceDetails(line,line2,line3,line4,&idata->service);
           break;
         case S_DESKTOP:
           line2=read_line(fin); line3=read_line(fin);
@@ -244,6 +250,8 @@ int main() {
 
   WriteLinkList(fout,idata->startmenu);
   WriteLinkList(fout,idata->desktop);
+
+  WriteServiceDetails(fout,idata->service);
 
   CloseHandle(fout);
   bfree(inbuf);

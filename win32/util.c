@@ -284,6 +284,28 @@ void FreeFileList(InstFiles *filelist,BOOL freepts) {
   }
 }
 
+void AddServiceDetails(char *servicename,char *servicedisp,
+                       char *servicedesc,char *serviceexe,
+                       NTService **service) {
+  *service = bmalloc(sizeof(NTService));
+  (*service)->name = servicename;
+  (*service)->display = servicedisp;
+  (*service)->description = servicedesc;
+  (*service)->exe = serviceexe;
+}
+
+void FreeServiceDetails(NTService *service,BOOL freepts) {
+  if (!service) return;
+
+  if (freepts) {
+    bfree(service->name);
+    bfree(service->display);
+    bfree(service->description);
+    bfree(service->exe);
+  }
+  bfree(service);
+}
+
 void FreeInstData(InstData *idata,BOOL freepts) {
   FreeFileList(idata->instfiles,freepts);
   FreeFileList(idata->extrafiles,freepts);
@@ -291,11 +313,41 @@ void FreeInstData(InstData *idata,BOOL freepts) {
   FreeLinkList(idata->startmenu,freepts);
   FreeLinkList(idata->desktop,freepts);
 
+  FreeServiceDetails(idata->service,freepts);
+
   bfree(idata->product);
   bfree(idata->installdir);
   bfree(idata->startmenudir);
 
   bfree(idata);
+}
+
+void WriteServiceDetails(HANDLE fout,NTService *service) {
+  DWORD bytes_written;
+  char str[]="";
+
+  if (!service) {
+    if (!WriteFile(fout,str,strlen(str)+1,&bytes_written,NULL)) {
+      printf("Write error\n");
+    }
+  } else {
+    if (!WriteFile(fout,service->name,strlen(service->name)+1,
+                   &bytes_written,NULL)) {
+      printf("Write error\n");
+    }
+    if (!WriteFile(fout,service->display,strlen(service->display)+1,
+                   &bytes_written,NULL)) {
+      printf("Write error\n");
+    }
+    if (!WriteFile(fout,service->description,strlen(service->description)+1,
+                   &bytes_written,NULL)) {
+      printf("Write error\n");
+    }
+    if (!WriteFile(fout,service->exe,strlen(service->exe)+1,
+                   &bytes_written,NULL)) {
+      printf("Write error\n");
+    }
+  }
 }
 
 void WriteLinkList(HANDLE fout,InstLink *listpt) {

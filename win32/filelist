@@ -4,7 +4,7 @@ dopewars-1.5.3
 [instdir]
 C:\Program Files\dopewars-1.5.3
 
-[NTService]
+[NT Service]
 dopewars-server
 dopewars server
 Server for the drug-dealing game "dopewars"

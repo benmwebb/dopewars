@@ -39,10 +39,18 @@ typedef struct _InstLink {
   struct _InstLink *next;
 } InstLink;
 
+typedef struct _NTService {
+  char *name;
+  char *display;
+  char *description;
+  char *exe;
+} NTService;
+
 typedef struct _InstData {
   char *product;
   char *installdir,*startmenudir;
   DWORD totalsize;
+  NTService *service;
   InstFiles *instfiles;
   InstFiles *extrafiles;
   InstLink *startmenu;
@@ -79,6 +87,11 @@ void AddInstLink(char *linkfile,char *origfile,char *args,InstLink **lastpt,
 void FreeLinkList(InstLink *linklist,BOOL freepts);
 void FreeFileList(InstFiles *filelist,BOOL freepts);
 void FreeInstData(InstData *idata,BOOL freepts);
+void AddServiceDetails(char *servicename,char *servicedisp,
+                       char *servicedesc,char *serviceexe,
+                       NTService **service);
+void FreeServiceDetails(NTService *service,BOOL freepts);
+void WriteServiceDetails(HANDLE fout,NTService *service);
 void WriteLinkList(HANDLE fout,InstLink *listpt);
 void WriteFileList(HANDLE fout,InstFiles *listpt);
 char *GetStartMenuTopDir(void);

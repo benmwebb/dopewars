@@ -43,16 +43,15 @@ HINSTANCE hInst=NULL;
 DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
 
-void InstallService(void) {
+void InstallService(InstData *idata) {
   SC_HANDLE scManager,scService;
   HKEY key;
   bstr *str;
   static char keyprefix[] = "SYSTEM\\ControlSet001\\Services\\";
+  NTService *service;
 
-  static char servicename[] = "dopewars-server";
-  static char servicedisp[] = "dopewars server";
-  static char serviceexe[] = "dopewars.exe -N";
-  static char servicedesc[] = "Server for the drug-dealing game \"dopewars\"";
+  service = idata->service;
+  if (!service) return;
 
   scManager = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
 
@@ -63,9 +62,9 @@ void InstallService(void) {
 
   str = bstr_new();
   bstr_assign(str,idata->installdir);
-  bstr_appendpath(str,serviceexe);
+  bstr_appendpath(str,service->exe);
 
-  scService = CreateService(scManager,servicename,servicedisp,
+  scService = CreateService(scManager,service->name,service->display,
                             SERVICE_ALL_ACCESS,SERVICE_WIN32_OWN_PROCESS,
                             SERVICE_DEMAND_START,SERVICE_ERROR_NORMAL,
                             str->text,NULL,NULL,NULL,NULL,NULL);
@@ -76,10 +75,11 @@ void InstallService(void) {
   }
 
   bstr_assign(str,keyprefix);
-  bstr_append(str,servicename);
+  bstr_append(str,service->name);
   if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,str->text,0,KEY_WRITE,&key)
       ==ERROR_SUCCESS) {
-    RegSetValueEx(key,"Description",0,REG_SZ,servicedesc,strlen(servicedesc));
+    RegSetValueEx(key,"Description",0,REG_SZ,service->description,
+                  strlen(service->description));
     RegCloseKey(key);
   }
 
@@ -253,7 +253,7 @@ LPVOID GetResource(LPCTSTR resname,LPCTSTR restype) {
 InstData *ReadInstData() {
   InstFiles *lastinst=NULL,*lastextra=NULL;
   InstLink *lastmenu=NULL,*lastdesktop=NULL;
-  char *instdata,*pt,*filename,*line2,*line3;
+  char *instdata,*pt,*filename,*line2,*line3,*line4;
   DWORD filesize;
   InstData *idata;
 
@@ -263,6 +263,7 @@ InstData *ReadInstData() {
   pt=instdata;
 
   idata = bmalloc(sizeof(InstData));
+  idata->service = NULL;
   idata->totalsize = atol(pt);
   pt += strlen(pt)+1;
 
@@ -310,6 +311,13 @@ InstData *ReadInstData() {
       line3=pt; pt += strlen(pt)+1;
       AddInstLink(filename,line2,line3,&lastdesktop,&idata->desktop);
     } else break;
+  }
+  filename=pt; pt += strlen(pt)+1;
+  if (filename[0]) {
+    line2=pt; pt += strlen(pt)+1;
+    line3=pt; pt += strlen(pt)+1;
+    line4=pt; pt += strlen(pt)+1;
+    AddServiceDetails(filename,line2,line3,line4,&idata->service);
   }
 
   return idata;
@@ -639,12 +647,14 @@ DWORD WINAPI DoInstall(LPVOID lpParam) {
 
   WriteFileList(logf,idata->extrafiles);
 
-  InstallService();
+  InstallService(idata);
 
   CoInitialize(NULL);
   SetupShortcuts(logf);
   SetupUninstall();
   CoUninitialize();
+
+  WriteServiceDetails(logf,idata->service);
 
   CloseHandle(logf);
 
@@ -686,6 +696,35 @@ void FillFolderList(void) {
     FindClose(findfile);
   }
   bstr_free(str,TRUE);
+}
+
+BOOL CheckExistingInstall(InstData *idata) {
+  bstr *str,*subkey;
+  HKEY key;
+  DWORD ind;
+  FILETIME ftime;
+  BOOL retval=TRUE;
+
+  str=bstr_new();
+  bstr_assign(str,UninstallKey);
+  bstr_appendpath(str,idata->product);
+  
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,str->text,0,KEY_READ,&key)
+      ==ERROR_SUCCESS) {
+    RegCloseKey(key);
+    if (MessageBox(NULL,"This program appears to already be installed.\n"
+                   "Are you sure you want to go ahead and install it anyway?",
+                   idata->product,MB_YESNO)==IDNO) retval=FALSE;
+  } else {
+// TODO: Check for old versions to upgrade
+    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,UninstallKey,0,KEY_READ,&key)
+        ==ERROR_SUCCESS) {
+/*    for (ind=0;RegEnumKeyEx(key,ind,subkey,subkey->len,
+                              NULL,NULL,NULL,&ftime)==ERROR_SUCCESS;ind++) {
+      }*/
+    }
+  }
+  return retval;
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
@@ -730,17 +769,19 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
   for (i=0;i<DL_NUM;i++) SetGuiFont(mainDlg[i]);
 
-  CurrentDialog=DL_NUM;
-  ShowNewDialog(DL_INTRO);
+  if (CheckExistingInstall(idata)) {
+    CurrentDialog=DL_NUM;
+    ShowNewDialog(DL_INTRO);
 
-  while (GetMessage(&msg,NULL,0,0)) {
-    Handled=FALSE;
-    for (i=0;i<DL_NUM && !Handled;i++) {
-      Handled=IsDialogMessage(mainDlg[i],&msg);
-    }
-    if (!Handled) {
-      TranslateMessage(&msg);
-      DispatchMessage(&msg);
+    while (GetMessage(&msg,NULL,0,0)) {
+      Handled=FALSE;
+      for (i=0;i<DL_NUM && !Handled;i++) {
+        Handled=IsDialogMessage(mainDlg[i],&msg);
+      }
+      if (!Handled) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+      }
     }
   }
   FreeInstData(idata,FALSE);

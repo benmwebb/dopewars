@@ -30,19 +30,20 @@ HINSTANCE hInst;
 HWND mainDlg;
 char *product;
 
-void RemoveService(void) {
+void RemoveService(NTService *service) {
   SC_HANDLE scManager,scService;
   SERVICE_STATUS status;
-  static char servicename[] = "dopewars-server";
 
-  scManager = OpenSCManager(NULL,NULL,SC_MANAGER_ALL_ACCESS);
+  if (!service) return;
+
+  scManager = OpenSCManager(NULL,NULL,GENERIC_READ);
 
   if (!scManager) {
     DisplayError("Cannot connect to service manager",TRUE,FALSE);
     return;
   }
 
-  scService = OpenService(scManager,servicename,DELETE|SERVICE_STOP);
+  scService = OpenService(scManager,service->name,DELETE|SERVICE_STOP);
   if (!scService) {
     DisplayError("Cannot open service",TRUE,FALSE);
   } else {
@@ -103,6 +104,25 @@ InstLink *ReadLinkList(HANDLE fin) {
     newpt->args=args;
   }
   return first;
+}
+
+NTService *ReadServiceDetails(HANDLE fin) {
+  NTService *service=NULL;
+  char *name,*disp,*desc,*exe;
+
+  name = read_line0(fin);
+  if (name) {
+    disp = read_line0(fin);
+    desc = read_line0(fin);
+    exe = read_line0(fin);
+    if (!disp || !desc || !exe) {
+      DisplayError("Corrupt install.log",FALSE,TRUE);
+    } else {
+      AddServiceDetails(name,disp,desc,exe,&service);
+    }
+  }
+
+  return service;
 }
 
 InstFiles *ReadFileList(HANDLE fin) {
@@ -181,6 +201,8 @@ InstData *ReadInstData(HANDLE fin,char *product,char *installdir) {
 
   idata->startmenu = ReadLinkList(fin);
   idata->desktop = ReadLinkList(fin);
+
+  idata->service = ReadServiceDetails(fin);
   return idata;
 }
 
@@ -273,7 +295,7 @@ DWORD WINAPI DoUninstall(LPVOID lpParam) {
     idata = ReadInstData(fin,product,installdir);
     CloseHandle(fin);
 
-    RemoveService();
+    RemoveService(idata->service);
 
     DeleteFile("install.log");
     DeleteFileList(idata->instfiles);
