@@ -32,6 +32,7 @@
 #ifdef CYGWIN
 #include <windows.h>            /* For datatypes such as BOOL */
 #include <winsock.h>            /* For network functions */
+#include <process.h>            /* For getpid */
 #else
 #include <sys/socket.h>         /* For struct sockaddr etc. */
 #include <netinet/in.h>         /* For struct sockaddr_in etc. */
@@ -762,8 +763,6 @@ static gboolean StartServer(void)
 
 #ifndef CYGWIN
   struct sigaction sact;
-#else
-  SERVICE_STATUS status;
 #endif
 
   if (!CheckHighScoreFileConfig())
@@ -1070,10 +1069,9 @@ static int SetupLocalSocket(void)
 void ServerLoop()
 {
   Player *tmp;
-  GSList *list, *nextlist, *localconn = NULL;
+  GSList *list, *nextlist;
   fd_set readfs, writefs, errorfs;
   int topsock;
-  GPrintFunc oldprint;
   struct timeval timeout;
   int MinTimeout;
   GString *LineBuf;
@@ -1082,6 +1080,8 @@ void ServerLoop()
 
 #ifndef CYGWIN
   int localsock;
+  GPrintFunc oldprint;
+  GSList *localconn = NULL;
 #endif
 
   if (!StartServer())
