@@ -1,4 +1,4 @@
-/* serverside.h   Server-side parts of Dopewars                         */
+/* serverside.h   Server-side parts of dopewars                         */
 /* Copyright (C)  1998-2001  Ben Webb                                   */
 /*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
 /*                WWW: http://bellatrix.pcl.ox.ac.uk/~ben/dopewars/     */
