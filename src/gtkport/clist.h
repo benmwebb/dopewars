@@ -76,6 +76,7 @@ void gtk_clist_set_column_title(GtkCList *clist, gint column,
 gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[]);
 gint gtk_clist_set_text(GtkCList *clist, gint row, gint col, gchar *text);
 void gtk_clist_set_column_width(GtkCList *clist, gint column, gint width);
+gint gtk_clist_optimal_column_width(GtkCList *clist, gint column);
 void gtk_clist_column_title_passive(GtkCList *clist, gint column);
 void gtk_clist_column_titles_passive(GtkCList *clist);
 void gtk_clist_column_title_active(GtkCList *clist, gint column);

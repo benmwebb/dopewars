@@ -185,7 +185,7 @@ static void FillMetaServerList(gboolean UseNewList)
   ServerData *ThisServer;
   gchar *titles[5];
   GSList *ListPt;
-  gint row;
+  gint row, width;
 
   if (UseNewList && !stgam.NewMetaList)
     return;
@@ -221,6 +221,14 @@ static void FillMetaServerList(gboolean UseNewList)
     g_free(titles[1]);
     if (ThisServer->CurPlayers != -1)
       g_free(titles[3]);
+  }
+  if (MetaList) {
+    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 4);
+    gtk_clist_set_column_width(GTK_CLIST(metaserv), 4, width);
+    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 3);
+    gtk_clist_set_column_width(GTK_CLIST(metaserv), 3, width);
+    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 0);
+    gtk_clist_set_column_width(GTK_CLIST(metaserv), 0, width);
   }
   gtk_clist_thaw(GTK_CLIST(metaserv));
 }

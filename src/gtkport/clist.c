@@ -180,7 +180,7 @@ void gtk_clist_realize(GtkWidget *widget)
   SendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
   clist->header_size = wp.cy;
   widget->hWnd = CreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
-                                WS_CHILD | WS_TABSTOP | LBS_DISABLENOSCROLL
+                                WS_CHILD | WS_TABSTOP | WS_HSCROLL
                                 | WS_VSCROLL | LBS_OWNERDRAWFIXED |
                                 LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
                                 hInst, NULL);
@@ -506,6 +506,15 @@ void gtk_clist_set_column_width_full(GtkCList *clist, gint column,
     hWnd = GTK_WIDGET(clist)->hWnd;
     if (hWnd)
       InvalidateRect(hWnd, NULL, FALSE);
+  }
+}
+
+gint gtk_clist_optimal_column_width(GtkCList *clist, gint column)
+{
+  if (clist && column >= 0 && column < clist->cols) {
+    return clist->coldata[column].width;
+  } else {
+    return 0;
   }
 }
 
