@@ -266,19 +266,21 @@ void ConvertConfigFile(void)
     Conv_SetCodeset(conv, Encoding);
   }
 
-  for (i = 0; i < NUMGLOB; i++) {
-    gvar = &Globals[i];
-    if (gvar->StringVal) {
-      if (gvar->StructListPt) {
-        for (j = 1; j <= *gvar->MaxIndex; j++) {
-          ConvertString(conv, GetGlobalString(i, j));
+  if (Conv_Needed(conv)) {
+    for (i = 0; i < NUMGLOB; i++) {
+      gvar = &Globals[i];
+      if (gvar->StringVal) {
+        if (gvar->StructListPt) {
+          for (j = 1; j <= *gvar->MaxIndex; j++) {
+            ConvertString(conv, GetGlobalString(i, j));
+          }
+        } else {
+          ConvertString(conv, GetGlobalString(i, 0));
         }
-      } else {
-        ConvertString(conv, GetGlobalString(i, 0));
-      }
-    } else if (gvar->StringList) {
-      for (j = 0; j < *gvar->MaxIndex; j++) {
-        ConvertString(conv, (*gvar->StringList) + j);
+      } else if (gvar->StringList) {
+        for (j = 0; j < *gvar->MaxIndex; j++) {
+          ConvertString(conv, (*gvar->StringList) + j);
+        }
       }
     }
   }
