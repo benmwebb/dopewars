@@ -31,7 +31,6 @@ void bfree(void *pt) {
 }
 
 void *brealloc(void *pt,UINT numbytes) {
-  HLOCAL localpt;
   UINT numcp;
   void *newpt;
   if (!pt && numbytes) return bmalloc(numbytes);

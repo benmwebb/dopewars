@@ -1,5 +1,10 @@
 all: setup makeinstall uninstall
 
+clean:
+	/bin/rm -f *.o *.res uninstall.exe setup.exe makeinstall.exe core *~
+	/bin/rm -f installfiles.gz manifest
+	touch installfiles.gz manifest
+
 setup: setup.o util.o guifunc.o setup.res
 	gcc -Wall -mno-cygwin -mwindows -o setup setup.o util.o guifunc.o setup.res zlib/libz.a -lcomctl32 -lole32 -luuid
 	strip setup.exe
