@@ -271,13 +271,17 @@ fi
 
 if test "$plugins" = "yes" ; then
   AC_DEFINE(PLUGINS, 1, [Define if using dynamically-loaded sound modules])
+  plugindir="${libdir}/dopewars"
+  AC_SUBST(plugindir)
+  PLUGINDEF="-DPLUGINDIR=\\\"${plugindir}\\\""
+  AC_SUBST(PLUGINDEF)
 else
   PLUGOBJS="plugins/sound_sdl.o plugins/sound_esd.o plugins/sound_winmm.o"
   AC_SUBST(PLUGOBJS)
   PLUGLIBS="$SOUND_LIBS"
   AC_SUBST(PLUGLIBS)
 fi
-AM_CONDITIONAL(NOPLUGINS, test "$plugins" != "yes")
+AM_CONDITIONAL(PLUGINS, test "$plugins" = "yes")
 
 dnl Enable networking by default under Win32, but on Unix systems
 dnl make it dependent on the availability of select and socket
