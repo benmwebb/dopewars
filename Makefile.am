@@ -1,4 +1,4 @@
-SUBDIRS    = intl src doc po
+SUBDIRS    = intl src doc po sounds
 DESKTOPDIR = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP    = dopewars.desktop
 SCOREDIR   = ${DESTDIR}${datadir}

@@ -4,6 +4,7 @@ DOCS       = aiplayer.html configfile.html index.html i18n.html server.html \
              servercommands.html commandline.html developer.html \
              metaserver.html protocol.html windows.html ../LICENCE
 man_MANS   = dopewars.6
+SUBDIRS    = help
 EXTRA_DIST = ${man_MANS} ${DOCS}
 
 install-data-local:
@@ -11,4 +12,3 @@ install-data-local:
 	for doc in ${DOCS}; do \
 	  ${INSTALL} -m 0644 ${srcdir}/$${doc} ${DOCPATH}; \
 	done
-

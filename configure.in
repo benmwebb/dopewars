@@ -396,7 +396,10 @@ src/curses_client/Makefile
 src/gtkport/Makefile
 src/cursesport/Makefile
 src/plugins/Makefile
+sounds/Makefile
+sounds/19.5degs/Makefile
 doc/Makefile
+doc/help/Makefile
 intl/Makefile
 po/Makefile.in],
 [sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile])
