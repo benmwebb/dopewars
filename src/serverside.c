@@ -614,6 +614,8 @@ void StartServer() {
    struct sigaction sact;
 #endif
 
+   InitNetworkBuffer(&MetaNetBuf,'\n','\r');
+
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
    CreatePidFile();
@@ -806,8 +808,6 @@ void ServerLoop() {
    GString *LineBuf;
    gboolean EndOfLine,DoneOK,ReadingHeaders;
    gchar *buf;
-
-   InitNetworkBuffer(&MetaNetBuf,'\n','\r');
 
    StartServer();
 

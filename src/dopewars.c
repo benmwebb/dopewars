@@ -1751,7 +1751,7 @@ GString *GetLogString(GLogLevelFlags log_level,const gchar *message) {
 
 #ifndef CYGWIN
 
-#ifdef NETWORKING
+#if NETWORKING && !GUI_SERVER
 static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
                              const gchar *message,gpointer user_data) {
    GString *text;
