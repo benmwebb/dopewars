@@ -1164,7 +1164,7 @@ void print_status(Player *Play,char DispDrug) {
    mvaddstr(1,Width/4-2,_("Stats"));
 
    attrset(StatsAttr);
-   g_string_sprintf(text,_("Cash %17P"),Play->Cash);
+   dpg_string_sprintf(text,_("Cash %17P"),Play->Cash);
    mvaddstr(3,9,text->str);
    dpg_string_sprintf(text,"%-19Tde%3d",Names.Guns,TotalGunsCarried(Play));
    mvaddstr(Network ? 4 : 5,9,text->str);
@@ -1480,11 +1480,14 @@ static void Curses_DoGame(Player *Play) {
             attrset(PromptAttr);
             g_string_assign(text,_("Do you "));
             if (Play->Flags&CANSHOOT) {
-               if (TotalGunsCarried(Play)>0) g_string_append(text,_("F>ight, "));
-               else g_string_append(text,_("S>tand, "));
+               if (TotalGunsCarried(Play)>0) {
+                  g_string_append(text,_("F>ight, "));
+               } else {
+                  g_string_append(text,_("S>tand, "));
+               }
             }
             if (Play->Flags&FIGHTING) g_string_append(text,_("R>un, "));
-            g_string_append(text,_("D>eal ")); g_string_append(text,Names.Drugs);
+            dpg_string_sprintfa(text,_("D>eal %tde"),Names.Drugs);
             g_string_append(text,_(", or Q>uit? "));
             mvaddstr(22,40-strlen(text->str)/2,text->str);
             attrset(TextAttr);
