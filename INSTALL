@@ -38,13 +38,32 @@ default. It can be placed into an alternative location by specifying the
 will configure the system to write the dopewars binary as /usr/bin/dopewars
 and the high score as /var/games/dopewars/dopewars.sco
 
-By default, the configure script will check your system for the availability
-of networking functions (specifically, the socket and select function calls).
-If these are found, the default behaviour is to compile dopewars with support
-for running as a server, and/or to connect to existing servers over a TCP/IP
-network. (Without networking, dopewars will only be useable in single-player
-mode.) This test can be overridden by specifying the --enable-networking or 
---disable-networking options to the configure script.
+Other options to ./configure include:-
+
+--enable-networking:
+	Compile dopewars with support for running as a server, and/or to
+connect to existing servers over a TCP/IP network. (Without networking,
+dopewars will only be useable in single-player mode.) If this option is not
+specified, the configure script will enable networking only if it believes
+your system has the necessary support functions (select and socket). You can
+also explicitly disable networking with --enable-networking=no or
+--disable-networking
+
+--enable-gui-client:
+	Compile a graphical dopewars client, using GTK+ on Unix systems and
+the standard libaries under Windows. If unspecified, this is enabled only
+if your system has the necessary libraries (e.g. GTK+) installed.
+
+--enable-curses-client:
+	Compile a text-mode client, using ncurses or similar on Unix systems
+and the standard libraries under Windows. If unspecified, this is enabled only
+if you have ncurses (or similar) installed.
+
+--enable-gui-server:
+	Use a (very basic) graphical interface to the dopewars server. If not
+specified, this is enabled under Windows and disabled under Unix (where a
+simple text-mode server is used instead).
+
 
 Basic Installation
 ==================
