@@ -1,9 +1,9 @@
-# Nasty hack; there seems to be no way of disabling libtool for the link
-# of the main executable...
+# Nasty hack; there seems to be no other way of disabling libtool for the
+# link of the main executable...
 if PLUGINS
-LIBTOOL = $(SHELL) $(top_builddir)/libtool
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 else
-LIBTOOL = ./fakelibtool.sh
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 endif
 
 if GUI_CLIENT
