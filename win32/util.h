@@ -87,6 +87,8 @@ void bstr_append_windir(bstr *str);
 void bstr_append_curdir(bstr *str);
 void bstr_assign_windir(bstr *str);
 void bstr_assign_curdir(bstr *str);
+void bstr_assign_progfilesdir(bstr *str);
+void bstr_append_progfilesdir(bstr *str);
 
 void DisplayError(const char *errtext, BOOL addsyserr, BOOL fatal);
 void AddInstFiles(char *filename, DWORD filesize, InstFiles **lastpt,

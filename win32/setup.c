@@ -333,6 +333,7 @@ InstData *ReadInstData()
   InstFiles *lastinst = NULL, *lastextra = NULL, *lastkeep = NULL;
   InstLink *lastmenu = NULL, *lastdesktop = NULL;
   char *instdata, *pt, *filename, *line2, *line3, *line4;
+  bstr *idir;
   DWORD filesize;
   InstData *idata;
 
@@ -351,7 +352,11 @@ InstData *ReadInstData()
   idata->product = bstrdup(pt);
   pt += strlen(pt) + 1;
 
-  idata->installdir = bstrdup(pt);
+  idir = bstr_new();
+  bstr_assign_progfilesdir(idir);
+  bstr_appendpath(idir, pt);
+  idata->installdir = idir->text;
+  bstr_free(idir, FALSE);
   pt += strlen(pt) + 1;
 
   idata->startmenudir = bstrdup(pt);

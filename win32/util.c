@@ -200,6 +200,35 @@ void bstr_assign_curdir(bstr *str)
   bstr_append_curdir(str);
 }
 
+void bstr_assign_progfilesdir(bstr *str)
+{
+  bstr_setlength(str, 0);
+  bstr_append_progfilesdir(str);
+}
+
+void bstr_append_progfilesdir(bstr *str)
+{
+  HKEY key;
+  int len;
+  static const *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion";
+  static const *subval = "ProgramFilesDir";
+  BOOL ok = FALSE;
+
+  len = str->bufsiz - str->length;
+  if (RegGetValue(HKEY_LOCAL_MACHINE, subkey, subval, RRF_RT_REG_SZ, NULL,
+                  NULL, &len) == ERROR_SUCCESS) {
+    len += 5;
+    bstr_expandby(str, len);
+    if (RegGetValue(HKEY_LOCAL_MACHINE, subkey, subval, RRF_RT_REG_SZ, NULL,
+                    str->text + str->length, &len) == ERROR_SUCCESS) {
+      ok = TRUE;
+    }
+  }
+  if (!ok) {
+    bstr_append(str, "C:\\Program Files");
+  }
+}
+
 void bstr_append_dir(bstr *str, BOOL windir)
 {
   unsigned spaceleft;
