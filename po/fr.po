@@ -901,7 +901,7 @@ msgid ""
 "players are logged on. Wait for all players to log off, or remove\n"
 "them with the push or kill commands, and try again.\n"
 msgstr ""
-"La config peut seulement etre changee quand aucun joueur n'est connecte"
+"La config peut seulement etre changee quand aucun joueur n'est connecte\n"
 
 #. Error message displayed when you try to set, for example, Drug[10].Name
 #. when NumDrug<10 (%s="Drug" and %d=10 in this example)
@@ -1035,7 +1035,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1069,7 +1069,7 @@ msgstr ""
 "  -h       affiche cet ecran d'aide\n"
 "  -v       affiche la version et quitte\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2001, et distribue sous GNU GPL\n"
+"dopewars is Copyright (C) Ben Webb 1998-2002, et distribue sous GNU GPL\n"
 "Envoyer les bugs a l'auteur : ben@bellatrix.pcl.ox.ac.uk\n"
 
 #. Usage information, printed when the user runs "dopewars -h" (short
@@ -1108,7 +1108,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2001, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2002, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"
 msgstr ""
@@ -1142,7 +1142,7 @@ msgstr ""
 "  -h       affiche cet ecran d'aide\n"
 "  -v       affiche la version et quitte\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2001, et distribue sous GNU GPL\n"
+"dopewars is Copyright (C) Ben Webb 1998-2002, et distribue sous GNU GPL\n"
 "Envoyer les bugs a l'auteur : ben@bellatrix.pcl.ox.ac.uk\n"
 
 #: src/dopewars.c:2130 src/winmain.c:264
@@ -1188,8 +1188,8 @@ msgid "have one month of game time to make your fortune."
 msgstr "as un mois de temps de jeu pour faire fortune."
 
 #: src/curses_client.c:178
-msgid "Copyright (C) 1998-2001  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Copyright (C) 1998-2001  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgid "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr "Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client.c:180
 #, c-format
@@ -2270,10 +2270,10 @@ msgstr ""
 #: src/gtk_client.c:1948
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2001  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2001  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
+"Version %s     Copyright (C) 1998-2002  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars est diffuse sous la GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
