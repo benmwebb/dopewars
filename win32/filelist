@@ -30,7 +30,11 @@ index.html
 ../doc/windows.html -> windows.html
 ../doc/help/general.html -> help\general.html
 ../doc/help/locations.html -> help\locations.html
+../doc/help/drugs.html -> help\drugs.html
+../doc/help/guns.html -> help\guns.html
+../doc/help/cops.html -> help\cops.html
 ../doc/help/server.html -> help\server.html
+../doc/help/sounds.html -> help\sounds.html
 ../../auxdope/dopewars-config.txt -> dopewars-config.txt
 ../src/dopewars.exe -> dopewars.exe
 ../../auxdope/iconv.dll -> iconv.dll
