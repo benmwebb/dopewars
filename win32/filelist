@@ -16,6 +16,7 @@ uninstall.exe
 ../doc/aiplayer.html -> aiplayer.html
 ../doc/clientplay.html -> clientplay.html
 ../doc/commandline.html -> commandline.html
+../doc/contribute.html -> contribute.html
 configfile.html
 ../doc/credits.html -> credits.html
 developer.html

@@ -56,10 +56,10 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %files -f %{name}.lang
 %defattr(-,root,root)
 %doc ChangeLog LICENCE README doc/aiplayer.html doc/clientplay.html
-%doc doc/configfile.html doc/credits.html doc/developer.html
-%doc doc/example-cfg doc/i18n.html doc/index.html doc/installation.html
-%doc doc/metaserver.html doc/server.html doc/servercommands.html
-%doc doc/protocol.html doc/windows.html
+%doc doc/configfile.html doc/contribute.html doc/credits.html
+%doc doc/developer.html doc/example-cfg doc/i18n.html doc/index.html
+%doc doc/installation.html doc/metaserver.html doc/server.html
+%doc doc/servercommands.html doc/protocol.html doc/windows.html
 %attr(2755,root,games) %{_bindir}/dopewars
 %attr(0660,root,games) %config %{_datadir}/dopewars.sco
 %{_mandir}/man6/dopewars.6.gz
