@@ -506,9 +506,7 @@ void NewGameDialog(Player *play)
     ServerEntry = ServerName;
 
   gtk_entry_set_text(GTK_ENTRY(entry), ServerEntry);
-  gtk_table_attach(GTK_TABLE(table), entry, 1, 2, 0, 1,
-                   GTK_EXPAND | GTK_SHRINK | GTK_FILL,
-                   GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
   label = gtk_label_new(_("Port"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
@@ -516,9 +514,7 @@ void NewGameDialog(Player *play)
   text = g_strdup_printf("%d", Port);
   gtk_entry_set_text(GTK_ENTRY(entry), text);
   g_free(text);
-  gtk_table_attach(GTK_TABLE(table), entry, 1, 2, 1, 2,
-                   GTK_EXPAND | GTK_SHRINK | GTK_FILL,
-                   GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
 
   gtk_box_pack_start(GTK_BOX(vbox2), table, FALSE, FALSE, 0);
 
