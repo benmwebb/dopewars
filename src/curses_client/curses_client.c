@@ -1,4 +1,5 @@
 /************************************************************************
+ *
  * curses_client.c  dopewars client using the (n)curses console library *
  * Copyright (C)  1998-2003  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
@@ -150,6 +151,37 @@ void ResizeHandle(int sig)
   ResizedFlag = 1;
 }
 
+/*
+ * Returns the topmost row of the message area
+ */
+static int get_msg_area_top(void)
+{
+  return 10;
+}
+
+/*
+ * Returns the bottommost row of the message area
+ */
+static int get_msg_area_bottom(void)
+{
+  return 14;
+}
+
+static int get_ui_area_top(void)
+{
+  return 16;
+}
+
+static int get_ui_area_bottom(void)
+{
+  return Depth;
+}
+
+static int get_prompt_line(void)
+{
+  return Depth - 2;
+}
+
 /* 
  * Checks to see if the curses window needs to be resized - i.e. if a
  * SIGWINCH signal has been received.
@@ -195,7 +227,7 @@ static void mvaddcentstr(const int row, const gchar *str)
   guint col, len;
 
   len = strlen(str);
-  col = (len > Width ? 0 : (Width - len) / 2);
+  col = (len > (guint)Width ? 0 : ((guint)Width - len) / 2);
   mvaddstr(row, col, str);
 }
 
@@ -286,20 +318,21 @@ void display_intro(void)
 static void SelectServerManually(void)
 {
   gchar *text, *PortText;
+  int top = get_ui_area_top();
 
   if (ServerName[0] == '(')
     AssignName(&ServerName, "localhost");
   attrset(TextAttr);
   clear_bottom();
-  mvaddstr(17, 1,
+  mvaddstr(top + 1, 1,
            /* Prompts for hostname and port when selecting a server
             * manually */
            _("Please enter the hostname and port of a dopewars server:-"));
-  text = nice_input(_("Hostname: "), 18, 1, FALSE, ServerName, '\0');
+  text = nice_input(_("Hostname: "), top + 2, 1, FALSE, ServerName, '\0');
   AssignName(&ServerName, text);
   g_free(text);
   PortText = g_strdup_printf("%d", Port);
-  text = nice_input(_("Port: "), 19, 1, TRUE, PortText, '\0');
+  text = nice_input(_("Port: "), top + 3, 1, TRUE, PortText, '\0');
   Port = atoi(text);
   g_free(text);
   g_free(PortText);
@@ -322,10 +355,11 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
   int maxsock;
   gboolean DoneOK;
   HttpConnection *MetaConn;
+  int top = get_ui_area_top();
 
   attrset(TextAttr);
   clear_bottom();
-  mvaddstr(17, 1, _("Please wait... attempting to contact metaserver..."));
+  mvaddstr(top + 1, 1, _("Please wait... attempting to contact metaserver..."));
   refresh();
 
   if (OpenMetaHttpConnection(&MetaConn)) {
@@ -384,11 +418,11 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     clear_bottom();
     /* Printout of metaserver information in curses client */
     g_string_sprintf(text, _("Server : %s"), ThisServer->Name);
-    mvaddstr(17, 1, text->str);
+    mvaddstr(top + 1, 1, text->str);
     g_string_sprintf(text, _("Port   : %d"), ThisServer->Port);
-    mvaddstr(18, 1, text->str);
+    mvaddstr(top + 2, 1, text->str);
     g_string_sprintf(text, _("Version    : %s"), ThisServer->Version);
-    mvaddstr(18, 40, text->str);
+    mvaddstr(top + 2, 40, text->str);
     if (ThisServer->CurPlayers == -1) {
       g_string_sprintf(text, _("Players: -unknown- (maximum %d)"),
                        ThisServer->MaxPlayers);
@@ -396,13 +430,13 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
       g_string_sprintf(text, _("Players: %d (maximum %d)"),
                        ThisServer->CurPlayers, ThisServer->MaxPlayers);
     }
-    mvaddstr(19, 1, text->str);
+    mvaddstr(top + 3, 1, text->str);
     g_string_sprintf(text, _("Up since   : %s"), ThisServer->UpSince);
-    mvaddstr(19, 40, text->str);
+    mvaddstr(top + 3, 40, text->str);
     g_string_sprintf(text, _("Comment: %s"), ThisServer->Comment);
-    mvaddstr(20, 1, text->str);
+    mvaddstr(top + 4, 1, text->str);
     attrset(PromptAttr);
-    mvaddstr(23, 1,
+    mvaddstr(get_prompt_line() + 1, 1,
              _("N>ext server; P>revious server; S>elect this server... "));
 
     /* The three keys that are valid responses to the previous question -
@@ -434,7 +468,7 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     g_string_assign(errstr, "No servers listed on metaserver");
     return FALSE;
   }
-  clear_line(17);
+  clear_line(top + 1);
   refresh();
   g_string_free(text, TRUE);
   return TRUE;
@@ -594,7 +628,7 @@ static gboolean ConnectToServer(Player *Play)
   gboolean MetaOK = TRUE, NetOK = TRUE, firstrun = FALSE;
   GString *errstr;
   gchar *text;
-  int c;
+  int c, top = get_ui_area_top();
 
   errstr = g_string_new("");
 
@@ -617,41 +651,41 @@ static gboolean ConnectToServer(Player *Play)
     attrset(TextAttr);
     clear_bottom();
     if (MetaOK && !firstrun) {
-      mvaddstr(17, 1, _("Please wait... attempting to contact "
-                        "dopewars server..."));
+      mvaddstr(top + 1, 1, _("Please wait... attempting to contact "
+                             "dopewars server..."));
       refresh();
       NetOK = DoConnect(Play, errstr);
     }
     if (!NetOK || !MetaOK || firstrun) {
       firstrun = FALSE;
-      clear_line(16);
-      clear_line(17);
+      clear_line(top);
+      clear_line(top + 1);
       if (!MetaOK) {
         /* Display of an error while contacting the metaserver */
-        mvaddstr(16, 1, _("Cannot get metaserver details"));
+        mvaddstr(top, 1, _("Cannot get metaserver details"));
         text = g_strdup_printf("   (%s)", errstr->str);
-        mvaddstr(17, 1, text);
+        mvaddstr(top + 1, 1, text);
         g_free(text);
       } else if (!NetOK) {
         /* Display of an error message while trying to contact a dopewars
          * server (the error message itself is displayed on the next
          * screen line) */
-        mvaddstr(16, 1, _("Could not start multiplayer dopewars"));
+        mvaddstr(top, 1, _("Could not start multiplayer dopewars"));
         text = g_strdup_printf("   (%s)", errstr->str);
-        mvaddstr(17, 1, text);
+        mvaddstr(top + 1, 1, text);
         g_free(text);
       }
       MetaOK = NetOK = TRUE;
       attrset(PromptAttr);
-      mvaddstr(18, 1,
+      mvaddstr(top + 2, 1,
                _("Will you... C>onnect to a named dopewars server"));
-      mvaddstr(19, 1,
+      mvaddstr(top + 3, 1,
                _("            L>ist the servers on the metaserver, and "
                  "select one"));
-      mvaddstr(20, 1,
+      mvaddstr(top + 4, 1,
                _("            Q>uit (where you can start a server "
                  "by typing \"dopewars -s\")"));
-      mvaddstr(21, 1, _("         or P>lay single-player ? "));
+      mvaddstr(top + 5, 1, _("         or P>lay single-player ? "));
       attrset(TextAttr);
 
       /* Translate these 4 keys in line with the above options, keeping
@@ -680,6 +714,52 @@ static gboolean ConnectToServer(Player *Play)
 }
 #endif /* NETWORKING */
 
+/*
+ * Displays the list of null-terminated names given by the "names"
+ * parameter in the bottom part of the screen. The names are spaced
+ * in columns so as to attempt to make best use of the available space.
+ * After displaying the names, the list is freed.
+ */
+void display_select_list(GSList *names)
+{
+  int top = get_ui_area_top() + 1, maxrows;
+  guint maxlen = 0;
+  int numcols, numrows, xoff, count, numlist;
+  GSList *listpt;
+
+  maxrows = get_prompt_line() - top;
+
+  for (listpt = names, numlist = 0; listpt;
+       listpt = g_slist_next(listpt), numlist++) {
+    maxlen = MAX(maxlen, strlen(listpt->data));
+  }
+
+  maxlen += 3;
+  numcols = Width / maxlen;
+  numcols = MAX(numcols, 1);
+
+  /* Try and make the list reasonably "square" */
+  while(numcols > 1) {
+    numrows = (numlist + numcols - 2) / (numcols - 1);
+    if (numrows <= maxrows && numrows <= numcols && numcols > 1) {
+      numcols--;
+    } else {
+      break;
+    }
+  }
+
+  xoff = (Width - numcols * maxlen + 3) / 2;
+  xoff = MAX(xoff, 0);
+
+  count = 0;
+  for (listpt = names; listpt; listpt = g_slist_next(listpt), count++) {
+    mvaddstr(top + count / numcols, xoff + maxlen * (count % numcols),
+             listpt->data);
+    g_free(listpt->data);
+  }
+  g_slist_free(names);
+}
+
 /* 
  * Displays the list of locations and prompts the user to select one.
  * If "AllowReturn" is TRUE, then if the current location is selected
@@ -694,32 +774,35 @@ static gboolean ConnectToServer(Player *Play)
 static gboolean jet(Player *Play, gboolean AllowReturn)
 {
   int i, c;
-  GString *text;
+  GSList *names = NULL;
+  GString *str;
 
-  text = g_string_new("");
+  str = g_string_new("");
   attrset(TextAttr);
   clear_bottom();
   for (i = 0; i < NumLocation; i++) {
+    gchar *text;
     /* Display of shortcut keys and locations to jet to */
-    dpg_string_sprintf(text, _("%d. %tde"), i + 1, Location[i].Name);
-    mvaddstr(17 + i / 3, (i % 3) * 20 + 12, text->str);
+    text = dpg_strdup_printf(_("%d. %tde"), i + 1, Location[i].Name);
+    names = g_slist_append(names, text);
   }
+  display_select_list(names);
   attrset(PromptAttr);
 
   /* Prompt when the player chooses to "jet" to a new location */
-  mvaddstr(22, 22, _("Where to, dude ? "));
+  mvaddstr(get_prompt_line(), 22, _("Where to, dude ? "));
   attrset(TextAttr);
   curs_set(1);
   do {
     c = bgetch();
     if (c >= '1' && c < '1' + NumLocation) {
-      dpg_string_sprintf(text, _("%/Location display/%tde"),
+      dpg_string_sprintf(str, _("%/Location display/%tde"),
                          Location[c - '1'].Name);
-      addstr(text->str);
+      addstr(str->str);
       if (Play->IsAt != c - '1') {
-        g_string_sprintf(text, "%d", c - '1');
+        g_string_sprintf(str, "%d", c - '1');
         DisplayMode = DM_NONE;
-        SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, text->str);
+        SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, str->str);
       } else {
         c = 0;
       }
@@ -729,7 +812,7 @@ static gboolean jet(Player *Play, gboolean AllowReturn)
   } while (c == 0 && !AllowReturn);
 
   curs_set(0);
-  g_string_free(text, TRUE);
+  g_string_free(str, TRUE);
 
   return (c != 0);
 }
@@ -739,7 +822,7 @@ static gboolean jet(Player *Play, gboolean AllowReturn)
  */
 static void DropDrugs(Player *Play)
 {
-  int i, c, num, NumDrugs;
+  int i, c, num, NumDrugs, top = get_ui_area_top();
   GString *text;
   gchar *buf;
 
@@ -751,18 +834,18 @@ static void DropDrugs(Player *Play)
                       * default) */
                      _("You can\'t get any cash for the following "
                        "carried %tde :"), Names.Drugs);
-  mvaddstr(16, 1, text->str);
+  mvaddstr(top, 1, text->str);
   NumDrugs = 0;
   for (i = 0; i < NumDrug; i++) {
     if (Play->Drugs[i].Carried > 0 && Play->Drugs[i].Price == 0) {
       g_string_sprintf(text, "%c. %-10s %-8d", NumDrugs + 'A',
                        Drug[i].Name, Play->Drugs[i].Carried);
-      mvaddstr(17 + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
+      mvaddstr(top + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
       NumDrugs++;
     }
   }
   attrset(PromptAttr);
-  mvaddstr(22, 20, _("What do you want to drop? "));
+  mvaddstr(get_prompt_line(), 20, _("What do you want to drop? "));
   curs_set(1);
   attrset(TextAttr);
   c = bgetch();
@@ -772,9 +855,8 @@ static void DropDrugs(Player *Play)
       c--;
       if (c < 'A') {
         addstr(Drug[i].Name);
-        buf =
-            nice_input(_("How many do you drop? "), 23, 8, TRUE, NULL,
-                       '\0');
+        buf = nice_input(_("How many do you drop? "), get_prompt_line() + 1,
+                         8, TRUE, NULL, '\0');
         num = atoi(buf);
         g_free(buf);
         if (num > 0) {
@@ -805,13 +887,13 @@ static void DealDrugs(Player *Play, gboolean Buy)
     if (Play->Drugs[c].Price > 0)
       NumDrugsHere++;
 
-  clear_line(22);
+  clear_line(get_prompt_line());
   attrset(PromptAttr);
   if (Buy) {
     /* Buy and sell prompts for dealing drugs or guns */
-    mvaddstr(22, 20, _("What do you wish to buy? "));
+    mvaddstr(get_prompt_line(), 20, _("What do you wish to buy? "));
   } else {
-    mvaddstr(22, 20, _("What do you wish to sell? "));
+    mvaddstr(get_prompt_line(), 20, _("What do you wish to sell? "));
   }
   curs_set(1);
   attrset(TextAttr);
@@ -831,9 +913,9 @@ static void DealDrugs(Player *Play, gboolean Buy)
        * buying drugs */
       text = g_strdup_printf(_("You can afford %d, and can carry %d. "),
                              CanAfford, CanCarry);
-      mvaddstr(23, 2, text);
-      input = nice_input(_("How many do you buy? "), 23, 2 + strlen(text),
-                         TRUE, NULL, '\0');
+      mvaddstr(get_prompt_line() + 1, 2, text);
+      input = nice_input(_("How many do you buy? "), get_prompt_line() + 1,
+                         2 + strlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -847,9 +929,9 @@ static void DealDrugs(Player *Play, gboolean Buy)
       text =
           g_strdup_printf(_("You have %d. "),
                           Play->Drugs[DrugNum].Carried);
-      mvaddstr(23, 2, text);
-      input = nice_input(_("How many do you sell? "), 23, 2 + strlen(text),
-                         TRUE, NULL, '\0');
+      mvaddstr(get_prompt_line() + 1, 2, text);
+      input = nice_input(_("How many do you sell? "), get_prompt_line() + 1,
+                         2 + strlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -876,7 +958,7 @@ static void GiveErrand(Player *Play)
   text = g_string_new("");
   attrset(TextAttr);
   clear_bottom();
-  y = 17;
+  y = get_ui_area_top() + 1;
 
   /* Prompt for sending your bitches out to spy etc. (%tde = "bitches" by
    * default) */
@@ -948,9 +1030,9 @@ static void GiveErrand(Player *Play)
 static int want_to_quit(void)
 {
   attrset(TextAttr);
-  clear_line(22);
+  clear_line(get_prompt_line());
   attrset(PromptAttr);
-  mvaddstr(22, 1, _("Are you sure you want to quit? "));
+  mvaddstr(get_prompt_line(), 1, _("Are you sure you want to quit? "));
   attrset(TextAttr);
   return (GetKey(_("YN"), "YN", FALSE, TRUE, FALSE) != 'N');
 }
@@ -963,7 +1045,8 @@ static void change_name(Player *Play, gboolean nullname)
   gchar *NewName;
 
   /* Prompt for player to change his/her name */
-  NewName = nice_input(_("New name: "), 23, 0, FALSE, NULL, '\0');
+  NewName = nice_input(_("New name: "), get_prompt_line() + 1, 0, FALSE,
+                       NULL, '\0');
 
   if (NewName[0]) {
     StripTerminators(NewName);
@@ -1028,17 +1111,17 @@ void HandleClientMessage(char *Message, Player *Play)
     break;
   case C_PUSH:
     attrset(TextAttr);
-    clear_line(22);
-    mvaddstr(22, 0, _("You have been pushed from the server. "
-                      "Reverting to single player mode."));
+    clear_line(get_prompt_line());
+    mvaddstr(get_prompt_line(), 0, _("You have been pushed from the server. "
+                                     "Reverting to single player mode."));
     nice_wait();
     SwitchToSinglePlayer(Play);
     print_status(Play, TRUE);
     break;
   case C_QUIT:
     attrset(TextAttr);
-    clear_line(22);
-    mvaddstr(22, 0,
+    clear_line(get_prompt_line());
+    mvaddstr(get_prompt_line(), 0,
              _("The server has terminated. Reverting to "
                "single player mode."));
     nice_wait();
@@ -1077,7 +1160,7 @@ void HandleClientMessage(char *Message, Player *Play)
     text = g_strdup_printf(_("%s will now be known as %s."),
                            GetPlayerName(From), Data);
     SetPlayerName(From, Data);
-    mvaddstr(22, 0, text);
+    mvaddstr(get_prompt_line(), 0, text);
     g_free(text);
     nice_wait();
     break;
@@ -1141,18 +1224,19 @@ void HandleClientMessage(char *Message, Player *Play)
     }
     break;
   case C_NEWNAME:
-    clear_line(22);
-    clear_line(23);
+    clear_line(get_prompt_line());
+    clear_line(get_prompt_line() + 1);
     attrset(TextAttr);
-    mvaddstr(22, 0, _("Unfortunately, somebody else is already "
-                      "using \"your\" name. Please change it."));
+    mvaddstr(get_prompt_line(), 0,
+             _("Unfortunately, somebody else is already "
+               "using \"your\" name. Please change it."));
     change_name(Play, TRUE);
     break;
   default:
     if (!Handled) {
       text = g_strdup_printf("%s^%c^%s^%s", GetPlayerName(From), Code,
                              GetPlayerName(Play), Data);
-      mvaddstr(22, 0, text);
+      mvaddstr(get_prompt_line(), 0, text);
       g_free(text);
       nice_wait();
     }
@@ -1208,14 +1292,14 @@ void PrintMessage(const gchar *text)
   guint i, line;
 
   attrset(TextAttr);
-  clear_line(16);
+  clear_line(get_ui_area_top());
 
   line = 1;
   for (i = 0; i < strlen(text) && (text[i] == '^' || text[i] == '\n'); i++)
     line++;
   clear_exceptfor(line);
 
-  line = 17;
+  line = get_ui_area_top() + 1;
   move(line, 1);
   for (i = 0; i < strlen(text); i++) {
     if (text[i] == '^' || text[i] == '\n') {
@@ -1231,19 +1315,19 @@ static void SellGun(Player *Play)
   gchar *text;
   gint gunind;
 
-  clear_line(22);
+  clear_line(get_prompt_line());
   if (TotalGunsCarried(Play) == 0) {
     /* Error - player tried to sell guns that he/she doesn't have
      * (%tde="guns" by default) */
     text = dpg_strdup_printf(_("You don't have any %tde to sell!"),
                              Names.Guns);
-    mvaddstr(22, (Width - strlen(text)) / 2, text);
+    mvaddcentstr(get_prompt_line(), text);
     g_free(text);
     nice_wait();
-    clear_line(23);
+    clear_line(get_prompt_line() + 1);
   } else {
     attrset(PromptAttr);
-    mvaddstr(22, 20, _("What do you wish to sell? "));
+    mvaddstr(get_prompt_line(), 20, _("What do you wish to sell? "));
     curs_set(1);
     attrset(TextAttr);
     gunind = bgetch();
@@ -1252,11 +1336,11 @@ static void SellGun(Player *Play)
       gunind -= 'A';
       addstr(Gun[gunind].Name);
       if (Play->Guns[gunind].Carried == 0) {
-        clear_line(22);
+        clear_line(get_prompt_line());
         /* Error - player tried to sell some guns that he/she doesn't have */
-        mvaddstr(22, 10, _("You don't have any to sell!"));
+        mvaddstr(get_prompt_line(), 10, _("You don't have any to sell!"));
         nice_wait();
-        clear_line(23);
+        clear_line(get_prompt_line() + 1);
       } else {
         Play->Cash += Gun[gunind].Price;
         Play->CoatSize += Gun[gunind].Space;
@@ -1275,7 +1359,7 @@ static void BuyGun(Player *Play)
   gchar *text;
   gint gunind;
 
-  clear_line(22);
+  clear_line(get_prompt_line());
   if (TotalGunsCarried(Play) >= Play->Bitches.Carried + 2) {
     text = dpg_strdup_printf(
                               /* Error - player tried to buy more guns
@@ -1285,13 +1369,13 @@ static void BuyGun(Player *Play)
                               _("You'll need more %tde to carry "
                                 "any more %tde!"),
                               Names.Bitches, Names.Guns);
-    mvaddstr(22, (Width - strlen(text)) / 2, text);
+    mvaddcentstr(get_prompt_line(), text);
     g_free(text);
     nice_wait();
-    clear_line(23);
+    clear_line(get_prompt_line() + 1);
   } else {
     attrset(PromptAttr);
-    mvaddstr(22, 20, _("What do you wish to buy? "));
+    mvaddstr(get_prompt_line(), 20, _("What do you wish to buy? "));
     curs_set(1);
     attrset(TextAttr);
     gunind = bgetch();
@@ -1300,25 +1384,25 @@ static void BuyGun(Player *Play)
       gunind -= 'A';
       addstr(Gun[gunind].Name);
       if (Gun[gunind].Space > Play->CoatSize) {
-        clear_line(22);
+        clear_line(get_prompt_line());
         /* Error - player tried to buy a gun that he/she doesn't have
          * space for (%tde="gun" by default) */
         text = dpg_strdup_printf(_("You don't have enough space to "
                                    "carry that %tde!"), Names.Gun);
-        mvaddstr(22, (Width - strlen(text)) / 2, text);
+        mvaddcentstr(get_prompt_line(), text);
         g_free(text);
         nice_wait();
-        clear_line(23);
+        clear_line(get_prompt_line() + 1);
       } else if (Gun[gunind].Price > Play->Cash) {
-        clear_line(22);
+        clear_line(get_prompt_line());
         /* Error - player tried to buy a gun that he/she can't afford
          * (%tde="gun" by default) */
         text = dpg_strdup_printf(_("You don't have enough cash to buy "
                                    "that %tde!"), Names.Gun);
-        mvaddstr(22, (Width - strlen(text)) / 2, text);
+	mvaddcentstr(get_prompt_line(), text);
         g_free(text);
         nice_wait();
-        clear_line(23);
+        clear_line(get_prompt_line() + 1);
       } else {
         Play->Cash -= Gun[gunind].Price;
         Play->CoatSize -= Gun[gunind].Space;
@@ -1339,24 +1423,24 @@ static void BuyGun(Player *Play)
 void GunShop(Player *Play)
 {
   int i, action;
+  GSList *names = NULL;
   gchar *text;
 
   print_status(Play, FALSE);
   attrset(TextAttr);
   clear_bottom();
   for (i = 0; i < NumGun; i++) {
-    text =
-        dpg_strdup_printf("%c. %-22tde %12P", 'A' + i, Gun[i].Name,
-                          Gun[i].Price);
-    mvaddstr(17 + i / 2, (i % 2) * 40 + 1, text);
-    g_free(text);
+    text = dpg_strdup_printf("%c. %-22tde %12P", 'A' + i, Gun[i].Name,
+                             Gun[i].Price);
+    names = g_slist_append(names, text);
   }
+  display_select_list(names);
   do {
     /* Prompt for actions in the gun shop */
     text = _("Will you B>uy, S>ell, or L>eave? ");
     attrset(PromptAttr);
-    clear_line(22);
-    mvaddcentstr(22, text);
+    clear_line(get_prompt_line());
+    mvaddcentstr(get_prompt_line(), text);
     attrset(TextAttr);
 
     /* Translate these three keys in line with the above options, keeping
@@ -1552,38 +1636,41 @@ void clear_line(int line)
 }
 
 /* 
- * Clears the bottom of the screen (i.e. from line 16 to line 23)
+ * Clears the bottom of the screen (the user interface)
  * except for the top "skip" lines.
  */
 void clear_exceptfor(int skip)
 {
-  int i;
+  int i, from = get_ui_area_top() + skip, to  = get_ui_area_bottom();
 
-  for (i = 16 + skip; i <= 23; i++)
+  for (i = from; i <= to; i++) {
     clear_line(i);
+  }
 }
 
 
 /* 
- * Clears screen lines 16 to 23.
+ * Clears the bottom part of the screen (the user interface)
  */
 void clear_bottom(void)
 {
-  int i;
+  int i, from = get_ui_area_top(), to = get_ui_area_bottom();
 
-  for (i = 16; i <= 23; i++)
+  for (i = from; i <= to; i++) {
     clear_line(i);
+  }
 }
 
 /* 
- * Clears the entire screen; 24 lines of 80 characters each.
+ * Clears the entire screen
  */
 void clear_screen(void)
 {
   int i;
 
-  for (i = 0; i < Depth; i++)
+  for (i = 0; i < Depth; i++) {
     clear_line(i);
+  }
 }
 
 /* 
@@ -1593,7 +1680,7 @@ void clear_screen(void)
 void nice_wait()
 {
   attrset(PromptAttr);
-  mvaddcentstr(23, _("Press any key..."));
+  mvaddcentstr(get_prompt_line() + 1, _("Press any key..."));
   bgetch();
   attrset(TextAttr);
 }
@@ -1653,22 +1740,6 @@ void DisplayFightMessage(Player *Play, char *text)
       textpt += MIN(strlen(textpt), 78);
     }
   }
-}
-
-/*
- * Returns the topmost row of the message area
- */
-static int get_msg_area_top(void)
-{
-  return 10;
-}
-
-/*
- * Returns the bottommost row of the message area
- */
-static int get_msg_area_bottom(void)
-{
-  return 14;
 }
 
 /* Number of lines that the message window is scrolled back by */
@@ -2017,37 +2088,39 @@ Player *ListPlayers(Player *Play, gboolean Select, char *Prompt)
 {
   Player *tmp = NULL;
   GSList *list;
-  int i, c;
+  int i, c, top = get_ui_area_top(), bottom = get_ui_area_bottom();
   gchar *text;
+  GSList *names = NULL;
 
   attrset(TextAttr);
   clear_bottom();
   if (!FirstClient || (!g_slist_next(FirstClient) &&
                        FirstClient->data == Play)) {
     text = _("No other players are currently logged on!");
-    mvaddstr(18, (Width - strlen(text)) / 2, text);
+    mvaddcentstr((top + bottom) / 2, text);
     nice_wait();
     return 0;
   }
-  mvaddstr(16, 1, _("Players currently logged on:-"));
+  mvaddstr(top, 1, _("Players currently logged on:-"));
 
   i = 0;
   for (list = FirstClient; list; list = g_slist_next(list)) {
     tmp = (Player *)list->data;
     if (strcmp(GetPlayerName(tmp), GetPlayerName(Play)) == 0)
       continue;
-    if (Select)
+    if (Select) {
       text = g_strdup_printf("%c. %s", 'A' + i, GetPlayerName(tmp));
-    else
+    } else {
       text = g_strdup(GetPlayerName(tmp));
-    mvaddstr(17 + i / 2, (i % 2) * 40 + 1, text);
-    g_free(text);
+    }
+    names = g_slist_append(names, text);
     i++;
   }
+  display_select_list(names);
 
   if (Prompt) {
     attrset(PromptAttr);
-    mvaddstr(22, 10, Prompt);
+    mvaddstr(get_prompt_line(), 10, Prompt);
     attrset(TextAttr);
   }
   if (Select) {
@@ -2163,6 +2236,38 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   return ReturnString;
 }
 
+static void DisplayDrugsHere(Player *Play)
+{
+  int NumDrugsHere, i, c;
+  gchar *text;
+  GSList *names = NULL;
+
+  attrset(TextAttr);
+  NumDrugsHere = 0;
+  for (i = 0; i < NumDrug; i++) {
+    if (Play->Drugs[i].Price > 0) {
+      NumDrugsHere++;
+    }
+  }
+  clear_bottom();
+  /* Display of drug prices (%tde="drugs" by default) */
+  text = dpg_strdup_printf(_("Hey dude, the prices of %tde here are:"),
+                           Names.Drugs);
+  mvaddstr(get_ui_area_top(), 1, text);
+  g_free(text);
+  for (c = 0, i = GetNextDrugIndex(-1, Play);
+       c < NumDrugsHere && i != -1;
+       c++, i = GetNextDrugIndex(i, Play)) {
+    /* List of individual drug names for selection (%tde="Opium" etc.
+     * by default) */
+    text = dpg_strdup_printf( _("%c. %-10tde %8P"), 'A' + c,
+                             Drug[i].Name, Play->Drugs[i].Price);
+    names = g_slist_append(names, text);
+  }
+  display_select_list(names);
+  attrset(PromptAttr);
+}
+
 /* 
  * Loop which handles the user playing an interactive game (i.e. "Play"
  * is a client connected to a server, either locally or remotely)
@@ -2186,7 +2291,6 @@ static void Curses_DoGame(Player *Play)
   gchar *pt;
   gboolean justconnected = FALSE;
 #endif
-  int NumDrugsHere;
   int MaxSock;
   char HaveWorthless;
   Player *tmp;
@@ -2214,9 +2318,8 @@ static void Curses_DoGame(Player *Play)
   buf = NULL;
   do {
     g_free(buf);
-    buf =
-        nice_input(_("Hey dude, what's your name? "), 17, 1, FALSE,
-                   OldName, '\0');
+    buf = nice_input(_("Hey dude, what's your name? "), get_ui_area_top() + 1,
+                     1, FALSE, OldName, '\0');
   } while (buf[0] == 0);
 #if NETWORKING
   if (WantNetwork) {
@@ -2249,32 +2352,14 @@ static void Curses_DoGame(Player *Play)
     for (i = 0; i < NumDrug; i++) {
       if (Play->Drugs[i].Carried > 0) {
         IsCarrying = 1;
-        if (Play->Drugs[i].Price == 0)
+        if (Play->Drugs[i].Price == 0) {
           HaveWorthless = 1;
+        }
       }
     }
     switch (DisplayMode) {
     case DM_STREET:
-      attrset(TextAttr);
-      NumDrugsHere = 0;
-      for (i = 0; i < NumDrug; i++)
-        if (Play->Drugs[i].Price > 0)
-          NumDrugsHere++;
-      clear_bottom();
-      /* Display of drug prices (%tde="drugs" by default) */
-      dpg_string_sprintf(text, _("Hey dude, the prices of %tde here are:"),
-                         Names.Drugs);
-      mvaddstr(16, 1, text->str);
-      for (c = 0, i = GetNextDrugIndex(-1, Play);
-           c < NumDrugsHere && i != -1;
-           c++, i = GetNextDrugIndex(i, Play)) {
-        /* List of individual drug names for selection (%tde="Opium" etc.
-         * by default) */
-        dpg_string_sprintf(text, _("%c. %-10tde %8P"), 'A' + c,
-                           Drug[i].Name, Play->Drugs[i].Price);
-        mvaddstr(17 + c / 3, (c % 3) * 25 + 4, text->str);
-      }
-      attrset(PromptAttr);
+      DisplayDrugsHere(Play);
       /* Prompts for "normal" actions in curses client */
       g_string_assign(text, _("Will you B>uy"));
       if (IsCarrying)
@@ -2294,7 +2379,7 @@ static void Curses_DoGame(Player *Play)
         g_string_append(text, _(", J>et"));
       }
       g_string_append(text, _(", or Q>uit? "));
-      mvaddcentstr(22, text->str);
+      mvaddcentstr(get_prompt_line(), text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
@@ -2316,7 +2401,7 @@ static void Curses_DoGame(Player *Play)
         /* (%tde = "drugs" by default here) */
         dpg_string_sprintfa(text, _("D>eal %tde, "), Names.Drugs);
       g_string_append(text, _("or Q>uit? "));
-      mvaddcentstr(22, text->str);
+      mvaddcentstr(get_prompt_line(), text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
@@ -2329,7 +2414,7 @@ static void Curses_DoGame(Player *Play)
       g_string_append(text, Names.Drugs);
       g_string_append(text, ", or Q>uit? ");
       attrset(PromptAttr);
-      mvaddcentstr(22, text->str);
+      mvaddcentstr(get_prompt_line(), text->str);
       attrset(TextAttr);
       curs_set(1);
       break;
@@ -2378,9 +2463,10 @@ static void Curses_DoGame(Player *Play)
       }
       if (!DoneOK) {
         attrset(TextAttr);
-        clear_line(22);
-        mvaddstr(22, 0, _("Connection to server lost! "
-                          "Reverting to single player mode"));
+        clear_line(get_prompt_line());
+        mvaddstr(get_prompt_line(), 0,
+	         _("Connection to server lost! "
+                   "Reverting to single player mode"));
         nice_wait();
         SwitchToSinglePlayer(Play);
         print_status(Play, TRUE);
@@ -2441,7 +2527,8 @@ static void Curses_DoGame(Player *Play)
       } else if (c == 'L') {
         if (Network) {
           attrset(PromptAttr);
-          mvaddstr(23, 20, _("List what? P>layers or S>cores? "));
+          mvaddstr(get_prompt_line() + 1, 20,
+                   _("List what? P>layers or S>cores? "));
           /* P>layers, S>cores */
           i = GetKey(_("PS"), "PS", TRUE, FALSE, FALSE);
           if (i == 'P') {
@@ -2460,9 +2547,10 @@ static void Curses_DoGame(Player *Play)
                             "(talk privately to) ? "));
         if (tmp) {
           attrset(TextAttr);
-          clear_line(22);
+          clear_line(get_prompt_line());
           /* Prompt for sending player-player messages */
-          TalkMsg = nice_input(_("Talk: "), 22, 0, FALSE, NULL, '\0');
+          TalkMsg = nice_input(_("Talk: "), get_prompt_line(), 0, FALSE,
+                               NULL, '\0');
           if (TalkMsg[0]) {
             SendClientMessage(Play, C_NONE, C_MSGTO, tmp, TalkMsg);
             buf = g_strdup_printf("%s->%s: %s", GetPlayerName(Play),
@@ -2474,8 +2562,9 @@ static void Curses_DoGame(Player *Play)
         }
       } else if (c == 'T' && Client) {
         attrset(TextAttr);
-        clear_line(22);
-        TalkMsg = nice_input(_("Talk: "), 22, 0, FALSE, NULL, '\0');
+        clear_line(get_prompt_line());
+        TalkMsg = nice_input(_("Talk: "), get_prompt_line(), 0,
+                             FALSE, NULL, '\0');
         if (TalkMsg[0]) {
           SendClientMessage(Play, C_NONE, C_MSG, NULL, TalkMsg);
           buf = g_strdup_printf("%s: %s", GetPlayerName(Play), TalkMsg);
@@ -2587,7 +2676,7 @@ void CursesLoop(struct CMDLINE *cmdline)
     CleanUpServer();
     RestoreConfig();
     attrset(TextAttr);
-    mvaddstr(23, 20, _("Play again? "));
+    mvaddstr(get_prompt_line() + 1, 20, _("Play again? "));
     c = GetKey(_("YN"), "YN", TRUE, TRUE, FALSE);
   } while (c == 'Y');
   FirstClient = RemovePlayer(Play, FirstClient);

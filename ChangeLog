@@ -1,6 +1,8 @@
 cvs
     - The messages window in the curses client can now be scrolled with the
       + and - keys
+    - The curses client now makes better use of space with screen sizes
+      larger than 80x24
 
 1.5.8   21-10-2002
     - Options dialog now allows sounds for all supported game events to be set
