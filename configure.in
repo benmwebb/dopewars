@@ -195,7 +195,7 @@ fi
 dnl Enable full warnings if using gcc
 if test -n "$GCC"; then
 dnl   CFLAGS="$CFLAGS -Wall -Wfloat-equal -Wpointer-arith -Wbad-function-cast -Wcast-qual -Wcast-align -Wconversion -Wsign-compare -Waggregate-return -Wstrict-prototypes -Wredundant-decls -Wnested-externs -Wunreachable-code -Wunused"
-   CFLAGS="$CFLAGS -Wall"
+   CFLAGS="$CFLAGS -Wall -Wfloat-equal -Wpointer-arith -Wcast-qual -Wcast-align -Wsign-compare -Waggregate-return -Wredundant-decls -Wnested-externs -Wunused"
 fi
 
 dnl Pass the data directory to the compiler so the program knows
