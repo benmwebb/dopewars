@@ -1083,7 +1083,7 @@ static int SetupLocalSocket(void)
 void ServerLoop()
 {
   Player *tmp;
-  GSList *list, *nextlist;
+  GSList *list, *nextlist, *listcp;
   fd_set readfs, writefs, errorfs;
   int topsock;
   struct timeval timeout;
@@ -1247,11 +1247,13 @@ void ServerLoop()
           break;
       }
     }
-    list = FirstServer;
-    while (list) {
-      nextlist = g_slist_next(list);
-      tmp = (Player *)list->data;
-      if (tmp) {
+
+    /* Check all players for data; iterate over a copy of the player list,
+     * as HandleServerPlayer may remove players from this list! */
+    listcp = g_slist_copy(FirstServer);
+    for (list = listcp; list; list = g_slist_next(list)) {
+      if (list->data && g_slist_find(FirstServer, list->data)) {
+        tmp = (Player *)list->data;
         if (RespondToSelect(&tmp->NetBuf, &readfs, &writefs,
                             &errorfs, &DoneOK)) {
           /* If any complete messages were read, process them */
@@ -1261,15 +1263,16 @@ void ServerLoop()
           /* The socket has been shut down, or the buffer was filled -
            * remove player */
           RemovePlayerFromServer(tmp);
-          if (IsServerShutdown())
+          if (IsServerShutdown()) {
             break;
-          tmp = NULL;
+          }
         }
       }
-      list = nextlist;
     }
-    if (list && IsServerShutdown())
+    g_slist_free(listcp);
+    if (IsServerShutdown()) {
       break;
+    }
   }
 #ifndef CYGWIN
   CloseLocalSocket(localsock);
