@@ -1096,6 +1096,11 @@ void ResizeStoppedTo(int NewNum) {
 }
 
 void AssignName(gchar **dest,gchar *src) {
+/* Sets the dynamically-sized string pointed to by *dest to a copy of */
+/* "src" - src can safely be freed or reused afterwards. Any existing */
+/* string in "dest" is freed. The function returns immediately if src */
+/* and *dest are already the same.                                    */
+   if (*dest == src) return;
    g_free(*dest);
    *dest=g_strdup(src);
 }

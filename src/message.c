@@ -515,12 +515,14 @@ void SendSpyReport(Player *To,Player *SpiedOn) {
    g_string_free(text,TRUE);
 }
 
-#define NUMNAMES 8
+#define NUMNAMES 12
 
 void SendInitialData(Player *To) {
    gchar *LocalNames[NUMNAMES] = { Names.Bitch,Names.Bitches,Names.Gun,
                                    Names.Guns,Names.Drug,Names.Drugs,
-                                   Names.Month,Names.Year };
+                                   Names.Month,Names.Year,Names.LoanSharkName,
+                                   Names.BankName,Names.GunShopName,
+                                   Names.RoughPubName };
    gint i;
    GString *text;
 
@@ -530,14 +532,21 @@ void SendInitialData(Player *To) {
    }
    text=g_string_new("");
    g_string_sprintf(text,"%s^%d^%d^%d^",VERSION,NumLocation,NumGun,NumDrug);
-   for (i=0;i<NUMNAMES;i++) {
+   for (i=0;i<8;i++) {
       g_string_append(text,LocalNames[i]);
       g_string_append_c(text,'^');
    }
+   if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
+
+/* Player ID is expected after the first 8 names, so send the rest now */
+   for (i=8;i<NUMNAMES;i++) {
+      g_string_append(text,LocalNames[i]);
+      g_string_append_c(text,'^');
+   }
+
    if (!HaveAbility(To,A_TSTRING)) for (i=0;i<NUMNAMES;i++) {
       g_free(LocalNames[i]);
    }
-   if (HaveAbility(To,A_PLAYERID)) g_string_sprintfa(text,"%d^",To->ID);
    SendServerMessage(NULL,C_NONE,C_INIT,To,text->str);
    g_string_free(text,TRUE);
 }
@@ -562,6 +571,14 @@ void ReceiveInitialData(Player *Play,char *Data) {
    AssignName(&Names.Month,GetNextWord(&pt,""));
    AssignName(&Names.Year,GetNextWord(&pt,""));
    if (HaveAbility(Play,A_PLAYERID)) Play->ID=GetNextInt(&pt,0);
+
+/* Servers up to version 1.4.8 don't send the following names, so 
+   default to the existing values if they haven't been sent */
+   AssignName(&Names.LoanSharkName,GetNextWord(&pt,Names.LoanSharkName));
+   AssignName(&Names.BankName,GetNextWord(&pt,Names.BankName));
+   AssignName(&Names.GunShopName,GetNextWord(&pt,Names.GunShopName));
+   AssignName(&Names.RoughPubName,GetNextWord(&pt,Names.RoughPubName));
+
    if (strcmp(VERSION,ServerVersion)!=0) {
       g_message(_("This server is version %s, while your client is "
 "version %s.\nBe warned that different versions may not be fully compatible!\n"
