@@ -1012,7 +1012,6 @@ void SendEvent(Player *To) {
    gchar *text;
    Player *Play;
    GSList *list;
-   gchar *prstr;
 
    if (!To) return;
    if (To->EventNum==E_MAX) To->EventNum=E_NONE;
@@ -1047,8 +1046,8 @@ void SendEvent(Player *To) {
                    else j=brandom(0,NUMDISCOVER-1);
                    text=dpg_strdup_printf(
                         _("One of your %tde was spying for %s.^The spy %s!"),
-                        Names.Bitches,
-                        GetPlayerName(To->SpyList.Data[i].Play),_(Discover[j]));
+                        Names.Bitches,GetPlayerName(To->SpyList.Data[i].Play),
+                        _(Discover[j]));
                    if (j!=DEFECT) LoseBitch(To,NULL,NULL);
                    SendPlayerData(To);
                    SendPrintMessage(NULL,C_NONE,To,text);
@@ -1127,12 +1126,11 @@ void SendEvent(Player *To) {
          case E_HIREBITCH:
             if (To->IsAt+1==RoughPubLoc && !WantAntique) {
                To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice);
-               text=g_strdup_printf(
-                           _("YN^^Would you like to hire a %tde for %s?"),
-                           Names.Bitch,
-                           prstr=FormatPrice(To->Bitches.Price));
+               text=dpg_strdup_printf(
+                           _("YN^^Would you like to hire a %tde for %P?"),
+                           Names.Bitch,To->Bitches.Price);
                SendQuestion(NULL,C_ASKBITCH,To,text);
-               g_free(text); g_free(prstr);
+               g_free(text);
                return;
             }
             break;
@@ -1554,20 +1552,18 @@ int OfferObject(Player *To,char ForceBitch) {
 /* TRUE, then a bitch is definitely offered. Returns 0 if the client */
 /* can advance immediately to the next state, 1 otherwise.           */
    int ObjNum;
-   gchar *prstr,*text=NULL;
+   gchar *text=NULL;
 
    if (brandom(0,100)<50 || ForceBitch) {
       if (WantAntique) {
          To->Bitches.Price=brandom(MINTRENCHPRICE,MAXTRENCHPRICE);
-         text=g_strdup_printf(_("Would you like to buy a bigger trenchcoat "
-                              "for %s?"),prstr=FormatPrice(To->Bitches.Price));
-         g_free(prstr);
+         text=dpg_strdup_printf(_("Would you like to buy a bigger trenchcoat "
+                                "for %P?"),To->Bitches.Price);
       } else {
          To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice)/10l;
-         text=g_strdup_printf(_("YN^Hey dude! I'll help carry your %s for a "
-                              "mere %s. Yes or no?"),Names.Drugs,
-                              prstr=FormatPrice(To->Bitches.Price));
-         g_free(prstr);
+         text=dpg_strdup_printf(
+                       _("YN^Hey dude! I'll help carry your %tde for a "
+                         "mere %P. Yes or no?"),Names.Drugs,To->Bitches.Price);
       }
       SendQuestion(NULL,C_ASKBITCH,To,text);
       g_free(text);
@@ -1576,10 +1572,8 @@ int OfferObject(Player *To,char ForceBitch) {
       ObjNum=brandom(0,NumGun);
       To->Guns[ObjNum].Price=Gun[ObjNum].Price/10;
       if (Gun[ObjNum].Space>To->CoatSize) return 0;
-      text=g_strdup_printf(_("YN^Would you like to buy a %s for %s?"),
-                           Gun[ObjNum].Name,
-                           prstr=FormatPrice(To->Guns[ObjNum].Price));
-      g_free(prstr);
+      text=dpg_strdup_printf(_("YN^Would you like to buy a %tde for %P?"),
+                             Gun[ObjNum].Name,To->Guns[ObjNum].Price);
       SendQuestion(NULL,C_ASKGUN,To,text);
       g_free(text);
       return 1;

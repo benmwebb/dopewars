@@ -1,7 +1,9 @@
 1.4.9
     - Completely rewritten fighting code
-    - Tense and case-sensitive translated strings
     - Internationalization (i18n) support
+    - Tense and case-sensitive translated strings handled via. dpg_ analogues
+      to glib's g_ string handling functions %P = price,
+      %Txx or %txx = tense-sensitive string
     - Networking revamped - now uses nonblocking sockets to improve server
       responsiveness and to remove deadlocks (previously, any client could
       halt server by sending an unterminated message); "abilities" added to

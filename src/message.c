@@ -1054,8 +1054,7 @@ void FormatFightMessage(Player *To,GString *text,
                                    _("armed to the teeth");
          if (DefendName[0]) {
             dpg_string_sprintfa(text,_("%s arrives with %d %tde, %s!"),
-                                Names.Bitches,
-                                DefendName,Bitches,Armament);
+                                DefendName,Bitches,Names.Bitches,Armament);
          }
          break;
       case F_STAND:
@@ -1095,8 +1094,7 @@ void FormatFightMessage(Player *To,GString *text,
                                  AttackName,DefendName);
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,_("%s shoots at %s and kills a %tde!"),
-                                   Names.Bitch,
-                                   AttackName,DefendName);
+                                   AttackName,DefendName,Names.Bitch);
              } else {
                g_string_sprintfa(text,_("%s shoots at %s."),
                                  AttackName,DefendName);
@@ -1108,8 +1106,7 @@ void FormatFightMessage(Player *To,GString *text,
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,
                                    _("%s shoots at you... and kills a %tde!"),
-                                   Names.Bitch,
-                                   AttackName);
+                                   AttackName,Names.Bitch);
             } else {
                g_string_sprintfa(text,_("%s hits you, man!"),AttackName);
             }
@@ -1118,8 +1115,7 @@ void FormatFightMessage(Player *To,GString *text,
                g_string_sprintfa(text,_("You killed %s!"),DefendName);
             } else if (BitchesKilled) {
                dpg_string_sprintfa(text,_("You hit %s, and killed a %tde!"),
-                                   Names.Bitch,
-                                   DefendName);
+                                   DefendName,Names.Bitch);
             } else {
                g_string_sprintfa(text,_("You hit %s!"),DefendName);
             }

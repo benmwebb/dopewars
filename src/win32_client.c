@@ -116,31 +116,21 @@ static void DisplayStats(Player *Play,struct STATS *Stats) {
    g_string_sprintf(text,"Space available: %d",Play->CoatSize);
    SetWindowText(Stats->Space,text->str);
 
-   prstr=FormatPrice(Play->Cash);
-   g_string_sprintf(text,"Cash: %s",prstr);
+   dpg_string_sprintf(text,"Cash: %P",Play->Cash);
    SetWindowText(Stats->Cash,text->str);
-   g_free(prstr);
 
-   prstr=FormatPrice(Play->Debt);
-   g_string_sprintf(text,"Debt: %s",prstr);
+   dpg_string_sprintf(text,"Debt: %P",Play->Debt);
    SetWindowText(Stats->Debt,text->str);
-   g_free(prstr);
 
-   prstr=FormatPrice(Play->Bank);
-   g_string_sprintf(text,"Bank: %s",prstr);
+   dpg_string_sprintf(text,"Bank: %P",Play->Bank);
    SetWindowText(Stats->Bank,text->str);
-   g_free(prstr);
 
-   caps=InitialCaps(Names.Guns);
-   g_string_sprintf(text,"%s: %d",caps,TotalGunsCarried(Play));
+   dpg_string_sprintf(text,"%Tde: %d",Names.Guns,TotalGunsCarried(Play));
    SetWindowText(Stats->Guns,text->str);
-   g_free(caps);
 
    if (!WantAntique) {
-      caps=InitialCaps(Names.Bitches);
-      g_string_sprintf(text,"%s: %d",caps,Play->Bitches.Carried);
+      dpg_string_sprintf(text,"%Tde: %d",Names.Bitches,Play->Bitches.Carried);
       SetWindowText(Stats->Bitches,text->str);
-      g_free(caps);
    } else SetWindowText(Stats->Bitches,"");
 
    g_string_sprintf(text,"Health: %d",Play->Health);
@@ -192,13 +182,12 @@ void UpdateInventory(HWND HereList,HWND CarriedList,
       }
       if (HereList && price>0) {
          CanBuy=TRUE;
-         prstr=FormatPrice(price);
-         text=g_strdup_printf("%s\t%s",name,prstr);
+         text=dpg_strdup_printf("%s\t%P",name,price);
          addresult=SendMessage(HereList,LB_ADDSTRING,0,(LPARAM)text);
          if (addresult>=0 && addresult<NumObjects) {
             SendMessage(HereList,LB_SETITEMDATA,(WPARAM)addresult,(LPARAM)i);
          }
-         g_free(text); g_free(prstr);
+         g_free(text);
       }
       if (Objects[i].Carried>0) {
          if (price>0) CanSell=TRUE; else CanDrop=TRUE;
@@ -221,15 +210,13 @@ static void SetErrandMenus(HWND hwnd) {
    menu=GetMenu(hwnd);
    if (!menu) return;
 
-   prstr=FormatPrice(Prices.Spy);
-   text=g_strdup_printf("&Spy\t(%s)",prstr);
+   text=dpg_strdup_printf("&Spy\t(%P)",Prices.Spy);
    ModifyMenu(menu,ID_SPY,MF_BYCOMMAND | MF_STRING,ID_SPY,text);
-   g_free(text); g_free(prstr);
+   g_free(text);
 
-   prstr=FormatPrice(Prices.Tipoff);
-   text=g_strdup_printf("&Tipoff\t(%s)",prstr);
+   text=dpg_strdup_printf("&Tipoff\t(%P)",Prices.Tipoff);
    ModifyMenu(menu,ID_TIPOFF,MF_BYCOMMAND | MF_STRING,ID_TIPOFF,text);
-   g_free(text); g_free(prstr);
+   g_free(text);
 
    DrawMenuBar(hwnd);
 }
@@ -447,9 +434,7 @@ static void UpdateDealDialog(HWND hwnd,LONG DealType,int DrugInd) {
 
    CanDrop=Play->Drugs[DrugInd].Carried;
    CanCarry=Play->CoatSize;
-   prstr=FormatPrice(Play->Drugs[DrugInd].Price);
-   g_string_sprintf(text,"at %s",prstr);
-   g_free(prstr);
+   dpg_string_sprintf(text,"at %P",Play->Drugs[DrugInd].Price);
    SetDlgItemText(hwnd,ST_DEALPRICE,text->str);
 
    g_string_sprintf(text,"You are currently carrying %d %s",
@@ -773,20 +758,17 @@ BOOL CALLBACK TransferWndProc(HWND hwnd,UINT msg,UINT wParam,
    switch(msg) {
       case WM_INITDIALOG:
          Type=(char)lParam;
-         prstr=FormatPrice(ClientData.Play->Cash);
-         text=g_strdup_printf("Cash: %s",prstr);
+         text=dpg_strdup_printf("Cash: %P",ClientData.Play->Cash);
          SetDlgItemText(hwnd,ST_MONEY,text);
          g_free(text); g_free(prstr);
          if (Type==C_BANK) {
             CheckDlgButton(hwnd,RB_WITHDRAW,BST_CHECKED);
-            prstr=FormatPrice(ClientData.Play->Bank);
-            text=g_strdup_printf("Bank: %s",prstr);
+            text=dpg_strdup_printf("Bank: %P",ClientData.Play->Bank);
          } else {
-            prstr=FormatPrice(ClientData.Play->Debt);
-            text=g_strdup_printf("Debt: %s",prstr);
+            text=dpg_strdup_printf("Debt: %P",ClientData.Play->Debt);
          }
          SetDlgItemText(hwnd,ST_BANK,text);
-         g_free(text); g_free(prstr);
+         g_free(text);
          return TRUE;
       case WM_COMMAND:
          if (HIWORD(wParam)==BN_CLICKED) switch(LOWORD(wParam)) {

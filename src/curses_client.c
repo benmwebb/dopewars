@@ -501,7 +501,6 @@ static void GiveErrand(Player *Play) {
 /* Prompts the user (player "Play") to give an errand to one of his/her */
 /* bitches. The decision is relayed to the server for implementation.   */
    int c,y;
-   gchar *prstr;
    GString *text;
    Player *To;
 
@@ -514,14 +513,14 @@ static void GiveErrand(Player *Play) {
    mvaddstr(y++,1,text->str);
    attrset(PromptAttr);
    if (Play->Bitches.Carried>0) {
-      g_string_sprintf(text,
-                    _("   S>py on another dealer                  (cost: %s)"),
-                      prstr=FormatPrice(Prices.Spy));
-      mvaddstr(y++,2,text->str); g_free(prstr);
-      g_string_sprintf(text,
-                    _("   T>ip off the cops to another dealer     (cost: %s)"),
-                      prstr=FormatPrice(Prices.Tipoff));
-      mvaddstr(y++,2,text->str); g_free(prstr);
+      dpg_string_sprintf(text,
+                    _("   S>py on another dealer                  (cost: %P)"),
+                      Prices.Spy);
+      mvaddstr(y++,2,text->str);
+      dpg_string_sprintf(text,
+                    _("   T>ip off the cops to another dealer     (cost: %P)"),
+                      Prices.Tipoff);
+      mvaddstr(y++,2,text->str);
       mvaddstr(y++,2,_("   G>et stuffed"));
    }
    if (Play->Flags&SPYINGON) {
@@ -792,16 +791,15 @@ void GunShop(Player *Play) {
 /* Allows player "Play" to buy and sell guns interactively. Passes the */
 /* decisions on to the server for sanity checking and implementation.  */
    int i,c,c2;
-   gchar *text,*prstr;
+   gchar *text;
 
    print_status(Play,0);
    attrset(TextAttr);
    clear_bottom();
    for (i=0;i<NumGun;i++) {
-      text=g_strdup_printf("%c. %-22s %12s",'A'+i,Gun[i].Name,
-                           prstr=FormatPrice(Gun[i].Price));
-      mvaddstr(17+i/2,(i%2)*40+1,text);
-      g_free(prstr); g_free(text);
+      text=dpg_strdup_printf("%c. %-22tde %12P",'A'+i,Gun[i].Name,
+                             Gun[i].Price);
+      mvaddstr(17+i/2,(i%2)*40+1,text); g_free(text);
    }
    while (1) {
       text=_("Will you B>uy, S>ell, or L>eave? ");
@@ -1123,7 +1121,6 @@ void print_status(Player *Play,char DispDrug) {
 /* details. If "DispDrugs" is TRUE, displays the carried drugs on the  */
 /* right hand side of the screen; if FALSE, displays the carried guns. */
    int i,c;
-   gchar *prstr,*caps;
    GString *text;
    gchar *tfmt,**tstr;
 
@@ -1167,21 +1164,16 @@ void print_status(Player *Play,char DispDrug) {
    mvaddstr(1,Width/4-2,_("Stats"));
 
    attrset(StatsAttr);
-   g_string_sprintf(text,_("Cash %17s"),prstr=FormatPrice(Play->Cash));
-   g_free(prstr);
+   g_string_sprintf(text,_("Cash %17P"),Play->Cash);
    mvaddstr(3,9,text->str);
-   g_string_sprintf(text,"%-19s%3d",caps=InitialCaps(Names.Guns),
-                    TotalGunsCarried(Play));
-   g_free(caps);
+   dpg_string_sprintf(text,"%-19Tde%3d",Names.Guns,TotalGunsCarried(Play));
    mvaddstr(Network ? 4 : 5,9,text->str);
    g_string_sprintf(text,_("Health             %3d"),Play->Health);
    mvaddstr(Network ? 5 : 7,9,text->str);
-   g_string_sprintf(text,_("Bank %17s"),prstr=FormatPrice(Play->Bank));
-   g_free(prstr);
+   dpg_string_sprintf(text,_("Bank %17P"),Play->Bank);
    mvaddstr(Network ? 6 : 9,9,text->str);
    if (Play->Debt>0) attrset(DebtAttr);
-   g_string_sprintf(text,_("Debt %17s"),prstr=FormatPrice(Play->Debt));
-   g_free(prstr);
+   dpg_string_sprintf(text,_("Debt %17P"),Play->Debt);
    mvaddstr(Network ? 7 : 11,9,text->str);
    attrset(TitleAttr);
    if (WantAntique) g_string_sprintf(text,_("Space %6d"),Play->CoatSize);
@@ -1383,7 +1375,7 @@ static void Curses_DoGame(Player *Play) {
 /* dopewars is essentially server-driven, so this loop simply has to    */
 /* make the screen look pretty, respond to user keypresses, and react   */
 /* to messages from the server.                                         */
-   gchar *buf,*OldName,*TalkMsg,*pt,*prstr;
+   gchar *buf,*OldName,*TalkMsg,*pt;
    GString *text;
    int i,c;
    char IsCarrying;
@@ -1458,9 +1450,8 @@ static void Curses_DoGame(Player *Play) {
             i=-1;
             for (c=0;c<NumDrugsHere;c++) {
                if ((i=GetNextDrugIndex(i,Play))==-1) break;
-               g_string_sprintf(text,"%c. %-10s %8s",'A'+c,Drug[i].Name,
-                                prstr=FormatPrice(Play->Drugs[i].Price));
-               g_free(prstr);
+               dpg_string_sprintf(text,"%c. %-10tde %8P",'A'+c,Drug[i].Name,
+                                  Play->Drugs[i].Price);
                mvaddstr(17+c/3,(c%3)*25+4,text->str);
             }
             attrset(PromptAttr);

@@ -284,7 +284,7 @@ void SetSocketWriteTest(Player *Play,gboolean WriteTest) {
 void HandleClientMessage(char *pt,Player *Play) {
    char *Data,Code,AICode,DisplayMode;
    Player *From,*tmp;
-   gchar *text,*prstr;
+   gchar *text;
    gboolean Handled;
    GtkWidget *MenuItem;
    GSList *list;
@@ -363,16 +363,14 @@ void HandleClientMessage(char *pt,Player *Play) {
       case C_ENDLIST:
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Spy");
-         prstr=FormatPrice(Prices.Spy);
-         text=g_strdup_printf(_("_Spy\t(%s)"),prstr);
+         text=dpg_strdup_printf(_("_Spy\t(%P)"),Prices.Spy);
          gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
-         g_free(text); g_free(prstr);
-         prstr=FormatPrice(Prices.Tipoff);
-         text=g_strdup_printf(_("_Tipoff\t(%s)"),prstr);
+         g_free(text);
+         text=dpg_strdup_printf(_("_Tipoff\t(%P)"),Prices.Tipoff);
          MenuItem=gtk_item_factory_get_widget(ClientData.Menu,
                                               "<main>/Errands/Tipoff");
          gtk_label_parse_uline(GTK_LABEL(GTK_BIN(MenuItem)->child),text);
-         g_free(text); g_free(prstr);
+         g_free(text);
          break;
       case C_UPDATE:
          if (From==&Noone) {
@@ -684,7 +682,7 @@ void UpdateInventory(struct InventoryWidgets *Inven,
    gint i,row,selectrow[2];
    gpointer rowdata;
    price_t price;
-   gchar *titles[2],*prstr;
+   gchar *titles[2];
    gboolean CanBuy=FALSE,CanSell=FALSE,CanDrop=FALSE;
    GList *glist[2],*selection;
    GtkCList *clist[2];
@@ -740,9 +738,8 @@ void UpdateInventory(struct InventoryWidgets *Inven,
       if (Objects[i].Carried > 0) {
          if (price>0) CanSell=TRUE; else CanDrop=TRUE;
          if (HaveAbility(ClientData.Play,A_DRUGVALUE)) {
-            prstr=FormatPrice(Objects[i].TotalValue/Objects[i].Carried);
-            titles[1] = g_strdup_printf("%d @ %s",Objects[i].Carried,prstr);
-            g_free(prstr);
+            titles[1] = dpg_strdup_printf("%d @ %P",Objects[i].Carried,
+                              Objects[i].TotalValue/Objects[i].Carried);
          } else {
             titles[1] = g_strdup_printf("%d",Objects[i].Carried);
          }
@@ -863,7 +860,6 @@ static struct DealDiaStruct DealDialog;
 
 static void UpdateDealDialog() {
    GString *text;
-   gchar *prstr;
    GtkAdjustment *spin_adj;
    gint DrugInd,CanDrop,CanCarry,CanAfford,MaxDrug;
    Player *Play;
@@ -872,14 +868,12 @@ static void UpdateDealDialog() {
    DrugInd=DealDialog.DrugInd;
    Play=ClientData.Play;
 
-   prstr=FormatPrice(Play->Drugs[DrugInd].Price);
-   g_string_sprintf(text,_("at %s"),prstr);
-   g_free(prstr);
+   dpg_string_sprintf(text,_("at %P"),Play->Drugs[DrugInd].Price);
    gtk_label_set_text(GTK_LABEL(DealDialog.cost),text->str);
 
    CanDrop=Play->Drugs[DrugInd].Carried;
    dpg_string_sprintf(text,_("You are currently carrying %d %tde"),
-                      Drug[DrugInd].Name,CanDrop);
+                      CanDrop,Drug[DrugInd].Name);
    gtk_label_set_text(GTK_LABEL(DealDialog.carrying),text->str);
 
    CanCarry=Play->CoatSize;
@@ -1952,14 +1946,22 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
 
 void TransferDialog(gboolean Debt) {
    GtkWidget *dialog,*button,*label,*radio,*table,*vbox,*hbbox,*hsep,*entry;
-   gchar *text,*prstr;
+   gchar *text;
    GSList *group;
+   gchar *tfmt,**tstr;
 
    dialog=gtk_window_new(GTK_WINDOW_DIALOG);
    gtk_signal_connect(GTK_OBJECT(dialog),"destroy",
                       GTK_SIGNAL_FUNC(SendDoneMessage),NULL);
-   gtk_window_set_title(GTK_WINDOW(dialog),Debt ? Names.LoanSharkName :
-                                                  Names.BankName);
+   if (Debt) {
+      tstring_fmt(&tfmt,&tstr,
+                  _("**LoanShark window title** %Tde"),Names.LoanSharkName);
+   } else {
+      tstring_fmt(&tfmt,&tstr,
+                  _("**BankName window title** %Tde"),Names.BankName);
+   }
+   gtk_window_set_title(GTK_WINDOW(dialog),tstr[0]);
+   tstring_free(tfmt,tstr);
    gtk_container_set_border_width(GTK_CONTAINER(dialog),7);
    gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
    gtk_window_set_transient_for(GTK_WINDOW(dialog),
@@ -1970,21 +1972,18 @@ void TransferDialog(gboolean Debt) {
    gtk_table_set_row_spacings(GTK_TABLE(table),4);
    gtk_table_set_col_spacings(GTK_TABLE(table),4);
 
-   prstr=FormatPrice(ClientData.Play->Cash);
-   text=g_strdup_printf(_("Cash: %s"),prstr);
+   text=dpg_strdup_printf(_("Cash: %P"),ClientData.Play->Cash);
    label=gtk_label_new(text);
-   g_free(text); g_free(prstr);
+   g_free(text);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,0,1);
 
    if (Debt) {
-      prstr=FormatPrice(ClientData.Play->Debt);
-      text=g_strdup_printf(_("Debt: %s"),prstr);
+      text=dpg_strdup_printf(_("Debt: %P"),ClientData.Play->Debt);
    } else {
-      prstr=FormatPrice(ClientData.Play->Bank);
-      text=g_strdup_printf(_("Bank: %s"),prstr);
+      text=dpg_strdup_printf(_("Bank: %P"),ClientData.Play->Bank);
    }
    label=gtk_label_new(text);
-   g_free(text); g_free(prstr);
+   g_free(text);
    gtk_table_attach_defaults(GTK_TABLE(table),label,0,3,1,2);
 
    gtk_object_set_data(GTK_OBJECT(dialog),"debt",GINT_TO_POINTER(Debt));

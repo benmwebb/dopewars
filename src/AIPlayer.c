@@ -29,6 +29,7 @@
 #include "dopeos.h"
 #include "dopewars.h"
 #include "message.h"
+#include "tstring.h"
 #include "AIPlayer.h"
 
 #if NETWORKING
@@ -118,7 +119,6 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
    char *Data,Code,AICode,WasFighting;
    Player *From,*tmp;
    GSList *list;
-   gchar *prstr,*prstr2;
    struct timeval tv;
    gboolean Handled;
    if (ProcessMessage(Message,AIPlay,&From,&AICode,&Code,
@@ -169,11 +169,8 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          tv.tv_sec=AITurnPause;
          tv.tv_usec=0;
          bselect(0,NULL,NULL,NULL,&tv);
-         g_print(_("Jetting to %s with %s cash and %s debt"),
-                Location[(int)AIPlay->IsAt].Name,
-                (prstr=FormatPrice(AIPlay->Cash)),
-                (prstr2=FormatPrice(AIPlay->Debt)));
-         g_free(prstr); g_free(prstr2);
+         dpg_print(_("Jetting to %tde with %P cash and %P debt"),
+                Location[(int)AIPlay->IsAt].Name,AIPlay->Cash,AIPlay->Debt);
          if (brandom(0,100)<10) AISendRandomMessage(AIPlay);
          break;
       case C_UPDATE:
@@ -244,7 +241,7 @@ void PrintAIMessage(char *Text) {
 void AIDealDrugs(Player *AIPlay) {
 /* Buy and sell drugs for AI player "AIPlay" */
    price_t *Profit,MaxProfit;
-   gchar *prstr,*text;
+   gchar *text;
    int i,LastHighest,Highest,Num,MinProfit;
    Profit = g_new(price_t,NumDrug);
    for (i=0;i<NumDrug;i++) {
@@ -269,9 +266,8 @@ void AIDealDrugs(Player *AIPlay) {
       if (Highest==-1) break;
       Num=AIPlay->Drugs[Highest].Carried;
       if (MaxProfit>0 && Num>0) {
-         g_print(_("Selling %d %s at %s\n"),Num,Drug[Highest].Name,
-                (prstr=FormatPrice(AIPlay->Drugs[Highest].Price)));
-         g_free(prstr);
+         dpg_print(_("Selling %d %tde at %P\n"),Num,Drug[Highest].Name,
+                   AIPlay->Drugs[Highest].Price);
          AIPlay->CoatSize+=Num;
          AIPlay->Cash+=Num*AIPlay->Drugs[Highest].Price;
          text=g_strdup_printf("drug^%d^%d",Highest,-Num);
@@ -285,9 +281,8 @@ void AIDealDrugs(Player *AIPlay) {
             Num=AIPlay->CoatSize-SPACERESERVE;
          }
          if (MaxProfit<0 && Num>0) {
-            g_print(_("Buying %d %s at %s\n"),Num,Drug[Highest].Name,
-                   (prstr=FormatPrice(AIPlay->Drugs[Highest].Price)));
-            g_free(prstr);
+            dpg_print(_("Buying %d %tde at %P\n"),Num,Drug[Highest].Name,
+                      AIPlay->Drugs[Highest].Price);
             text=g_strdup_printf("drug^%d^%d",Highest,Num);
             AIPlay->CoatSize-=Num;
             AIPlay->Cash-=Num*AIPlay->Drugs[Highest].Price;
@@ -303,7 +298,7 @@ void AIGunShop(Player *AIPlay) {
 /* Handles a visit to the gun shop by AI player "AIPlay" */
    int i;
    int Bought;
-   gchar *text,*prstr;
+   gchar *text;
    do {
       Bought=0;
       for (i=0;i<NumGun;i++) {
@@ -314,9 +309,8 @@ void AIGunShop(Player *AIPlay) {
             AIPlay->CoatSize-=Gun[i].Space;
             AIPlay->Guns[i].Carried++;
             Bought++;
-            g_print(_("Buying a %s for %s at the gun shop\n"),Gun[i].Name,
-                   (prstr=FormatPrice(Gun[i].Price)));
-            g_free(prstr);
+            dpg_print(_("Buying a %tde for %P at the gun shop\n"),
+                      Gun[i].Name,Gun[i].Price);
             text=g_strdup_printf("gun^%d^1",i);
             SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
@@ -354,9 +348,7 @@ void AIPayLoan(Player *AIPlay) {
       prstr=pricetostr(AIPlay->Debt);
       SendClientMessage(AIPlay,C_NONE,C_PAYLOAN,NULL,prstr);
       g_free(prstr);
-      g_print(_("Debt of %s paid off to loan shark\n"),
-             (prstr=FormatPrice(AIPlay->Debt)));
-      g_free(prstr);
+      dpg_print(_("Debt of %P paid off to loan shark\n"),AIPlay->Debt);
    }
    SendClientMessage(AIPlay,C_NONE,C_DONE,NULL,NULL);
 }

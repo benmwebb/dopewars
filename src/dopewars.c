@@ -40,6 +40,7 @@
 #include "dopeos.h"
 #include "message.h"
 #include "serverside.h"
+#include "tstring.h"
 #include "AIPlayer.h"
 
 int ClientSock,ListenSock;     
@@ -1256,7 +1257,7 @@ gboolean CheckMaxIndex(GScanner *scanner,int GlobalIndex,int StructIndex,
 
 void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
                       GScanner *scanner) {
-   gchar *prstr,*GlobalName;
+   gchar *GlobalName;
    int i;
    if (!CheckMaxIndex(scanner,GlobalIndex,StructIndex,IndexGiven)) return;
    if (Globals[GlobalIndex].NameStruct[0]) {
@@ -1267,10 +1268,8 @@ void PrintConfigValue(int GlobalIndex,int StructIndex,gboolean IndexGiven,
       g_print(_("%s is %d\n"),GlobalName,
               *((int *)GetGlobalPointer(GlobalIndex,StructIndex)));
    } else if (Globals[GlobalIndex].PriceVal) {
-      prstr=FormatPrice(*((price_t *)GetGlobalPointer(GlobalIndex,
-                                                      StructIndex)));
-      g_print(_("%s is %s\n"),GlobalName,prstr);
-      g_free(prstr);
+      dpg_print(_("%s is %P\n"),GlobalName,
+                *((price_t *)GetGlobalPointer(GlobalIndex,StructIndex)));
    } else if (Globals[GlobalIndex].StringVal) {
       g_print(_("%s is \"%s\"\n"),GlobalName,
               *((gchar **)GetGlobalPointer(GlobalIndex,StructIndex)));

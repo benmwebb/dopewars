@@ -20,6 +20,7 @@
 
 
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
 #ifdef HAVE_CONFIG_H
@@ -30,6 +31,16 @@
 #include "dopewars.h"
 #include "message.h"
 #include "tstring.h"
+
+typedef struct _FmtData {
+   union {
+      int IntVal;
+      price_t PriceVal;
+      char CharVal;
+      char *StrVal;
+   } data;
+   char Type;
+} FmtData;
 
 gchar *GetTranslatedString(gchar *str,gchar *code,gboolean Caps) {
    gchar *dstr,*pt,*tstr,*Default,*tcode;
@@ -109,137 +120,161 @@ void tstring_free(gchar *tformat,gchar **tstrings) {
    g_free(tstrings);
 }
 
-void GetNextFormat(int Index,gchar *str,int *StartPos,
-                   int *EndPos,int *ArgNum,char *Code,gboolean *Caps) {
-   int anum;
-   *StartPos=*EndPos=*ArgNum=0;
+void GetNextFormat(int *Index,gchar *str,int *StartPos,
+                   int *EndPos,int *FmtPos,gchar *Type,int *ArgNum,int *Wid,
+                   int *Prec,char *Code) {
+   int anum,wid,prec,i;
+   gchar type;
+   *StartPos=-1;
+   *EndPos=*FmtPos=*ArgNum=*Wid=*Prec=0;
+   *Type=0;
    Code[0]=0;
-   anum=0;
-   while (str[Index]) {
-      if (str[Index]=='%') {
-         *StartPos=*EndPos=Index++;
-         while (str[Index]>='0' && str[Index]<='9') {
-            anum=anum*10+str[Index]-'0';
-            Index++;
-         }
-         if (str[Index]=='$') {
-            *EndPos=Index++; *ArgNum=anum;
-         }
-         if ((str[Index]=='T' || str[Index]=='t') && Index+2<strlen(str)) {
-            *Caps=(str[Index]=='T');
-            Code[0]=str[Index+1];
-            Code[1]=str[Index+2];
-            Code[2]=0;
-            *EndPos=Index+2;
-         }
-         return;
-      } else Index++;
-   }
-}
-
-void GetNextTString(gchar *str,int index,gchar *Code,gboolean *Caps,
-                    int *NumArg,int *StartPos,int *EndPos) {
-   int i;
-   *StartPos=*EndPos=0;
-   i=index;
+   anum=wid=prec=0;
+   i=*Index;
    while (str[i]) {
       if (str[i]=='%') {
-         i++;
-         if ((str[i]=='T' || str[i]=='t')
-             && i+2<strlen(str)) {
-            (*NumArg)++;
-            *StartPos=i-1;
-            *Caps = (str[i]=='T');
+         *StartPos=*EndPos=i++;
+         while (strchr("#0- +'",str[i])) i++;  /* Skip flag characters */
+         while (str[i]>='0' && str[i]<='9') wid=wid*10+str[i++]-'0';
+         if (str[i]=='$') {
+            *EndPos=i;
+            i++; anum=wid; wid=0;
+            while (strchr("#0- +'",str[i])) i++;  /* Skip flag characters */
+            while (str[i]>='0' && str[i]<='9') wid=wid*10+str[i++]-'0';
+         }
+         if (str[i]=='.') {
+            i++;
+            while (str[i]>='0' && str[i]<='9') prec=prec*10+str[i++]-'0';
+         }
+         *FmtPos=i;
+         type=str[i];
+         if ((type=='T' || type=='t') && i+2<strlen(str)) {
             Code[0]=str[i+1];
             Code[1]=str[i+2];
-            Code[2]='\0';
+            Code[2]=0;
             i+=3;
-            *EndPos=i;
-            return;
-         }
+         } else i++;
+         *ArgNum=anum; *Wid=wid; *Prec=prec; *Index=i; *Type=type;
+         return;
       } else i++;
    }
+   *Index=i;
 }
 
-int SkipNextTString(gchar *str,int index) {
-   gchar Code[3];
-   gboolean Caps;
-   int NumArg,StartPos,EndPos;
-   GetNextTString(str,index,Code,&Caps,&NumArg,&StartPos,&EndPos);
-   return EndPos;
-}
+gchar *HandleTFmt(gchar *format, va_list va) {
+   int i,StrInd,StartPos,EndPos,FmtPos,ArgNum,DefaultArgNum,Wid,Prec;
+   char Code[3],Type;
+   gchar *retstr,*fstr;
+   GString *string,*tmpfmt;
+   GArray *arr;
+   FmtData *fdat;
 
-void SubstNextTString(GString *string,int *NumArg,GPtrArray *strs) {
-   gchar Code[3];
-   gboolean Caps;
-   int StartPos,EndPos;
-   gchar *str,*tstr;
+   string=g_string_new("");
+   tmpfmt=g_string_new("");
 
-   GetNextTString(string->str,0,Code,&Caps,NumArg,&StartPos,&EndPos);
-   if (EndPos!=0 && *NumArg>=1 && *NumArg<=strs->len) {
-      str=(gchar *)g_ptr_array_index(strs,*NumArg-1);
-      tstr=GetTranslatedString(str,Code,Caps);
-      g_string_erase(string,StartPos,EndPos-StartPos);
-      g_string_insert(string,StartPos,tstr);
-      g_free(tstr);
+   arr=g_array_new(FALSE,TRUE,sizeof(FmtData));
+   i=DefaultArgNum=0;
+   while (i<strlen(format)) {
+      GetNextFormat(&i,format,&StartPos,&EndPos,&FmtPos,&Type,&ArgNum,
+                    &Wid,&Prec,Code);
+      if (StartPos==-1) break;
+      if (ArgNum==0) ArgNum=++DefaultArgNum;
+      if (ArgNum>arr->len) {
+         g_array_set_size(arr,ArgNum);
+      }
+      g_array_index(arr,FmtData,ArgNum-1).Type=Type;
    }
-}
-
-gchar *HandleTFmt(gchar *format, va_list args) {
-   GString *string;
-   gchar *retstr;
-   GPtrArray *tstrs;
-   int i,numtstr,NumArg;
-
-   string=g_string_new(format);
-   tstrs=g_ptr_array_new();
-   i=numtstr=0;
-   while (1) {
-      i=SkipNextTString(string->str,i);
-      if (i!=0) numtstr++; else break;
+   for (i=0;i<arr->len;i++) {
+      fdat=&g_array_index(arr,FmtData,i);
+      switch(fdat->Type) {
+         case '\0':
+            g_error("Incomplete format string!"); break;
+         case 'd':
+            fdat->data.IntVal=va_arg(va,int); break;
+         case 'P':
+            fdat->data.PriceVal=va_arg(va,price_t); break;
+         case 'c':
+            fdat->data.CharVal=(char)va_arg(va,int); break;
+         case 's': case 't': case 'T':
+            fdat->data.StrVal=va_arg(va,char *); break;
+         default:
+            g_error("Unknown format type %c!",fdat->Type);
+      }
    }
-   for (i=0;i<numtstr;i++) {
-      g_ptr_array_add(tstrs,(gpointer)va_arg(args,char *));
-   }
-   NumArg=0;
-   for (i=0;i<numtstr;i++) {
-      SubstNextTString(string,&NumArg,tstrs);
+   i=DefaultArgNum=0;
+   while (i<strlen(format)) {
+      StrInd=i;
+      GetNextFormat(&i,format,&StartPos,&EndPos,&FmtPos,&Type,&ArgNum,
+                    &Wid,&Prec,Code);
+      if (StartPos==-1) {
+         g_string_append(string,&format[StrInd]); break;
+      }
+      while (StrInd<StartPos) g_string_append_c(string,format[StrInd++]);
+      if (ArgNum==0) ArgNum=++DefaultArgNum;
+      g_string_assign(tmpfmt,"%");
+      EndPos++;
+      while (EndPos<FmtPos) g_string_append_c(tmpfmt,format[EndPos++]);
+      if (Type=='T' || Type=='t' || Type=='P') g_string_append_c(tmpfmt,'s');
+      else g_string_append_c(tmpfmt,Type);
+      fdat=&g_array_index(arr,FmtData,ArgNum-1);
+      if (Type!=fdat->Type) g_error("Unmatched types!");
+      switch(Type) {
+         case 'd':
+            g_string_sprintfa(string,tmpfmt->str,fdat->data.IntVal); break;
+         case 'c':
+            g_string_sprintfa(string,tmpfmt->str,fdat->data.CharVal); break;
+         case 'P':
+            fstr=FormatPrice(fdat->data.PriceVal);
+            g_string_sprintfa(string,tmpfmt->str,fstr); g_free(fstr); break;
+         case 't': case 'T':
+            fstr=GetTranslatedString(fdat->data.StrVal,Code,Type=='T');
+            g_string_sprintfa(string,tmpfmt->str,fstr); g_free(fstr); break;
+         case 's':
+            g_string_sprintfa(string,tmpfmt->str,fdat->data.StrVal); break;
+      }
    }
    retstr=string->str;
-   g_ptr_array_free(tstrs,FALSE);
+   g_array_free(arr,TRUE);
    g_string_free(string,FALSE);
+   g_string_free(tmpfmt,TRUE);
    return retstr;
+}
+
+void dpg_print(gchar *format, ...) {
+   va_list ap;
+   gchar *retstr;
+   va_start(ap,format);
+   retstr=HandleTFmt(format,ap);
+   va_end(ap);
+   g_print(retstr);
+   g_free(retstr);
 }
 
 gchar *dpg_strdup_printf(gchar *format, ...) {
    va_list ap;
-   gchar *newfmt,*retstr;
+   gchar *retstr;
    va_start(ap,format);
-   newfmt=HandleTFmt(format,ap);
-   retstr=g_strdup_vprintf(newfmt,ap);
-   g_free(newfmt);
+   retstr=HandleTFmt(format,ap);
    va_end(ap);
    return retstr;
 }
 
 void dpg_string_sprintf(GString *string, gchar *format, ...) {
    va_list ap;
-   gchar *newfmt,*retstr;
+   gchar *newstr;
    va_start(ap,format);
-   newfmt=HandleTFmt(format,ap);
-   retstr=g_strdup_vprintf(newfmt,ap);
-   g_string_assign(string,retstr);
-   g_free(newfmt); g_free(retstr);
+   newstr=HandleTFmt(format,ap);
+   g_string_assign(string,newstr);
+   g_free(newstr);
    va_end(ap);
 }
 
 void dpg_string_sprintfa(GString *string, gchar *format, ...) {
    va_list ap;
-   gchar *newfmt,*retstr;
+   gchar *newstr;
    va_start(ap,format);
-   newfmt=HandleTFmt(format,ap);
-   retstr=g_strdup_vprintf(newfmt,ap);
-   g_string_append(string,retstr);
-   g_free(newfmt); g_free(retstr);
+   newstr=HandleTFmt(format,ap);
+   g_string_append(string,newstr);
+   g_free(newstr);
    va_end(ap);
 }
