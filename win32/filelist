@@ -57,6 +57,12 @@ dopewars.exe
 dopewars server.lnk
 dopewars.exe
 -s
+text-mode dopewars.lnk
+dopewars.exe
+-t
+dopewars AI player.lnk
+dopewars.exe
+-c
 dopewars command line options.lnk
 dopewars.exe
 -h
