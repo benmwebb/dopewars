@@ -1,3 +1,9 @@
+cvs
+    - Fix for server segfault on invalid short network messages
+    - dopewars no longer runs GTK+ setgid
+    - "make install" installs dopewars as group "wheel" if "games" is
+      unavailable
+
 1.5.0-beta1 08-04-2001
     - Completely rewritten fighting code
     - Internationalization (i18n) support
