@@ -498,13 +498,13 @@ void HandleClientMessage(char *pt, Player *Play)
                                            "<main>/Errands/Spy...");
 
     /* Text to update the Errands/Spy menu item with the price for spying */
-    text = dpg_strdup_printf(_("_Spy\t(%P)"), Prices.Spy);
+    text = dpg_strdup_printf(_("_Spy (%P)"), Prices.Spy);
     SetAccelerator(MenuItem, text, NULL, NULL, NULL);
     g_free(text);
 
     /* Text to update the Errands/Tipoff menu item with the price for a
      * tipoff */
-    text = dpg_strdup_printf(_("_Tipoff\t(%P)"), Prices.Tipoff);
+    text = dpg_strdup_printf(_("_Tipoff (%P)"), Prices.Tipoff);
     MenuItem = gtk_item_factory_get_widget(ClientData.Menu,
                                            "<main>/Errands/Tipoff...");
     SetAccelerator(MenuItem, text, NULL, NULL, NULL);
