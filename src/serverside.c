@@ -1257,10 +1257,73 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
 
 #ifdef CYGWIN
 static HWND mainhwnd=NULL;
+static SERVICE_STATUS_HANDLE scHandle;
+
+static BOOL RegisterStatus(DWORD state) {
+  SERVICE_STATUS status;
+  status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+  status.dwCurrentState = state;
+  status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+  status.dwWin32ExitCode = NO_ERROR;
+  status.dwCheckPoint = 0;
+  status.dwWaitHint = 5000;
+  return SetServiceStatus(scHandle,&status);
+}
+
+static VOID WINAPI ServiceHandler(DWORD control) {
+  DWORD state=SERVICE_RUNNING;
+  switch(control) {
+    case SERVICE_CONTROL_STOP:
+      state=SERVICE_STOP_PENDING;
+      break;
+  }
+  if (!RegisterStatus(state)) {
+    dopelog(0,_("Failed to set NT Service status"));
+    return;
+  }
+
+  if (mainhwnd && !PostMessage(mainhwnd,MYWM_SERVICE,0,(LPARAM)control)) {
+    dopelog(0,_("Failed to post service notification message"));
+    return;
+  }
+}
+
+static VOID WINAPI ServiceInit(DWORD argc,LPTSTR *argv) {
+  scHandle = RegisterServiceCtrlHandler("dopewars-server",ServiceHandler);
+  if (!scHandle) {
+    dopelog(0,_("Failed to register service handler")); return;
+  }
+  if (!RegisterStatus(SERVICE_START_PENDING)) {
+    dopelog(0,_("Failed to set NT Service status"));
+    return;
+  }
+
+  GuiServerLoop(TRUE);
+
+  if (!RegisterStatus(SERVICE_STOPPED)) {
+    dopelog(0,_("Failed to set NT Service status"));
+    return;
+  }
+}
+
+void ServiceMain(void) {
+  SERVICE_TABLE_ENTRY services[] = {
+    { "dopewars-server",ServiceInit },
+    { NULL,NULL }
+  };
+  if (!StartServiceCtrlDispatcher(services)) {
+    dopelog(0,_("Failed to start NT Service"));
+  }
+}
 
 static LRESULT CALLBACK GuiServerWndProc(HWND hwnd,UINT msg,WPARAM wparam,
                                          LPARAM lparam) {
   if (hwnd==mainhwnd) switch(msg) {
+    case MYWM_SERVICE:
+      if (lparam==SERVICE_CONTROL_STOP) {
+        GuiQuitServer();
+      }
+      break;
     case MYWM_TASKBAR:
       if ((UINT)lparam==WM_LBUTTONDOWN) ShowWindow(mainhwnd,SW_SHOW);
       break;
@@ -1281,7 +1344,6 @@ static void SetupTaskBarIcon(GtkWidget *widget) {
   if (widget && !widget->hWnd) return;
   if (!widget && !mainhwnd) return;
 
-  if (widget) mainhwnd = widget->hWnd;
   nid.hWnd = mainhwnd;
   if (widget) {
     nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
@@ -1296,7 +1358,7 @@ static void SetupTaskBarIcon(GtkWidget *widget) {
 }
 #endif /* CYGWIN */
 
-void GuiServerLoop() {
+void GuiServerLoop(gboolean is_service) {
    GtkWidget *window,*text,*hbox,*vbox,*entry,*label;
    GtkAdjustment *adj;
 
@@ -1329,14 +1391,21 @@ void GuiServerLoop() {
    gtk_container_add(GTK_CONTAINER(window),vbox);
    gtk_widget_show_all(window);
 
-   g_set_print_handler(GuiServerPrintFunc);
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
-                     GuiServerLogMessage,NULL);
+   if (!is_service) {
+     g_set_print_handler(GuiServerPrintFunc);
+     g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
+                       GuiServerLogMessage,NULL);
+   }
    StartServer();
 
    ListenTag=gdk_input_add(ListenSock,GDK_INPUT_READ,GuiNewConnect,NULL);
 #ifdef CYGWIN
+   mainhwnd=window->hWnd;
    SetupTaskBarIcon(window);
+   if (is_service && !RegisterStatus(SERVICE_RUNNING)) {
+     dopelog(0,_("Failed to set NT Service status"));
+     return;
+   }
 #endif
    gtk_main();
 #ifdef CYGWIN

@@ -71,7 +71,7 @@ gboolean CanPlayerFire(Player *Play);
 gboolean CanRunHere(Player *Play);
 Player *GetNextShooter(Player *Play);
 #ifdef GUI_SERVER
-void GuiServerLoop(void);
+void GuiServerLoop(gboolean is_service);
 #endif
 
 #endif

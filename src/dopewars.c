@@ -1948,7 +1948,7 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"),DATADIR);
 
 void HandleCmdLine(int argc,char *argv[]) {
    int c;
-   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:";
+   static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:N";
 #ifdef HAVE_GETOPT_LONG
    static const struct option long_options[] = {
       { "no-color", no_argument, NULL, 'b' },
@@ -2074,7 +2074,7 @@ int main(int argc,char *argv[]) {
 #ifdef GUI_SERVER
             gtk_set_locale();
             gtk_init(&argc,&argv);
-            GuiServerLoop();
+            GuiServerLoop(FALSE);
 #else
 /* Deal with dopelog() stuff nicely */
             logfp = fopen(Log.File,"a");

@@ -47,8 +47,9 @@ static void ServerLogMessage(const gchar *log_domain,GLogLevelFlags log_level,
    text=GetLogString(log_level,message);
    if (text) {
       g_string_append(text,"\n");
-      WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE),text->str,strlen(text->str),
-                   &NumChar,NULL);
+  g_print(text->str);
+/*    WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE),text->str,strlen(text->str),
+                   &NumChar,NULL);*/
       g_string_free(text,TRUE);
    }
 }
@@ -146,14 +147,29 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
                      LPSTR lpszCmdParam,int nCmdShow) {
    gchar **split;
    int argc;
+   gboolean is_service;
+   gchar modpath[300],*lastslash;
 #ifdef ENABLE_NLS
    gchar *winlocale;
 #endif
 
-   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
-                     G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
+/* Are we running as an NT service? */
+   is_service = (lpszCmdParam && strncmp(lpszCmdParam,"-N",2)==0);
+
+   if (is_service) {
+     modpath[0]='\0';
+     GetModuleFileName(NULL,modpath,300);
+     lastslash=strrchr(modpath,'\\');
+     if (lastslash) *lastslash='\0';
+     SetCurrentDirectory(modpath);
+   }
+
    LogFileStart();
    g_set_print_handler(LogFilePrintFunc);
+
+   g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING|
+                     G_LOG_LEVEL_CRITICAL,
+                     ServerLogMessage,NULL);
 
 #ifdef ENABLE_NLS
    winlocale=GetWindowsLocale();
@@ -176,25 +192,33 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
    while (split[argc] && split[argc][0]) argc++;
 
    if (GeneralStartup(argc,split)==0) {
-      if (WantVersion || WantHelp) {
-         WindowPrintStart();
-         g_set_print_handler(WindowPrintFunc);
-         HandleHelpTexts();
-         WindowPrintEnd();
-      } else if (WantConvert) {
-         WindowPrintStart();
-         g_set_print_handler(WindowPrintFunc);
-         ConvertHighScoreFile();
-         WindowPrintEnd();
-      } else {
+    if (WantVersion || WantHelp) {
+      WindowPrintStart();
+      g_set_print_handler(WindowPrintFunc);
+      HandleHelpTexts();
+      WindowPrintEnd();
 #ifdef NETWORKING
-         StartNetworking();
+    } else if (is_service) {
+      StartNetworking();
+Network=Server=TRUE;
+      win32_init(hInstance,hPrevInstance,"mainicon");
+      ServiceMain();
+      StopNetworking();
+#endif
+    } else if (WantConvert) {
+      WindowPrintStart();
+      g_set_print_handler(WindowPrintFunc);
+      ConvertHighScoreFile();
+      WindowPrintEnd();
+    } else {
+#ifdef NETWORKING
+      StartNetworking();
 #endif
          if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
             win32_init(hInstance,hPrevInstance,"mainicon");
-            GuiServerLoop();
+            GuiServerLoop(FALSE);
 #else
             AllocConsole();
             SetConsoleTitle(_("dopewars server"));
