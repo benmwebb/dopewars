@@ -206,7 +206,7 @@ GtkWidget *my_hbbox_new(void)
 {
   GtkWidget *hbbox = gtk_hbutton_box_new();
 
-#ifdef HAVE_GLIB2
+#if HAVE_GLIB2 && !CYGWIN
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
 #endif
   return hbbox;
@@ -2144,7 +2144,7 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 
 static void make_tags(GtkTextView *textview)
 {
-#ifdef HAVE_GLIB2
+#if HAVE_GLIB2 && !CYGWIN
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
 
   gtk_text_buffer_create_tag(buffer, "jet", "foreground", "blue", NULL);
@@ -2179,7 +2179,7 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_init(argc, argv);
 #endif
 
-#ifdef HAVE_GLIB2
+#if HAVE_GLIB2 && !CYGWIN
   /* GTK+2 expects all strings to be UTF-8, so we force gettext to return
    * all translations in this encoding here. */
   bind_textdomain_codeset(PACKAGE, "UTF-8");
