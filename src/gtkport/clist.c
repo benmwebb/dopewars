@@ -193,7 +193,7 @@ void gtk_clist_realize(GtkWidget *widget)
   for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
     row = (GtkCListRow *)rows->data;
     if (row) {
-      SendMessage(widget->hWnd, LB_ADDSTRING, 0, (LPARAM)row->data);
+      SendMessage(widget->hWnd, LB_ADDSTRING, 0, 1);
     }
   }
 
@@ -385,7 +385,7 @@ gint gtk_clist_insert(GtkCList *clist, gint row, gchar *text[])
 
   if (GTK_WIDGET_REALIZED(widget)) {
     hWnd = widget->hWnd;
-    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, (LPARAM)new_row->data);
+    SendMessage(hWnd, LB_INSERTSTRING, (WPARAM)row, 1);
   }
 
   return row;
@@ -647,7 +647,7 @@ void gtk_clist_set_row_data(GtkCList *clist, gint row, gpointer data)
   if (row >= 0 && row < clist->rows) {
     list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
     if (list_row)
-      list_row->data = data + 1;
+      list_row->data = data;
   }
 }
 
@@ -658,7 +658,7 @@ gpointer gtk_clist_get_row_data(GtkCList *clist, gint row)
   if (row >= 0 && row < clist->rows) {
     list_row = (GtkCListRow *)g_slist_nth_data(clist->rowdata, row);
     if (list_row)
-      return list_row->data - 1;
+      return list_row->data;
   }
   return NULL;
 }
