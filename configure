@@ -3231,7 +3231,7 @@ EOF
 
          
    CFLAGS="$CFLAGS -mwindows -fnative-struct -mno-cygwin"
-   LIBS="$LIBS -lwsock32 -lcomctl32"
+   LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
 
       LDFLAGS="$LDFLAGS -lglib-1.3"
 

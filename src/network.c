@@ -776,7 +776,10 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
    guint addlen,i;
    struct in_addr *h_addr;
    unsigned short int netport;
-#ifndef CYGWIN
+#ifdef CYGWIN
+   gchar *username=NULL;
+   DWORD bufsize;
+#else
    struct passwd *pwd;
 #endif
 
@@ -814,15 +817,27 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf,gchar *RemoteHost,
    he = LookupHostname(RemoteHost,&NetBuf->error);
    if (!he) return FALSE;
 
-#ifndef CYGWIN
+#ifdef CYGWIN
+   bufsize=0;
+   WNetGetUser(NULL,username,&bufsize);
+   if (GetLastError()!=ERROR_MORE_DATA) {
+     SetError(&NetBuf->error,ET_WIN32,GetLastError());
+     return FALSE;
+   } else {
+     username=g_malloc(bufsize);
+     if (WNetGetUser(NULL,username,&bufsize)!=NO_ERROR) {
+       SetError(&NetBuf->error,ET_WIN32,GetLastError());
+       return FALSE;
+     }
+   }
+g_print("username %s\n",username);
+   addlen=9+strlen(username);
+#else
    pwd = getpwuid(getuid());
    if (!pwd || !pwd->pw_name) return FALSE;
 g_print("username %s\n",pwd->pw_name);
    addlen=9+strlen(pwd->pw_name);
-#else
-   addlen=13;
 #endif
-
 
    h_addr = (struct in_addr *)he->h_addr;
    g_assert(sizeof(struct in_addr)==4);
@@ -840,7 +855,8 @@ g_print("username %s\n",pwd->pw_name);
    memcpy(&addpt[2],&netport,sizeof(netport));
    memcpy(&addpt[4],h_addr,sizeof(struct in_addr));
 #ifdef CYGWIN
-   strcpy(&addpt[8],"user");
+   strcpy(&addpt[8],username);
+   g_free(username);
 #else
    strcpy(&addpt[8],pwd->pw_name);
 #endif

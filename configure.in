@@ -50,7 +50,7 @@ if test "$CYGWIN" = "yes" ; then
    dnl that can happen is that "make" fails later on.
 
    CFLAGS="$CFLAGS -mwindows -fnative-struct -mno-cygwin"
-   LIBS="$LIBS -lwsock32 -lcomctl32"
+   LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
 
    dnl Glib stuff
    LDFLAGS="$LDFLAGS -lglib-1.3"
