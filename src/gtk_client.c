@@ -376,10 +376,10 @@ void HandleClientMessage(char *pt,Player *Play) {
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,Play);
+            ReceivePlayerData(Play,Data,Play);
             UpdateStatus(Play,TRUE);
          } else {
-            ReceivePlayerData(Data,From);
+            ReceivePlayerData(Play,Data,From);
             DisplaySpyReports(From);
          }
          break;
@@ -683,7 +683,7 @@ void UpdateInventory(struct InventoryWidgets *Inven,
    gint i,row,selectrow[2];
    gpointer rowdata;
    price_t price;
-   gchar *titles[2];
+   gchar *titles[2],*prstr;
    gboolean CanBuy=FALSE,CanSell=FALSE,CanDrop=FALSE;
    GList *glist[2],*selection;
    GtkCList *clist[2];
@@ -738,7 +738,13 @@ void UpdateInventory(struct InventoryWidgets *Inven,
 
       if (Objects[i].Carried > 0) {
          if (price>0) CanSell=TRUE; else CanDrop=TRUE;
-         titles[1] = g_strdup_printf("%d",Objects[i].Carried);
+         if (HaveAbility(ClientData.Play,A_DRUGVALUE)) {
+            prstr=FormatPrice(Objects[i].TotalValue/Objects[i].Carried);
+            titles[1] = g_strdup_printf("%d @ %s",Objects[i].Carried,prstr);
+            g_free(prstr);
+         } else {
+            titles[1] = g_strdup_printf("%d",Objects[i].Carried);
+         }
          row=gtk_clist_append(GTK_CLIST(carrylist),titles); g_free(titles[1]);
          gtk_clist_set_row_data(GTK_CLIST(carrylist),row,GINT_TO_POINTER(i));
          if (g_list_find(glist[0],GINT_TO_POINTER(i))) {

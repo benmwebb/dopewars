@@ -338,10 +338,10 @@ static void HandleClientMessage(char *pt,Player *Play) {
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,Play);
+            ReceivePlayerData(Play,Data,Play);
             UpdateStatus(Play,TRUE);
          } else {
-            ReceivePlayerData(Data,From);
+            ReceivePlayerData(Play,Data,From);
             DisplaySpyReports(From);
          }
          break;

@@ -180,9 +180,9 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          WasFighting=FALSE;
          if (From==&Noone) {
             if (AIPlay->Flags & FIGHTING) WasFighting=TRUE;
-            ReceivePlayerData(Data,AIPlay);
+            ReceivePlayerData(AIPlay,Data,AIPlay);
          } else {
-            ReceivePlayerData(Data,From); /* spy reports */
+            ReceivePlayerData(AIPlay,Data,From); /* spy reports */
          }
          if (!(AIPlay->Flags & FIGHTING) && WasFighting) {
             AIDealDrugs(AIPlay);

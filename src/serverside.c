@@ -1442,6 +1442,8 @@ int RandomOffer(Player *To) {
       } else {
          g_string_sprintf(text,
              _("You meet a friend! You give him %d %s."),amount,Drug[ind].Name);
+         To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
+                    (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
          To->Drugs[ind].Carried-=amount;
          To->CoatSize+=amount;
       }
@@ -1456,6 +1458,8 @@ int RandomOffer(Player *To) {
          g_string_sprintf(text,_("Police dogs chase you for %d blocks! "
                           "You dropped some %s! That's a drag, man!"),
                           brandom(3,7),Names.Drugs);
+         To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
+                    (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
          To->Drugs[ind].Carried-=amount;
          To->CoatSize+=amount;
          SendPlayerData(To);
@@ -1481,6 +1485,8 @@ int RandomOffer(Player *To) {
       if (amount>To->Drugs[ind].Carried) amount=To->Drugs[ind].Carried;
       g_string_sprintf(text,_("Your mama made brownies with some of your %s! "
                        "They were great!"),Drug[ind].Name);
+      To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue*
+                 (To->Drugs[ind].Carried-amount)/To->Drugs[ind].Carried;
       To->Drugs[ind].Carried-=amount;
       To->CoatSize+=amount;
       SendPlayerData(To);
@@ -2023,6 +2029,12 @@ void BuyObject(Player *From,char *data) {
       if (index>=0 && index<NumDrug && From->Drugs[index].Carried+amount >= 0
           && From->CoatSize-amount >= 0 && (From->Drugs[index].Price!=0 || 
           amount<0) && From->Cash >= amount*From->Drugs[index].Price) {
+         if (amount>0) {
+            From->Drugs[index].TotalValue+=amount*From->Drugs[index].Price;
+         } else {
+            From->Drugs[index].TotalValue = From->Drugs[index].TotalValue*
+                 (From->Drugs[index].Carried+amount)/From->Drugs[index].Carried;
+         }
          From->Drugs[index].Carried+=amount;
          From->CoatSize-=amount;
          From->Cash-=amount*From->Drugs[index].Price;
@@ -2105,6 +2117,8 @@ int LoseBitch(Player *Play,Inventory *Guns,Inventory *Drugs) {
    for (i=0;i<NumDrug;i++) if (Play->Drugs[i].Carried>0) {
       num=(int)((float)Play->Drugs[i].Carried/(Play->Bitches.Carried+2.0)+0.5);
       if (num>0) {
+         Play->Drugs[i].TotalValue = Play->Drugs[i].TotalValue*
+                 (Play->Drugs[i].Carried-num)/Play->Drugs[i].Carried;
          Play->Drugs[i].Carried-=num;
          if (Drugs) Drugs[i].Carried+=num;
          Play->CoatSize+=num;
@@ -2116,6 +2130,8 @@ int LoseBitch(Player *Play,Inventory *Guns,Inventory *Drugs) {
       for (i=0;i<NumDrug;i++) {
          if (Play->Drugs[i].Carried>0) {
             losedrug=1; drugslost=1;
+            Play->Drugs[i].TotalValue = Play->Drugs[i].TotalValue*
+                   (Play->Drugs[i].Carried-1)/Play->Drugs[i].Carried;
             Play->Drugs[i].Carried--;
             Play->CoatSize++;
             if (Play->CoatSize>=0) break;

@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2000-09-15 01:20+0100\n"
+"POT-Creation-Date: 2000-09-16 14:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -127,664 +127,668 @@ msgid "Random events are sanitized"
 msgstr ""
 
 #: src/dopewars.c:164
+msgid "Non-zero if the total value of bought drugs should be stored"
+msgstr ""
+
+#: src/dopewars.c:167
 msgid "Be verbose in processing config file"
 msgstr ""
 
-#: src/dopewars.c:166
+#: src/dopewars.c:169
 msgid "Number of locations in the game"
 msgstr ""
 
-#: src/dopewars.c:169
+#: src/dopewars.c:172
 msgid "Number of guns in the game"
 msgstr ""
 
-#: src/dopewars.c:171
+#: src/dopewars.c:174
 msgid "Number of drugs in the game"
 msgstr ""
 
-#: src/dopewars.c:173
+#: src/dopewars.c:176
 msgid "Location of the Loan Shark"
 msgstr ""
 
-#: src/dopewars.c:175
+#: src/dopewars.c:178
 msgid "Location of the bank"
 msgstr ""
 
-#: src/dopewars.c:177
+#: src/dopewars.c:180
 msgid "Location of the gun shop"
 msgstr ""
 
-#: src/dopewars.c:179
+#: src/dopewars.c:182
 msgid "Location of the pub"
 msgstr ""
 
-#: src/dopewars.c:182
+#: src/dopewars.c:185
 msgid "Name of the loan shark"
 msgstr ""
 
-#: src/dopewars.c:184
+#: src/dopewars.c:187
 msgid "Name of the bank"
 msgstr ""
 
-#: src/dopewars.c:186
+#: src/dopewars.c:189
 msgid "Name of the gun shop"
 msgstr ""
 
-#: src/dopewars.c:188
+#: src/dopewars.c:191
 msgid "Name of the pub"
 msgstr ""
 
-#: src/dopewars.c:190
+#: src/dopewars.c:193
 msgid "Sort key for listing available drugs"
 msgstr ""
 
-#: src/dopewars.c:193
+#: src/dopewars.c:196
 msgid "No. of seconds in which to return fire"
 msgstr ""
 
-#: src/dopewars.c:196
+#: src/dopewars.c:199
 msgid "Players are disconnected after this many seconds"
 msgstr ""
 
-#: src/dopewars.c:199
+#: src/dopewars.c:202
 msgid "Time in seconds for connections to be made or broken"
 msgstr ""
 
-#: src/dopewars.c:202
+#: src/dopewars.c:205
 msgid "Maximum number of TCP/IP connections"
 msgstr ""
 
-#: src/dopewars.c:205
+#: src/dopewars.c:208
 msgid "Seconds between turns of AI players"
 msgstr ""
 
-#: src/dopewars.c:208
+#: src/dopewars.c:211
 msgid "Amount of cash that each player starts with"
 msgstr ""
 
-#: src/dopewars.c:211
+#: src/dopewars.c:214
 msgid "Amount of debt that each player starts with"
 msgstr ""
 
-#: src/dopewars.c:213
+#: src/dopewars.c:216
 msgid "Name of each location"
 msgstr ""
 
-#: src/dopewars.c:217
+#: src/dopewars.c:220
 msgid "Police presence at each location (%)"
 msgstr ""
 
-#: src/dopewars.c:221
+#: src/dopewars.c:224
 msgid "Minimum number of drugs at each location"
 msgstr ""
 
-#: src/dopewars.c:225
+#: src/dopewars.c:228
 msgid "Maximum number of drugs at each location"
 msgstr ""
 
-#: src/dopewars.c:229
+#: src/dopewars.c:232
 msgid "Name of each drug"
 msgstr ""
 
-#: src/dopewars.c:233
+#: src/dopewars.c:236
 msgid "Minimum normal price of each drug"
 msgstr ""
 
-#: src/dopewars.c:237
+#: src/dopewars.c:240
 msgid "Maximum normal price of each drug"
 msgstr ""
 
-#: src/dopewars.c:241
+#: src/dopewars.c:244
 msgid "Non-zero if this drug can be specially cheap"
 msgstr ""
 
-#: src/dopewars.c:245
+#: src/dopewars.c:248
 msgid "Non-zero if this drug can be specially expensive"
 msgstr ""
 
-#: src/dopewars.c:249
+#: src/dopewars.c:252
 msgid "Message displayed when this drug is specially cheap"
 msgstr ""
 
-#: src/dopewars.c:253 src/dopewars.c:256
+#: src/dopewars.c:256 src/dopewars.c:259
 #, c-format
 msgid "Format string used for expensive drugs 50% of time"
 msgstr ""
 
-#: src/dopewars.c:259
+#: src/dopewars.c:262
 msgid "Divider for drug price when it's specially cheap"
 msgstr ""
 
-#: src/dopewars.c:262
+#: src/dopewars.c:265
 msgid "Multiplier for specially expensive drug prices"
 msgstr ""
 
-#: src/dopewars.c:265
+#: src/dopewars.c:268
 msgid "Name of each gun"
 msgstr ""
 
-#: src/dopewars.c:269
+#: src/dopewars.c:272
 msgid "Price of each gun"
 msgstr ""
 
-#: src/dopewars.c:273
+#: src/dopewars.c:276
 msgid "Space taken by each gun"
 msgstr ""
 
-#: src/dopewars.c:277
+#: src/dopewars.c:280
 msgid "Damage done by each gun"
 msgstr ""
 
-#: src/dopewars.c:281
+#: src/dopewars.c:284
 #, c-format
 msgid "% probability of escaping from Officer Hardass"
 msgstr ""
 
-#: src/dopewars.c:284
+#: src/dopewars.c:287
 msgid "Modifier to EscapeProb for each extra deputy"
 msgstr ""
 
-#: src/dopewars.c:287
+#: src/dopewars.c:290
 #, c-format
 msgid "% probability that Officer Hardass hits you"
 msgstr ""
 
-#: src/dopewars.c:290
+#: src/dopewars.c:293
 msgid "Modifier to HitProb for each extra deputy"
 msgstr ""
 
-#: src/dopewars.c:293
+#: src/dopewars.c:296
 msgid "Maximum damage done to you by each cop"
 msgstr ""
 
-#: src/dopewars.c:296
+#: src/dopewars.c:299
 msgid "Toughness of (difficulty of hitting) each cop"
 msgstr ""
 
-#: src/dopewars.c:299
+#: src/dopewars.c:302
 #, c-format
 msgid "% probability that the cops catch you dropping drugs"
 msgstr ""
 
-#: src/dopewars.c:302
+#: src/dopewars.c:305
 msgid "Word used to denote a single \"bitch\""
 msgstr ""
 
-#: src/dopewars.c:304
+#: src/dopewars.c:307
 msgid "Word used to denote two or more \"bitches\""
 msgstr ""
 
-#: src/dopewars.c:307
+#: src/dopewars.c:310
 msgid "Word used to denote a single gun or equivalent"
 msgstr ""
 
-#: src/dopewars.c:310
+#: src/dopewars.c:313
 msgid "Word used to denote two or more guns"
 msgstr ""
 
-#: src/dopewars.c:312
+#: src/dopewars.c:315
 msgid "Word used to denote a single drug or equivalent"
 msgstr ""
 
-#: src/dopewars.c:315
+#: src/dopewars.c:318
 msgid "Word used to denote two or more drugs"
 msgstr ""
 
-#: src/dopewars.c:317
+#: src/dopewars.c:320
 msgid "Text prefixed to the turn number (i.e. the month)"
 msgstr ""
 
-#: src/dopewars.c:320
+#: src/dopewars.c:323
 msgid "Text appended to the turn number (i.e. the year)"
 msgstr ""
 
-#: src/dopewars.c:323
+#: src/dopewars.c:326
 msgid "Name of the police officer"
 msgstr ""
 
-#: src/dopewars.c:325
+#: src/dopewars.c:328
 msgid "Name of the reserve police officer"
 msgstr ""
 
-#: src/dopewars.c:327
+#: src/dopewars.c:330
 msgid "Cost for a bitch to spy on the enemy"
 msgstr ""
 
-#: src/dopewars.c:330
+#: src/dopewars.c:333
 msgid "Cost for a bitch to tipoff the cops to an enemy"
 msgstr ""
 
-#: src/dopewars.c:333
+#: src/dopewars.c:336
 msgid "Minimum price to hire a bitch"
 msgstr ""
 
-#: src/dopewars.c:336
+#: src/dopewars.c:339
 msgid "Maximum price to hire a bitch"
 msgstr ""
 
-#: src/dopewars.c:339
+#: src/dopewars.c:342
 msgid "List of things which you overhear on the subway"
 msgstr ""
 
-#: src/dopewars.c:342
+#: src/dopewars.c:345
 msgid "Number of subway sayings"
 msgstr ""
 
-#: src/dopewars.c:345
+#: src/dopewars.c:348
 msgid "List of songs which you can hear playing"
 msgstr ""
 
-#: src/dopewars.c:348
+#: src/dopewars.c:351
 msgid "Number of playing songs"
 msgstr ""
 
-#: src/dopewars.c:351
+#: src/dopewars.c:354
 msgid "List of things which you can stop to do"
 msgstr ""
 
-#: src/dopewars.c:354
+#: src/dopewars.c:357
 msgid "Number of things which you can stop to do"
 msgstr ""
 
-#: src/dopewars.c:359
+#: src/dopewars.c:362
 msgid "escaped"
 msgstr ""
 
-#: src/dopewars.c:359
+#: src/dopewars.c:362
 msgid "defected"
 msgstr ""
 
-#: src/dopewars.c:359
+#: src/dopewars.c:362
 msgid "was shot"
 msgstr ""
 
-#: src/dopewars.c:363
+#: src/dopewars.c:366
 msgid "`Are you Experienced` by Jimi Hendrix"
 msgstr ""
 
-#: src/dopewars.c:364
+#: src/dopewars.c:367
 msgid "`Cheeba Cheeba` by Tone Loc"
 msgstr ""
 
-#: src/dopewars.c:365
+#: src/dopewars.c:368
 msgid "`Comin` in to Los Angeles` by Arlo Guthrie"
 msgstr ""
 
-#: src/dopewars.c:366
+#: src/dopewars.c:369
 msgid "`Commercial` by Spanky and Our Gang"
 msgstr ""
 
-#: src/dopewars.c:367
+#: src/dopewars.c:370
 msgid "`Late in the Evening` by Paul Simon"
 msgstr ""
 
-#: src/dopewars.c:368
+#: src/dopewars.c:371
 msgid "`Light Up` by Styx"
 msgstr ""
 
-#: src/dopewars.c:369
+#: src/dopewars.c:372
 msgid "`Mexico` by Jefferson Airplane"
 msgstr ""
 
-#: src/dopewars.c:370
+#: src/dopewars.c:373
 msgid "`One toke over the line` by Brewer & Shipley"
 msgstr ""
 
-#: src/dopewars.c:371
+#: src/dopewars.c:374
 msgid "`The Smokeout` by Shel Silverstein"
 msgstr ""
 
-#: src/dopewars.c:372
+#: src/dopewars.c:375
 msgid "`White Rabbit` by Jefferson Airplane"
 msgstr ""
 
-#: src/dopewars.c:373
+#: src/dopewars.c:376
 msgid "`Itchycoo Park` by Small Faces"
 msgstr ""
 
-#: src/dopewars.c:374
+#: src/dopewars.c:377
 msgid "`White Punks on Dope` by the Tubes"
 msgstr ""
 
-#: src/dopewars.c:375
+#: src/dopewars.c:378
 msgid "`Legend of a Mind` by the Moody Blues"
 msgstr ""
 
-#: src/dopewars.c:376
+#: src/dopewars.c:379
 msgid "`Eight Miles High` by the Byrds"
 msgstr ""
 
-#: src/dopewars.c:377
+#: src/dopewars.c:380
 msgid "`Acapulco Gold` by Riders of the Purple Sage"
 msgstr ""
 
-#: src/dopewars.c:378
+#: src/dopewars.c:381
 msgid "`Kicks` by Paul Revere & the Raiders"
 msgstr ""
 
-#: src/dopewars.c:379
+#: src/dopewars.c:382
 msgid "the Nixon tapes"
 msgstr ""
 
-#: src/dopewars.c:380
+#: src/dopewars.c:383
 msgid "`Legalize It` by Mojo Nixon & Skid Roper"
 msgstr ""
 
-#: src/dopewars.c:385
+#: src/dopewars.c:388
 msgid "have a beer"
 msgstr ""
 
-#: src/dopewars.c:386
+#: src/dopewars.c:389
 msgid "smoke a joint"
 msgstr ""
 
-#: src/dopewars.c:387
+#: src/dopewars.c:390
 msgid "smoke a cigar"
 msgstr ""
 
-#: src/dopewars.c:388
+#: src/dopewars.c:391
 msgid "smoke a Djarum"
 msgstr ""
 
-#: src/dopewars.c:389
+#: src/dopewars.c:392
 msgid "smoke a cigarette"
 msgstr ""
 
-#: src/dopewars.c:393
+#: src/dopewars.c:396
 msgid "Baretta"
 msgstr ""
 
-#: src/dopewars.c:394
+#: src/dopewars.c:397
 msgid ".38 Special"
 msgstr ""
 
-#: src/dopewars.c:395
+#: src/dopewars.c:398
 msgid "Ruger"
 msgstr ""
 
-#: src/dopewars.c:396
+#: src/dopewars.c:399
 msgid "Saturday Night Special"
 msgstr ""
 
-#: src/dopewars.c:400
+#: src/dopewars.c:403
 msgid "Bronx"
 msgstr ""
 
-#: src/dopewars.c:401
+#: src/dopewars.c:404
 msgid "Ghetto"
 msgstr ""
 
-#: src/dopewars.c:402
+#: src/dopewars.c:405
 msgid "Central Park"
 msgstr ""
 
-#: src/dopewars.c:403
+#: src/dopewars.c:406
 msgid "Manhattan"
 msgstr ""
 
-#: src/dopewars.c:404
+#: src/dopewars.c:407
 msgid "Coney Island"
 msgstr ""
 
-#: src/dopewars.c:405
+#: src/dopewars.c:408
 msgid "Brooklyn"
 msgstr ""
 
-#: src/dopewars.c:406
+#: src/dopewars.c:409
 msgid "Queens"
 msgstr ""
 
-#: src/dopewars.c:407
+#: src/dopewars.c:410
 msgid "Staten Island"
 msgstr ""
 
-#: src/dopewars.c:411
+#: src/dopewars.c:414
 msgid "Acid"
 msgstr ""
 
-#: src/dopewars.c:412
+#: src/dopewars.c:415
 msgid "The market is flooded with cheap home-made acid!"
 msgstr ""
 
-#: src/dopewars.c:413
+#: src/dopewars.c:416
 msgid "Cocaine"
 msgstr ""
 
-#: src/dopewars.c:414
+#: src/dopewars.c:417
 msgid "Hashish"
 msgstr ""
 
-#: src/dopewars.c:414
+#: src/dopewars.c:417
 msgid "The Marrakesh Express has arrived!"
 msgstr ""
 
-#: src/dopewars.c:415
+#: src/dopewars.c:418
 msgid "Heroin"
 msgstr ""
 
-#: src/dopewars.c:416
+#: src/dopewars.c:419
 msgid "Ludes"
 msgstr ""
 
-#: src/dopewars.c:417
+#: src/dopewars.c:420
 msgid "Rival drug dealers raided a pharmacy and are selling cheap ludes!"
 msgstr ""
 
-#: src/dopewars.c:418
+#: src/dopewars.c:421
 msgid "MDA"
 msgstr ""
 
-#: src/dopewars.c:419
+#: src/dopewars.c:422
 msgid "Opium"
 msgstr ""
 
-#: src/dopewars.c:420
+#: src/dopewars.c:423
 msgid "PCP"
 msgstr ""
 
-#: src/dopewars.c:421
+#: src/dopewars.c:424
 msgid "Peyote"
 msgstr ""
 
-#: src/dopewars.c:422
+#: src/dopewars.c:425
 msgid "Shrooms"
 msgstr ""
 
-#: src/dopewars.c:423
+#: src/dopewars.c:426
 msgid "Speed"
 msgstr ""
 
-#: src/dopewars.c:424
+#: src/dopewars.c:427
 msgid "Weed"
 msgstr ""
 
-#: src/dopewars.c:424
+#: src/dopewars.c:427
 msgid ""
 "Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr ""
 
-#: src/dopewars.c:430
+#: src/dopewars.c:433
 #, c-format
 msgid "Cops made a big %s bust! Prices are outrageous!"
 msgstr ""
 
-#: src/dopewars.c:431
+#: src/dopewars.c:434
 #, c-format
 msgid "Addicts are buying %s at ridiculous prices!"
 msgstr ""
 
-#: src/dopewars.c:436
+#: src/dopewars.c:439
 msgid "Wouldn't it be funny if everyone suddenly quacked at once?"
 msgstr ""
 
-#: src/dopewars.c:437
+#: src/dopewars.c:440
 msgid "The Pope was once Jewish, you know"
 msgstr ""
 
-#: src/dopewars.c:438
+#: src/dopewars.c:441
 msgid "I'll bet you have some really interesting dreams"
 msgstr ""
 
-#: src/dopewars.c:439
+#: src/dopewars.c:442
 msgid "So I think I'm going to Amsterdam this year"
 msgstr ""
 
-#: src/dopewars.c:440
+#: src/dopewars.c:443
 msgid "Son, you need a yellow haircut"
 msgstr ""
 
-#: src/dopewars.c:441
+#: src/dopewars.c:444
 msgid "I think it's wonderful what they're doing with incense these days"
 msgstr ""
 
-#: src/dopewars.c:442
+#: src/dopewars.c:445
 msgid "I wasn't always a woman, you know"
 msgstr ""
 
-#: src/dopewars.c:443
+#: src/dopewars.c:446
 msgid "Does your mother know you're a dope dealer?"
 msgstr ""
 
-#: src/dopewars.c:444
+#: src/dopewars.c:447
 msgid "Are you high on something?"
 msgstr ""
 
-#: src/dopewars.c:445
+#: src/dopewars.c:448
 msgid "Oh, you must be from California"
 msgstr ""
 
-#: src/dopewars.c:446
+#: src/dopewars.c:449
 msgid "I used to be a hippie, myself"
 msgstr ""
 
-#: src/dopewars.c:447
+#: src/dopewars.c:450
 msgid "There's nothing like having lots of money"
 msgstr ""
 
-#: src/dopewars.c:448
+#: src/dopewars.c:451
 msgid "You look like an aardvark!"
 msgstr ""
 
-#: src/dopewars.c:449
+#: src/dopewars.c:452
 msgid "I don't believe in Ronald Reagan"
 msgstr ""
 
-#: src/dopewars.c:450
+#: src/dopewars.c:453
 msgid "Courage!  Bush is a noodle!"
 msgstr ""
 
-#: src/dopewars.c:451
+#: src/dopewars.c:454
 msgid "Haven't I seen you on TV?"
 msgstr ""
 
-#: src/dopewars.c:452
+#: src/dopewars.c:455
 msgid "I think hemorrhoid commercials are really neat!"
 msgstr ""
 
-#: src/dopewars.c:453
+#: src/dopewars.c:456
 msgid "We're winning the war for drugs!"
 msgstr ""
 
-#: src/dopewars.c:454
+#: src/dopewars.c:457
 msgid "A day without dope is like night"
 msgstr ""
 
-#: src/dopewars.c:455
+#: src/dopewars.c:458
 #, c-format
 msgid "We only use 20% of our brains, so why not burn out the other 80%"
 msgstr ""
 
-#: src/dopewars.c:456
+#: src/dopewars.c:459
 msgid "I'm soliciting contributions for Zombies for Christ"
 msgstr ""
 
-#: src/dopewars.c:457
+#: src/dopewars.c:460
 msgid "I'd like to sell you an edible poodle"
 msgstr ""
 
-#: src/dopewars.c:458
+#: src/dopewars.c:461
 msgid "Winners don't do drugs... unless they do"
 msgstr ""
 
-#: src/dopewars.c:459
+#: src/dopewars.c:462
 msgid "Kill a cop for Christ!"
 msgstr ""
 
-#: src/dopewars.c:460
+#: src/dopewars.c:463
 msgid "I am the walrus!"
 msgstr ""
 
-#: src/dopewars.c:461
+#: src/dopewars.c:464
 msgid "Jesus loves you more than you will know"
 msgstr ""
 
-#: src/dopewars.c:462
+#: src/dopewars.c:465
 msgid "I feel an unaccountable urge to dye my hair blue"
 msgstr ""
 
-#: src/dopewars.c:463
+#: src/dopewars.c:466
 msgid "Wasn't Jane Fonda wonderful in Barbarella"
 msgstr ""
 
-#: src/dopewars.c:464
+#: src/dopewars.c:467
 msgid "Just say No... well, maybe... ok, what the hell!"
 msgstr ""
 
-#: src/dopewars.c:465
+#: src/dopewars.c:468
 msgid "Would you like a jelly baby?"
 msgstr ""
 
-#: src/dopewars.c:466
+#: src/dopewars.c:469
 msgid "Drugs can be your friend!"
 msgstr ""
 
-#: src/dopewars.c:1102
+#: src/dopewars.c:1117
 msgid "Unable to process configuration file line"
 msgstr ""
 
-#: src/dopewars.c:1163
+#: src/dopewars.c:1178
 msgid ""
 "Configuration can only be changed interactively when no\n"
 "players are logged on. Wait for all players to log off, or remove\n"
 "them with the push or kill commands, and try again."
 msgstr ""
 
-#: src/dopewars.c:1224
+#: src/dopewars.c:1239
 #, c-format
 msgid "Index into %s array should be between 1 and %d"
 msgstr ""
 
-#: src/dopewars.c:1243
+#: src/dopewars.c:1258
 #, c-format
 msgid "%s is %d\n"
 msgstr ""
 
-#: src/dopewars.c:1248
+#: src/dopewars.c:1263
 #, c-format
 msgid "%s is %s\n"
 msgstr ""
 
-#: src/dopewars.c:1251
+#: src/dopewars.c:1266
 #, c-format
 msgid "%s is \"%s\"\n"
 msgstr ""
 
-#: src/dopewars.c:1255
+#: src/dopewars.c:1270
 #, c-format
 msgid "%s[%d] is %s\n"
 msgstr ""
 
-#: src/dopewars.c:1258
+#: src/dopewars.c:1273
 #, c-format
 msgid "%s is { "
 msgstr ""
 
-#: src/dopewars.c:1289
+#: src/dopewars.c:1304
 #, c-format
 msgid "Resized structure list to %d elements\n"
 msgstr ""
 
-#: src/dopewars.c:1432
+#: src/dopewars.c:1448
 #, c-format
 msgid ""
 "Usage: dopewars [OPTION]...\n"
@@ -998,7 +1002,7 @@ msgstr ""
 msgid "CLQP"
 msgstr ""
 
-#: src/curses_client.c:371 src/gtk_client.c:809
+#: src/curses_client.c:371 src/gtk_client.c:815
 msgid "Where to, dude ? "
 msgstr ""
 
@@ -1146,22 +1150,22 @@ msgstr ""
 msgid "You don't have any %s to sell!"
 msgstr ""
 
-#: src/curses_client.c:820 src/gtk_client.c:1084
+#: src/curses_client.c:820 src/gtk_client.c:1090
 #, c-format
 msgid "You'll need more %s to carry any more %s!"
 msgstr ""
 
-#: src/curses_client.c:842 src/gtk_client.c:1088
+#: src/curses_client.c:842 src/gtk_client.c:1094
 #, c-format
 msgid "You don't have enough space to carry that %s!"
 msgstr ""
 
-#: src/curses_client.c:850 src/gtk_client.c:1092
+#: src/curses_client.c:850 src/gtk_client.c:1098
 #, c-format
 msgid "You don't have enough cash to buy that %s!"
 msgstr ""
 
-#: src/curses_client.c:863 src/gtk_client.c:1096
+#: src/curses_client.c:863 src/gtk_client.c:1102
 msgid "You don't have any to sell!"
 msgstr ""
 
@@ -1169,7 +1173,7 @@ msgstr ""
 msgid "How much money do you pay back? "
 msgstr ""
 
-#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1925
+#: src/curses_client.c:893 src/curses_client.c:923 src/gtk_client.c:1931
 msgid "You don't have that much money!"
 msgstr ""
 
@@ -1185,7 +1189,7 @@ msgstr ""
 msgid "How much money? "
 msgstr ""
 
-#: src/curses_client.c:926 src/gtk_client.c:1918
+#: src/curses_client.c:926 src/gtk_client.c:1924
 msgid "There isn't that much money in the bank..."
 msgstr ""
 
@@ -1197,7 +1201,7 @@ msgstr ""
 msgid "Messages"
 msgstr ""
 
-#: src/curses_client.c:1143 src/gtk_client.c:1377
+#: src/curses_client.c:1143 src/gtk_client.c:1383
 msgid "Stats"
 msgstr ""
 
@@ -1445,7 +1449,7 @@ msgstr ""
 msgid "Inventory"
 msgstr ""
 
-#: src/gtk_client.c:240 src/gtk_client.c:2160 src/gtk_client.c:2524
+#: src/gtk_client.c:240 src/gtk_client.c:2166 src/gtk_client.c:2530
 msgid "Close"
 msgstr ""
 
@@ -1480,9 +1484,9 @@ msgstr ""
 msgid "High Scores"
 msgstr ""
 
-#: src/gtk_client.c:439 src/gtk_client.c:1035 src/gtk_client.c:1490
-#: src/gtk_client.c:1835 src/gtk_client.c:1999 src/gtk_client.c:2275
-#: src/gtk_client.c:2432
+#: src/gtk_client.c:439 src/gtk_client.c:1041 src/gtk_client.c:1496
+#: src/gtk_client.c:1841 src/gtk_client.c:2005 src/gtk_client.c:2281
+#: src/gtk_client.c:2438
 msgid "OK"
 msgstr ""
 
@@ -1495,7 +1499,7 @@ msgstr ""
 msgid "_Deal %s"
 msgstr ""
 
-#: src/gtk_client.c:552 src/gtk_client.c:1127 src/gtk_client.c:1324
+#: src/gtk_client.c:552 src/gtk_client.c:1133 src/gtk_client.c:1330
 msgid "_Fight"
 msgstr ""
 
@@ -1503,134 +1507,134 @@ msgstr ""
 msgid "_Stand"
 msgstr ""
 
-#: src/gtk_client.c:558 src/gtk_client.c:1126
+#: src/gtk_client.c:558 src/gtk_client.c:1132
 msgid "_Run"
 msgstr ""
 
-#: src/gtk_client.c:800
+#: src/gtk_client.c:806
 msgid "Jet to location"
 msgstr ""
 
-#: src/gtk_client.c:869
+#: src/gtk_client.c:875
 #, c-format
 msgid "at %s"
 msgstr ""
 
-#: src/gtk_client.c:874
+#: src/gtk_client.c:880
 #, c-format
 msgid "You are currently carrying %d %s"
 msgstr ""
 
-#: src/gtk_client.c:879
+#: src/gtk_client.c:885
 #, c-format
 msgid "Available space: %d"
 msgstr ""
 
-#: src/gtk_client.c:884
+#: src/gtk_client.c:890
 #, c-format
 msgid "You can afford %d"
 msgstr ""
 
-#: src/gtk_client.c:933 src/gtk_client.c:1064
+#: src/gtk_client.c:939 src/gtk_client.c:1070
 msgid "Buy"
 msgstr ""
 
-#: src/gtk_client.c:934 src/gtk_client.c:1065
+#: src/gtk_client.c:940 src/gtk_client.c:1071
 msgid "Sell"
 msgstr ""
 
-#: src/gtk_client.c:935 src/gtk_client.c:1066
+#: src/gtk_client.c:941 src/gtk_client.c:1072
 msgid "Drop"
 msgstr ""
 
-#: src/gtk_client.c:1023
+#: src/gtk_client.c:1029
 #, c-format
 msgid "%s how many?"
 msgstr ""
 
-#: src/gtk_client.c:1041 src/gtk_client.c:1835 src/gtk_client.c:2010
-#: src/gtk_client.c:2283
+#: src/gtk_client.c:1047 src/gtk_client.c:1841 src/gtk_client.c:2016
+#: src/gtk_client.c:2289
 msgid "Cancel"
 msgstr ""
 
-#: src/gtk_client.c:1080
+#: src/gtk_client.c:1086
 #, c-format
 msgid "You don't have any %s!"
 msgstr ""
 
-#: src/gtk_client.c:1126 src/gtk_client.c:1836
+#: src/gtk_client.c:1132 src/gtk_client.c:1842
 msgid "_Yes"
 msgstr ""
 
-#: src/gtk_client.c:1126 src/gtk_client.c:1836
+#: src/gtk_client.c:1132 src/gtk_client.c:1842
 msgid "_No"
 msgstr ""
 
-#: src/gtk_client.c:1127
+#: src/gtk_client.c:1133
 msgid "_Attack"
 msgstr ""
 
-#: src/gtk_client.c:1127
+#: src/gtk_client.c:1133
 msgid "_Evade"
 msgstr ""
 
-#: src/gtk_client.c:1145
+#: src/gtk_client.c:1151
 msgid "Question"
 msgstr ""
 
-#: src/gtk_client.c:1274
+#: src/gtk_client.c:1280
 msgid "Space"
 msgstr ""
 
-#: src/gtk_client.c:1279
+#: src/gtk_client.c:1285
 msgid "Cash"
 msgstr ""
 
-#: src/gtk_client.c:1284
+#: src/gtk_client.c:1290
 msgid "Debt"
 msgstr ""
 
-#: src/gtk_client.c:1289
+#: src/gtk_client.c:1295
 msgid "Bank"
 msgstr ""
 
-#: src/gtk_client.c:1304
+#: src/gtk_client.c:1310
 msgid "Health"
 msgstr ""
 
-#: src/gtk_client.c:1324
+#: src/gtk_client.c:1330
 msgid "_Jet!"
 msgstr ""
 
-#: src/gtk_client.c:1354
+#: src/gtk_client.c:1360
 msgid "dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1437
+#: src/gtk_client.c:1443
 msgid "Drug Dealing and Research"
 msgstr ""
 
-#: src/gtk_client.c:1438
+#: src/gtk_client.c:1444
 msgid "Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1439
+#: src/gtk_client.c:1445
 msgid "Extensive Play Testing"
 msgstr ""
 
-#: src/gtk_client.c:1441
+#: src/gtk_client.c:1447
 msgid "Constructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1443
+#: src/gtk_client.c:1449
 msgid "Unconstructive Criticism"
 msgstr ""
 
-#: src/gtk_client.c:1447
+#: src/gtk_client.c:1453
 msgid "About dopewars"
 msgstr ""
 
-#: src/gtk_client.c:1456
+#: src/gtk_client.c:1462
 msgid ""
 "Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an\n"
 "imaginary drug market.  dopewars is an All-American game which features\n"
@@ -1642,151 +1646,151 @@ msgid ""
 "have one month of game time to make your fortune.\n"
 msgstr ""
 
-#: src/gtk_client.c:1464
+#: src/gtk_client.c:1470
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2000  Ben Webb ben@bellatrix.pcl.ox.ac.uk\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
 
-#: src/gtk_client.c:1482
+#: src/gtk_client.c:1488
 msgid ""
 "\n"
 "For information on the command line options, type dopewars -h at your\n"
 "Unix prompt. This will display a help screen, listing the availableoptions."
 msgstr ""
 
-#: src/gtk_client.c:1520 src/gtk_client.c:1543
+#: src/gtk_client.c:1526 src/gtk_client.c:1549
 #, c-format
 msgid "Status: Could not connect (%s)"
 msgstr ""
 
-#: src/gtk_client.c:1531
+#: src/gtk_client.c:1537
 #, c-format
 msgid "Status: Attempting to contact %s..."
 msgstr ""
 
-#: src/gtk_client.c:1591
+#: src/gtk_client.c:1597
 #, c-format
 msgid "%d of %d"
 msgstr ""
 
-#: src/gtk_client.c:1655 src/gtk_client.c:1696 src/gtk_client.c:1737
+#: src/gtk_client.c:1661 src/gtk_client.c:1702 src/gtk_client.c:1743
 msgid "Server"
 msgstr ""
 
-#: src/gtk_client.c:1656 src/gtk_client.c:1711
+#: src/gtk_client.c:1662 src/gtk_client.c:1717
 msgid "Port"
 msgstr ""
 
-#: src/gtk_client.c:1657
+#: src/gtk_client.c:1663
 msgid "Version"
 msgstr ""
 
-#: src/gtk_client.c:1658
+#: src/gtk_client.c:1664
 msgid "Players"
 msgstr ""
 
-#: src/gtk_client.c:1659
+#: src/gtk_client.c:1665
 msgid "Comment"
 msgstr ""
 
-#: src/gtk_client.c:1672
+#: src/gtk_client.c:1678
 msgid "New Game"
 msgstr ""
 
-#: src/gtk_client.c:1681
+#: src/gtk_client.c:1687
 msgid "Hey dude, what's your _name?"
 msgstr ""
 
-#: src/gtk_client.c:1703
+#: src/gtk_client.c:1709
 msgid "Host name"
 msgstr ""
 
-#: src/gtk_client.c:1726 src/gtk_client.c:1789
+#: src/gtk_client.c:1732 src/gtk_client.c:1795
 msgid "_Connect"
 msgstr ""
 
-#: src/gtk_client.c:1739 src/gtk_client.c:1760
+#: src/gtk_client.c:1745 src/gtk_client.c:1766
 msgid "Single player"
 msgstr ""
 
-#: src/gtk_client.c:1745
+#: src/gtk_client.c:1751
 msgid "_Antique mode"
 msgstr ""
 
-#: src/gtk_client.c:1752
+#: src/gtk_client.c:1758
 msgid "_Start single-player game"
 msgstr ""
 
-#: src/gtk_client.c:1762 src/gtk_client.c:1800
+#: src/gtk_client.c:1768 src/gtk_client.c:1806
 msgid "Metaserver"
 msgstr ""
 
-#: src/gtk_client.c:1779
+#: src/gtk_client.c:1785
 msgid "_Update"
 msgstr ""
 
-#: src/gtk_client.c:1804
+#: src/gtk_client.c:1810
 msgid "Status: Waiting for user input"
 msgstr ""
 
-#: src/gtk_client.c:1956
+#: src/gtk_client.c:1962
 #, c-format
 msgid "Cash: %s"
 msgstr ""
 
-#: src/gtk_client.c:1963
+#: src/gtk_client.c:1969
 #, c-format
 msgid "Debt: %s"
 msgstr ""
 
-#: src/gtk_client.c:1966
+#: src/gtk_client.c:1972
 #, c-format
 msgid "Bank: %s"
 msgstr ""
 
-#: src/gtk_client.c:1974
+#: src/gtk_client.c:1980
 msgid "Pay back:"
 msgstr ""
 
-#: src/gtk_client.c:1977
+#: src/gtk_client.c:1983
 msgid "Deposit"
 msgstr ""
 
-#: src/gtk_client.c:1981
+#: src/gtk_client.c:1987
 msgid "Withdraw"
 msgstr ""
 
-#: src/gtk_client.c:2005
+#: src/gtk_client.c:2011
 msgid "Pay all"
 msgstr ""
 
-#: src/gtk_client.c:2027
+#: src/gtk_client.c:2033
 msgid "Player List"
 msgstr ""
 
-#: src/gtk_client.c:2115
+#: src/gtk_client.c:2121
 msgid "Talk to player(s)"
 msgstr ""
 
-#: src/gtk_client.c:2137
+#: src/gtk_client.c:2143
 msgid "Talk to all players"
 msgstr ""
 
-#: src/gtk_client.c:2141
+#: src/gtk_client.c:2147
 msgid "Message:-"
 msgstr ""
 
-#: src/gtk_client.c:2154
+#: src/gtk_client.c:2160
 msgid "Send"
 msgstr ""
 
-#: src/gtk_client.c:2245
+#: src/gtk_client.c:2251
 msgid "Spy On Player"
 msgstr ""
 
-#: src/gtk_client.c:2247
+#: src/gtk_client.c:2253
 #, c-format
 msgid ""
 "Please choose the player to spy on. Your %s will\n"
@@ -1796,11 +1800,11 @@ msgid ""
 "you, so any %s or %s that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2255
+#: src/gtk_client.c:2261
 msgid "Tip Off The Cops"
 msgstr ""
 
-#: src/gtk_client.c:2257
+#: src/gtk_client.c:2263
 #, c-format
 msgid ""
 "Please choose the player to tip off the cops to. Your %s will\n"
@@ -1809,71 +1813,71 @@ msgid ""
 "so any %s or %s that he's carrying may be lost!"
 msgstr ""
 
-#: src/gtk_client.c:2297
+#: src/gtk_client.c:2303
 #, c-format
 msgid "Sack %s"
 msgstr ""
 
-#: src/gtk_client.c:2298
+#: src/gtk_client.c:2304
 #, c-format
 msgid ""
 "Are you sure? (Any %s or %s carried\n"
 "by this %s may be lost!)"
 msgstr ""
 
-#: src/gtk_client.c:2318
+#: src/gtk_client.c:2324
 msgid "Name"
 msgstr ""
 
-#: src/gtk_client.c:2319
+#: src/gtk_client.c:2325
 msgid "Price"
 msgstr ""
 
-#: src/gtk_client.c:2320
+#: src/gtk_client.c:2326
 msgid "Number"
 msgstr ""
 
-#: src/gtk_client.c:2322
+#: src/gtk_client.c:2328
 msgid "_Buy ->"
 msgstr ""
 
-#: src/gtk_client.c:2323
+#: src/gtk_client.c:2329
 msgid "<- _Sell"
 msgstr ""
 
-#: src/gtk_client.c:2324
+#: src/gtk_client.c:2330
 msgid "_Drop <-"
 msgstr ""
 
-#: src/gtk_client.c:2329
+#: src/gtk_client.c:2335
 #, c-format
 msgid "%s here"
 msgstr ""
 
-#: src/gtk_client.c:2332
+#: src/gtk_client.c:2338
 #, c-format
 msgid "%s carried"
 msgstr ""
 
-#: src/gtk_client.c:2408
+#: src/gtk_client.c:2414
 msgid "Change Name"
 msgstr ""
 
-#: src/gtk_client.c:2418
+#: src/gtk_client.c:2424
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it:-"
 msgstr ""
 
-#: src/gtk_client.c:2477
+#: src/gtk_client.c:2483
 msgid "Done"
 msgstr ""
 
-#: src/gtk_client.c:2510
+#: src/gtk_client.c:2516
 msgid "Spy reports"
 msgstr ""
 
-#: src/gtk_client.c:2581
+#: src/gtk_client.c:2587
 msgid ""
 "No GTK+ client available - rebuild the binary passing the\n"
 "--enable-gtk-client option to configure, or use the curses\n"
@@ -2275,213 +2279,213 @@ msgstr ""
 msgid "You meet a friend! You give him %d %s."
 msgstr ""
 
-#: src/serverside.c:1451
+#: src/serverside.c:1453
 msgid "Sanitized away a RandomOffer"
 msgstr ""
 
-#: src/serverside.c:1456
+#: src/serverside.c:1458
 #, c-format
 msgid ""
 "Police dogs chase you for %d blocks! You dropped some %s! That's a drag, man!"
 msgstr ""
 
-#: src/serverside.c:1470
+#: src/serverside.c:1474
 #, c-format
 msgid "You find %d %s on a dead dude in the subway!"
 msgstr ""
 
-#: src/serverside.c:1482
+#: src/serverside.c:1486
 #, c-format
 msgid "Your mama made brownies with some of your %s! They were great!"
 msgstr ""
 
-#: src/serverside.c:1490
+#: src/serverside.c:1496
 msgid ""
 "YN^There is some weed that smells like paraquat here!^It looks good! Will "
 "you smoke it? "
 msgstr ""
 
-#: src/serverside.c:1497
+#: src/serverside.c:1503
 #, c-format
 msgid "You stopped to %s."
 msgstr ""
 
-#: src/serverside.c:1518
+#: src/serverside.c:1524
 #, c-format
 msgid "Would you like to buy a bigger trenchcoat for %s?"
 msgstr ""
 
-#: src/serverside.c:1523
+#: src/serverside.c:1529
 #, c-format
 msgid "YN^Hey dude! I'll help carry your %s for a mere %s. Yes or no?"
 msgstr ""
 
-#: src/serverside.c:1535
+#: src/serverside.c:1541
 #, c-format
 msgid "YN^Would you like to buy a %s for %s?"
 msgstr ""
 
-#: src/serverside.c:1636 src/serverside.c:1747
+#: src/serverside.c:1642 src/serverside.c:1753
 #, c-format
 msgid "%s: offer was on behalf of %s"
 msgstr ""
 
-#: src/serverside.c:1639
+#: src/serverside.c:1645
 #, c-format
 msgid "%s has accepted your %s!^Use the G key to contact your spy."
 msgstr ""
 
-#: src/serverside.c:1685
+#: src/serverside.c:1691
 msgid ""
 "You hallucinated for three days on the wildest trip you ever imagined!^Then "
 "you died because your brain disintegrated!"
 msgstr ""
 
-#: src/serverside.c:1724
+#: src/serverside.c:1730
 #, c-format
 msgid "Too late - %s has just left!"
 msgstr ""
 
-#: src/serverside.c:1750
+#: src/serverside.c:1756
 #, c-format
 msgid "%s has rejected your %s!"
 msgstr ""
 
-#: src/serverside.c:1785
+#: src/serverside.c:1791
 #, c-format
 msgid "%s has got away!"
 msgstr ""
 
-#: src/serverside.c:1826
+#: src/serverside.c:1832
 #, c-format
 msgid "%s has run off!"
 msgstr ""
 
-#: src/serverside.c:1838
+#: src/serverside.c:1844
 msgid "Coward! You successfully escaped from the fight."
 msgstr ""
 
-#: src/serverside.c:1894
+#: src/serverside.c:1900
 msgid "pitifully armed"
 msgstr ""
 
-#: src/serverside.c:1895
+#: src/serverside.c:1901
 msgid "lightly armed"
 msgstr ""
 
-#: src/serverside.c:1896
+#: src/serverside.c:1902
 msgid "moderately well armed"
 msgstr ""
 
-#: src/serverside.c:1897
+#: src/serverside.c:1903
 msgid "heavily armed"
 msgstr ""
 
-#: src/serverside.c:1898
+#: src/serverside.c:1904
 msgid "armed to the teeth"
 msgstr ""
 
-#: src/serverside.c:1899
+#: src/serverside.c:1905
 msgid " fires and "
 msgstr ""
 
-#: src/serverside.c:1900
+#: src/serverside.c:1906
 msgid " stands and takes it."
 msgstr ""
 
-#: src/serverside.c:1903
+#: src/serverside.c:1909
 #, c-format
 msgid "%s arrives, with %d %s, %s,^%s"
 msgstr ""
 
-#: src/serverside.c:1907
+#: src/serverside.c:1913
 #, c-format
 msgid "%s arrives, %s,^%s"
 msgstr ""
 
-#: src/serverside.c:1912
+#: src/serverside.c:1918
 #, c-format
 msgid "%s fires and "
 msgstr ""
 
-#: src/serverside.c:1914
+#: src/serverside.c:1920
 #, c-format
 msgid "%s stands and takes it."
 msgstr ""
 
-#: src/serverside.c:1926
+#: src/serverside.c:1932
 msgid "misses you!"
 msgstr ""
 
-#: src/serverside.c:1927
+#: src/serverside.c:1933
 #, c-format
 msgid "You failed to hit %s."
 msgstr ""
 
-#: src/serverside.c:1930
+#: src/serverside.c:1936
 msgid "You stand and take it."
 msgstr ""
 
-#: src/serverside.c:1934
+#: src/serverside.c:1940
 msgid "hits you, man!"
 msgstr ""
 
-#: src/serverside.c:1937
+#: src/serverside.c:1943
 msgid " You've been wasted! What a drag!"
 msgstr ""
 
-#: src/serverside.c:1938
+#: src/serverside.c:1944
 #, c-format
 msgid "You hit and killed %s"
 msgstr ""
 
-#: src/serverside.c:1953 src/serverside.c:1986
+#: src/serverside.c:1959 src/serverside.c:1992
 msgid ", and loot the body!"
 msgstr ""
 
-#: src/serverside.c:1962
+#: src/serverside.c:1968
 #, c-format
 msgid "^You lost a %s, man!"
 msgstr ""
 
-#: src/serverside.c:1967
+#: src/serverside.c:1973
 #, c-format
 msgid "You are paid a bounty of %s in reward for killing^one of %s's %s"
 msgstr ""
 
-#: src/serverside.c:1975
+#: src/serverside.c:1981
 #, c-format
 msgid "You killed one of %s's %s (%d left)"
 msgstr ""
 
-#: src/serverside.c:1993
+#: src/serverside.c:1999
 #, c-format
 msgid "You fire, and hit %s!"
 msgstr ""
 
-#: src/serverside.c:2033
+#: src/serverside.c:2045
 msgid "YN^Officer %%s spots you dropping %s, and chases you!"
 msgstr ""
 
-#: src/serverside.c:2035
+#: src/serverside.c:2047
 msgid ""
 "YN^Officer %%s and %%d of his deputies spot you dropping %s, and chase you!"
 msgstr ""
 
-#: src/serverside.c:2190
+#: src/serverside.c:2206
 msgid "Player removed due to idle timeout"
 msgstr ""
 
-#: src/serverside.c:2200
+#: src/serverside.c:2216
 msgid "Player removed due to connect timeout"
 msgstr ""
 
-#: src/serverside.c:2206 src/serverside.c:2212
+#: src/serverside.c:2222 src/serverside.c:2228
 #, c-format
 msgid "%s fails to return fire..."
 msgstr ""
 
-#: src/message.c:517
+#: src/message.c:523
 #, c-format
 msgid ""
 "This server is version %s, while your client is version %s.\n"
@@ -2490,27 +2494,27 @@ msgid ""
 "for the latest version."
 msgstr ""
 
-#: src/message.c:656
+#: src/message.c:666
 msgid "Could not find host"
 msgstr ""
 
-#: src/message.c:657
+#: src/message.c:667
 msgid "Could not create network socket"
 msgstr ""
 
-#: src/message.c:658 src/message.c:691
+#: src/message.c:668 src/message.c:701
 msgid "Connection refused or no server present"
 msgstr ""
 
-#: src/message.c:850
+#: src/message.c:860
 msgid "Cannot locate metaserver"
 msgstr ""
 
-#: src/message.c:851
+#: src/message.c:861
 msgid "Cannot create socket"
 msgstr ""
 
-#: src/message.c:853
+#: src/message.c:863
 msgid "Metaserver not running HTTP or connection denied"
 msgstr ""
 

@@ -209,6 +209,7 @@ void InitAbilities(Player *Play) {
    }
 /* Set local abilities */
    Play->Abil.Local[A_PLAYERID]=TRUE;
+   Play->Abil.Local[A_DRUGVALUE]=(DrugValue ? TRUE : FALSE);
    if (!Network) for (i=0;i<A_NUM;i++) {
       Play->Abil.Remote[i]=Play->Abil.Shared[i]=Play->Abil.Local[i];
    }
@@ -452,7 +453,7 @@ void ReceiveInventory(char *Data,Inventory *Guns,Inventory *Drugs) {
 
 void SendPlayerData(Player *To) {
 /* Sends all pertinent data about player "To" from the server to player "To" */
-   SendSpyReport(NULL,To);
+   SendSpyReport(To,To);
 }
 
 void SendSpyReport(Player *To,Player *SpiedOn) {
@@ -474,9 +475,14 @@ void SendSpyReport(Player *To,Player *SpiedOn) {
    for (i=0;i<NumDrug;i++) {
       g_string_sprintfa(text,"%d^",SpiedOn->Drugs[i].Carried);
    }
+   if (HaveAbility(To,A_DRUGVALUE)) for (i=0;i<NumDrug;i++) {
+      g_string_sprintfa(text,"%s^",
+                        (cashstr=pricetostr(SpiedOn->Drugs[i].TotalValue)));
+      g_free(cashstr);
+   }
    g_string_sprintfa(text,"%d",SpiedOn->Bitches.Carried);
-   if (To) SendServerMessage(SpiedOn,C_NONE,C_UPDATE,To,text->str);
-   else SendServerMessage(NULL,C_NONE,C_UPDATE,SpiedOn,text->str);
+   if (To!=SpiedOn) SendServerMessage(SpiedOn,C_NONE,C_UPDATE,To,text->str);
+   else SendServerMessage(NULL,C_NONE,C_UPDATE,To,text->str);
    g_string_free(text,TRUE);
 }
 
@@ -590,8 +596,9 @@ void ReceiveMiscData(char *Data) {
    }
 }
 
-void ReceivePlayerData(char *text,Player *From) {
-/* Decode player data from the string "text" into player "From" */
+void ReceivePlayerData(Player *Play,char *text,Player *From) {
+/* Decode player data from the string "text" into player "From"; "Play" */
+/* specifies the player that owns the network connection.               */
    char *cp;
    int i;
    cp=text;
@@ -608,6 +615,9 @@ void ReceivePlayerData(char *text,Player *From) {
    }
    for (i=0;i<NumDrug;i++) {
       From->Drugs[i].Carried=GetNextInt(&cp,0);
+   }
+   if (HaveAbility(Play,A_DRUGVALUE)) for (i=0;i<NumDrug;i++) {
+      From->Drugs[i].TotalValue=GetNextPrice(&cp,0);
    }
    From->Bitches.Carried=GetNextInt(&cp,0);
 }

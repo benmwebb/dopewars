@@ -70,10 +70,9 @@ typedef long price_t;
 typedef long long price_t;
 #endif
 
-#define NMLEN 20
-
 #define A_PLAYERID      0
-#define A_NUM           1
+#define A_DRUGVALUE     1
+#define A_NUM           2
 typedef struct ABILITIES {
    gboolean Local[A_NUM];
    gboolean Remote[A_NUM];
@@ -111,7 +110,7 @@ struct BITCH {
 
 extern int ClientSock,ListenSock;
 extern char Network,Client,Server,NotifyMetaServer,AIPlayer;
-extern int Port,Sanitized;
+extern int Port,Sanitized,DrugValue;
 extern int NumLocation,NumGun,NumDrug,NumSubway,NumPlaying,NumStoppedTo;
 extern gchar *HiScoreFile,*ServerName,*Pager;
 extern char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
@@ -138,8 +137,6 @@ extern int NumTurns;
 #define DS_CHEAPLAST  4
 #define DS_MAX        5
 
-#define NAMELEN      37
-#define BUFLEN       600
 #define NUMSUBWAY    31
 #define NUMHISCORE   18
 #define NUMSTOPPEDTO 5
@@ -256,7 +253,7 @@ struct DRUGS {
 extern struct DRUGS Drugs;
 
 struct INVENTORY {
-   price_t Price;
+   price_t Price,TotalValue;
    int Carried;
 };
 typedef struct INVENTORY Inventory;
@@ -314,7 +311,7 @@ typedef struct tag_serverdata {
    char *Comment,*Version,*Update,*UpSince;
 } ServerData;
 
-#define NUMGLOB 79
+#define NUMGLOB 80
 struct GLOBALS {
    int *IntVal;
    price_t *PriceVal;

@@ -124,7 +124,7 @@ void SendInventory(Player *From,char AICode,char Code,Player *To,
 void ReceiveInventory(char *Data,Inventory *Guns,Inventory *Drugs);
 void SendPlayerData(Player *To);
 void SendSpyReport(Player *To,Player *SpiedOn);
-void ReceivePlayerData(char *text,Player *From);
+void ReceivePlayerData(Player *Play,char *text,Player *From);
 void SendInitialData(Player *To);
 void ReceiveInitialData(Player *Play,char *data);
 void SendMiscData(Player *To);

@@ -51,7 +51,7 @@ char Network,Client,Server,NotifyMetaServer,AIPlayer;
    dopewars in single-player or antique mode:
              Network=Server=Client=FALSE
 */
-int Port=7902,Sanitized=0,ConfigVerbose=0;
+int Port=7902,Sanitized=0,ConfigVerbose=0,DrugValue;
 char *HiScoreFile=NULL,*ServerName=NULL,*Pager=NULL;
 char WantHelp,WantVersion,WantAntique,WantColour,WantNetwork;
 char WantedClient;
@@ -159,6 +159,9 @@ struct GLOBALS Globals[NUMGLOB] = {
      N_("No. of game turns (if 0, game never ends)"),
      NULL,NULL,0,"",NULL,NULL },
    { &Sanitized,NULL,NULL,NULL,"Sanitized",N_("Random events are sanitized"),
+     NULL,NULL,0,"",NULL,NULL },
+   { &DrugValue,NULL,NULL,NULL,"DrugValue",
+     N_("Non-zero if the total value of bought drugs should be stored"),
      NULL,NULL,0,"",NULL,NULL },
    { &ConfigVerbose,NULL,NULL,NULL,"ConfigVerbose",
      N_("Be verbose in processing config file"),NULL,NULL,0,"",NULL,NULL },
@@ -747,8 +750,12 @@ void ClearInventory(Inventory *Guns,Inventory *Drugs) {
 /* This function simply clears the given inventories "Guns" */
 /* and "Drugs" if they are non-NULL                         */
    int i;
-   if (Guns) for (i=0;i<NumGun;i++) Guns[i].Carried=0;
-   if (Drugs) for (i=0;i<NumDrug;i++) Drugs[i].Carried=0;
+   if (Guns) for (i=0;i<NumGun;i++) {
+      Guns[i].Carried=0; Guns[i].TotalValue=0;
+   }
+   if (Drugs) for (i=0;i<NumDrug;i++) {
+      Drugs[i].Carried=0; Drugs[i].TotalValue=0;
+   }
 }
 
 char IsInventoryClear(Inventory *Guns,Inventory *Drugs) {
@@ -762,6 +769,9 @@ char IsInventoryClear(Inventory *Guns,Inventory *Drugs) {
 void AddInventory(Inventory *Cumul,Inventory *Add,int Length) {
 /* Adds inventory "Add" into the contents of inventory "Cumul" */
 /* Each inventory is of length "Length"                        */
+/* N.B. TotalValue is not modified, as it is assumed that the  */
+/* new items are free (if this is not the case it must be      */
+/* handled elsewhere).                                         */
    int i;
    for (i=0;i<Length;i++) Cumul[i].Carried+=Add[i].Carried;
 }
@@ -825,9 +835,14 @@ void TruncateInventoryFor(Inventory *Guns,Inventory *Drugs,
          Total+=Gun[CheapIndex].Space;
       } else {
          if (Drugs && Drugs[CheapIndex].Carried >= -Total) {
+            Drugs[CheapIndex].TotalValue =
+                   Drugs[CheapIndex].TotalValue*
+                   (Drugs[CheapIndex].Carried+Total)/
+                   Drugs[CheapIndex].Carried;
             Drugs[CheapIndex].Carried += Total; Total=0;
          } else {
             Total+=Drugs[CheapIndex].Carried; Drugs[CheapIndex].Carried=0;
+            Drugs[CheapIndex].TotalValue=0;
          }
       }
    }
@@ -1376,6 +1391,7 @@ void SetupParameters() {
    Gun=NULL;
    Drug=NULL;
    SubwaySaying=Playing=StoppedTo=NULL;
+   DrugValue=1;
    NumLocation=NumGun=NumDrug=0;
    FirstClient=FirstServer=NULL;
    Noone.Name=g_strdup("Noone");

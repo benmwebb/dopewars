@@ -714,7 +714,7 @@ void HandleClientMessage(char *Message,Player *Play) {
          break;
       case C_UPDATE:
          if (From==&Noone) {
-            ReceivePlayerData(Data,Play);
+            ReceivePlayerData(Play,Data,Play);
             print_status(Play,1); refresh();
          } else {
             DisplaySpyReports(Data,From,Play);
@@ -1210,7 +1210,7 @@ void DisplaySpyReports(char *Data,Player *From,Player *To) {
 /* Parses details about player "From" from string "Data" and then */
 /* displays the lot, drugs and guns.                              */
    gchar *caps,*text;
-   ReceivePlayerData(Data,From);
+   ReceivePlayerData(To,Data,From);
 
    clear_bottom();
    text=g_strdup_printf(_("Spy reports for %s"),GetPlayerName(From));
