@@ -944,6 +944,10 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     if (HIWORD(wParam) == 0 || HIWORD(wParam) == 1) {
       menu = gtk_window_get_menu_ID(GTK_WINDOW(widget), LOWORD(wParam));
       if (menu) {
+        if (GTK_MENU_ITEM(menu)->check) {
+          gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu),
+                                         !GTK_CHECK_MENU_ITEM(menu)->active);
+        }
         gtk_signal_emit(GTK_OBJECT(menu), "activate");
         return FALSE;
       }
@@ -3563,6 +3567,9 @@ void gtk_item_factory_create_item(GtkItemFactory *ifactory,
                                    menu_title, &accel);
 
   menu_item = gtk_menu_item_new_with_label(menu_title->str);
+  if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
+    GTK_CHECK_MENU_ITEM(menu_item)->check = 1;
+  }
   new_child->widget = menu_item;
   if (entry->callback) {
     gtk_signal_connect(GTK_OBJECT(menu_item), "activate",
@@ -3699,6 +3706,8 @@ GtkWidget *gtk_menu_item_new_with_label(const gchar *label)
   menu_item = GTK_MENU_ITEM(GtkNewObject(&GtkMenuItemClass));
   menu_item->accelind = -1;
   menu_item->text = g_strdup(label);
+  menu_item->check = 0;
+  menu_item->active = 0;
   for (i = 0; i < strlen(menu_item->text); i++) {
     if (menu_item->text[i] == '_')
       menu_item->text[i] = '&';
@@ -3710,6 +3719,23 @@ void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu)
 {
   menu_item->submenu = GTK_MENU(submenu);
   submenu->parent = GTK_WIDGET(menu_item);
+}
+
+void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active)
+{
+  GtkWidget *widget = GTK_WIDGET(menu_item);
+  menu_item->active = active;
+
+  if (GTK_WIDGET_REALIZED(widget)) {
+    MENUITEMINFO mii;
+    HMENU parent_menu;
+
+    parent_menu = GTK_MENU_SHELL(widget->parent)->menu;
+    mii.cbSize = sizeof(MENUITEMINFO);
+    mii.fMask = MIIM_STATE;
+    mii.fState = active ? MFS_CHECKED : MFS_UNCHECKED;
+    SetMenuItemInfo(parent_menu, menu_item->ID, FALSE, &mii);
+  }
 }
 
 static GtkWidget *gtk_menu_item_get_menu_ID(GtkMenuItem *menu_item,
