@@ -2045,7 +2045,7 @@ static void HandleMetaSock(gpointer data,gint socket,
       while (HandleWaitingMetaServerData(widgets->MetaConn,
                                          &widgets->NewMetaList)) {}
    }
-   if (!DoneOK) {
+   if (!DoneOK && HandleHttpCompletion(widgets->MetaConn)) {
       ConnectError(widgets,TRUE);
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaConn=NULL;

@@ -322,7 +322,7 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
 
 /* If we're done reading the headers, only read if the data for a whole
    server is available (8 lines) N.B. "Status" is from the _last_ read */
-   if (conn->Status==HS_READBODY) {
+   if (conn->Status==HS_READBODY && conn->StatusCode==200) {
       if (CountWaitingMessages(&conn->NetBuf)<8) return FALSE;
 
       NewServer=g_new0(ServerData,1);
@@ -341,7 +341,7 @@ gboolean HandleWaitingMetaServerData(HttpConnection *conn,GSList **listpt) {
       NewServer->Comment=ReadHttpResponse(conn);
       NewServer->UpSince=ReadHttpResponse(conn);
       *listpt=g_slist_append(*listpt,NewServer);
-   } else if (conn->Status==HS_READSEPARATOR) {
+   } else if (conn->Status==HS_READSEPARATOR && conn->StatusCode==200) {
       /* This should be the first line of the body, the "MetaServer:" line */
       msg=ReadHttpResponse(conn);
       if (!msg) return FALSE;

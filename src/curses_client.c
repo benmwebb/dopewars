@@ -263,7 +263,7 @@ static gboolean SelectServerFromMetaServer(Player *Play,GString *errstr) {
       if (RespondToSelect(&MetaConn->NetBuf,&readfds,&writefds,NULL,&DoneOK)) {
          while (HandleWaitingMetaServerData(MetaConn,&ServerList)) {}
       }
-      if (!DoneOK) {
+      if (!DoneOK && HandleHttpCompletion(MetaConn)) {
          if (IsHttpError(MetaConn)) {
             g_string_assign_error(errstr,&MetaConn->NetBuf.error);
             CloseHttpConnection(MetaConn);
