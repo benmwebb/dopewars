@@ -2143,7 +2143,8 @@ static void ConvertString(gchar **str)
  * UTF-8. This is a bit of a hack, as ideally all strings would be in
  * UTF-8 anyway, but we need to support old GTK+1 and curses builds,
  * which are not Unicode-aware. (N.B. As the default location names, etc.
- * are set before bind_text_domain_codeset is called
+ * are set before bind_text_domain_codeset is called, if the locale's
+ * encoding is not UTF-8, then these strings will not be UTF-8 either.)
  */
 static void ConvertToUTF8(void)
 {
