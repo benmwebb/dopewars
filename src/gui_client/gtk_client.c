@@ -2214,7 +2214,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
 
   /* Have the GLib log messages pop up in a nice dialog box */
   g_log_set_handler(NULL,
-                    LogMask() | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING |
+                    G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING |
                     G_LOG_LEVEL_CRITICAL, LogMessage, NULL);
 
   if (!CheckHighScoreFileConfig())

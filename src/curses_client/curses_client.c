@@ -2407,7 +2407,7 @@ void CursesLoop(void)
 
   /* Make the GLib log messages display nicely */
   g_log_set_handler(NULL,
-                    LogMask() | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
+                    G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                     LogMessage, NULL);
 
   SoundOpen(WantedPlugin);
