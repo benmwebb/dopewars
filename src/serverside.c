@@ -709,6 +709,7 @@ void BreakHandle(int sig)
   TerminateRequest = 1;
   sact.sa_handler = SIG_DFL;
   sact.sa_flags = 0;
+  sigemptyset(&sact.sa_mask);
   sigaction(SIGTERM, &sact, NULL);
   sigaction(SIGINT, &sact, NULL);
 }
