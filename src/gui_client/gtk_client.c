@@ -1068,10 +1068,12 @@ void DisplayFightMessage(char *Data)
     return;
   }
   if (FightDialog) {
-    if (IsShowingDealDrugs)
+    if (IsShowingDealDrugs) {
       gtk_widget_destroy(DealDialog.dialog);
-    if (!GTK_WIDGET_VISIBLE(FightDialog))
+    }
+    if (!GTK_WIDGET_VISIBLE(FightDialog)) {
       gtk_widget_show(FightDialog);
+    }
   } else {
     CreateFightDialog();
   }
@@ -1114,10 +1116,11 @@ void DisplayFightMessage(char *Data)
     SetJetButtonTitle(accel_group);
   } else {
     Message = Data;
-    if (Play->Flags & FIGHTING)
+    if (Play->Flags & FIGHTING) {
       fp = F_MSG;
-    else
+    } else {
       fp = F_LASTLEAVE;
+    }
     CanFire = (Play->Flags & CANSHOOT);
     CanRunHere = FALSE;
   }
@@ -1130,22 +1133,26 @@ void DisplayFightMessage(char *Data)
     TextViewAppend(textview, "\n", NULL, TRUE);
   }
 
-  if (!CanRunHere || fp == F_LASTLEAVE)
+  if (!CanRunHere || fp == F_LASTLEAVE) {
     gtk_widget_show(Deal);
-  else
+  } else {
     gtk_widget_hide(Deal);
-  if (CanFire && TotalGunsCarried(Play) > 0)
+  }
+  if (CanFire && TotalGunsCarried(Play) > 0) {
     gtk_widget_show(Fight);
-  else
+  } else {
     gtk_widget_hide(Fight);
-  if (CanFire && TotalGunsCarried(Play) == 0)
+  }
+  if (CanFire && TotalGunsCarried(Play) == 0) {
     gtk_widget_show(Stand);
-  else
+  } else {
     gtk_widget_hide(Stand);
-  if (fp != F_LASTLEAVE)
+  }
+  if (fp != F_LASTLEAVE) {
     gtk_widget_show(Run);
-  else
+  } else {
     gtk_widget_hide(Run);
+  }
 }
 
 /* 
