@@ -15,7 +15,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Dopewars\n"
-"POT-Creation-Date: 2003-06-06 19:17+0100\n"
+"POT-Creation-Date: 2003-06-06 20:23+0100\n"
 "PO-Revision-Date: 2002-12-11 10:03+0100\n"
 "Last-Translator: Åsmund Skjæveland <aasmunds@student.matnat.uio.no>\n"
 "Language-Team: Norsk nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -1366,7 +1366,8 @@ msgstr "Du har ein månad i speletid på å skapa formuen din."
 #, c-format
 msgid ""
 "Version %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Versjon %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr ""
+"Versjon %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client/curses_client.c:300
 msgid "dopewars is released under the GNU General Public Licence"

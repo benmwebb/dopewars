@@ -1,3 +1,8 @@
+7th June 2003
+     dopewars-1.5.9 released. This is largely a bugfix release, fixing a
+crash on pressing the "drop drugs" button, and adding minor improvements
+to the text-mode client.
+
 21st October 2002
      dopewars-1.5.8 released. The Windows and GTK+2.0 builds now have fairly
 complete Unicode support. A default set of sounds is now provided, and

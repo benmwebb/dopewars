@@ -11,7 +11,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Dopewars CVS-20020726\n"
-"POT-Creation-Date: 2003-06-06 19:17+0100\n"
+"POT-Creation-Date: 2003-06-06 20:23+0100\n"
 "PO-Revision-Date: 2002-08-01 10:10CET\n"
 "Last-Translator: Quique <quique@sindominio.net>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -1392,7 +1392,8 @@ msgstr "Tienes un mes de tiempo de juego para amasar tu fortuna."
 #, c-format
 msgid ""
 "Version %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
-msgstr "Version %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
+msgstr ""
+"Version %-8s Copyright (C) 1998-2003  Ben Webb ben@bellatrix.pcl.ox.ac.uk"
 
 #: src/curses_client/curses_client.c:300
 msgid "dopewars is released under the GNU General Public Licence"

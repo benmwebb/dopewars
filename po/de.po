@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"
-"POT-Creation-Date: 2003-06-06 19:17+0100\n"
+"POT-Creation-Date: 2003-06-06 20:23+0100\n"
 "PO-Revision-Date: 2001-04-08 15:48+0100\n"
 "Last-Translator: Eric Steiner <eric_st@aon.at>\n"
 "Language-Team: German <de@li.org>\n"

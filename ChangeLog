@@ -1,4 +1,4 @@
-cvs
+1.5.9   07-06-2003
     - The messages window in the curses client can now be scrolled with the
       + and - keys
     - The curses client now makes better use of space with screen sizes
