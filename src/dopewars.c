@@ -42,6 +42,9 @@
 #include <errno.h>
 #include <glib.h>
 #include <stdarg.h>
+#ifdef HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 #include "admin.h"
 #include "message.h"
 #include "nls.h"
@@ -1469,6 +1472,14 @@ void dopelog(const int loglevel, const LogFlags flags,
   g_logv(G_LOG_DOMAIN, 1 << (loglevel + G_LOG_LEVEL_USER_SHIFT), format,
          args);
   va_end(args);
+
+#ifdef HAVE_SYSLOG_H
+  if (loglevel <= Log.Level) {
+    va_start(args, format);
+    vsyslog(LOG_INFO, format, args);
+    va_end(args);
+  }
+#endif
 }
 
 /* 
@@ -2788,6 +2799,9 @@ GString *GetLogString(GLogLevelFlags log_level, const gchar *message)
 void OpenLog(void)
 {
   CloseLog();
+#ifdef HAVE_SYSLOG_H
+  openlog(PACKAGE, LOG_PID, LOG_USER);
+#endif
   if (Log.File[0] == '\0')
     return;
   Log.fp = fopen(Log.File, "a");
