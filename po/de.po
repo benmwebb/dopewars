@@ -1,14 +1,15 @@
-# SOME DESCRIPTIVE TITLE.
+# German translation for dopewars
 # Copyright (C) YEAR Free Software Foundation, Inc.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Created by Ben Webb <ben@bellatrix.pcl.ox.ac.uk>, Sep 2000, based on
+# Tobias Mathes' translated dopewars client
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: dopewars 1.4.8-devel\n"
 "POT-Creation-Date: 2000-09-09 17:49+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Tobias Mathes <tobi@ideenpark.de>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
