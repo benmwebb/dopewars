@@ -2063,7 +2063,7 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
      * TRUE" */
     g_print(_("%s is %s\n"), GlobalName,
             *GetGlobalBoolean(GlobalIndex, StructIndex) ?
-            _("TRUE") : _("FALSE"));
+            "TRUE" : "FALSE");
   } else if (Globals[GlobalIndex].PriceVal) {
     /* Display of a price config. file variable - e.g. "Bitch.MinPrice is
      * $200" */
@@ -2177,16 +2177,11 @@ static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
         G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
     parsed = FALSE;
     if (token == G_TOKEN_IDENTIFIER) {
-      if (g_strcasecmp(scanner->value.v_identifier, _("TRUE")) == 0 ||
-          g_strcasecmp(scanner->value.v_identifier, _("YES")) == 0 ||
-          g_strcasecmp(scanner->value.v_identifier, _("ON")) == 0 ||
+      if (g_strcasecmp(scanner->value.v_identifier, "TRUE") == 0 ||
           strcmp(scanner->value.v_identifier, "1") == 0) {
         parsed = TRUE;
         *GetGlobalBoolean(GlobalIndex, StructIndex) = TRUE;
-      } else if (g_strcasecmp(scanner->value.v_identifier, _("FALSE")) == 0
-                 || g_strcasecmp(scanner->value.v_identifier, _("NO")) == 0
-                 || g_strcasecmp(scanner->value.v_identifier,
-                                 _("OFF")) == 0
+      } else if (g_strcasecmp(scanner->value.v_identifier, "FALSE") == 0
                  || strcmp(scanner->value.v_identifier, "0") == 0) {
         parsed = TRUE;
         *GetGlobalBoolean(GlobalIndex, StructIndex) = FALSE;
@@ -2194,8 +2189,8 @@ static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
     }
     if (!parsed) {
       g_scanner_unexp_token(scanner, G_TOKEN_NONE, NULL, NULL, NULL,
-                            _("expected a boolean value (one of 0, OFF, "
-                              "NO, FALSE, 1, ON, YES, TRUE)"), FALSE);
+                            _("expected a boolean value (one of 0, FALSE, "
+                              "1, TRUE)"), FALSE);
       return FALSE;
     }
   } else if (Globals[GlobalIndex].PriceVal) {
