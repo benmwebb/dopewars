@@ -326,6 +326,7 @@ void GetClientMessage(gpointer data,gint socket,
        g_warning(_("Connection to server lost - switching to "
                  "single player mode"));
        SwitchToSinglePlayer(ClientData.Play);
+       UpdatePlayerLists();
        UpdateMenus();
      } else {
        ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
@@ -381,6 +382,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          g_warning(_("You have been pushed from the server.\n"
                      "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
+         UpdatePlayerLists();
          UpdateMenus();
          break;
       case C_QUIT:
@@ -388,6 +390,7 @@ void HandleClientMessage(char *pt,Player *Play) {
          g_warning(_("The server has terminated.\n"
                      "Switching to single player mode."));
          SwitchToSinglePlayer(Play);
+         UpdatePlayerLists();
          UpdateMenus();
          break;
       case C_NEWNAME:
@@ -806,7 +809,8 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
                             gchar *BitchName,int DefendHealth) {
 /* Updates the display of information for a player/cop in the Fight dialog. */
 /* If the player's name (DefendName) already exists, updates the display of */
-/* total health and number of bitches - otherwise, adds a new entry.        */
+/* total health and number of bitches - otherwise, adds a new entry. If     */
+/* DefendBitches is -1, then the player has left.                           */
    guint i,RowIndex;
    gchar *name;
    struct combatant *compt;
@@ -847,23 +851,33 @@ static void UpdateCombatant(gchar *DefendName,int DefendBitches,
                                DefendBitches,BitchName);
 
 /* Display of health during combat */
-   HealthText=g_strdup_printf(_("Health: %d"),DefendHealth);
+   if (DefendBitches == -1) {
+     HealthText = g_strdup(_("(Left)"));
+   } else if (DefendHealth == 0 && DefendBitches == 0) {
+     HealthText = g_strdup(_("(Dead)"));
+   } else {
+     HealthText=g_strdup_printf(_("Health: %d"),DefendHealth);
+   }
 
    ProgPercent=(gfloat)DefendHealth/100.0;
 
    if (compt->name) {
-      if (DefendName[0]) gtk_label_set_text(GTK_LABEL(compt->name),DefendName);
-      gtk_label_set_text(GTK_LABEL(compt->bitches),BitchText);
-      gtk_label_set_text(GTK_LABEL(compt->healthlabel),HealthText);
-      gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
-                              ProgPercent);
+     if (DefendName[0]) {
+       gtk_label_set_text(GTK_LABEL(compt->name),DefendName);
+     }
+     if (DefendBitches>=0) {
+       gtk_label_set_text(GTK_LABEL(compt->bitches),BitchText);
+     }
+     gtk_label_set_text(GTK_LABEL(compt->healthlabel),HealthText);
+     gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
+                             ProgPercent);
    } else {
 /* Display of the current player's name during combat */
       compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
 
       gtk_table_attach_defaults(GTK_TABLE(table),compt->name,0,1,
                                 RowIndex,RowIndex+1);
-      compt->bitches = gtk_label_new(BitchText);
+      compt->bitches = gtk_label_new(DefendBitches>=0 ? BitchText : "");
       gtk_table_attach_defaults(GTK_TABLE(table),compt->bitches,1,2,
                                 RowIndex,RowIndex+1);
       compt->healthprog = gtk_progress_bar_new();
@@ -937,13 +951,20 @@ void DisplayFightMessage(char *Data) {
       ReceiveFightMessage(Data,&AttackName,&DefendName,&DefendHealth,
                           &DefendBitches,&BitchName,&BitchesKilled,&ArmPercent,
                           &fp,&CanRunHere,&Loot,&CanFire,&Message);
-      if (fp==F_HIT || fp==F_ARRIVED || fp==F_MISS) {
-         UpdateCombatant(DefendName,DefendBitches,BitchName,DefendHealth);
-      }
-      if (fp==F_LASTLEAVE) {
-         Play->Flags&= ~FIGHTING;
-      } else {
-         Play->Flags|=FIGHTING;
+      Play->Flags|=FIGHTING;
+      switch(fp) {
+        case F_HIT: case F_ARRIVED: case F_MISS:
+          UpdateCombatant(DefendName,DefendBitches,BitchName,DefendHealth);
+          break;
+        case F_LEAVE:
+          if (AttackName[0]) {
+            UpdateCombatant(AttackName,-1,BitchName,0);
+          }
+          break;
+        case F_LASTLEAVE:
+          Play->Flags&= ~FIGHTING;
+          break;
+        default:
       }
       accel_group=(GtkAccelGroup *)
              gtk_object_get_data(GTK_OBJECT(ClientData.window),"accel_group");
