@@ -75,7 +75,7 @@
 
 #define C_NONE        'A'
 #define C_ASKLOAN     'B'
-#define C_COPS        'C'
+#define C_COPSMESG    'C'
 #define C_ASKBITCH    'D'
 #define C_ASKGUN      'E'
 #define C_ASKGUNSHOP  'F'
@@ -85,6 +85,7 @@
 #define C_ASKRUNFIGHT 'J'
 #define C_ASKSEW      'K'
 #define C_MEETPLAYER  'L'
+#define C_COPSDONE    'M'
 
 #define DT_LOCATION    'A'
 #define DT_DRUG        'B'

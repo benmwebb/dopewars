@@ -1306,7 +1306,7 @@ void FireAtHardass(Player *Play,char FireType) {
          } else {
             g_string_append(text,_("^You lose them in the alleys."));
          }
-         SendPrintMessage(NULL,C_NONE,Play,text->str);
+         SendPrintMessage(NULL,C_COPSDONE,Play,text->str);
          FinishFightWithHardass(Play,NULL);
          g_string_free(text,TRUE);
          return;
@@ -1332,10 +1332,10 @@ void FireAtHardass(Player *Play,char FireType) {
             Play->Cash += i;
             Play->Flags |= DEADHARDASS;
             SendPlayerData(Play);
-            SendPrintMessage(NULL,C_NONE,Play,text->str);
             Play->DocPrice=brandom(1000,2000-5*Play->Health);
             if (brandom(0,100)<75 && Play->DocPrice<=Play->Cash &&
                 Play->Health<100) {
+               SendPrintMessage(NULL,C_COPSMESG,Play,text->str);
                Play->EventNum=E_DOCTOR;
 	       if (Play->Bitches.Carried && !WantAntique) {
                   g_string_sprintf(text,
@@ -1349,6 +1349,7 @@ void FireAtHardass(Player *Play,char FireType) {
                g_free(prstr);
                SendQuestion(NULL,C_ASKSEW,Play,text->str);
             } else {
+               SendPrintMessage(NULL,C_COPSDONE,Play,text->str);
                FinishFightWithHardass(Play,NULL);
             }
             g_string_free(text,TRUE);
@@ -1398,7 +1399,7 @@ void FireAtHardass(Player *Play,char FireType) {
       }
    }
    SendPlayerData(Play);
-   SendPrintMessage(NULL,C_NONE,Play,text->str);
+   SendPrintMessage(NULL,C_COPSMESG,Play,text->str);
    g_string_free(text,TRUE);
    OfficerHardass(Play,NULL,NULL);
 }
@@ -2017,7 +2018,8 @@ void BuyObject(Player *From,char *data) {
          From->Cash-=amount*From->Drugs[index].Price;
          SendPlayerData(From); 
 
-         if (!Sanitized && (From->Drugs[index].Price==0 && brandom(0,100)<Cops.DropProb)) {
+         if (!Sanitized && (From->Drugs[index].Price==0 &&
+                            brandom(0,100)<Cops.DropProb)) {
             lone=g_strdup_printf(_("YN^Officer %%s spots you dropping %s, and "
                                  "chases you!"),Names.Drugs);
             deputy=g_strdup_printf(_("YN^Officer %%s and %%d of his deputies "
