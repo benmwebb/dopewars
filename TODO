@@ -1,5 +1,5 @@
-- Register abilities of both client and server to allow backwards-compatible
-  protocol extensions
+- Ignore "To" message field in client, and "From" field in server; use
+  A_PLAYERID ability to replace player names in protocol with player IDs
 - Fix GTK+ modal dialog behaviour (mouse grabbing during fighting)
 - Revamp player-player fighting
 - Display purchase price of drugs?
@@ -11,9 +11,8 @@
 - Fix spying in server (currently you can spy on other players _before_ they
   accept your bitch!)
 - Graphical mode server? (would avoid select() problems under Win32)
-- Revamp protocol - e.g. remove From/To names from messages - without breaking
-  backwards compatibility (tricky!)
-- Problems reported with display of large prices and health - must fix
+- Problems reported with display of large prices and health - "seems" to be
+  OK now... (i.e. I can't see anything wrong with it!)
 - Introduce minimum/maximum players options - AI players automatically
   spawned/killed to "fill the gaps" when humans leave/enter
 - "Deal" option when meeting players?
