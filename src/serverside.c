@@ -89,7 +89,9 @@ int MetaUpdateTimeout;
 int MetaMinTimeout;
 gboolean WantQuit=FALSE;
 
+#ifdef CYGWIN
 static SERVICE_STATUS_HANDLE scHandle;
+#endif
 
 /* Do we want to update the player details on the metaserver when the
    timeout expires? */
@@ -699,8 +701,9 @@ static void StartServer(void) {
    GString *errstr;
 #ifndef CYGWIN
    struct sigaction sact;
-#endif
+#else
    SERVICE_STATUS status;
+#endif
 
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
