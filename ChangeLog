@@ -1,3 +1,6 @@
+cvs
+    - Options dialog now allows sounds for all supported game events to be set
+
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;
       the individual modules can be statically linked in, or built as true

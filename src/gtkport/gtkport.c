@@ -5050,6 +5050,31 @@ void gtk_hbutton_box_set_spacing_default(gint spacing)
   hbbox_spacing = spacing;
 }
 
+gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
+                  const gchar *title)
+{
+  OPENFILENAME ofn;
+  char file[800], filetitle[800];
+
+  memset(&ofn, 0, sizeof(OPENFILENAME));
+  ofn.lStructSize = sizeof(OPENFILENAME);
+  ofn.hwndOwner = parent ? parent->hWnd : NULL;
+  ofn.lpstrFilter = NULL;
+  ofn.nFilterIndex = 0;
+  ofn.lpstrFile = file;
+  ofn.nMaxFile = sizeof(file);
+  ofn.lpstrFileTitle = filetitle;
+  ofn.nMaxFileTitle = sizeof(filetitle);
+  ofn.lpstrInitialDir = NULL;
+  ofn.lpstrDefExt = NULL;
+  ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+  if (GetOpenFileName(&ofn)) {
+    return g_strdup(file);
+  } else {
+    return NULL;
+  }
+}
+
 #else /* CYGWIN */
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
