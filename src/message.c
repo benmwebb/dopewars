@@ -100,7 +100,11 @@ void SendClientMessage(Player *From,char AICode,char Code,
    if (!Network) {
 #endif
       if (From) ServerFrom=GetPlayerByName(GetPlayerName(From),FirstServer);
-      else ServerFrom=NULL;
+      else if (FirstServer) ServerFrom=(Player *)(FirstServer->data);
+      else {
+         ServerFrom=g_new(Player,1);
+         FirstServer=AddPlayer(0,ServerFrom,FirstServer);
+      }
       HandleServerMessage(text->str,ServerFrom);
 #if NETWORKING
    } else {

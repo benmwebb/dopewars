@@ -187,219 +187,214 @@ void HandleServerPlayer(Player *Play) {
    }
 }
 
-void HandleServerMessage(gchar *buf,Player *ReallyFrom) {
-/* Given a message "buf" which identifies itself as being from player */
-/* "ReallyFrom" by the incoming socket, performs processing and sends */
-/* suitable replies.                                                  */
-   Player *From,*To,*tmp,*pt;
+void HandleServerMessage(gchar *buf,Player *Play) {
+/* Given a message "buf", from player "Play", performs processing and */
+/* sends suitable replies.                                            */
+   Player *To,*tmp,*pt;
    GSList *list;
    char Code,*Data,AICode;
+   gchar *text;
    DopeEntry NewEntry;
    int i;
    price_t money;
 
-   if (ProcessMessage(buf,&From,&AICode,&Code,&To,&Data,FirstServer)==-1) {
+/* Ignore client's From: field (bin it in tmp) - should always be "Play" */
+   if (ProcessMessage(buf,&tmp,&AICode,&Code,&To,&Data,FirstServer)==-1) {
       g_warning("Bad message");
       return;
-   }
-   if (From!=ReallyFrom && (From!=&Noone ||
-       (Code!=C_NAME && Code!=C_ABILITIES && Code!=C_NETMESSAGE))) {
-       g_warning(_("Message is lying about its origin\n%s: %c: %s: %s\n"
-                 "Should be from %s"),From ? GetPlayerName(From) : "",Code,
-                 To ? GetPlayerName(To) : "",Data,
-                 ReallyFrom ? GetPlayerName(ReallyFrom) : "NULL");
-       g_free(Data);
-       return;
    }
    switch(Code) {
       case C_MSGTO:
          if (Network) {
-            g_message("%s->%s: %s",GetPlayerName(From),GetPlayerName(To),Data);
+            g_message("%s->%s: %s",GetPlayerName(Play),GetPlayerName(To),Data);
          }
-         SendServerMessage(From,AICode,Code,To,Data);
+         SendServerMessage(Play,AICode,Code,To,Data);
          break;
       case C_NETMESSAGE:
          g_message("Net:%s\n",Data);
-/*       shutdown(ReallyFrom->fd,SD_RECV);*/
+/*       shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
          if (ConnectTimeout) {
-            ReallyFrom->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
+            Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
          }
          break;
       case C_ABILITIES:
-         ReceiveAbilities(ReallyFrom,Data);
+         ReceiveAbilities(Play,Data);
          break;
       case C_NAME:
          pt=GetPlayerByName(Data,FirstServer);
-         if (pt && pt!=From) {
+         if (pt && pt!=Play) {
             if (ConnectTimeout) {
-               ReallyFrom->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
+               Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
             }
-            SendServerMessage(NULL,C_NONE,C_NEWNAME,ReallyFrom,NULL);
-         } else if (((ReallyFrom && strlen(GetPlayerName(ReallyFrom))==0 &&
-                     Network) || (!Network && From==&Noone)) && Data[0]) {
+            SendServerMessage(NULL,C_NONE,C_NEWNAME,Play,NULL);
+         } else if (strlen(GetPlayerName(Play))==0 && Data[0]) {
             if (CountPlayers(FirstServer)<MaxClients || !Network) { 
-               SendAbilities(ReallyFrom);
-               CombineAbilities(ReallyFrom);
-               SendInitialData(ReallyFrom);
-               SendMiscData(ReallyFrom);
-               if (!Network) {
-                  From=g_new(Player,1);
-                  FirstServer=AddPlayer(0,From,FirstServer);
-               } else From=ReallyFrom;
-               SetPlayerName(From,Data);
+               SendAbilities(Play);
+               CombineAbilities(Play);
+               SendInitialData(Play);
+               SendMiscData(Play);
+               SetPlayerName(Play,Data);
                for (list=FirstServer;list;list=g_slist_next(list)) {
                   pt=(Player *)list->data;
-                  if (pt!=From) {
-                     SendServerMessage(NULL,C_NONE,C_LIST,From,
+                  if (pt!=Play) {
+                     SendServerMessage(NULL,C_NONE,C_LIST,Play,
                                        GetPlayerName(pt));
                   }
                }
-               SendServerMessage(NULL,C_NONE,C_ENDLIST,From,NULL);
+               SendServerMessage(NULL,C_NONE,C_ENDLIST,Play,NULL);
                RegisterWithMetaServer(TRUE,FALSE);
-               From->ConnectTimeout=0;
+               Play->ConnectTimeout=0;
 
                if (Network) {
-                  g_message(_("%s joins the game!"),GetPlayerName(From));
+                  g_message(_("%s joins the game!"),GetPlayerName(Play));
                }
-               BroadcastToClients(C_NONE,C_JOIN,GetPlayerName(From),NULL,From);
-               From->EventNum=E_ARRIVE;
-               SendPlayerData(From);
-               SendEvent(From);
+               BroadcastToClients(C_NONE,C_JOIN,GetPlayerName(Play),NULL,Play);
+               Play->EventNum=E_ARRIVE;
+               SendPlayerData(Play);
+               SendEvent(Play);
             } else {
-               From=ReallyFrom;
                g_message(_("MaxClients (%d) exceeded - dropping connection"),
                          MaxClients);
-               sprintf(buf,_("Sorry, but this server has a limit of %d "
-"%s, which has been reached.^Please try connecting again later."),
-                       MaxClients,MaxClients==1 ? _("player") : _("players"));
-               SendServerMessage(NULL,C_NONE,C_PRINTMESSAGE,From,buf);
-/*             shutdown(From->fd,SD_RECV);*/
+               if (MaxClients==1) {
+                  text=g_strdup_printf(
+                       _("Sorry, but this server has a limit of 1 "
+                         "player, which has been reached.^"
+                         "Please try connecting again later."));
+               } else {
+                  text=g_strdup_printf(
+                       _("Sorry, but this server has a limit of %d "
+                         "players, which has been reached.^"
+                         "Please try connecting again later."),MaxClients);
+               }
+               SendServerMessage(NULL,C_NONE,C_PRINTMESSAGE,Play,text);
+               g_free(text);
+/*             shutdown(Play->fd,SD_RECV);*/
 /* Make sure they do actually disconnect, eventually! */
                if (ConnectTimeout) {
-                  From->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
+                  Play->ConnectTimeout=time(NULL)+(time_t)ConnectTimeout;
                }
             }
          } else {
-            g_message(_("%s will now be known as %s"),GetPlayerName(From),Data);
-            BroadcastToClients(C_NONE,C_RENAME,Data,From,From);
-            SetPlayerName(From,Data);
+            g_message(_("%s will now be known as %s"),GetPlayerName(Play),Data);
+            BroadcastToClients(C_NONE,C_RENAME,Data,Play,Play);
+            SetPlayerName(Play,Data);
          }
          break;
       case C_WANTQUIT:
-         if (From->EventNum!=E_FINISH) FinishGame(From,NULL);
+         if (Play->EventNum!=E_FINISH) FinishGame(Play,NULL);
          break;
       case C_REQUESTJET:
          i=atoi(Data);
-         if (From->EventNum==E_ATTACK || From->EventNum==E_DEFEND ||
-             From->EventNum==E_WAITATTACK || From->EventNum==E_FREEFORALL) {
-             BreakoffCombat(From,FALSE);
+         if (Play->EventNum==E_ATTACK || Play->EventNum==E_DEFEND ||
+             Play->EventNum==E_WAITATTACK || Play->EventNum==E_FREEFORALL) {
+             BreakoffCombat(Play,FALSE);
          }
-         if (NumTurns>0 && From->Turn>=NumTurns && From->EventNum!=E_FINISH) {
-            FinishGame(From,_("Your dealing time is up..."));
-         } else if (i!=From->IsAt && (NumTurns==0 || From->Turn<NumTurns) && 
-                    From->EventNum==E_NONE && From->Health>0) {
-            From->IsAt=(char)i;
-            From->Turn++;
-            From->Debt=(price_t)((float)From->Debt*1.1);
-            From->Bank=(price_t)((float)From->Bank*1.05);
-            SendPlayerData(From);
-            From->EventNum=E_SUBWAY;
-            SendEvent(From);
+         if (NumTurns>0 && Play->Turn>=NumTurns && Play->EventNum!=E_FINISH) {
+            FinishGame(Play,_("Your dealing time is up..."));
+         } else if (i!=Play->IsAt && (NumTurns==0 || Play->Turn<NumTurns) && 
+                    Play->EventNum==E_NONE && Play->Health>0) {
+            Play->IsAt=(char)i;
+            Play->Turn++;
+            Play->Debt=(price_t)((float)Play->Debt*1.1);
+            Play->Bank=(price_t)((float)Play->Bank*1.05);
+            SendPlayerData(Play);
+            Play->EventNum=E_SUBWAY;
+            SendEvent(Play);
          } else {
-            g_warning(_("%s: DENIED jet to %s"),GetPlayerName(From),
+            g_warning(_("%s: DENIED jet to %s"),GetPlayerName(Play),
                                                 Location[i].Name);
          }
          break;
       case C_REQUESTSCORE:
-         SendHighScores(From,FALSE,NULL);
+         SendHighScores(Play,FALSE,NULL);
          break;
       case C_CONTACTSPY:
          for (list=FirstServer;list;list=g_slist_next(list)) {
             tmp=(Player *)list->data;
-            if (tmp!=From && GetListEntry(&(tmp->SpyList),From)>=0) {
-               SendSpyReport(From,tmp);
+            if (tmp!=Play && GetListEntry(&(tmp->SpyList),Play)>=0) {
+               SendSpyReport(Play,tmp);
             }
         }
         break;
       case C_DEPOSIT:
          money=strtoprice(Data);
-         if (From->Bank+money >=0 && From->Cash-money >=0) {
-            From->Bank+=money; From->Cash-=money;
-           SendPlayerData(From);
+         if (Play->Bank+money >=0 && Play->Cash-money >=0) {
+            Play->Bank+=money; Play->Cash-=money;
+           SendPlayerData(Play);
          }
          break;
       case C_PAYLOAN:
          money=strtoprice(Data);
-         if (From->Debt-money >=0 && From->Cash-money >=0) {
-            From->Debt-=money; From->Cash-=money;
-            SendPlayerData(From);
+         if (Play->Debt-money >=0 && Play->Cash-money >=0) {
+            Play->Debt-=money; Play->Cash-=money;
+            SendPlayerData(Play);
          }
          break;
       case C_BUYOBJECT:
-         BuyObject(From,Data);
+         BuyObject(Play,Data);
          break;
       case C_FIGHTACT:
-         if (From->EventNum==E_ATTACK || From->EventNum==E_FREEFORALL) {
-            AttackPlayer(From,From->Attacked,
-               TotalGunsCarried(From)>0 ? AT_SHOOT : 0);
-         } else if (From->EventNum==E_DEFEND) {
+         if (Play->EventNum==E_ATTACK || Play->EventNum==E_FREEFORALL) {
+            AttackPlayer(Play,Play->Attacked,
+               TotalGunsCarried(Play)>0 ? AT_SHOOT : 0);
+         } else if (Play->EventNum==E_DEFEND) {
             for (list=FirstServer;list;list=g_slist_next(list)) {
                tmp=(Player *)list->data;
                if ((tmp->EventNum==E_FREEFORALL || tmp->EventNum==E_WAITATTACK) 
-                   && tmp->Attacked==From) {
-                  AttackPlayer(From,tmp,
-                               TotalGunsCarried(From)>0 ? AT_SHOOT : 0);
+                   && tmp->Attacked==Play) {
+                  AttackPlayer(Play,tmp,
+                               TotalGunsCarried(Play)>0 ? AT_SHOOT : 0);
                }
             }
          }
          break;
       case C_ANSWER:
-         HandleAnswer(From,To,Data);
+         HandleAnswer(Play,To,Data);
          break;
       case C_DONE:
-         if (From->EventNum!=E_NONE && From->EventNum<E_OUTOFSYNC) {
-            From->EventNum++; SendEvent(From);
+         if (Play->EventNum!=E_NONE && Play->EventNum<E_OUTOFSYNC) {
+            Play->EventNum++; SendEvent(Play);
          }
          break;
       case C_SPYON:
-         if (From->Cash >= Prices.Spy) {
-            g_message(_("%s now spying on %s"),GetPlayerName(From),
+         if (Play->Cash >= Prices.Spy) {
+            g_message(_("%s now spying on %s"),GetPlayerName(Play),
                                             GetPlayerName(To));
-            From->Cash -= Prices.Spy;
-            LoseBitch(From,NULL,NULL);
-            NewEntry.Play=From; NewEntry.Turns=-1;
+            Play->Cash -= Prices.Spy;
+            LoseBitch(Play,NULL,NULL);
+            NewEntry.Play=Play; NewEntry.Turns=-1;
             AddListEntry(&(To->SpyList),&NewEntry);
-            SendPlayerData(From);
+            SendPlayerData(Play);
          } else {
-            g_warning(_("%s spy on %s: DENIED"),GetPlayerName(From),
+            g_warning(_("%s spy on %s: DENIED"),GetPlayerName(Play),
                                                 GetPlayerName(To));
          }
          break;
       case C_TIPOFF:
-         if (From->Cash >= Prices.Tipoff) {
-            g_message(_("%s tipped off the cops to %s"),GetPlayerName(From),
+         if (Play->Cash >= Prices.Tipoff) {
+            g_message(_("%s tipped off the cops to %s"),GetPlayerName(Play),
                                                         GetPlayerName(To));
-            From->Cash -= Prices.Tipoff;
-            LoseBitch(From,NULL,NULL);
-            NewEntry.Play=From; NewEntry.Turns=0;
+            Play->Cash -= Prices.Tipoff;
+            LoseBitch(Play,NULL,NULL);
+            NewEntry.Play=Play; NewEntry.Turns=0;
             AddListEntry(&(To->TipList),&NewEntry);
-            SendPlayerData(From);
+            SendPlayerData(Play);
          } else {
-            g_warning(_("%s tipoff about %s: DENIED"),GetPlayerName(From),
+            g_warning(_("%s tipoff about %s: DENIED"),GetPlayerName(Play),
                                                       GetPlayerName(To));
          }
          break;
       case C_SACKBITCH:
-         LoseBitch(From,NULL,NULL);
-         SendPlayerData(From);
+         LoseBitch(Play,NULL,NULL);
+         SendPlayerData(Play);
          break;
       case C_MSG:
-         if (Network) g_message("%s: %s",GetPlayerName(From),Data);
-         BroadcastToClients(C_NONE,C_MSG,Data,From,From);
+         if (Network) g_message("%s: %s",GetPlayerName(Play),Data);
+         BroadcastToClients(C_NONE,C_MSG,Data,Play,Play);
          break;
       default:
-         g_warning("%s:%c:%s:%s",GetPlayerName(From),Code,
+         g_warning("%s:%c:%s:%s",GetPlayerName(Play),Code,
                                  GetPlayerName(To),Data);
          break;
    }
