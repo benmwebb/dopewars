@@ -698,9 +698,7 @@ gchar *GetNextWord(gchar **Data,gchar *Default) {
    if (*Data==NULL || **Data=='\0') return Default;
    Word=*Data;
    while (**Data!='\0' && **Data!='^') (*Data)++;
-   if (**Data=='\0') {
-      *Data=NULL;
-   } else {
+   if (**Data!='\0') {
       **Data='\0'; (*Data)++;
    }
    return Word;
