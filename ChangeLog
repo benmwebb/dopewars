@@ -2,7 +2,7 @@
     - Internationalization (i18n) support
     - Networking revamped - now uses nonblocking sockets to improve server
       responsiveness and to remove deadlocks (previously, any client could
-      halt server by sending an unterminated message); Abilities added to
+      halt server by sending an unterminated message); "abilities" added to
       allow backwards-compatible protocol extensions
     - Longer T>alk and P>age messages allowed in curses client
     - Minor bug fixes to configure options

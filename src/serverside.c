@@ -240,6 +240,7 @@ void HandleServerMessage(gchar *buf,Player *ReallyFrom) {
                      Network) || (!Network && From==&Noone)) && Data[0]) {
             if (CountPlayers(FirstServer)<MaxClients || !Network) { 
                SendAbilities(ReallyFrom);
+               CombineAbilities(ReallyFrom);
                SendInitialData(ReallyFrom);
                SendMiscData(ReallyFrom);
                if (!Network) {

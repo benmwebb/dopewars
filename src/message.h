@@ -144,6 +144,7 @@ void ReadMetaServerData(int HttpSock);
 void InitAbilities(Player *Play);
 void SendAbilities(Player *Play);
 void ReceiveAbilities(Player *Play,gchar *Data);
+void CombineAbilities(Player *Play);
 gboolean HaveAbility(Player *Play,gint Type);
 
 #endif

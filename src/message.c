@@ -175,6 +175,12 @@ void ReceiveAbilities(Player *Play,gchar *Data) {
    Length=MIN(strlen(Data),A_NUM);
    for (i=0;i<Length;i++) {
       Play->Abil.Remote[i]= (Data[i]=='1' ? TRUE : FALSE);
+   }
+}
+
+void CombineAbilities(Player *Play) {
+   int i;
+   for (i=0;i<A_NUM;i++) {
       Play->Abil.Shared[i]= (Play->Abil.Remote[i] && Play->Abil.Local[i]);
    }
 }
@@ -712,7 +718,8 @@ gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
       case C_INIT:
          ReceiveInitialData(Data); break;
       case C_ABILITIES:
-         ReceiveAbilities(To,Data); break;
+         ReceiveAbilities(To,Data); CombineAbilities(To);
+         break;
       case C_LEAVE:
          if (From!=&Noone) FirstClient=RemovePlayer(From,FirstClient);
          break;
