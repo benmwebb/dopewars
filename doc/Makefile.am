@@ -6,7 +6,7 @@ DOCS           = aiplayer.html configfile.html index.html i18n.html \
                  ../LICENCE
 man_MANS       = dopewars.6
 SUBDIRS        = help
-EXTRA_DIST     = ${man_MANS} ${DOCS}
+EXTRA_DIST     = dopewars.6.in ${DOCS}
 DISTCLEANFILES = dopewars.6
 
 install-data-local:
