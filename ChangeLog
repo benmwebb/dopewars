@@ -1,4 +1,5 @@
 cvs
+    - Various fixes for installation on BSD systems and Mac OS X
     - Multiplayer menus (spy on player, etc.) are now greyed out in GTK+ client
       when in single-player mode
     - Manpage (courtesy of Leon Breedt) added in doc/
