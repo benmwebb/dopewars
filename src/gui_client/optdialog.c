@@ -676,7 +676,7 @@ static void FillSoundsList(GtkCList *clist)
     if (strlen(Globals[i].Name) > 7
 	&& strncmp(Globals[i].Name, "Sounds.", 7) == 0) {
       rowtext[0] = &Globals[i].Name[7];
-      rowtext[1] = Globals[i].Help;
+      rowtext[1] = _(Globals[i].Help);
       row = gtk_clist_append(clist, rowtext);
       gtk_clist_set_row_data(clist, row, GINT_TO_POINTER(i));
     }
