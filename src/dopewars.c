@@ -2008,7 +2008,7 @@ static void PrintEscaped(FILE *fp, gchar *str)
       if (isprint(str[i])) {
         fputc(str[i], fp);
       } else {
-        fprintf(fp, "\\%o", str[i]);
+        fprintf(fp, "\\%o", (int)(guchar)str[i]);
       }
     }
   }
