@@ -5310,7 +5310,7 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   label = gtk_label_new(text);
 
   /* Set the text colour */
-  style = gtk_style_new();
+  style = gtk_style_copy(gtk_rc_get_style(label));
   style->fg[GTK_STATE_NORMAL] = color;
   gtk_widget_set_style(label, style);
 
