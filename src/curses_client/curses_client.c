@@ -1,5 +1,4 @@
 /************************************************************************
- *
  * curses_client.c  dopewars client using the (n)curses console library *
  * Copyright (C)  1998-2003  Ben Webb                                   *
  *                Email: ben@bellatrix.pcl.ox.ac.uk                     *
@@ -159,17 +158,30 @@ static int get_msg_area_top(void)
   return 10;
 }
 
+static int get_separator_line(void)
+{
+  if (!Network) {
+    return 14;
+  } else if (Depth <= 20) {
+    return 11;
+  } else if (Depth <= 24) {
+    return Depth - 9;
+  } else {
+    return 11 + (Depth - 20) * 2 / 3;
+  }
+}
+
 /*
  * Returns the bottommost row of the message area
  */
 static int get_msg_area_bottom(void)
 {
-  return 14;
+  return get_separator_line() - 1;
 }
 
 static int get_ui_area_top(void)
 {
-  return 16;
+  return get_separator_line() + (Network ? 1 : 2);
 }
 
 static int get_ui_area_bottom(void)
@@ -436,7 +448,7 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     g_string_sprintf(text, _("Comment: %s"), ThisServer->Comment);
     mvaddstr(top + 4, 1, text->str);
     attrset(PromptAttr);
-    mvaddstr(get_prompt_line() + 1, 1,
+    mvaddstr(top + 5, 1,
              _("N>ext server; P>revious server; S>elect this server... "));
 
     /* The three keys that are valid responses to the previous question -
@@ -1696,48 +1708,54 @@ void nice_wait()
  */
 void DisplayFightMessage(Player *Play, char *text)
 {
-  static char Messages[5][79];
-  static int x, y;
+  static GList *msgs = NULL;
+  static int num_msgs = 0;
   gchar *textpt;
   gchar *AttackName, *DefendName, *BitchName;
-  gint i, DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
+  gint y, DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
   gboolean Loot;
+  int top = get_ui_area_top(), bottom = get_ui_area_bottom() - 4;
 
   if (text == NULL) {
-    x = 0;
-    y = 15;
-    for (i = 0; i < 5; i++)
-      Messages[i][0] = '\0';
-  } else if (!text[0]) {
+    GList *pt;
+    for (pt = msgs; pt; pt = g_list_next(pt)) {
+      g_free(pt->data);
+    }
+    g_list_free(msgs);
+    msgs = NULL;
+    num_msgs = 0;
+  } else {
+    GList *pt;
+    if (text[0]) {
+      if (HaveAbility(Play, A_NEWFIGHT)) {
+        ReceiveFightMessage(text, &AttackName, &DefendName, &DefendHealth,
+                            &DefendBitches, &BitchName, &BitchesKilled,
+                            &ArmPercent, &fp, &RunHere, &Loot, &CanFire,
+                            &textpt);
+      } else {
+        textpt = text;
+        if (Play->Flags & FIGHTING)
+          fp = F_MSG;
+        else
+          fp = F_LASTLEAVE;
+        CanFire = (Play->Flags & CANSHOOT);
+        RunHere = FALSE;
+      }
+      msgs = g_list_append(msgs, g_strdup(textpt));
+      num_msgs++;
+    }
     attrset(TextAttr);
     clear_bottom();
-    for (i = 16; i <= 20; i++)
-      mvaddstr(i, 1, Messages[i - 16]);
-  } else {
-    if (HaveAbility(Play, A_NEWFIGHT)) {
-      ReceiveFightMessage(text, &AttackName, &DefendName, &DefendHealth,
-                          &DefendBitches, &BitchName, &BitchesKilled,
-                          &ArmPercent, &fp, &RunHere, &Loot, &CanFire,
-                          &textpt);
-    } else {
-      textpt = text;
-      if (Play->Flags & FIGHTING)
-        fp = F_MSG;
-      else
-        fp = F_LASTLEAVE;
-      CanFire = (Play->Flags & CANSHOOT);
-      RunHere = FALSE;
+    pt = g_list_last(msgs);
+    y = bottom;
+    while (pt && g_list_previous(pt) && y > top) {
+      y--;
+      pt = g_list_previous(pt);
     }
-    while (textpt[0]) {
-      if (y < 20)
-        y++;
-      else
-        for (i = 0; i < 4; i++)
-          strcpy(Messages[i], Messages[i + 1]);
-
-      strncpy(Messages[y - 16], textpt, 78);
-      Messages[y - 16][78] = '\0';
-      textpt += MIN(strlen(textpt), 78);
+    y = top;
+    while (pt) {
+      mvaddstr(y++, 1, pt->data);
+      pt = g_list_next(pt);
     }
   }
 }
@@ -1780,7 +1798,7 @@ void display_message(const char *buf)
   depth = get_msg_area_bottom() - top + 1;
   wid = Width - 4;
 
-  if (wid < 0 || depth < 0) {
+  if (wid < 0 || depth < 0 || !Network) {
     return;
   }
 
@@ -1807,6 +1825,7 @@ void display_message(const char *buf)
       if (num_msgs == MaxMessages && msgs) {
 	g_free(msgs->data);
 	msgs = g_list_remove(msgs, msgs->data);
+	--num_msgs;
       }
       msgs = g_list_append(msgs, g_strdup(buf));
       ++num_msgs;
@@ -1882,7 +1901,7 @@ void print_location(char *text)
   move(0, Width / 2 - 9);
   for (i = 0; i < 18; i++)
     addch(' ');
-  mvaddstr(0, (Width - strlen(text)) / 2, text);
+  mvaddcentstr(0, text);
   attrset(TextAttr);
 }
 
@@ -1904,7 +1923,7 @@ void print_status(Player *Play, gboolean DispDrug)
   mvaddstr(0, 3, text->str);
 
   attrset(StatsAttr);
-  for (i = 2; i <= 14; i++) {
+  for (i = get_separator_line() - 1; i >= 2; i--) {
     mvaddch(i, 1, ACS_VLINE);
     mvaddch(i, Width - 2, ACS_VLINE);
   }
@@ -1923,11 +1942,11 @@ void print_status(Player *Play, gboolean DispDrug)
       addch(' ');
   }
   if (!Network) {
-    mvaddch(14, 1, ACS_LLCORNER);
+    mvaddch(get_separator_line(), 1, ACS_LLCORNER);
     for (i = 0; i < Width - 4; i++)
       addch(ACS_HLINE);
     addch(ACS_LRCORNER);
-    mvaddch(14, Width / 2, ACS_BTEE);
+    mvaddch(get_separator_line(), Width / 2, ACS_BTEE);
   } else {
     mvaddch(9, 1, ACS_LTEE);
     for (i = 0; i < Width - 4; i++)
@@ -1938,9 +1957,10 @@ void print_status(Player *Play, gboolean DispDrug)
     /* Title of the "Messages" window in the curses client */
     mvaddstr(9, 9, _("Messages (-/+ scrolls up/down)"));
 
-    mvaddch(15, 1, ACS_LLCORNER);
-    for (i = 0; i < Width - 4; i++)
+    mvaddch(get_separator_line(), 1, ACS_LLCORNER);
+    for (i = 0; i < Width - 4; i++) {
       addch(ACS_HLINE);
+    }
     addch(ACS_LRCORNER);
   }
 
@@ -2038,7 +2058,7 @@ void print_status(Player *Play, gboolean DispDrug)
   }
   attrset(TextAttr);
   if (!Network)
-    clear_line(15);
+    clear_line(get_separator_line() + 1);
   refresh();
   g_string_free(text, TRUE);
 }
