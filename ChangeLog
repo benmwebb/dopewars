@@ -2,6 +2,8 @@ cvs
     - Options dialog now allows sounds for all supported game events to be set
     - BindAddress config variable added, to allow the server to be bound to
       a non-default IP address
+    - BankInterest and DebtInterest variables added, to allow the
+      configuration of interest rates (with thanks to Matt)
 
 1.5.7   25-06-2002
     - Sound support; Windows multimedia, ESD and SDL outputs are supported;
