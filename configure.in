@@ -268,6 +268,7 @@ fi
 if test "$GUI_SERVER" = "yes" -o "$GUI_CLIENT" = "yes" ; then
    if test "$HAVE_FIXED_GTK" = "no" ; then
      cat <<FGTKEND
+
 WARNING: You have an old version of GTK+, which has bugs in the
 gtk_entry_set_visibility function (used for password-entry boxes). Thus, for
 stability reasons, this function will not be used, and all passwords entered
