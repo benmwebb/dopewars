@@ -24,7 +24,7 @@
 #include <config.h>
 #endif
 
-#ifndef CYGWIN
+#if !defined(CYGWIN) && defined(NETWORKING)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

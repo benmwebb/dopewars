@@ -741,25 +741,6 @@ void PrintHelpTo(FILE *fp)
   g_string_free(VarName, TRUE);
 }
 
-static NetworkBuffer *reply_netbuf;
-static void ServerReply(const gchar *msg)
-{
-  int msglen;
-  gchar *msgcp;
-
-  if (reply_netbuf) {
-    msglen = strlen(msg);
-    while (msglen > 0 && msg[msglen - 1] == '\n')
-      msglen--;
-    if (msglen > 0) {
-      msgcp = g_strndup(msg, msglen);
-      QueueMessageForSend(reply_netbuf, msgcp);
-      g_free(msgcp);
-    }
-  } else
-    g_print(msg);
-}
-
 /* 
  * Displays a simple help screen listing the server commands and options.
  */
@@ -784,6 +765,25 @@ void ServerHelp(void)
 }
 
 #if NETWORKING
+static NetworkBuffer *reply_netbuf;
+static void ServerReply(const gchar *msg)
+{
+  int msglen;
+  gchar *msgcp;
+
+  if (reply_netbuf) {
+    msglen = strlen(msg);
+    while (msglen > 0 && msg[msglen - 1] == '\n')
+      msglen--;
+    if (msglen > 0) {
+      msgcp = g_strndup(msg, msglen);
+      QueueMessageForSend(reply_netbuf, msgcp);
+      g_free(msgcp);
+    }
+  } else
+    g_print(msg);
+}
+
 /* 
  * Creates a pid file (if "PidFile" is non-NULL) and writes the process
  * ID into it.

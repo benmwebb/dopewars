@@ -2848,9 +2848,11 @@ void InitConfiguration(struct CMDLINE *cmdline)
   if (cmdline->setport) {
     Port = cmdline->port;
   }
+#ifdef NETWORKING
   if (cmdline->server) {
     MetaServer.Active = cmdline->notifymeta;
   }
+#endif
   WantAntique = cmdline->antique;
 
   if (!cmdline->version && !cmdline->help && !cmdline->ai
@@ -2976,7 +2978,14 @@ int main(int argc, char *argv[])
   if (cmdline->version || cmdline->help) {
     HandleHelpTexts(cmdline->help);
   } else if (cmdline->admin) {
+#ifdef NETWORKING
     AdminServer(cmdline);
+#else
+    g_print(_("This binary has been compiled without networking "
+              "support, and thus cannot run\nin admin mode. "
+              "Recompile passing --enable-networking to the "
+              "configure script.\n"));
+#endif
   } else if (cmdline->convert) {
     ConvertHighScoreFile(cmdline->convertfile);
   } else {

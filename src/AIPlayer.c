@@ -685,7 +685,7 @@ void AISendRandomMessage(Player *AIPlay)
  * Whoops - the user asked that we run an AI player, but the binary was
  * built without that compiled in.
  */
-void AIPlayerLoop()
+void AIPlayerLoop(struct CMDLINE *cmdline)
 {
   g_print(_("This binary has been compiled without networking support, "
             "and thus cannot act as an AI player.\nRecompile passing "

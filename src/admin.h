@@ -27,7 +27,7 @@
 #include <config.h>
 #endif
 
-#ifndef CYGWIN
+#if !defined(CYGWIN) && defined(NETWORKING)
 
 struct CMDLINE;
 void AdminServer(struct CMDLINE *cmdline);
