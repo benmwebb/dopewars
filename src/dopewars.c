@@ -1977,7 +1977,7 @@ gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,
  */
 static void PrintEscaped(FILE *fp, gchar *str)
 {
-  int i;
+  guint i;
 
   for (i = 0; i < strlen(str); i++) {
     switch(str[i]) {
