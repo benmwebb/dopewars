@@ -1,0 +1,6 @@
+If you are intending to build the Win32 installer for dopewars, then place
+the zlib distribution into this directory. The installer expects to
+statically link with the file libz.a in this directory; the libz.a file
+included in the Cygwin distribution should _not_ be used, as this requires
+the CYGWIN.DLL file, which is not a standard Windows DLL. Use the
+Makefile.nocygwin file to compile zlib, as this adds in the -mno-cygwin flag.

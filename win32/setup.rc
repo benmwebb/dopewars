@@ -3,6 +3,6 @@
 1   24        "setup.manifest"
 
 0   INSTLIST  "manifest"
-1   INSTFILE  "installfiles.bz2"
+1   INSTFILE  "installfiles.z"
 
 #include "dialogs.rc"

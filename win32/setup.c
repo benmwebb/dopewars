@@ -25,7 +25,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bzlib/bzlib.h"
+#ifdef LIBBZ2
+# include "bzlib/bzlib.h"
+#else
+# include "zlib/zlib.h"
+#endif
 #include <shlobj.h>
 
 #include "contid.h"
@@ -429,7 +433,11 @@ char *GetFirstFile(InstFiles *filelist, DWORD totalsize)
   DWORD bufsiz;
   char *inbuf, *outbuf;
   int status;
-  bz_stream bz;
+#ifdef LIBBZ2
+  bz_stream z;
+#else
+  z_stream z;
+#endif
 
   if (!filelist)
     return NULL;
@@ -441,22 +449,42 @@ char *GetFirstFile(InstFiles *filelist, DWORD totalsize)
   bufsiz = filelist->filesize;
   outbuf = bmalloc(bufsiz + 1);
 
-  bz.bzalloc = NULL;
-  bz.bzfree = NULL;
-  bz.opaque = NULL;
-  bz.next_in = inbuf;
-  bz.avail_in = totalsize;
+#ifdef LIBBZ2
+  z.bzalloc = NULL;
+  z.bzfree = NULL;
+  z.opaque = NULL;
+  BZ2_bzDecompressInit(&z, 0, 0);
+#else
+  z.zalloc = Z_NULL;
+  z.zfree  = Z_NULL;
+  z.opaque = Z_NULL;
+  inflateInit(&z);
+#endif
 
-  BZ2_bzDecompressInit(&bz, 0, 0);
-  bz.next_out = outbuf;
-  bz.avail_out = bufsiz;
+  z.next_in = inbuf;
+  z.avail_in = totalsize;
+  z.next_out = outbuf;
+  z.avail_out = bufsiz;
 
   while (1) {
-    status = BZ2_bzDecompress(&bz);
-    if ((status != BZ_OK && status != BZ_STREAM_END) || bz.avail_out == 0)
+#ifdef LIBBZ2
+    status = BZ2_bzDecompress(&z);
+    if ((status != BZ_OK && status != BZ_STREAM_END) || z.avail_out == 0) {
       break;
+    }
+#else
+    status = inflate(&z, Z_SYNC_FLUSH);
+    if ((status != Z_OK && status != Z_STREAM_END) || z.avail_out == 0) {
+      break;
+    }
+#endif
   }
-  BZ2_bzDecompressEnd(&bz);
+
+#ifdef LIBBZ2
+  BZ2_bzDecompressEnd(&z);
+#else
+  inflateEnd(&z);
+#endif
 
   outbuf[bufsiz] = '\0';
   return outbuf;
@@ -827,7 +855,11 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
   BOOL skipfile, service_installed;
   char *inbuf, *outbuf;
   int status, count;
-  bz_stream bz;
+#ifdef LIBBZ2
+  bz_stream z;
+#else
+  z_stream z;
+#endif
   InstFiles *listpt;
   InstData *oldidata;
 
@@ -877,28 +909,40 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
 
   outbuf = bmalloc(BUFFER_SIZE);
 
-  bz.bzalloc = NULL;
-  bz.bzfree = NULL;
-  bz.opaque = NULL;
-  bz.next_in = inbuf;
-  bz.avail_in = idata->totalsize;
+#ifdef LIBBZ2
+  z.bzalloc = NULL;
+  z.bzfree  = NULL;
+  z.opaque  = NULL;
+  BZ2_bzDecompressInit(&z, 0, 0);
+#else
+  z.zalloc = Z_NULL;
+  z.zfree  = Z_NULL;
+  z.opaque = Z_NULL;
+  inflateInit(&z);
+#endif
 
-  BZ2_bzDecompressInit(&bz, 0, 0);
-  bz.next_out = outbuf;
-  bz.avail_out = BUFFER_SIZE;
+  z.avail_in  = idata->totalsize;
+  z.next_in   = inbuf;
+  z.next_out  = outbuf;
+  z.avail_out = BUFFER_SIZE;
 
   while (1) {
-    status = BZ2_bzDecompress(&bz);
+#ifdef LIBBZ2
+    status = BZ2_bzDecompress(&z);
     if (status == BZ_OK || status == BZ_STREAM_END) {
-      count = BUFFER_SIZE - bz.avail_out;
-      bz.next_out = outbuf;
+#else
+    status = inflate(&z, Z_SYNC_FLUSH);
+    if (status == Z_OK || status == Z_STREAM_END) {
+#endif
+      count = BUFFER_SIZE - z.avail_out;
+      z.next_out = outbuf;
       while (count >= fileleft) {
         if (fileleft && !skipfile
-            && !WriteFile(fout, bz.next_out, fileleft, &bytes_written, NULL)) {
+            && !WriteFile(fout, z.next_out, fileleft, &bytes_written, NULL)) {
           printf("Write error\n");
         }
         count -= fileleft;
-        bz.next_out += fileleft;
+        z.next_out += fileleft;
         if (!OpenNextOutput(&fout, idata->instfiles, idata->keepfiles,
                             &listpt, &fileleft, logf, &skipfile))
           break;
@@ -906,18 +950,29 @@ DWORD WINAPI DoInstall(LPVOID lpParam)
       if (fout == INVALID_HANDLE_VALUE)
         break;
       if (count && !skipfile
-          && !WriteFile(fout, bz.next_out, count, &bytes_written, NULL)) {
+          && !WriteFile(fout, z.next_out, count, &bytes_written, NULL)) {
         printf("Write error\n");
       }
       fileleft -= count;
-      bz.next_out = outbuf;
-      bz.avail_out = BUFFER_SIZE;
+      z.next_out = outbuf;
+      z.avail_out = BUFFER_SIZE;
     }
-    if (status != BZ_OK)
+#ifdef LIBBZ2
+    if (status != BZ_OK) {
       break;
+    }
+#else
+    if (status != Z_OK) {
+      break;
+    }
+#endif
   }
 
-  BZ2_bzDecompressEnd(&bz);
+#ifdef LIBBZ2
+  BZ2_bzDecompressEnd(&z);
+#else
+  inflateEnd(&z);
+#endif
   if (!skipfile)
     CloseHandle(fout);
 
@@ -1175,6 +1230,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   return 0;
 }
 
+#ifdef LIBBZ2
 void bz_internal_error(int errcode)
 {
 }
+#endif
