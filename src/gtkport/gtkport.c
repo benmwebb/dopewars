@@ -3184,6 +3184,8 @@ void gtk_table_attach(GtkTable *table, GtkWidget *widget,
   newChild->right_attach = right_attach;
   newChild->top_attach = top_attach;
   newChild->bottom_attach = bottom_attach;
+  newChild->xoptions = xoptions;
+  newChild->yoptions = yoptions;
 
   table->children = g_list_append(table->children, (gpointer)newChild);
   widget->parent = GTK_WIDGET(table);
@@ -3285,29 +3287,72 @@ void gtk_table_size_request(GtkWidget *widget, GtkRequisition *requisition)
 void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   GtkTable *table;
-  gint row_extra = 0, col_extra = 0, i;
+  gint row_extra = 0, col_extra = 0, i, row_expand = 0, col_expand = 0;
   GtkAllocation child_alloc;
   GList *children;
   GtkTableChild *child;
   gint border_width;
+  GtkAttachOptions *rowopt, *colopt;
 
   table = GTK_TABLE(widget);
   border_width = GTK_CONTAINER(widget)->border_width;
 
-  if (table->ncols) {
-    col_extra =
-        (allocation->width - widget->requisition.width) / table->ncols;
+  rowopt = g_new0(GtkAttachOptions, table->nrows);
+  colopt = g_new0(GtkAttachOptions, table->ncols);
+  for (children = table->children; children;
+       children = g_list_next(children)) {
+    GtkTableChild *child = (GtkTableChild *)(children->data);
+    GtkWidget *child_wid;
+
+    if (!child)
+      continue;
+    child_wid = child->widget;
+    if (child_wid && child->left_attach < child->right_attach &&
+        child->top_attach < child->bottom_attach &&
+        GTK_WIDGET_VISIBLE(child_wid)) {
+      if (child->xoptions & GTK_SHRINK) {
+        for (i = child->left_attach; i < child->right_attach; i++) {
+          colopt[i] |= GTK_SHRINK;
+        }
+      }
+      if (child->yoptions & GTK_EXPAND) {
+        for (i = child->top_attach; i < child->bottom_attach; i++) {
+          rowopt[i] |= GTK_EXPAND;
+        }
+      }
+    }
   }
-  if (table->nrows) {
-    row_extra =
-        (allocation->height - widget->requisition.height) / table->nrows;
-  }
+
   for (i = 0; i < table->ncols; i++) {
-    table->cols[i].allocation = table->cols[i].requisition + col_extra;
+    if (!(colopt[i] & GTK_SHRINK)) {
+      col_expand++;
+    }
   }
   for (i = 0; i < table->nrows; i++) {
-    table->rows[i].allocation = table->rows[i].requisition + row_extra;
+    if (rowopt[i] & GTK_EXPAND) {
+      row_expand++;
+    }
   }
+
+
+  if (col_expand) {
+    col_extra =
+        (allocation->width - widget->requisition.width) / col_expand;
+  }
+  if (row_expand) {
+    row_extra =
+        (allocation->height - widget->requisition.height) / row_expand;
+  }
+  for (i = 0; i < table->ncols; i++) {
+    table->cols[i].allocation = table->cols[i].requisition +
+                                (colopt[i] & GTK_SHRINK ? 0 : col_extra);
+  }
+  for (i = 0; i < table->nrows; i++) {
+    table->rows[i].allocation = table->rows[i].requisition +
+                                (rowopt[i] & GTK_SHRINK ? 0 : row_extra);
+  }
+  g_free(rowopt);
+  g_free(colopt);
   for (children = table->children; children;
        children = g_list_next(children)) {
     child = (GtkTableChild *)(children->data);
