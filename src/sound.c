@@ -24,10 +24,34 @@
 #include <config.h>
 #endif
 
+#include "sound_esd.h"
+
+static SoundDriver *driver = NULL;
+
 void SoundInit(void)
 {
+#ifdef HAVE_ESD
+  driver = SoundInit_ESD();
+#endif
+}
+
+void SoundOpen(gchar *drivername)
+{
+  if (driver && driver->open) {
+    driver->open();
+  }
 }
 
 void SoundClose(void)
 {
+  if (driver && driver->close) {
+    driver->close();
+  }
+}
+
+void SoundPlay(const gchar *snd)
+{
+  if (driver && driver->play && snd && snd[0]) {
+    driver->play(snd);
+  }
 }
