@@ -573,6 +573,9 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
       } else {
         g_print("FIXME: Bad redirect\n");
       }
+    } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
+               conn->StatusCode==401) {
+      g_print("FIXME: Authentication %s required\n",split[1]);
     }
   }
   g_strfreev(split);
