@@ -61,8 +61,12 @@ void AIPlayerLoop() {
    g_message(_("AI Player started; attempting to contact server at %s:%d..."),
              ServerName,Port);
    pt=SetupNetwork(FALSE);
-   if (pt) g_error(_("Could not connect to dopewars server\n(%s)\n"
-                   "AI Player terminating abnormally."),_(pt));
+   if (pt) {
+      g_log(NULL,G_LOG_LEVEL_CRITICAL,
+            _("Could not connect to dopewars server\n(%s)\n"
+              "AI Player terminating abnormally."),_(pt));
+      return;
+   }
    AIPlay->fd=ClientSock;
 
    InitAbilities(AIPlay);

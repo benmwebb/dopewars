@@ -888,10 +888,10 @@ int InitHighScoreFile() {
 #endif
 
    if (!ScoreFP) {
-      g_warning(_("Cannot open high score file %s.\n"
-                "Either ensure you have permissions to access this file and "
-                "directory, or\nspecify an alternate high score file with "
-                "the -f command line option."),HiScoreFile);
+      g_log(NULL,G_LOG_LEVEL_CRITICAL,_("Cannot open high score file %s.\n"
+            "Either ensure you have permissions to access this file and "
+            "directory, or\nspecify an alternate high score file with "
+            "the -f command line option."),HiScoreFile);
       return -1;
    }
    return 0;
