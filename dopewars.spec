@@ -1,14 +1,13 @@
-Summary:   Drug dealing game
-Name:      dopewars
-Version:   cvs
-Release:   1
-Vendor:    Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
-URL:       http://dopewars.sourceforge.net/
-License:   GPL
-Group:     Amusements/Games
-Source0:   dopewars-cvs.tar.gz
-
-BuildRoot: /tmp/dopewars-rpm
+Summary:       Drug dealing game
+Name:          dopewars
+Version:       cvs
+Release:       1
+Vendor:        Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+URL:           http://dopewars.sourceforge.net/
+License:       GPL
+Group:         Amusements/Games
+Source0:       %{name}-%{version}.tar.gz
+BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
 BuildRequires: SDL_mixer-devel, esound-devel
 
 %description
@@ -27,7 +26,7 @@ switches (via dopewars -h) for further information.
 %package esd
 Summary:  dopewars ESD sound plugin
 Group:    Amusements/Games
-Requires: dopewars
+Requires: %{name}
 %description esd
 This package adds a plugin to dopewars to allow sound to be output via.
 the ESD (Esound) daemon.
@@ -35,52 +34,54 @@ the ESD (Esound) daemon.
 %package sdl
 Summary:  dopewars SDL_mixer sound plugin
 Group:    Amusements/Games
-Requires: dopewars
+Requires: %{name}
 %description sdl
 This package adds a plugin to dopewars to allow sound to be output via.
-the Simple DirectMedia Layer mixer (SDL_mixer)
-the ESD (Esound) daemon.
+the Simple DirectMedia Layer mixer (SDL_mixer).
 
 %prep
 %setup
+
 %build
-./configure --prefix=/usr
-make DESTDIR=${RPM_BUILD_ROOT}
+%configure
+make
 
 %install
-make DESTDIR=${RPM_BUILD_ROOT} install-strip
+make install DESTDIR=${RPM_BUILD_ROOT}
+%find_lang %{name}
 
 %clean
-rm -rf ${RPM_BUILD_ROOT}
+test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root)
 %doc ChangeLog LICENCE README doc/aiplayer.html doc/clientplay.html
 %doc doc/configfile.html doc/credits.html doc/developer.html
 %doc doc/example-cfg doc/i18n.html doc/index.html doc/installation.html
 %doc doc/metaserver.html doc/server.html doc/servercommands.html
 %doc doc/protocol.html doc/windows.html
-%attr(2755,root,games) /usr/bin/dopewars
-%attr(0660,root,games) %config /usr/share/dopewars.sco
-/usr/man/man6/dopewars.6.gz
-/usr/share/gnome/apps/Games/dopewars.desktop
-/usr/share/pixmaps/dopewars-pill.png
-/usr/share/pixmaps/dopewars-weed.png
-/usr/share/pixmaps/dopewars-shot.png
-/usr/share/locale/de/LC_MESSAGES/dopewars.mo
-/usr/share/locale/pl/LC_MESSAGES/dopewars.mo
-/usr/share/locale/pt_BR/LC_MESSAGES/dopewars.mo
-/usr/share/locale/fr/LC_MESSAGES/dopewars.mo
+%attr(2755,root,games) %{_bindir}/dopewars
+%attr(0660,root,games) %config %{_datadir}/dopewars.sco
+%{_mandir}/man6/dopewars.6.gz
+%{_datadir}/gnome/apps/Games/dopewars.desktop
+%{_datadir}/pixmaps/dopewars-pill.png
+%{_datadir}/pixmaps/dopewars-weed.png
+%{_datadir}/pixmaps/dopewars-shot.png
 
 %files esd
 %defattr(-,root,root)
-/usr/lib/dopewars/libsound_esd.so
+%{_libdir}/dopewars/libsound_esd.so
 
 %files sdl
 %defattr(-,root,root)
-/usr/lib/dopewars/libsound_sdl.so
+%{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
+* Fri Jun 21 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
+- Description typos corrected
+- A lot of hardcoded texts replaced with %{name} etc.
+- Redundant make arguments removed
+
 * Mon May 13 2002 Ben Webb <ben@bellatrix.pcl.ox.ac.uk>
 - SDL and ESD plugin subpackages added
 
