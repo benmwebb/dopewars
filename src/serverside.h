@@ -73,6 +73,9 @@ void DropPrivileges(void);
 
 #ifdef GUI_SERVER
 void GuiServerLoop(gboolean is_service);
+#ifdef CYGWIN
+void ServiceMain(void);
+#endif
 #endif
 #ifndef CYGWIN
 gchar *GetLocalSocket(void);
