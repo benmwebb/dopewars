@@ -14,6 +14,7 @@ DOCS= aiplayer.html configfile.html index.html server.html clientplay.html \
       developer.html metaserver.html windows.html README
 
 install-exec-hook:
-	chown root.games ${DESTDIR}${bindir}/dopewars
+	chown root:games ${DESTDIR}${bindir}/dopewars || \
+	    chown root:wheel ${DESTDIR}${bindir}/dopewars
 	chmod 2755 ${DESTDIR}${bindir}/dopewars
 

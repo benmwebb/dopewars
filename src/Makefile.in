@@ -341,7 +341,8 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
 install-exec-hook:
-	chown root.games ${DESTDIR}${bindir}/dopewars
+	chown root:games ${DESTDIR}${bindir}/dopewars || \
+	    chown root:wheel ${DESTDIR}${bindir}/dopewars
 	chmod 2755 ${DESTDIR}${bindir}/dopewars
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

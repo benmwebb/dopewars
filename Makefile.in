@@ -376,7 +376,8 @@ mostlyclean distclean maintainer-clean
 install-data-local:
 	${mkinstalldirs} ${DESTDIR}${datadir}
 	touch ${DESTDIR}${datadir}/dopewars.sco
-	chown root.games ${DESTDIR}${datadir}/dopewars.sco
+	chown root:games ${DESTDIR}${datadir}/dopewars.sco || \
+	   chown root:wheel ${DESTDIR}${datadir}/dopewars.sco
 	chmod 0660 ${DESTDIR}${datadir}/dopewars.sco
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
