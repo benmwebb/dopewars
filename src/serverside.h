@@ -34,7 +34,6 @@ extern char *PidFile;
 void CleanUpServer(void);
 void BreakHandle(int sig);
 void ClientLeftServer(Player *Play);
-void StartServer(void);
 void StopServer(void);
 void HandleServerCommand(char *string);
 Player *HandleNewConnection(void);

@@ -89,6 +89,8 @@ int MetaUpdateTimeout;
 int MetaMinTimeout;
 gboolean WantQuit=FALSE;
 
+static SERVICE_STATUS_HANDLE scHandle;
+
 /* Do we want to update the player details on the metaserver when the
    timeout expires? */
 gboolean MetaPlayerPending=FALSE;
@@ -692,12 +694,13 @@ gboolean ReadServerKey(GString *LineBuf,gboolean *EndOfLine) {
 #endif
 }
 
-void StartServer() {
-   LastError *sockerr;
+static void StartServer(void) {
+   LastError *sockerr=NULL;
    GString *errstr;
 #ifndef CYGWIN
    struct sigaction sact;
 #endif
+   SERVICE_STATUS status;
 
    Scanner=g_scanner_new(&ScannerConfig);
    Scanner->input_name="(stdin)";
@@ -734,20 +737,22 @@ void StartServer() {
      errstr=g_string_new("");
      g_string_assign_error(errstr,sockerr);
      g_log(NULL,G_LOG_LEVEL_CRITICAL,
-           _("Cannot listen on port %u (%s) Aborting."),
+           _("Cannot bind to port %u (%s) Aborting."),
            Port,errstr->str);
      g_string_free(errstr,TRUE);
      FreeError(sockerr);
      exit(1);
    }
 
+   if (listen(ListenSock,10)==SOCKET_ERROR) {
+     g_log(NULL,G_LOG_LEVEL_CRITICAL,
+           _("Cannot listen to network socket. Aborting."));
+     exit(1);
+   }
+
 /* Initial startup message for the server */
    dopelog(0,_("dopewars server version %s ready and waiting for "
                "connections on port %d."),VERSION,Port);
-
-   if (listen(ListenSock,10)==SOCKET_ERROR) {
-      perror("listen socket"); exit(1);
-   }
 
    MetaUpdateTimeout=MetaMinTimeout=0;
 
@@ -1149,6 +1154,23 @@ static void GuiServerLogMessage(const gchar *log_domain,
    }
 }
 
+#ifdef CYGWIN
+static void ServiceFailure(const gchar *log_domain,
+                           GLogLevelFlags log_level,const gchar *message,
+                           gpointer user_data) {
+  SERVICE_STATUS status;
+
+  g_print("%s\n",message);
+  status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+  status.dwCurrentState = SERVICE_STOPPED;
+  status.dwControlsAccepted = SERVICE_ACCEPT_STOP;
+  status.dwWin32ExitCode = ERROR_NETWORK_UNREACHABLE;
+  status.dwCheckPoint = 0;
+  status.dwWaitHint = 0;
+  SetServiceStatus(scHandle,&status);
+}
+#endif
+
 static void GuiQuitServer() {
    gtk_main_quit();
    StopServer();
@@ -1257,7 +1279,6 @@ static gint GuiRequestDelete(GtkWidget *widget,GdkEvent *event,gpointer data) {
 
 #ifdef CYGWIN
 static HWND mainhwnd=NULL;
-static SERVICE_STATUS_HANDLE scHandle;
 
 static BOOL RegisterStatus(DWORD state) {
   SERVICE_STATUS status;
@@ -1391,7 +1412,11 @@ void GuiServerLoop(gboolean is_service) {
    gtk_container_add(GTK_CONTAINER(window),vbox);
    gtk_widget_show_all(window);
 
-   if (!is_service) {
+   if (is_service) {
+#ifdef CYGWIN
+     g_log_set_handler(NULL,G_LOG_LEVEL_CRITICAL,ServiceFailure,NULL);
+#endif
+   } else {
      g_set_print_handler(GuiServerPrintFunc);
      g_log_set_handler(NULL,LogMask()|G_LOG_LEVEL_MESSAGE|G_LOG_LEVEL_WARNING,
                        GuiServerLogMessage,NULL);

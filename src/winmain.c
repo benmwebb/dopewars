@@ -217,6 +217,7 @@ Network=Server=TRUE;
          if (Server) {
 #ifdef NETWORKING
 #ifdef GUI_SERVER
+            g_log_set_handler(NULL,G_LOG_LEVEL_CRITICAL,LogMessage,NULL);
             win32_init(hInstance,hPrevInstance,"mainicon");
             GuiServerLoop(FALSE);
 #else
