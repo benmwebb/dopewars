@@ -1,13 +1,13 @@
-This is dopewars 1.5.7, a game simulating the life of a drug dealer in 
+This is dopewars 1.5.8, a game simulating the life of a drug dealer in 
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.5.7 servers should handle clients as old as version 1.4.3 with
+dopewars 1.5.8 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.5.7!
+recommended that both clients and servers are upgraded to 1.5.8!
 
 INSTALLATION
 
@@ -17,10 +17,10 @@ Either...
    
 Or...
 
-2. Get the tarball dopewars-1.5.7.tar.gz from the same URL
-   Extract it via. tar -xvzf dopewars-1.5.7.tar.gz
+2. Get the tarball dopewars-1.5.8.tar.gz from the same URL
+   Extract it via. tar -xvzf dopewars-1.5.8.tar.gz
    Follow the instructions in the INSTALL file in the newly-created
-      dopewars-1.5.7 directory
+      dopewars-1.5.8 directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
