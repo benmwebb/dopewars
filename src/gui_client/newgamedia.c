@@ -743,7 +743,7 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            (gpointer)window);
+                            GTK_OBJECT(window));
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
@@ -851,7 +851,7 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            (gpointer)window);
+                            GTK_OBJECT(window));
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);

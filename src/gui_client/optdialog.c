@@ -924,12 +924,12 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   button = gtk_button_new_with_label(_("Browse..."));
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(BrowseSound), entry);
+                            GTK_SIGNAL_FUNC(BrowseSound), GTK_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   button = gtk_button_new_with_label(_("Play"));
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(TestPlaySound), entry);
+                            GTK_SIGNAL_FUNC(TestPlaySound), GTK_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, FALSE, 0);
@@ -953,7 +953,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            (gpointer)dialog);
+                            GTK_OBJECT(dialog));
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
                      GTK_SIGNAL_FUNC(FinishOptDialog), NULL);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
