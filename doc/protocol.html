@@ -1,7 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
- "http://www.w3.org/TR/html4/strict.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
 
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
 <title>The dopewars network protocol</title>
 </head>
@@ -34,8 +37,8 @@ binary representation, but as a string - i.e. "100" takes 3 characters
 
 </dl>
 
-Anything else should be taken as literal characters, which should appear in
-the message exactly as printed here.
+<p>Anything else should be taken as literal characters, which should appear in
+the message exactly as printed here.</p>
 
 <h2><a name="format">General message format</a></h2>
 
@@ -53,9 +56,9 @@ character, should normally be avoided in message data.</p>
 
 <dl>
 <dt><tt>&lt;ID&gt;^(A)(C)"data"</tt></dt>
-<dd><tt>ID</tt> = player ID (may also be blank if this is not applicable)<br>
-<tt>A</tt> = one-letter message subtype code (used by AI players)<br>
-<tt>C</tt> = one-letter message type code<br>
+<dd><tt>ID</tt> = player ID (may also be blank if this is not applicable)<br />
+<tt>A</tt> = one-letter message subtype code (used by AI players)<br />
+<tt>C</tt> = one-letter message type code<br />
 <tt>data</tt> = message-dependent information</dd>
 </dl>
 
@@ -114,209 +117,188 @@ server will not "retry" if the client does not respond.</p>
 <dl>
 
 <dt><b>C_PRINTMESSAGE</b> ('<tt>A</tt>')</dt>
-<dd>Sent when the server wishes the client to display some text<br>
+<dd>Sent when the server wishes the client to display some text<br />
 <tt>data</tt> = The text that the client should display; any ^ delimiters in
-this text should be taken to mean a new line.<br>
-e.g. "^AAGame over^You made the high score list"<br>
-<b>Answer required:</b> no</dd>
-<p>
+this text should be taken to mean a new line.<br />
+e.g. "^AAGame over^You made the high score list"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_LIST</b> ('<tt>B</tt>')</dt>
-<dd>Used by the server to tell the client about other logged on players<br>
-<tt>data</tt> = <tt>"name"^&lt;ID&gt;</tt><br>
-<tt>name</tt> = the name of the player<br>
+<dd>Used by the server to tell the client about other logged on players<br />
+<tt>data</tt> = <tt>"name"^&lt;ID&gt;</tt><br />
+<tt>name</tt> = the name of the player<br />
 <tt>ID</tt> = the numeric ID that should be used to communicate with this
-player<br>
-e.g. "^ABFred^1"<br>
-<b>Answer required:</b> no</dd>
-<p>
+player<br />
+e.g. "^ABFred^1"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_ENDLIST</b> ('<tt>C</tt>')</dt>
 <dd>Signals that all players have been listed (no more C_LIST messages to
-come)<br>
-e.g. "^AC"<br>
-<b>Answer required:</b> no</dd>
-<p>
+come)<br />
+e.g. "^AC"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_NEWNAME</b> ('<tt>D</tt>')</dt>
 <dd>Signals that the name provided by the client is unsuitable (usually, this
-is because it's already been taken by another player)<br>
+is because it's already been taken by another player)<br />
 N.B. This is always sent at the start of the game, before protocol negotiation,
-so uses the old format, e.g. "^^AD"<br>
+so uses the old format, e.g. "^^AD"<br />
 <b>Answer required:</b> yes - must send a suitable C_NAME message to
-proceed</dd>
-<p>
+proceed<p /></dd>
 
 <dt><b>C_MSG</b> ('<tt>E</tt>')</dt>
 <dd>Contains a message from one player (or the server admin) broadcast to all
-connected players.<br>
-<tt>data</tt> = the message to display<br>
-<tt>ID</tt> = the ID of the player that sent the message<br>
-e.g. "1^AEHello world"<br>
-<b>Answer required:</b> no</dd>
-<p>
+connected players.<br />
+<tt>data</tt> = the message to display<br />
+<tt>ID</tt> = the ID of the player that sent the message<br />
+e.g. "1^AEHello world"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_MSGTO</b> ('<tt>F</tt>')</dt>
-<dd>Contains a private message from one player to another<br>
-<tt>data</tt> = the message to display<br>
-<tt>ID</tt> = the ID of the player that sent the message<br>
-e.g. "1^AFHello player"<br>
-<b>Answer required:</b> no</dd>
-<p>
+<dd>Contains a private message from one player to another<br />
+<tt>data</tt> = the message to display<br />
+<tt>ID</tt> = the ID of the player that sent the message<br />
+e.g. "1^AFHello player"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_JOIN</b> ('<tt>G</tt>')</dt>
 <dd>Sent by the server to all players when a new player joins the game
-(See C_LIST for format)<br>
-<b>Answer required:</b> no</dd>
-<p>
+(See C_LIST for format)<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_LEAVE</b> ('<tt>H</tt>')</dt>
-<dd>Sent by the server to all players when a player leaves the game<br>
-<tt>data</tt> = the name of the player that's leaving<br>
-<tt>ID</tt> = the ID of the player<br>
-e.g. "1^AHFred"<br>
-<b>Answer required:</b> no</dd>
-<p>
+<dd>Sent by the server to all players when a player leaves the game<br />
+<tt>data</tt> = the name of the player that's leaving<br />
+<tt>ID</tt> = the ID of the player<br />
+e.g. "1^AHFred"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_SUBWAYFLASH</b> ('<tt>I</tt>')</dt>
 <dd>Used by the server to tell a client that it has just moved to a new
 location. (The client is not told where this location is, since this is
 information is contained in a C_UPDATE message.) Clients usually reset any
 location-dependent state (e.g. fights) on receiving this message, and flash
-a "subway" indicator or similar<br>
-e.g. "^AI"<br>
-<b>Answer required:</b> no</dd>
-<p>
+a "subway" indicator or similar<br />
+e.g. "^AI"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_UPDATE</b> ('<tt>J</tt>')</dt>
 <dd>Used by the server to update client state. This is also used to tell the
-player about the state of another player (a report from a spy)<br>
-<tt>data</tt> = <tt>&lt;cash&gt;^&lt;debt&gt;^&lt;bank&gt;^&lt;health&gt;^&lt;coatsize&gt;^&lt;locn&gt;^&lt;turn&gt;^&lt;flags&gt;^&lt;GUNS&gt;^&lt;DRUGS&gt;^&lt;DRUGVALUE&gt;^&lt;bitches&gt;</tt><br>
+player about the state of another player (a report from a spy)<br />
+<tt>data</tt> = <tt>&lt;cash&gt;^&lt;debt&gt;^&lt;bank&gt;^&lt;health&gt;^&lt;coatsize&gt;^&lt;locn&gt;^&lt;turn&gt;^&lt;flags&gt;^&lt;GUNS&gt;^&lt;DRUGS&gt;^&lt;DRUGVALUE&gt;^&lt;bitches&gt;</tt><br />
 <tt>cash</tt>, <tt>debt</tt>, <tt>bank</tt> = money available, owed to the
-loan shark, in the bank<br>
-<tt>coatsize</tt> = amount of space available for drugs/guns<br>
-<tt>locn</tt> = zero-based game location<br>
-<tt>turn</tt> = turn number<br>
+loan shark, in the bank<br />
+<tt>coatsize</tt> = amount of space available for drugs/guns<br />
+<tt>locn</tt> = zero-based game location<br />
+<tt>turn</tt> = turn number<br />
 <tt>flags</tt> = player status flags - see PlayerFlags in src/dopewars.h for
 the individual binary bits. The only one currently used is SPYINGON (16) which
-is set if the player is currently spying on one or more other players<br>
+is set if the player is currently spying on one or more other players<br />
 <tt>GUNS</tt> = the numbers of each gun carried, separated by ^ characters
-(there should be NumGun numbers in this list - see the C_INIT message)<br>
-<tt>DRUGS</tt> = similar, for carried drugs<br>
+(there should be NumGun numbers in this list - see the C_INIT message)<br />
+<tt>DRUGS</tt> = similar, for carried drugs<br />
 <tt>DRUGVALUE</tt> = similar, but contains the total cash value of each drug;
 N.B. this field is only sent if the ability
-<a href="#drugvalue">A_DRUGVALUE</a> is present<br>
-<tt>bitches</tt> = number of accompanying bitches<br>
+<a href="#drugvalue">A_DRUGVALUE</a> is present<br />
+<tt>bitches</tt> = number of accompanying bitches<br />
 <tt>ID</tt> = blank for a status update, otherwise the ID of the player that
-you're spying on<br>
-<b>Answer required:</b> no</dd>
-<p>
+you're spying on<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_DRUGHERE</b> ('<tt>K</tt>')</dt>
 <dd>Tells the client which drugs are available to buy at the current
-location<br>
+location<br />
 <tt>data</tt> = drug prices, separated by ^ characters. If a price is zero,
-that drug is not available here<br>
-<b>Answer required:</b> no</dd>
-<p>
+that drug is not available here<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_GUNSHOP</b> ('<tt>L</tt>')</dt>
-<dd>Tells the client to start up the "gun shop", for buying/selling guns<br>
-e.g. "^AL"<br>
+<dd>Tells the client to start up the "gun shop", for buying/selling guns<br />
+e.g. "^AL"<br />
 <b>Answer required:</b> yes - zero or more C_BUYOBJECT messages, followed by a
-C_DONE message</dd>
-<p>
+C_DONE message<p /></dd>
 
 <dt><b>C_LOANSHARK</b> ('<tt>M</tt>')</dt>
-<dd>Tells the client that the player has a chance to pay back the loan<br>
-e.g. "^AM"<br>
+<dd>Tells the client that the player has a chance to pay back the loan<br />
+e.g. "^AM"<br />
 <b>Answer required:</b> yes - an optional C_PAYLOAN message, followed by a
-C_DONE message</dd>
-<p>
+C_DONE message<p /></dd>
 
 <dt><b>C_BANK</b> ('<tt>N</tt>')</dt>
-<dd>Tells the client that the player has a chance to visit the bank<br>
-e.g. "^AN"<br>
+<dd>Tells the client that the player has a chance to visit the bank<br />
+e.g. "^AN"<br />
 <b>Answer required:</b> yes - an optional C_DEPOSIT message, followed by a
-C_DONE message</dd>
-<p>
+C_DONE message<p /></dd>
 
 <dt><b>C_QUESTION</b> ('<tt>O</tt>')</dt>
-<dd>Used to display a message from the server that requires a response<br>
-<tt>data</tt> = <tt>"keys"^"message"</tt><br>
+<dd>Used to display a message from the server that requires a response<br />
+<tt>data</tt> = <tt>"keys"^"message"</tt><br />
 <tt>keys</tt> = a list of the valid single-character responses - e.g. "YN" for
 a yes/no question; the client may use these keys directly, or expand them to
-complete words (e.g. YN -> Yes/No)<br>
-<tt>message</tt> = the message to display<br>
-e.g. "^AOYN^Would you like to visit the bank?"<br>
+complete words (e.g. YN -> Yes/No)<br />
+<tt>message</tt> = the message to display<br />
+e.g. "^AOYN^Would you like to visit the bank?"<br />
 <b>Answer required:</b> yes - a C_ANSWER message, containing one of the valid
-response keys</dd>
-<p>
+response keys<p /></dd>
 
 <dt><b>C_HISCORE</b> ('<tt>Q</tt>')</dt>
 <dd>Used for the server to tell the client about a high score; C_HISCORE
 messages should only ever be sent after a C_STARTHISCORE message and before a
-C_ENDHISCORE message<br>
-<tt>data</tt> = <tt>&lt;index&gt;^(B)"score"</tt><br>
+C_ENDHISCORE message<br />
+<tt>data</tt> = <tt>&lt;index&gt;^(B)"score"</tt><br />
 <tt>index</tt> = the zero-based index of the high score (0 is the top
-score)<br>
+score)<br />
 <tt>B</tt> = the single character 'B' if this score should be displayed in
-bold (usually to indicate that it's "your" score) or 'N' otherwise<br>
-<tt>score</tt> = the text containing the score, date, and player name<br>
-<b>Answer required:</b> no</dd>
-<p>
+bold (usually to indicate that it's "your" score) or 'N' otherwise<br />
+<tt>score</tt> = the text containing the score, date, and player name<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_STARTHISCORE</b> ('<tt>R</tt>')</dt>
 <dd>Tells the client that the server is about to send it a list of high scores;
-usually used by the client to display the title of a high score screen<br>
-e.g. "^AR"<br>
-<b>Answer required:</b> no</dd>
-<p>
+usually used by the client to display the title of a high score screen<br />
+e.g. "^AR"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_ENDHISCORE</b> ('<tt>S</tt>')</dt>
 <dd>Tells the client that the server has sent all of the high scores; usually
 used by the client to display a prompt to end the game (if data="end") or to
-return to the game (if data is not "end")<br>
-<tt>data</tt> = "end" if the game has finished, blank otherwise<br>
-e.g. "^ASend"<br>
-<b>Answer required:</b> no, but the client should disonnect if data="end"</dd>
-<p>
+return to the game (if data is not "end")<br />
+<tt>data</tt> = "end" if the game has finished, blank otherwise<br />
+e.g. "^ASend"<br />
+<b>Answer required:</b> no, but the client should disonnect if data="end"
+<p /></dd>
 
 <dt><b>C_PUSH</b> ('<tt>Z</tt>')</dt>
-<dd>Requests that the client leave the server<br>
-e.g. "^AZ"<br>
-<b>Answer required:</b> no, but the client should disconnect</dd>
-<p>
+<dd>Requests that the client leave the server<br />
+e.g. "^AZ"<br />
+<b>Answer required:</b> no, but the client should disconnect<p /></dd>
 
 <dt><b>C_QUIT</b> ('<tt>a</tt>')</dt>
-<dd>Notifies the client that the server is about to terminate<br>
-e.g. "^Aa"<br>
-<b>Answer required:</b> no, but the client should disconnect</dd>
-<p>
+<dd>Notifies the client that the server is about to terminate<br />
+e.g. "^Aa"<br />
+<b>Answer required:</b> no, but the client should disconnect<p /></dd>
 
 <dt><b>C_RENAME</b> ('<tt>b</tt>')</dt>
-<dd>Instructs the client that another player has changed his/her name<br>
-<tt>data</tt> = the new player name<br>
-<tt>ID</tt> = the player's ID<br>
-e.g. "1^AbFred"<br>
-<b>Answer required:</b> no</dd>
-<p>
+<dd>Instructs the client that another player has changed his/her name<br />
+<tt>data</tt> = the new player name<br />
+<tt>ID</tt> = the player's ID<br />
+e.g. "1^AbFred"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_INIT</b> ('<tt>k</tt>')</dt>
-<dd>Tells the client about various global game settings<br>
-<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"</tt><br>
-<tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br>
-<tt>numloc</tt> = the number of locations in the game<br>
-<tt>numgun</tt> = the number of guns in the game<br>
-<tt>numdrug</tt> = the number of drugs in the game<br>
+<dd>Tells the client about various global game settings<br />
+<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"month"^"year"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"</tt><br />
+<tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br />
+<tt>numloc</tt> = the number of locations in the game<br />
+<tt>numgun</tt> = the number of guns in the game<br />
+<tt>numdrug</tt> = the number of drugs in the game<br />
 <tt>bitch</tt>, <tt>bitches</tt>, <tt>gun</tt>, <tt>guns</tt>, <tt>drug</tt>,
 <tt>drugs</tt>, <tt>month</tt>, <tt>year</tt>, <tt>loanshark</tt>,
 <tt>bank</tt>, <tt>gunshop</tt>, <tt>pub</tt> = various names used in the
-game<br>
-<tt>ID</tt> = the ID that the client should use to refer to itself<br>
-e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"<br>
-<b>Answer required:</b> no</dd>
-<p>
+game<br />
+<tt>ID</tt> = the ID that the client should use to refer to itself<br />
+e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"<br />
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_DATA</b> ('<tt>l</tt>')</dt>
 <dd>Tells the client about various game settings - 4 variants on this message
@@ -324,54 +306,50 @@ are possible:-
 
 <dl>
 <dt>Information about locations in the game</dt>
-<dd><tt>data</tt> = <tt>&lt;index&gt;^A"name"</tt><br>
-<tt>index</tt> = zero-based index of the location<br>
-<tt>name</tt> = name of the location<br>
-e.g. "^Al0^ABronx"</dd>
-<p>
+<dd><tt>data</tt> = <tt>&lt;index&gt;^A"name"</tt><br />
+<tt>index</tt> = zero-based index of the location<br />
+<tt>name</tt> = name of the location<br />
+e.g. "^Al0^ABronx"<p /></dd>
 
 <dt>Information about drugs</dt>
 <dd><tt>data</tt> = <tt>&lt;index&gt;^B"name"^&lt;min&gt;^&lt;max&gt;</tt>
-<tt>index</tt> = zero-based index of the drug<br>
-<tt>name</tt> = name of the drug<br>
-<tt>min</tt> = the minimum price of the drug<br>
-<tt>max</tt> = the maximum price of the drug<br>
-e.g. "^Al1^BCocaine^15000^29000"</dd>
-<p>
+<tt>index</tt> = zero-based index of the drug<br />
+<tt>name</tt> = name of the drug<br />
+<tt>min</tt> = the minimum price of the drug<br />
+<tt>max</tt> = the maximum price of the drug<br />
+e.g. "^Al1^BCocaine^15000^29000"<p /></dd>
 
 <dt>Information about guns</dt>
-<dd><tt>data</tt> = <tt>&lt;index&gt;^C"name"^&lt;price&gt;^&lt;space&gt;^&lt;damage&gt;</tt><br>
-<tt>index</tt> = zero-based index of the gun<br>
-<tt>name</tt> = name of the gun<br>
-<tt>price</tt> = the normal cost of the gun<br>
-<tt>damage</tt> = the maximum damage that the gun can do<br>
-e.g. "^Al2^CRuger^2900^4^4"</dd>
-<p>
+<dd><tt>data</tt> = <tt>&lt;index&gt;^C"name"^&lt;price&gt;^&lt;space&gt;^&lt;damage&gt;</tt><br />
+<tt>index</tt> = zero-based index of the gun<br />
+<tt>name</tt> = name of the gun<br />
+<tt>price</tt> = the normal cost of the gun<br />
+<tt>damage</tt> = the maximum damage that the gun can do<br />
+e.g. "^Al2^CRuger^2900^4^4"<p /></dd>
 
 <dt>Miscellaneous information</dt>
-<dd><tt>data</tt> = <tt>0^D&lt;spy&gt;^&lt;tipoff&gt;</tt><br>
-<tt>spy</tt> = the price to spy on another player<br>
-<tt>tipoff</tt> = the price to tip off the cops to another player<br>
+<dd><tt>data</tt> = <tt>0^D&lt;spy&gt;^&lt;tipoff&gt;</tt><br />
+<tt>spy</tt> = the price to spy on another player<br />
+<tt>tipoff</tt> = the price to tip off the cops to another player<br />
 e.g. "^Al0^D20000^10000"</dd>
 </dl>
 
-<b>Answer required:</b> no</dd>
-<p>
+<b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_FIGHTPRINT</b> ('<tt>m</tt>')</dt>
-<dd><tt>data</tt> = <tt>"attack"^"defend"^&lt;health&gt;^&lt;bitches&gt;^"bitchname"^&lt;killed&gt;^&lt;armpct&gt;^(fightpoint)(runhere)(loot)(canfire)^"text"</tt><br>
+<dd><tt>data</tt> = <tt>"attack"^"defend"^&lt;health&gt;^&lt;bitches&gt;^"bitchname"^&lt;killed&gt;^&lt;armpct&gt;^(fightpoint)(runhere)(loot)(canfire)^"text"</tt><br />
 <tt>attack</tt> = name of the attacker player/cop if applicable (if blank,
-it's you)<br>
+it's you)<br />
 <tt>defend</tt> = name of the defending player/cop if applicable (if blank,
-it's you)<br>
-<tt>health</tt> = defender's health, if applicable<br>
+it's you)<br />
+<tt>health</tt> = defender's health, if applicable<br />
 <tt>bitches</tt> = number of bitches/deputies accompanying the defending
-player<br>
-<tt>bitchname</tt> = usually "bitch", "bitches", "deputy" or "deputies"<br>
-<tt>killed</tt> = number of bitches killed in this attack<br>
+player<br />
+<tt>bitchname</tt> = usually "bitch", "bitches", "deputy" or "deputies"<br />
+<tt>killed</tt> = number of bitches killed in this attack<br />
 <tt>armpct</tt> = a number between 0 and 100 showing how heavily armed the
-attacker is<br>
-<tt>fightpoint</tt> =<br>
+attacker is<br />
+<tt>fightpoint</tt> =<br />
 <dl>
 <dt>'<tt>A</tt>' (<b>F_ARRIVED</b>)</dt>
 <dd>The "defending" player has just arrived on the scene</dd>
@@ -403,21 +381,20 @@ is over</dd>
 </dl>
 
 <tt>runhere</tt> = '1' if running should take you to the current location (if
-'0', you should jet to another location)<br>
-<tt>loot</tt> = '1' if the attack resulted in a kill and a loot of the body<br>
+'0', you should jet to another location)<br />
+<tt>loot</tt> = '1' if the attack resulted in a kill and a loot of the body<br />
 <tt>canfire</tt> = '1' if you are allowed to shoot at other players right
-now<br>
-<tt>text</tt> = explanatory text from the server, to be printed<br>
+now<br />
+<tt>text</tt> = explanatory text from the server, to be printed<br />
 <b>Answer required:</b> yes, depending on the message contents: usually a
-C_REQUESTJET or C_FIGHTACT message</dd>
-<p>
+C_REQUESTJET or C_FIGHTACT message<p /></dd>
 
 <dt><a name="abilities"><b>C_ABILITIES</b></a> ('<tt>r</tt>')</dt>
-<dd>Negotiates protocol extensions between client and server<br>
-<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)</tt><p>
+<dd>Negotiates protocol extensions between client and server<br />
+<tt>data</tt> = <tt>(playerid)(drugvalue)(newfight)(tstring)</tt>
 
-<a name="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather than
-player names to identify players in network messages ('0' otherwise). It is
+<p><a name="playerid"><tt>playerid</tt></a> = '1' if we use player IDs rather
+than player names to identify players in network messages ('0' otherwise). It is
 strongly recommended that this new protocol be used, as the old protocol is
 difficult to properly support, and is deprecated. However, the new protocol is
 only supported by servers of version 1.5.0 or above. (N.B. Since the old
@@ -426,25 +403,21 @@ server have exchanged C_ABILITIES messages the server will "talk" using the old
 protocol. Thus, the C_ABILITIES message itself from the client, and any
 succeeding messages sent before the server sends C_ABILITIES back, must be
 sent using the old protocol. "Old" servers will ignore the C_ABILITIES
-message.) Ability name in dopewars code: <b>A_PLAYERID</b>
-<p>
+message.) Ability name in dopewars code: <b>A_PLAYERID</b></p>
 
-<a name="drugvalue"><tt>drugvalue</tt></a> = '1' if the server should keep track
-of how much players paid for their drugs, so that they can see whether they're
-getting a good deal when they come to sell them ('0' otherwise). Ability name
-in dopewars code: <b>A_DRUGVALUE</b>
-<p>
+<p><a name="drugvalue"><tt>drugvalue</tt></a> = '1' if the server should keep
+track of how much players paid for their drugs, so that they can see whether
+they're getting a good deal when they come to sell them ('0' otherwise).
+Ability name in dopewars code: <b>A_DRUGVALUE</b></p>
 
-<a name="newfight"><tt>newfight</tt></a> = '1' if we use the "new" fighting
+<p><a name="newfight"><tt>newfight</tt></a> = '1' if we use the "new" fighting
 interface (documented here). Highly recommended. Ability name in dopewars
-code: <b>A_NEWFIGHT</b>
-<p>
+code: <b>A_NEWFIGHT</b></p>
 
-<a name="tstring"><tt>tstring</tt></a> = '1' if names of drugs etc. should be
+<p><a name="tstring"><tt>tstring</tt></a> = '1' if names of drugs etc. should be
 sent in the <a href="i18n.html">translated string</a> (tstring) notation;
 only necessary if you are supporting non-English languages. Ability name
-in dopewars code: <b>A_TSTRING</b>
-<p>
+in dopewars code: <b>A_TSTRING</b></p>
 
 e.g. "^^Ar1010" (N.B. the double ^ is a feature of the "old" protocol)</dd>
 
@@ -461,140 +434,124 @@ from the server to the client.</p>
 
 <dt><b>C_MSG</b> ('<tt>E</tt>')</dt>
 <dd>Contains a message from one player to be broadcast to all connected
-players<br>
-<tt>data</tt> = the message to display<br>
-e.g. "^AEHello world"</dd>
-<p>
+players<br />
+<tt>data</tt> = the message to display<br />
+e.g. "^AEHello world"<p /></dd>
 
 <dt><b>C_MSGTO</b> ('<tt>F</tt>')</dt>
-<dd>Contains a private message from one player to another<br>
-<tt>data</tt> = the message to display<br>
-<tt>ID</tt> = the ID of the player to send the message to<br>
-e.g. "1^AFHello player"</dd>
-<p>
+<dd>Contains a private message from one player to another<br />
+<tt>data</tt> = the message to display<br />
+<tt>ID</tt> = the ID of the player to send the message to<br />
+e.g. "1^AFHello player"<p /></dd>
 
 <dt><b>C_BUYOBJECT</b> ('<tt>T</tt>')</dt>
-<dd>Requests the server to buy or sell an object<br>
-<tt>data</tt> = <tt>"type"^&lt;index&gt;^&lt;amount&gt;</tt><br>
-<tt>type</tt> = "bitch", "gun" or "drug"<br>
+<dd>Requests the server to buy or sell an object<br />
+<tt>data</tt> = <tt>"type"^&lt;index&gt;^&lt;amount&gt;</tt><br />
+<tt>type</tt> = "bitch", "gun" or "drug"<br />
 <tt>index</tt> = the zero-based index of the gun/drug that you want to
-buy/sell, or zero if type="bitch"<br>
-<tt>amount</tt> = the number of objects to buy (or, if negative, to sell)<br>
-e.g. "^ATbitch^0^1"</dd>
-<p>
+buy/sell, or zero if type="bitch"<br />
+<tt>amount</tt> = the number of objects to buy (or, if negative, to sell)<br />
+e.g. "^ATbitch^0^1"<p /></dd>
 
 <dt><b>C_DONE</b> ('<tt>U</tt>')</dt>
 <dd>Sent by the client when it's finished with the loan shark, bank, or gun
-shop<br>
-e.g. "^AU"</dd>
-<p>
+shop<br />
+e.g. "^AU"<p /></dd>
 
 <dt><b>C_REQUESTJET</b> ('<tt>V</tt>')</dt>
-<dd>Asks the server to jet to a new location (or to run from a fight)<br>
-<tt>data</tt> = the numeric, zero-based, location to jet to<br>
-e.g. "^AV2"</dd>
-<p>
+<dd>Asks the server to jet to a new location (or to run from a fight)<br />
+<tt>data</tt> = the numeric, zero-based, location to jet to<br />
+e.g. "^AV2"<p /></dd>
 
 <dt><b>C_PAYLOAN</b> ('<tt>W</tt>')</dt>
-<dd>Asks to pay back a loan to the loan shark<br>
-<tt>data</tt> = the amount of money to pay back<br>
-e.g. "^AW5000"</dd>
-<p>
+<dd>Asks to pay back a loan to the loan shark<br />
+<tt>data</tt> = the amount of money to pay back<br />
+e.g. "^AW5000"<p /></dd>
 
 <dt><b>C_ANSWER</b> ('<tt>X</tt>')</dt>
-<dd>Sends the reply to a previous question from the server<br>
-<tt>data</tt> = the single character response<br>
-e.g. "^AXY"</dd>
-<p>
+<dd>Sends the reply to a previous question from the server<br />
+<tt>data</tt> = the single character response<br />
+e.g. "^AXY"<p /></dd>
 
 <dt><b>C_DEPOSIT</b> ('<tt>Y</tt>')</dt>
-<dd>Asks to deposit money into (or withdraw money from) the bank<br>
+<dd>Asks to deposit money into (or withdraw money from) the bank<br />
 <tt>data</tt> = the amount of money to deposit, or (if negative) the amount
-to withdraw<br>
-e.g. "^AY10000"</dd>
-<p>
+to withdraw<br />
+e.g. "^AY10000"<p /></dd>
 
 <dt><a name="name"><b>C_NAME</b></a> ('<tt>c</tt>')</dt>
-<dd>Sent by the client to register the player name with the server<br>
-<tt>data</tt> = the player's name<br>
+<dd>Sent by the client to register the player name with the server<br />
+<tt>data</tt> = the player's name<br />
 N.B. this is always sent at the start of the game, in which case the old
-format should be used, e.g. "^^AcFred"</dd>
-<p>
+format should be used, e.g. "^^AcFred"<p /></dd>
 
 <dt><b>C_SACKBITCH</b> ('<tt>d</tt>')</dt>
-<dd>Requests that a bitch should be sacked<br>
-e.g. "^Ad"</dd>
-<p>
+<dd>Requests that a bitch should be sacked<br />
+e.g. "^Ad"<p /></dd>
 
 <dt><b>C_TIPOFF</b> ('<tt>e</tt>')</dt>
-<dd>Asks the server to tip off the cops to another player<br>
-<tt>ID</tt> = the player ID to tip off the cops to<br>
-e.g. "1^Ae"</dd>
-<p>
+<dd>Asks the server to tip off the cops to another player<br />
+<tt>ID</tt> = the player ID to tip off the cops to<br />
+e.g. "1^Ae"<p /></dd>
 
 <dt><b>C_SPYON</b> ('<tt>f</tt>')</dt>
-<dd>Asks the server to spy on another player<br>
-<tt>ID</tt> = the player ID to spy on<br>
-e.g. "1^Af"</dd>
-<p>
+<dd>Asks the server to spy on another player<br />
+<tt>ID</tt> = the player ID to spy on<br />
+e.g. "1^Af"<p /></dd>
 
 <dt><b>C_WANTQUIT</b> ('<tt>g</tt>')</dt>
-<dd>Tells the server that the client wishes to leave the game early<br>
-e.g. "^Ag"</dd>
-<p>
+<dd>Tells the server that the client wishes to leave the game early<br />
+e.g. "^Ag"<p /></dd>
 
 <dt><b>C_CONTACTSPY</b> ('<tt>h</tt>')</dt>
 <dd>Asks the server to send back reports about all the players that we are
-currently spying on<br>
-e.g. "^Ah"</dd>
-<p>
+currently spying on<br />
+e.g. "^Ah"<p /></dd>
 
 <dt><b>C_REQUESTSCORE</b> ('<tt>j</tt>')</dt>
-<dd>Asks the server to send back the high score list<br>
-e.g. "^Aj"</dd>
-<p>
+<dd>Asks the server to send back the high score list<br />
+e.g. "^Aj"<p /></dd>
 
 <dt><b>C_FIGHTACT</b> ('<tt>n</tt>')</dt>
-<dd>Responds to a previous C_FIGHTPRINT message<br>
-<tt>data</tt> = "<tt>F</tt>", "<tt>S</tt>", or "<tt>R</tt>"<br>
-<tt>F</tt> = return fire<br>
-<tt>S</tt> = stand and take it (do not return fire)<br>
-<tt>R</tt> = try to run away<br>
+<dd>Responds to a previous C_FIGHTPRINT message<br />
+<tt>data</tt> = "<tt>F</tt>", "<tt>S</tt>", or "<tt>R</tt>"<br />
+<tt>F</tt> = return fire<br />
+<tt>S</tt> = stand and take it (do not return fire)<br />
+<tt>R</tt> = try to run away<br />
 N.B. If "runhere" is not set in the C_FIGHTPRINT message, the "R" response
-should not be sent - a C_REQUESTJET message should be sent instead.<br>
-e.g. "^AnF"</dd>
-<p>
+should not be sent - a C_REQUESTJET message should be sent instead.<br />
+e.g. "^AnF"<p /></dd>
 
 <dt><b>C_ABILITIES</b> ('<tt>r</tt>')</dt>
 <dd>Notifies the server of supported protocol features. See the explanation
-for the corresponding <a href="#abilities">server message</a>.<p>
+for the corresponding <a href="#abilities">server message</a>.
 
-The client will receive this message in response to a previous C_ABILITIES
+<p>The client will receive this message in response to a previous C_ABILITIES
 message that it sent to the server. This reply message contains the abilities
 that the server is willing to support. The client should compare these to
 those that it previously offered, and then use only those abilities that both
 client and server support. (If the server does not support the new protocol,
 no C_ABILITIES reply message will be sent, and the client should assume that
 <b>no</b> abilities are supported.) The server will expect all client messages
-after the C_ABILITIES message to be compliant with these abilities.
-<p>
+after the C_ABILITIES message to be compliant with these abilities.</p>
 
-e.g.<br>
+e.g.<br />
 - client sends "1110" (supports everything except
-<a href="#tstring">A_TSTRING</a>)<br>
+<a href="#tstring">A_TSTRING</a>)<br />
 - server responds with "1011" (supports everything except
-<a href="#drugvalue">A_DRUGVALUE</a>)<br>
+<a href="#drugvalue">A_DRUGVALUE</a>)<br />
 - client should adopt the abilities "1010" (
 <a href="#playerid">A_PLAYERID</a> and <a href="#newfight">A_NEWFIGHT</a>)</dd>
 
 </dl>
 
-<hr>
+<hr />
 <ul>
 <li><a href="index.html">Main index</a>
-<ul>
-<li><a href="developer.html">Notes for developers</a>
-</ul>
+  <ul>
+  <li><a href="developer.html">Notes for developers</a></li>
+  </ul>
+</li>
 </ul>
 <p>Last update: <b>25-10-2001</b></p>
 
