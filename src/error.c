@@ -65,7 +65,7 @@ gchar *ErrStrFromErrno(int errcode)
     if (utf8str) {
       return utf8str;
     } else {
-      g_strdup(_("(Error cannot be displayed in UTF-8)"));
+      return g_strdup(_("(Error cannot be displayed in UTF-8)"));
     }
   } else {
     return g_strdup(untran);
