@@ -262,6 +262,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   while (split[argc] && split[argc][0])
     argc++;
 
+  SoundInit();
   GeneralStartup(argc, split);
   OpenLog();
   if (WantVersion || WantHelp) {
