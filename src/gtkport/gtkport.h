@@ -743,13 +743,29 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define MB_NO     8
 #define MB_MAX    4
 #define MB_YESNO  (MB_YES|MB_NO)
+
+#ifdef HAVE_GTK2
+#define IDOK      GTK_RESPONSE_OK
+#define IDCANCEL  GTK_RESPONSE_CANCEL
+#define IDYES     GTK_RESPONSE_YES
+#define IDNO      GTK_RESPONSE_NO
+#else
 #define IDOK      1
 #define IDCANCEL  2
 #define IDYES     4
 #define IDNO      8
+#endif
 
 /* Other flags */
 #define MB_IMMRETURN 16
+
+#ifndef HAVE_GTK2
+#define GTK_STOCK_OK     _("OK")
+#define GTK_STOCK_CLOSE  _("Close")
+#define GTK_STOCK_CANCEL _("Cancel")
+
+#define gtk_button_new_from_stock gtk_button_new_with_label
+#endif
 
 typedef struct _GtkUrl GtkUrl;
 
