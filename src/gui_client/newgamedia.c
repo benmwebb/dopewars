@@ -418,7 +418,7 @@ void NewGameDialog(Player *play)
 #endif
 {
   GtkWidget *vbox, *vbox2, *hbox, *label, *entry, *notebook;
-  GtkWidget *frame, *button, *dialog;
+  GtkWidget *frame, *button, *dialog, *defbutton;
   GtkAccelGroup *accel_group;
   guint AccelKey;
 
@@ -526,8 +526,8 @@ void NewGameDialog(Player *play)
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(frame), vbox2);
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-  gtk_widget_grab_default(button);
-
+  defbutton = button;
+  
   label = gtk_label_new(_("Server"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
 #endif /* NETWORKING */
@@ -618,6 +618,9 @@ void NewGameDialog(Player *play)
   SetStartGameStatus(NULL);
   gtk_widget_show_all(dialog);
   gtk_notebook_set_page(GTK_NOTEBOOK(notebook), NewGameType);
+#ifdef NETWORKING
+  gtk_widget_grab_default(defbutton);
+#endif
 }
 
 #ifdef NETWORKING
