@@ -8,7 +8,7 @@ Windows:
      possible to build dopewars with C compilers other than Cygwin, but
      this is not supported. Make sure that when you install Cygwin you
      select the "mingw" package for install.
-   - Get GLib from http://user.sgic.fi/~tml/gimp/win32/. The various header
+   - Get GLib from http://www.gimp.org/~tml/gimp/win32/. The various header
      files need to be placed in /usr/include/mingw/ of your Cygwin
      installation, while the GLib DLL eventually needs to be placed either
      in the same directory as the dopewars binary, or your Windows directory.
