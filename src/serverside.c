@@ -82,6 +82,7 @@ static GScanner *Scanner;
 
 /* Data waiting to be sent to/read from the metaserver */
 NetworkBuffer MetaNetBuf;
+gint MetaInputTag=0;
 
 /* Handle to the high score file */
 static FILE *ScoreFP=NULL;
@@ -109,6 +110,11 @@ static char HelpText[] = {
 
 int SendSingleHighScore(Player *Play,struct HISCORE *Score,
                         int index,char Bold);
+
+#ifdef GUI_SERVER
+static void GuiHandleMeta(gpointer data,gint socket,
+                          GdkInputCondition condition);
+#endif
 
 void RegisterWithMetaServer(gboolean Up,gboolean SendData,
                             gboolean RespectTimeout) {
@@ -152,6 +158,11 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
       dopelog(2,_("Waiting for metaserver connect to %s:%d..."),MetaName,
               MetaPort);
    } else return;
+#ifdef GUI_SERVER
+   if (MetaInputTag) gdk_input_remove(MetaInputTag);
+   MetaInputTag=gdk_input_add(MetaNetBuf.fd,GDK_INPUT_READ|GDK_INPUT_WRITE,
+                              GuiHandleMeta,NULL);
+#endif
    MetaPlayerPending=FALSE;
    text=g_string_new("");
    query=g_string_new("");
@@ -977,6 +988,31 @@ static void GuiDoCommand(GtkWidget *widget,gpointer data) {
    HandleServerCommand(text);
    g_free(text);
    if (IsServerShutdown()) GuiQuitServer();
+}
+
+void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
+   gboolean DoneOK;
+   gchar *buf;
+   static gboolean ReadingHeaders=TRUE;
+
+   if (MetaNetBuf.WaitConnect) ReadingHeaders=TRUE;
+   if (NetBufHandleNetwork(&MetaNetBuf,condition&GDK_INPUT_READ,
+                           condition&GDK_INPUT_WRITE,&DoneOK)) {
+      while ((buf=GetWaitingMessage(&MetaNetBuf))) {
+         if (buf[0] || ReadingHeaders) {
+            dopelog(ReadingHeaders ? 4 : 2,"MetaServer: %s",buf);
+         }
+         if (buf[0]==0) ReadingHeaders=FALSE;
+         g_free(buf);
+      }
+   }
+   if (!DoneOK) {
+      dopelog(4,"MetaServer: (closed)\n");
+      ShutdownNetworkBuffer(&MetaNetBuf);
+      gdk_input_remove(MetaInputTag);
+      MetaInputTag=0;
+      if (IsServerShutdown()) GuiQuitServer();
+   }
 }
 
 static void GuiHandleSocket(gpointer data,gint socket,

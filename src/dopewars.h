@@ -287,6 +287,7 @@ typedef struct tagConnBuf {
 /* Handles reading and writing messages from/to a network connection */
 typedef struct tagNetworkBuffer {
    int fd;                /* File descriptor of the socket */
+   gint InputTag;         /* Identifier for gdk_input routines */
    char Terminator;       /* Character that separates messages */
    char StripChar;        /* Character that should be removed from messages */
    ConnBuf ReadBuf;       /* New data, waiting for the application */

@@ -402,19 +402,31 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
    return DataWaiting;
 }
 
+gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf,gboolean ReadReady,
+                             gboolean WriteReady,gboolean *DoneOK) {
+   gboolean ReadOK,WriteOK,ErrorOK;
+   gboolean DataWaiting=FALSE;
+
+   *DoneOK=TRUE;
+   if (!NetBuf || NetBuf->fd<=0) return DataWaiting;
+
+   DataWaiting=DoNetworkBufferStuff(NetBuf,ReadReady,WriteReady,FALSE,
+                                    &ReadOK,&WriteOK,&ErrorOK);
+
+   *DoneOK=(WriteOK && ErrorOK && ReadOK);
+   return DataWaiting;
+}
+
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
                              gboolean WriteReady,gboolean *DoneOK) {
 /* Reads and writes player data from/to the network if it is ready.  */
 /* If any data were read, TRUE is returned. "DoneOK" is set TRUE     */
 /* unless a fatal error (i.e. the connection was broken) occurred.   */
-   gboolean ReadOK,WriteOK,ErrorOK;
    gboolean DataWaiting=FALSE;
 
    *DoneOK=TRUE;
-   if (!Play || Play->NetBuf.fd<=0) return DataWaiting;
-
-   DataWaiting=DoNetworkBufferStuff(&Play->NetBuf,ReadReady,WriteReady,FALSE,
-                                    &ReadOK,&WriteOK,&ErrorOK);
+   if (!Play) return DataWaiting;
+   DataWaiting=NetBufHandleNetwork(&Play->NetBuf,ReadReady,WriteReady,DoneOK);
 
 /* If we've written out everything, then ask not to be notified of
    socket write-ready status in future */
@@ -423,7 +435,6 @@ gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
       (*SocketWriteTestPt)(Play,FALSE);
    }
 
-   *DoneOK=(WriteOK && ErrorOK && ReadOK);
    return DataWaiting;
 }
 

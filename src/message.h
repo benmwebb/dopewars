@@ -130,6 +130,8 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf,fd_set *readfds,
 gboolean RespondToSelect(NetworkBuffer *NetBuf,fd_set *readfds,
                          fd_set *writefds,fd_set *errorfds,
                          gboolean *DoneOK);
+gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf,gboolean ReadReady,
+                             gboolean WriteReady,gboolean *DoneOK);
 gboolean PlayerHandleNetwork(Player *Play,gboolean ReadReady,
                              gboolean WriteReady,gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
