@@ -77,6 +77,30 @@ static void PrintEscaped(FILE *fp, gchar *str)
 }
 
 /*
+ * Converts the given string from UTF-8 to the locale's codeset. If the
+ * locale codeset already is UTF-8, returns a copy of the original
+ * string. The returned string is dynamically allocated, and should be
+ * later g_free'd by the caller.
+ */
+static gchar *ToLocaleCodeset(const gchar *origstr)
+{
+#ifdef HAVE_GLIB2
+  if (!g_get_charset(NULL)) {
+    gchar *convstr = g_locale_from_utf8(origstr, -1, NULL, NULL, NULL);
+    if (convstr) {
+      return convstr;
+    } else {
+      return g_strdup("[Could not convert string from UTF8]");
+    }
+  } else {
+    return g_strdup(origstr);
+  }
+#else
+  return g_strdup(origstr);
+#endif
+}
+
+/*
  * Writes a single configuration file variable (identified by GlobalIndex
  * and StructIndex) to the specified file, in a format suitable for reading
  * back in (via. ParseNextConfig and friends).
@@ -106,8 +130,12 @@ static void WriteConfigValue(FILE *fp, int GlobalIndex, int StructIndex)
     fprintf(fp, "%s = %s\n", GlobalName, prstr);
     g_free(prstr);
   } else if (Globals[GlobalIndex].StringVal) {
+    gchar *convstr;
+
     fprintf(fp, "%s = \"", GlobalName);
-    PrintEscaped(fp, *GetGlobalString(GlobalIndex, StructIndex));
+    convstr = ToLocaleCodeset(*GetGlobalString(GlobalIndex, StructIndex));
+    PrintEscaped(fp, convstr);
+    g_free(convstr);
     fprintf(fp, "\"\n");
   } else if (Globals[GlobalIndex].StringList) {
     int i;
