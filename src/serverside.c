@@ -190,6 +190,7 @@ void RegisterWithMetaServer(gboolean Up,gboolean SendData,
    MetaConn=OpenHttpConnection(MetaServer.Name,MetaServer.Port,
                                MetaServer.ProxyName,MetaServer.ProxyPort,
                                "POST",MetaServer.Path,headers->str,body->str);
+   g_print("Sending headers %s and body %s\n",headers->str,body->str);
    g_string_free(headers,TRUE);
    g_string_free(body,TRUE);
 
@@ -1003,6 +1004,12 @@ void GuiHandleMeta(gpointer data,gint socket,GdkInputCondition condition) {
       gdk_input_remove(MetaInputTag);
       MetaInputTag=0;
       if (IsServerShutdown()) GuiQuitServer();
+   } else if (condition&GDK_INPUT_WRITE &&
+              !MetaConn->NetBuf.WriteBuf.DataPresent) {
+/* If we've written out everything, no need to test for write-ready any more */
+      gdk_input_remove(MetaInputTag);
+      MetaInputTag=gdk_input_add(MetaConn->NetBuf.fd,
+                                 GDK_INPUT_READ,GuiHandleMeta,NULL);
    }
 }
 

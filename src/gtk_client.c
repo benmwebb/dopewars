@@ -1998,14 +1998,19 @@ static void HandleMetaSock(gpointer data,gint socket,
       CloseHttpConnection(widgets->MetaConn);
       widgets->MetaTag=0; widgets->MetaConn=NULL;
       FillMetaServerList(widgets);
+   } else if (condition&GDK_INPUT_WRITE &&
+              !widgets->MetaConn->NetBuf.WriteBuf.DataPresent) {
+/* If we've written out everything, no need to test for write-ready any more */
+      gdk_input_remove(widgets->MetaTag);
+      widgets->MetaTag=gdk_input_add(widgets->MetaConn->NetBuf.fd,
+                                     GDK_INPUT_READ,
+                                     HandleMetaSock,(gpointer)widgets);
    }
 }
 
 static void UpdateMetaServerList(GtkWidget *widget,
                                  struct StartGameStruct *widgets) {
-/* char *MetaError;
-   int HttpSock;*/
-
+   GtkWidget *metaserv;
    if (widgets->MetaTag) {
       gdk_input_remove(widgets->MetaTag);
       CloseHttpConnection(widgets->MetaConn);
@@ -2015,20 +2020,13 @@ static void UpdateMetaServerList(GtkWidget *widget,
    widgets->MetaConn = OpenMetaHttpConnection();
 
    if (widgets->MetaConn) {
+      metaserv=widgets->metaserv;
+      gtk_clist_clear(GTK_CLIST(metaserv));
+      ClearServerList();
       widgets->MetaTag = gdk_input_add(widgets->MetaConn->NetBuf.fd,
                                        GDK_INPUT_READ|GDK_INPUT_WRITE,
                                        HandleMetaSock,(gpointer)widgets);
    }
-
-/* MetaError=OpenMetaServerConnection(&HttpSock);
-
-   if (MetaError) {
-      return;
-   }
-   ReadMetaServerData(HttpSock);
-   CloseMetaServerConnection(HttpSock);
-   MetaServerRead=TRUE;
-   FillMetaServerList(widgets);*/
 }
 
 static void MetaServerConnect(GtkWidget *widget,

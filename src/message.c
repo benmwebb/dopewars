@@ -628,6 +628,10 @@ HttpConnection *OpenHttpConnection(gchar *HostName,unsigned Port,
    QueueMessageForSend(&conn->NetBuf,text->str);
 
    if (conn->Headers) QueueMessageForSend(&conn->NetBuf,conn->Headers);
+
+   g_string_sprintf(text,"User-Agent: dopewars/%s",VERSION);
+   QueueMessageForSend(&conn->NetBuf,text->str);
+
    QueueMessageForSend(&conn->NetBuf,"\n");
    if (conn->Body) QueueMessageForSend(&conn->NetBuf,conn->Body);
 
