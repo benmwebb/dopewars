@@ -168,6 +168,6 @@ void g_string_assign_error(GString *str,LastError *error) {
 }
 
 void g_string_append_error(GString *str,LastError *error) {
-  if (!error->type) return;
+  if (!error || !error->type) return;
   (*error->type->AppendErrorString)(str,error);
 }
