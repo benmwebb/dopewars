@@ -1347,7 +1347,7 @@ void InitList(DopeList *List)
  */
 void ClearList(DopeList *List)
 {
-  free(List->Data);
+  g_free(List->Data);
   InitList(List);
 }
 
