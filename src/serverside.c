@@ -997,7 +997,8 @@ void ServerLoop() {
 #ifdef GUI_SERVER
 static GtkWidget *TextOutput;
 static gint ListenTag=0;
-static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write);
+static void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                         gboolean CallNow);
 static void GuiSetTimeouts(void);
 static time_t NextTimeout=0;
 static guint TimeoutTag=0;
@@ -1109,7 +1110,8 @@ static void GuiHandleSocket(gpointer data,gint socket,
    }
 }
 
-void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
+void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
+                  gboolean CallNow) {
    if (NetBuf->InputTag) gdk_input_remove(NetBuf->InputTag);
    NetBuf->InputTag=0;
    if (Read || Write) {
@@ -1118,6 +1120,7 @@ void SocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write) {
                                      (Write ? GDK_INPUT_WRITE : 0),
                                      GuiHandleSocket,NetBuf->CallBackData);
    }
+   if (CallNow) GuiHandleSocket(NetBuf->CallBackData,NetBuf->fd,0);
 }
 
 void MetaSocketStatus(NetworkBuffer *NetBuf,gboolean Read,gboolean Write,
