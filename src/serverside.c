@@ -1748,8 +1748,8 @@ int OfferObject(Player *To,char ForceBitch) {
    if (brandom(0,100)<50 || ForceBitch) {
       if (WantAntique) {
          To->Bitches.Price=brandom(MINTRENCHPRICE,MAXTRENCHPRICE);
-         text=dpg_strdup_printf(_("Would you like to buy a bigger trenchcoat "
-                                "for %P?"),To->Bitches.Price);
+         text=dpg_strdup_printf(_("YN^Would you like to buy a bigger "
+                                "trenchcoat for %P?"),To->Bitches.Price);
       } else {
          To->Bitches.Price=brandom(Bitch.MinPrice,Bitch.MaxPrice)/10l;
          text=dpg_strdup_printf(
