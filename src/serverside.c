@@ -2246,8 +2246,9 @@ void SendEvent(Player *To)
         if (IsConnectedPlayer(Play) && Play != To &&
             Play->IsAt == To->IsAt &&
             Play->EventNum == E_NONE && TotalGunsCarried(To) > 0) {
-          text = g_strdup_printf(_("AE^%s is already here!^"
+          text = g_strdup_printf(_("%s^%s is already here!^"
                                    "Do you Attack, or Evade?"),
+                                 attackquestiontr,
                                  GetPlayerName(Play));
           /* Steal this to keep track of the potential defender */
           To->OnBehalfOf = Play;
