@@ -160,7 +160,7 @@ static gboolean MetaConnectError(HttpConnection *conn)
     return FALSE;
   errstr = g_string_new("");
   g_string_assign_error(errstr, MetaConn->NetBuf.error);
-  dopelog(1, _("Failed to connect to metaserver at %s:%u (%s)"),
+  dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s:%u (%s)"),
           MetaServer.Name, MetaServer.Port, errstr->str);
   g_string_free(errstr, TRUE);
   return TRUE;
@@ -175,25 +175,27 @@ static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
     if (MetaServer.proxyuser[0] && MetaServer.proxypassword[0]) {
       user = MetaServer.proxyuser;
       password = MetaServer.proxypassword;
-      dopelog(3,
+      dopelog(3, LF_SERVER,
               _("Using MetaServer.Proxy.User and "
                 "MetaServer.Proxy.Password for HTTP proxy authentication"));
     } else {
-      dopelog(0, _("Unable to authenticate with HTTP proxy; please "
-                   "set MetaServer.Proxy.User and "
-                   "MetaServer.Proxy.Password variables"));
+      dopelog(0, LF_SERVER,
+              _("Unable to authenticate with HTTP proxy; please "
+                "set MetaServer.Proxy.User and "
+                "MetaServer.Proxy.Password variables"));
     }
   } else {
     if (MetaServer.authuser[0] && MetaServer.authpassword[0]) {
       user = MetaServer.authuser;
       password = MetaServer.authpassword;
-      dopelog(3,
+      dopelog(3, LF_SERVER,
               _("Using MetaServer.Auth.User and MetaServer.Auth.Password "
                 "for HTTP authentication"));
     } else {
-      dopelog(0, _("Unable to authenticate with HTTP server; please set "
-                   "MetaServer.Auth.User and "
-                   "MetaServer.Auth.Password variables"));
+      dopelog(0, LF_SERVER,
+              _("Unable to authenticate with HTTP server; please set "
+                "MetaServer.Auth.User and "
+                "MetaServer.Auth.Password variables"));
     }
   }
   SetHttpAuthentication(conn, proxyauth, user, password);
@@ -201,8 +203,9 @@ static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
 
 static void ServerNetBufAuth(NetworkBuffer *netbuf, gpointer data)
 {
-  dopelog(3, _("Using Socks.Auth.User and Socks.Auth.Password "
-               "for SOCKS5 authentication"));
+  dopelog(3, LF_SERVER,
+          _("Using Socks.Auth.User and Socks.Auth.Password "
+            "for SOCKS5 authentication"));
   SendSocks5UserPasswd(netbuf, Socks.authuser, Socks.authpassword);
 }
 #endif
@@ -230,8 +233,9 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     return;
 
   if (MetaMinTimeout > time(NULL) && RespectTimeout) {
-    dopelog(3, _("Attempt to connect to metaserver too frequently "
-                 "- waiting for next timeout"));
+    dopelog(3, LF_SERVER,
+            _("Attempt to connect to metaserver too frequently "
+              "- waiting for next timeout"));
     MetaPlayerPending = TRUE;
     return;
   }
@@ -289,7 +293,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   g_string_free(body, TRUE);
 
   if (retval) {
-    dopelog(2, _("Waiting for metaserver connect to %s:%u..."),
+    dopelog(2, LF_SERVER, _("Waiting for metaserver connect to %s:%u..."),
             MetaServer.Name, MetaServer.Port);
   } else {
     MetaConnectError(MetaConn);
@@ -400,8 +404,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
   switch (Code) {
   case C_MSGTO:
     if (Network) {
-      dopelog(3, "%s->%s: %s", GetPlayerName(Play), GetPlayerName(To),
-              Data);
+      dopelog(3, LF_SERVER, "%s->%s: %s", GetPlayerName(Play),
+              GetPlayerName(To), Data);
     }
     SendServerMessage(Play, AI, Code, To, Data);
     break;
@@ -438,7 +442,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
         Play->ConnectTimeout = 0;
 
         if (Network) {
-          dopelog(2, _("%s joins the game!"), GetPlayerName(Play));
+          dopelog(2, LF_SERVER, _("%s joins the game!"), GetPlayerName(Play));
         }
         for (list = FirstServer; list; list = g_slist_next(list)) {
           pt = (Player *)list->data;
@@ -452,7 +456,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       } else {
         /* Message displayed in the server when too many players try to
          * connect */
-        dopelog(2, _("MaxClients (%d) exceeded - dropping connection"),
+        dopelog(2, LF_SERVER,
+                _("MaxClients (%d) exceeded - dropping connection"),
                 MaxClients);
         if (MaxClients == 1) {
           text = g_strdup_printf(
@@ -481,8 +486,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       /* A player changed their name during the game (unusual, and not
        * really properly supported anyway) - notify all players of the
        * change */
-      dopelog(2, _("%s will now be known as %s"), GetPlayerName(Play),
-              Data);
+      dopelog(2, LF_SERVER, _("%s will now be known as %s"),
+              GetPlayerName(Play), Data);
       BroadcastToClients(C_NONE, C_RENAME, Data, Play, Play);
       SetPlayerName(Play, Data);
     }
@@ -512,7 +517,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       FinishGame(Play, _("Your dealing time is up..."));
     } else if (i != Play->IsAt && (NumTurns == 0 || Play->Turn < NumTurns)
                && Play->EventNum == E_NONE && Play->Health > 0) {
-      dopelog(4, "%s jets to %s", GetPlayerName(Play), Location[i].Name);
+      dopelog(4, LF_SERVER, "%s jets to %s",
+              GetPlayerName(Play), Location[i].Name);
       Play->IsAt = i;
       Play->Turn++;
       Play->Debt = (price_t)((float)Play->Debt * 1.1);
@@ -524,8 +530,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       /* A player has tried to jet to a new location, but we don't allow
        * them to. (e.g. they're still fighting someone, or they're
        * supposed to be dead) */
-      dopelog(3, _("%s: DENIED jet to %s"), GetPlayerName(Play),
-              Location[i].Name);
+      dopelog(3, LF_SERVER, _("%s: DENIED jet to %s"),
+              GetPlayerName(Play), Location[i].Name);
     }
     break;
   case C_REQUESTSCORE:
@@ -581,7 +587,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_SPYON:
     if (Play->Cash >= Prices.Spy) {
-      dopelog(3, _("%s now spying on %s"), GetPlayerName(Play),
+      dopelog(3, LF_SERVER, _("%s now spying on %s"), GetPlayerName(Play),
               GetPlayerName(To));
       Play->Cash -= Prices.Spy;
       LoseBitch(Play, NULL, NULL);
@@ -590,14 +596,14 @@ void HandleServerMessage(gchar *buf, Player *Play)
       AddListEntry(&(To->SpyList), &NewEntry);
       SendPlayerData(Play);
     } else {
-      g_warning(_("%s spy on %s: DENIED"), GetPlayerName(Play),
+      dopelog(2, LF_SERVER, _("%s spy on %s: DENIED"), GetPlayerName(Play),
                 GetPlayerName(To));
     }
     break;
   case C_TIPOFF:
     if (Play->Cash >= Prices.Tipoff) {
-      dopelog(3, _("%s tipped off the cops to %s"), GetPlayerName(Play),
-              GetPlayerName(To));
+      dopelog(3, LF_SERVER, _("%s tipped off the cops to %s"),
+              GetPlayerName(Play), GetPlayerName(To));
       Play->Cash -= Prices.Tipoff;
       LoseBitch(Play, NULL, NULL);
       NewEntry.Play = Play;
@@ -617,12 +623,12 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_MSG:
     if (Network)
-      dopelog(3, "%s: %s", GetPlayerName(Play), Data);
+      dopelog(3, LF_SERVER, "%s: %s", GetPlayerName(Play), Data);
     BroadcastToClients(C_NONE, C_MSG, Data, Play, Play);
     break;
   default:
-    dopelog(0, _("Unknown message: %s:%c:%s:%s"), GetPlayerName(Play),
-            Code, GetPlayerName(To), Data);
+    dopelog(0, LF_SERVER, _("Unknown message: %s:%c:%s:%s"),
+            GetPlayerName(Play), Code, GetPlayerName(To), Data);
     break;
   }
 }
@@ -781,7 +787,7 @@ void CreatePidFile(void)
     return;
   fp = fopen(PidFile, "w");
   if (fp) {
-    dopelog(1, _("Maintaining pid file %s"), PidFile);
+    dopelog(1, LF_SERVER, _("Maintaining pid file %s"), PidFile);
     fprintf(fp, "%ld\n", (long)getpid());
     fclose(fp);
     chmod(PidFile, S_IREAD | S_IWRITE);
@@ -867,8 +873,9 @@ static gboolean StartServer(void)
   }
 
   /* Initial startup message for the server */
-  dopelog(0, _("dopewars server version %s ready and waiting for "
-               "connections on port %d."), VERSION, Port);
+  dopelog(0, LF_SERVER, 
+          _("dopewars server version %s ready and waiting for "
+            "connections on port %d."), VERSION, Port);
 
   MetaUpdateTimeout = MetaMinTimeout = 0;
 
@@ -1011,7 +1018,8 @@ Player *HandleNewConnection(void)
     perror("accept socket");
     exit(1);
   }
-  dopelog(2, _("got connection from %s"), inet_ntoa(ClientAddr.sin_addr));
+  dopelog(2, LF_SERVER, _("got connection from %s"),
+          inet_ntoa(ClientAddr.sin_addr));
   tmp = g_new(Player, 1);
 
   FirstServer = AddPlayer(ClientSock, tmp, FirstServer);
@@ -1023,7 +1031,7 @@ Player *HandleNewConnection(void)
 
 void StopServer()
 {
-  dopelog(0, _("dopewars server terminating."));
+  dopelog(0, LF_SERVER, _("dopewars server terminating."));
   g_scanner_destroy(Scanner);
   CleanUpServer();
   RemovePidFile();
@@ -1032,7 +1040,7 @@ void StopServer()
 void RemovePlayerFromServer(Player *Play)
 {
   if (!WantQuit && strlen(GetPlayerName(Play)) > 0) {
-    dopelog(2, _("%s leaves the server!"), GetPlayerName(Play));
+    dopelog(2, LF_SERVER, _("%s leaves the server!"), GetPlayerName(Play));
     ClientLeftServer(Play);
     /* Blank the name, so that CountPlayers ignores this player */
     SetPlayerName(Play, NULL);
@@ -1142,8 +1150,9 @@ void ServerLoop()
 #ifndef CYGWIN
   localsock = SetupLocalSocket();
   if (localsock == -1) {
-    dopelog(0, _("Could not set up Unix domain socket for admin "
-                 "connections - check permissions on /tmp!"));
+    dopelog(0, LF_SERVER,
+            _("Could not set up Unix domain socket for admin "
+              "connections - check permissions on /tmp!"));
   }
 #endif
 
@@ -1228,7 +1237,7 @@ void ServerLoop()
       g_print(_("dopewars server version %s ready for admin commands; "
                 "try \"help\" for help"), VERSION);
       FinishServerReply(oldprint);
-      dopelog(1, _("New admin connection"));
+      dopelog(1, LF_SERVER, _("New admin connection"));
     }
     list = localconn;
     while (list) {
@@ -1239,13 +1248,13 @@ void ServerLoop()
       if (netbuf) {
         if (RespondToSelect(netbuf, &readfs, &writefs, &errorfs, &DoneOK)) {
           while ((buf = GetWaitingMessage(netbuf)) != NULL) {
-            dopelog(2, _("Admin command: %s"), buf);
+            dopelog(2, LF_SERVER, _("Admin command: %s"), buf);
             HandleServerCommand(buf, netbuf);
             g_free(buf);
           }
         }
         if (!DoneOK) {
-          dopelog(1, _("Admin connection closed"));
+          dopelog(1, LF_SERVER, _("Admin connection closed"));
           localconn = g_slist_remove(localconn, netbuf);
           ShutdownNetworkBuffer(netbuf);
           g_free(netbuf);
@@ -1263,14 +1272,14 @@ void ServerLoop()
           gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
 
           if (buf[0] || !ReadingBody) {
-            dopelog(ReadingBody ? 2 : 4, "MetaServer: %s", buf);
+            dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
           }
           g_free(buf);
         }
       }
       if (!DoneOK && HandleHttpCompletion(MetaConn)) {
         if (!MetaConnectError(MetaConn)) {
-          dopelog(4, "MetaServer: (closed)\n");
+          dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
         }
         CloseHttpConnection(MetaConn);
         MetaConn = NULL;
@@ -1419,14 +1428,14 @@ void GuiHandleMeta(gpointer data, gint socket, GdkInputCondition condition)
       gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
 
       if (buf[0] || !ReadingBody) {
-        dopelog(ReadingBody ? 2 : 4, "MetaServer: %s", buf);
+        dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
       }
       g_free(buf);
     }
   }
   if (!DoneOK && HandleHttpCompletion(MetaConn)) {
     if (!MetaConnectError(MetaConn)) {
-      dopelog(4, "MetaServer: (closed)\n");
+      dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
     }
     CloseHttpConnection(MetaConn);
     MetaConn = NULL;
@@ -1547,13 +1556,13 @@ static VOID WINAPI ServiceHandler(DWORD control)
     break;
   }
   if (!RegisterStatus(state)) {
-    dopelog(0, _("Failed to set NT Service status"));
+    dopelog(0, LF_SERVER, _("Failed to set NT Service status"));
     return;
   }
 
   if (mainhwnd
       && !PostMessage(mainhwnd, MYWM_SERVICE, 0, (LPARAM) control)) {
-    dopelog(0, _("Failed to post service notification message"));
+    dopelog(0, LF_SERVER, _("Failed to post service notification message"));
     return;
   }
 }
@@ -1562,18 +1571,18 @@ static VOID WINAPI ServiceInit(DWORD argc, LPTSTR * argv)
 {
   scHandle = RegisterServiceCtrlHandler("dopewars-server", ServiceHandler);
   if (!scHandle) {
-    dopelog(0, _("Failed to register service handler"));
+    dopelog(0, LF_SERVER, _("Failed to register service handler"));
     return;
   }
   if (!RegisterStatus(SERVICE_START_PENDING)) {
-    dopelog(0, _("Failed to set NT Service status"));
+    dopelog(0, LF_SERVER, _("Failed to set NT Service status"));
     return;
   }
 
   GuiServerLoop(TRUE);
 
   if (!RegisterStatus(SERVICE_STOPPED)) {
-    dopelog(0, _("Failed to set NT Service status"));
+    dopelog(0, LF_SERVER, _("Failed to set NT Service status"));
     return;
   }
 }
@@ -1586,7 +1595,7 @@ void ServiceMain(void)
   };
 
   if (!StartServiceCtrlDispatcher(services)) {
-    dopelog(0, _("Failed to start NT Service"));
+    dopelog(0, LF_SERVER, _("Failed to start NT Service"));
   }
 }
 
@@ -1691,7 +1700,7 @@ void GuiServerLoop(gboolean is_service)
   SetupTaskBarIcon(window);
   SetCustomWndProc(GuiServerWndProc);
   if (is_service && !RegisterStatus(SERVICE_RUNNING)) {
-    dopelog(0, _("Failed to set NT Service status"));
+    dopelog(0, LF_SERVER, _("Failed to set NT Service status"));
     return;
   }
 #endif
@@ -2178,7 +2187,7 @@ void SendEvent(Player *To)
     case E_OFFOBJECT:
       To->OnBehalfOf = NULL;
       for (i = 0; i < To->TipList.Number; i++) {
-        dopelog(3, _("%s: Tipoff from %s"), GetPlayerName(To),
+        dopelog(3, LF_SERVER, _("%s: Tipoff from %s"), GetPlayerName(To),
                 GetPlayerName(To->TipList.Data[i].Play));
         To->OnBehalfOf = To->TipList.Data[i].Play;
         SendCopOffer(To, FORCECOPS);
@@ -2186,7 +2195,7 @@ void SendEvent(Player *To)
       }
       for (i = 0; i < To->SpyList.Number; i++) {
         if (To->SpyList.Data[i].Turns < 0) {
-          dopelog(3, _("%s: Spy offered by %s"), GetPlayerName(To),
+          dopelog(3, LF_SERVER, _("%s: Spy offered by %s"), GetPlayerName(To),
                   GetPlayerName(To->SpyList.Data[i].Play));
           To->OnBehalfOf = To->SpyList.Data[i].Play;
           SendCopOffer(To, FORCEBITCH);
@@ -2860,8 +2869,8 @@ void ResolveTipoff(Player *Play)
     return;
 
   if (g_slist_find(FirstServer, (gpointer)Play->OnBehalfOf)) {
-    dopelog(4, _("%s: tipoff by %s finished OK."), GetPlayerName(Play),
-            GetPlayerName(Play->OnBehalfOf));
+    dopelog(4, LF_SERVER, _("%s: tipoff by %s finished OK."),
+            GetPlayerName(Play), GetPlayerName(Play->OnBehalfOf));
     RemoveListPlayer(&(Play->TipList), Play->OnBehalfOf);
     text = g_string_new("");
     if (Play->Health == 0) {
@@ -2994,7 +3003,7 @@ int RandomOffer(Player *To)
     SendPlayerData(To);
     SendPrintMessage(NULL, C_NONE, To, text->str);
   } else if (Sanitized) {
-    dopelog(3, _("Sanitized away a RandomOffer"));
+    dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
   } else if (r < 50) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
@@ -3236,8 +3245,8 @@ void HandleAnswer(Player *From, Player *To, char *answer)
     switch (From->EventNum) {
     case E_OFFOBJECT:
       if (g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
-        dopelog(3, _("%s: offer was on behalf of %s"), GetPlayerName(From),
-                GetPlayerName(From->OnBehalfOf));
+        dopelog(3, LF_SERVER, _("%s: offer was on behalf of %s"),
+                GetPlayerName(From), GetPlayerName(From->OnBehalfOf));
         if (From->Bitches.Price) {
           text = dpg_strdup_printf(_("%s has accepted your %tde!"
                                      "^Use the G key to contact your spy."),
@@ -3346,8 +3355,8 @@ void HandleAnswer(Player *From, Player *To, char *answer)
     case E_OFFOBJECT:
     case E_WEED:
       if (g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
-        dopelog(3, _("%s: offer was on behalf of %s"), GetPlayerName(From),
-                GetPlayerName(From->OnBehalfOf));
+        dopelog(3, LF_SERVER, _("%s: offer was on behalf of %s"),
+                GetPlayerName(From), GetPlayerName(From->OnBehalfOf));
         if (From->Bitches.Price && From->EventNum == E_OFFOBJECT) {
           text = dpg_strdup_printf(_("%s has rejected your %tde!"),
                                    GetPlayerName(From), Names.Bitch);
@@ -3637,12 +3646,12 @@ GSList *HandleTimeouts(GSList *First)
   if (MetaMinTimeout <= timenow) {
     MetaMinTimeout = 0;
     if (MetaPlayerPending) {
-      dopelog(3, _("Sending pending updates to the metaserver..."));
+      dopelog(3, LF_SERVER, _("Sending pending updates to the metaserver..."));
       RegisterWithMetaServer(TRUE, TRUE, FALSE);
     }
   }
   if (MetaUpdateTimeout != 0 && MetaUpdateTimeout <= timenow) {
-    dopelog(3, _("Sending reminder message to the metaserver..."));
+    dopelog(3, LF_SERVER, _("Sending reminder message to the metaserver..."));
     RegisterWithMetaServer(TRUE, FALSE, FALSE);
   }
   list = First;
@@ -3651,7 +3660,7 @@ GSList *HandleTimeouts(GSList *First)
     Play = (Player *)list->data;
     if (Play->IdleTimeout != 0 && Play->IdleTimeout <= timenow) {
       Play->IdleTimeout = 0;
-      dopelog(1, _("Player removed due to idle timeout"));
+      dopelog(1, LF_SERVER, _("Player removed due to idle timeout"));
       SendPrintMessage(NULL, C_NONE, Play,
                        "Disconnected due to idle timeout");
       ClientLeftServer(Play);
@@ -3664,7 +3673,7 @@ GSList *HandleTimeouts(GSList *First)
     } else if (Play->ConnectTimeout != 0
                && Play->ConnectTimeout <= timenow) {
       Play->ConnectTimeout = 0;
-      dopelog(1, _("Player removed due to connect timeout"));
+      dopelog(1, LF_SERVER, _("Player removed due to connect timeout"));
       First = RemovePlayer(Play, First);
     } else if (IsConnectedPlayer(Play) &&
                Play->FightTimeout != 0 && Play->FightTimeout <= timenow) {
