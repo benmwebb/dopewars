@@ -604,7 +604,7 @@ static void ParseHtmlHeader(gchar *line,HttpConnection *conn) {
     } else if (g_strcasecmp(split[0],"WWW-Authenticate:")==0 &&
                conn->StatusCode==401) {
       g_print("FIXME: Authentication %s required\n",split[1]);
-      conn->proxyauth=TRUE;
+      conn->proxyauth=FALSE;
       if (conn->authfunc) conn->authsupplied=(*conn->authfunc)(conn,split[1]);
 /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but some
    HTTP/1.0 proxies seem to support it anyway */
