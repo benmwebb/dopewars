@@ -191,8 +191,7 @@ void NewGame(GtkWidget *widget,gpointer data) {
 }
 
 void ListScores(GtkWidget *widget,gpointer data) {
-   SendClientMessage(ClientData.Play,C_NONE,C_REQUESTSCORE,NULL,NULL,
-                     ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_REQUESTSCORE,NULL,NULL);
 }
 
 void ListInventory(GtkWidget *widget,gpointer data) {
@@ -287,8 +286,7 @@ void HandleClientMessage(char *pt,Player *Play) {
    GtkWidget *MenuItem;
    GSList *list;
 
-/* Ignore To: field as all messages should be for "Play" */
-   if (ProcessMessage(pt,Play,&From,&AICode,&Code,NULL,&Data,FirstClient)==-1) {
+   if (ProcessMessage(pt,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
       return;
    }
 
@@ -481,7 +479,7 @@ static void FightCallback(GtkWidget *widget,gpointer data) {
               (Answer=='S' && TotalGunsCarried(Play)==0))) {
             Play->Flags &= ~CANSHOOT;
             text=g_strdup_printf("%c",Answer);
-            SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,text,Play);
+            SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,text);
             g_free(text);
          }
          break;
@@ -772,8 +770,7 @@ static void JetCallback(GtkWidget *widget,gpointer data) {
    NewLocation = GPOINTER_TO_INT(data);
    gtk_widget_destroy(JetDialog);
    text=g_strdup_printf("%d",NewLocation);
-   SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,
-                     text,ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,text);
    g_free(text);
 }
 
@@ -908,8 +905,7 @@ static void DealOKCallback(GtkWidget *widget,gpointer data) {
 
    text=g_strdup_printf("drug^%d^%d",DealDialog.DrugInd,
                         data==BT_BUY ? amount : -amount);
-   SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,
-                     text,ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text);
    g_free(text);
 
    gtk_widget_destroy(DealDialog.dialog);
@@ -1095,8 +1091,7 @@ void DealGuns(GtkWidget *widget,gpointer data) {
       MessageBox(dialog,Title,_("You don't have any to sell!"),MB_OK);
    } else {
       g_string_sprintf(text,"gun^%d^%d",GunInd,data==BT_BUY ? 1 : -1);
-      SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text->str,
-                        ClientData.Play);
+      SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text->str);
    }
    g_free(Title);
    g_string_free(text,TRUE);
@@ -1113,7 +1108,7 @@ static void QuestionCallback(GtkWidget *widget,gpointer data) {
    Answer = GPOINTER_TO_INT(data);
 
    text[0]=(gchar)Answer; text[1]='\0';
-   SendClientMessage(ClientData.Play,C_NONE,C_ANSWER,To,text,ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_ANSWER,To,text);
 
    gtk_widget_destroy(dialog);
 }
@@ -1189,7 +1184,7 @@ void StartGame() {
    Play->fd=ClientSock;
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
-   SendClientMessage(NULL,C_NONE,C_NAME,NULL,ClientData.PlayerName,Play);
+   SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);
    InGame=TRUE;
    UpdateMenus();
    if (Network) {
@@ -1886,14 +1881,13 @@ gint MessageBox(GtkWidget *parent,const gchar *Title,
 }
 
 static void SendDoneMessage(GtkWidget *widget,gpointer data) {
-   SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL,ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL);
 }
 
 static void TransferPayAll(GtkWidget *widget,GtkWidget *dialog) {
    gchar *text;
    text=pricetostr(ClientData.Play->Debt);
-   SendClientMessage(ClientData.Play,C_NONE,C_PAYLOAN,NULL,
-                     text,ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_PAYLOAN,NULL,text);
    g_free(text);
    gtk_widget_destroy(dialog);
 }
@@ -1932,7 +1926,7 @@ static void TransferOK(GtkWidget *widget,GtkWidget *dialog) {
    }
    text=pricetostr(money);
    SendClientMessage(ClientData.Play,C_NONE,
-                     Debt ? C_PAYLOAN : C_DEPOSIT,NULL,text,ClientData.Play);
+                     Debt ? C_PAYLOAN : C_DEPOSIT,NULL,text);
    g_free(text);
    gtk_widget_destroy(dialog);
 }
@@ -2082,7 +2076,7 @@ static void TalkSend(GtkWidget *widget,struct TalkStruct *TalkData) {
    msg=g_string_new("");
 
    if (AllPlayers) {
-      SendClientMessage(ClientData.Play,C_NONE,C_MSG,NULL,text,ClientData.Play);
+      SendClientMessage(ClientData.Play,C_NONE,C_MSG,NULL,text);
       g_string_sprintf(msg,"%s: %s",GetPlayerName(ClientData.Play),text);
       PrintMessage(msg->str);
    } else {
@@ -2091,8 +2085,7 @@ static void TalkSend(GtkWidget *widget,struct TalkStruct *TalkData) {
          row=GPOINTER_TO_INT(selection->data);
          Play=(Player *)gtk_clist_get_row_data(GTK_CLIST(TalkData->clist),row);
          if (Play) {
-            SendClientMessage(ClientData.Play,C_NONE,C_MSGTO,Play,
-                              text,ClientData.Play);
+            SendClientMessage(ClientData.Play,C_NONE,C_MSGTO,Play,text);
             g_string_sprintf(msg,"%s->%s: %s",GetPlayerName(ClientData.Play),
                              GetPlayerName(Play),text);
             PrintMessage(msg->str);
@@ -2218,11 +2211,9 @@ static void ErrandOK(GtkWidget *widget,GtkWidget *clist) {
       row=GPOINTER_TO_INT(selection->data);
       Play=(Player *)gtk_clist_get_row_data(GTK_CLIST(clist),row);
       if (ErrandType==ET_SPY) {
-         SendClientMessage(ClientData.Play,C_NONE,C_SPYON,Play,
-                           NULL,ClientData.Play);
+         SendClientMessage(ClientData.Play,C_NONE,C_SPYON,Play,NULL);
       } else {
-         SendClientMessage(ClientData.Play,C_NONE,C_TIPOFF,Play,
-                           NULL,ClientData.Play);
+         SendClientMessage(ClientData.Play,C_NONE,C_TIPOFF,Play,NULL);
       }
       gtk_widget_destroy(dialog);
    }
@@ -2307,8 +2298,7 @@ void SackBitch(GtkWidget *widget,gpointer data) {
                         "by this %s may be lost!)"),Names.Guns,
                         Names.Drugs,Names.Bitch);
    if (MessageBox(ClientData.window,title,text,MB_YES|MB_NO)==MB_YES) {
-      SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL,
-                        ClientData.Play);
+      SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,NULL,NULL);
    }
    g_free(caps); g_free(text); g_free(title);
 }
@@ -2404,7 +2394,7 @@ static void NewNameOK(GtkWidget *widget,GtkWidget *window) {
    text=gtk_editable_get_chars(GTK_EDITABLE(entry),0,-1);
    if (text[0]) {
       SetPlayerName(ClientData.Play,text);
-      SendClientMessage(NULL,C_NONE,C_NAME,NULL,text,ClientData.Play);
+      SendNullClientMessage(ClientData.Play,C_NONE,C_NAME,NULL,text);
       gtk_widget_destroy(window);
    }
    g_free(text);
@@ -2501,8 +2491,7 @@ void UpdatePlayerLists() {
 }
 
 void GetSpyReports(GtkWidget *Widget,gpointer data) {
-   SendClientMessage(ClientData.Play,C_NONE,C_CONTACTSPY,NULL,NULL,
-                     ClientData.Play);
+   SendClientMessage(ClientData.Play,C_NONE,C_CONTACTSPY,NULL,NULL);
 }
 
 static void DestroySpyReports(GtkWidget *widget,gpointer data) {

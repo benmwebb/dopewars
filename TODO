@@ -1,5 +1,3 @@
-- Ignore "To" message field in client, and "From" field in server; use
-  A_PLAYERID ability to replace player names in protocol with player IDs
 - Fix GTK+ modal dialog behaviour (mouse grabbing during fighting) - _seems_
   to be OK...
 - Revamp player-player fighting

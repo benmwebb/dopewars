@@ -241,8 +241,7 @@ static void HandleClientMessage(char *pt,Player *Play) {
    gchar *text;
    LRESULT Answer;
    GSList *list;
-/* Ignore server's To: field; use "Play" instead */
-   if (ProcessMessage(pt,Play,&From,&AICode,&Code,NULL,&Data,FirstClient)==-1) {
+   if (ProcessMessage(pt,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
       return;
    }
    Handled=HandleGenericClientMessage(From,AICode,Code,Play,Data,&DisplayMode);
@@ -321,7 +320,7 @@ static void HandleClientMessage(char *pt,Player *Play) {
          if (Answer!=0) {
             text=g_strdup_printf("%c",(char)Answer);
             SendClientMessage(Play,C_NONE,C_ANSWER,
-                              From==&Noone ? NULL : From,text,Play);
+                              From==&Noone ? NULL : From,text);
             g_free(text);
          }
          break;
@@ -365,7 +364,7 @@ static void StartGame() {
    Play->fd=ClientSock;
    SendAbilities(Play);
    SetPlayerName(Play,ClientData.PlayerName);
-   SendClientMessage(NULL,C_NONE,C_NAME,NULL,ClientData.PlayerName,Play);
+   SendNullClientMessage(Play,C_NONE,C_NAME,NULL,ClientData.PlayerName);
    InGame=TRUE;
    UpdateControls();
    if (Network) {
@@ -528,8 +527,7 @@ BOOL CALLBACK TalkWndProc(HWND hwnd,UINT msg,UINT wParam,
                SetWindowText(MessageWnd,"");
                message=g_string_new("");
                if (IsDlgButtonChecked(hwnd,CB_TALKALL)==BST_CHECKED) {
-                  SendClientMessage(ClientData.Play,C_NONE,C_MSG,NULL,text,
-                                    ClientData.Play);
+                  SendClientMessage(ClientData.Play,C_NONE,C_MSG,NULL,text);
                   g_string_sprintf(message,"%s: %s",
                                    GetPlayerName(ClientData.Play),text);
                   PrintMessage(message->str);
@@ -545,7 +543,7 @@ BOOL CALLBACK TalkWndProc(HWND hwnd,UINT msg,UINT wParam,
                            if (LBResult!=LB_ERR && LBResult) {
                               Play=(Player *)LBResult;
                               SendClientMessage(ClientData.Play,C_NONE,C_MSGTO,
-                                                Play,text,ClientData.Play);
+                                                Play,text);
                               g_string_sprintf(message,"%s->%s: %s",
                                                GetPlayerName(ClientData.Play), 
                                                GetPlayerName(Play),text);
@@ -667,7 +665,7 @@ BOOL CALLBACK GunShopWndProc(HWND hwnd,UINT msg,UINT wParam,
                   g_string_sprintf(text,"gun^%d^%d",GunInd,
                                    LOWORD(wParam)==BT_BUYGUN ? 1 : -1);
                   SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,
-                                    NULL,text->str,ClientData.Play);
+                                    NULL,text->str);
                }
                g_free(Title);
                g_string_free(text,TRUE);
@@ -680,8 +678,7 @@ BOOL CALLBACK GunShopWndProc(HWND hwnd,UINT msg,UINT wParam,
       case WM_DESTROY:
          GunShopWnd=NULL;
          EnableWindow(ClientData.Window,TRUE);
-         SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL,
-                           ClientData.Play);
+         SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL);
          return TRUE;
    }
    return FALSE;
@@ -754,7 +751,7 @@ BOOL CALLBACK NewNameWndProc(HWND hwnd,UINT msg,UINT wParam,
             text=g_new(char,buflen+1);
             GetWindowText(EditWnd,text,buflen+1);
             SetPlayerName(ClientData.Play,text);
-            SendClientMessage(NULL,C_NONE,C_NAME,NULL,text,ClientData.Play);
+            SendNullClientMessage(ClientData.Play,C_NONE,C_NAME,NULL,text);
             g_free(text);
             DestroyWindow(hwnd);
             return TRUE;
@@ -824,7 +821,7 @@ BOOL CALLBACK TransferWndProc(HWND hwnd,UINT msg,UINT wParam,
                text=pricetostr(money);
                SendClientMessage(ClientData.Play,C_NONE,
                                  Type==C_LOANSHARK ? C_PAYLOAN : C_DEPOSIT,
-                                 NULL,text,ClientData.Play);
+                                 NULL,text);
                g_free(text);
                SendMessage(hwnd,WM_CLOSE,0,0);
                return TRUE;
@@ -832,8 +829,7 @@ BOOL CALLBACK TransferWndProc(HWND hwnd,UINT msg,UINT wParam,
          break;
       case WM_CLOSE:
          EndDialog(hwnd,0);
-         SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL,
-                           ClientData.Play);
+         SendClientMessage(ClientData.Play,C_NONE,C_DONE,NULL,NULL);
          return TRUE;
    }
    return FALSE;
@@ -987,8 +983,7 @@ static BOOL CALLBACK DealWndProc(HWND hwnd,UINT msg,UINT wParam,
             amount=atoi(Num);
             text=g_strdup_printf("drug^%d^%d",DrugInd,
                                  DealType==BT_BUY ? amount : -amount);
-            SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text,
-                              ClientData.Play);
+            SendClientMessage(ClientData.Play,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
             EndDialog(hwnd,0); return TRUE;
          } else if (HIWORD(wParam)==BN_CLICKED && LOWORD(wParam)==ID_CANCEL) {
@@ -1049,8 +1044,7 @@ static BOOL CALLBACK JetWndProc(HWND hwnd,UINT msg,UINT wParam,
             EndDialog(hwnd,0);
             NewLocation=(gint)(LOWORD(wParam));
             text=g_strdup_printf("%d",NewLocation);
-            SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,text,
-                              ClientData.Play);
+            SendClientMessage(ClientData.Play,C_NONE,C_REQUESTJET,NULL,text);
             g_free(text);
             return TRUE;
          }
@@ -1139,7 +1133,7 @@ static BOOL CALLBACK ErrandWndProc(HWND hwnd,UINT msg,UINT wParam,
                   Play=(Player *)LBResult;
                   SendClientMessage(ClientData.Play,C_NONE,
                                     ErrandType==ID_SPY ? C_SPYON : C_TIPOFF,
-                                    Play,NULL,ClientData.Play);
+                                    Play,NULL);
                   EndDialog(hwnd,0); return TRUE;
                }
             }
@@ -1492,14 +1486,14 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
                               "by this bitch may be lost!)",
                               "Sack Bitch",MB_YESNO)==IDYES) {
                   SendClientMessage(ClientData.Play,C_NONE,C_SACKBITCH,
-                                    NULL,NULL,ClientData.Play);
+                                    NULL,NULL);
                }
                break;
             case ID_GETSPY:
                if (SpyReportsWnd) DestroyWindow(SpyReportsWnd);
                SpyReportsWnd=NULL;
                SendClientMessage(ClientData.Play,C_NONE,C_CONTACTSPY,
-                                 NULL,NULL,ClientData.Play);
+                                 NULL,NULL);
                break;
             case ID_LISTPLAYERS:
                if (PlayerListWnd) {
@@ -1525,7 +1519,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,UINT wParam,LONG lParam) {
                break;
             case ID_LISTSCORES:
                SendClientMessage(ClientData.Play,C_NONE,C_REQUESTSCORE,
-                                 NULL,NULL,ClientData.Play);
+                                 NULL,NULL);
                break;
             case ID_ABOUT:
                DialogBox(hInst,MAKEINTRESOURCE(AboutDialog),hwnd,AboutWndProc);
@@ -1558,8 +1552,7 @@ static BOOL CALLBACK FightWndProc(HWND hwnd,UINT msg,WPARAM wParam,
                   text[0]='F';
                }
                text[1]='\0';
-               SendClientMessage(ClientData.Play,C_NONE,C_FIGHTACT,NULL,text,
-                                 ClientData.Play);
+               SendClientMessage(ClientData.Play,C_NONE,C_FIGHTACT,NULL,text);
                return TRUE;
             case BT_RUN:
                EnableWindow(ClientData.Window,TRUE);

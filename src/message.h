@@ -93,7 +93,11 @@
 #define DT_PRICES      'D'
 
 void SendClientMessage(Player *From,char AICode,char Code,
-                       Player *To,char *Data,Player *BufOwn);
+                       Player *To,char *Data);
+void SendNullClientMessage(Player *From,char AICode,char Code,
+                           Player *To,char *Data);
+void DoSendClientMessage(Player *From,char AICode,char Code,
+                         Player *To,char *Data,Player *BufOwn);
 void SendServerMessage(Player *From,char AICode,char Code,
                        Player *To,char *Data);
 void SendPrintMessage(Player *From,char AICode,Player *To,char *Data);
@@ -133,8 +137,8 @@ char *SetupNetwork(gboolean NonBlocking);
 char *FinishSetupNetwork();
 void ShutdownNetwork();
 void SwitchToSinglePlayer(Player *Play);
-int ProcessMessage(char *Msg,Player *Play,Player **From,char *AICode,char *Code,
-                   Player **To,char **Data,GSList *First);
+int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
+                   char *Code,char **Data,GSList *First);
 void ReceiveDrugsHere(char *text,Player *To);
 gboolean HandleGenericClientMessage(Player *From,char AICode,char Code,
                                Player *To,char *Data,char *DisplayMode);

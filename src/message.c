@@ -50,33 +50,46 @@
    handled by the server. All communication is conducted via. TCP by means
    of plain text newline-delimited messages.
 
-   Message structure:-
-       From^To^ACData
+   New message structure:-
+       Other^ACData
 
-   From,To: Player names identifying the sender and intended recipient of
-            the message. Either field may be blank, although the server will
-            usually reject incoming messages if they are not properly
-            identified with a correct "From" field.
+   Other:   The ID of the player at the "other end" of the connection;
+            for messages received by the client, this is the player from
+            which the message originates, while for messages received by
+            the server, it's the player to which to deliver the message.
    A:       One-letter code; used by AI players to identify the message subtype
                                        (check AIPlayer.h)
    C:       One-letter code to identify the message type (check message.h)
    Data:    Message-dependent information
 
+
+   For compatibility with old clients and servers, the old message structure
+   is still supported:-
+       From^To^ACData
+
+   From,To:  Player names identifying the sender and intended recipient of
+             the message. Either field may be blank, although the server will
+             usually reject incoming messages if they are not properly
+             identified with a correct "From" field.
+   A,C,Data: As above, for the new message structure
+
    For example, a common message is the "printmessage" message (message code 
    C is C_PRINTMESSAGE), which simply instructs the client to display "Data". 
    Any ^ characters within Data are replaced by newlines on output. So in order 
-   for the server to instruct player "Fred" to display "Hello world" it would 
-   send the message:-
-       ^Fred^AAHello world
-   Note that the server has left the From field blank, and has specified the
-   AI code 'A' - defined in AIPlayer.h as C_NONE (i.e. an "unimportant" 
-   message) as well as the main code 'A', defined as C_PRINTMESSAGE in
-   message.h
+   for the server to instruct player "Fred" (ID 1) to display "Hello world" it
+   would send the message:-
+       ^AAHello world                   (new format)
+       ^Fred^AAHello world              (old format)
+   Note that the server has left the Other (or From) field blank, and has
+   specified the AI code 'A' - defined in AIPlayer.h as C_NONE (i.e. an
+   "unimportant" message) as well as the main code 'A', defined as
+   C_PRINTMESSAGE in message.h. Note also that the destination player (Fred)
+   is not specified in the new format; the player is identified by the socket
+   through which the message is transmitted.
 
-   When the network is down, a server is simulated locally. Client to server
-   messages are simply passed directly to the server message handling routine
-   in serverside.c, while server to client messages are queued in MessageList
-   and read by the do_game loop within dopewars.c                        */
+   When the network is down, a server is simulated locally. Messages from
+   the client are passed directly to the server message handling routine,
+   and vice versa.  */
 
 GSList *FirstClient;
 
@@ -84,17 +97,34 @@ void (*ClientMessageHandlerPt) (char *,Player *) = NULL;
 void (*SocketWriteTestPt) (Player *,gboolean) = NULL;
 
 void SendClientMessage(Player *From,char AICode,char Code,
-                       Player *To,char *Data,Player *BufOwn) {
+                       Player *To,char *Data) {
+/* Sends a message from player "From" to player "To" via. the server.     */
+/* AICode, Code and Data define the message.                              */
+   DoSendClientMessage(From,AICode,Code,To,Data,From);
+}
+
+void SendNullClientMessage(Player *From,char AICode,char Code,
+                           Player *To,char *Data) {
+/* Sends a message from player "From" to player "To" via. the server,     */
+/* sending a blank name for "From" (this is required with the old message */
+/* format, up to and including the first successful C_NAME message, but   */
+/* has no effect with the new format. AICode, Code and Data define the    */
+/* message.                                                               */
+   DoSendClientMessage(NULL,AICode,Code,To,Data,From);
+}
+
+void DoSendClientMessage(Player *From,char AICode,char Code,
+                         Player *To,char *Data,Player *BufOwn) {
 /* Send a message from client player "From" with computer code "AICode",  */
 /* human-readable code "Code" and data "Data". The message is sent to the */
-/* server, identifying itself as for "To". From, To, or Data may be NULL. */
+/* server, identifying itself as for "To". "BufOwn" identifies the player */
+/* which owns the buffers used for the actual wire connection. With the   */
+/* new message format, "From" is ignored. From, To, or Data may be NULL.  */
    GString *text;
    Player *ServerFrom;
    g_assert(BufOwn!=NULL);
    text=g_string_new(NULL);
    if (HaveAbility(BufOwn,A_PLAYERID)) {
-      if (From) g_string_sprintf(text,"%d",From->ID);
-      g_string_append_c(text,'^');
       if (To) g_string_sprintfa(text,"%d",To->ID);
       g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
    } else {
@@ -102,7 +132,6 @@ void SendClientMessage(Player *From,char AICode,char Code,
                        To ? GetPlayerName(To) : "",AICode,Code,
                        Data ? Data : "");
    }
-
 #if NETWORKING
    if (!Network) {
 #endif
@@ -140,23 +169,37 @@ void SendQuestion(Player *From,char AICode,
 void SendServerMessage(Player *From,char AICode,char Code,
                        Player *To,char *Data) {
 /* Sends a message from the server to client player "To" with computer    */
-/* code "AICode", human-readable code "Code" and data "Data". The message */
-/* will claim to be from or on behalf of player "From"                    */
+/* code "AICode", human-readable code "Code" and data "Data", claiming    */
+/* to be from player "From"                                               */
    GString *text;
-   if (!Network) {
-      text=g_string_new("");
-      if (From) g_string_sprintf(text,"%d",From->ID);
-      g_string_append_c(text,'^');
-      if (To) g_string_sprintfa(text,"%d",To->ID);
+   text=g_string_new(NULL);
+   if (HaveAbility(To,A_PLAYERID)) {
+      if (From) g_string_sprintfa(text,"%d",From->ID);
       g_string_sprintfa(text,"^%c%c%s",AICode,Code,Data ? Data : "");
+   } else {
+      g_string_sprintf(text,"%s^%s^%c%c%s",From ? GetPlayerName(From) : "",
+                       To ? GetPlayerName(To) : "",AICode,Code,
+                       Data ? Data : "");
+   }
+#if NETWORKING
+   if (!Network) {
+#endif
       if (ClientMessageHandlerPt) {
          (*ClientMessageHandlerPt)(text->str,(Player *)(FirstClient->data));
       }
-      g_string_free(text,TRUE);
-   } else SendClientMessage(From,AICode,Code,To,Data,To);
+#if NETWORKING
+   } else {
+      WriteToConnectionBuffer(To,text->str);
+      if (SocketWriteTestPt) (*SocketWriteTestPt)(To,TRUE);
+   }
+#endif
+   g_string_free(text,TRUE);
 }
 
 void InitAbilities(Player *Play) {
+/* Sets up the "abilities" of player "Play". Abilities are used to extend */
+/* the protocol; if both the client and server share an ability, then the */
+/* protocol extension can be used.                                        */
    int i;
 /* Clear all abilities */
    for (i=0;i<A_NUM;i++) {
@@ -172,16 +215,21 @@ void InitAbilities(Player *Play) {
 }
 
 void SendAbilities(Player *Play) {
+/* Sends abilities of player "Play" to the other end of the client-server */
+/* connection.                                                            */
    int i;
    gchar Data[A_NUM+1];
    if (!Network) return;
    for (i=0;i<A_NUM;i++) Data[i]= (Play->Abil.Local[i] ? '1' : '0');
    Data[A_NUM]='\0';
    if (Server) SendServerMessage(NULL,C_NONE,C_ABILITIES,Play,Data);
-   else SendClientMessage(Play,C_NONE,C_ABILITIES,NULL,Data,Play);
+   else SendClientMessage(Play,C_NONE,C_ABILITIES,NULL,Data);
 }
 
 void ReceiveAbilities(Player *Play,gchar *Data) {
+/* Fills in the "remote" abilities of player "Play" using the message data */
+/* in "Data". These are the abilities of the server/client at the other    */
+/* end of the connection.                                                  */
    int i,Length;
    InitAbilities(Play);
    if (!Network) return;
@@ -192,6 +240,9 @@ void ReceiveAbilities(Player *Play,gchar *Data) {
 }
 
 void CombineAbilities(Player *Play) {
+/* Combines the local and remote abilities of player "Play". The resulting */
+/* shared abilities are used to determine when protocol extensions can be  */
+/* used.                                                                   */
    int i;
    for (i=0;i<A_NUM;i++) {
       Play->Abil.Shared[i]= (Play->Abil.Remote[i] && Play->Abil.Local[i]);
@@ -199,12 +250,18 @@ void CombineAbilities(Player *Play) {
 }
 
 gboolean HaveAbility(Player *Play,gint Type) {
+/* Returns TRUE if ability "Type" is one of player "Play"'s shared abilities */
    if (Type<0 || Type>=A_NUM) return FALSE;
    else return (Play->Abil.Shared[Type]);
 }
 
 #if NETWORKING
 gchar *ReadFromConnectionBuffer(Player *Play) {
+/* Reads a newline-terminated message from "Play"'s read buffer. The message */
+/* is removed from the buffer, and returned as a null-terminated string (the */
+/* terminating newline is removed). If no complete message is waiting, NULL  */
+/* is returned. The string is dynamically allocated, and must be g_free'd by */
+/* the caller.                                                               */
    ConnBuf *conn;
    int MessageLen;
    char *SepPt;
@@ -226,6 +283,9 @@ gchar *ReadFromConnectionBuffer(Player *Play) {
 }
 
 gboolean ReadConnectionBufferFromWire(Player *Play) {
+/* Reads any waiting data on the TCP/IP connection for player "Play" into */
+/* the player's read buffer. Returns FALSE if the connection was closed,  */
+/* or if the read buffer's maximum size was reached.                      */
    ConnBuf *conn;
    int CurrentPosition,BytesRead;
    conn=&Play->ReadBuf;
@@ -254,6 +314,11 @@ gboolean ReadConnectionBufferFromWire(Player *Play) {
 }
 
 void WriteToConnectionBuffer(Player *Play,gchar *data) {
+/* Writes the null-terminated string "data" to "Play"'s connection buffer. */
+/* The message is automatically newline-terminated. Fails to write the     */
+/* message without error if the buffer reaches its maximum size (although  */
+/* this error will be detected when the buffer is attempted to be written  */
+/* to the wire, below)                                                     */
    int AddLength,NewLength;
    ConnBuf *conn;
    conn=&Play->WriteBuf;
@@ -272,6 +337,9 @@ void WriteToConnectionBuffer(Player *Play,gchar *data) {
 }
 
 gboolean WriteConnectionBufferToWire(Player *Play) {
+/* Writes any waiting data in "Play"'s connection buffer to the wire.  */
+/* Returns TRUE on success, or FALSE if the buffer's maximum length is */
+/* reached, or the remote end has closed the connection.               */
    ConnBuf *conn;
    int CurrentPosition,BytesSent;
    conn=&Play->WriteBuf;
@@ -675,43 +743,36 @@ void ShutdownNetwork() {
    Client=Network=Server=FALSE;
 }
 
-int ProcessMessage(char *Msg,Player *Play,Player **From,char *AICode,char *Code,
-                   Player **To,char **Data,GSList *First) {
+int ProcessMessage(char *Msg,Player *Play,Player **Other,char *AICode,
+                   char *Code,char **Data,GSList *First) {
 /* Given a "raw" message in "Msg" and a pointer to the start of the linked   */
 /* list of known players in "First", sets the other arguments to the message */
 /* fields. Data is returned as a pointer into the message "Msg", and should  */
 /* therefore NOT be g_free'd. "Play" is a pointer to the player which is     */
-/* receiving the message. Returns 0 on success, -1 on failure.               */
+/* receiving the message. "Other" is the player that is identified by the    */
+/* message; for messages to clients, this will be the player "From" which    */
+/* the message claims to be, while for messages to servers, this will be     */
+/* the player "To" which to send messages. Returns 0 on success, -1 on       */
+/* failure.                                                                  */
    gchar *pt,*buf;
    guint ID;
 
    *AICode=*Code=C_NONE;
+   *Other=&Noone;
    pt=Msg;
-   buf=GetNextWord(&pt,NULL);
-   if (From) {
-      if (HaveAbility(Play,A_PLAYERID)) {
-         if (buf[0]) {
-            ID=atoi(buf);
-            *From=GetPlayerByID(ID,First);
-         } else *From=&Noone;
-      } else {
-         *From=GetPlayerByName(buf,First);
+   if (HaveAbility(Play,A_PLAYERID)) {
+      buf=GetNextWord(&pt,NULL);
+      if (buf[0]) {
+         ID=atoi(buf);
+         *Other=GetPlayerByID(ID,First);
       }
-      if (!(*From)) return -1;
+   } else {
+      buf=GetNextWord(&pt,NULL);
+      if (Client) *Other=GetPlayerByName(buf,First);
+      buf=GetNextWord(&pt,NULL);
+      if (Server) *Other=GetPlayerByName(buf,First);
    }
-
-   buf=GetNextWord(&pt,NULL);
-   if (To) {
-      if (HaveAbility(Play,A_PLAYERID)) {
-         if (buf[0]) {
-            ID=atoi(buf);
-            *To=GetPlayerByID(ID,First);
-         } else *To=&Noone;
-      } else {
-         *To=GetPlayerByName(buf,First);
-      }
-      if (!(*To)) return -1;
-   }
+   if (!(*Other)) return -1;
 
    if (strlen(pt)>=2) {
       *AICode=pt[0];

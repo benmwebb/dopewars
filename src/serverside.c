@@ -210,8 +210,7 @@ void HandleServerMessage(gchar *buf,Player *Play) {
    int i;
    price_t money;
 
-/* Ignore client's From: field - should always be "Play" */
-   if (ProcessMessage(buf,Play,NULL,&AICode,&Code,&To,&Data,FirstServer)==-1) {
+   if (ProcessMessage(buf,Play,&To,&AICode,&Code,&Data,FirstServer)==-1) {
       g_warning("Bad message");
       return;
    }

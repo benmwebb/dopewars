@@ -107,7 +107,7 @@ void AISetName(Player *AIPlay) {
    text=g_strdup_printf("AI) %s",AINames[brandom(0,NUMNAMES)]);
    SetPlayerName(AIPlay,text);
    g_free(text);
-   SendClientMessage(NULL,C_NONE,C_NAME,NULL,GetPlayerName(AIPlay),AIPlay);
+   SendNullClientMessage(AIPlay,C_NONE,C_NAME,NULL,GetPlayerName(AIPlay));
    g_print(_("Using name %s\n"),GetPlayerName(AIPlay));
 }
 
@@ -116,16 +116,16 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
 /* "Message" for AI player "AIPlay". Returns 1 if the game should */
 /* be ended as a result, 0 otherwise.                             */
    char *Data,Code,AICode,WasFighting;
-   Player *From,*To,*tmp;
+   Player *From,*tmp;
    GSList *list;
    gchar *prstr,*prstr2;
    struct timeval tv;
    gboolean Handled;
-   if (ProcessMessage(Message,AIPlay,&From,&AICode,&Code,&To,
+   if (ProcessMessage(Message,AIPlay,&From,&AICode,&Code,
                       &Data,FirstClient)==-1) {
       g_warning("Bad network message. Oops."); return 0;
    }
-   Handled=HandleGenericClientMessage(From,AICode,Code,To,Data,NULL);
+   Handled=HandleGenericClientMessage(From,AICode,Code,AIPlay,Data,NULL);
    switch(Code) {
       case C_ENDLIST:
          g_print(_("Players in this game:-\n"));
@@ -143,7 +143,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
             AIPlay->Flags |= FIGHTING+CANSHOOT;
          }
          if (TotalGunsCarried(AIPlay)>0 && AIPlay->Health>MINSAFEHEALTH) {
-            SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"F",AIPlay);
+            SendClientMessage(AIPlay,C_NONE,C_FIGHTACT,NULL,"F");
          } else {
             AIJet(AIPlay);
          }
@@ -155,7 +155,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          g_print("%s: %s\n",GetPlayerName(From),Data);
          break;
       case C_MSGTO:
-         g_print("%s->%s: %s\n",GetPlayerName(From),GetPlayerName(To),Data);
+         g_print("%s->%s: %s\n",GetPlayerName(From),GetPlayerName(AIPlay),Data);
          break;
       case C_JOIN:
          g_print(_("%s joins the game.\n"),Data); break;
@@ -180,7 +180,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          WasFighting=FALSE;
          if (From==&Noone) {
             if (AIPlay->Flags & FIGHTING) WasFighting=TRUE;
-            ReceivePlayerData(Data,To);
+            ReceivePlayerData(Data,AIPlay);
          } else {
             ReceivePlayerData(Data,From); /* spy reports */
          }
@@ -219,7 +219,7 @@ int HandleAIMessage(char *Message,Player *AIPlay) {
          return 1;
       default:
          if (!Handled) g_message("%s^%c^%s%s\n",GetPlayerName(From),Code,
-                                                GetPlayerName(To),Data);
+                                                GetPlayerName(AIPlay),Data);
          break;
    }
    return 0;
@@ -275,7 +275,7 @@ void AIDealDrugs(Player *AIPlay) {
          AIPlay->CoatSize+=Num;
          AIPlay->Cash+=Num*AIPlay->Drugs[Highest].Price;
          text=g_strdup_printf("drug^%d^%d",Highest,-Num);
-         SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text,AIPlay);
+         SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
          g_free(text);
       }
       if (AIPlay->Drugs[Highest].Price != 0 &&
@@ -291,7 +291,7 @@ void AIDealDrugs(Player *AIPlay) {
             text=g_strdup_printf("drug^%d^%d",Highest,Num);
             AIPlay->CoatSize-=Num;
             AIPlay->Cash-=Num*AIPlay->Drugs[Highest].Price;
-            SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text,AIPlay);
+            SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
          }
       }
@@ -318,12 +318,12 @@ void AIGunShop(Player *AIPlay) {
                    (prstr=FormatPrice(Gun[i].Price)));
             g_free(prstr);
             text=g_strdup_printf("gun^%d^1",i);
-            SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text,AIPlay);
+            SendClientMessage(AIPlay,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
          }
       }
    } while (Bought);
-   SendClientMessage(AIPlay,C_NONE,C_DONE,NULL,NULL,AIPlay);
+   SendClientMessage(AIPlay,C_NONE,C_DONE,NULL,NULL);
 }
 
 void AIJet(Player *AIPlay) {
@@ -343,7 +343,7 @@ void AIJet(Player *AIPlay) {
    }
    while (NewLocation==AIPlay->IsAt) NewLocation=brandom(0,NumLocation);
    sprintf(text,"%d",NewLocation);
-   SendClientMessage(AIPlay,C_NONE,C_REQUESTJET,NULL,text,AIPlay);
+   SendClientMessage(AIPlay,C_NONE,C_REQUESTJET,NULL,text);
 }
 
 void AIPayLoan(Player *AIPlay) {
@@ -352,19 +352,19 @@ void AIPayLoan(Player *AIPlay) {
    gchar *prstr;
    if (AIPlay->Cash-AIPlay->Debt >= MINSAFECASH) {
       prstr=pricetostr(AIPlay->Debt);
-      SendClientMessage(AIPlay,C_NONE,C_PAYLOAN,NULL,prstr,AIPlay);
+      SendClientMessage(AIPlay,C_NONE,C_PAYLOAN,NULL,prstr);
       g_free(prstr);
       g_print(_("Debt of %s paid off to loan shark\n"),
              (prstr=FormatPrice(AIPlay->Debt)));
       g_free(prstr);
    }
-   SendClientMessage(AIPlay,C_NONE,C_DONE,NULL,NULL,AIPlay);
+   SendClientMessage(AIPlay,C_NONE,C_DONE,NULL,NULL);
 }
 
 void AISendAnswer(Player *From,Player *To,char *answer) {
 /* Sends the answer "answer" from AI player "From" to the server,        */
 /* claiming to be for player "To". Also prints the answer on the screen. */
-   SendClientMessage(From,C_NONE,C_ANSWER,To,answer,From); puts(answer);
+   SendClientMessage(From,C_NONE,C_ANSWER,To,answer); puts(answer);
 }
 
 void AIHandleQuestion(char *Data,char AICode,Player *AIPlay,Player *From) {
@@ -438,8 +438,7 @@ void AISendRandomMessage(Player *AIPlay) {
       N_("Zzzzz... are you dealing in candy or what?"),
       N_("Reckon I'll just have to shoot you for your own good.")
    };
-   SendClientMessage(AIPlay,C_NONE,C_MSG,NULL,
-                     _(RandomInsult[brandom(0,5)]),AIPlay);
+   SendClientMessage(AIPlay,C_NONE,C_MSG,NULL,_(RandomInsult[brandom(0,5)]));
 }
 
 #else /* NETWORKING */

@@ -379,7 +379,7 @@ static int jet(Player *Play,char AllowReturn) {
             curs_set(0);
             sprintf(text,"%d",c-'1');
             DisplayMode=DM_NONE;
-            SendClientMessage(Play,C_NONE,C_REQUESTJET,NULL,text,Play);
+            SendClientMessage(Play,C_NONE,C_REQUESTJET,NULL,text);
             return 1;
          }
       }
@@ -426,7 +426,7 @@ static void DropDrugs(Player *Play) {
             c=atoi(buf); g_free(buf);
             if (c>0) {
                g_string_sprintf(text,"drug^%d^%d",i,-c);
-               SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text->str,Play);
+               SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text->str);
             }
             break;
          }
@@ -477,7 +477,7 @@ static void DealDrugs(Player *Play,char Buy) {
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,c);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text,Play);
+            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
          }
       } else {
@@ -487,7 +487,7 @@ static void DealDrugs(Player *Play,char Buy) {
          c=atoi(input); g_free(input); g_free(text);
          if (c>=0) {
             text=g_strdup_printf("drug^%d^%d",DrugNum,-c);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text,Play);
+            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
          }
       }
@@ -531,22 +531,22 @@ static void GiveErrand(Player *Play) {
    if (Play->Bitches.Carried>0 || c=='C') switch (c) {
       case 'S':
          To=ListPlayers(Play,TRUE,_("Whom do you want to spy on? "));
-         if (To) SendClientMessage(Play,C_NONE,C_SPYON,To,NULL,Play);
+         if (To) SendClientMessage(Play,C_NONE,C_SPYON,To,NULL);
          break;
       case 'T':
          To=ListPlayers(Play,TRUE,
                         _("Whom do you want to tip the cops off to? "));
-         if (To) SendClientMessage(Play,C_NONE,C_TIPOFF,To,NULL,Play);
+         if (To) SendClientMessage(Play,C_NONE,C_TIPOFF,To,NULL);
          break;
       case 'G':
          attrset(PromptAttr);
          addstr(_(" Are you sure? "));
          c=GetKey(_("YN"),"YN",FALSE,TRUE);
-         if (c=='Y') SendClientMessage(Play,C_NONE,C_SACKBITCH,NULL,NULL,Play);
+         if (c=='Y') SendClientMessage(Play,C_NONE,C_SACKBITCH,NULL,NULL);
          break;
       case 'C':
          if (Play->Flags & SPYINGON) {
-            SendClientMessage(Play,C_NONE,C_CONTACTSPY,NULL,NULL,Play);
+            SendClientMessage(Play,C_NONE,C_CONTACTSPY,NULL,NULL);
          }
          break;
    }
@@ -567,7 +567,11 @@ static void change_name(Player *Play,char nullname) {
    gchar *NewName;
    NewName=nice_input(_("New name: "),23,0,0,NULL);
    if (NewName[0]) {
-      SendClientMessage(nullname ? NULL : Play,C_NONE,C_NAME,NULL,NewName,Play);
+      if (nullname) {
+         SendNullClientMessage(Play,C_NONE,C_NAME,NULL,NewName);
+      } else {
+         SendClientMessage(Play,C_NONE,C_NAME,NULL,NewName);
+      }
       SetPlayerName(Play,NewName);
    }
    g_free(NewName);
@@ -588,8 +592,7 @@ void HandleClientMessage(char *Message,Player *Play) {
    gboolean Handled;
 
 /* Ignore To: field - all messages will be for Player "Play" */
-   if (ProcessMessage(Message,Play,&From,&AICode,&Code,NULL,
-                      &Data,FirstClient)==-1) {
+   if (ProcessMessage(Message,Play,&From,&AICode,&Code,&Data,FirstClient)==-1) {
       return;
    }
 
@@ -694,20 +697,20 @@ void HandleClientMessage(char *Message,Player *Play) {
          i=GetKey(wrd,wrd,FALSE,TRUE);
          wrd=g_strdup_printf("%c",i);
          SendClientMessage(Play,C_NONE,C_ANSWER,
-                           From==&Noone ? NULL : From,wrd,Play);
+                           From==&Noone ? NULL : From,wrd);
          g_free(wrd);
          break;
       case C_LOANSHARK:
          LoanShark(Play);
-         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL);
          break;
       case C_BANK:
          Bank(Play);
-         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL);
          break;
       case C_GUNSHOP:
          GunShop(Play);
-         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL,Play);
+         SendClientMessage(Play,C_NONE,C_DONE,NULL,NULL);
          break;
       case C_UPDATE:
          if (From==&Noone) {
@@ -865,7 +868,7 @@ void GunShop(Player *Play) {
                Play->Guns[c2].Carried--;
             }
             text=g_strdup_printf("gun^%d^%d",c2,c=='B' ? 1 : -1);
-            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text,Play);
+            SendClientMessage(Play,C_NONE,C_BUYOBJECT,NULL,text);
             g_free(text);
             print_status(Play,0);
          }
@@ -891,7 +894,7 @@ void LoanShark(Player *Play) {
          nice_wait();
       } else {
          SendClientMessage(Play,C_NONE,C_PAYLOAN,NULL,
-                           (prstr=pricetostr(money)),Play);
+                           (prstr=pricetostr(money)));
          g_free(prstr);
          break;
       }
@@ -926,7 +929,7 @@ void Bank(Player *Play) {
          break;
       } else {
          SendClientMessage(Play,C_NONE,C_DEPOSIT,NULL,
-                           (prstr=pricetostr(money)),Play);
+                           (prstr=pricetostr(money)));
          g_free(prstr);
          break;
       }
@@ -1406,7 +1409,7 @@ static void Curses_DoGame(Player *Play) {
 
    SendAbilities(Play);
    SetPlayerName(Play,buf);
-   SendClientMessage(NULL,C_NONE,C_NAME,NULL,buf,Play);
+   SendNullClientMessage(Play,C_NONE,C_NAME,NULL,buf);
    g_free(buf); g_free(OldName);
 
    text=g_string_new("");
@@ -1566,7 +1569,7 @@ static void Curses_DoGame(Player *Play) {
                if (want_to_quit()==1) {
                   DisplayMode=DM_NONE;
                   clear_bottom();
-                  SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL,Play);
+                  SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL);
                }
             } else if (c=='L' && Network) {
                attrset(PromptAttr);
@@ -1576,7 +1579,7 @@ static void Curses_DoGame(Player *Play) {
                   ListPlayers(Play,FALSE,NULL);
                } else if (i=='S') {
                   DisplayMode=DM_NONE;
-                  SendClientMessage(Play,C_NONE,C_REQUESTSCORE,NULL,NULL,Play);
+                  SendClientMessage(Play,C_NONE,C_REQUESTSCORE,NULL,NULL);
                }
             } else if (c=='P' && Network) {
                tmp=ListPlayers(Play,TRUE,
@@ -1585,7 +1588,7 @@ static void Curses_DoGame(Player *Play) {
                   attrset(TextAttr); clear_line(22);
                   TalkMsg=nice_input("Talk: ",22,0,0,NULL);
                   if (TalkMsg[0]) {
-                     SendClientMessage(Play,C_NONE,C_MSGTO,tmp,TalkMsg,Play);
+                     SendClientMessage(Play,C_NONE,C_MSGTO,tmp,TalkMsg);
                      buf=g_strdup_printf("%s->%s: %s",GetPlayerName(Play),
                              GetPlayerName(tmp),TalkMsg);
                      display_message(buf);
@@ -1597,7 +1600,7 @@ static void Curses_DoGame(Player *Play) {
                attrset(TextAttr); clear_line(22);
                TalkMsg=nice_input(_("Talk: "),22,0,0,NULL);
                if (TalkMsg[0]) {
-                  SendClientMessage(Play,C_NONE,C_MSG,NULL,TalkMsg,Play);
+                  SendClientMessage(Play,C_NONE,C_MSG,NULL,TalkMsg);
                   buf=g_strdup_printf("%s: %s",GetPlayerName(Play),TalkMsg);
                   display_message(buf);
                   g_free(buf);
@@ -1616,7 +1619,7 @@ static void Curses_DoGame(Player *Play) {
                   if (TotalGunsCarried(Play)>0 && Play->Flags&CANSHOOT) {
                      buf=g_strdup_printf("%c",c);
                      Play->Flags &= ~CANSHOOT;
-                     SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf,Play);
+                     SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf);
                      g_free(buf);
                   }
                   break;
@@ -1624,14 +1627,14 @@ static void Curses_DoGame(Player *Play) {
                   if (TotalGunsCarried(Play)==0 && Play->Flags&CANSHOOT) {
                      buf=g_strdup_printf("%c",c);
                      Play->Flags &= ~CANSHOOT;
-                     SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf,Play);
+                     SendClientMessage(Play,C_NONE,C_FIGHTACT,NULL,buf);
                      g_free(buf);
                   }
                   break;
                case 'Q':
                   if (want_to_quit()==1) {
                      DisplayMode=DM_NONE; clear_bottom();
-                     SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL,Play);
+                     SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL);
                   }
                   break;
             }
@@ -1643,7 +1646,7 @@ static void Curses_DoGame(Player *Play) {
                case 'Q':
                   if (want_to_quit()==1) {
                      DisplayMode=DM_NONE; clear_bottom();
-                     SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL,Play);
+                     SendClientMessage(Play,C_NONE,C_WANTQUIT,NULL,NULL);
                   }
                   break;
             }
