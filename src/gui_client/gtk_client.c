@@ -2382,7 +2382,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   docindex = GetDocIndex();
-  PackCentredURL(vbox, "Local HTML documentation", docindex, WebBrowser);
+  PackCentredURL(vbox, _("Local HTML documentation"), docindex, WebBrowser);
   g_free(docindex);
 
   PackCentredURL(vbox, "http://dopewars.sourceforge.net/",
