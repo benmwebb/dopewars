@@ -30,17 +30,57 @@
 
 #include "unicodewrap.h"
 
+static gboolean unicode_support = FALSE;
+
+/*
+ * Sets the global variable unicode_support to reflect whether this version
+ * of Windows understands Unicode. (WinNT/2000/XP do, 95/98/ME do not.)
+ * This is done by calling the Unicode version of GetVersionEx, which should
+ * have no undesirable side effects. On non-Unicode systems, this is just
+ * a stub function that returns an error.
+ */
+void InitUnicodeSupport(void)
+{
+  OSVERSIONINFOW verinfo;
+
+  verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+
+  unicode_support =
+    (GetVersionExW(&verinfo) || GetLastError() != ERROR_CALL_NOT_IMPLEMENTED);
+}
+
+gboolean HaveUnicodeSupport(void)
+{
+  return unicode_support;
+}
+
+/*
+ * Converts a string from our internal representation (UTF-8) to a form
+ * suitable for Windows Unicode-aware functions (i.e. UTF-16). This
+ * returned string must be g_free'd when no longer needed.
+ */
+static gunichar2 *strtow32(const char *instr)
+{
+  gunichar2 *outstr;
+  outstr = g_utf8_to_utf16(instr, -1, NULL, NULL, NULL);
+  if (!outstr) {
+    outstr = g_utf8_to_utf16("[?]", -1, NULL, NULL, NULL);
+  }
+}
+
 BOOL mySetWindowText(HWND hWnd, LPCTSTR lpString)
 {
-  gunichar2 *text;
   BOOL retval;
 
-  if (!(text = g_utf8_to_utf16(lpString, -1, NULL, NULL, NULL))) {
-    retval = SetWindowTextA(hWnd, lpString);
-  } else {
+  if (unicode_support) {
+    gunichar2 *text;
+    text = strtow32(lpString);
     retval = SetWindowTextW(hWnd, text);
     g_free(text);
+  } else {
+    retval = SetWindowTextA(hWnd, lpString);
   }
+
   return retval;
 }
 
@@ -48,20 +88,20 @@ HWND myCreateWindow(LPCTSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,
                     HMENU hMenu, HANDLE hInstance, LPVOID lpParam)
 {
-  gunichar2 *classname, *winname;
   HWND retval;
 
-  classname = g_utf8_to_utf16(lpClassName, -1, NULL, NULL, NULL);
-  winname = g_utf8_to_utf16(lpWindowName, -1, NULL, NULL, NULL);
-  if (!classname || !winname) {
-    retval = CreateWindowA(lpClassName, lpWindowName, dwStyle, x, y, nWidth,
-                           nHeight, hwndParent, hMenu, hInstance, lpParam);
-  } else {
+  if (unicode_support) {
+    gunichar2 *classname, *winname;
+    classname = strtow32(lpClassName);
+    winname = strtow32(lpWindowName);
     retval = CreateWindowW(classname, winname, dwStyle, x, y, nWidth,
                            nHeight, hwndParent, hMenu, hInstance, lpParam);
+    g_free(classname);
+    g_free(winname);
+  } else {
+    retval = CreateWindowA(lpClassName, lpWindowName, dwStyle, x, y, nWidth,
+                           nHeight, hwndParent, hMenu, hInstance, lpParam);
   }
-  g_free(classname);
-  g_free(winname);
   return retval;
 }
 
@@ -70,22 +110,22 @@ HWND myCreateWindowEx(DWORD dwExStyle, LPCTSTR lpClassName,
                       int nWidth, int nHeight, HWND hwndParent, HMENU hMenu,
                       HANDLE hInstance, LPVOID lpParam)
 {
-  gunichar2 *classname, *winname;
   HWND retval;
 
-  classname = g_utf8_to_utf16(lpClassName, -1, NULL, NULL, NULL);
-  winname = g_utf8_to_utf16(lpWindowName, -1, NULL, NULL, NULL);
-  if (!classname || !winname) {
-    retval = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle,
-                             x, y, nWidth, nHeight, hwndParent, hMenu,
-                             hInstance, lpParam);
-  } else {
+  if (unicode_support) {
+    gunichar2 *classname, *winname;
+    classname = strtow32(lpClassName);
+    winname = strtow32(lpWindowName);
     retval = CreateWindowExW(dwExStyle, classname, winname, dwStyle, x, y,
                              nWidth, nHeight, hwndParent, hMenu, hInstance,
                              lpParam);
+    g_free(classname);
+    g_free(winname);
+  } else {
+    retval = CreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle,
+                             x, y, nWidth, nHeight, hwndParent, hMenu,
+                             hInstance, lpParam);
   }
-  g_free(classname);
-  g_free(winname);
   return retval;
 }
 

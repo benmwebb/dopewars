@@ -751,6 +751,8 @@ struct _GtkUrl {
   gchar *target, *bin;
 };
 
+gboolean HaveUnicodeSupport(void);
+
 #endif /* CYGWIN */
 
 #if CYGWIN || !HAVE_GLIB2

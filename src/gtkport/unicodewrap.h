@@ -30,6 +30,9 @@
 #ifdef CYGWIN
 #include <windows.h>
 
+void InitUnicodeSupport(void);
+void HaveUnicodeSupport(void);
+
 BOOL mySetWindowText(HWND hWnd, LPCTSTR lpString);
 HWND myCreateWindow(LPCTSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,

@@ -1117,6 +1117,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   WNDCLASS wc;
 
   hInst = hInstance;
+  InitUnicodeSupport();
   defFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
   urlFont = CreateFont(14, 0, 0, 0, FW_SEMIBOLD, FALSE, TRUE, FALSE,
                        ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -5464,6 +5465,15 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   gtk_main();
 
   return filename;
+}
+
+gboolean HaveUnicodeSupport(void)
+{
+#ifdef HAVE_GLIB2
+  return TRUE;
+#else
+  return FALSE;
+#endif
 }
 
 #endif /* CYGWIN */
