@@ -792,6 +792,12 @@ void gtk_container_set_size(GtkWidget *widget, GtkAllocation *allocation);
 #define IDCANCEL  2
 #define IDYES     4
 #define IDNO      8
+
+#define gtk_text_view_set_editable(text, edit) gtk_text_set_editable(text, edit)
+#define gtk_text_view_set_wrap_mode(text, wrap) gtk_text_set_word_wrap(text, wrap)
+#define GTK_WRAP_WORD TRUE
+#define GTK_TEXT_VIEW(wid) GTK_TEXT(wid)
+#define GtkTextView GtkText
 #endif
 
 /* Other flags */
@@ -834,11 +840,10 @@ GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt);
-GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj,
-                                 GtkWidget **pack_widg);
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg);
 void TextViewAppend(GtkTextView *textview, const gchar *text,
                     const gchar *tagname, gboolean scroll);
+void TextViewClear(GtkTextView *textview);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
 

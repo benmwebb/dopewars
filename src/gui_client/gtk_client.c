@@ -869,11 +869,11 @@ static void CreateFightDialog(void)
   g_array_set_size(combatants, 1);
   gtk_object_set_data(GTK_OBJECT(dialog), "combatants", combatants);
 
-  text = gtk_scrolled_text_new(NULL, NULL, &hbox);
+  text = gtk_scrolled_text_view_new(&hbox);
   gtk_widget_set_usize(text, 150, 120);
 
-  gtk_text_set_editable(GTK_TEXT(text), FALSE);
-  gtk_text_set_word_wrap(GTK_TEXT(text), TRUE);
+  gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
+  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_object_set_data(GTK_OBJECT(dialog), "text", text);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
@@ -1043,10 +1043,9 @@ static void FreeCombatants(void)
 void DisplayFightMessage(char *Data)
 {
   Player *Play;
-  gint EditPos;
   GtkAccelGroup *accel_group;
-  GtkWidget *Deal, *Fight, *Stand, *Run, *Text;
-  char cr[] = "\n";
+  GtkWidget *Deal, *Fight, *Stand, *Run;
+  GtkTextView *textview;
   gchar *AttackName, *DefendName, *BitchName, *Message;
   FightPoint fp;
   int DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
@@ -1073,7 +1072,8 @@ void DisplayFightMessage(char *Data)
   Fight = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "fight"));
   Stand = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "stand"));
   Run = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "run"));
-  Text = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "text"));
+  textview = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(FightDialog),
+                                               "text"));
 
   Play = ClientData.Play;
 
@@ -1116,10 +1116,8 @@ void DisplayFightMessage(char *Data)
 
   g_strdelimit(Message, "^", '\n');
   if (strlen(Message) > 0) {
-    EditPos = gtk_text_get_length(GTK_TEXT(Text));
-    gtk_editable_insert_text(GTK_EDITABLE(Text), Message,
-                             strlen(Message), &EditPos);
-    gtk_editable_insert_text(GTK_EDITABLE(Text), cr, strlen(cr), &EditPos);
+    TextViewAppend(textview, Message, NULL, FALSE);
+    TextViewAppend(textview, "\n", NULL, TRUE);
   }
 
   if (!CanRunHere || fp == F_LASTLEAVE)
@@ -1890,7 +1888,7 @@ void EndGame(void)
 {
   DisplayFightMessage(NULL);
   gtk_widget_hide_all(ClientData.vbox);
-//gtk_editable_delete_text(GTK_EDITABLE(ClientData.messages), 0, -1);
+  TextViewClear(GTK_TEXT_VIEW(ClientData.messages));
   ShutdownNetwork(ClientData.Play);
   UpdatePlayerLists();
   CleanUpServer();
@@ -2080,6 +2078,7 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 
 static void make_tags(GtkTextView *textview)
 {
+#ifdef HAVE_GLIB2
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
 
   gtk_text_buffer_create_tag(buffer, "jet", "foreground", "blue", NULL);
@@ -2087,6 +2086,7 @@ static void make_tags(GtkTextView *textview)
   gtk_text_buffer_create_tag(buffer, "page", "foreground", "magenta", NULL);
   gtk_text_buffer_create_tag(buffer, "join", "foreground", "darkblue", NULL);
   gtk_text_buffer_create_tag(buffer, "leave", "foreground", "darkred", NULL);
+#endif
 }
 
 #ifdef CYGWIN
