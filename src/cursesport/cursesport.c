@@ -44,6 +44,7 @@ void refresh(void)
   COORD size, offset;
   SMALL_RECT screenpos;
 
+  move(CurY, CurX);
   for (y = 0; y < Depth; y++) {
     if (memcmp(&RealScreen[y][0], &VirtualScreen[y][0],
                sizeof(CHAR_INFO) * Width) != 0) {
@@ -91,6 +92,7 @@ SCREEN *newterm(void *a, void *b, void *c)
   hOut = GetConHandle("CONOUT$");
   hIn = GetConHandle("CONIN$");
   SetConsoleMode(hIn, 0);
+  SetConsoleMode(hOut, 0);
   return NULL;
 }
 
@@ -153,7 +155,6 @@ void curs_set(BOOL visible)
 {
   CONSOLE_CURSOR_INFO ConCurInfo;
 
-  move(CurY, CurX);
   ConCurInfo.dwSize = 10;
   ConCurInfo.bVisible = visible;
   SetConsoleCursorInfo(hOut, &ConCurInfo);
@@ -170,6 +171,12 @@ void move(int y, int x)
 {
   COORD coord;
 
+  if (x >= Width) {
+    x = 0;
+  }
+  if (y >= Depth) {
+    y = 0;
+  }
   CurX = x;
   CurY = y;
   coord.X = x;
@@ -188,7 +195,6 @@ void addstr(const char *str)
 
   for (i = 0; i < strlen(str); i++)
     addch(str[i]);
-  move(CurY, CurX);
 }
 
 void addch(int ch)
