@@ -37,37 +37,42 @@
 #include "plugins/sound_winmm.h"
 #endif
 
+#include "nls.h"
 #include "sound.h"
+
+#define NOPLUGIN "none"
 
 static SoundDriver *driver = NULL;
 static GSList *driverlist = NULL;
 typedef SoundDriver *(*InitFunc)(void);
-static gboolean module_open = FALSE;
 
-const gchar *GetPluginName(GSList **listpt)
+gchar *GetPluginList(void)
 {
-  if (!*listpt) {
-    *listpt = driverlist;
-  } else {
-    *listpt = g_slist_next(*listpt);
-  }
-  if (*listpt) {
-    SoundDriver *drivpt = (SoundDriver *)(*listpt)->data;
+  GSList *listpt;
+  GString *plugins;
+  gchar *retstr;
 
-    if (drivpt) {
-      return drivpt->name;
+  plugins = g_string_new("\""NOPLUGIN"\"");
+  for (listpt = driverlist; listpt; listpt = g_slist_next(listpt)) {
+    SoundDriver *drivpt = (SoundDriver *)listpt->data;
+
+    if (drivpt && drivpt->name) {
+      g_string_sprintfa(plugins, ", \"%s\"", drivpt->name);
     }
   }
-  return NULL;
+  retstr = plugins->str;
+  g_string_free(plugins, FALSE);
+  return retstr;
 }
 
 static void AddPlugin(InitFunc ifunc, void *module)
 {
-  driver = (*ifunc)();
-  if (driver) {
-    g_print("%s sound plugin init OK\n", driver->name);
-    driver->module = module;
-    driverlist = g_slist_append(driverlist, driver);
+  SoundDriver *newdriver = (*ifunc)();
+
+  if (newdriver) {
+    g_print("%s sound plugin init OK\n", newdriver->name);
+    newdriver->module = module;
+    driverlist = g_slist_append(driverlist, newdriver);
   }
 }
 
@@ -148,14 +153,44 @@ void SoundInit(void)
   AddPlugin(sound_winmm_init, NULL);
 #endif
 #endif
-  module_open = FALSE;
+  driver = NULL;
+}
+
+static SoundDriver *GetPlugin(gchar *drivername)
+{
+  GSList *listpt;
+
+  for (listpt = driverlist; listpt; listpt = g_slist_next(listpt)) {
+    SoundDriver *drivpt = (SoundDriver *)listpt->data;
+
+    if (drivpt && drivpt->name
+        && (!drivername || strcmp(drivpt->name, drivername) == 0)) {
+      return drivpt;
+    }
+  }
+  return NULL;
 }
 
 void SoundOpen(gchar *drivername)
 {
-  if (driver && driver->open && !module_open) {
-    driver->open();
-    module_open = TRUE;
+  if (!drivername || strcmp(drivername, NOPLUGIN) != 0) {
+    driver = GetPlugin(drivername);
+    if (driver) {
+      if (driver->open) {
+        g_print("Using plugin %s\n", driver->name);
+        driver->open();
+      }
+    } else if (drivername) {
+      gchar *plugins, *err;
+
+      plugins = GetPluginList();
+      err = g_strdup_printf(_("Invalid plugin \"%s\" selected.\n"
+                              "(%s available; now using \"%s\".)"),
+                            drivername, plugins, NOPLUGIN);
+      g_log(NULL, G_LOG_LEVEL_CRITICAL, err);
+      g_free(plugins);
+      g_free(err);
+    }
   }
 }
 
@@ -166,9 +201,9 @@ void SoundClose(void)
   SoundDriver *listdriv;
 #endif
 
-  if (driver && driver->close && module_open) {
+  if (driver && driver->close) {
     driver->close();
-    module_open = FALSE;
+    driver = NULL;
   }
 #ifdef PLUGINS
   for (listpt = driverlist; listpt; listpt = g_slist_next(listpt)) {

@@ -2220,7 +2220,7 @@ gboolean GtkLoop(int *argc, char **argv[], gboolean ReturnOnFail)
   if (!CheckHighScoreFileConfig())
     return TRUE;
 
-  SoundOpen(NULL);
+  SoundOpen(WantedPlugin);
 
   /* Create the main player */
   ClientData.Play = g_new(Player, 1);

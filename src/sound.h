@@ -37,7 +37,7 @@ struct _SoundDriver {
 };
 typedef struct _SoundDriver SoundDriver;
 
-const gchar *GetPluginName(GSList **listpt);
+gchar *GetPluginList(void);
 void SoundInit(void);
 void SoundOpen(gchar *drivername);
 void SoundClose(void);

@@ -78,7 +78,7 @@ gboolean Network, Client, Server, NotifyMetaServer, AIPlayer;
 unsigned Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue;
 gchar *HiScoreFile = NULL, *ServerName = NULL, *ConvertFile = NULL;
-gchar *ServerMOTD = NULL;
+gchar *ServerMOTD = NULL, *WantedPlugin = NULL;
 gboolean WantHelp, WantVersion, WantAntique, WantColour, WantNetwork;
 gboolean WantConvert, WantAdmin;
 
@@ -2515,8 +2515,7 @@ void SetupParameters(void)
 
 static void PluginHelp(void)
 {
-  GSList *listpt = NULL;
-  const gchar *plugname;
+  gchar *plugins;
 #ifdef HAVE_GETOPT_LONG
   g_print(_("  -u, --plugin=FILE       use sound plugin \"FILE\"\n"
             "                            "));
@@ -2524,14 +2523,9 @@ static void PluginHelp(void)
   g_print(_("  -u file  use sound plugin \"file\"\n"
             "	          "));
 #endif
-  g_print("(\"none\"");
-  do {
-    plugname = GetPluginName(&listpt);
-    if (plugname) {
-      g_print(", \"%s\"", plugname);
-    }
-  } while(plugname);
-  g_print(_(" available)\n"));
+  plugins = GetPluginList();
+  g_print(_("(%s available)\n"), plugins);
+  g_free(plugins);
 }
 
 void HandleHelpTexts(void)
@@ -2616,7 +2610,7 @@ Report bugs to the author at ben@bellatrix.pcl.ox.ac.uk\n"), DATADIR);
 void HandleCmdLine(int argc, char *argv[])
 {
   int c;
-  static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NA";
+  static const gchar *options = "anbchvf:o:sSp:g:r:wtC:l:NAu:";
 
 #ifdef HAVE_GETOPT_LONG
   static const struct option long_options[] = {
@@ -2637,6 +2631,7 @@ void HandleCmdLine(int argc, char *argv[])
     {"convert", required_argument, NULL, 'C'},
     {"logfile", required_argument, NULL, 'l'},
     {"admin", no_argument, NULL, 'A'},
+    {"plugin", required_argument, NULL, 'u'},
     {"help", no_argument, NULL, 'h'},
     {"version", no_argument, NULL, 'v'},
     {0, 0, 0, 0}
@@ -2696,6 +2691,9 @@ void HandleCmdLine(int argc, char *argv[])
       break;
     case 'l':
       AssignName(&Log.File, optarg);
+      break;
+    case 'u':
+      AssignName(&WantedPlugin, optarg);
       break;
     case 'w':
       WantedClient = CLIENT_WINDOW;

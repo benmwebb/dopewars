@@ -167,7 +167,8 @@ extern unsigned Port;
 extern gboolean Sanitized, ConfigVerbose, DrugValue;
 extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
-extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD;
+extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
+	     *WantedPlugin;
 extern gboolean WantHelp, WantVersion, WantAntique, WantColour,
                 WantNetwork, WantConvert, WantAdmin;
 #ifdef CYGWIN

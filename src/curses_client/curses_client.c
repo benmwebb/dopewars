@@ -2410,7 +2410,7 @@ void CursesLoop(void)
                     LogMask() | G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING,
                     LogMessage, NULL);
 
-  SoundOpen(NULL);
+  SoundOpen(WantedPlugin);
 
   display_intro();
 
