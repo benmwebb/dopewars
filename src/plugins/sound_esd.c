@@ -29,7 +29,7 @@
 #include <string.h>
 #include <esd.h>
 #include <glib.h>
-#include "sound.h"
+#include "../sound.h"
 
 #define MAXCACHE 6
 

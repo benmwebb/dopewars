@@ -30,7 +30,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <glib.h>
-#include "sound.h"
+#include "../sound.h"
 
 struct ChannelStruct {
   Mix_Chunk *chunk;
