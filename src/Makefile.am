@@ -30,7 +30,7 @@ dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    serverside.c serverside.h sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
 INCLUDES   = -I../intl -I${srcdir} -I.. @GTK_CFLAGS@
-DEFS       = @DEFS@ -DLOCALEDIR=\"${localedir}\" @PLUGINDEF@
+DEFS       = @DEFS@
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}
 DOPEBIN    = ${DOPEDIR}/dopewars

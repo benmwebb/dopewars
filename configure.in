@@ -220,9 +220,6 @@ if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"
 fi
 
-localedir=${datadir}/locale
-AC_SUBST(localedir)
-
 if test "$GUI_CLIENT" = "yes" ; then
    AC_DEFINE(GUI_CLIENT, 1, [Use the graphical client?])
 fi
@@ -269,8 +266,9 @@ if test "$plugins" = "yes" ; then
   AC_DEFINE(PLUGINS, 1, [Define if using dynamically-loaded sound modules])
   plugindir="${libdir}/dopewars"
   AC_SUBST(plugindir)
-  PLUGINDEF="-DPLUGINDIR=\\\"${plugindir}\\\""
-  AC_SUBST(PLUGINDEF)
+  DP_EXPAND_DIR(PLUGINDIR, '${plugindir}')
+  AC_DEFINE_UNQUOTED(PLUGINDIR, "$PLUGINDIR",
+                   [The directory containing the plugins])
 else
   PLUGOBJS="plugins/sound_sdl.o plugins/sound_esd.o plugins/sound_winmm.o"
   AC_SUBST(PLUGOBJS)
@@ -324,9 +322,16 @@ if test -n "$GCC"; then
    fi
 fi
 
-dnl Pass the data directory to the compiler so the program knows
-dnl where the high scores and docs are
-CFLAGS="$CFLAGS -DDATADIR=\\\"${datadir}\\\""
+dnl Tell dopewars where the high scores, docs and locale files are
+DP_EXPAND_DIR(DATADIR, '${datadir}')
+AC_DEFINE_UNQUOTED(DATADIR, "$DATADIR",
+                   [The directory containing the high score file and docs])
+
+localedir=${datadir}/locale
+AC_SUBST(localedir)
+DP_EXPAND_DIR(LOCALEDIR, '${localedir}')
+AC_DEFINE_UNQUOTED(LOCALEDIR, "$LOCALEDIR",
+                   [The directory containing locale files])
 
 dnl Add in the required clients
 AM_CONDITIONAL(GUI_CLIENT, test "$GUI_CLIENT" = "yes")
