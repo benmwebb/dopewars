@@ -1153,8 +1153,19 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                    ArmPercent<80 ? _("heavily armed")         :
                                    _("armed to the teeth");
          if (DefendName[0]) {
-            dpg_string_sprintfa(text,_("%s arrives with %d %tde, %s!"),
-                                DefendName,Bitches,BitchesName,Armament);
+            if (IsCop(Defender)) {
+               if (Bitches==0) {
+                  dpg_string_sprintfa(text,_("%s, %s, is chasing you, man!"),
+                                      DefendName,Armament);
+               } else {
+                  dpg_string_sprintfa(text,
+                              _("%s and %d %tde, %s, are chasing you, man!"),
+                                      DefendName,Bitches,BitchesName,Armament);
+               }
+            } else {
+               dpg_string_sprintfa(text,_("%s arrives with %d %tde, %s!"),
+                                   DefendName,Bitches,BitchesName,Armament);
+            }
          }
          break;
       case F_STAND:
@@ -1225,7 +1236,7 @@ void FormatFightMessage(Player *To,GString *text,Player *Attacker,
                g_string_append(text,_(" You loot the body!"));
             }
          }
-         if (Health>0) g_string_sprintfa(text,_(" (Health: %d)"),Health);
+/*       if (Health>0) g_string_sprintfa(text,_(" (Health: %d)"),Health);*/
          break;
    }
 }
