@@ -1,3 +1,23 @@
+/* setup.c        Simple Win32 installer for dopewars                   */
+/* Copyright (C)  2001  Ben Webb                                        */
+/*                Email: ben@bellatrix.pcl.ox.ac.uk                     */
+/*                WWW: http://dopewars.sourceforge.net/                 */
+
+/* This program is free software; you can redistribute it and/or        */
+/* modify it under the terms of the GNU General Public License          */
+/* as published by the Free Software Foundation; either version 2       */
+/* of the License, or (at your option) any later version.               */
+
+/* This program is distributed in the hope that it will be useful,      */
+/* but WITHOUT ANY WARRANTY; without even the implied warranty of       */
+/* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        */
+/* GNU General Public License for more details.                         */
+
+/* You should have received a copy of the GNU General Public License    */
+/* along with this program; if not, write to the Free Software          */
+/* Foundation, Inc., 59 Temple Place - Suite 330, Boston,               */
+/*                   MA  02111-1307, USA.                               */
+
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
@@ -5,6 +25,7 @@
 #include <string.h>
 #include <zlib.h>
 #include <shlobj.h>
+
 #include "contid.h"
 #include "guifunc.h"
 #include "util.h"
@@ -23,6 +44,9 @@ DWORD WINAPI DoInstall(LPVOID lpParam);
 static void GetWinText(char **text,HWND hWnd);
 
 BOOL CheckCreateDir(void) {
+/* Checks that the install directory exists, and creates it if it does not.
+   Returns TRUE if the directory is OK. */
+
   char *instdir;
   GetWinText(&idata->installdir,GetDlgItem(mainDlg[DL_INSTALLDIR],ED_INSTDIR));
   instdir=idata->installdir;
@@ -483,12 +507,6 @@ void SetupUninstall() {
   bstr_append(link,".LNK");
 
   CreateLink(str->text,idata->product,NULL,link->text,NULL);
-/*bstr_append_c(str,',');
-bstr_append(str,idata->product);
-bstr_append(str,",NULL,");
-bstr_append(str,link->text);
-bstr_append(str,",NULL");
-MessageBox(NULL,str->text,NULL,MB_OK);*/
 
   bstr_free(link,TRUE);
   bstr_free(uninstexe,TRUE);
@@ -605,25 +623,20 @@ void FillFolderList(void) {
   bstr_assign(str,startdir);
   bfree(startdir);
   bstr_appendpath(str,"Programs\\*");
-//MessageBox(NULL,str->text,NULL,MB_OK);
 
-//MessageBox(NULL,"Finding first file",NULL,MB_OK);
   findfile = FindFirstFile(str->text,&finddata);
   if (findfile!=INVALID_HANDLE_VALUE) {
     while(1) {
-//MessageBox(NULL,finddata.cFileName,NULL,MB_OK);
       if (finddata.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY &&
           strcmp(finddata.cFileName,".")!=0 &&
           strcmp(finddata.cFileName,"..")!=0) {
         SendMessage(folderlist,LB_ADDSTRING,0,(LPARAM)finddata.cFileName);
       }
-//MessageBox(NULL,"Finding next file",NULL,MB_OK);
       if (!FindNextFile(findfile,&finddata)) break;
     }
     FindClose(findfile);
   }
   bstr_free(str,TRUE);
-//MessageBox(NULL,"Find done",NULL,MB_OK);
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
@@ -637,10 +650,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 
   hInst = hInstance;
 
-//MessageBox(NULL,"Registering class",NULL,MB_OK);
   if (!hPrevInstance) RegisterSepClass(hInstance);
 
-//MessageBox(NULL,"Creating dialogs",NULL,MB_OK);
   for (i=0;i<DL_NUM;i++) {
     mainDlg[i] = CreateDialog(hInst,MAKEINTRESOURCE(i+1),NULL,MainDlgProc);
   }
@@ -648,7 +659,6 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
   CheckDlgButton(mainDlg[DL_SHORTCUTS],CB_DESKTOP,BST_CHECKED);
   EnableWindow(GetDlgItem(mainDlg[DL_DOINSTALL],BT_FINISH),FALSE);
 
-//MessageBox(NULL,"Filling folder list",NULL,MB_OK);
   FillFolderList();
 
   ShowWindow(GetDlgItem(mainDlg[DL_DOINSTALL],ST_COMPLETE),SW_HIDE);
