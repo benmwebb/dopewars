@@ -576,10 +576,9 @@ void NewGameDialog(Player *play)
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
   hbbox = my_hbbox_new();
-  button = gtk_button_new_with_label("");
 
   /* Button to update metaserver information */
-  SetAccelerator(button, _("_Update"), button, "clicked", accel_group, TRUE);
+  button = gtk_button_new_from_stock(GTK_STOCK_REFRESH);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(UpdateMetaServerList), NULL);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
