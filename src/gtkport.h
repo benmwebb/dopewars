@@ -5,6 +5,8 @@
 #include <config.h>
 #endif
 
+#ifdef GUI_CLIENT
+
 #ifdef CYGWIN
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
@@ -699,5 +701,5 @@ guint SetAccelerator(GtkWidget *labelparent,gchar *Text,
                      GtkAccelGroup *accel_group);
 GtkWidget *gtk_scrolled_text_new(GtkAdjustment *hadj,GtkAdjustment *vadj,
                                  GtkWidget **pack_widg);
-
+#endif /* GUI_CLIENT */
 #endif /* __GTKPORT_H__ */

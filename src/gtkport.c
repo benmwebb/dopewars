@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <glib.h>
 
+#ifdef GUI_CLIENT
 #include "gtkport.h"
 
 /* Internationalization stuff */
@@ -4427,5 +4428,7 @@ gint GtkMessageBox(GtkWidget *parent,const gchar *Text,
    gtk_main();
    return retval;
 }
+
+#endif /* GUI_CLIENT */
 
 #endif  /* CYGWIN */
