@@ -472,6 +472,7 @@ void HandleClientMessage(char *pt, Player *Play)
     text = g_strdup_printf(_("%s joins the game!"), Data);
     PrintMessage(text, "join");
     g_free(text);
+    SoundPlay(Sounds.JoinGame);
     UpdatePlayerLists();
     UpdateMenus();
     break;
@@ -480,6 +481,7 @@ void HandleClientMessage(char *pt, Player *Play)
       text = g_strdup_printf(_("%s has left the game."), Data);
       PrintMessage(text, "leave");
       g_free(text);
+      SoundPlay(Sounds.LeaveGame);
       UpdatePlayerLists();
       UpdateMenus();
     }

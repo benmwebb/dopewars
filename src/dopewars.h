@@ -85,6 +85,7 @@ struct NAMES {
 
 struct SOUNDS {
   gchar *FightHit, *FightMiss, *FightReload, *Jet, *TalkToAll, *TalkPrivate;
+  gchar *JoinGame, *LeaveGame;
 };
 
 #ifdef NETWORKING

@@ -154,7 +154,7 @@ struct NAMES Names = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 struct SOUNDS Sounds = {
-  NULL, NULL, NULL, NULL, NULL, NULL
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 /* N.B. The slightly over-enthusiastic comments here are for the benefit
@@ -393,6 +393,12 @@ struct GLOBALS Globals[] = {
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {NULL, NULL, NULL, &Sounds.TalkPrivate, NULL, "Sounds.TalkPrivate",
    N_("Sound file played when a player sends a private chat message"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.JoinGame, NULL, "Sounds.JoinGame",
+   N_("Sound file played when a player joins the game"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
+  {NULL, NULL, NULL, &Sounds.LeaveGame, NULL, "Sounds.LeaveGame",
+   N_("Sound file played when a player leaves the game"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0},
   {&DrugSortMethod, NULL, NULL, NULL, NULL, "DrugSortMethod",
    N_("Sort key for listing available drugs"),

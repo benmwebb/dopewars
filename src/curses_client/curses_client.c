@@ -1015,12 +1015,14 @@ void HandleClientMessage(char *Message, Player *Play)
     text = g_strdup_printf(_("%s joins the game!"), Data);
     display_message(text);
     g_free(text);
+    SoundPlay(Sounds.JoinGame);
     break;
   case C_LEAVE:
     if (From != &Noone) {
       text = g_strdup_printf(_("%s has left the game."), Data);
       display_message(text);
       g_free(text);
+      SoundPlay(Sounds.LeaveGame);
     }
     break;
   case C_RENAME:
