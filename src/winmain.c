@@ -112,7 +112,7 @@ static void LogFileStart()
 static void LogFilePrintFunc(const gchar *string)
 {
   if (LogFile) {
-    fprintf(LogFile, string);
+    fprintf(LogFile, "%s", string);
     fflush(LogFile);
   }
 }
