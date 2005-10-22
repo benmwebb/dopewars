@@ -5314,7 +5314,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
     Options |= MB_ICONERROR; break;
   case GTK_MESSAGE_QUESTION:
     Options |= MB_ICONQUESTION; break;
-  default:
+  default: break;
   }
 
   retval = myMessageBox(parent && parent->hWnd ? parent->hWnd : NULL,
