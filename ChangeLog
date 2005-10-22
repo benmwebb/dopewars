@@ -2,7 +2,7 @@ CVS
     - Add example configuration file to the documentation.
     - Fixed various typos in the German translation (thanks to Jens Seidel
       and Francois Marier).
-    - Fix a remote exploit against the Win32 server.
+    - Fix a remote exploit against the Win32 server (thanks to KF).
 
 1.5.10  24-10-2004
     - High score file is now installed in ${localstatedir} rather than
