@@ -1,3 +1,7 @@
+1.5.12  30-12-2005
+    - Really fix a potential exploit against the Win32 server when running as
+      an NT service (user data was being used as a format string in some cases).
+
 1.5.11  30-12-2005
     - Add example configuration file to the documentation.
     - Fixed various typos in the German translation (thanks to Jens Seidel

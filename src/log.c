@@ -50,8 +50,7 @@ void dopelog(const int loglevel, const LogFlags flags,
     return;
 
   va_start(args, format);
-  g_logv(G_LOG_DOMAIN, 1 << (loglevel + G_LOG_LEVEL_USER_SHIFT), format,
-         args);
+  g_logv(G_LOG_DOMAIN, 1 << (loglevel + G_LOG_LEVEL_USER_SHIFT), format, args);
   va_end(args);
 
 #ifdef HAVE_SYSLOG_H

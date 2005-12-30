@@ -119,7 +119,7 @@ static void WriteConfigValue(FILE *fp, Converter *conv, int GlobalIndex,
                               *GetGlobalString(GlobalIndex, StructIndex), -1);
     PrintEscaped(fp, convstr);
     g_free(convstr);
-    fprintf(fp, "\"\n");
+    fputs("\"\n", fp);
   } else if (Globals[GlobalIndex].StringList) {
     int i;
     gchar *convstr;
@@ -127,7 +127,7 @@ static void WriteConfigValue(FILE *fp, Converter *conv, int GlobalIndex,
     fprintf(fp, "%s = { ", GlobalName);
     for (i = 0; i < *Globals[GlobalIndex].MaxIndex; i++) {
       if (i > 0)
-        fprintf(fp, ", ");
+        fputs(", ", fp);
       fputc('"', fp);
       convstr = Conv_ToExternal(conv,
                                 (*Globals[GlobalIndex].StringList)[i], -1);
@@ -135,7 +135,7 @@ static void WriteConfigValue(FILE *fp, Converter *conv, int GlobalIndex,
       g_free(convstr);
       fputc('"', fp);
     }
-    fprintf(fp, " }\n");
+    fputs(" }\n", fp);
   }
 
   if (Globals[GlobalIndex].NameStruct[0])
@@ -182,9 +182,9 @@ static void ReadFileToString(FILE *fp, gchar *str, int matchlen)
 
   rewind(fp);
   ftruncate(fileno(fp), 0);
-  fprintf(fp, file->str);
+  fputs(file->str, fp);
 
-  fprintf(fp, str);
+  fputs(str, fp);
 
   g_string_free(file, TRUE);
 }
@@ -201,7 +201,7 @@ static void WriteConfigFile(FILE *fp, gboolean ForceUTF8)
   if (ForceUTF8 && !IsConfigFileUTF8()) {
     g_free(LocalCfgEncoding);
     LocalCfgEncoding = g_strdup("UTF-8");
-    fprintf(fp, "encoding \"UTF-8\"\n");
+    fputs("encoding \"UTF-8\"\n", fp);
   }
 
   if (LocalCfgEncoding && LocalCfgEncoding[0]) {

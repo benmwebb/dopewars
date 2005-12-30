@@ -737,7 +737,7 @@ void PrintHelpTo(FILE *fp)
     }
     fprintf(fp, "%-26s %s\n", VarName->str, _(Globals[i].Help));
   }
-  fprintf(fp, "\n\n");
+  fputs("\n\n", fp);
   g_string_free(VarName, TRUE);
 }
 
@@ -780,8 +780,9 @@ static void ServerReply(const gchar *msg)
       QueueMessageForSend(reply_netbuf, msgcp);
       g_free(msgcp);
     }
-  } else
-    g_print(msg);
+  } else {
+    g_print("%s", msg);
+  }
 }
 
 /* 

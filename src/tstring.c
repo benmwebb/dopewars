@@ -277,7 +277,7 @@ void dpg_print(gchar *format, ...)
   va_start(ap, format);
   retstr = HandleTFmt(format, ap);
   va_end(ap);
-  g_print(retstr);
+  g_print("%s", retstr);
   g_free(retstr);
 }
 

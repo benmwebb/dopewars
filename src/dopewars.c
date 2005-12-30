@@ -2157,7 +2157,7 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
       }
       g_string_append(text, " }\n");
 
-      g_print(text->str);
+      g_print("%s", text->str);
       g_string_free(text, TRUE);
     }
   }
@@ -2950,8 +2950,7 @@ static void DefaultLogMessage(const gchar *log_domain,
 
   text = GetLogString(log_level, message);
   if (text) {
-    g_string_append(text, "\n");
-    g_print(text->str);
+    g_print("%s\n", text->str);
     g_string_free(text, TRUE);
   }
 }
