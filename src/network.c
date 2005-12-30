@@ -520,7 +520,7 @@ void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
 
 static gboolean Socks5Connect(NetworkBuffer *NetBuf)
 {
-  guchar *addpt;
+  gchar *addpt;
   guint addlen, hostlen;
   ConnBuf *conn;
   unsigned short int netport;
@@ -555,7 +555,7 @@ static gboolean Socks5Connect(NetworkBuffer *NetBuf)
 
 static gboolean HandleSocksReply(NetworkBuffer *NetBuf)
 {
-  guchar *data;
+  gchar *data;
   guchar addrtype;
   guint replylen;
   gboolean retval = TRUE;
@@ -993,7 +993,7 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf, gchar *RemoteHost,
   guint num_methods;
   ConnBuf *conn;
   struct hostent *he;
-  guchar *addpt;
+  gchar *addpt;
   guint addlen, i;
   struct in_addr *haddr;
   unsigned short int netport;

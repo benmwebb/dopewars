@@ -685,6 +685,7 @@ void AddScoreToDialog(char *Data)
     color.red = 0;
     color.green = 0;
     color.blue = 0xDDDD;
+    color.pixel = 0;
     style = gtk_style_new();
     style->fg[GTK_STATE_NORMAL] = color;
     gtk_widget_set_style(label, style);

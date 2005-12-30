@@ -158,8 +158,8 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
 
 gchar *HandleTFmt(gchar *format, va_list va)
 {
-  int StrInd, StartPos, EndPos, FmtPos, Wid, Prec;
-  guint i, ArgNum, DefaultArgNum;
+  int StrInd, StartPos, EndPos, FmtPos, Wid, Prec, ArgNum, DefaultArgNum;
+  guint i;
   char Code[3], Type;
   gchar *retstr, *fstr;
   GString *string, *tmpfmt;
