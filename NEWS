@@ -1,3 +1,8 @@
+30th December 2005
+     dopewars-1.5.11 released. This is largely a security bugfix release,
+fixing a potential exploit against the Windows server when running as an
+NT serivce.
+
 24th October 2004
      dopewars-1.5.10 released. This is largely a bugfix release, fixing a
 server DOS and some minor bugs in the text-mode client.
