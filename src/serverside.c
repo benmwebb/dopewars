@@ -1963,6 +1963,50 @@ void ConvertHighScoreFile(const gchar *convertfile)
   g_free(BackupFile);
 }
 
+#ifdef CYGWIN
+/* Try to open a high score file in the Win32-specific AppData directory */
+static FILE *OpenHighScoreAppData(int *error, gboolean *empty)
+{
+  FILE *fp = NULL;
+  HKEY key;
+  static const char *subkey = "Software\\Microsoft\\Windows\\CurrentVersion"
+                              "\\Explorer\\Shell Folders";
+  static const char *subval = "Local AppData";
+
+  *empty = FALSE;
+
+  if (RegOpenKeyEx(HKEY_CURRENT_USER, subkey, 0, KEY_READ,
+                   &key) == ERROR_SUCCESS) {
+    DWORD keylen, keytype;
+    if (RegQueryValueEx(key, subval, NULL, &keytype, NULL,
+                        &keylen) == ERROR_SUCCESS && keytype == REG_SZ) {
+      char *keyval = g_malloc(keylen);
+      if (RegQueryValueEx(key, subval, NULL, &keytype, keyval,
+                          &keylen) == ERROR_SUCCESS) {
+        GString *str = g_string_sized_new(keylen + 40);
+        g_string_assign(str, keyval);
+        g_free(keyval);
+        g_string_append(str, "\\dopewars");
+        CreateDirectory(str->str, NULL);
+        g_string_append(str, "\\dopewars.sco");
+        fp = fopen(str->str, "r+");
+        if (!fp) {
+          fp = fopen(str->str, "w+");
+          if (!fp) {
+            *error = errno;
+          }
+          *empty = TRUE;
+        }
+        g_string_free(str, 1);
+      }
+    }
+    RegCloseKey(key);
+  }
+  return fp;
+}
+#endif
+
+
 /* State, set by OpenHighScoreFile, and later used by
  * CheckHighScoreFileConfig */
 static gboolean EmptyFile;
@@ -1989,6 +2033,11 @@ void OpenHighScoreFile(void)
     }
     EmptyFile = TRUE;
   }
+#ifdef CYGWIN
+  if (!ScoreFP) {
+    ScoreFP = OpenHighScoreAppData(&OpenError, &EmptyFile);
+  }
+#endif
 
   /* Check for a 0-byte score file */
   if (ScoreFP && !EmptyFile) {
