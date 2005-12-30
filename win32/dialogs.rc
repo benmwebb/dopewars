@@ -1,13 +1,13 @@
 #include "contid.h"
 1 DIALOG 17, 40, 239, 162
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "dopewars-1.5.11 installation"
+CAPTION "dopewars-1.5.12 installation"
 BEGIN
 	CONTROL "", 101, "WC_GTKSEP", 2 | WS_CHILD | WS_VISIBLE, 7, 135, 225, 2
 	CONTROL "< &Back", BT_BACK, "BUTTON", BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP, 105, 143, 39, 13
 	PUSHBUTTON "&Next >", BT_NEXT, 144, 143, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
 	PUSHBUTTON "&Cancel", BT_CANCEL, 191, 143, 39, 13, WS_CHILD | WS_VISIBLE | WS_TABSTOP
-	LTEXT "Welcome to the dopewars-1.5.11 installation program.\nThis program will install dopewars-1.5.11 on your computer.", -1, 22, 14, 195, 17, WS_CHILD | WS_VISIBLE | WS_GROUP
+	LTEXT "Welcome to the dopewars-1.5.12 installation program.\nThis program will install dopewars-1.5.12 on your computer.", -1, 22, 14, 195, 17, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "Use the ""Back"" and ""Next"" buttons at the bottom of the dialog to control the installation. You can quit at any time using the ""Cancel"" button.", -1, 22, 50, 195, 25, WS_CHILD | WS_VISIBLE | WS_GROUP
 	LTEXT "Newer versions of this program, when available, can be obtained from the dopewars website, http://dopewars.sf.net/", -1, 22, 84, 195, 18, WS_CHILD | WS_VISIBLE | WS_GROUP
 	CONTROL "Install for &all users (requires admin rights)", RB_ALLUSERS, "BUTTON", BS_AUTORADIOBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 28, 108, 110, 8
