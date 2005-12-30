@@ -1,6 +1,6 @@
 /************************************************************************
  * newgamedia.c   New game dialog                                       *
- * Copyright (C)  1998-2004  Ben Webb                                   *
+ * Copyright (C)  1998-2005  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

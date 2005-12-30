@@ -1,6 +1,6 @@
 /************************************************************************
  * sound.h        Header file for dopewars sound system                 *
- * Copyright (C)  1998-2004  Ben Webb                                   *
+ * Copyright (C)  1998-2005  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
