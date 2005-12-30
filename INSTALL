@@ -25,19 +25,21 @@ Windows:
      http://www.gimp.org/win32/downloads.html. (You can also build them from
      the source code, but this is not described here.) The binary packages
      that you will need are:
-         glib-2.4.5-20040903.zip
-         glib-dev-2.4.5.zip
+         glib-2.4.7.zip
+         glib-dev-2.4.7.zip
          libiconv-1.9.1.bin.woe32.zip
-         gettext-runtime-0.13.1.zip
+         gettext-0.14.5.zip
+         gettext-dev-0.14.5.zip
      Later versions of any of these packages should also work. Note that the
      libintl and libiconv Cygwin packages will NOT suffice here.
    - These packages need to be installed on your Cygwin system under /target,
      so start a Cygwin shell, and execute something similar to the following:
          mkdir -p /target
          cd /target
-         unzip /glib-2.4.5-20040903.zip
-         unzip /glib-dev-2.4.5.zip
-         unzip /gettext-runtime-0.13.1.zip
+         unzip /glib-2.4.7.zip
+         unzip /glib-dev-2.4.7.zip
+         unzip /gettext-0.14.5.zip
+         unzip /gettext-dev-0.14.5.zip
          unzip /libiconv-1.9.1.bin.woe32.zip
    - In order for pkg-config to detect the installed packages, you need
      to put their .pc files (in /target/lib/pkgconfig) in the pkgconfig

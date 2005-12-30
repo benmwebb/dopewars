@@ -1,8 +1,8 @@
 [product]
-dopewars-1.5.10
+dopewars-1.5.11
 
 [instdir]
-dopewars-1.5.10
+dopewars-1.5.11
 
 [NT Service]
 dopewars-server
@@ -38,7 +38,7 @@ index.html
 ../../auxdope/dopewars-config.txt -> dopewars-config.txt
 ../src/dopewars.exe -> dopewars.exe
 ../../auxdope/iconv.dll -> iconv.dll
-../../auxdope/libintl-1.dll -> libintl-1.dll
+../../auxdope/intl.dll -> intl.dll
 ../../auxdope/libglib-2.0-0.dll -> libglib-2.0-0.dll
 readme.txt
 example-cfg.txt
@@ -71,7 +71,7 @@ dopewars-log.txt
 dopewars.sco
 
 [startmenudir]
-dopewars-1.5.10
+dopewars-1.5.11
 
 [startmenu]
 dopewars.lnk
