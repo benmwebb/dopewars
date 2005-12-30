@@ -185,6 +185,9 @@ static gchar *GetWindowsLocale(void)
     break;
   case LANG_FRENCH:
     strcat(langenv, "fr");
+    if (sublang == SUBLANG_FRENCH_CANADIAN) {
+      strcat(langenv, "_CA");
+    }
     break;
   case LANG_GERMAN:
     strcat(langenv, "de");
@@ -194,6 +197,9 @@ static gchar *GetWindowsLocale(void)
     break;
   case LANG_SPANISH:
     strcat(langenv, "es");
+    if (sublang == SUBLANG_SPANISH) {
+      strcat(langenv, "_ES");
+    }
     break;
   case LANG_NORWEGIAN:
     if (sublang == SUBLANG_NORWEGIAN_NYNORSK) {
