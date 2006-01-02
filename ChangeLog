@@ -1,3 +1,7 @@
+CVS
+    - Support for old GTK1 and GLIB1 libraries removed - we now need version 2
+      of these libraries to build dopewars.
+
 1.5.12  30-12-2005
     - Really fix a potential exploit against the Win32 server when running as
       an NT service (user data was being used as a format string in some cases).

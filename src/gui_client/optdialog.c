@@ -802,12 +802,10 @@ void OptDialog(GtkWidget *widget, gpointer data)
   check = NewConfigCheck("Sanitized", _("Remove drug references"));
   gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 1, 0, 1);
 
-#ifdef HAVE_GLIB2
   check = gtk_check_button_new_with_label(_("Unicode config file"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
   gtk_table_attach_defaults(GTK_TABLE(table), check, 1, 3, 0, 1);
   gtk_object_set_data(GTK_OBJECT(dialog), "unicode_check", check);
-#endif
 
   label = gtk_label_new(_("Game length (turns)"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,

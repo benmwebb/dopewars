@@ -31,8 +31,6 @@ case "$host_os" in darwin*)
    CPPFLAGS="$CPPFLAGS -no-cpp-precomp"
 esac
 
-HAVE_FIXED_GTK="no"
-
 dnl Process client options
 AC_ARG_ENABLE(gui-client,
 [  --enable-gui-client     include graphical client (GTK+/Win32)],
@@ -45,10 +43,6 @@ AC_ARG_ENABLE(curses-client,
 AC_ARG_ENABLE(gui-server,
 [  --enable-gui-server     use a simple GTK+/Win32 GUI for the server],
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
-
-AC_ARG_ENABLE(glib2,
-[  --disable-glib2         use GLib/GTK+ 1.x, even if 2.x is found],
-[ USE_GLIB2="$enableval" ],[ USE_GLIB2="yes" ])
 
 AC_ARG_WITH(esd,
 [  --without-esd           do not support ESD sound output],
@@ -92,7 +86,6 @@ if test "$CYGWIN" = "yes" ; then
    LDFLAGS="$LDFLAGS -mno-cygwin"
 
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
-   AC_DEFINE(HAVE_GLIB2, 1, [Do we have GLIB 2.0 ?])
 
    dnl We need to compile and then link in the Windows resources
    WNDRES="dopewars.res"
@@ -102,10 +95,6 @@ if test "$CYGWIN" = "yes" ; then
    SOUND_LIBS="$SOUND_LIBS -lwinmm"
    PLUGOBJS="$PLUGOBJS plugins/sound_winmm.o"
    AC_DEFINE(HAVE_WINMM, 1, [Do we have the Windows multimedia system?])
-
-   dnl The gtkport implementation works just fine
-   dnl for gtk_entry_set_visibility()
-   HAVE_FIXED_GTK="yes"
 
    dnl Use graphical server by default
    if test "$GUI_SERVER" = "probe"; then
@@ -139,51 +128,20 @@ else
 
    gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
-      if test "$USE_GLIB2" = "yes" ; then
-        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+      AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+      if test "$gtk2_found" = "no" ; then
+         if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+            AC_MSG_ERROR(Cannot find GTK+)
+         else
+            AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
+            GUI_CLIENT="no"
+            GUI_SERVER="no"
+         fi
       fi
-      if test "$gtk2_found" = "yes" ; then
-        HAVE_FIXED_GTK="yes"
-      else
-        gtk_found="no"
-        AM_PATH_GTK(1.2.0,gtk_found="yes")
-        if test "$gtk_found" = "no" ; then
-           if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-             AC_MSG_ERROR(Cannot find GTK+)
-           else
-             AC_MSG_WARN(Cannot find GTK+)
-             GUI_CLIENT="no"
-             GUI_SERVER="no"
-           fi
-        else
-           AC_MSG_CHECKING([for non-buggy GTK+ ( >= 1.2.10 )])
-           dnl Versions older than 1.2.10 are buggy
-           if test "$gtk_config_major_version" -gt 1 ; then
-              HAVE_FIXED_GTK="yes"
-           elif test "$gtk_config_major_version" -eq 1 ; then
-              if test "$gtk_config_minor_version" -gt 2 ; then
-                 dnl We assume all 1.3.x releases are OK
-                 HAVE_FIXED_GTK="yes"
-              elif test "$gtk_config_minor_version" -eq 2 -a \
-                        "$gtk_config_micro_version" -ge 10 ; then
-                 HAVE_FIXED_GTK="yes"
-              fi
-           fi
-           AC_MSG_RESULT([$HAVE_FIXED_GTK])
-        fi
-     fi
    fi
 
-   dnl We NEED glib; N.B. don't link against glib2 if we're using GTK+1
-   glib2_found="no"
-   if test "$USE_GLIB2" = "yes" -a "$gtk2_found" != "no"; then
-     AM_PATH_GLIB_2_0(2.0.0, glib2_found="yes")
-   fi
-   if test "$glib2_found" = "no" ; then
-     AM_PATH_GLIB(1.2.0, , [AC_MSG_ERROR(Cannot find glib - aborting)])
-   else
-     AC_DEFINE(HAVE_GLIB2, 1, [Do we have GLIB 2.0 ?])
-   fi
+   dnl We NEED glib
+   AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
 
    dnl Add esound support if available
    if test "$USE_ESD" != "no"; then
@@ -270,12 +228,6 @@ fi
 
 if test "$GUI_SERVER" = "yes" ; then
    AC_DEFINE(GUI_SERVER, 1, [Use a graphical server?])
-fi
-
-if test "$HAVE_FIXED_GTK" = "yes" ; then
-   AC_DEFINE(HAVE_FIXED_GTK, 1,
-        [Do we have GTK+ with a non-buggy gtk_entry_set_visibility() ?
-   (i.e. >= 1.2.10)])
 fi
 
 dnl Can we use a long long datatype for price_t ?
@@ -461,15 +413,4 @@ else
    echo "Networking support DISABLED; single-player mode only"
 fi
 
-if test "$GUI_SERVER" = "yes" -o "$GUI_CLIENT" = "yes" ; then
-   if test "$HAVE_FIXED_GTK" = "no" ; then
-     cat <<FGTKEND
-
-WARNING: You have an old version of GTK+, which has bugs in the
-gtk_entry_set_visibility function (used for password-entry boxes). Thus, for
-stability reasons, this function will not be used, and all passwords entered
-will be visible. To fix this, upgrade GTK+ to version 1.2.10 or later.
-FGTKEND
-   fi
-fi
 echo

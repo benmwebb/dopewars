@@ -741,17 +741,10 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 #define MB_MAX    4
 #define MB_YESNO  (MB_YES|MB_NO)
 
-#ifdef HAVE_GLIB2
 #define IDOK      GTK_RESPONSE_OK
 #define IDCANCEL  GTK_RESPONSE_CANCEL
 #define IDYES     GTK_RESPONSE_YES
 #define IDNO      GTK_RESPONSE_NO
-#else
-#define IDOK      1
-#define IDCANCEL  2
-#define IDYES     4
-#define IDNO      8
-#endif
 
 /* Other flags */
 #define MB_IMMRETURN 16
@@ -765,7 +758,7 @@ struct _GtkUrl {
 
 #endif /* CYGWIN */
 
-#if CYGWIN || !HAVE_GLIB2
+#if CYGWIN
 extern const gchar *GTK_STOCK_OK, *GTK_STOCK_CLOSE, *GTK_STOCK_CANCEL, 
                    *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO,
                    *GTK_STOCK_HELP;

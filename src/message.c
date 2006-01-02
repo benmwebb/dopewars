@@ -251,11 +251,7 @@ void InitAbilities(Player *Play)
   Play->Abil.Local[A_DRUGVALUE] = (DrugValue ? TRUE : FALSE);
   Play->Abil.Local[A_TSTRING] = TRUE;
   Play->Abil.Local[A_DONEFIGHT] = TRUE;
-#ifdef HAVE_GLIB2
   Play->Abil.Local[A_UTF8] = TRUE;
-#else
-  Play->Abil.Local[A_UTF8] = FALSE;
-#endif
   Play->Abil.Local[A_DATE] = TRUE;
 
   if (!Network) {

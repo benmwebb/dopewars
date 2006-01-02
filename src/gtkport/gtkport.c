@@ -41,7 +41,7 @@
 #include "gtkport.h"
 #include "nls.h"
 
-#if CYGWIN || !HAVE_GLIB2
+#if CYGWIN
 #include "unicodewrap.h"
 const gchar *GTK_STOCK_OK = N_("_OK");
 const gchar *GTK_STOCK_CLOSE = N_("_Close");
@@ -5469,8 +5469,6 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
   return AccelKey;
 }
 
-#ifdef HAVE_GLIB2
-
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
 {
   GtkWidget *textview, *scrollwin, *frame;
@@ -5515,25 +5513,6 @@ void TextViewClear(GtkTextView *textview)
 
   gtk_text_buffer_set_text(buffer, "", -1);
 }
-
-#else
-
-GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
-{
-  GtkWidget *hbox, *text, *vscroll;
-  GtkAdjustment *adj;
-
-  hbox = gtk_hbox_new(FALSE, 0);
-  adj = (GtkAdjustment *)gtk_adjustment_new(0.0, 0.0, 100.0, 1.0, 10.0, 10.0);
-  text = gtk_text_new(NULL, adj);
-  gtk_box_pack_start(GTK_BOX(hbox), text, TRUE, TRUE, 0);
-  vscroll = gtk_vscrollbar_new(adj);
-  gtk_box_pack_start(GTK_BOX(hbox), vscroll, FALSE, FALSE, 0);
-  *pack_widg = hbox;
-  return text;
-}
-
-#endif
 
 static void DestroyGtkMessageBox(GtkWidget *widget, gpointer data)
 {
@@ -5612,8 +5591,6 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   return retval;
 }
 
-#ifdef HAVE_GLIB2
-
 GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
 {
   return gtk_button_new_from_stock(label);
@@ -5643,25 +5620,6 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   gtk_widget_destroy(dialog);
   return retval;
 }
-
-#else
-
-gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
-                   const gchar *Title, GtkMessageType type, gint Options)
-{
-  return OldGtkMessageBox(parent, Text, Title, Options);
-}
-
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
-{
-  GtkWidget *button;
-
-  button = gtk_button_new_with_label("");
-  SetAccelerator(button, _(label), button, "clicked", accel_group, FALSE);
-  return button;
-}
-
-#endif
 
 static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
 {
@@ -5804,16 +5762,12 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
 
 gboolean HaveUnicodeSupport(void)
 {
-#ifdef HAVE_GLIB2
   return TRUE;
-#else
-  return FALSE;
-#endif
 }
 
 #endif /* CYGWIN */
 
-#if CYGWIN || !HAVE_GLIB2
+#if CYGWIN
 void TextViewAppend(GtkTextView *textview, const gchar *text,
                     const gchar *tagname, gboolean scroll)
 {

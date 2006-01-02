@@ -57,7 +57,6 @@ gchar *ErrStrFromErrno(int errcode)
 {
   gchar *untran = strerror(errcode);
 
-#ifdef HAVE_GLIB2
   if (err_utf8_encoding) {
     gchar *utf8str;
 
@@ -70,9 +69,6 @@ gchar *ErrStrFromErrno(int errcode)
   } else {
     return g_strdup(untran);
   }
-#else
-  return g_strdup(untran);
-#endif
 }
 
 void FreeError(LastError *error)

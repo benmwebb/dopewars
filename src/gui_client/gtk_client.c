@@ -206,7 +206,7 @@ GtkWidget *my_hbbox_new(void)
 {
   GtkWidget *hbbox = gtk_hbutton_box_new();
 
-#if HAVE_GLIB2 && !CYGWIN
+#if !CYGWIN
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
 #endif
   return hbbox;
@@ -217,10 +217,8 @@ GtkWidget *my_hbbox_new(void)
  */
 void my_set_dialog_position(GtkWindow *dialog)
 {
-#ifdef HAVE_GLIB2
   gtk_window_set_type_hint(dialog, GDK_WINDOW_TYPE_HINT_DIALOG);
   gtk_window_set_position(dialog, GTK_WIN_POS_CENTER_ON_PARENT);
-#endif
 }
 
 void QuitGame(GtkWidget *widget, gpointer data)
@@ -664,11 +662,7 @@ void AddScoreToDialog(char *Data)
   g_strchug(cp);
 
   /* Get the first word - the score */
-#ifdef HAVE_GLIB2
   spl1 = g_strsplit(cp, " ", 2);
-#else
-  spl1 = g_strsplit(cp, " ", 1);
-#endif
   if (!spl1 || !spl1[0] || !spl1[1]) {
     /* Error - the high score from the server is invalid */
     g_warning(_("Corrupt high score!"));
@@ -697,11 +691,7 @@ void AddScoreToDialog(char *Data)
   g_strchug(spl1[1]);
 
   /* Get the second word - the date */
-#ifdef HAVE_GLIB2
   spl2 = g_strsplit(spl1[1], " ", 2);
-#else
-  spl2 = g_strsplit(spl1[1], " ", 1);
-#endif
   if (!spl2 || !spl2[0] || !spl2[1]) {
     g_warning(_("Corrupt high score!"));
     g_strfreev(spl2);
@@ -1888,11 +1878,7 @@ void QuestionDialog(char *Data, Player *From)
   guint numWords = sizeof(Words) / sizeof(Words[0]);
   guint i, j;
 
-#ifdef HAVE_GLIB2
   split = g_strsplit(Data, "^", 2);
-#else
-  split = g_strsplit(Data, "^", 1);
-#endif
   if (!split[0] || !split[1]) {
     g_warning("Bad QUESTION message %s", Data);
     return;
@@ -2184,7 +2170,6 @@ static void SetIcon(GtkWidget *window, gchar **xpmdata)
 
 static void make_tags(GtkTextView *textview)
 {
-#if HAVE_GLIB2
   GtkTextBuffer *buffer = gtk_text_view_get_buffer(textview);
 
   gtk_text_buffer_create_tag(buffer, "jet", "foreground",
@@ -2197,7 +2182,6 @@ static void make_tags(GtkTextView *textview)
                              "#000000008B8B", NULL);
   gtk_text_buffer_create_tag(buffer, "leave", "foreground",
                              "#8B8B00000000", NULL);
-#endif
 }
 
 #ifdef CYGWIN
@@ -2260,7 +2244,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
   gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);
 
-#if CYGWIN || !HAVE_GLIB2
+#if CYGWIN
   gtk_hbutton_box_set_spacing_default(8);
 #endif
 

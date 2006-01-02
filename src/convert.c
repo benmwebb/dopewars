@@ -49,14 +49,10 @@ void Conv_SetInternalCodeset(const gchar *codeset)
 
 static const gchar *GetLocaleCodeset(void)
 {
-#ifdef HAVE_GLIB2
   const gchar *codeset;
 
   g_get_charset(&codeset);
   return FixedCodeset(codeset);
-#else
-  return "ISO-8859-1";
-#endif
 }
 
 Converter *Conv_New(void)
@@ -85,18 +81,13 @@ void Conv_SetCodeset(Converter *conv, const gchar *codeset)
 
 gboolean Conv_Needed(Converter *conv)
 {
-#ifdef HAVE_GLIB2
   return (strcmp(conv->ext_codeset, int_codeset) != 0
           || strcmp(int_codeset, "UTF-8") == 0);
-#else
-  return FALSE;
-#endif
 }
 
 static gchar *do_convert(const gchar *from_codeset, const gchar *to_codeset,
                          const gchar *from_str, int from_len)
 {
-#ifdef HAVE_GLIB2
   gchar *to_str;
 
   if (strcmp(to_codeset, "UTF-8") == 0 && strcmp(from_codeset, "UTF-8") == 0) {
@@ -123,13 +114,6 @@ static gchar *do_convert(const gchar *from_codeset, const gchar *to_codeset,
       return g_strdup("[?]");
     }
   }
-#else
-  if (from_len == -1) {
-    return g_strdup(from_str);
-  } else {
-    return g_strndup(from_str, from_len);
-  }
-#endif
 }
 
 gchar *Conv_ToExternal(Converter *conv, const gchar *int_str, int len)

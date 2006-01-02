@@ -751,10 +751,7 @@ void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
   entry = gtk_entry_new();
   gtk_object_set_data(GTK_OBJECT(window), "password", (gpointer)entry);
 
-#ifdef HAVE_FIXED_GTK
-  /* GTK+ versions earlier than 1.2.10 do bad things with this */
   gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
-#endif
 
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
 
