@@ -9,7 +9,7 @@ dnl Modified by Ben Webb, 2002, to perform two expansions; this
 dnl handles the case where DIR is something like ${datadir}
 dnl (first expansion -> ${prefix}/share,
 dnl  second expansion -> /usr/local/share)
-AC_DEFUN(DP_EXPAND_DIR, [
+AC_DEFUN([DP_EXPAND_DIR], [
 	$1=$2
 	$1=`(
 	    test "x$prefix" = xNONE && prefix="$ac_default_prefix"
