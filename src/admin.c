@@ -1,6 +1,6 @@
 /************************************************************************
  * admin.c        dopewars server administration                        *
- * Copyright (C)  1998-2005  Ben Webb                                   *
+ * Copyright (C)  1998-2008  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

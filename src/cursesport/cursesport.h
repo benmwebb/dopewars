@@ -1,7 +1,7 @@
 /************************************************************************
  * cursesport.h   Portability functions to enable curses applications   *
  *                     to be built on Win32 systems                     *
- * Copyright (C)  1998-2005  Ben Webb                                   *
+ * Copyright (C)  1998-2008  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
