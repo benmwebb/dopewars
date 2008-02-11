@@ -1,5 +1,6 @@
 CVS
-    - Updated German translation from Benjamin Karaca.
+    - Updated German and French Canadian translations from Benjamin Karaca
+      and Francois Marier.
     - Support for old GTK1 and GLIB1 libraries removed - we now need version 2
       of these libraries to build dopewars.
 

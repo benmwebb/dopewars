@@ -3465,7 +3465,7 @@ msgid ""
 "A backup of the old file has been created as %s.\n"
 msgstr ""
 "Die Bestenliste-Datei %s wurde in das neue Format konvertiert.\n"
-"Ein Backup der alten Datei wurde als %s erstellt.\n."
+"Ein Backup der alten Datei wurde als %s erstellt.\n"
 
 #: src/serverside.c:1950
 #, c-format
@@ -3505,7 +3505,7 @@ msgid ""
 msgstr "%s scheint keine gültige Bestenliste-Datei zu sein -\n"
 "bitte nachprüfen! Wenn es eine Datei von einer älteren Version\n"
 "von Dopewars ist, dann konvertiere sie zuerst in das neue Format\n"
-"mit Hilfe des Parameters \dopewars -C %s\"\n"
+"mit Hilfe des Parameters \"dopewars -C %s\"\n"
 "in der Kommandozeile."
 
 #: src/serverside.c:2088
@@ -3515,7 +3515,7 @@ msgid ""
 "file \"dopewars-log.txt\" for further details."
 msgstr "Beim Lesen der Konfigurationsdatei traten Fehler auf. Als Folge\n"
 "werden einige Einstellungen vielleicht nicht wie erwartet funktionieren.\n"
-"Ziehe "die Datei \"dopewars-log.txt\" für weitere Details zu Rate."
+"Ziehe die Datei \"dopewars-log.txt\" für weitere Details zu Rate."
 
 #: src/serverside.c:2093
 msgid ""
@@ -4174,7 +4174,7 @@ msgstr "Versuche, lokalen dopewars Server via Unix Domänen Socket\n"
 msgid ""
 "Connection established; use Ctrl-D to close your session.\n"
 "\n"
-msgstr "Verbindung hergestellt. Beende deine Session mit Strg+D."
+msgstr "Verbindung hergestellt. Beende deine Session mit Strg+D.\n"
 
 #: src/configfile.c:238
 msgid "Could not determine local config file to write to"
@@ -4211,7 +4211,7 @@ msgstr "Bestätigung mit SOCKS Server\n"
 #: src/AIPlayer.c:115
 #, c-format
 msgid "Asking SOCKS for connect to %s...\n"
-msgstr "Frage SOCKS um zu %s... zu verbinden"
+msgstr "Frage SOCKS um zu %s... zu verbinden\n"
 
 #: src/AIPlayer.c:126
 msgid ""
