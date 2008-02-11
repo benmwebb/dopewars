@@ -14,6 +14,7 @@ EXTRA_DIST     = ABOUT-NLS LICENCE dopewars.desktop dopewars.spec.in depcomp \
                  win32/bzlib/Makefile.nocygwin win32/bzlib/README.bzlib
 CLEANFILES     = dopewars.sco dopewars-log.txt dopewars-config.txt
 DISTCLEANFILES = dopewars.spec
+ACLOCAL_AMFLAGS= -I m4
 
 install-data-local:
 	${mkinstalldirs} ${SCOREDIR}
