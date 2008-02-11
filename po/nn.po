@@ -1219,7 +1219,7 @@ msgstr ""
 "\n"
 "dopewars er Copyright (C) Ben Webb 1998-2008, og er tilgjengeleg under GNU "
 "GPL\n"
-"Rapportér feil til forfattaren på ben@bellatrix.pcl.ac.uk\n"
+"Rapportér feil til forfattaren på benwebb@users.sf.net\n"
 
 #. Usage information, printed when the user runs "dopewars -h"
 #. * (short options only version)
@@ -1298,7 +1298,7 @@ msgstr ""
 "\n"
 "dopewars er Copyright (C) Ben Webb 1998-2008, og er tilgjengeleg under GNU "
 "GPL\n"
-"Rapportér feil til forfattaren på ben@bellatrix.pcl.ac.uk\n"
+"Rapportér feil til forfattaren på benwebb@users.sf.net\n"
 
 #: src/dopewars.c:2915
 msgid ""

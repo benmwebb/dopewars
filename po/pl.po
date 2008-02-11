@@ -1175,7 +1175,7 @@ msgstr ""
 "  -v        wy¶wietla wersjê programu\n"
 "\n"
 "dopewars (C) Ben Webb 1998-2000, publikowane zgodnie z GNU GPL\n"
-"Wszelkie b³êdy wysy³aj na adres autora ben@bewebb@users.sf.net\n"
+"Wszelkie b³êdy wysy³aj na adres autora benwebb@users.sf.net\n"
 
 #: src/dopewars.c:2608
 msgid ""
