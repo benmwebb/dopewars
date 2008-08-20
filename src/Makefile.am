@@ -1,7 +1,7 @@
 # Nasty hack; there seems to be no other way of disabling libtool for the
 # link of the main executable...
 if PLUGINS
-MYLINK = $(LIBTOOL) --mode=link $(CCLD)
+MYLINK = $(LIBTOOL) --mode=link --tag=CC $(CCLD)
 else
 MYLINK = $(CCLD)
 endif

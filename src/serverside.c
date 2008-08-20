@@ -831,7 +831,6 @@ static gboolean StartServer(void)
   Scanner = g_scanner_new(&ScannerConfig);
   Scanner->msg_handler = ScannerErrorHandler;
   Scanner->input_name = "(stdin)";
-  CreatePidFile();
 
   /* Make the output line-buffered, so that the log file (if used) is
    * updated regularly */
@@ -1186,6 +1185,7 @@ void ServerLoop(struct CMDLINE *cmdline)
   if (Daemonize && fork() > 0)
     return;
 #endif
+  CreatePidFile();
 
 #ifndef CYGWIN
   localsock = SetupLocalSocket();

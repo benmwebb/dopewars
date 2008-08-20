@@ -1,4 +1,6 @@
-CVS
+SVN
+    - Fixes to build with OpenWRT (thanks to Theodor-Iulian Ciobanu).
+    - Write server pidfile after fork (thanks to Theodor-Iulian Ciobanu).
     - Updated German and French Canadian translations from Benjamin Karaca
       and Francois Marier.
     - Support for old GTK1 and GLIB1 libraries removed - we now need version 2
