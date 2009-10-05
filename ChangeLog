@@ -5,6 +5,8 @@ SVN
       and Francois Marier.
     - Support for old GTK1 and GLIB1 libraries removed - we now need version 2
       of these libraries to build dopewars.
+    - Fix for a DOS against the server using the REQUESTJET message type
+      (thanks to Doug Prostko for reporting the problem).
 
 1.5.12  30-12-2005
     - Really fix a potential exploit against the Win32 server when running as

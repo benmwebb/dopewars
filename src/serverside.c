@@ -504,6 +504,12 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_REQUESTJET:
     i = atoi(Data);
+    /* Make sure value is within range */
+    if (i < 0 || i >= NumLocation) {
+      dopelog(3, LF_SERVER, _("%s: DENIED jet to invalid location %s"),
+              GetPlayerName(Play), Data);
+      break;
+    }
     if (Play->EventNum == E_FIGHT || Play->EventNum == E_FIGHTASK) {
       if (CanRunHere(Play)) {
         break;
