@@ -1,6 +1,6 @@
 /************************************************************************
  * sound_winmm.c  dopewars sound system (Windows MM driver)             *
- * Copyright (C)  1998-2008  Ben Webb                                   *
+ * Copyright (C)  1998-2011  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

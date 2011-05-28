@@ -1,6 +1,6 @@
 /************************************************************************
  * network.h      Header file for low-level networking routines         *
- * Copyright (C)  1998-2008  Ben Webb                                   *
+ * Copyright (C)  1998-2011  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

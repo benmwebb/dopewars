@@ -1229,14 +1229,14 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2008, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2011, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
 "  -h, --help              mostrar esta información de ayuda\n"
 "  -v, --version           mostrar información sobre la versión y salir\n"
 "\n"
-"dopewars es Copyright (C) Ben Webb 1998-2008, y está publicado bajo la GNU "
+"dopewars es Copyright (C) Ben Webb 1998-2011, y está publicado bajo la GNU "
 "GPL\n"
 "Informa de fallos al autor escribiendo a benwebb@users.sf.net\n"
 
@@ -1312,14 +1312,14 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2008, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2011, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
 "  -h       mostrar esta información de ayuda\n"
 "  -v       mostrar información sobre la versión y salir\n"
 "\n"
-"dopewars es Copyright (C) Ben Webb 1998-2008, y está publicado bajo la GNU "
+"dopewars es Copyright (C) Ben Webb 1998-2011, y está publicado bajo la GNU "
 "GPL\n"
 "Informa de fallos al autor escribiendo a benwebb@users.sf.net\n"
 
@@ -1389,8 +1389,8 @@ msgstr "Tienes un mes de tiempo de juego para amasar tu fortuna."
 
 #: src/curses_client/curses_client.c:297
 #, c-format
-msgid "Version %-8s Copyright (C) 1998-2008  Ben Webb benwebb@users.sf.net"
-msgstr "Version %-8s Copyright (C) 1998-2008  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net"
+msgstr "Version %-8s Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net"
 
 #: src/curses_client/curses_client.c:300
 msgid "dopewars is released under the GNU General Public Licence"
@@ -2531,10 +2531,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2410
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2008  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
-"Versión %s     Copyright (C) 1998-2008  Ben Webb benwebb@users.sf.net\n"
+"Versión %s     Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net\n"
 "dopewars está publicado bajo la GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
