@@ -1142,8 +1142,11 @@ static void SendHttpRequest(HttpConnection *conn)
 
   text = g_string_new("");
 
-  g_string_sprintf(text, "%s http://%s:%u%s HTTP/1.0",
-                   conn->Method, conn->HostName, conn->Port, conn->Query);
+  g_string_sprintf(text, "%s %s HTTP/1.0",
+                   conn->Method, conn->Query);
+  QueueMessageForSend(&conn->NetBuf, text->str);
+
+  g_string_sprintf(text, "Host: %s", conn->HostName);
   QueueMessageForSend(&conn->NetBuf, text->str);
 
   if (conn->Headers)
