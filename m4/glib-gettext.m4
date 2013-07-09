@@ -125,7 +125,7 @@ glib_DEFUN([GLIB_WITH_NLS],
         ])
   
       if test "$gt_cv_func_dgettext_libc" = "yes" ; then
-        AC_CHECK_FUNCS(bind_textdomain_codeset)
+        [AC_CHECK_FUNCS([bind_textdomain_codeset])]
       fi
 
       #
@@ -156,7 +156,7 @@ glib_DEFUN([GLIB_WITH_NLS],
           glib_save_LIBS="$LIBS"
           LIBS="$LIBS -lintl $libintl_extra_libs"
           unset ac_cv_func_bind_textdomain_codeset
-          AC_CHECK_FUNCS(bind_textdomain_codeset)
+          [AC_CHECK_FUNCS([bind_textdomain_codeset])]
           LIBS="$glib_save_LIBS"
 
           if test "$ac_cv_func_bind_textdomain_codeset" = "yes" ; then
@@ -186,7 +186,7 @@ glib_DEFUN([GLIB_WITH_NLS],
 	if test "$MSGFMT" != "no"; then
           glib_save_LIBS="$LIBS"
           LIBS="$LIBS $INTLLIBS"
-	  AC_CHECK_FUNCS(dcgettext)
+	  [AC_CHECK_FUNCS([dcgettext])]
 	  AC_PATH_PROG(GMSGFMT, gmsgfmt, $MSGFMT)
 	  GLIB_PATH_PROG_WITH_TEST(XGETTEXT, xgettext,
 	    [test -z "`$ac_dir/$ac_word -h 2>&1 | grep '(HELP)'`"], :)
@@ -201,11 +201,11 @@ glib_DEFUN([GLIB_WITH_NLS],
             dnl since both are added to the libc all together.
 	    dnl Hence, we'd like to go with DATADIRNAME=share and
 	    dnl and CATOBJEXT=.gmo in this case.
-            AC_CHECK_FUNC(bind_textdomain_codeset,
+            [AC_CHECK_FUNC([bind_textdomain_codeset],
 	      [CATOBJEXT=.gmo 
                DATADIRNAME=share],
 	      [CATOBJEXT=.mo
-               DATADIRNAME=lib])
+               DATADIRNAME=lib])]
 	    ;;
 	    *)
 	    CATOBJEXT=.mo
