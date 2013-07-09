@@ -1,19 +1,20 @@
 /* Implementation of the dcngettext(3) function.
-   Copyright (C) 1995-1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
+   This program is free software; you can redistribute it and/or modify it
+   under the terms of the GNU Library General Public License as published
+   by the Free Software Foundation; either version 2, or (at your option)
    any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software Foundation,
-   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU Library General Public
+   License along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+   USA.  */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -36,19 +37,16 @@
 # define DCNGETTEXT __dcngettext
 # define DCIGETTEXT __dcigettext
 #else
-# define DCNGETTEXT dcngettext__
-# define DCIGETTEXT dcigettext__
+# define DCNGETTEXT libintl_dcngettext
+# define DCIGETTEXT libintl_dcigettext
 #endif
 
 /* Look up MSGID in the DOMAINNAME message catalog for the current CATEGORY
    locale.  */
 char *
-DCNGETTEXT (domainname, msgid1, msgid2, n, category)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
-     int category;
+DCNGETTEXT (const char *domainname,
+	    const char *msgid1, const char *msgid2, unsigned long int n,
+	    int category)
 {
   return DCIGETTEXT (domainname, msgid1, msgid2, 1, n, category);
 }
