@@ -1406,18 +1406,18 @@ int GetNextDrugIndex(int OldIndex, Player *Play)
     if (Play->Drugs[i].Price != 0 && i != OldIndex && i != MaxIndex &&
         (MaxIndex == -1
          || (DrugSortMethod == DS_ATOZ
-          && g_strcasecmp(Drug[MaxIndex].Name, Drug[i].Name) > 0)
+          && g_ascii_strncasecmp(Drug[MaxIndex].Name, Drug[i].Name, strlen(Drug[i].Name)) > 0)
          || (DrugSortMethod == DS_ZTOA
-          && g_strcasecmp(Drug[MaxIndex].Name, Drug[i].Name) < 0)
+          && g_ascii_strncasecmp(Drug[MaxIndex].Name, Drug[i].Name, strlen(Drug[i].Name)) < 0)
          || (DrugSortMethod == DS_CHEAPFIRST
           && Play->Drugs[MaxIndex].Price > Play->Drugs[i].Price)
          || (DrugSortMethod == DS_CHEAPLAST
           && Play->Drugs[MaxIndex].Price < Play->Drugs[i].Price)) &&
         (OldIndex == -1
          || (DrugSortMethod == DS_ATOZ
-          && g_strcasecmp(Drug[OldIndex].Name, Drug[i].Name) <= 0)
+          && g_ascii_strncasecmp(Drug[OldIndex].Name, Drug[i].Name, strlen(Drug[i].Name)) <= 0)
          || (DrugSortMethod == DS_ZTOA
-          && g_strcasecmp(Drug[OldIndex].Name, Drug[i].Name) >= 0)
+          && g_ascii_strncasecmp(Drug[OldIndex].Name, Drug[i].Name, strlen(Drug[i].Name)) >= 0)
          || (DrugSortMethod == DS_CHEAPFIRST
           && Play->Drugs[OldIndex].Price <= Play->Drugs[i].Price)
          || (DrugSortMethod == DS_CHEAPLAST
@@ -1909,7 +1909,7 @@ gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
     return FALSE;
   }
 
-  if (g_strcasecmp(scanner->value.v_identifier, "include") == 0) {
+  if (g_ascii_strncasecmp(scanner->value.v_identifier, "include", 7) == 0) {
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_STRING) {
       if (!ReadConfigFile(scanner->value.v_string, NULL)) {
@@ -1922,7 +1922,7 @@ gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
                             NULL, NULL, FALSE);
       return FALSE;
     }
-  } else if (g_strcasecmp(scanner->value.v_identifier, "encoding") == 0) {
+  } else if (g_ascii_strncasecmp(scanner->value.v_identifier, "encoding", 8) == 0) {
     token = g_scanner_get_next_token(scanner);
     if (token == G_TOKEN_STRING) {
       Conv_SetCodeset(conv, scanner->value.v_string);
@@ -2002,13 +2002,13 @@ int GetGlobalIndex(gchar *ID1, gchar *ID2)
   if (!ID1)
     return -1;
   for (i = 0; i < NumGlob; i++) {
-    if (g_strcasecmp(ID1, Globals[i].Name) == 0
+    if (g_ascii_strncasecmp(ID1, Globals[i].Name, strlen(Globals[i].Name)) == 0
         && !Globals[i].NameStruct[0]) {
       /* Just a bog-standard ID1=value */
       return i;
     }
-    if (g_strcasecmp(ID1, Globals[i].NameStruct) == 0 && ID2
-        && g_strcasecmp(ID2, Globals[i].Name) == 0
+    if (g_ascii_strncasecmp(ID1, Globals[i].NameStruct, strlen(Globals[i].NameStruct)) == 0 && ID2
+        && g_ascii_strncasecmp(ID2, Globals[i].Name, strlen(Globals[i].Name)) == 0
         && Globals[i].StructStaticPt && Globals[i].StructListPt) {
       /* ID1[index].ID2=value */
       return i;
@@ -2242,11 +2242,11 @@ static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
         G_CSET_a_2_z "._0123456789" G_CSET_A_2_Z;
     parsed = FALSE;
     if (token == G_TOKEN_IDENTIFIER) {
-      if (g_strcasecmp(scanner->value.v_identifier, "TRUE") == 0 ||
+      if (g_ascii_strncasecmp(scanner->value.v_identifier, "TRUE", 4) == 0 ||
           strcmp(scanner->value.v_identifier, "1") == 0) {
         parsed = TRUE;
         *GetGlobalBoolean(GlobalIndex, StructIndex) = TRUE;
-      } else if (g_strcasecmp(scanner->value.v_identifier, "FALSE") == 0
+      } else if (g_ascii_strncasecmp(scanner->value.v_identifier, "FALSE", 5) == 0
                  || strcmp(scanner->value.v_identifier, "0") == 0) {
         parsed = TRUE;
         *GetGlobalBoolean(GlobalIndex, StructIndex) = FALSE;

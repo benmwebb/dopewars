@@ -24,6 +24,7 @@
 #include <config.h>
 #endif
 
+#include <string.h>
 #include <stdlib.h>              /* For atoi */
 #include <glib.h>
 
@@ -527,12 +528,12 @@ void NewGameDialog(Player *play)
   entry = stgam.hostname = gtk_entry_new();
 
   ServerEntry = "localhost";
-  if (g_strcasecmp(ServerName, SN_META) == 0) {
+  if (g_ascii_strncasecmp(ServerName, SN_META, strlen(SN_META)) == 0) {
     NewGameType = 2;
     UpdateMeta = TRUE;
-  } else if (g_strcasecmp(ServerName, SN_PROMPT) == 0)
+  } else if (g_ascii_strncasecmp(ServerName, SN_PROMPT, strlen(SN_PROMPT)) == 0)
     NewGameType = 0;
-  else if (g_strcasecmp(ServerName, SN_SINGLE) == 0)
+  else if (g_ascii_strncasecmp(ServerName, SN_SINGLE, strlen(SN_SINGLE)) == 0)
     NewGameType = 1;
   else
     ServerEntry = ServerName;

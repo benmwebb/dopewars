@@ -190,7 +190,7 @@ void SoundOpen(gchar *drivername)
       err = g_strdup_printf(_("Invalid plugin \"%s\" selected.\n"
                               "(%s available; now using \"%s\".)"),
                             drivername, plugins, NOPLUGIN);
-      g_log(NULL, G_LOG_LEVEL_CRITICAL, err);
+      g_log(NULL, G_LOG_LEVEL_CRITICAL, "%s", err);
       g_free(plugins);
       g_free(err);
     }

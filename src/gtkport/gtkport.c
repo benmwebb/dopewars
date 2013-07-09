@@ -5613,7 +5613,7 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
 
   dialog = gtk_message_dialog_new(GTK_WINDOW(parent),
                                   GTK_DIALOG_MODAL,
-                                  type, buttons, Text);
+                                  type, buttons, "%s", Text);
   if (Title) gtk_window_set_title(GTK_WINDOW(dialog), Title);
 
   retval = gtk_dialog_run(GTK_DIALOG(dialog));

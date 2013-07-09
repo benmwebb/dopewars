@@ -1295,7 +1295,7 @@ static gboolean ParseHtmlLocation(gchar *uri, gchar **host, unsigned *port,
   gchar *uris, *colon, *slash;
 
   uris = g_strstrip(uri);
-  if (!uris || strlen(uris) < 7 || g_strncasecmp(uris, "http://", 7) != 0)
+  if (!uris || strlen(uris) < 7 || g_ascii_strncasecmp(uris, "http://", 7) != 0)
     return FALSE;
 
   uris += 7;                    /* skip to hostname */
@@ -1345,8 +1345,8 @@ static void StartHttpAuth(HttpConnection *conn, gboolean proxy,
 
   split = g_strsplit(header, " ", 2);
 
-  if (split[0] && split[1] && g_strcasecmp(split[0], "Basic") == 0 &&
-      g_strncasecmp(split[1], "realm=", 6) == 0 && strlen(split[1]) > 6) {
+  if (split[0] && split[1] && g_ascii_strncasecmp(split[0], "Basic", 5) == 0 &&
+      g_ascii_strncasecmp(split[1], "realm=", 6) == 0 && strlen(split[1]) > 6) {
     realm = &split[1][6];
     conn->waitinput = TRUE;
     (*conn->authfunc) (conn, proxy, realm, conn->authdata);
@@ -1366,7 +1366,7 @@ static void ParseHtmlHeader(gchar *line, HttpConnection *conn,
 
   split = g_strsplit(line, " ", 2);
   if (split[0] && split[1]) {
-    if (g_strcasecmp(split[0], "Location:") == 0 &&
+    if (g_ascii_strncasecmp(split[0], "Location:", 9) == 0 &&
         (conn->StatusCode == HEC_MOVETEMP
          || conn->StatusCode == HEC_MOVEPERM)) {
       if (ParseHtmlLocation(split[1], &host, &port, &query)) {
@@ -1380,10 +1380,10 @@ static void ParseHtmlHeader(gchar *line, HttpConnection *conn,
         SetError(&conn->NetBuf.error, &ETHTTP, HEC_BADREDIR,
                  g_strdup(line));
       }
-    } else if (g_strcasecmp(split[0], "WWW-Authenticate:") == 0 &&
+    } else if (g_ascii_strncasecmp(split[0], "WWW-Authenticate:", 17) == 0 &&
                conn->StatusCode == HEC_AUTHREQ) {
       StartHttpAuth(conn, FALSE, split[1], doneOK);
-    } else if (g_strcasecmp(split[0], "Proxy-Authenticate:") == 0 &&
+    } else if (g_ascii_strncasecmp(split[0], "Proxy-Authenticate:", 19) == 0 &&
                conn->StatusCode == HEC_PROXYAUTH) {
       /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but
        * some HTTP/1.0 proxies seem to support it anyway */

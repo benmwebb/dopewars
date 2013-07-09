@@ -1000,18 +1000,18 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
   }
   g_scanner_input_text(Scanner, string, strlen(string));
   if (!ParseNextConfig(Scanner, conv, NULL, TRUE)) {
-    if (g_strcasecmp(string, "help") == 0 || g_strcasecmp(string, "h") == 0
+    if (g_ascii_strncasecmp(string, "help", 4) == 0 || g_ascii_strncasecmp(string, "h", 1) == 0
         || strcmp(string, "?") == 0) {
       ServerHelp();
-    } else if (g_strcasecmp(string, "quit") == 0) {
+    } else if (g_ascii_strncasecmp(string, "quit", 4) == 0) {
       RequestServerShutdown();
-    } else if (g_strncasecmp(string, "msg:", 4) == 0) {
+    } else if (g_ascii_strncasecmp(string, "msg:", 4) == 0) {
       BroadcastToClients(C_NONE, C_MSG, string + 4, NULL, NULL);
-    } else if (g_strncasecmp(string, "save ", 5) == 0) {
+    } else if (g_ascii_strncasecmp(string, "save ", 5) == 0) {
       ServerSaveConfigFile(string + 5);
-    } else if (g_strcasecmp(string, "save") == 0) {
+    } else if (g_ascii_strncasecmp(string, "save", 4) == 0) {
       ServerSaveConfigFile(NULL);
-    } else if (g_strcasecmp(string, "list") == 0) {
+    } else if (g_ascii_strncasecmp(string, "list", 4) == 0) {
       if (FirstServer) {
         g_print(_("Users currently logged on:-\n"));
         for (list = FirstServer; list; list = g_slist_next(list)) {
@@ -1022,14 +1022,14 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
         }
       } else
         g_print(_("No users currently logged on!\n"));
-    } else if (g_strncasecmp(string, "push ", 5) == 0) {
+    } else if (g_ascii_strncasecmp(string, "push ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
       if (tmp) {
         g_print(_("Pushing %s\n"), GetPlayerName(tmp));
         SendServerMessage(NULL, C_NONE, C_PUSH, tmp, NULL);
       } else
         g_print(_("No such user!\n"));
-    } else if (g_strncasecmp(string, "kill ", 5) == 0) {
+    } else if (g_ascii_strncasecmp(string, "kill ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
       if (tmp) {
         /* The named user has been removed from the server following
@@ -1050,13 +1050,13 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
 
 Player *HandleNewConnection(void)
 {
-  int cadsize;
+  socklen_t cadsize;
   int ClientSock;
   struct sockaddr_in ClientAddr;
   Player *tmp;
   cadsize = sizeof(struct sockaddr);
   if ((ClientSock = accept(ListenSock, (struct sockaddr *)&ClientAddr,
-                           &cadsize)) == -1) {
+                            &cadsize)) == -1) {
     perror("accept socket");
     exit(EXIT_FAILURE);
   }

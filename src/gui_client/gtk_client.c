@@ -1560,8 +1560,8 @@ static void UpdateDealDialog(void)
     MaxDrug = CanDrop;
   }
 
-  spin_adj = (GtkAdjustment *)gtk_adjustment_new(MaxDrug, 1.0, MaxDrug,
-                                                 1.0, 10.0, 10.0);
+  spin_adj = (GtkAdjustment *)gtk_adjustment_new(MaxDrug, 0.0, MaxDrug,
+                                                 1.0, 10.0, 0.0);
   gtk_spin_button_set_adjustment(GTK_SPIN_BUTTON(DealDialog.amount),
                                  spin_adj);
   gtk_spin_button_set_value(GTK_SPIN_BUTTON(DealDialog.amount), MaxDrug);
@@ -1735,8 +1735,8 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   }
   label = gtk_label_new(text->str);
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-  spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 1.0, 2.0,
-                                                 1.0, 10.0, 10.0);
+  spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 2.0,
+                                                 1.0, 10.0, 0.0);
   spinner = DealDialog.amount = gtk_spin_button_new(spin_adj, 1.0, 0);
   gtk_signal_connect(GTK_OBJECT(spinner), "activate",
                      GTK_SIGNAL_FUNC(DealOKCallback), data);
@@ -2013,9 +2013,9 @@ static gint DrugSortFunc(GtkCList *clist, gconstpointer ptr1,
 
   switch (DrugSortMethod) {
   case DS_ATOZ:
-    return g_strcasecmp(Drug[index1].Name, Drug[index2].Name);
+    return g_ascii_strncasecmp(Drug[index1].Name, Drug[index2].Name, strlen(Drug[index2].Name));
   case DS_ZTOA:
-    return g_strcasecmp(Drug[index2].Name, Drug[index1].Name);
+    return g_ascii_strncasecmp(Drug[index2].Name, Drug[index1].Name, strlen(Drug[index1].Name));
   case DS_CHEAPFIRST:
     pricediff = ClientData.Play->Drugs[index1].Price -
                 ClientData.Play->Drugs[index2].Price;
