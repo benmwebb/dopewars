@@ -31,7 +31,7 @@ dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    message.c message.h network.c network.h nls.h \
                    serverside.c serverside.h sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
-INCLUDES   = -I../intl -I${srcdir} -I.. @GLIB_CFLAGS@ @GTK_CFLAGS@
+AM_CPPFLAGS= -I../intl -I${srcdir} -I.. @GLIB_CFLAGS@ @GTK_CFLAGS@
 DEFS       = @DEFS@
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}

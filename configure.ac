@@ -1,8 +1,14 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(src/dopewars.c)
+AC_INIT([dopewars], [SVN])
+AC_CONFIG_SRCDIR([src/dopewars.c])
+
+AC_CONFIG_MACRO_DIR([m4])
+
+AC_CANONICAL_TARGET
+AC_USE_SYSTEM_EXTENSIONS
 
 dnl Initialise automake
-AM_INIT_AUTOMAKE(dopewars,SVN)
+AM_INIT_AUTOMAKE
 
 dnl Write configuration defines into config.h
 AM_CONFIG_HEADER(config.h)
@@ -213,7 +219,7 @@ fi
 
 dnl Do i18n stuff
 ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES"
-AM_GNU_GETTEXT
+AM_GNU_GETTEXT([external])
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"
 fi
@@ -372,11 +378,10 @@ sounds/Makefile
 sounds/19.5degs/Makefile
 doc/Makefile
 doc/help/Makefile
-intl/Makefile
 dopewars.spec
 doc/dopewars.6
 po/Makefile.in],
-[sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile])
+[])
 
 echo
 echo "dopewars has been configured as follows:"

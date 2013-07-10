@@ -3,7 +3,7 @@ DESKTOPDIR     = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP        = dopewars.desktop
 SCOREDIR       = ${DESTDIR}${localstatedir}
 SCORE          = ${SCOREDIR}/dopewars.sco
-EXTRA_DIST     = config.rpath  ABOUT-NLS LICENCE dopewars.desktop dopewars.spec.in depcomp \
+EXTRA_DIST     = config.rpath  config.rpath  ABOUT-NLS LICENCE dopewars.desktop dopewars.spec.in depcomp \
                  runindent.sh win32/Makefile win32/README win32/contid.h \
                  win32/dialogs.rc win32/filelist win32/guifunc.c \
                  win32/guifunc.h win32/makeinstall.c win32/setup.c \

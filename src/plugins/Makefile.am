@@ -5,7 +5,7 @@ libsound_sdl_la_SOURCES = sound_sdl.c sound_sdl.h
 libsound_sdl_la_LDFLAGS = @SDL_LIBS@
 libsound_winmm_la_SOURCES = sound_winmm.c sound_winmm.h
 LIBS = @GLIB_LIBS@
-INCLUDES = @SOUND_CFLAGS@ @GLIB_CFLAGS@
+AM_CPPFLAGS = @SOUND_CFLAGS@ @GLIB_CFLAGS@
 LINKNOO = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS)
 
 if PLUGINS
