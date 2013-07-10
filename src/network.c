@@ -1,6 +1,6 @@
 /************************************************************************
  * network.c      Low-level networking routines                         *
- * Copyright (C)  1998-2011  Ben Webb                                   *
+ * Copyright (C)  1998-2013  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
