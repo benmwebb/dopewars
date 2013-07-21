@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: dopewars SVN\n"
-"Report-Msgid-Bugs-To: benwebb@sf.net\n"
-"POT-Creation-Date: 2013-07-08 13:09-0700\n"
+"Report-Msgid-Bugs-To: benwebb@users.sf.net\n"
+"POT-Creation-Date: 2013-07-21 05:07-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1104,7 +1104,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2011, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2013, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
@@ -1148,7 +1148,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2011, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2013, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
@@ -1219,7 +1219,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:297
 #, c-format
-msgid "Version %-8s Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2013  Ben Webb benwebb@users.sf.net"
 msgstr ""
 
 #: src/curses_client/curses_client.c:300
@@ -2214,7 +2214,7 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2419
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2011  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2013  Ben Webb benwebb@users.sf.net\n"
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
 
