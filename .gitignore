@@ -1,4 +1,8 @@
-core
+*.o
+*.a
+*.la
+*.lo
+src/dopewars
 config.cache
 configure
 acinclude.m4
