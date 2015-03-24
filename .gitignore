@@ -16,3 +16,7 @@ dopewars.sco
 dopewars.spec
 libtool
 autom4te.cache
+.deps
+compile
+doc/dopewars.6
+po/POTFILES
