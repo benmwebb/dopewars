@@ -1,5 +1,20 @@
+/* Version number of package */
+#define VERSION "@VERSION@"
+
 /* Use the (n)curses client? */
 #cmakedefine CURSES_CLIENT
+
+/* true if curses.h is available */
+#cmakedefine CURSES_HAVE_CURSES_H
+
+/* true if ncurses.h is available */
+#cmakedefine CURSES_HAVE_NCURSES_H
+
+/* true if ncurses/ncurses.h is available */
+#cmakedefine CURSES_HAVE_NCURSES_NCURSES_H
+
+/* true if ncurses/curses.h is available */
+#cmakedefine CURSES_HAVE_NCURSES_CURSES_H
 
 /* Define if building under the Cygwin environment */
 #undef CYGWIN
@@ -187,9 +202,6 @@
 # undef __EXTENSIONS__
 #endif
 
-
-/* Version number of package */
-#cmakedefine VERSION
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

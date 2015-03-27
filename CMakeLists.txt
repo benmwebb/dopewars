@@ -1,11 +1,19 @@
 cmake_minimum_required(VERSION 2.8)
 
 project(dopewars)
-set(VERSION SVN)
+set(VERSION "SVN")
 
 include(CheckIncludeFiles)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+    ${PROJECT_SOURCE_DIR}/cmake_modules)
+include(${PROJECT_SOURCE_DIR}/cmake_modules/FindGLIB.cmake)
+
+# Find source headers
+include_directories("${PROJECT_SOURCE_DIR}/src")
+
 # Find generated config.h
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAVE_CONFIG_H")
 include_directories("${PROJECT_BINARY_DIR}")
 
 check_include_files(fcntl.h HAVE_FCNTL_H)
@@ -14,15 +22,49 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(stdlib.h HAVE_STDLIB_H)
 
 # Process client options
-option(GUI_CLIENT "include graphical client (GTK+/Win32)" "probe")
-option(CURSES_CLIENT "include curses client" "probe")
+option(GUI_CLIENT "include graphical client (GTK+/Win32)" ON)
+option(CURSES_CLIENT "include curses client" ON)
 option(GUI_SERVER "use a simple GTK+/Win32 GUI for the server" "probe")
 
-option(WITH_ESD "support ESD sound output" "probe")
-option(WITH_SDL "support SDL sound output" "probe")
+option(WITH_ESD "support ESD sound output" ON)
+option(WITH_SDL "support SDL sound output" ON)
+
+find_package(GLIB)
+if (!GLIB_FOUND)
+  message(FATAL_ERROR "GLib is required")
+else()
+  set(EXTRA_LIBS ${EXTRA_LIBS} ${GLIB_LIBRARIES})
+  include_directories(${GLIB_INCLUDE_DIRS})
+endif()
+
+if (CURSES_CLIENT)
+  find_package(Curses)
+  if (CURSES_FOUND)
+    add_subdirectory(src/curses_client)
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${CURSES_LIBRARIES} cursesclient)
+    include_directories(${CURSES_INCLUDE_DIRS})
+  else()
+    message(WARNING "Cannot find any curses-type library")
+    set(CURSES_CLIENT OFF)
+  endif()
+endif()
 
 configure_file("${PROJECT_SOURCE_DIR}/config-cmake.h.in"
                "${PROJECT_BINARY_DIR}/config.h")
 
-add_executable(dopewars "${PROJECT_SOURCE_DIR}/src/*.c")
+add_executable(dopewars
+               "${PROJECT_SOURCE_DIR}/src/AIPlayer.c"
+               "${PROJECT_SOURCE_DIR}/src/error.c"
+               "${PROJECT_SOURCE_DIR}/src/sound.c"
+               "${PROJECT_SOURCE_DIR}/src/admin.c"
+               "${PROJECT_SOURCE_DIR}/src/log.c"
+               "${PROJECT_SOURCE_DIR}/src/tstring.c"
+               "${PROJECT_SOURCE_DIR}/src/configfile.c"
+               "${PROJECT_SOURCE_DIR}/src/message.c"
+               "${PROJECT_SOURCE_DIR}/src/util.c"
+               "${PROJECT_SOURCE_DIR}/src/convert.c"
+               "${PROJECT_SOURCE_DIR}/src/network.c"
+               "${PROJECT_SOURCE_DIR}/src/dopewars.c"
+               "${PROJECT_SOURCE_DIR}/src/serverside.c")
+
 target_link_libraries(dopewars ${EXTRA_LIBS})
