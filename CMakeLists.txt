@@ -4,6 +4,7 @@ project(dopewars)
 set(VERSION "SVN")
 
 include(CheckIncludeFiles)
+include(GNUInstallDirs)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     ${PROJECT_SOURCE_DIR}/cmake_modules)

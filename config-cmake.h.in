@@ -20,10 +20,10 @@
 #undef CYGWIN
 
 /* The directory containing the docs and sounds */
-#undef DPDATADIR
+#define DPDATADIR "@CMAKE_INSTALL_FULL_DATADIR@"
 
 /* The directory containing the high score file */
-#undef DPSCOREDIR
+#define DPSCOREDIR "@CMAKE_INSTALL_FULL_LOCALSTATEDIR@"
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -143,7 +143,7 @@
 #undef NETWORKING
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "@PROJECT_NAME@"
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
