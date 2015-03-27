@@ -49,6 +49,18 @@ if (CURSES_CLIENT)
   endif()
 endif()
 
+if (GUI_CLIENT OR GUI_SERVER)
+  find_package(GTK2 2.0 COMPONENTS gtk)
+  if (GTK2_FOUND)
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${GTK2_LIBRARIES})
+    include_directories(${GTK2_INCLUDE_DIRS})
+  else()
+    message(WARNING "Cannot find GTK+; not building GUI client or server")
+    set(GUI_CLIENT OFF)
+    set(GUI_SERVER OFF)
+  endif()
+endif()
+
 configure_file("${PROJECT_SOURCE_DIR}/config-cmake.h.in"
                "${PROJECT_BINARY_DIR}/config.h")
 
