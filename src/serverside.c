@@ -225,7 +225,7 @@ static void ServerNetBufAuth(NetworkBuffer *netbuf, gpointer data)
 void RegisterWithMetaServer(gboolean Up, gboolean SendData,
                             gboolean RespectTimeout)
 {
-#if NETWORKING
+#ifdef NETWORKING
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
   GString *headers, *body;
   gchar *prstr;
@@ -680,7 +680,7 @@ void CleanUpServer()
   while (FirstServer) {
     FirstServer = RemovePlayer((Player *)FirstServer->data, FirstServer);
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (Server)
     CloseSocket(ListenSock);
 #endif
@@ -770,7 +770,7 @@ void ServerHelp(void)
   g_string_free(VarName, TRUE);
 }
 
-#if NETWORKING
+#ifdef NETWORKING
 static NetworkBuffer *reply_netbuf;
 static void ServerReply(const gchar *msg)
 {

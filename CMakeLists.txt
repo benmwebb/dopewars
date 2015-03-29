@@ -26,6 +26,8 @@ check_include_files(stdlib.h HAVE_STDLIB_H)
 option(GUI_CLIENT "include graphical client (GTK+/Win32)" ON)
 option(CURSES_CLIENT "include curses client" ON)
 option(GUI_SERVER "use a simple GTK+/Win32 GUI for the server" "probe")
+option(NETWORKING
+       "should dopewars use TCP/IP networking to connect to servers?" ON)
 
 option(WITH_ESD "support ESD sound output" ON)
 option(WITH_SDL "support SDL sound output" ON)

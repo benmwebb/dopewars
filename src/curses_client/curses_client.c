@@ -2307,7 +2307,7 @@ static void Curses_DoGame(Player *Play)
   int i, c;
   char IsCarrying;
 
-#if NETWORKING || HAVE_SELECT
+#if defined(NETWORKING) || defined(HAVE_SELECT)
   fd_set readfs;
 #endif
 #ifdef NETWORKING
@@ -2350,7 +2350,7 @@ static void Curses_DoGame(Player *Play)
                        get_ui_area_top() + 1, 1, FALSE, OldName, '\0');
     } while (buf[0] == 0);
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (WantNetwork) {
     if (!ConnectToServer(Play)) {
       end_curses();
@@ -2454,7 +2454,7 @@ static void Curses_DoGame(Player *Play)
 
     if (QuitRequest)
       return;
-#if NETWORKING
+#ifdef NETWORKING
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_SET(0, &readfs);
@@ -2529,7 +2529,7 @@ static void Curses_DoGame(Player *Play)
 
     } else
       c = 0;
-#if ! (NETWORKING || HAVE_SELECT)
+#if ! (defined(NETWORKING) || defined(HAVE_SELECT))
     CheckForResize(Play);
 #endif
     if (DisplayMode == DM_STREET) {
@@ -2657,7 +2657,7 @@ static void Curses_DoGame(Player *Play)
         break;
       }
     }
-#if NETWORKING
+#ifdef NETWORKING
     }
 #endif
     curs_set(0);

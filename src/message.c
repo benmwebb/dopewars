@@ -152,7 +152,7 @@ void DoSendClientMessage(Player *From, AICode AI, MsgCode Code,
                      To ? GetPlayerName(To) : "", AI, Code,
                      Data ? Data : "");
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (!Network) {
 #endif
     if (From)
@@ -164,7 +164,7 @@ void DoSendClientMessage(Player *From, AICode AI, MsgCode Code,
       FirstServer = AddPlayer(0, ServerFrom, FirstServer);
     }
     HandleServerMessage(text->str, ServerFrom);
-#if NETWORKING
+#ifdef NETWORKING
   } else {
     QueuePlayerMessageForSend(BufOwn, text->str);
   }
@@ -213,12 +213,12 @@ void SendServerMessage(Player *From, AICode AI, MsgCode Code,
                      To ? GetPlayerName(To) : "", AI, Code,
                      Data ? Data : "");
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (!Network) {
 #endif
     if (ClientMessageHandlerPt)
       (*ClientMessageHandlerPt)(text->str, (Player *)(FirstClient->data));
-#if NETWORKING
+#ifdef NETWORKING
   } else {
     QueuePlayerMessageForSend(To, text->str);
   }
@@ -349,7 +349,7 @@ gboolean HaveAbility(Player *Play, gint Type)
     return (Play->Abil.Shared[Type]);
 }
 
-#if NETWORKING
+#ifdef NETWORKING
 /* 
  * Reads and writes player data from/to the network if it is ready.
  * If any data were read, TRUE is returned. "DoneOK" is set TRUE

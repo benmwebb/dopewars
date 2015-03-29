@@ -140,7 +140,7 @@
 #undef LT_OBJDIR
 
 /* Define if dopewars should use TCP/IP networking to connect to servers */
-#undef NETWORKING
+#cmakedefine NETWORKING
 
 /* Name of package */
 #define PACKAGE "@PROJECT_NAME@"

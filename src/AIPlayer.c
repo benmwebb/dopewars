@@ -37,7 +37,7 @@
 #include "util.h"
 #include "AIPlayer.h"
 
-#if NETWORKING
+#ifdef NETWORKING
 static int HandleAIMessage(char *Message, Player *AIPlay);
 static void PrintAIMessage(char *Text);
 static void AIDealDrugs(Player *AIPlay);

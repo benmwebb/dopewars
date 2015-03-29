@@ -895,7 +895,7 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
   NewPlayer->Health = 100;
   NewPlayer->CoatSize = 100;
   NewPlayer->Flags = 0;
-#if NETWORKING
+#ifdef NETWORKING
   InitNetworkBuffer(&NewPlayer->NetBuf, '\n', '\r',
                     UseSocks ? &Socks : NULL);
   if (Server)
@@ -938,7 +938,7 @@ GSList *RemovePlayer(Player *Play, GSList *First)
   g_assert(First);
 
   First = g_slist_remove(First, (gpointer)Play);
-#if NETWORKING
+#ifdef NETWORKING
   if (!IsCop(Play))
     ShutdownNetworkBuffer(&Play->NetBuf);
 #endif
@@ -2892,7 +2892,7 @@ void StripTerminators(gchar *str)
 
 #ifndef CYGWIN
 
-#if NETWORKING && !GUI_SERVER
+#if defined(NETWORKING) && !defined(GUI_SERVER)
 static void ServerLogMessage(const gchar *log_domain,
                              GLogLevelFlags log_level,
                              const gchar *message, gpointer user_data)
