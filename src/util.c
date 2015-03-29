@@ -40,6 +40,7 @@
 #include <conio.h>
 #endif
 
+#include <string.h>
 #include "util.h"
 #include "dopewars.h"
 
