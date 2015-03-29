@@ -75,7 +75,7 @@ void SendServerMessage(Player *From, AICode AI, MsgCode Code,
 void SendPrintMessage(Player *From, AICode AI, Player *To, char *Data);
 void SendQuestion(Player *From, AICode AI, Player *To, char *Data);
 
-#if NETWORKING
+#ifdef NETWORKING
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
                              gboolean WriteReady, gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
