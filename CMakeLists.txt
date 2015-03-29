@@ -4,6 +4,7 @@ project(dopewars)
 set(VERSION "SVN")
 
 include(CheckIncludeFiles)
+include(CheckFunctionExists)
 include(GNUInstallDirs)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
@@ -22,12 +23,25 @@ check_include_files(sys/time.h HAVE_SYS_TIME_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(stdlib.h HAVE_STDLIB_H)
 
+# Check for socket and select even if networking gets manually
+# disabled below, since select is used if available for
+# millisecond sleeping
+check_function_exists(socket HAVE_SOCKET)
+check_function_exists(gethostbyname HAVE_GETHOSTBYNAME)
+check_function_exists(select HAVE_SELECT)
+if (${HAVE_SOCKET} AND ${HAVE_GETHOSTBYNAME} AND ${HAVE_SELECT})
+  set(HAVE_NETWORK ON)
+else()
+  set(HAVE_NETWORK OFF)
+endif()
+
 # Process client options
 option(GUI_CLIENT "include graphical client (GTK+/Win32)" ON)
 option(CURSES_CLIENT "include curses client" ON)
 option(GUI_SERVER "use a simple GTK+/Win32 GUI for the server" "probe")
 option(NETWORKING
-       "should dopewars use TCP/IP networking to connect to servers?" ON)
+       "should dopewars use TCP/IP networking to connect to servers?"
+       ${HAVE_NETWORK})
 
 option(WITH_ESD "support ESD sound output" ON)
 option(WITH_SDL "support SDL sound output" ON)

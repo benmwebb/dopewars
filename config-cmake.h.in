@@ -52,7 +52,7 @@
 #undef HAVE_FORK
 
 /* Define to 1 if you have the `gethostbyname' function. */
-#undef HAVE_GETHOSTBYNAME
+#cmakedefine HAVE_GETHOSTBYNAME
 
 /* Define to 1 if you have the `getopt' function. */
 #undef HAVE_GETOPT
@@ -85,10 +85,10 @@
 #undef HAVE_SDL_MIXER
 
 /* Define to 1 if you have the `select' function. */
-#undef HAVE_SELECT
+#cmakedefine HAVE_SELECT
 
 /* Define to 1 if you have the `socket' function. */
-#undef HAVE_SOCKET
+#cmakedefine HAVE_SOCKET
 
 /* Do we have the socklen_t data type? */
 #undef HAVE_SOCKLEN_T

@@ -2502,7 +2502,7 @@ static void Curses_DoGame(Player *Play)
       }
     }
     if (FD_ISSET(0, &readfs)) {
-#elif HAVE_SELECT
+#elif defined(HAVE_SELECT)
     FD_ZERO(&readfs);
     FD_SET(0, &readfs);
     MaxSock = 1;

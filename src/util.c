@@ -231,7 +231,7 @@ void ReleaseLock(FILE * fp)
  */
 void MicroSleep(int microsec)
 {
-#if HAVE_SELECT || CYGWIN
+#if defined(HAVE_SELECT) || CYGWIN
   struct timeval tv;
 
   tv.tv_sec = 0;
