@@ -1,6 +1,6 @@
 /************************************************************************
  * admin.h        Header file for dopewars server administration        *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2015  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
