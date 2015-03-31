@@ -82,7 +82,7 @@
 #undef HAVE_MEMORY_H
 
 /* Do we have the SDL_mixer sound library? */
-#undef HAVE_SDL_MIXER
+#cmakedefine HAVE_SDL_MIXER
 
 /* Define to 1 if you have the `select' function. */
 #cmakedefine HAVE_SELECT
@@ -164,10 +164,10 @@
 #undef PACKAGE_VERSION
 
 /* The directory containing the plugins */
-#undef PLUGINDIR
+#define PLUGINDIR "@CMAKE_INSTALL_FULL_LIBDIR@/dopewars"
 
 /* Define if using dynamically-loaded sound modules */
-#undef PLUGINS
+#cmakedefine PLUGINS
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG

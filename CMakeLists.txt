@@ -10,6 +10,7 @@ include(GNUInstallDirs)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
     ${PROJECT_SOURCE_DIR}/cmake_modules)
 include(${PROJECT_SOURCE_DIR}/cmake_modules/FindGLIB.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake_modules/FindDL.cmake)
 
 # Find source headers
 include_directories("${PROJECT_SOURCE_DIR}/src")
@@ -45,6 +46,7 @@ option(NETWORKING
 
 option(WITH_ESD "support ESD sound output" ON)
 option(WITH_SDL "support SDL sound output" ON)
+option(PLUGINS "use dynamically-loaded sound modules" ON)
 
 find_package(GLIB)
 if (!GLIB_FOUND)
@@ -84,6 +86,36 @@ if (GUI_CLIENT OR GUI_SERVER)
     set(GUI_SERVER OFF)
   endif()
 endif()
+
+if (PLUGINS)
+  find_package(DL)
+  if (DL_FOUND)
+    include_directories(${DL_INCLUDE_DIR})
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${DL_LIBRARIES})
+  else()
+    set(PLUGINS OFF)
+  endif()
+endif()
+
+if (PLUGINS)
+  # Add esound support if available
+  find_package(ESD)
+  if (ESD_FOUND)
+    include_directories(${ESD_INCLUDE_DIR})
+    set(SOUND_LIBS ${SOUND_LIBS} ${ESD_LIBRARY})
+    set(HAVE_ESD ON)
+  endif()
+
+  # Add SDL_mixer sound support if available
+  find_package(SDL_mixer)
+  if (SDL_MIXER_FOUND)
+    include_directories(${SDL_MIXER_INCLUDE_DIRS})
+    set(SOUND_LIBS ${SOUND_LIBS} ${SDL_MIXER_LIBRARIES})
+    set(HAVE_SDL_MIXER ON)
+  endif()
+endif()
+
+add_subdirectory("src/plugins")
 
 configure_file("${PROJECT_SOURCE_DIR}/config-cmake.h.in"
                "${PROJECT_BINARY_DIR}/config.h")
