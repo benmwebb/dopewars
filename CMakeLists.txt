@@ -56,6 +56,12 @@ else()
   include_directories(${GLIB_INCLUDE_DIRS})
 endif()
 
+find_package(LibIntl)
+if (LibIntl_FOUND)
+  set(EXTRA_LIBS ${EXTRA_LIBS} ${LibIntl_LIBRARIES})
+  include_directories(${LibIntl_INCLUDE_DIRS})
+endif()
+
 if (CURSES_CLIENT)
   find_package(Curses)
   if (CURSES_FOUND)
