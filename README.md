@@ -13,14 +13,14 @@ INSTALLATION
 
 Either...
 
-1. Get the relevant RPM from http://dopewars.sourceforge.net/
+1. Get the relevant RPM from https://dopewars.sourceforge.io/
    
 Or...
 
-2. Get the tarball `dopewars-1.5.12.tar.gz` from the same URL
-   Extract it via `tar -xvzf dopewars-1.5.12.tar.gz`
-   Follow the instructions in the `INSTALL` file in the newly-created
-      `dopewars-1.5.12` directory
+1. Get the tarball `dopewars-1.5.12.tar.gz` from the same URL
+2. Extract it via `tar -xvzf dopewars-1.5.12.tar.gz`
+3. Follow the instructions in the `INSTALL` file in the newly-created
+   `dopewars-1.5.12` directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
