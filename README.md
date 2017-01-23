@@ -17,17 +17,17 @@ Either...
    
 Or...
 
-2. Get the tarball dopewars-1.5.12.tar.gz from the same URL
-   Extract it via tar -xvzf dopewars-1.5.12.tar.gz
-   Follow the instructions in the INSTALL file in the newly-created
-      dopewars-1.5.12 directory
+2. Get the tarball `dopewars-1.5.12.tar.gz` from the same URL
+   Extract it via `tar -xvzf dopewars-1.5.12.tar.gz`
+   Follow the instructions in the `INSTALL` file in the newly-created
+      `dopewars-1.5.12` directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
 
-dopewars stores its high score files by default in /usr/share/dopewars.sco
+dopewars stores its high score files by default in `/usr/share/dopewars.sco`
 This will be created by make install or by RPM installation. A different high 
-score file can be selected with the -f switch.
+score file can be selected with the `-f` switch.
 
 WIN32 INSTALLATION
 
@@ -39,29 +39,29 @@ Windows-friendly "dopewars-config.txt".
 
 The easiest way to install the Win32 version is to download the precompiled
 binary. The supplied configure script, however, should build the binary
-correctly under Cygwin (see the INSTALL file for details).
+correctly under Cygwin (see the `INSTALL` file for details).
 
 USAGE
 
 dopewars has built-in client-server support for multi-player games. For a
 full list of options configurable on the command line, run dopewars with
-the -h switch.
+the `-h` switch.
 
-dopewars -a
+`dopewars -a`
 This is "antique" dopewars; it tries to keep to the original dopewars, based
 on the "Drug Wars" game by John E. Dell, as closely as possible.
 
-dopewars
+`dopewars`
 By default, dopewars supports multi-player games. On starting a game, the
 program will attempt to connect to a dopewars server so that players can send
 messages back and forth, and shoot each other if they really want to...
 
-dopewars -s
+`dopewars -s`
 Starts a dopewars server. This sits in the background and handles multi-player
-games. You probably want to use the -l command line option too to direct its
+games. You probably want to use the `-l` command line option too to direct its
 log output to somewhere sensible.
 
-dopewars -c
+`dopewars -c`
 Create and run a computer dopewars player. This will attempt to connect
 to a dopewars server, and if this succeeds, it will then participate in
 multi-player dopewars games.
@@ -71,13 +71,13 @@ CONFIGURATION
 Most of the dopewars defaults (for example, the location of the high score file,
 the port and server to connect to, the names of the drugs and guns, etc.) can be
 configured by adding suitable entries to the dopewars configuration file. The
-global file /etc/dopewars is read first, and can then be overridden by the local
-settings in ~/.dopewars. All of the settings here can also be set on the command
-line of an interactive dopewars server when no players are logged on. See the
-file "example-cfg" for an example configuration file, and for a brief
-explanation of each option, type "help" in an interactive server. A subset of
-the configuration options can also be tweaked via the "Options" menu item
-in the GTK+/Win32 client.
+global file `/etc/dopewars` is read first, and can then be overridden by
+the local settings in `~/.dopewars`. All of the settings here can also be
+set on the command line of an interactive dopewars server when no players
+are logged on. See the file "example-cfg" for an example configuration file,
+and for a brief explanation of each option, type "help" in an interactive
+server. A subset of the configuration options can also be tweaked via the
+"Options" menu item in the GTK+/Win32 client.
 
 PLAYING
 
@@ -96,7 +96,7 @@ if I can fix 'em... of course, a working patch would be even nicer! ;)
 LICENCE
 
 dopewars is released under the GNU General Public License; see the text file
-LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2015.
+LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2017.
 The dopewars icons are copyright (C) Ocelot Mantis 2001.
 
 SUPPORT
