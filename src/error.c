@@ -114,7 +114,7 @@ void LookupErrorCode(GString *str, gint code, ErrTable *table,
       return;
     }
   }
-  g_string_sprintfa(str, fallbackstr, code);
+  g_string_append_printf(str, fallbackstr, code);
 }
 
 /* "Custom" error handling */

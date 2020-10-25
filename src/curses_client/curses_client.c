@@ -294,7 +294,7 @@ void display_intro(void)
                     "possible (and stay alive)!"));
   mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
-  g_string_sprintf(text, _("Version %-8s Copyright (C) 1998-2015  Ben Webb "
+  g_string_printf(text, _("Version %-8s Copyright (C) 1998-2015  Ben Webb "
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
@@ -434,23 +434,23 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     attrset(TextAttr);
     clear_bottom();
     /* Printout of metaserver information in curses client */
-    g_string_sprintf(text, _("Server : %s"), ThisServer->Name);
+    g_string_printf(text, _("Server : %s"), ThisServer->Name);
     mvaddstr(top + 1, 1, text->str);
-    g_string_sprintf(text, _("Port   : %d"), ThisServer->Port);
+    g_string_printf(text, _("Port   : %d"), ThisServer->Port);
     mvaddstr(top + 2, 1, text->str);
-    g_string_sprintf(text, _("Version    : %s"), ThisServer->Version);
+    g_string_printf(text, _("Version    : %s"), ThisServer->Version);
     mvaddstr(top + 2, 40, text->str);
     if (ThisServer->CurPlayers == -1) {
-      g_string_sprintf(text, _("Players: -unknown- (maximum %d)"),
+      g_string_printf(text, _("Players: -unknown- (maximum %d)"),
                        ThisServer->MaxPlayers);
     } else {
-      g_string_sprintf(text, _("Players: %d (maximum %d)"),
+      g_string_printf(text, _("Players: %d (maximum %d)"),
                        ThisServer->CurPlayers, ThisServer->MaxPlayers);
     }
     mvaddstr(top + 3, 1, text->str);
-    g_string_sprintf(text, _("Up since   : %s"), ThisServer->UpSince);
+    g_string_printf(text, _("Up since   : %s"), ThisServer->UpSince);
     mvaddstr(top + 3, 40, text->str);
-    g_string_sprintf(text, _("Comment: %s"), ThisServer->Comment);
+    g_string_printf(text, _("Comment: %s"), ThisServer->Comment);
     mvaddstr(top + 4, 1, text->str);
     attrset(PromptAttr);
     mvaddstr(top + 5, 1,
@@ -513,14 +513,14 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,
   case NBS_SOCKSCONNECT:
     switch (sockstat) {
     case NBSS_METHODS:
-      g_string_sprintf(text, _("Connected to SOCKS server %s..."),
+      g_string_printf(text, _("Connected to SOCKS server %s..."),
                        Socks.name);
       break;
     case NBSS_USERPASSWD:
       g_string_assign(text, _("Authenticating with SOCKS server"));
       break;
     case NBSS_CONNECT:
-      g_string_sprintf(text, _("Asking SOCKS for connect to %s..."),
+      g_string_printf(text, _("Asking SOCKS for connect to %s..."),
                        ServerName);
       break;
     }
@@ -813,11 +813,11 @@ static gboolean jet(Player *Play, gboolean AllowReturn)
   do {
     c = bgetch();
     if (c >= '1' && c < '1' + NumLocation) {
-      dpg_string_sprintf(str, _("%/Location display/%tde"),
+      dpg_string_printf(str, _("%/Location display/%tde"),
                          Location[c - '1'].Name);
       addstr(str->str);
       if (Play->IsAt != c - '1') {
-        g_string_sprintf(str, "%d", c - '1');
+        g_string_printf(str, "%d", c - '1');
         DisplayMode = DM_NONE;
         SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, str->str);
       } else {
@@ -846,7 +846,7 @@ static void DropDrugs(Player *Play)
   attrset(TextAttr);
   clear_bottom();
   text = g_string_new("");
-  dpg_string_sprintf(text,
+  dpg_string_printf(text,
                      /* List of drugs that you can drop (%tde = "drugs" by 
                       * default) */
                      _("You can\'t get any cash for the following "
@@ -855,7 +855,7 @@ static void DropDrugs(Player *Play)
   NumDrugs = 0;
   for (i = 0; i < NumDrug; i++) {
     if (Play->Drugs[i].Carried > 0 && Play->Drugs[i].Price == 0) {
-      g_string_sprintf(text, "%c. %-10s %-8d", NumDrugs + 'A',
+      g_string_printf(text, "%c. %-10s %-8d", NumDrugs + 'A',
                        Drug[i].Name, Play->Drugs[i].Carried);
       mvaddstr(top + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
       NumDrugs++;
@@ -877,7 +877,7 @@ static void DropDrugs(Player *Play)
         num = atoi(buf);
         g_free(buf);
         if (num > 0) {
-          g_string_sprintf(text, "drug^%d^%d", i, -num);
+          g_string_printf(text, "drug^%d^%d", i, -num);
           SendClientMessage(Play, C_NONE, C_BUYOBJECT, NULL, text->str);
         }
       }
@@ -979,17 +979,17 @@ static void GiveErrand(Player *Play)
 
   /* Prompt for sending your bitches out to spy etc. (%tde = "bitches" by
    * default) */
-  dpg_string_sprintf(text,
+  dpg_string_printf(text,
                      _("Choose an errand to give one of your %tde..."),
                      Names.Bitches);
   mvaddstr(y++, 1, text->str);
   attrset(PromptAttr);
   if (Play->Bitches.Carried > 0) {
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("   S>py on another dealer                  "
                          "(cost: %P)"), Prices.Spy);
     mvaddstr(y++, 2, text->str);
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("   T>ip off the cops to another dealer     "
                          "(cost: %P)"), Prices.Tipoff);
     mvaddstr(y++, 2, text->str);
@@ -1976,40 +1976,40 @@ void print_status(Player *Play, gboolean DispDrug)
 
   /* Display of the player's cash in the stats window (careful to keep the
    * formatting if you change the length of the "Cash" word) */
-  dpg_string_sprintf(text, _("Cash %17P"), Play->Cash);
+  dpg_string_printf(text, _("Cash %17P"), Play->Cash);
   mvaddstr(3, 9, text->str);
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
-  dpg_string_sprintf(text, _("%-19Tde%3d"), Names.Guns,
+  dpg_string_printf(text, _("%-19Tde%3d"), Names.Guns,
                      TotalGunsCarried(Play));
   mvaddstr(Network ? 4 : 5, 9, text->str);
 
   /* Display of the player's health */
-  g_string_sprintf(text, _("Health             %3d"), Play->Health);
+  g_string_printf(text, _("Health             %3d"), Play->Health);
   mvaddstr(Network ? 5 : 7, 9, text->str);
 
   /* Display of the player's bank balance */
-  dpg_string_sprintf(text, _("Bank %17P"), Play->Bank);
+  dpg_string_printf(text, _("Bank %17P"), Play->Bank);
   mvaddstr(Network ? 6 : 9, 9, text->str);
 
   if (Play->Debt > 0)
     attrset(DebtAttr);
   /* Display of the player's debt */
-  dpg_string_sprintf(text, _("Debt %17P"), Play->Debt);
+  dpg_string_printf(text, _("Debt %17P"), Play->Debt);
   mvaddstr(Network ? 7 : 11, 9, text->str);
   attrset(TitleAttr);
 
   /* Display of the player's trenchcoat size (antique mode only) */
   if (WantAntique)
-    g_string_sprintf(text, _("Space %6d"), Play->CoatSize);
+    g_string_printf(text, _("Space %6d"), Play->CoatSize);
   else {
     /* Display of the player's number of bitches, and available space
      * (%Tde="Bitches" by default) */
-    dpg_string_sprintf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
+    dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
                        Play->Bitches.Carried, Play->CoatSize);
   }
   mvaddstr(0, Width - 2 - strlen(text->str), text->str);
-  dpg_string_sprintf(text, _("%/Current location/%tde"),
+  dpg_string_printf(text, _("%/Current location/%tde"),
                      Location[Play->IsAt].Name);
   print_location(text->str);
   attrset(StatsAttr);
@@ -2024,7 +2024,7 @@ void print_status(Player *Play, gboolean DispDrug)
        * string is the "%Tde" which is "Drugs" by default; the %/.../ part 
        * is ignored, so you don't need to translate it; see doc/i18n.html) 
        */
-      dpg_string_sprintf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
+      dpg_string_printf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
       mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
     }
     for (i = 0; i < NumDrug; i++) {
@@ -2032,14 +2032,14 @@ void print_status(Player *Play, gboolean DispDrug)
         /* Display of carried drugs with price (%tde="Opium", etc. by
          * default) */
         if (HaveAbility(Play, A_DRUGVALUE)) {
-          dpg_string_sprintf(text, _("%-7tde  %3d @ %P"), Drug[i].Name,
+          dpg_string_printf(text, _("%-7tde  %3d @ %P"), Drug[i].Name,
                              Play->Drugs[i].Carried,
                              Play->Drugs[i].TotalValue /
                              Play->Drugs[i].Carried);
           mvaddstr(3 + c, Width / 2 + 3, text->str);
         } else {
           /* Display of carried drugs (%tde="Opium", etc. by default) */
-          dpg_string_sprintf(text, _("%-7tde  %3d"), Drug[i].Name,
+          dpg_string_printf(text, _("%-7tde  %3d"), Drug[i].Name,
                              Play->Drugs[i].Carried);
           mvaddstr(3 + c / 2, Width / 2 + 3 + (c % 2) * 17, text->str);
         }
@@ -2049,12 +2049,12 @@ void print_status(Player *Play, gboolean DispDrug)
   } else {
     /* Title of the "guns" window (the only important bit in this string
      * is the "%Tde" which is "Guns" by default) */
-    dpg_string_sprintf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
+    dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
     mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
     for (i = 0; i < NumGun; i++) {
       if (Play->Guns[i].Carried > 0) {
         /* Display of carried guns (%tde="Baretta", etc. by default) */
-        dpg_string_sprintf(text, _("%-22tde %3d"), Gun[i].Name,
+        dpg_string_printf(text, _("%-22tde %3d"), Gun[i].Name,
                            Play->Guns[i].Carried);
         mvaddstr(3 + c, Width / 2 + 3, text->str);
         c++;
@@ -2428,7 +2428,7 @@ static void Curses_DoGame(Player *Play)
         g_string_append(text, _("R>un, "));
       if (!RunHere || fp == F_LASTLEAVE)
         /* (%tde = "drugs" by default here) */
-        dpg_string_sprintfa(text, _("D>eal %tde, "), Names.Drugs);
+        dpg_string_append_printf(text, _("D>eal %tde, "), Names.Drugs);
       g_string_append(text, _("or Q>uit? "));
       mvaddcentstr(get_prompt_line(), text->str);
       attrset(TextAttr);

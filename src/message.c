@@ -145,10 +145,10 @@ void DoSendClientMessage(Player *From, AICode AI, MsgCode Code,
   text = g_string_new(NULL);
   if (HaveAbility(BufOwn, A_PLAYERID)) {
     if (To)
-      g_string_sprintfa(text, "%d", To->ID);
-    g_string_sprintfa(text, "^%c%c%s", AI, Code, Data ? Data : "");
+      g_string_append_printf(text, "%d", To->ID);
+    g_string_append_printf(text, "^%c%c%s", AI, Code, Data ? Data : "");
   } else {
-    g_string_sprintf(text, "%s^%s^%c%c%s", From ? GetPlayerName(From) : "",
+    g_string_printf(text, "%s^%s^%c%c%s", From ? GetPlayerName(From) : "",
                      To ? GetPlayerName(To) : "", AI, Code,
                      Data ? Data : "");
   }
@@ -206,10 +206,10 @@ void SendServerMessage(Player *From, AICode AI, MsgCode Code,
   text = g_string_new(NULL);
   if (HaveAbility(To, A_PLAYERID)) {
     if (From)
-      g_string_sprintfa(text, "%d", From->ID);
-    g_string_sprintfa(text, "^%c%c%s", AI, Code, Data ? Data : "");
+      g_string_append_printf(text, "%d", From->ID);
+    g_string_append_printf(text, "^%c%c%s", AI, Code, Data ? Data : "");
   } else {
-    g_string_sprintf(text, "%s^%s^%c%c%s", From ? GetPlayerName(From) : "",
+    g_string_printf(text, "%s^%s^%c%c%s", From ? GetPlayerName(From) : "",
                      To ? GetPlayerName(To) : "", AI, Code,
                      Data ? Data : "");
   }
@@ -413,15 +413,15 @@ static void MetaAppendError(GString *str, LastError *error)
 {
   switch (error->code) {
   case MEC_INTERNAL:
-    g_string_sprintfa(str, _("Internal metaserver error \"%s\""),
+    g_string_append_printf(str, _("Internal metaserver error \"%s\""),
                       (gchar *)error->data);
     break;
   case MEC_BADREPLY:
-    g_string_sprintfa(str, _("Bad metaserver reply \"%s\""),
+    g_string_append_printf(str, _("Bad metaserver reply \"%s\""),
                       (gchar *)error->data);
     break;
   default:
-    g_string_sprintfa(str, _("Unknown metaserver error code %d"),
+    g_string_append_printf(str, _("Unknown metaserver error code %d"),
                       error->code);
     break;
   }
@@ -554,7 +554,7 @@ void AddURLEnc(GString *str, gchar *unenc)
     } else if (unenc[i] == ' ') {
       g_string_append_c(str, '+');
     } else {
-      g_string_sprintfa(str, "%%%02X", unenc[i]);
+      g_string_append_printf(str, "%%%02X", unenc[i]);
     }
   }
 }
@@ -590,10 +590,10 @@ void SendInventory(Player *From, AICode AI, MsgCode Code,
 
   text = g_string_new(NULL);
   for (i = 0; i < NumGun; i++) {
-    g_string_sprintfa(text, "%d:", Guns ? Guns[i].Carried : 0);
+    g_string_append_printf(text, "%d:", Guns ? Guns[i].Carried : 0);
   }
   for (i = 0; i < NumDrug; i++) {
-    g_string_sprintfa(text, "%d:", Drugs ? Drugs[i].Carried : 0);
+    g_string_append_printf(text, "%d:", Drugs ? Drugs[i].Carried : 0);
   }
   SendServerMessage(From, AI, Code, To, text->str);
   g_string_free(text, TRUE);
@@ -641,7 +641,7 @@ void SendSpyReport(Player *To, Player *SpiedOn)
   int i;
 
   text = g_string_new(NULL);
-  g_string_sprintf(text, "%s^%s^%s^%d^%d^%d^%d^%d^",
+  g_string_printf(text, "%s^%s^%s^%d^%d^%d^%d^%d^",
                    (cashstr = pricetostr(SpiedOn->Cash)),
                    (debtstr = pricetostr(SpiedOn->Debt)),
                    (bankstr = pricetostr(SpiedOn->Bank)),
@@ -651,23 +651,24 @@ void SendSpyReport(Player *To, Player *SpiedOn)
   g_free(debtstr);
   g_free(bankstr);
   if (HaveAbility(SpiedOn, A_DATE)) {
-    g_string_sprintfa(text, "%d^%d^%d^", g_date_day(SpiedOn->date),
-                      g_date_month(SpiedOn->date), g_date_year(SpiedOn->date));
+    g_string_append_printf(text, "%d^%d^%d^", g_date_get_day(SpiedOn->date),
+                      g_date_get_month(SpiedOn->date),
+                      g_date_get_year(SpiedOn->date));
   }
   for (i = 0; i < NumGun; i++) {
-    g_string_sprintfa(text, "%d^", SpiedOn->Guns[i].Carried);
+    g_string_append_printf(text, "%d^", SpiedOn->Guns[i].Carried);
   }
   for (i = 0; i < NumDrug; i++) {
-    g_string_sprintfa(text, "%d^", SpiedOn->Drugs[i].Carried);
+    g_string_append_printf(text, "%d^", SpiedOn->Drugs[i].Carried);
   }
   if (HaveAbility(To, A_DRUGVALUE))
     for (i = 0; i < NumDrug; i++) {
-      g_string_sprintfa(text, "%s^",
+      g_string_append_printf(text, "%s^",
                         (cashstr =
                          pricetostr(SpiedOn->Drugs[i].TotalValue)));
       g_free(cashstr);
     }
-  g_string_sprintfa(text, "%d", SpiedOn->Bitches.Carried);
+  g_string_append_printf(text, "%d", SpiedOn->Bitches.Carried);
   if (To != SpiedOn)
     SendServerMessage(SpiedOn, C_NONE, C_UPDATE, To, text->str);
   else
@@ -695,7 +696,7 @@ void SendInitialData(Player *To)
       LocalNames[i] = GetDefaultTString(LocalNames[i]);
     }
   text = g_string_new("");
-  g_string_sprintf(text, "%s^%d^%d^%d^", VERSION, NumLocation, NumGun,
+  g_string_printf(text, "%s^%d^%d^%d^", VERSION, NumLocation, NumGun,
                    NumDrug);
   for (i = 0; i < 6; i++) {
     g_string_append(text, LocalNames[i]);
@@ -706,11 +707,11 @@ void SendInitialData(Player *To)
     g_string_append(text, LocalNames[6]);
     g_string_append_c(text, '^');
   } else {
-    g_string_sprintfa(text, "%d-^-%d^", StartDate.month, StartDate.year);
+    g_string_append_printf(text, "%d-^-%d^", StartDate.month, StartDate.year);
   }
 
   if (HaveAbility(To, A_PLAYERID))
-    g_string_sprintfa(text, "%d^", To->ID);
+    g_string_append_printf(text, "%d^", To->ID);
 
   /* Player ID is expected after the first 7 names, so send the rest now */
   for (i = 7; i < NUMNAMES; i++) {
@@ -723,7 +724,7 @@ void SendInitialData(Player *To)
       g_free(LocalNames[i]);
     }
 
-  g_string_sprintfa(text, "%c%s^", Currency.Prefix ? '1' : '0',
+  g_string_append_printf(text, "%c%s^", Currency.Prefix ? '1' : '0',
                     Currency.Symbol);
   SendServerMessage(NULL, C_NONE, C_INIT, To, text->str);
   g_string_free(text, TRUE);
@@ -1301,7 +1302,7 @@ void SendFightMessage(Player *Attacker, Player *Defender,
         }
       } else
         BitchName = "";
-      g_string_sprintf(text, "%s^%s^%d^%d^%s^%d^%d^%c%c%c%c^",
+      g_string_printf(text, "%s^%s^%d^%d^%s^%d^%d^%c%c%c%c^",
                        Attacker == To ? "" : GetPlayerName(Attacker),
                        (Defender == To || Defender == NULL)
                        ? "" : GetPlayerName(Defender),
@@ -1369,29 +1370,29 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
     if (DefendName[0]) {
       if (IsCop(Defender) && !AttackName[0]) {
         if (Bitches == 0) {
-          dpg_string_sprintfa(text, _("%s - %s - is chasing you, man!"),
+          dpg_string_append_printf(text, _("%s - %s - is chasing you, man!"),
                               DefendName, Armament);
         } else {
-          dpg_string_sprintfa(text,
+          dpg_string_append_printf(text,
                               _("%s and %d %tde - %s - are chasing you, man!"),
                               DefendName, Bitches, BitchesName, Armament);
         }
       } else {
-        dpg_string_sprintfa(text, _("%s arrives with %d %tde, %s!"),
+        dpg_string_append_printf(text, _("%s arrives with %d %tde, %s!"),
                             DefendName, Bitches, BitchesName, Armament);
       }
     }
     break;
   case F_STAND:
     if (AttackName[0]) {
-      g_string_sprintfa(text, _("%s stands and takes it"), AttackName);
+      g_string_append_printf(text, _("%s stands and takes it"), AttackName);
     } else {
       g_string_append(text, _("You stand there like a dummy."));
     }
     break;
   case F_FAILFLEE:
     if (AttackName[0]) {
-      g_string_sprintfa(text, _("%s tries to get away, but fails."),
+      g_string_append_printf(text, _("%s tries to get away, but fails."),
                         AttackName);
     } else {
       g_string_append(text, _("Panic! You can't get away!"));
@@ -1403,13 +1404,13 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
       if (AttackName[0]) {
         if (!IsCop(Attacker) && brandom(0, 100) < 70
             && Attacker->IsAt >= 0) {
-          dpg_string_sprintfa(text, _("%s has got away to %tde!"), AttackName,
+          dpg_string_append_printf(text, _("%s has got away to %tde!"), AttackName,
                               Location[Attacker->IsAt].Name);
         } else {
-          g_string_sprintfa(text, _("%s has got away!"), AttackName);
+          g_string_append_printf(text, _("%s has got away!"), AttackName);
         }
       } else {
-        g_string_sprintfa(text, _("You got away!"));
+        g_string_append_printf(text, _("You got away!"));
       }
     }
     break;
@@ -1420,49 +1421,49 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
     break;
   case F_MISS:
     if (AttackName[0] && DefendName[0]) {
-      g_string_sprintfa(text, _("%s shoots at %s... and misses!"),
+      g_string_append_printf(text, _("%s shoots at %s... and misses!"),
                         AttackName, DefendName);
     } else if (AttackName[0]) {
-      g_string_sprintfa(text, _("%s shoots at you... and misses!"),
+      g_string_append_printf(text, _("%s shoots at you... and misses!"),
                         AttackName);
     } else if (DefendName[0]) {
-      g_string_sprintfa(text, _("You missed %s!"), DefendName);
+      g_string_append_printf(text, _("You missed %s!"), DefendName);
     }
     break;
   case F_HIT:
     if (AttackName[0] && DefendName[0]) {
       if (Health == 0 && Bitches == 0) {
-        g_string_sprintfa(text, _("%s shoots %s dead."),
+        g_string_append_printf(text, _("%s shoots %s dead."),
                           AttackName, DefendName);
       } else if (BitchesKilled) {
-        dpg_string_sprintfa(text, _("%s shoots at %s and kills a %tde!"),
+        dpg_string_append_printf(text, _("%s shoots at %s and kills a %tde!"),
                             AttackName, DefendName, BitchName);
       } else {
-        g_string_sprintfa(text, _("%s shoots at %s."),
+        g_string_append_printf(text, _("%s shoots at %s."),
                           AttackName, DefendName);
       }
     } else if (AttackName[0]) {
       if (Health == 0 && Bitches == 0) {
-        g_string_sprintfa(text, _("%s wasted you, man! What a drag!"),
+        g_string_append_printf(text, _("%s wasted you, man! What a drag!"),
                           AttackName);
       } else if (BitchesKilled) {
-        dpg_string_sprintfa(text,
+        dpg_string_append_printf(text,
                             _("%s shoots at you... and kills a %tde!"),
                             AttackName, BitchName);
       } else {
-        g_string_sprintfa(text, _("%s hits you, man!"), AttackName);
+        g_string_append_printf(text, _("%s hits you, man!"), AttackName);
       }
     } else if (DefendName[0]) {
       if (Health == 0 && Bitches == 0) {
-        g_string_sprintfa(text, _("You killed %s!"), DefendName);
+        g_string_append_printf(text, _("You killed %s!"), DefendName);
       } else if (BitchesKilled) {
-        dpg_string_sprintfa(text, _("You hit %s, and killed a %tde!"),
+        dpg_string_append_printf(text, _("You hit %s, and killed a %tde!"),
                             DefendName, BitchName);
       } else {
-        g_string_sprintfa(text, _("You hit %s!"), DefendName);
+        g_string_append_printf(text, _("You hit %s!"), DefendName);
       }
       if (Loot > 0) {
-        dpg_string_sprintfa(text, _(" You find %P on the body!"), Loot);
+        dpg_string_append_printf(text, _(" You find %P on the body!"), Loot);
       } else if (Loot < 0) {
         g_string_append(text, _(" You loot the body!"));
       }

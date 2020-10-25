@@ -96,7 +96,7 @@ GString *GetLogString(GLogLevelFlags log_level, const gchar *message)
         g_string_free(text, TRUE);
         return NULL;
       }
-      g_string_sprintfa(text, "%d: ", i);
+      g_string_append_printf(text, "%d: ", i);
     }
   g_string_append(text, message);
   return text;

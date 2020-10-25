@@ -60,7 +60,7 @@ gchar *GetPluginList(void)
     SoundDriver *drivpt = (SoundDriver *)listpt->data;
 
     if (drivpt && drivpt->name) {
-      g_string_sprintfa(plugins, ", \"%s\"", drivpt->name);
+      g_string_append_printf(plugins, ", \"%s\"", drivpt->name);
     }
   }
   retstr = plugins->str;

@@ -1462,7 +1462,7 @@ void AddListEntry(DopeList *List, DopeEntry *NewEntry)
   List->Number++;
   List->Data = (DopeEntry *)g_realloc(List->Data, List->Number *
                                       sizeof(DopeEntry));
-  g_memmove(&(List->Data[List->Number - 1]), NewEntry, sizeof(DopeEntry));
+  memmove(&(List->Data[List->Number - 1]), NewEntry, sizeof(DopeEntry));
 }
 
 /* 
@@ -1474,7 +1474,7 @@ void RemoveListEntry(DopeList *List, int Index)
     return;
 
   if (Index < List->Number - 1) {
-    g_memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
+    memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
               (List->Number - 1 - Index) * sizeof(DopeEntry));
   }
   List->Number--;
@@ -2146,12 +2146,12 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
       /* Display of the first part of an entire string list config. file
        * variable - e.g. "StoppedTo is { " (followed by "have a beer",
        * "smoke a joint" etc.) */
-      g_string_sprintf(text, _("%s is { "), GlobalName);
+      g_string_printf(text, _("%s is { "), GlobalName);
       if (Globals[GlobalIndex].MaxIndex) {
         for (i = 0; i < *(Globals[GlobalIndex].MaxIndex); i++) {
           if (i > 0)
             g_string_append(text, ", ");
-          g_string_sprintfa(text, "\"%s\"",
+          g_string_append_printf(text, "\"%s\"",
                             (*(Globals[GlobalIndex].StringList))[i]);
         }
       }

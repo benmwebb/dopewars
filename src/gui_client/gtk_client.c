@@ -1212,14 +1212,14 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
 
   text = g_string_new(NULL);
 
-  dpg_string_sprintf(text, _("%/Current location/%tde"),
+  dpg_string_printf(text, _("%/Current location/%tde"),
                      Location[Play->IsAt].Name);
   gtk_label_set_text(GTK_LABEL(Status->Location), text->str);
 
   GetDateString(text, Play);
   gtk_label_set_text(GTK_LABEL(Status->Date), text->str);
 
-  g_string_sprintf(text, "%d", Play->CoatSize);
+  g_string_printf(text, "%d", Play->CoatSize);
   gtk_label_set_text(GTK_LABEL(Status->SpaceValue), text->str);
 
   prstr = FormatPrice(Play->Cash);
@@ -1236,25 +1236,25 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
 
   /* Display of carried guns in GTK+ client status window (%Tde="Guns" by
    * default) */
-  dpg_string_sprintf(text, _("%/GTK Stats: Guns/%Tde"), Names.Guns);
+  dpg_string_printf(text, _("%/GTK Stats: Guns/%Tde"), Names.Guns);
   gtk_label_set_text(GTK_LABEL(Status->GunsName), text->str);
-  g_string_sprintf(text, "%d", TotalGunsCarried(Play));
+  g_string_printf(text, "%d", TotalGunsCarried(Play));
   gtk_label_set_text(GTK_LABEL(Status->GunsValue), text->str);
 
   if (!WantAntique) {
     /* Display of number of bitches in GTK+ client status window
      * (%Tde="Bitches" by default) */
-    dpg_string_sprintf(text, _("%/GTK Stats: Bitches/%Tde"),
+    dpg_string_printf(text, _("%/GTK Stats: Bitches/%Tde"),
                        Names.Bitches);
     gtk_label_set_text(GTK_LABEL(Status->BitchesName), text->str);
-    g_string_sprintf(text, "%d", Play->Bitches.Carried);
+    g_string_printf(text, "%d", Play->Bitches.Carried);
     gtk_label_set_text(GTK_LABEL(Status->BitchesValue), text->str);
   } else {
     gtk_label_set_text(GTK_LABEL(Status->BitchesName), NULL);
     gtk_label_set_text(GTK_LABEL(Status->BitchesValue), NULL);
   }
 
-  g_string_sprintf(text, "%d", Play->Health);
+  g_string_printf(text, "%d", Play->Health);
   gtk_label_set_text(GTK_LABEL(Status->HealthValue), text->str);
 
   g_string_free(text, TRUE);
@@ -1526,21 +1526,21 @@ static void UpdateDealDialog(void)
 
   /* Display of the current price of the selected drug in 'Deal Drugs'
    * dialog */
-  dpg_string_sprintf(text, _("at %P"), Play->Drugs[DrugInd].Price);
+  dpg_string_printf(text, _("at %P"), Play->Drugs[DrugInd].Price);
   gtk_label_set_text(GTK_LABEL(DealDialog.cost), text->str);
 
   CanDrop = Play->Drugs[DrugInd].Carried;
 
   /* Display of current inventory of the selected drug in 'Deal Drugs'
    * dialog (%tde="Opium" etc. by default) */
-  dpg_string_sprintf(text, _("You are currently carrying %d %tde"),
+  dpg_string_printf(text, _("You are currently carrying %d %tde"),
                      CanDrop, Drug[DrugInd].Name);
   gtk_label_set_text(GTK_LABEL(DealDialog.carrying), text->str);
 
   CanCarry = Play->CoatSize;
 
   /* Available space for drugs in 'Deal Drugs' dialog */
-  g_string_sprintf(text, _("Available space: %d"), CanCarry);
+  g_string_printf(text, _("Available space: %d"), CanCarry);
   gtk_label_set_text(GTK_LABEL(DealDialog.space), text->str);
 
   if (DealDialog.Type == BT_BUY) {
@@ -1553,7 +1553,7 @@ static void UpdateDealDialog(void)
 
     /* Number of the selected drug that you can afford in 'Deal Drugs'
      * dialog */
-    g_string_sprintf(text, _("You can afford %d"), CanAfford);
+    g_string_printf(text, _("You can afford %d"), CanAfford);
     gtk_label_set_text(GTK_LABEL(DealDialog.afford), text->str);
     MaxDrug = MIN(CanCarry, CanAfford);
   } else {
@@ -1693,7 +1693,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
         || (data == BT_SELL && Play->Drugs[i].Carried > 0
          && Play->Drugs[i].Price != 0)
         || (data == BT_BUY && Play->Drugs[i].Price != 0)) {
-      dpg_string_sprintf(text, _("%/DealDrugs drug name/%tde"), Drug[i].Name);
+      dpg_string_printf(text, _("%/DealDrugs drug name/%tde"), Drug[i].Name);
       menuitem = gtk_menu_item_new_with_label(text->str);
       gtk_signal_connect(GTK_OBJECT(menuitem), "activate",
                          GTK_SIGNAL_FUNC(DealSelectCallback),
@@ -1727,11 +1727,11 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   hbox = gtk_hbox_new(FALSE, 7);
   if (data == BT_BUY) {
     /* Prompts for action in the "deal drugs" dialog */
-    g_string_sprintf(text, _("Buy how many?"));
+    g_string_printf(text, _("Buy how many?"));
   } else if (data == BT_SELL) {
-    g_string_sprintf(text, _("Sell how many?"));
+    g_string_printf(text, _("Sell how many?"));
   } else {
-    g_string_sprintf(text, _("Drop how many?"));
+    g_string_printf(text, _("Drop how many?"));
   }
   label = gtk_label_new(text->str);
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
@@ -1814,23 +1814,23 @@ void DealGuns(GtkWidget *widget, gpointer data)
   text = g_string_new("");
 
   if (data != BT_BUY && TotalGunsCarried(ClientData.Play) == 0) {
-    dpg_string_sprintf(text, _("You don't have any %tde to sell!"),
+    dpg_string_printf(text, _("You don't have any %tde to sell!"),
                        Names.Guns);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY && TotalGunsCarried(ClientData.Play) >=
              ClientData.Play->Bitches.Carried + 2) {
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("You'll need more %tde to carry any more %tde!"),
                        Names.Bitches, Names.Guns);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY
              && Gun[GunInd].Space > ClientData.Play->CoatSize) {
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("You don't have enough space to carry that %tde!"),
                        Names.Gun);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY && Gun[GunInd].Price > ClientData.Play->Cash) {
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("You don't have enough cash to buy that %tde!"),
                        Names.Gun);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
@@ -1838,7 +1838,7 @@ void DealGuns(GtkWidget *widget, gpointer data)
     GtkMessageBox(dialog, _("You don't have any to sell!"), Title, 
                   GTK_MESSAGE_WARNING, MB_OK);
   } else {
-    g_string_sprintf(text, "gun^%d^%d", GunInd, data == BT_BUY ? 1 : -1);
+    g_string_printf(text, "gun^%d^%d", GunInd, data == BT_BUY ? 1 : -1);
     SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL,
                       text->str);
   }
@@ -2561,11 +2561,11 @@ void TransferDialog(gboolean Debt)
                      GTK_SIGNAL_FUNC(SendDoneMessage), NULL);
   if (Debt) {
     /* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
-    dpg_string_sprintf(text, _("%/LoanShark window title/%Tde"),
+    dpg_string_printf(text, _("%/LoanShark window title/%Tde"),
                        Names.LoanSharkName);
   } else {
     /* Title of bank dialog - (%Tde="The Bank" by default) */
-    dpg_string_sprintf(text, _("%/BankName window title/%Tde"),
+    dpg_string_printf(text, _("%/BankName window title/%Tde"),
                        Names.BankName);
   }
   gtk_window_set_title(GTK_WINDOW(dialog), text->str);
@@ -2581,16 +2581,16 @@ void TransferDialog(gboolean Debt)
   gtk_table_set_col_spacings(GTK_TABLE(table), 4);
 
   /* Display of player's cash in bank or loan shark dialog */
-  dpg_string_sprintf(text, _("Cash: %P"), ClientData.Play->Cash);
+  dpg_string_printf(text, _("Cash: %P"), ClientData.Play->Cash);
   label = gtk_label_new(text->str);
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 0, 1);
 
   if (Debt) {
     /* Display of player's debt in loan shark dialog */
-    dpg_string_sprintf(text, _("Debt: %P"), ClientData.Play->Debt);
+    dpg_string_printf(text, _("Debt: %P"), ClientData.Play->Debt);
   } else {
     /* Display of player's bank balance in bank dialog */
-    dpg_string_sprintf(text, _("Bank: %P"), ClientData.Play->Bank);
+    dpg_string_printf(text, _("Bank: %P"), ClientData.Play->Bank);
   }
   label = gtk_label_new(text->str);
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 1, 2);
@@ -2727,7 +2727,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
 
   if (AllPlayers) {
     SendClientMessage(ClientData.Play, C_NONE, C_MSG, NULL, text);
-    g_string_sprintf(msg, "%s: %s", GetPlayerName(ClientData.Play), text);
+    g_string_printf(msg, "%s: %s", GetPlayerName(ClientData.Play), text);
     PrintMessage(msg->str, "talk");
   } else {
     for (selection = GTK_CLIST(TalkData->clist)->selection; selection;
@@ -2736,7 +2736,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
       Play = (Player *)gtk_clist_get_row_data(GTK_CLIST(TalkData->clist), row);
       if (Play) {
         SendClientMessage(ClientData.Play, C_NONE, C_MSGTO, Play, text);
-        g_string_sprintf(msg, "%s->%s: %s", GetPlayerName(ClientData.Play),
+        g_string_printf(msg, "%s->%s: %s", GetPlayerName(ClientData.Play),
                          GetPlayerName(Play), text);
         PrintMessage(msg->str, "page");
       }
@@ -3036,13 +3036,13 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   if (CreateHere) {
     /* Title of the display of available drugs/guns (%Tde = "Guns" or
      * "Drugs" by default) */
-    dpg_string_sprintf(text, _("%Tde here"), Objects);
+    dpg_string_printf(text, _("%Tde here"), Objects);
     widgets->HereFrame = frame[0] = gtk_frame_new(text->str);
   }
 
   /* Title of the display of carried drugs/guns (%Tde = "Guns" or "Drugs"
    * by default) */
-  dpg_string_sprintf(text, _("%Tde carried"), Objects);
+  dpg_string_printf(text, _("%Tde carried"), Objects);
 
   widgets->CarriedFrame = frame[1] = gtk_frame_new(text->str);
 

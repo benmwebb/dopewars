@@ -31,8 +31,8 @@
 
 void dpg_print(gchar *format, ...);
 gchar *dpg_strdup_printf(gchar *format, ...);
-void dpg_string_sprintf(GString *string, gchar *format, ...);
-void dpg_string_sprintfa(GString *string, gchar *format, ...);
+void dpg_string_printf(GString *string, gchar *format, ...);
+void dpg_string_append_printf(GString *string, gchar *format, ...);
 
 gchar *GetDefaultTString(gchar *tstring);
 

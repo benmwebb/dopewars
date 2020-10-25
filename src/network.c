@@ -420,13 +420,13 @@ static void HTTPAppendError(GString *str, LastError *error)
     g_string_append(str, _("Number of tries exceeded"));
     break;
   case HEC_BADAUTH:
-    g_string_sprintfa(str, _("Bad auth header: %s"), (gchar *)error->data);
+    g_string_append_printf(str, _("Bad auth header: %s"), (gchar *)error->data);
     break;
   case HEC_BADREDIR:
-    g_string_sprintfa(str, _("Bad redirect: %s"), (gchar *)error->data);
+    g_string_append_printf(str, _("Bad redirect: %s"), (gchar *)error->data);
     break;
   case HEC_BADSTATUS:
-    g_string_sprintfa(str, _("Invalid HTTP status line: %s"),
+    g_string_append_printf(str, _("Invalid HTTP status line: %s"),
                       (gchar *)error->data);
     break;
   case HEC_FORBIDDEN:
@@ -447,13 +447,13 @@ static void HTTPAppendError(GString *str, LastError *error)
     break;
   default:
     if (error->code < HEC_REDIRECT || error->code >= 600) {
-      g_string_sprintfa(str, _("Unknown HTTP error %d"), error->code);
+      g_string_append_printf(str, _("Unknown HTTP error %d"), error->code);
     } else if (error->code < HEC_CLIENTERR) {
-      g_string_sprintfa(str, _("%d: redirect error"), error->code);
+      g_string_append_printf(str, _("%d: redirect error"), error->code);
     } else if (error->code < HEC_SERVERERR) {
-      g_string_sprintfa(str, _("%d: HTTP client error"), error->code);
+      g_string_append_printf(str, _("%d: HTTP client error"), error->code);
     } else {
-      g_string_sprintfa(str, _("%d: HTTP server error"), error->code);
+      g_string_append_printf(str, _("%d: HTTP server error"), error->code);
     }
     break;
   }
@@ -1142,11 +1142,11 @@ static void SendHttpRequest(HttpConnection *conn)
 
   text = g_string_new("");
 
-  g_string_sprintf(text, "%s %s HTTP/1.0",
+  g_string_printf(text, "%s %s HTTP/1.0",
                    conn->Method, conn->Query);
   QueueMessageForSend(&conn->NetBuf, text->str);
 
-  g_string_sprintf(text, "Host: %s", conn->HostName);
+  g_string_printf(text, "Host: %s", conn->HostName);
   QueueMessageForSend(&conn->NetBuf, text->str);
 
   if (conn->Headers)
@@ -1168,7 +1168,7 @@ static void SendHttpRequest(HttpConnection *conn)
     QueueMessageForSend(&conn->NetBuf, text->str);
   }
 
-  g_string_sprintf(text, "User-Agent: dopewars/%s", VERSION);
+  g_string_printf(text, "User-Agent: dopewars/%s", VERSION);
   QueueMessageForSend(&conn->NetBuf, text->str);
 
   /* Insert a blank line between headers and body */

@@ -254,9 +254,9 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
 
   g_string_assign(body, "output=text&");
 
-  g_string_sprintfa(body, "up=%d&port=%d&version=", Up ? 1 : 0, Port);
+  g_string_append_printf(body, "up=%d&port=%d&version=", Up ? 1 : 0, Port);
   AddURLEnc(body, VERSION);
-  g_string_sprintfa(body, "&players=%d&maxplay=%d&comment=",
+  g_string_append_printf(body, "&players=%d&maxplay=%d&comment=",
                     CountPlayers(FirstServer), MaxClients);
   AddURLEnc(body, MetaServer.Comment);
 
@@ -272,11 +272,11 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   if (SendData && HighScoreRead(ScoreFP, MultiScore, AntiqueScore, TRUE)) {
     for (i = 0; i < NUMHISCORE; i++) {
       if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-        g_string_sprintfa(body, "&nm[%d]=", i);
+        g_string_append_printf(body, "&nm[%d]=", i);
         AddURLEnc(body, MultiScore[i].Name);
-        g_string_sprintfa(body, "&dt[%d]=", i);
+        g_string_append_printf(body, "&dt[%d]=", i);
         AddURLEnc(body, MultiScore[i].Time);
-        g_string_sprintfa(body, "&st[%d]=%s&sc[%d]=", i,
+        g_string_append_printf(body, "&st[%d]=%s&sc[%d]=", i,
                           MultiScore[i].Dead ? "dead" : "alive", i);
         AddURLEnc(body, prstr = FormatPrice(MultiScore[i].Money));
         g_free(prstr);
@@ -284,7 +284,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  g_string_sprintf(headers,
+  g_string_printf(headers,
                    "Content-Type: application/x-www-form-urlencoded\n"
                    "Content-Length: %d", (int)strlen(body->str));
 
@@ -351,7 +351,7 @@ void SendPlayerDetails(Player *Play, Player *To, MsgCode Code)
 
   text = g_string_new(GetPlayerName(Play));
   if (HaveAbility(To, A_PLAYERID)) {
-    g_string_sprintfa(text, "^%d", Play->ID);
+    g_string_append_printf(text, "^%d", Play->ID);
   }
   SendServerMessage(NULL, C_NONE, Code, To, text->str);
   g_string_free(text, TRUE);
@@ -735,7 +735,7 @@ void PrintHelpTo(FILE *fp)
   fprintf(fp, _(HelpText), VERSION);
   for (i = 0; i < NUMGLOB; i++) {
     if (Globals[i].NameStruct[0]) {
-      g_string_sprintf(VarName, "%s%s.%s", Globals[i].NameStruct,
+      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
                        Globals[i].StructListPt ? "[x]" : "",
                        Globals[i].Name);
     } else {
@@ -759,7 +759,7 @@ void ServerHelp(void)
   g_print(_(HelpText), VERSION);
   for (i = 0; i < NUMGLOB; i++) {
     if (Globals[i].NameStruct[0]) {
-      g_string_sprintf(VarName, "%s%s.%s", Globals[i].NameStruct,
+      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
                        Globals[i].StructListPt ? "[x]" : "",
                        Globals[i].Name);
     } else {
@@ -2985,11 +2985,11 @@ void ResolveTipoff(Player *Play)
     RemoveListPlayer(&(Play->TipList), Play->OnBehalfOf);
     text = g_string_new("");
     if (Play->Health == 0) {
-      g_string_sprintf(text,
+      g_string_printf(text,
                        _("Following your tipoff, the cops ambushed %s, "
                          "who was shot dead!"), GetPlayerName(Play));
     } else {
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("Following your tipoff, the cops ambushed %s, "
                            "who escaped with %d %tde. "), GetPlayerName(Play),
                          Play->Bitches.Carried, Names.Bitches);
@@ -3096,13 +3096,13 @@ int RandomOffer(Player *To)
     }
     if (ind == -1) {
       ind = brandom(0, NumDrug);
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You meet a friend! He gives you %d %tde."),
                          amount, Drug[ind].Name);
       To->Drugs[ind].Carried += amount;
       To->CoatSize -= amount;
     } else {
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You meet a friend! You give him %d %tde."),
                          amount, Drug[ind].Name);
       To->Drugs[ind].TotalValue =
@@ -3121,7 +3121,7 @@ int RandomOffer(Player *To)
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind != -1) {
-      dpg_string_sprintf(text, _("Police dogs chase you for %d blocks! "
+      dpg_string_printf(text, _("Police dogs chase you for %d blocks! "
                                  "You dropped some %tde! That's a drag, man!"),
                          brandom(3, 7), Names.Drugs);
       To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue *
@@ -3137,7 +3137,7 @@ int RandomOffer(Player *To)
         g_string_free(text, TRUE);
         return 0;
       }
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You find %d %tde on a dead dude in the subway!"),
                          amount, Drug[ind].Name);
       To->Drugs[ind].Carried += amount;
@@ -3152,7 +3152,7 @@ int RandomOffer(Player *To)
     amount = brandom(2, 6);
     if (amount > To->Drugs[ind].Carried)
       amount = To->Drugs[ind].Carried;
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("Your mama made brownies with some of your %tde! "
                          "They were great!"), Drug[ind].Name);
     To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue *
@@ -3170,7 +3170,7 @@ int RandomOffer(Player *To)
     g_string_free(text, TRUE);
     return 1;
   } else if (NumStoppedTo > 0) {
-    g_string_sprintf(text, _("You stopped to %s."),
+    g_string_printf(text, _("You stopped to %s."),
                      StoppedTo[brandom(0, NumStoppedTo)]);
     amount = brandom(1, 10);
     if (To->Cash >= amount)
@@ -3309,7 +3309,7 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
         if (Deal[i] == DT_CHEAP) {
           g_string_append(text, Drug[i].CheapStr);
         } else {
-          dpg_string_sprintfa(text, brandom(0, 100) < 50
+          dpg_string_append_printf(text, brandom(0, 100) < 50
                               ? Drugs.ExpensiveStr1 : Drugs.ExpensiveStr2,
                               Drug[i].Name);
         }
@@ -3323,7 +3323,7 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
     SendPrintMessage(NULL, C_NONE, To, text->str);
   g_string_truncate(text, 0);
   for (i = 0; i < NumDrug; i++) {
-    g_string_sprintfa(text, "%s^",
+    g_string_append_printf(text, "%s^",
                       (prstr = pricetostr(To->Drugs[i].Price)));
     g_free(prstr);
   }
