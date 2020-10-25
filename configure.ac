@@ -149,6 +149,9 @@ else
    dnl We NEED glib
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
 
+   dnl Find libcurl for metaserver support
+   LIBCURL_CHECK_CONFIG()
+
    dnl Add esound support if available
    if test "$USE_ESD" != "no"; then
      AM_PATH_ESD(0.0.20, ESD=yes)
