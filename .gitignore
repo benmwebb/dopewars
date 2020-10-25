@@ -1,3 +1,5 @@
+po/*.gmo
+po/stamp-po
 *.o
 *.a
 *.la
