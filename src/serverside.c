@@ -28,6 +28,7 @@
 #include <string.h>
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/stat.h>
+#include <curl/curl.h>
 
 #ifdef CYGWIN
 #include <windows.h>            /* For datatypes such as BOOL */
@@ -90,7 +91,7 @@ static char *attackquestiontr = N_("AE");
 int TerminateRequest, ReregisterRequest, RelogRequest;
 
 int MetaUpdateTimeout;
-int MetaMinTimeout;
+long MetaMinTimeout;
 gboolean WantQuit = FALSE;
 
 #ifdef CYGWIN
@@ -107,7 +108,38 @@ GSList *FirstServer = NULL;
 static GScanner *Scanner;
 
 /* Data waiting to be sent to/read from the metaserver */
-HttpConnection *MetaConn = NULL;
+CURLM *MetaConnM = NULL;
+
+struct _MetaServerConnection {
+  CURL *h;
+  gchar *data;
+  size_t data_size;
+  char Terminator;              /* Character that separates messages */
+  char StripChar;               /* Char that should be removed
+                                 * from messages */
+};
+
+struct _MetaServerConnection MetaConn;
+
+static size_t MetaConnWriteFunc(void *contents, size_t size, size_t nmemb, void *userp)
+{
+  size_t realsize = size * nmemb;
+  struct _MetaServerConnection *conn = (struct _MetaServerConnection *)userp;
+ 
+  char *ptr = realloc(conn->data, conn->data_size + realsize + 1);
+  if(ptr == NULL) {
+    /* out of memory! */ 
+    printf("not enough memory (realloc returned NULL)\n");
+    return 0;
+  }
+ 
+  conn->data = ptr;
+  memcpy(&(conn->data[conn->data_size]), contents, realsize);
+  conn->data_size += realsize;
+  conn->data[conn->data_size] = 0;
+ 
+  return realsize;
+}
 #endif
 
 /* Handle to the high score file */
@@ -155,9 +187,9 @@ static void MetaSocketStatus(NetworkBuffer *NetBuf,
 #endif
 
 #ifdef NETWORKING
-static gboolean MetaConnectError(HttpConnection *conn)
+static gboolean MetaConnectError(CURL *conn)
 {
-  GString *errstr;
+/*GString *errstr;
 
   if (!IsHttpError(conn))
     return FALSE;
@@ -165,7 +197,7 @@ static gboolean MetaConnectError(HttpConnection *conn)
   g_string_assign_error(errstr, MetaConn->NetBuf.error);
   dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s:%u (%s)"),
           MetaServer.Name, MetaServer.Port, errstr->str);
-  g_string_free(errstr, TRUE);
+  g_string_free(errstr, TRUE);*/
   return TRUE;
 }
 
@@ -227,7 +259,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
 {
 #ifdef NETWORKING
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
-  GString *headers, *body;
+  GString *body;
   gchar *prstr;
   gboolean retval;
   int i;
@@ -246,10 +278,13 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
 
   /* If the previous connect hung for so long that it's still active, then
    * break the connection before we start a new one */
-  if (MetaConn)
-    CloseHttpConnection(MetaConn);
+  if (MetaConn.h) {
+    curl_multi_remove_handle(MetaConnM, MetaConn.h);
+    curl_easy_cleanup(MetaConn.h);
+    MetaConn.h = NULL;
+    free(MetaConn.data);
+  }
 
-  headers = g_string_new("");
   body = g_string_new("");
 
   g_string_assign(body, "output=text&");
@@ -284,35 +319,36 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  g_string_printf(headers,
-                   "Content-Type: application/x-www-form-urlencoded\n"
-                   "Content-Length: %d", (int)strlen(body->str));
-
-  retval = OpenHttpConnection(&MetaConn, MetaServer.Name, MetaServer.Port,
-                              MetaServer.ProxyName, MetaServer.ProxyPort,
-                              BindAddress,
-                              UseSocks && MetaServer.UseSocks ? &Socks : NULL,
-                              "POST", MetaServer.Path, headers->str,
-                              body->str);
-  g_string_free(headers, TRUE);
+  MetaConn.h = curl_easy_init();
+  MetaConn.data = malloc(1);
+  MetaConn.Terminator = '\n';
+  MetaConn.StripChar = '\r';
+  MetaConn.data_size = 0;
+  if (MetaConn.h) {
+    int still_running;
+    curl_easy_setopt(MetaConn.h, CURLOPT_COPYPOSTFIELDS, body->str);
+    curl_easy_setopt(MetaConn.h, CURLOPT_URL, MetaServer.URL);
+    curl_easy_setopt(MetaConn.h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
+    curl_easy_setopt(MetaConn.h, CURLOPT_WRITEDATA, &MetaConn);
+ 
+    curl_multi_add_handle(MetaConnM, MetaConn.h);
+    curl_multi_perform(MetaConnM, &still_running);
+    dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s..."),
+            MetaServer.URL);
+  }
   g_string_free(body, TRUE);
 
-  if (retval) {
-    dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s:%u..."),
-            MetaServer.Name, MetaServer.Port);
-  } else {
-    MetaConnectError(MetaConn);
+/*  MetaConnectError(MetaConn);
     CloseHttpConnection(MetaConn);
     MetaConn = NULL;
-    return;
-  }
-  SetHttpAuthFunc(MetaConn, ServerHttpAuth, NULL);
+    return;*/
+/*SetHttpAuthFunc(MetaConn, ServerHttpAuth, NULL);
 
   if (Socks.authuser && Socks.authuser[0] &&
       Socks.authpassword && Socks.authpassword[0]) {
     SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf, ServerNetBufAuth,
                                    NULL);
-  }
+  }*/
 #ifdef GUI_SERVER
   SetNetworkBufferCallBack(&MetaConn->NetBuf, MetaSocketStatus, NULL);
 #endif
@@ -952,7 +988,7 @@ void RequestServerShutdown(void)
  */
 gboolean IsServerShutdown(void)
 {
-  return (WantQuit && !FirstServer && !MetaConn);
+  return (WantQuit && !FirstServer && !MetaConn.h);
 }
 
 static GPrintFunc StartServerReply(NetworkBuffer *netbuf)
@@ -1182,6 +1218,9 @@ void ServerLoop(struct CMDLINE *cmdline)
 
   InitConfiguration(cmdline);
 
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+  MetaConnM = curl_multi_init();
+
   if (!StartServer())
     return;
 
@@ -1207,9 +1246,10 @@ void ServerLoop(struct CMDLINE *cmdline)
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_ZERO(&errorfs);
+    curl_multi_fdset(MetaConnM, &readfs, &writefs, &errorfs, &topsock);
     FD_SET(ListenSock, &readfs);
     FD_SET(ListenSock, &errorfs);
-    topsock = ListenSock + 1;
+    topsock = MAX(topsock + 1, ListenSock + 1);
 #ifndef CYGWIN
     if (localsock >= 0) {
       FD_SET(localsock, &readfs);
@@ -1223,10 +1263,6 @@ void ServerLoop(struct CMDLINE *cmdline)
                                 &topsock);
     }
 #endif
-    if (MetaConn) {
-      SetSelectForNetworkBuffer(&MetaConn->NetBuf, &readfs, &writefs,
-                                &errorfs, &topsock);
-    }
     for (list = FirstServer; list; list = g_slist_next(list)) {
       tmp = (Player *)list->data;
       if (!IsCop(tmp)) {
@@ -1311,8 +1347,11 @@ void ServerLoop(struct CMDLINE *cmdline)
     if (IsServerShutdown())
       break;
 #endif
-    if (MetaConn) {
-      if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
+    if (MetaConn.h) {
+      int still_running;
+      curl_multi_perform(MetaConnM, &still_running);
+//    dopelog(2, LF_SERVER, "MetaServer multi_perform: %d", still_running);
+/*    if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
                           &errorfs, &DoneOK)) {
         while ((buf = ReadHttpResponse(MetaConn, &DoneOK))) {
           gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
@@ -1329,6 +1368,30 @@ void ServerLoop(struct CMDLINE *cmdline)
         }
         CloseHttpConnection(MetaConn);
         MetaConn = NULL;
+        if (IsServerShutdown())
+          break;
+      } */
+      if (still_running == 0) {
+	char *ch = MetaConn.data;
+	while(ch && *ch) {
+	  char *sep_pt = strchr(ch, MetaConn.Terminator);
+	  if (sep_pt) {
+            *sep_pt = '\0';
+	    if (sep_pt > ch && sep_pt[-1] == MetaConn.StripChar) {
+              sep_pt[-1] = '\0';
+	    }
+	    sep_pt++;
+	  }
+	  if (*ch) {
+            dopelog(2, LF_SERVER, "MetaServer: %s", ch);
+	  }
+	  ch = sep_pt;
+	}
+        dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
+        curl_multi_remove_handle(MetaConnM, MetaConn.h);
+        curl_easy_cleanup(MetaConn.h);
+	MetaConn.h = NULL;
+	free(MetaConn.data);
         if (IsServerShutdown())
           break;
       }
@@ -1365,6 +1428,10 @@ void ServerLoop(struct CMDLINE *cmdline)
 #endif
   StopServer();
   g_string_free(LineBuf, TRUE);
+
+  curl_multi_cleanup(MetaConnM);
+
+  curl_global_cleanup();
 }
 
 #ifdef GUI_SERVER
@@ -3703,7 +3770,7 @@ void ClearFightTimeout(Player *Play)
  * unless "mintime" is already smaller (as long as it's not -1, which
  * means "uninitialized"). Returns 1 if the timeout has already expired.
  */
-int AddTimeout(time_t timeout, time_t timenow, int *mintime)
+long AddTimeout(time_t timeout, time_t timenow, long *mintime)
 {
   if (timeout == 0)
     return 0;
@@ -3721,14 +3788,15 @@ int AddTimeout(time_t timeout, time_t timenow, int *mintime)
  * an event has already expired, returns 0. If no events are pending,
  * returns -1. "First" should point to a list of valid players.
  */
-int GetMinimumTimeout(GSList *First)
+long GetMinimumTimeout(GSList *First)
 {
   Player *Play;
   GSList *list;
-  int mintime = -1;
+  long mintime = -1;
   time_t timenow;
 
   timenow = time(NULL);
+  curl_multi_timeout(MetaConnM, &mintime);
   if (AddTimeout(MetaMinTimeout, timenow, &mintime))
     return 0;
   if (AddTimeout(MetaUpdateTimeout, timenow, &mintime))

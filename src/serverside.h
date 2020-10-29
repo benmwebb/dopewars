@@ -52,7 +52,7 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs);
 void GainBitch(Player *Play);
 void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
-int GetMinimumTimeout(GSList *First);
+long GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
 void ConvertHighScoreFile(const gchar *convertfile);
 void OpenHighScoreFile(void);

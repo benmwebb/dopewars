@@ -435,8 +435,8 @@ gboolean OpenMetaHttpConnection(HttpConnection **conn)
   gboolean retval;
 
   query = g_strdup_printf("%s?output=text&getlist=%d",
-                          MetaServer.Path, METAVERSION);
-  retval = OpenHttpConnection(conn, MetaServer.Name, MetaServer.Port,
+                          MetaServer.URL, METAVERSION);
+  retval = OpenHttpConnection(conn, MetaServer.URL, 80,
                               MetaServer.ProxyName, MetaServer.ProxyPort,
                               "",
                               UseSocks

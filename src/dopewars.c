@@ -210,12 +210,12 @@ struct BITCH Bitch = {
 
 #ifdef NETWORKING
 struct METASERVER MetaServer = {
-  FALSE, NULL, 0, NULL, 0, NULL, NULL, NULL,
+  FALSE, NULL, NULL, 0, NULL, NULL,
   NULL, FALSE, NULL, NULL, NULL, NULL
 };
 
 struct METASERVER DefaultMetaServer = {
-  TRUE, "dopewars.sourceforge.net", 80, "", 8080, "/metaserver.php",
+  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "", 8080,
   "", "", "dopewars server", FALSE, "", "", "", ""
 };
 
@@ -277,21 +277,15 @@ struct GLOBALS Globals[] = {
   {NULL, &MetaServer.Active, NULL, NULL, NULL, "MetaServer.Active",
    N_("TRUE if server should report to a metaserver"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.Name, NULL, "MetaServer.Name",
-   N_("Metaserver name to report/get server details to/from"),
+  {NULL, NULL, NULL, &MetaServer.URL, NULL, "MetaServer.URL",
+   N_("Metaserver URL to report/get server details to/from"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {&MetaServer.Port, NULL, NULL, NULL, NULL, "MetaServer.Port",
-   N_("Port for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
   {NULL, NULL, NULL, &MetaServer.ProxyName, NULL, "MetaServer.ProxyName",
    N_("Name of a proxy for metaserver communication"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {&MetaServer.ProxyPort, NULL, NULL, NULL, NULL, "MetaServer.ProxyPort",
    N_("Port for communicating with the proxy server"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
-  {NULL, NULL, NULL, &MetaServer.Path, NULL, "MetaServer.Path",
-   N_("Path of the script on the metaserver"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &MetaServer.LocalName, NULL, "MetaServer.LocalName",
    N_("Preferred hostname of your server machine"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0, 0},
@@ -1682,12 +1676,10 @@ void CopyNames(struct NAMES *dest, struct NAMES *src)
 void CopyMetaServer(struct METASERVER *dest, struct METASERVER *src)
 {
   dest->Active = src->Active;
-  dest->Port = src->Port;
   dest->ProxyPort = src->ProxyPort;
   dest->UseSocks = src->UseSocks;
-  AssignName(&dest->Name, src->Name);
+  AssignName(&dest->URL, src->URL);
   AssignName(&dest->ProxyName, src->ProxyName);
-  AssignName(&dest->Path, src->Path);
   AssignName(&dest->LocalName, src->LocalName);
   AssignName(&dest->Password, src->Password);
   AssignName(&dest->Comment, src->Comment);
