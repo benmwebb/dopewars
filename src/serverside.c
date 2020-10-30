@@ -168,18 +168,10 @@ static void MetaSocketStatus(NetworkBuffer *NetBuf,
 #endif
 
 #ifdef NETWORKING
-static gboolean MetaConnectError(CURL *conn)
+static void MetaConnectError(CurlConnection *conn, const char *errstr)
 {
-/*GString *errstr;
-
-  if (!IsHttpError(conn))
-    return FALSE;
-  errstr = g_string_new("");
-  g_string_assign_error(errstr, MetaConn->NetBuf.error);
-  dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s:%u (%s)"),
-          MetaServer.Name, MetaServer.Port, errstr->str);
-  g_string_free(errstr, TRUE);*/
-  return TRUE;
+  dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s (%s)"),
+          MetaServer.URL, errstr);
 }
 
 void CurlInit(CurlConnection *conn)
@@ -211,7 +203,30 @@ void CurlCleanup(CurlConnection *conn)
   curl_global_cleanup();
 }
 
-gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
+const char *CurlConnectionPerform(CurlConnection *conn, int *still_running)
+{
+  CURLMcode mres;
+  struct CURLMsg *m;
+
+  mres = curl_multi_perform(conn->multi, still_running);
+  if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+    CloseCurlConnection(conn);
+    return curl_multi_strerror(mres);
+  }
+
+  do {
+    int msgq = 0;
+    m = curl_multi_info_read(conn->multi, &msgq);
+    if (m && m->msg == CURLMSG_DONE && m->data.result != CURLE_OK) {
+      CloseCurlConnection(conn);
+      return curl_easy_strerror(m->data.result);
+    }
+  } while(m);
+  
+  return NULL;
+}
+
+const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
 {
   /* If the previous connect hung for so long that it's still active, then
    * break the connection before we start a new one */
@@ -220,19 +235,34 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
   }
 
   if (conn->h) {
+    const char *errstr;
     int still_running;
+    CURLcode res;
+    CURLMcode mres;
+    res = curl_easy_setopt(conn->h, CURLOPT_COPYPOSTFIELDS, body);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_URL, URL);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+
     conn->data = g_malloc(1);
     conn->data_size = 0;
-    curl_easy_setopt(conn->h, CURLOPT_COPYPOSTFIELDS, body);
-    curl_easy_setopt(conn->h, CURLOPT_URL, URL);
-    curl_easy_setopt(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
-    curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
-    curl_multi_add_handle(conn->multi, conn->h);
+    mres = curl_multi_add_handle(conn->multi, conn->h);
+    if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+      g_free(conn->data);
+      return curl_multi_strerror(mres);
+    }
     conn->running = TRUE;
-    curl_multi_perform(conn->multi, &still_running);
-    return TRUE;
+    errstr = CurlConnectionPerform(conn, &still_running);
+    if (errstr) {
+      return errstr;
+    }
+    return NULL;
   } else {
-    return FALSE;
+    return "Could not init curl";
   }
 }
 
@@ -296,7 +326,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
   GString *body;
   gchar *prstr;
-  gboolean retval;
+  const char *errstr;
   int i;
 
   if (!MetaServer.Active || WantQuit || !Server) {
@@ -345,16 +375,14 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  retval = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str);
+  errstr = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str);
 
   dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s..."),
           MetaServer.URL);
   g_string_free(body, TRUE);
-
-/*  MetaConnectError(MetaConn);
-    CloseHttpConnection(MetaConn);
-    MetaConn = NULL;
-    return;*/
+  if (errstr) {
+    MetaConnectError(&MetaConn, errstr);
+  }
 /*SetHttpAuthFunc(MetaConn, ServerHttpAuth, NULL);
 
   if (Socks.authuser && Socks.authuser[0] &&
@@ -1361,7 +1389,12 @@ void ServerLoop(struct CMDLINE *cmdline)
 #endif
     if (MetaConn.running) {
       int still_running;
-      curl_multi_perform(MetaConn.multi, &still_running);
+      const char *errstr;
+      errstr = CurlConnectionPerform(&MetaConn, &still_running);
+      if (errstr) {
+        MetaConnectError(&MetaConn, errstr);
+        if (IsServerShutdown())
+          break;
 //    dopelog(2, LF_SERVER, "MetaServer multi_perform: %d", still_running);
 /*    if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
                           &errorfs, &DoneOK)) {
@@ -1383,7 +1416,7 @@ void ServerLoop(struct CMDLINE *cmdline)
         if (IsServerShutdown())
           break;
       } */
-      if (still_running == 0) {
+      } else if (still_running == 0) {
 	char *ch = MetaConn.data;
 	while(ch && *ch) {
 	  char *sep_pt = strchr(ch, MetaConn.Terminator);
