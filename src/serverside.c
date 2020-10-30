@@ -266,6 +266,19 @@ const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
   }
 }
 
+char *CurlNextLine(CurlConnection *conn, char *ch)
+{
+  char *sep_pt = strchr(ch, conn->Terminator);
+  if (sep_pt) {
+    *sep_pt = '\0';
+    if (sep_pt > ch && sep_pt[-1] == MetaConn.StripChar) {
+      sep_pt[-1] = '\0';
+    }
+    sep_pt++;
+  }
+  return sep_pt;
+}
+
 static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
                            gchar *realm, gpointer data)
 {
@@ -1395,42 +1408,13 @@ void ServerLoop(struct CMDLINE *cmdline)
         MetaConnectError(&MetaConn, errstr);
         if (IsServerShutdown())
           break;
-//    dopelog(2, LF_SERVER, "MetaServer multi_perform: %d", still_running);
-/*    if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
-                          &errorfs, &DoneOK)) {
-        while ((buf = ReadHttpResponse(MetaConn, &DoneOK))) {
-          gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
-
-          if (buf[0] || !ReadingBody) {
-            dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
-          }
-          g_free(buf);
-        }
-      }
-      if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-        if (!MetaConnectError(MetaConn)) {
-          dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
-        }
-        CloseHttpConnection(MetaConn);
-        MetaConn = NULL;
-        if (IsServerShutdown())
-          break;
-      } */
       } else if (still_running == 0) {
 	char *ch = MetaConn.data;
 	while(ch && *ch) {
-	  char *sep_pt = strchr(ch, MetaConn.Terminator);
-	  if (sep_pt) {
-            *sep_pt = '\0';
-	    if (sep_pt > ch && sep_pt[-1] == MetaConn.StripChar) {
-              sep_pt[-1] = '\0';
-	    }
-	    sep_pt++;
-	  }
-	  if (*ch) {
+          char *nextch = CurlNextLine(&MetaConn, ch);
+	  if (*ch)
             dopelog(2, LF_SERVER, "MetaServer: %s", ch);
-	  }
-	  ch = sep_pt;
+	  ch = nextch;
 	}
         dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
         CloseCurlConnection(&MetaConn);
