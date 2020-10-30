@@ -121,6 +121,17 @@ static size_t MetaConnWriteFunc(void *contents, size_t size, size_t nmemb, void 
  
   return realsize;
 }
+
+static size_t MetaConnHeaderFunc(char *contents, size_t size, size_t nmemb, void *userp)
+{
+  size_t realsize = size * nmemb;
+  CurlConnection *conn = (CurlConnection *)userp;
+
+  gchar *str = g_strchomp(g_strndup(contents, realsize));
+  g_ptr_array_add(conn->headers, (gpointer)str);
+  return realsize;
+}
+
 #endif
 
 /* Handle to the high score file */
@@ -183,6 +194,7 @@ void CurlInit(CurlConnection *conn)
   conn->Terminator = '\n';
   conn->StripChar = '\r';
   conn->data_size = 0;
+  conn->headers = NULL;
 }
 
 void CloseCurlConnection(CurlConnection *conn)
@@ -191,6 +203,8 @@ void CloseCurlConnection(CurlConnection *conn)
   g_free(conn->data);
   conn->data_size = 0;
   conn->running = FALSE;
+  g_ptr_array_free(conn->headers, TRUE);
+  conn->headers = NULL;
 }
 
 void CurlCleanup(CurlConnection *conn)
@@ -247,14 +261,18 @@ const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
     if (res != CURLE_OK) return curl_easy_strerror(res);
     res = curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
     if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_HEADERFUNCTION, MetaConnHeaderFunc);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_HEADERDATA, conn);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
 
-    conn->data = g_malloc(1);
-    conn->data_size = 0;
     mres = curl_multi_add_handle(conn->multi, conn->h);
     if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
-      g_free(conn->data);
       return curl_multi_strerror(mres);
     }
+    conn->data = g_malloc(1);
+    conn->data_size = 0;
+    conn->headers = g_ptr_array_new_with_free_func(g_free);
     conn->running = TRUE;
     errstr = CurlConnectionPerform(conn, &still_running);
     if (errstr) {
@@ -277,6 +295,13 @@ char *CurlNextLine(CurlConnection *conn, char *ch)
     sep_pt++;
   }
   return sep_pt;
+}
+
+void log_meta_headers(gpointer data, gpointer user_data)
+{
+  char *header = data;
+  if (*header)
+    dopelog(4, LF_SERVER, "MetaServer: %s", header);
 }
 
 static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
@@ -1409,6 +1434,7 @@ void ServerLoop(struct CMDLINE *cmdline)
         if (IsServerShutdown())
           break;
       } else if (still_running == 0) {
+        g_ptr_array_foreach(MetaConn.headers, log_meta_headers, NULL);
 	char *ch = MetaConn.data;
 	while(ch && *ch) {
           char *nextch = CurlNextLine(&MetaConn, ch);

@@ -70,6 +70,7 @@ typedef struct _CurlConnection {
   char Terminator;              /* Character that separates messages */
   char StripChar;               /* Char that should be removed
                                  * from messages */
+  GPtrArray *headers;
 } CurlConnection;
 
 typedef struct _ConnBuf {
