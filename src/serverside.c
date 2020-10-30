@@ -28,7 +28,6 @@
 #include <string.h>
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/stat.h>
-#include <curl/curl.h>
 
 #ifdef CYGWIN
 #include <windows.h>            /* For datatypes such as BOOL */
@@ -105,21 +104,10 @@ gboolean MetaPlayerPending = FALSE;
 GSList *FirstServer = NULL;
 
 #ifdef NETWORKING
-static GScanner *Scanner;
-
 /* Data waiting to be sent to/read from the metaserver */
-CURLM *MetaConnM = NULL;
+CurlConnection MetaConn;
 
-typedef struct _CurlConnection {
-  CURL *h;
-  gchar *data;
-  size_t data_size;
-  char Terminator;              /* Character that separates messages */
-  char StripChar;               /* Char that should be removed
-                                 * from messages */
-} CurlConnection;
-
-CurlConnection *MetaConn = NULL;
+static GScanner *Scanner;
 
 static size_t MetaConnWriteFunc(void *contents, size_t size, size_t nmemb, void *userp)
 {
@@ -194,38 +182,58 @@ static gboolean MetaConnectError(CURL *conn)
   return TRUE;
 }
 
-gboolean OpenCurlConnection(CurlConnection **c, char *URL, char *body, CURLM *mh)
+void CurlInit(CurlConnection *conn)
 {
-  CurlConnection *conn;
-
-  conn = g_new0(CurlConnection, 1);
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+  conn->multi = curl_multi_init();
   conn->h = curl_easy_init();
+  conn->running = FALSE;
   conn->Terminator = '\n';
   conn->StripChar = '\r';
   conn->data_size = 0;
+}
+
+void CloseCurlConnection(CurlConnection *conn)
+{
+  curl_multi_remove_handle(conn->multi, conn->h);
+  g_free(conn->data);
+  conn->data_size = 0;
+  conn->running = FALSE;
+}
+
+void CurlCleanup(CurlConnection *conn)
+{
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+  curl_easy_cleanup(conn->h);
+  curl_multi_cleanup(conn->multi);
+  curl_global_cleanup();
+}
+
+gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
+{
+  /* If the previous connect hung for so long that it's still active, then
+   * break the connection before we start a new one */
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+
   if (conn->h) {
     int still_running;
     conn->data = g_malloc(1);
+    conn->data_size = 0;
     curl_easy_setopt(conn->h, CURLOPT_COPYPOSTFIELDS, body);
     curl_easy_setopt(conn->h, CURLOPT_URL, URL);
     curl_easy_setopt(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
     curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
-    curl_multi_add_handle(mh, conn->h);
-    curl_multi_perform(mh, &still_running);
-    *c = conn;
+    curl_multi_add_handle(conn->multi, conn->h);
+    conn->running = TRUE;
+    curl_multi_perform(conn->multi, &still_running);
     return TRUE;
   } else {
-    g_free(conn);
     return FALSE;
   }
-}
-
-void CloseCurlConnection(CurlConnection *c, CURLM *mh)
-{
-  curl_multi_remove_handle(mh, c->h);
-  curl_easy_cleanup(c->h);
-  g_free(c->data);
-  g_free(c);
 }
 
 static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
@@ -303,11 +311,6 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     return;
   }
 
-  /* If the previous connect hung for so long that it's still active, then
-   * break the connection before we start a new one */
-  if (MetaConn)
-    CloseCurlConnection(MetaConn, MetaConnM);
-
   body = g_string_new("");
 
   g_string_assign(body, "output=text&");
@@ -342,7 +345,7 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  retval = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str, MetaConnM);
+  retval = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str);
 
   dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s..."),
           MetaServer.URL);
@@ -998,7 +1001,7 @@ void RequestServerShutdown(void)
  */
 gboolean IsServerShutdown(void)
 {
-  return (WantQuit && !FirstServer && !MetaConn);
+  return (WantQuit && !FirstServer && !MetaConn.running);
 }
 
 static GPrintFunc StartServerReply(NetworkBuffer *netbuf)
@@ -1216,6 +1219,7 @@ void ServerLoop(struct CMDLINE *cmdline)
   struct timeval timeout;
   int MinTimeout;
   GString *LineBuf;
+
   gboolean DoneOK;
   gchar *buf;
 
@@ -1227,9 +1231,7 @@ void ServerLoop(struct CMDLINE *cmdline)
 #endif
 
   InitConfiguration(cmdline);
-
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-  MetaConnM = curl_multi_init();
+  CurlInit(&MetaConn);
 
   if (!StartServer())
     return;
@@ -1256,7 +1258,7 @@ void ServerLoop(struct CMDLINE *cmdline)
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_ZERO(&errorfs);
-    curl_multi_fdset(MetaConnM, &readfs, &writefs, &errorfs, &topsock);
+    curl_multi_fdset(MetaConn.multi, &readfs, &writefs, &errorfs, &topsock);
     FD_SET(ListenSock, &readfs);
     FD_SET(ListenSock, &errorfs);
     topsock = MAX(topsock + 1, ListenSock + 1);
@@ -1357,9 +1359,9 @@ void ServerLoop(struct CMDLINE *cmdline)
     if (IsServerShutdown())
       break;
 #endif
-    if (MetaConn) {
+    if (MetaConn.running) {
       int still_running;
-      curl_multi_perform(MetaConnM, &still_running);
+      curl_multi_perform(MetaConn.multi, &still_running);
 //    dopelog(2, LF_SERVER, "MetaServer multi_perform: %d", still_running);
 /*    if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
                           &errorfs, &DoneOK)) {
@@ -1382,12 +1384,12 @@ void ServerLoop(struct CMDLINE *cmdline)
           break;
       } */
       if (still_running == 0) {
-	char *ch = MetaConn->data;
+	char *ch = MetaConn.data;
 	while(ch && *ch) {
-	  char *sep_pt = strchr(ch, MetaConn->Terminator);
+	  char *sep_pt = strchr(ch, MetaConn.Terminator);
 	  if (sep_pt) {
             *sep_pt = '\0';
-	    if (sep_pt > ch && sep_pt[-1] == MetaConn->StripChar) {
+	    if (sep_pt > ch && sep_pt[-1] == MetaConn.StripChar) {
               sep_pt[-1] = '\0';
 	    }
 	    sep_pt++;
@@ -1398,8 +1400,7 @@ void ServerLoop(struct CMDLINE *cmdline)
 	  ch = sep_pt;
 	}
         dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
-        CloseCurlConnection(MetaConn, MetaConnM);
-	MetaConn = NULL;
+        CloseCurlConnection(&MetaConn);
         if (IsServerShutdown())
           break;
       }
@@ -1437,9 +1438,7 @@ void ServerLoop(struct CMDLINE *cmdline)
   StopServer();
   g_string_free(LineBuf, TRUE);
 
-  curl_multi_cleanup(MetaConnM);
-
-  curl_global_cleanup();
+  CurlCleanup(&MetaConn);
 }
 
 #ifdef GUI_SERVER
@@ -3804,7 +3803,7 @@ long GetMinimumTimeout(GSList *First)
   time_t timenow;
 
   timenow = time(NULL);
-  curl_multi_timeout(MetaConnM, &mintime);
+  curl_multi_timeout(MetaConn.multi, &mintime);
   if (AddTimeout(MetaMinTimeout, timenow, &mintime))
     return 0;
   if (AddTimeout(MetaUpdateTimeout, timenow, &mintime))

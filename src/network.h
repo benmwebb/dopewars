@@ -55,10 +55,22 @@
 #include "error.h"
 
 #ifdef NETWORKING
+#include <curl/curl.h>
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif
+
+typedef struct _CurlConnection {
+  CURLM *multi;
+  CURL *h;
+  gboolean running;
+  gchar *data;
+  size_t data_size;
+  char Terminator;              /* Character that separates messages */
+  char StripChar;               /* Char that should be removed
+                                 * from messages */
+} CurlConnection;
 
 typedef struct _ConnBuf {
   gchar *Data;                  /* bytes waiting to be read/written */
