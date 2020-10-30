@@ -301,7 +301,7 @@ void log_meta_headers(gpointer data, gpointer user_data)
 {
   char *header = data;
   if (*header)
-    dopelog(4, LF_SERVER, "MetaServer: %s", header);
+    dopelog(4, LF_SERVER, _("MetaServer: %s"), header);
 }
 
 static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
@@ -1439,10 +1439,10 @@ void ServerLoop(struct CMDLINE *cmdline)
 	while(ch && *ch) {
           char *nextch = CurlNextLine(&MetaConn, ch);
 	  if (*ch)
-            dopelog(2, LF_SERVER, "MetaServer: %s", ch);
+            dopelog(2, LF_SERVER, _("MetaServer: %s"), ch);
 	  ch = nextch;
 	}
-        dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
+        dopelog(4, LF_SERVER, _("MetaServer: (closed)"));
         CloseCurlConnection(&MetaConn);
         if (IsServerShutdown())
           break;
