@@ -2,7 +2,7 @@
  * serverside.c   Handles the server side of dopewars                   *
  * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -350,7 +350,7 @@ void RemoteVersionCheck(Player *Play)
         _("You appear to be using an extremely old (version 1.4.x) client.^"
           "While this will probably work, many of the newer features^"
           "will be unsupported. Get the latest version from the^"
-          "dopewars website, http://dopewars.sourceforge.net/."));
+          "dopewars website, https://dopewars.sourceforge.io/."));
 
   /* The client has a smaller value of A_NUM; this means that not only does
    * it not support some features, it doesn't even know they might exist. */
@@ -359,7 +359,7 @@ void RemoteVersionCheck(Player *Play)
         _("Warning: your client is too old to support all of this^"
           "server's features. For the full \"experience\", get^"
           "the latest version of dopewars from the^"
-          "website, http://dopewars.sourceforge.net/."));
+          "website, https://dopewars.sourceforge.io/."));
   }
 
   /* Otherwise, the client is either the same version as the server, or

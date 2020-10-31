@@ -2,7 +2,7 @@
  * serverside.h   Server-side parts of dopewars                         *
  * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *

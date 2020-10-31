@@ -3,7 +3,7 @@ Name:          @PACKAGE@
 Version:       @VERSION@
 Release:       1
 Vendor:        Ben Webb <benwebb@users.sf.net>
-URL:           http://dopewars.sourceforge.net/
+URL:           https://dopewars.sourceforge.io/
 License:       GPL
 Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz

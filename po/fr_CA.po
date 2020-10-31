@@ -3294,22 +3294,22 @@ msgstr "En attente de la connexion au méta-serveur à %s:%u..."
 msgid ""
 "You appear to be using an extremely old (version 1.4.x) client.^While this "
 "will probably work, many of the newer features^will be unsupported. Get the "
-"latest version from the^dopewars website, http://dopewars.sourceforge.net/."
+"latest version from the^dopewars website, https://dopewars.sourceforge.io/."
 msgstr ""
 "Vous semblez utiliser une très vieille version (1.4.x) du jeu.  Cette "
 "versionrisque de fonctionner, mais plusieurs des nouvelles fonctionalités ne "
 "serontpas supportées.  Obtenez la dernière version sur le site web de "
-"Dopewars: http://dopewars.sourceforge.net/"
+"Dopewars: https://dopewars.sourceforge.io/"
 
 #: src/serverside.c:379
 msgid ""
 "Warning: your client is too old to support all of this^server's features. "
 "For the full \"experience\", get^the latest version of dopewars from "
-"the^website, http://dopewars.sourceforge.net/."
+"the^website, https://dopewars.sourceforge.io/."
 msgstr ""
 "Votre version de Dopewars est trop vieille pour supporter les "
 "fonctionalitésde ce serveur.  Pour une meilleure expérience, obtenez la "
-"dernière versionsur le site web de Dopewars: http://dopewars.sourceforge.net/"
+"dernière versionsur le site web de Dopewars: https://dopewars.sourceforge.io/"
 
 #: src/serverside.c:465
 #, c-format

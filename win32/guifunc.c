@@ -2,7 +2,7 @@
  * guifunc.c      GUI-specific shared functions for installer           *
  * Copyright (C)  2001-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *

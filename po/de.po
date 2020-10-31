@@ -3227,14 +3227,14 @@ msgstr "Warte auf Verbindung zu Metaserver %s:%u..."
 msgid ""
 "You appear to be using an extremely old (version 1.4.x) client.^While this "
 "will probably work, many of the newer features^will be unsupported. Get the "
-"latest version from the^dopewars website, http://dopewars.sourceforge.net/."
+"latest version from the^dopewars website, https://dopewars.sourceforge.io/."
 msgstr ""
 
 #: src/serverside.c:379
 msgid ""
 "Warning: your client is too old to support all of this^server's features. "
 "For the full \"experience\", get^the latest version of dopewars from "
-"the^website, http://dopewars.sourceforge.net/."
+"the^website, https://dopewars.sourceforge.io/."
 msgstr ""
 
 #: src/serverside.c:465

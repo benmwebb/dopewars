@@ -2,7 +2,7 @@
  * gtk_client.c   dopewars client using the GTK+ toolkit                *
  * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -2456,8 +2456,8 @@ void display_intro(GtkWidget *widget, gpointer data)
   PackCentredURL(vbox, _("Local HTML documentation"), docindex, WebBrowser);
   g_free(docindex);
 
-  PackCentredURL(vbox, "http://dopewars.sourceforge.net/",
-                 "http://dopewars.sourceforge.net/", WebBrowser);
+  PackCentredURL(vbox, "https://dopewars.sourceforge.io/",
+                 "https://dopewars.sourceforge.io/", WebBrowser);
 
   hsep = gtk_hseparator_new();
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
