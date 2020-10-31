@@ -1,6 +1,6 @@
 /************************************************************************
  * gtkport.h      Portable "almost-GTK+" for Unix/Win32                 *
- * Copyright (C)  1998-2015  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *

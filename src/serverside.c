@@ -1,6 +1,6 @@
 /************************************************************************
  * serverside.c   Handles the server side of dopewars                   *
- * Copyright (C)  1998-2015  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: http://dopewars.sourceforge.net/                 *
  *                                                                      *
