@@ -1200,6 +1200,147 @@ static gboolean StartHttpConnect(HttpConnection *conn)
   return TRUE;
 }
 
+static size_t MetaConnWriteFunc(void *contents, size_t size, size_t nmemb,
+                                void *userp)
+{
+  size_t realsize = size * nmemb;
+  CurlConnection *conn = (CurlConnection *)userp;
+ 
+  conn->data = g_realloc(conn->data, conn->data_size + realsize + 1);
+  memcpy(&(conn->data[conn->data_size]), contents, realsize);
+  conn->data_size += realsize;
+  conn->data[conn->data_size] = 0;
+ 
+  return realsize;
+}
+
+static size_t MetaConnHeaderFunc(char *contents, size_t size, size_t nmemb,
+                                 void *userp)
+{
+  size_t realsize = size * nmemb;
+  CurlConnection *conn = (CurlConnection *)userp;
+
+  gchar *str = g_strchomp(g_strndup(contents, realsize));
+  g_ptr_array_add(conn->headers, (gpointer)str);
+  return realsize;
+}
+
+void CurlInit(CurlConnection *conn)
+{
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+  conn->multi = curl_multi_init();
+  conn->h = curl_easy_init();
+  conn->running = FALSE;
+  conn->Terminator = '\n';
+  conn->StripChar = '\r';
+  conn->data_size = 0;
+  conn->headers = NULL;
+}
+
+void CloseCurlConnection(CurlConnection *conn)
+{
+  curl_multi_remove_handle(conn->multi, conn->h);
+  g_free(conn->data);
+  conn->data_size = 0;
+  conn->running = FALSE;
+  g_ptr_array_free(conn->headers, TRUE);
+  conn->headers = NULL;
+}
+
+void CurlCleanup(CurlConnection *conn)
+{
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+  curl_easy_cleanup(conn->h);
+  curl_multi_cleanup(conn->multi);
+  curl_global_cleanup();
+}
+
+const char *CurlConnectionPerform(CurlConnection *conn, int *still_running)
+{
+  CURLMcode mres;
+  struct CURLMsg *m;
+
+  mres = curl_multi_perform(conn->multi, still_running);
+  if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+    CloseCurlConnection(conn);
+    return curl_multi_strerror(mres);
+  }
+
+  do {
+    int msgq = 0;
+    m = curl_multi_info_read(conn->multi, &msgq);
+    if (m && m->msg == CURLMSG_DONE && m->data.result != CURLE_OK) {
+      CloseCurlConnection(conn);
+      return curl_easy_strerror(m->data.result);
+    }
+  } while(m);
+  
+  return NULL;
+}
+
+const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
+{
+  /* If the previous connect hung for so long that it's still active, then
+   * break the connection before we start a new one */
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+
+  if (conn->h) {
+    const char *errstr;
+    int still_running;
+    CURLcode res;
+    CURLMcode mres;
+    if (body) {
+      res = curl_easy_setopt(conn->h, CURLOPT_COPYPOSTFIELDS, body);
+      if (res != CURLE_OK) return curl_easy_strerror(res);
+    }
+    res = curl_easy_setopt(conn->h, CURLOPT_URL, URL);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_HEADERFUNCTION, MetaConnHeaderFunc);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+    res = curl_easy_setopt(conn->h, CURLOPT_HEADERDATA, conn);
+    if (res != CURLE_OK) return curl_easy_strerror(res);
+
+    mres = curl_multi_add_handle(conn->multi, conn->h);
+    if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+      return curl_multi_strerror(mres);
+    }
+    conn->data = g_malloc(1);
+    conn->data_size = 0;
+    conn->headers = g_ptr_array_new_with_free_func(g_free);
+    conn->running = TRUE;
+    errstr = CurlConnectionPerform(conn, &still_running);
+    if (errstr) {
+      return errstr;
+    }
+    return NULL;
+  } else {
+    return "Could not init curl";
+  }
+}
+
+char *CurlNextLine(CurlConnection *conn, char *ch)
+{
+  char *sep_pt;
+  if (!ch) return NULL;
+  sep_pt = strchr(ch, conn->Terminator);
+  if (sep_pt) {
+    *sep_pt = '\0';
+    if (sep_pt > ch && sep_pt[-1] == conn->StripChar) {
+      sep_pt[-1] = '\0';
+    }
+    sep_pt++;
+  }
+  return sep_pt;
+}
+
 gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
                             unsigned Port, gchar *Proxy,
                             unsigned ProxyPort, const gchar *bindaddr,

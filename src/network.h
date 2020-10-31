@@ -226,6 +226,13 @@ gchar *ExpandWriteBuffer(ConnBuf *conn, int numbytes, LastError **error);
 void CommitWriteBuffer(NetworkBuffer *NetBuf, ConnBuf *conn, gchar *addpt,
                        guint addlen);
 
+void CurlInit(CurlConnection *conn);
+void CurlCleanup(CurlConnection *conn);
+const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body);
+void CloseCurlConnection(CurlConnection *conn);
+const char *CurlConnectionPerform(CurlConnection *conn, int *still_running);
+char *CurlNextLine(CurlConnection *conn, char *ch);
+
 gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,
                             unsigned Port, gchar *Proxy,
                             unsigned ProxyPort, const gchar *bindaddr,

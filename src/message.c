@@ -427,82 +427,63 @@ static void MetaAppendError(GString *str, LastError *error)
   }
 }
 
-static ErrorType ETMeta = { MetaAppendError, NULL };
-
-gboolean OpenMetaHttpConnection(HttpConnection **conn)
+const char *OpenMetaHttpConnection(CurlConnection *conn)
 {
-  gchar *query;
-  gboolean retval;
+  const char *errstr;
+  gchar *url;
 
-  query = g_strdup_printf("%s?output=text&getlist=%d",
-                          MetaServer.URL, METAVERSION);
-  retval = OpenHttpConnection(conn, MetaServer.URL, 80,
-                              MetaServer.ProxyName, MetaServer.ProxyPort,
-                              "",
-                              UseSocks
-                              && MetaServer.UseSocks ? &Socks : NULL,
-                              "GET", query, NULL, NULL);
-  g_free(query);
-  return retval;
+  url = g_strdup_printf("%s?output=text&getlist=%d",
+                        MetaServer.URL, METAVERSION);
+  errstr = OpenCurlConnection(conn, url, NULL);
+  g_free(url);
+  return errstr;
 }
 
-gboolean HandleWaitingMetaServerData(HttpConnection *conn,
-                                     GSList **listpt, gboolean *doneOK)
+const char *HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt)
 {
-  gchar *msg;
-  ServerData *NewServer;
+  char *msg;
 
-  g_assert(conn && listpt && doneOK);
+  g_assert(conn && listpt);
 
-  /* If we're done reading the headers, only read if the data for a whole
-   * server is available (8 lines) N.B. "Status" is from the _last_ read */
-  if (conn->Status == HS_READBODY && conn->StatusCode == 200) {
-    if (CountWaitingMessages(&conn->NetBuf) < 8)
-      return FALSE;
-
-    NewServer = g_new0(ServerData, 1);
-    NewServer->Name = ReadHttpResponse(conn, doneOK);
-    msg = ReadHttpResponse(conn, doneOK);
-    NewServer->Port = atoi(msg);
-    g_free(msg);
-    NewServer->Version = ReadHttpResponse(conn, doneOK);
-    msg = ReadHttpResponse(conn, doneOK);
-    if (msg[0])
-      NewServer->CurPlayers = atoi(msg);
-    else
-      NewServer->CurPlayers = -1;
-    g_free(msg);
-    msg = ReadHttpResponse(conn, doneOK);
-    NewServer->MaxPlayers = atoi(msg);
-    g_free(msg);
-    NewServer->Update = ReadHttpResponse(conn, doneOK);
-    NewServer->Comment = ReadHttpResponse(conn, doneOK);
-    NewServer->UpSince = ReadHttpResponse(conn, doneOK);
-    *listpt = g_slist_append(*listpt, NewServer);
-  } else if (conn->Status == HS_READSEPARATOR && conn->StatusCode == 200) {
-    /* This should be the first line of the body, the "MetaServer:" line */
-    msg = ReadHttpResponse(conn, doneOK);
-    if (!msg)
-      return FALSE;
-    if (strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
-      SetError(&conn->NetBuf.error, &ETMeta, MEC_INTERNAL,
-               g_strdup(&msg[13]));
-      *doneOK = FALSE;
-      return FALSE;
-    } else if (strncmp(msg, "MetaServer:", 11) != 0) {
-      SetError(&conn->NetBuf.error, &ETMeta, MEC_BADREPLY, g_strdup(msg));
-      g_free(msg);
-      *doneOK = FALSE;
-      return FALSE;
-    }
-    g_free(msg);
-  } else {
-    msg = ReadHttpResponse(conn, doneOK);
-    if (!msg)
-      return FALSE;
-    g_free(msg);
+  msg = conn->data;
+  /* This should be the first line of the body, the "MetaServer:" line */
+  if (!msg) return NULL;
+  if (strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
+	  //todo
+/*  SetError(&conn->NetBuf.error, &ETMeta, MEC_INTERNAL,
+             g_strdup(&msg[13]));*/
+  } else if (strncmp(msg, "MetaServer:", 11) != 0) {
+	  //todo
+/*  SetError(&conn->NetBuf.error, &ETMeta, MEC_BADREPLY, g_strdup(msg));*/
   }
-  return TRUE;
+
+  msg = CurlNextLine(conn, msg);
+  while (msg) {
+    char *name, *port, *version, *curplayers, *maxplayers, *update,
+	 *comment, *upsince;
+    name = msg;
+    port = CurlNextLine(conn, name);
+    version = CurlNextLine(conn, port);
+    curplayers = CurlNextLine(conn, version);
+    maxplayers = CurlNextLine(conn, curplayers);
+    update = CurlNextLine(conn, maxplayers);
+    comment = CurlNextLine(conn, update);
+    upsince = CurlNextLine(conn, comment);
+    msg = CurlNextLine(conn, upsince);
+    if (msg) {
+      ServerData *NewServer = g_new0(ServerData, 1);
+      NewServer->Name = g_strdup(name);
+      NewServer->Port = atoi(port);
+      NewServer->Version = g_strdup(version);
+      NewServer->CurPlayers = curplayers[0] ? atoi(curplayers) : -1;
+      NewServer->MaxPlayers = atoi(maxplayers);
+      NewServer->Update = g_strdup(update);
+      NewServer->Comment = g_strdup(comment);
+      NewServer->UpSince = g_strdup(upsince);
+      *listpt = g_slist_append(*listpt, NewServer);
+    }
+  }
+  return NULL;
 }
 
 void ClearServerList(GSList **listpt)

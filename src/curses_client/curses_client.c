@@ -61,6 +61,9 @@ static int Width, Depth;
 const static int MaxMessages = 1000;
 
 #ifdef NETWORKING
+/* Data waiting to be sent to/read from the metaserver */
+CurlConnection MetaConn;
+
 static enum {
   CM_SERVER, CM_PROMPT, CM_META, CM_SINGLE
 } ConnectMethod = CM_SERVER;
@@ -364,14 +367,13 @@ static void SelectServerManually(void)
 static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
 {
   int c;
+  const char *merr;
   GSList *ListPt;
   ServerData *ThisServer;
   GString *text;
   gint index;
-  fd_set readfds, writefds;
+  fd_set readfds, writefds, errorfds;
   int maxsock;
-  gboolean DoneOK;
-  HttpConnection *MetaConn;
   int top = get_ui_area_top();
 
   attrset(TextAttr);
@@ -379,25 +381,28 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
   mvaddstr(top + 1, 1, _("Please wait... attempting to contact metaserver..."));
   refresh();
 
-  if (OpenMetaHttpConnection(&MetaConn)) {
-    SetHttpAuthFunc(MetaConn, HttpAuthFunc, NULL);
-    SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf, SocksAuthFunc, NULL);
-  } else {
-    g_string_assign_error(errstr, MetaConn->NetBuf.error);
-    CloseHttpConnection(MetaConn);
+  if ((merr = OpenMetaHttpConnection(&MetaConn))) {
+    g_string_assign(errstr, merr);
     return FALSE;
   }
 
   ClearServerList(&ServerList);
 
-  do {
+  while(TRUE) {
+    long mintime;
+    struct timeval timeout;
+    int still_running;
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
+    FD_ZERO(&errorfds);
     FD_SET(0, &readfds);
-    maxsock = 1;
-    SetSelectForNetworkBuffer(&MetaConn->NetBuf, &readfds, &writefds,
-                              NULL, &maxsock);
-    if (bselect(maxsock, &readfds, &writefds, NULL, NULL) == -1) {
+    curl_multi_fdset(MetaConn.multi, &readfds, &writefds, &errorfds, &maxsock);
+    curl_multi_timeout(MetaConn.multi, &mintime);
+    timeout.tv_sec = mintime < 0 ? 5 : mintime;
+    timeout.tv_usec = 0;
+    maxsock = MAX(maxsock+1, 1);
+
+    if (bselect(maxsock, &readfds, &writefds, &errorfds, &timeout) == -1) {
       if (errno == EINTR) {
         CheckForResize(Play);
         continue;
@@ -411,20 +416,20 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
       if (c == '\f')
         wrefresh(curscr);
     }
-    if (RespondToSelect
-        (&MetaConn->NetBuf, &readfds, &writefds, NULL, &DoneOK)) {
-      while (HandleWaitingMetaServerData(MetaConn, &ServerList, &DoneOK)) {
-      }
-    }
-    if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-      if (IsHttpError(MetaConn)) {
-        g_string_assign_error(errstr, MetaConn->NetBuf.error);
-        CloseHttpConnection(MetaConn);
+    merr = CurlConnectionPerform(&MetaConn, &still_running);
+    if (merr) {
+      g_string_assign(errstr, merr);
+      return FALSE;
+    } else if (still_running == 0) {
+      merr = HandleWaitingMetaServerData(&MetaConn, &ServerList);
+      CloseCurlConnection(&MetaConn);
+      if (merr) {
+        g_string_assign(errstr, merr);
         return FALSE;
       }
+      break;
     }
-  } while (DoneOK);
-  CloseHttpConnection(MetaConn);
+  }
 
   text = g_string_new("");
 
@@ -2682,6 +2687,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   BackupConfig();
 
   start_curses();
+  CurlInit(&MetaConn);
   Width = COLS;
   Depth = LINES;
 
@@ -2712,4 +2718,5 @@ void CursesLoop(struct CMDLINE *cmdline)
   } while (c == 'Y');
   FirstClient = RemovePlayer(Play, FirstClient);
   end_curses();
+  CurlCleanup(&MetaConn);
 }
