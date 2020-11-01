@@ -27,3 +27,5 @@ install-data-local:
 
 uninstall-local:
 	/bin/rm -f ${SCORE} ${DESKTOPDIR}/${DESKTOP}
+
+README: README.md
