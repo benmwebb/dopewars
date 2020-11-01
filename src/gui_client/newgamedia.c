@@ -313,7 +313,7 @@ static void HandleMetaSock(gpointer data, gint socket,
   if (!stgam.MetaConn)
     return;
 
-  oldstatus = stgam.MetaConn->NetBuf.status;
+/*oldstatus = stgam.MetaConn->NetBuf.status;
   oldsocks = stgam.MetaConn->NetBuf.sockstat;
 
   if (NetBufHandleNetwork
@@ -328,7 +328,7 @@ static void HandleMetaSock(gpointer data, gint socket,
     MetaDone();
   } else {
     DisplayConnectStatus(TRUE, oldstatus, oldsocks);
-  }
+  }*/
 }
 
 static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
@@ -367,6 +367,7 @@ static void UpdateMetaServerList(GtkWidget *widget)
   SetStartGameStatus(text);
   g_free(text);
 
+  /*
   if (OpenMetaHttpConnection(&stgam.MetaConn)) {
     metaserv = stgam.metaserv;
     SetHttpAuthFunc(stgam.MetaConn, AuthDialog, NULL);
@@ -378,7 +379,7 @@ static void UpdateMetaServerList(GtkWidget *widget)
     ConnectError(TRUE);
     CloseHttpConnection(stgam.MetaConn);
     stgam.MetaConn = NULL;
-  }
+  }*/
 }
 
 static void MetaServerConnect(GtkWidget *widget, gpointer data)
