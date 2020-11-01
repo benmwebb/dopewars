@@ -256,7 +256,7 @@ static GtkWidget *NewConfigEntry(gchar *name)
       spin_adj = (GtkAdjustment *)gtk_adjustment_new(*gvar->IntVal,
                                                      gvar->MinVal,
                                                      gvar->MaxVal,
-                                                     1.0, 10.0, 10.0);
+                                                     1.0, 10.0, 0.0);
       entry = gtk_spin_button_new(spin_adj, 1.0, 0);
     } else {
       tmpstr = g_strdup_printf("%d", *gvar->IntVal);
@@ -299,7 +299,7 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
       GtkAdjustment *spin_adj = (GtkAdjustment *)
           gtk_adjustment_new(gvar->MinVal, gvar->MinVal, gvar->MaxVal,
-                             1.0, 10.0, 10.0);
+                             1.0, 10.0, 0.0);
       entry = gtk_spin_button_new(spin_adj, 1.0, 0);
     } else {
       entry = gtk_entry_new();
