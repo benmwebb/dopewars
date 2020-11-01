@@ -276,7 +276,7 @@ void DisplayConnectStatus(gboolean meta,
        * completed, and now we're going to try to have it connect to
        * the final destination */
           g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
-                          meta ? MetaServer.Name : ServerName);
+                          meta ? MetaServer.URL : ServerName);
       SetStartGameStatus(text);
       g_free(text);
       break;
@@ -363,7 +363,7 @@ static void UpdateMetaServerList(GtkWidget *widget)
 
   /* Message displayed during the attempted connect to the metaserver */
   text = g_strdup_printf(_("Status: Attempting to contact %s..."),
-                         MetaServer.Name);
+                         MetaServer.URL);
   SetStartGameStatus(text);
   g_free(text);
 
