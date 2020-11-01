@@ -914,17 +914,11 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_table_attach_defaults(GTK_TABLE(table), check, 2, 4, 0, 1);
 #endif
 
-  label = gtk_label_new(_("Metaserver hostname"));
+  label = gtk_label_new(_("Metaserver URL"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Name");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
-
-  label = gtk_label_new(_("Port"));
-  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Port");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 1, 2);
+  entry = NewConfigEntry("MetaServer.URL");
+  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 1, 2);
 
   label = gtk_label_new(_("Web proxy hostname"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
@@ -937,12 +931,6 @@ void OptDialog(GtkWidget *widget, gpointer data)
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("MetaServer.ProxyPort");
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 2, 3);
-
-  label = gtk_label_new(_("Script path"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Path");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 3, 4);
 
   label = gtk_label_new(_("Comment"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
