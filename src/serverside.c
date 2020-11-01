@@ -1835,6 +1835,8 @@ void CloseHighScoreFile()
  */
 void DropPrivileges()
 {
+  if (issetugid() == 0) return;
+
 #ifndef CYGWIN
   /* Ignore the return from setregid; we'll check it ourselves to be sure
    * (this avoids problems when running under fakeroot) */
