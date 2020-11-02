@@ -32,7 +32,7 @@
 #include "network.h"
 
 #ifdef NETWORKING
-void NewGameDialog(Player *play, NBCallBack sockstat);
+void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn);
 void DisplayConnectStatus(gboolean meta, NBStatus oldstatus,
                           NBSocksStatus oldsocks);
 void FinishServerConnect(gboolean ConnectOK);

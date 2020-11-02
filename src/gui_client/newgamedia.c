@@ -41,7 +41,7 @@ struct StartGameStruct {
             *metaserv, *notebook;
   Player *play;
 #ifdef NETWORKING
-  HttpConnection *MetaConn;
+  CurlConnection *MetaConn;
   GSList *NewMetaList;
   NBCallBack sockstat;
 #endif
@@ -56,6 +56,7 @@ static void MetaSocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
 static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
                              gboolean Write, gboolean CallNow);
+static void FillMetaServerList(gboolean UseNewList);
 
 /* List of servers on the metaserver */
 static GSList *MetaList = NULL;
@@ -86,15 +87,154 @@ static void SetStartGameStatus(gchar *msg)
 }
 
 #ifdef NETWORKING
+
+/* Global information, common to all connections */
+typedef struct _GlobalData {
+  CURLM *multi;
+  guint timer_event;
+  int still_running;
+} GlobalData;
+
+/* Information associated with a specific socket */
+typedef struct _SockData {
+  curl_socket_t sockfd;
+  CURL *easy;
+  int action;
+  long timeout;
+  GIOChannel *ch;
+  guint ev;
+  GlobalData *global;
+} SockData;
+
+GlobalData global_data;
+
+/* Called by glib when we get action on a multi socket */
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition, gpointer data)
+{
+  GlobalData *g = (GlobalData*) data;
+  CURLMcode rc;
+  int fd = g_io_channel_unix_get_fd(ch);
+  fprintf(stderr, "bw> glib socket\n");
+  int action =
+    ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
+    ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
+
+  rc = curl_multi_socket_action(g->multi, fd, action, &g->still_running);
+  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  if (g->still_running) {
+    return TRUE;
+  } else {
+    fprintf(stderr, "got data %s\n", stgam.MetaConn->data);
+    fprintf(stderr, "last transfer done, kill timeout\n");
+    if (g->timer_event) {
+      g_source_remove(g->timer_event);
+      g->timer_event = 0;
+    }
+    HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList);
+    SetStartGameStatus(NULL);
+    CloseCurlConnection(stgam.MetaConn);
+    FillMetaServerList(TRUE);
+    return FALSE;
+  }
+}
+
+static gboolean glib_timeout(gpointer userp)
+{
+  GlobalData *g = userp;
+  CURLMcode rc;
+  fprintf(stderr, "bw> glib_timeout\n");
+  rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &g->still_running);
+  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  g->timer_event = 0;
+  return G_SOURCE_REMOVE;
+}
+
+int timer_cb(CURLM *multi, long timeout_ms, void *userp)
+{
+  fprintf(stderr, "bw> timer_cb %ld\n", timeout_ms);
+  GlobalData *g = userp;
+
+  if (g->timer_event) {
+    g_source_remove(g->timer_event);
+    g->timer_event = 0;
+  }
+
+  /* -1 means we should just delete our timer. */
+  if (timeout_ms >= 0) {
+    g->timer_event = g_timeout_add(timeout_ms, glib_timeout, g);
+  }
+  return 0;
+}
+
+/* Clean up the SockData structure */
+static void remsock(SockData *f)
+{
+  if (!f) {
+    return;
+  }
+  if (f->ev) {
+    g_source_remove(f->ev);
+  }
+  g_free(f);
+}
+
+/* Assign information to a SockData structure */
+static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
+                    GlobalData *g)
+{
+  GIOCondition kind =
+    ((act & CURL_POLL_IN) ? G_IO_IN : 0) |
+    ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
+
+  f->sockfd = s;
+  f->action = act;
+  f->easy = e;
+  if (f->ev) {
+    g_source_remove(f->ev);
+  }
+  f->ev = g_io_add_watch(f->ch, kind, glib_socket, g);
+}
+
+/* Initialize a new SockData structure */
+static void addsock(curl_socket_t s, CURL *easy, int action, GlobalData *g)
+{
+  SockData *fdp = g_malloc0(sizeof(SockData));
+
+  fdp->global = g;
+  fdp->ch = g_io_channel_unix_new(s);
+  setsock(fdp, s, easy, action, g);
+  curl_multi_assign(g->multi, s, fdp);
+}
+
+int socket_cb(CURL *easy, curl_socket_t s, int  what, void *userp,
+              void *socketp)
+{
+  GlobalData *g = userp;
+  SockData *fdp = socketp;
+  static const char *whatstr[]={ "none", "IN", "OUT", "INOUT", "REMOVE" };
+  fprintf(stderr, "bw> socket_cb s=%d %d what=%s\n", s, what, whatstr[what]);
+  if (what == CURL_POLL_REMOVE) {
+    fprintf(stderr, "remove socket\n");
+    remsock(fdp);
+  } else if (!fdp) {
+    fprintf(stderr, "add socket\n");
+    addsock(s, easy, what, g);
+  } else {
+    fprintf(stderr, "change socket\n");
+    setsock(fdp, s, easy, what, g);
+  }
+  return 0;
+}
+
 static void ConnectError(gboolean meta)
 {
   GString *neterr;
   gchar *text;
   LastError *error;
 
-  if (meta)
+/*if (meta)
     error = stgam.MetaConn->NetBuf.error;
-  else
+  else*/
     error = stgam.play->NetBuf.error;
 
   neterr = g_string_new("");
@@ -149,9 +289,8 @@ static void DoConnect(void)
 
   /* Terminate any existing connection attempts */
   ShutdownNetworkBuffer(NetBuf);
-  if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
+  if (stgam.MetaConn->running) {
+    CloseCurlConnection(stgam.MetaConn);
   }
 
   oldstatus = NetBuf->status;
@@ -242,13 +381,13 @@ void DisplayConnectStatus(gboolean meta,
   NBSocksStatus sockstat;
   gchar *text;
 
-  if (meta) {
+/*if (meta) {
     status = stgam.MetaConn->NetBuf.status;
     sockstat = stgam.MetaConn->NetBuf.sockstat;
-  } else {
+  } else {*/
     status = stgam.play->NetBuf.status;
     sockstat = stgam.play->NetBuf.sockstat;
-  }
+//}
   if (oldstatus == status && sockstat == oldsocks)
     return;
 
@@ -293,13 +432,12 @@ void DisplayConnectStatus(gboolean meta,
 
 static void MetaDone(void)
 {
-  if (IsHttpError(stgam.MetaConn)) {
+/*if (IsHttpError(stgam.MetaConn)) {
     ConnectError(TRUE);
-  } else {
+  } else {*/
     SetStartGameStatus(NULL);
-  }
-  CloseHttpConnection(stgam.MetaConn);
-  stgam.MetaConn = NULL;
+//}
+  CloseCurlConnection(stgam.MetaConn);
   FillMetaServerList(TRUE);
 }
 
@@ -351,12 +489,12 @@ static void UpdateMetaServerList(GtkWidget *widget)
 {
   GtkWidget *metaserv;
   gchar *text;
+  const char *merr;
 
   /* Terminate any existing connection attempts */
   ShutdownNetworkBuffer(&stgam.play->NetBuf);
-  if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
+  if (stgam.MetaConn->running) {
+    CloseCurlConnection(stgam.MetaConn);
   }
 
   ClearServerList(&stgam.NewMetaList);
@@ -367,6 +505,10 @@ static void UpdateMetaServerList(GtkWidget *widget)
   SetStartGameStatus(text);
   g_free(text);
 
+  if ((merr = OpenMetaHttpConnection(stgam.MetaConn))) {
+    ConnectError(TRUE);
+  } else {
+  }
   /*
   if (OpenMetaHttpConnection(&stgam.MetaConn)) {
     metaserv = stgam.metaserv;
@@ -422,7 +564,7 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
     ShutdownNetworkBuffer(&stgam.play->NetBuf);
   }
   if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
+    CloseCurlConnection(stgam.MetaConn);
     stgam.MetaConn = NULL;
   }
   ClearServerList(&stgam.NewMetaList);
@@ -445,7 +587,7 @@ static void metalist_row_unselect(GtkWidget *clist, gint row, gint column,
 }
 
 #ifdef NETWORKING
-void NewGameDialog(Player *play, NBCallBack sockstat)
+void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn)
 #else
 void NewGameDialog(Player *play)
 #endif
@@ -456,9 +598,16 @@ void NewGameDialog(Player *play)
   guint AccelKey;
 
 #ifdef NETWORKING
+  global_data.multi = MetaConn->multi;
+  global_data.timer_event = 0;
   GtkWidget *clist, *scrollwin, *table, *hbbox;
   gchar *server_titles[5], *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
+
+  curl_multi_setopt(MetaConn->multi, CURLMOPT_TIMERFUNCTION, timer_cb);
+  curl_multi_setopt(MetaConn->multi, CURLMOPT_TIMERDATA, &global_data);
+  curl_multi_setopt(MetaConn->multi, CURLMOPT_SOCKETFUNCTION, socket_cb);
+  curl_multi_setopt(MetaConn->multi, CURLMOPT_SOCKETDATA, &global_data);
 
   /* Column titles of metaserver information */
   server_titles[0] = _("Server");
@@ -467,7 +616,7 @@ void NewGameDialog(Player *play)
   server_titles[3] = _("Players");
   server_titles[4] = _("Comment");
 
-  stgam.MetaConn = NULL;
+  stgam.MetaConn = MetaConn;
   stgam.NewMetaList = NULL;
   stgam.sockstat = sockstat;
 

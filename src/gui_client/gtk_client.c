@@ -109,6 +109,9 @@ static void GetClientMessage(gpointer data, gint socket,
                              GdkInputCondition condition);
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
                   gboolean CallNow);
+
+/* Data waiting to be sent to/read from the metaserver */
+CurlConnection MetaConn;
 #endif /* NETWORKING */
 
 static void HandleClientMessage(char *buf, Player *Play);
@@ -264,7 +267,7 @@ void NewGame(GtkWidget *widget, gpointer data)
   BackupConfig();
 
 #ifdef NETWORKING
-  NewGameDialog(ClientData.Play, SocketStatus);
+  NewGameDialog(ClientData.Play, SocketStatus, &MetaConn);
 #else
   NewGameDialog(ClientData.Play);
 #endif
@@ -2339,7 +2342,11 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   SetIcon(window, dopewars_pill_xpm);
 
+  CurlInit(&MetaConn);
+
   gtk_main();
+
+  CurlCleanup(&MetaConn);
 
   /* Free the main player */
   FirstClient = RemovePlayer(ClientData.Play, FirstClient);
