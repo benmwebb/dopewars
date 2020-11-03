@@ -226,11 +226,19 @@ gchar *ExpandWriteBuffer(ConnBuf *conn, int numbytes, LastError **error);
 void CommitWriteBuffer(NetworkBuffer *NetBuf, ConnBuf *conn, gchar *addpt,
                        guint addlen);
 
+#define DOPE_CURL_ERROR dope_curl_error_quark()
+GQuark dope_curl_error_quark(void);
+
+#define DOPE_CURLM_ERROR dope_curlm_error_quark()
+GQuark dope_curlm_error_quark(void);
+
 void CurlInit(CurlConnection *conn);
 void CurlCleanup(CurlConnection *conn);
-const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body);
+gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
+                            GError **err);
 void CloseCurlConnection(CurlConnection *conn);
-const char *CurlConnectionPerform(CurlConnection *conn, int *still_running);
+gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
+                               GError **err);
 char *CurlNextLine(CurlConnection *conn, char *ch);
 
 gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,

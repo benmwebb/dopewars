@@ -367,7 +367,7 @@ static void SelectServerManually(void)
 static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
 {
   int c;
-  const char *merr;
+  GError *tmp_error = NULL;
   GSList *ListPt;
   ServerData *ThisServer;
   GString *text;
@@ -381,8 +381,9 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
   mvaddstr(top + 1, 1, _("Please wait... attempting to contact metaserver..."));
   refresh();
 
-  if ((merr = OpenMetaHttpConnection(&MetaConn))) {
-    g_string_assign(errstr, merr);
+  if (!OpenMetaHttpConnection(&MetaConn, &tmp_error)) {
+    g_string_assign(errstr, tmp_error->message);
+    g_error_free(tmp_error);
     return FALSE;
   }
 
@@ -416,12 +417,11 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
       if (c == '\f')
         wrefresh(curscr);
     }
-    merr = CurlConnectionPerform(&MetaConn, &still_running);
-    if (merr) {
-      g_string_assign(errstr, merr);
+    if (!CurlConnectionPerform(&MetaConn, &still_running, &tmp_error)) {
+      g_string_assign(errstr, tmp_error->message);
+      g_error_free(tmp_error);
       return FALSE;
     } else if (still_running == 0) {
-      GError *tmp_error = NULL;
       if (!HandleWaitingMetaServerData(&MetaConn, &ServerList, &tmp_error)) {
         CloseCurlConnection(&MetaConn);
         g_string_assign(errstr, tmp_error->message);

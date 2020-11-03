@@ -498,7 +498,7 @@ static void UpdateMetaServerList(GtkWidget *widget)
 {
   GtkWidget *metaserv;
   gchar *text;
-  const char *merr;
+  GError *tmp_error = NULL;
 
   /* Terminate any existing connection attempts */
   ShutdownNetworkBuffer(&stgam.play->NetBuf);
@@ -514,23 +514,12 @@ static void UpdateMetaServerList(GtkWidget *widget)
   SetStartGameStatus(text);
   g_free(text);
 
-  if ((merr = OpenMetaHttpConnection(stgam.MetaConn))) {
-    ConnectError(TRUE);
-  } else {
+  if (!OpenMetaHttpConnection(stgam.MetaConn, &tmp_error)) {
+    text = g_strdup_printf(_("Status: ERROR: %s"), tmp_error->message);
+    g_error_free(tmp_error);
+    SetStartGameStatus(text);
+    g_free(text);
   }
-  /*
-  if (OpenMetaHttpConnection(&stgam.MetaConn)) {
-    metaserv = stgam.metaserv;
-    SetHttpAuthFunc(stgam.MetaConn, AuthDialog, NULL);
-    SetNetworkBufferUserPasswdFunc(&stgam.MetaConn->NetBuf,
-                                   MetaSocksAuthDialog, NULL);
-    SetNetworkBufferCallBack(&stgam.MetaConn->NetBuf,
-                             MetaSocketStatus, NULL);
-  } else {
-    ConnectError(TRUE);
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
-  }*/
 }
 
 static void MetaServerConnect(GtkWidget *widget, gpointer data)

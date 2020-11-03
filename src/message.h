@@ -93,7 +93,7 @@ void QueuePlayerMessageForSend(Player *Play, gchar *data);
 gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
-const char *OpenMetaHttpConnection(CurlConnection *conn);
+gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err);
 gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
                                      GError **err);
 void ClearServerList(GSList **listpt);

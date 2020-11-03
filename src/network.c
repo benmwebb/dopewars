@@ -1257,15 +1257,14 @@ void CurlCleanup(CurlConnection *conn)
   curl_global_cleanup();
 }
 
-const char *CurlConnectionPerform(CurlConnection *conn, int *still_running)
+gboolean HandleCurlMultiReturn(CurlConnection *conn, CURLMcode mres,
+                               GError **err)
 {
-  CURLMcode mres;
   struct CURLMsg *m;
-
-  mres = curl_multi_perform(conn->multi, still_running);
   if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
     CloseCurlConnection(conn);
-    return curl_multi_strerror(mres);
+    g_set_error_literal(err, DOPE_CURLM_ERROR, mres, curl_multi_strerror(mres));
+    return FALSE;
   }
 
   do {
@@ -1273,14 +1272,45 @@ const char *CurlConnectionPerform(CurlConnection *conn, int *still_running)
     m = curl_multi_info_read(conn->multi, &msgq);
     if (m && m->msg == CURLMSG_DONE && m->data.result != CURLE_OK) {
       CloseCurlConnection(conn);
-      return curl_easy_strerror(m->data.result);
+      g_set_error_literal(err, DOPE_CURL_ERROR, m->data.result,
+                          curl_easy_strerror(m->data.result));
+      return FALSE;
     }
   } while(m);
   
-  return NULL;
+  return TRUE;
 }
 
-const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
+gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
+                               GError **err)
+{
+  CURLMcode mres = curl_multi_perform(conn->multi, still_running);
+  return HandleCurlMultiReturn(conn, mres, err);
+}
+
+GQuark dope_curl_error_quark(void)
+{
+  return g_quark_from_static_string("dope-curl-error-quark");
+}
+
+GQuark dope_curlm_error_quark(void)
+{
+  return g_quark_from_static_string("dope-curlm-error-quark");
+}
+
+gboolean CurlEasySetopt1(CURL *curl, CURLoption option, void *arg, GError **err)
+{
+  CURLcode res = curl_easy_setopt(curl, option, arg);
+  if (res == CURLE_OK) {
+    return TRUE;
+  } else {
+    g_set_error_literal(err, DOPE_CURL_ERROR, res, curl_easy_strerror(res));
+    return FALSE;
+  }
+}
+
+gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
+                            GError **err)
 {
   /* If the previous connect hung for so long that it's still active, then
    * break the connection before we start a new one */
@@ -1291,39 +1321,37 @@ const char *OpenCurlConnection(CurlConnection *conn, char *URL, char *body)
   if (conn->h) {
     const char *errstr;
     int still_running;
-    CURLcode res;
     CURLMcode mres;
-    if (body) {
-      res = curl_easy_setopt(conn->h, CURLOPT_COPYPOSTFIELDS, body);
-      if (res != CURLE_OK) return curl_easy_strerror(res);
+    if (body && !CurlEasySetopt1(conn->h, CURLOPT_COPYPOSTFIELDS, body, err)) {
+      return FALSE;
     }
-    res = curl_easy_setopt(conn->h, CURLOPT_URL, URL);
-    if (res != CURLE_OK) return curl_easy_strerror(res);
-    res = curl_easy_setopt(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc);
-    if (res != CURLE_OK) return curl_easy_strerror(res);
-    res = curl_easy_setopt(conn->h, CURLOPT_WRITEDATA, conn);
-    if (res != CURLE_OK) return curl_easy_strerror(res);
-    res = curl_easy_setopt(conn->h, CURLOPT_HEADERFUNCTION, MetaConnHeaderFunc);
-    if (res != CURLE_OK) return curl_easy_strerror(res);
-    res = curl_easy_setopt(conn->h, CURLOPT_HEADERDATA, conn);
-    if (res != CURLE_OK) return curl_easy_strerror(res);
+
+    if (!CurlEasySetopt1(conn->h, CURLOPT_URL, URL, err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc,
+                            err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_WRITEDATA, conn, err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_HEADERFUNCTION,
+                            MetaConnHeaderFunc, err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_HEADERDATA, conn, err)) {
+      return FALSE;
+    }
 
     mres = curl_multi_add_handle(conn->multi, conn->h);
     if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
-      return curl_multi_strerror(mres);
+      g_set_error_literal(err, DOPE_CURLM_ERROR, mres,
+                          curl_multi_strerror(mres));
+      return FALSE;
     }
     conn->data = g_malloc(1);
     conn->data_size = 0;
     conn->headers = g_ptr_array_new_with_free_func(g_free);
     conn->running = TRUE;
-    errstr = CurlConnectionPerform(conn, &still_running);
-    if (errstr) {
-      return errstr;
-    }
-    return NULL;
+    return CurlConnectionPerform(conn, &still_running, err);
   } else {
-    return "Could not init curl";
+    g_set_error_literal(err, DOPE_CURLM_ERROR, 0, _("Could not init curl"));
+    return FALSE;
   }
+  return TRUE;
 }
 
 char *CurlNextLine(CurlConnection *conn, char *ch)

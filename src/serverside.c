@@ -156,10 +156,10 @@ static void MetaSocketStatus(NetworkBuffer *NetBuf,
 #endif
 
 #ifdef NETWORKING
-static void MetaConnectError(CurlConnection *conn, const char *errstr)
+static void MetaConnectError(CurlConnection *conn, GError *err)
 {
   dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s (%s)"),
-          MetaServer.URL, errstr);
+          MetaServer.URL, err->message);
 }
 
 void log_meta_headers(gpointer data, gpointer user_data)
@@ -229,7 +229,8 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
   GString *body;
   gchar *prstr;
-  const char *errstr;
+  gboolean ret;
+  GError *tmp_error = NULL;
   int i;
 
   if (!MetaServer.Active || WantQuit || !Server) {
@@ -278,21 +279,15 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  errstr = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str);
+  ret = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str, &tmp_error);
 
   dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s..."),
           MetaServer.URL);
   g_string_free(body, TRUE);
-  if (errstr) {
-    MetaConnectError(&MetaConn, errstr);
+  if (!ret) {
+    MetaConnectError(&MetaConn, tmp_error);
+    g_error_free(tmp_error);
   }
-/*SetHttpAuthFunc(MetaConn, ServerHttpAuth, NULL);
-
-  if (Socks.authuser && Socks.authuser[0] &&
-      Socks.authpassword && Socks.authpassword[0]) {
-    SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf, ServerNetBufAuth,
-                                   NULL);
-  }*/
 #ifdef GUI_SERVER
   SetNetworkBufferCallBack(&MetaConn->NetBuf, MetaSocketStatus, NULL);
 #endif
@@ -1291,11 +1286,11 @@ void ServerLoop(struct CMDLINE *cmdline)
       break;
 #endif
     if (MetaConn.running) {
+      GError *tmp_error = NULL;
       int still_running;
-      const char *errstr;
-      errstr = CurlConnectionPerform(&MetaConn, &still_running);
-      if (errstr) {
-        MetaConnectError(&MetaConn, errstr);
+      if (!CurlConnectionPerform(&MetaConn, &still_running, &tmp_error)) {
+        MetaConnectError(&MetaConn, tmp_error);
+	g_error_free(tmp_error);
         if (IsServerShutdown())
           break;
       } else if (still_running == 0) {

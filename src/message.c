@@ -427,16 +427,16 @@ static void MetaAppendError(GString *str, LastError *error)
   }
 }
 
-const char *OpenMetaHttpConnection(CurlConnection *conn)
+gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err)
 {
-  const char *errstr;
+  gboolean ret;
   gchar *url;
 
   url = g_strdup_printf("%s?output=text&getlist=%d",
                         MetaServer.URL, METAVERSION);
-  errstr = OpenCurlConnection(conn, url, NULL);
+  ret = OpenCurlConnection(conn, url, NULL, err);
   g_free(url);
-  return errstr;
+  return ret;
 }
 
 GQuark dope_meta_error_quark(void)
