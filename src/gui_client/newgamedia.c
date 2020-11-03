@@ -50,12 +50,7 @@ struct StartGameStruct {
 static struct StartGameStruct stgam;
 
 #ifdef NETWORKING
-static void AuthDialog(HttpConnection *conn, gboolean proxyauth,
-                       gchar *realm, gpointer data);
-static void MetaSocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
-static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                             gboolean Write, gboolean CallNow);
 static void FillMetaServerList(gboolean UseNewList);
 
 /* List of servers on the metaserver */
@@ -305,7 +300,7 @@ static void DoConnect(void)
   oldstatus = NetBuf->status;
   oldsocks = NetBuf->sockstat;
   if (StartNetworkBufferConnect(NetBuf, NULL, ServerName, Port)) {
-    DisplayConnectStatus(FALSE, oldstatus, oldsocks);
+    DisplayConnectStatus(oldstatus, oldsocks);
     SetNetworkBufferUserPasswdFunc(NetBuf, SocksAuthDialog, NULL);
     SetNetworkBufferCallBack(NetBuf, stgam.sockstat, NULL);
   } else {
@@ -383,20 +378,14 @@ static void FillMetaServerList(gboolean UseNewList)
   gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
-void DisplayConnectStatus(gboolean meta,
-                          NBStatus oldstatus, NBSocksStatus oldsocks)
+void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks)
 {
   NBStatus status;
   NBSocksStatus sockstat;
   gchar *text;
 
-/*if (meta) {
-    status = stgam.MetaConn->NetBuf.status;
-    sockstat = stgam.MetaConn->NetBuf.sockstat;
-  } else {*/
-    status = stgam.play->NetBuf.status;
-    sockstat = stgam.play->NetBuf.sockstat;
-//}
+  status = stgam.play->NetBuf.status;
+  sockstat = stgam.play->NetBuf.sockstat;
   if (oldstatus == status && sockstat == oldsocks)
     return;
 
@@ -424,79 +413,19 @@ void DisplayConnectStatus(gboolean meta,
        * completed, and now we're going to try to have it connect to
        * the final destination */
           g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
-                          meta ? MetaServer.URL : ServerName);
+                          ServerName);
       SetStartGameStatus(text);
       g_free(text);
       break;
     }
     break;
   case NBS_CONNECTED:
-    if (meta) {
-      SetStartGameStatus(_("Status: Obtaining server information "
-                           "from metaserver..."));
-    }
     break;
   }
 }
 
-static void MetaDone(void)
-{
-/*if (IsHttpError(stgam.MetaConn)) {
-    ConnectError(TRUE);
-  } else {*/
-    SetStartGameStatus(NULL);
-//}
-  CloseCurlConnection(stgam.MetaConn);
-  FillMetaServerList(TRUE);
-}
-
-static void HandleMetaSock(gpointer data, gint socket,
-                           GdkInputCondition condition)
-{
-  gboolean DoneOK;
-  NBStatus oldstatus;
-  NBSocksStatus oldsocks;
-
-  if (!stgam.MetaConn)
-    return;
-
-/*oldstatus = stgam.MetaConn->NetBuf.status;
-  oldsocks = stgam.MetaConn->NetBuf.sockstat;
-
-  if (NetBufHandleNetwork
-      (&stgam.MetaConn->NetBuf, condition & GDK_INPUT_READ,
-       condition & GDK_INPUT_WRITE, &DoneOK)) {
-    while (HandleWaitingMetaServerData
-           (stgam.MetaConn, &stgam.NewMetaList, &DoneOK)) {
-    }
-  }
-
-  if (!DoneOK && HandleHttpCompletion(stgam.MetaConn)) {
-    MetaDone();
-  } else {
-    DisplayConnectStatus(TRUE, oldstatus, oldsocks);
-  }*/
-}
-
-static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                             gboolean Write, gboolean CallNow)
-{
-  if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
-  NetBuf->InputTag = 0;
-  if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
-                                     HandleMetaSock, NetBuf->CallBackData);
-  }
-  if (CallNow)
-    HandleMetaSock(NetBuf->CallBackData, NetBuf->fd, 0);
-}
-
 static void UpdateMetaServerList(GtkWidget *widget)
 {
-  GtkWidget *metaserv;
   gchar *text;
   GError *tmp_error = NULL;
 
@@ -809,125 +738,6 @@ void NewGameDialog(Player *play)
 }
 
 #ifdef NETWORKING
-static void OKAuthDialog(GtkWidget *widget, GtkWidget *window)
-{
-  gtk_object_set_data(GTK_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
-  gtk_widget_destroy(window);
-}
-
-static void DestroyAuthDialog(GtkWidget *window, gpointer data)
-{
-  GtkWidget *userentry, *passwdentry;
-  gchar *username = NULL, *password = NULL;
-  gpointer proxy, authok;
-  HttpConnection *conn;
-
-  authok = gtk_object_get_data(GTK_OBJECT(window), "authok");
-  proxy = gtk_object_get_data(GTK_OBJECT(window), "proxy");
-  userentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "username");
-  passwdentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "password");
-  conn =
-      (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),
-                                            "httpconn");
-  g_assert(userentry && passwdentry && conn);
-
-  if (authok) {
-    username = gtk_editable_get_chars(GTK_EDITABLE(userentry), 0, -1);
-    password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry), 0, -1);
-  }
-
-  SetHttpAuthentication(conn, GPOINTER_TO_INT(proxy), username, password);
-
-  g_free(username);
-  g_free(password);
-}
-
-void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
-                gpointer data)
-{
-  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
-  GtkAccelGroup *accel_group;
-
-  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  accel_group = gtk_accel_group_new();
-  gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
-
-  gtk_signal_connect(GTK_OBJECT(window), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyAuthDialog), NULL);
-  gtk_object_set_data(GTK_OBJECT(window), "proxy", GINT_TO_POINTER(proxy));
-  gtk_object_set_data(GTK_OBJECT(window), "httpconn", (gpointer)conn);
-
-  if (proxy) {
-    gtk_window_set_title(GTK_WINDOW(window),
-                         /* Title of dialog for authenticating with a
-                          * proxy server */
-                         _("Proxy Authentication Required"));
-  } else {
-    /* Title of dialog for authenticating with a web server */
-    gtk_window_set_title(GTK_WINDOW(window), _("Authentication Required"));
-  }
-  my_set_dialog_position(GTK_WINDOW(window));
-
-  gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(window),
-                               GTK_WINDOW(MainWindow));
-  gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-
-  vbox = gtk_vbox_new(FALSE, 7);
-
-  table = gtk_table_new(3, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
-
-  label = gtk_label_new("Realm:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
-
-  label = gtk_label_new(realm);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 0, 1);
-
-  label = gtk_label_new("User name:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-
-  entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "username", (gpointer)entry);
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
-
-  label = gtk_label_new("Password:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 2, 3);
-
-  entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "password", (gpointer)entry);
-
-  gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
-
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
-
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
-
-  hsep = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
-
-  hbbox = my_hbbox_new();
-
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(OKAuthDialog), (gpointer)window);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
-
-  gtk_container_add(GTK_CONTAINER(window), vbox);
-  gtk_widget_show_all(window);
-}
-
 static void OKSocksAuth(GtkWidget *widget, GtkWidget *window)
 {
   gtk_object_set_data(GTK_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
@@ -1035,11 +845,6 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
   gtk_widget_show_all(window);
-}
-
-void MetaSocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
-{
-  RealSocksAuthDialog(netbuf, TRUE, data);
 }
 
 void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)

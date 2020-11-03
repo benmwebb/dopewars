@@ -33,8 +33,7 @@
 
 #ifdef NETWORKING
 void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn);
-void DisplayConnectStatus(gboolean meta, NBStatus oldstatus,
-                          NBSocksStatus oldsocks);
+void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks);
 void FinishServerConnect(gboolean ConnectOK);
 #else
 void NewGameDialog(Player *play);

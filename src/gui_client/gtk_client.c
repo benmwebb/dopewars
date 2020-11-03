@@ -381,7 +381,7 @@ void GetClientMessage(gpointer data, gint socket,
   /* Handle pre-game stuff */
   if (status != NBS_CONNECTED) {
     /* The start game dialog isn't visible once we're connected... */
-    DisplayConnectStatus(FALSE, oldstatus, oldsocks);
+    DisplayConnectStatus(oldstatus, oldsocks);
   }
   if (oldstatus != NBS_CONNECTED && (status == NBS_CONNECTED || !DoneOK)) {
     FinishServerConnect(DoneOK);
