@@ -55,15 +55,8 @@ and so there is at least a good chance that the servers listed there will
 be working.</p>
 
 <p>The metaserver, being an ordinary web page, should work happily on
-most machines which have web access. A problem occurs, however, if your
-connection to the Web is via an enforced proxy server (i.e. traffic on
-port 80 from your machine is blocked by firewall). dopewars can be
-configured to connect via a proxy server without too much difficulty; if
-your proxy server is at <i>proxy.com</i> on port <i>8080</i> then you should
-add the following lines to your dopewars <a href="configfile.html">
-configuration file</a>:-<br />
-<b>MetaServer.ProxyName="proxy.com"<br />
-MetaServer.ProxyPort=8080</b></p>
+most machines which have web access. If you require a proxy to connect to
+the Web, set the <a href="https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment">https_proxy environment variable</a>.</p>
 
 <h2><a id="server">Using the metaserver from the server</a></h2>
 <p>People running servers who <b>do not</b> want their details listed by the

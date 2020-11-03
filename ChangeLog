@@ -7,6 +7,13 @@ SVN
       of these libraries to build dopewars.
     - Update metaserver to work with new SourceForge; older versions can no
       longer successfully register with the metaserver.
+    - Switch to using libcurl to talk to the metaserver (this supports https,
+      unlike the old internal code). The metaserver configuration has changed
+      accordingly; MetaServer.Name, MetaServer.Port and MetaServer.Path are
+      replaced with MetaServer.URL, and MetaServer.Auth, MetaServer.Proxy*,
+      and MetaServer.UseSocks are removed (set the https_proxy environment
+      variable instead, as per
+      https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment)
     - Fix for a DOS against the server using the REQUESTJET message type
       (thanks to Doug Prostko for reporting the problem).
 

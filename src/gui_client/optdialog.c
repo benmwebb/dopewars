@@ -920,18 +920,6 @@ void OptDialog(GtkWidget *widget, gpointer data)
   entry = NewConfigEntry("MetaServer.URL");
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 1, 2);
 
-  label = gtk_label_new(_("Web proxy hostname"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.ProxyName");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
-
-  label = gtk_label_new(_("Port"));
-  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 2, 3,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.ProxyPort");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 2, 3);
-
   label = gtk_label_new(_("Comment"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);

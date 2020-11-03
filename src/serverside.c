@@ -168,49 +168,6 @@ void log_meta_headers(gpointer data, gpointer user_data)
   if (*header)
     dopelog(4, LF_SERVER, _("MetaServer: %s"), header);
 }
-
-static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
-                           gchar *realm, gpointer data)
-{
-  gchar *user = NULL, *password = NULL;
-
-  if (proxyauth) {
-    if (MetaServer.proxyuser[0] && MetaServer.proxypassword[0]) {
-      user = MetaServer.proxyuser;
-      password = MetaServer.proxypassword;
-      dopelog(3, LF_SERVER,
-              _("Using MetaServer.Proxy.User and "
-                "MetaServer.Proxy.Password for HTTP proxy authentication"));
-    } else {
-      dopelog(0, LF_SERVER,
-              _("Unable to authenticate with HTTP proxy; please "
-                "set MetaServer.Proxy.User and "
-                "MetaServer.Proxy.Password variables"));
-    }
-  } else {
-    if (MetaServer.authuser[0] && MetaServer.authpassword[0]) {
-      user = MetaServer.authuser;
-      password = MetaServer.authpassword;
-      dopelog(3, LF_SERVER,
-              _("Using MetaServer.Auth.User and MetaServer.Auth.Password "
-                "for HTTP authentication"));
-    } else {
-      dopelog(0, LF_SERVER,
-              _("Unable to authenticate with HTTP server; please set "
-                "MetaServer.Auth.User and "
-                "MetaServer.Auth.Password variables"));
-    }
-  }
-  SetHttpAuthentication(conn, proxyauth, user, password);
-}
-
-static void ServerNetBufAuth(NetworkBuffer *netbuf, gpointer data)
-{
-  dopelog(3, LF_SERVER,
-          _("Using Socks.Auth.User and Socks.Auth.Password "
-            "for SOCKS5 authentication"));
-  SendSocks5UserPasswd(netbuf, Socks.authuser, Socks.authpassword);
-}
 #endif
 
 /* 

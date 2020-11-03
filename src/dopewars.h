@@ -101,11 +101,7 @@ struct SOUNDS {
 struct METASERVER {
   gboolean Active;
   gchar *URL;
-  gchar *ProxyName;
-  unsigned ProxyPort;
   gchar *LocalName, *Password, *Comment;
-  gboolean UseSocks;
-  gchar *authuser, *authpassword, *proxyuser, *proxypassword;
 };
 #endif
 

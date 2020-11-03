@@ -210,13 +210,12 @@ struct BITCH Bitch = {
 
 #ifdef NETWORKING
 struct METASERVER MetaServer = {
-  FALSE, NULL, NULL, 0, NULL, NULL,
-  NULL, FALSE, NULL, NULL, NULL, NULL
+  FALSE, NULL, NULL, NULL, NULL
 };
 
 struct METASERVER DefaultMetaServer = {
-  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "", 8080,
-  "", "", "dopewars server", FALSE, "", "", "", ""
+  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "",
+  "", "dopewars server"
 };
 
 SocksServer Socks = { NULL, 0, 0, FALSE, NULL, NULL, NULL };
@@ -280,12 +279,6 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &MetaServer.URL, NULL, "MetaServer.URL",
    N_("Metaserver URL to report/get server details to/from"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.ProxyName, NULL, "MetaServer.ProxyName",
-   N_("Name of a proxy for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {&MetaServer.ProxyPort, NULL, NULL, NULL, NULL, "MetaServer.ProxyPort",
-   N_("Port for communicating with the proxy server"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
   {NULL, NULL, NULL, &MetaServer.LocalName, NULL, "MetaServer.LocalName",
    N_("Preferred hostname of your server machine"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0, 0},
@@ -295,23 +288,6 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &MetaServer.Comment, NULL, "MetaServer.Comment",
    N_("Server description, reported to the metaserver"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0, 0},
-  {NULL, &MetaServer.UseSocks, NULL, NULL, NULL, "MetaServer.UseSocks",
-   N_("If TRUE, use SOCKS for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.authuser, NULL, "MetaServer.Auth.User",
-   N_("Username for HTTP Basic authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.authpassword, NULL,
-   "MetaServer.Auth.Password",
-   N_("Password for HTTP Basic authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.proxyuser, NULL, "MetaServer.Proxy.User",
-   N_("Username for HTTP Basic proxy authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.proxypassword, NULL,
-   "MetaServer.Proxy.Password",
-   N_("Password for HTTP Basic proxy authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
 #endif /* NETWORKING */
 #ifdef CYGWIN
   {NULL, &MinToSysTray, NULL, NULL, NULL, "MinToSysTray",
@@ -1676,17 +1652,10 @@ void CopyNames(struct NAMES *dest, struct NAMES *src)
 void CopyMetaServer(struct METASERVER *dest, struct METASERVER *src)
 {
   dest->Active = src->Active;
-  dest->ProxyPort = src->ProxyPort;
-  dest->UseSocks = src->UseSocks;
   AssignName(&dest->URL, src->URL);
-  AssignName(&dest->ProxyName, src->ProxyName);
   AssignName(&dest->LocalName, src->LocalName);
   AssignName(&dest->Password, src->Password);
   AssignName(&dest->Comment, src->Comment);
-  AssignName(&dest->authuser, src->authuser);
-  AssignName(&dest->authpassword, src->authpassword);
-  AssignName(&dest->proxyuser, src->proxyuser);
-  AssignName(&dest->proxypassword, src->proxypassword);
 }
 #endif
 
