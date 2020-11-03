@@ -1321,7 +1321,6 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
   }
 
   if (conn->h) {
-    const char *errstr;
     int still_running;
     CURLMcode mres;
     if (body && !CurlEasySetopt1(conn->h, CURLOPT_COPYPOSTFIELDS, body, err)) {
