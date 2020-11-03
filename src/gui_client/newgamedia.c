@@ -124,14 +124,23 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition, gpointer dat
   if (g->still_running) {
     return TRUE;
   } else {
+    GError *tmp_error = NULL;
     fprintf(stderr, "got data %s\n", stgam.MetaConn->data);
     fprintf(stderr, "last transfer done, kill timeout\n");
     if (g->timer_event) {
       g_source_remove(g->timer_event);
       g->timer_event = 0;
     }
-    HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList);
-    SetStartGameStatus(NULL);
+    if (!HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList,
+                                     &tmp_error)) {
+      char *str = g_strdup_printf(_("Status: ERROR: %s"), tmp_error->message);
+      SetStartGameStatus(str);
+      g_free(str);
+      g_error_free(tmp_error);
+    } else {
+      SetStartGameStatus(NULL);
+    }
+
     CloseCurlConnection(stgam.MetaConn);
     FillMetaServerList(TRUE);
     return FALSE;

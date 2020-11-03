@@ -421,12 +421,14 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
       g_string_assign(errstr, merr);
       return FALSE;
     } else if (still_running == 0) {
-      merr = HandleWaitingMetaServerData(&MetaConn, &ServerList);
-      CloseCurlConnection(&MetaConn);
-      if (merr) {
-        g_string_assign(errstr, merr);
-        return FALSE;
+      GError *tmp_error = NULL;
+      if (!HandleWaitingMetaServerData(&MetaConn, &ServerList, &tmp_error)) {
+        CloseCurlConnection(&MetaConn);
+        g_string_assign(errstr, tmp_error->message);
+	g_error_free(tmp_error);
+	return FALSE;
       }
+      CloseCurlConnection(&MetaConn);
       break;
     }
   }
@@ -485,10 +487,6 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
         ListPt = g_slist_last(ListPt);
       break;
     }
-  }
-  if (!ServerList) {
-    g_string_assign(errstr, "No servers listed on metaserver");
-    return FALSE;
   }
   clear_line(top + 1);
   refresh();

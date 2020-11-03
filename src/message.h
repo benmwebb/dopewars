@@ -76,6 +76,16 @@ void SendPrintMessage(Player *From, AICode AI, Player *To, char *Data);
 void SendQuestion(Player *From, AICode AI, Player *To, char *Data);
 
 #ifdef NETWORKING
+#define DOPE_META_ERROR dope_meta_error_quark()
+
+typedef enum {
+  DOPE_META_ERROR_EMPTY,     /* No servers listed on metaserver */
+  DOPE_META_ERROR_INTERNAL,  /* Internal metaserver error */
+  DOPE_META_ERROR_BAD_REPLY  /* Bad reply from metaserver */
+} DopeMetaError;
+
+GQuark dope_meta_error_quark(void);
+
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
                              gboolean WriteReady, gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
@@ -84,7 +94,8 @@ gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
 const char *OpenMetaHttpConnection(CurlConnection *conn);
-const char *HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt);
+gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
+                                     GError **err);
 void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
 

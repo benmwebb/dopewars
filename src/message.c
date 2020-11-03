@@ -439,7 +439,13 @@ const char *OpenMetaHttpConnection(CurlConnection *conn)
   return errstr;
 }
 
-const char *HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt)
+GQuark dope_meta_error_quark(void)
+{
+  return g_quark_from_static_string("dope-meta-error-quark");
+}
+
+gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
+                                     GError **err)
 {
   char *msg;
 
@@ -447,14 +453,14 @@ const char *HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt)
 
   msg = conn->data;
   /* This should be the first line of the body, the "MetaServer:" line */
-  if (!msg) return NULL;
-  if (strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
-	  //todo
-/*  SetError(&conn->NetBuf.error, &ETMeta, MEC_INTERNAL,
-             g_strdup(&msg[13]));*/
-  } else if (strncmp(msg, "MetaServer:", 11) != 0) {
-	  //todo
-/*  SetError(&conn->NetBuf.error, &ETMeta, MEC_BADREPLY, g_strdup(msg));*/
+  if (msg && strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
+    g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_INTERNAL,
+                _("Internal metaserver error \"%s\""), &msg[13]);
+    return FALSE;
+  } else if (msg && strncmp(msg, "MetaServer:", 11) != 0) {
+    g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_BAD_REPLY,
+                _("Bad metaserver reply \"%s\""), msg);
+    return FALSE;
   }
 
   msg = CurlNextLine(conn, msg);
@@ -483,7 +489,12 @@ const char *HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt)
       *listpt = g_slist_append(*listpt, NewServer);
     }
   }
-  return NULL;
+  if (!*listpt) {
+    g_set_error_literal(err, DOPE_META_ERROR, DOPE_META_ERROR_EMPTY,
+                        _("No servers listed on metaserver"));
+    return FALSE;
+  }
+  return TRUE;
 }
 
 void ClearServerList(GSList **listpt)
