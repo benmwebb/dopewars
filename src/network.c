@@ -1239,12 +1239,14 @@ void CurlInit(CurlConnection *conn)
 
 void CloseCurlConnection(CurlConnection *conn)
 {
-  curl_multi_remove_handle(conn->multi, conn->h);
-  g_free(conn->data);
-  conn->data_size = 0;
-  conn->running = FALSE;
-  g_ptr_array_free(conn->headers, TRUE);
-  conn->headers = NULL;
+  if (conn->running) {
+    curl_multi_remove_handle(conn->multi, conn->h);
+    g_free(conn->data);
+    conn->data_size = 0;
+    conn->running = FALSE;
+    g_ptr_array_free(conn->headers, TRUE);
+    conn->headers = NULL;
+  }
 }
 
 void CurlCleanup(CurlConnection *conn)
