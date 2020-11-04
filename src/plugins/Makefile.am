@@ -1,9 +1,11 @@
-noinst_LTLIBRARIES = libsound_esd.la libsound_sdl.la libsound_winmm.la
+noinst_LTLIBRARIES = libsound_esd.la libsound_sdl.la libsound_winmm.la libsound_cocoa.la
 libsound_esd_la_SOURCES = sound_esd.c sound_esd.h
 libsound_esd_la_LDFLAGS = @ESD_LIBS@
 libsound_sdl_la_SOURCES = sound_sdl.c sound_sdl.h
 libsound_sdl_la_LDFLAGS = @SDL_LIBS@
 libsound_winmm_la_SOURCES = sound_winmm.c sound_winmm.h
+libsound_cocoa_la_LDFLAGS = -module -avoid-version -no-undefined -Wl,-framework,Foundation,-framework,AppKit
+libsound_cocoa_la_SOURCES = sound_cocoa.m
 LIBS = @GLIB_LIBS@
 AM_CPPFLAGS = @SOUND_CFLAGS@ @GLIB_CFLAGS@
 LINKNOO = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS)
@@ -16,7 +18,10 @@ endif
 if SDL
 SDL_SO = .libs/libsound_sdl.so
 endif
-PLUGINS   = $(ESD_SO) $(SDL_SO)
+if COCOA
+COCOA_SO = .libs/libsound_cocoa.so
+endif
+PLUGINS   = $(ESD_SO) $(SDL_SO) $(COCOA_SO)
 
 all-local: ${PLUGINS}
 
@@ -28,6 +33,9 @@ all-local: ${PLUGINS}
 
 .libs/libsound_winmm.so: $(libsound_winmm_la_OBJECTS)
 	$(LINKNOO) -o libsound_winmm.la -rpath $(libdir) $(libsound_winmm_la_LDFLAGS) $(libsound_winmm_la_OBJECTS) $(libsound_winmm_la_LIBADD) $(LIBS)
+
+.libs/libsound_cocoa.so: $(libsound_cocoa_la_OBJECTS)
+	$(LINKNOO) -o libsound_cocoa.la -rpath $(libdir) $(libsound_cocoa_la_LDFLAGS) $(libsound_cocoa_la_OBJECTS) $(libsound_cocoa_la_LIBADD) $(LIBS)
 
 install-exec-am:
 	${mkinstalldirs} ${PLUGINDIR}

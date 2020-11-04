@@ -35,6 +35,9 @@
 #include "plugins/sound_sdl.h"
 #include "plugins/sound_esd.h"
 #include "plugins/sound_winmm.h"
+#ifdef HAVE_COCOA
+SoundDriver *sound_cocoa_init(void);
+#endif
 #endif
 
 #include "dopewars.h"
@@ -154,6 +157,9 @@ void SoundInit(void)
 #endif
 #ifdef HAVE_WINMM
   AddPlugin(sound_winmm_init, NULL);
+#endif
+#ifdef HAVE_COCOA
+  AddPlugin(sound_cocoa_init, NULL);
 #endif
 #endif
   driver = NULL;

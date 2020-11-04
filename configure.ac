@@ -58,8 +58,13 @@ AC_ARG_WITH(sdl,
 [  --without-sdl           do not support SDL sound output],
 [ USE_SDL="$withval" ], [ USE_SDL="probe" ])
 
+AC_ARG_WITH(cocoa,
+[  --without-cocoa         do not support Cocoa (Mac) sound output],
+[ USE_COCOA="$withval" ], [ USE_COCOA="probe" ])
+
 ESD=no
 SDL=no
+COCOA=no
 
 dnl Test for Cygwin environment
 AC_CYGWIN
@@ -194,6 +199,25 @@ else
      fi
    fi
 
+   dnl Add Cocoa (Mac) sound support if available
+   if test "$USE_COCOA" != "no"; then
+     AC_PROG_OBJC
+     if test "x$OBJC" != "x"; then
+       AC_LANG_PUSH([Objective C])
+       AC_CHECK_HEADERS(AppKit/AppKit.h, [HAVE_APPKIT="1"], [HAVE_APPKIT="0"])
+       AC_LANG_POP()
+       if test "x$HAVE_APPKIT" = "x1"; then
+	 COCOA="yes"
+         PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
+         AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
+       else
+         AC_MSG_ERROR([Cannot find AppKit.h, needed for Cocoa (Mac) sound])
+       fi
+    else
+       AC_MSG_ERROR([Cannot find Cocoa (Mac) sound library])
+     fi
+   fi
+
    dnl Use console server by default
    if test "$GUI_SERVER" = "probe"; then
      GUI_SERVER="no"
@@ -211,6 +235,7 @@ fi
 
 AM_CONDITIONAL(ESD, test "$ESD" = "yes")
 AM_CONDITIONAL(SDL, test "$SDL" = "yes")
+AM_CONDITIONAL(COCOA, test "$COCOA" = "yes")
 
 dnl If probing was unsuccessful, these will be set to "no"; therefore,
 dnl if still set to "probe" then everything worked, so set to "yes"
