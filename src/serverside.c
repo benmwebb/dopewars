@@ -97,6 +97,13 @@ gboolean WantQuit = FALSE;
 static SERVICE_STATUS_HANDLE scHandle;
 #endif
 
+#ifdef GUI_SERVER
+static gboolean glib_timeout(gpointer userp);
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data);
+#endif
+
+
 /* Do we want to update the player details on the metaserver when the
  * timeout expires? */
 gboolean MetaPlayerPending = FALSE;
@@ -146,14 +153,6 @@ static int SendCopOffer(Player *To, OfferForce Force);
 static int OfferObject(Player *To, gboolean ForceBitch);
 static gboolean HighScoreWrite(FILE *fp, struct HISCORE *MultiScore,
                                struct HISCORE *AntiqueScore);
-
-#ifdef GUI_SERVER
-static void GuiHandleMeta(gpointer data, gint socket,
-                          GdkInputCondition condition);
-static void MetaSocketStatus(NetworkBuffer *NetBuf,
-                             gboolean Read, gboolean Write,
-                             gboolean CallNow);
-#endif
 
 #ifdef NETWORKING
 static void MetaConnectError(CurlConnection *conn, GError *err)
@@ -245,9 +244,6 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     MetaConnectError(&MetaConn, tmp_error);
     g_error_free(tmp_error);
   }
-#ifdef GUI_SERVER
-  SetNetworkBufferCallBack(&MetaConn->NetBuf, MetaSocketStatus, NULL);
-#endif
   MetaPlayerPending = FALSE;
 
   MetaUpdateTimeout = time(NULL) + METAUPDATETIME;
@@ -770,6 +766,11 @@ static gboolean StartServer(void)
   Scanner->msg_handler = ScannerErrorHandler;
   Scanner->input_name = "(stdin)";
 
+  CurlInit(&MetaConn);
+#ifdef GUI_SERVER
+  SetCurlCallback(&MetaConn, glib_timeout, glib_socket);
+#endif
+
   /* Make the output line-buffered, so that the log file (if used) is
    * updated regularly */
   fflush(stdout);
@@ -1089,6 +1090,70 @@ static int SetupLocalSocket(void)
 }
 #endif
 
+static void LogMetaReply(CurlConnection *conn)
+{
+  g_ptr_array_foreach(conn->headers, log_meta_headers, NULL);
+  char *ch = conn->data;
+  while(ch && *ch) {
+    char *nextch = CurlNextLine(conn, ch);
+    if (*ch)
+      dopelog(2, LF_SERVER, _("MetaServer: %s"), ch);
+    ch = nextch;
+  }
+  dopelog(4, LF_SERVER, _("MetaServer: (closed)"));
+}
+
+#ifdef GUI_SERVER
+static gboolean glib_timeout(gpointer userp)
+{
+  CurlConnection *g = userp;
+  int still_running;
+  CURLMcode rc;
+  fprintf(stderr, "bw> glib_timeout\n");
+  rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &still_running);
+  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  g->timer_event = 0;
+  return G_SOURCE_REMOVE;
+}
+
+static void GuiQuitServer()
+{
+  gtk_main_quit();
+  StopServer();
+}
+
+/* Called by glib when we get action on a multi socket */
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data)
+{
+  CurlConnection *g = (CurlConnection*) data;
+  CURLMcode rc;
+  int still_running;
+  int fd = g_io_channel_unix_get_fd(ch);
+  fprintf(stderr, "bw> glib socket\n");
+  int action =
+    ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
+    ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
+
+  rc = curl_multi_socket_action(g->multi, fd, action, &still_running);
+  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  if (still_running) {
+    return TRUE;
+  } else {
+    if (g->timer_event) {
+      g_source_remove(g->timer_event);
+      g->timer_event = 0;
+    }
+    LogMetaReply(g);
+    CloseCurlConnection(g);
+    if (IsServerShutdown())
+      GuiQuitServer();
+    return FALSE;
+  }
+}
+
+#endif
+
 /* 
  * Initialises server, processes network and interactive messages, and
  * finally cleans up the server on exit.
@@ -1114,7 +1179,6 @@ void ServerLoop(struct CMDLINE *cmdline)
 #endif
 
   InitConfiguration(cmdline);
-  CurlInit(&MetaConn);
 
   if (!StartServer())
     return;
@@ -1251,15 +1315,7 @@ void ServerLoop(struct CMDLINE *cmdline)
         if (IsServerShutdown())
           break;
       } else if (still_running == 0) {
-        g_ptr_array_foreach(MetaConn.headers, log_meta_headers, NULL);
-	char *ch = MetaConn.data;
-	while(ch && *ch) {
-          char *nextch = CurlNextLine(&MetaConn, ch);
-	  if (*ch)
-            dopelog(2, LF_SERVER, _("MetaServer: %s"), ch);
-	  ch = nextch;
-	}
-        dopelog(4, LF_SERVER, _("MetaServer: (closed)"));
+        LogMetaReply(&MetaConn);
         CloseCurlConnection(&MetaConn);
         if (IsServerShutdown())
           break;
@@ -1377,12 +1433,6 @@ static void ServiceFailure(const gchar *log_domain,
 }
 #endif
 
-static void GuiQuitServer()
-{
-  gtk_main_quit();
-  StopServer();
-}
-
 static void GuiDoCommand(GtkWidget *widget, gpointer data)
 {
   gchar *text;
@@ -1393,35 +1443,6 @@ static void GuiDoCommand(GtkWidget *widget, gpointer data)
   g_free(text);
   if (IsServerShutdown())
     GuiQuitServer();
-}
-
-void GuiHandleMeta(gpointer data, gint socket, GdkInputCondition condition)
-{
-  gboolean DoneOK;
-  gchar *buf;
-
-  if (!MetaConn)
-    return;
-  if (NetBufHandleNetwork(&MetaConn->NetBuf, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE, &DoneOK)) {
-    while ((buf = ReadHttpResponse(MetaConn, &DoneOK))) {
-      gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
-
-      if (buf[0] || !ReadingBody) {
-        dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
-      }
-      g_free(buf);
-    }
-  }
-  if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-    if (!MetaConnectError(MetaConn)) {
-      dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
-    }
-    CloseHttpConnection(MetaConn);
-    MetaConn = NULL;
-    if (IsServerShutdown())
-      GuiQuitServer();
-  }
 }
 
 static void GuiHandleSocket(gpointer data, gint socket,
@@ -1463,22 +1484,6 @@ void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
   }
   if (CallNow)
     GuiHandleSocket(NetBuf->CallBackData, NetBuf->fd, 0);
-}
-
-void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                      gboolean CallNow)
-{
-  if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
-  NetBuf->InputTag = 0;
-  if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
-                                     GuiHandleMeta, NetBuf->CallBackData);
-  }
-  if (CallNow)
-    GuiHandleMeta(NetBuf->CallBackData, NetBuf->fd, 0);
 }
 
 static void GuiNewConnect(gpointer data, gint socket,
