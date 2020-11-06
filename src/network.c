@@ -1235,6 +1235,8 @@ void CurlInit(CurlConnection *conn)
   conn->StripChar = '\r';
   conn->data_size = 0;
   conn->headers = NULL;
+  conn->timer_cb = NULL;
+  conn->socket_cb = NULL;
 }
 
 void CloseCurlConnection(CurlConnection *conn)
@@ -1355,7 +1357,12 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
     conn->data_size = 0;
     conn->headers = g_ptr_array_new_with_free_func(g_free);
     conn->running = TRUE;
-    return CurlConnectionPerform(conn, &still_running, err);
+    if (conn->timer_cb) {
+      /* If we set a callback, we must not do _perform, but wait for the cb */
+      return TRUE;
+    } else {
+      return CurlConnectionPerform(conn, &still_running, err);
+    }
   } else {
     g_set_error_literal(err, DOPE_CURLM_ERROR, 0, _("Could not init curl"));
     return FALSE;
