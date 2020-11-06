@@ -1290,6 +1290,14 @@ gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
   return HandleCurlMultiReturn(conn, mres, err);
 }
 
+gboolean CurlConnectionSocketAction(CurlConnection *conn, int fd, int action,
+                                    int *still_running, GError **err)
+{
+  CURLMcode mres = curl_multi_socket_action(conn->multi, fd, action,
+                                            still_running);
+  return HandleCurlMultiReturn(conn, mres, err);
+}
+
 GQuark dope_curl_error_quark(void)
 {
   return g_quark_from_static_string("dope-curl-error-quark");

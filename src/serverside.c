@@ -1108,10 +1108,13 @@ static gboolean glib_timeout(gpointer userp)
 {
   CurlConnection *g = userp;
   int still_running;
-  CURLMcode rc;
+  GError *err = NULL;
   fprintf(stderr, "bw> glib_timeout\n");
-  rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &still_running);
-  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  if (!CurlConnectionSocketAction(g, CURL_SOCKET_TIMEOUT, 0, &still_running,
+                                  &err)) {
+    MetaConnectError(g, err);
+    g_error_free(err);
+  }
   g->timer_event = 0;
   return G_SOURCE_REMOVE;
 }
@@ -1127,16 +1130,18 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
                             gpointer data)
 {
   CurlConnection *g = (CurlConnection*) data;
-  CURLMcode rc;
   int still_running;
+  GError *err = NULL;
   int fd = g_io_channel_unix_get_fd(ch);
   fprintf(stderr, "bw> glib socket\n");
   int action =
     ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
     ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
 
-  rc = curl_multi_socket_action(g->multi, fd, action, &still_running);
-  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  if (!CurlConnectionSocketAction(g, fd, action, &still_running, &err)) {
+    MetaConnectError(g, err);
+    g_error_free(err);
+  }
   if (still_running) {
     return TRUE;
   } else {

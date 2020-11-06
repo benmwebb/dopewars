@@ -243,6 +243,8 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
 void CloseCurlConnection(CurlConnection *conn);
 gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
                                GError **err);
+gboolean CurlConnectionSocketAction(CurlConnection *conn, int fd, int action,
+                                    int *still_running, GError **err);
 char *CurlNextLine(CurlConnection *conn, char *ch);
 void SetCurlCallback(CurlConnection *conn, GSourceFunc timer_cb,
                      GIOFunc socket_cb);
