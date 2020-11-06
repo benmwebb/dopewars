@@ -1370,6 +1370,102 @@ char *CurlNextLine(CurlConnection *conn, char *ch)
   return sep_pt;
 }
 
+/* Information associated with a specific socket */
+typedef struct _SockData {
+  curl_socket_t sockfd;
+  CURL *easy;
+  int action;
+  long timeout;
+  GIOChannel *ch;
+  guint ev;
+  CurlGlobalData *global;
+} SockData;
+
+static int timer_function(CURLM *multi, long timeout_ms, void *userp)
+{
+  CurlGlobalData *g = userp;
+
+  if (g->timer_event) {
+    g_source_remove(g->timer_event);
+    g->timer_event = 0;
+  }
+
+  /* -1 means we should just delete our timer. */
+  if (timeout_ms >= 0) {
+    g->timer_event = g_timeout_add(timeout_ms, g->timer_cb, g);
+  }
+  return 0;
+}
+
+/* Clean up the SockData structure */
+static void remsock(SockData *f)
+{
+  if (!f) {
+    return;
+  }
+  if (f->ev) {
+    g_source_remove(f->ev);
+  }
+  g_free(f);
+}
+
+/* Assign information to a SockData structure */
+static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
+                    CurlGlobalData *g)
+{
+  GIOCondition kind =
+    ((act & CURL_POLL_IN) ? G_IO_IN : 0) |
+    ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
+
+  f->sockfd = s;
+  f->action = act;
+  f->easy = e;
+  if (f->ev) {
+    g_source_remove(f->ev);
+  }
+  f->ev = g_io_add_watch(f->ch, kind, g->socket_cb, g);
+}
+
+/* Initialize a new SockData structure */
+static void addsock(curl_socket_t s, CURL *easy, int action, CurlGlobalData *g)
+{
+  SockData *fdp = g_malloc0(sizeof(SockData));
+
+  fdp->global = g;
+  fdp->ch = g_io_channel_unix_new(s);
+  setsock(fdp, s, easy, action, g);
+  curl_multi_assign(g->multi, s, fdp);
+}
+
+static int socket_function(CURL *easy, curl_socket_t s, int  what, void *userp,
+                           void *socketp)
+{
+  CurlGlobalData *g = userp;
+  SockData *fdp = socketp;
+  if (what == CURL_POLL_REMOVE) {
+    remsock(fdp);
+  } else if (!fdp) {
+    addsock(s, easy, what, g);
+  } else {
+    setsock(fdp, s, easy, what, g);
+  }
+  return 0;
+}
+
+void SetCurlCallback(CurlConnection *conn, CurlGlobalData *g,
+                     GSourceFunc timer_cb, GIOFunc socket_cb)
+{
+  g->multi = conn->multi;
+  g->timer_event = 0;
+  g->timer_cb = timer_cb;
+  g->socket_cb = socket_cb;
+
+  curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, timer_function);
+  curl_multi_setopt(g->multi, CURLMOPT_TIMERDATA, g);
+  curl_multi_setopt(g->multi, CURLMOPT_SOCKETFUNCTION, socket_function);
+  curl_multi_setopt(g->multi, CURLMOPT_SOCKETDATA, g);
+}
+
 gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
                             unsigned Port, gchar *Proxy,
                             unsigned ProxyPort, const gchar *bindaddr,

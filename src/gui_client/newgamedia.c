@@ -83,30 +83,13 @@ static void SetStartGameStatus(gchar *msg)
 
 #ifdef NETWORKING
 
-/* Global information, common to all connections */
-typedef struct _GlobalData {
-  CURLM *multi;
-  guint timer_event;
-  int still_running;
-} GlobalData;
-
-/* Information associated with a specific socket */
-typedef struct _SockData {
-  curl_socket_t sockfd;
-  CURL *easy;
-  int action;
-  long timeout;
-  GIOChannel *ch;
-  guint ev;
-  GlobalData *global;
-} SockData;
-
-GlobalData global_data;
+CurlGlobalData global_data;
 
 /* Called by glib when we get action on a multi socket */
-static gboolean glib_socket(GIOChannel *ch, GIOCondition condition, gpointer data)
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data)
 {
-  GlobalData *g = (GlobalData*) data;
+  CurlGlobalData *g = (CurlGlobalData*) data;
   CURLMcode rc;
   int fd = g_io_channel_unix_get_fd(ch);
   fprintf(stderr, "bw> glib socket\n");
@@ -144,90 +127,13 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition, gpointer dat
 
 static gboolean glib_timeout(gpointer userp)
 {
-  GlobalData *g = userp;
+  CurlGlobalData *g = userp;
   CURLMcode rc;
   fprintf(stderr, "bw> glib_timeout\n");
   rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &g->still_running);
   if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
   g->timer_event = 0;
   return G_SOURCE_REMOVE;
-}
-
-int timer_cb(CURLM *multi, long timeout_ms, void *userp)
-{
-  fprintf(stderr, "bw> timer_cb %ld\n", timeout_ms);
-  GlobalData *g = userp;
-
-  if (g->timer_event) {
-    g_source_remove(g->timer_event);
-    g->timer_event = 0;
-  }
-
-  /* -1 means we should just delete our timer. */
-  if (timeout_ms >= 0) {
-    g->timer_event = g_timeout_add(timeout_ms, glib_timeout, g);
-  }
-  return 0;
-}
-
-/* Clean up the SockData structure */
-static void remsock(SockData *f)
-{
-  if (!f) {
-    return;
-  }
-  if (f->ev) {
-    g_source_remove(f->ev);
-  }
-  g_free(f);
-}
-
-/* Assign information to a SockData structure */
-static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
-                    GlobalData *g)
-{
-  GIOCondition kind =
-    ((act & CURL_POLL_IN) ? G_IO_IN : 0) |
-    ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
-
-  f->sockfd = s;
-  f->action = act;
-  f->easy = e;
-  if (f->ev) {
-    g_source_remove(f->ev);
-  }
-  f->ev = g_io_add_watch(f->ch, kind, glib_socket, g);
-}
-
-/* Initialize a new SockData structure */
-static void addsock(curl_socket_t s, CURL *easy, int action, GlobalData *g)
-{
-  SockData *fdp = g_malloc0(sizeof(SockData));
-
-  fdp->global = g;
-  fdp->ch = g_io_channel_unix_new(s);
-  setsock(fdp, s, easy, action, g);
-  curl_multi_assign(g->multi, s, fdp);
-}
-
-int socket_cb(CURL *easy, curl_socket_t s, int  what, void *userp,
-              void *socketp)
-{
-  GlobalData *g = userp;
-  SockData *fdp = socketp;
-  static const char *whatstr[]={ "none", "IN", "OUT", "INOUT", "REMOVE" };
-  fprintf(stderr, "bw> socket_cb s=%d %d what=%s\n", s, what, whatstr[what]);
-  if (what == CURL_POLL_REMOVE) {
-    fprintf(stderr, "remove socket\n");
-    remsock(fdp);
-  } else if (!fdp) {
-    fprintf(stderr, "add socket\n");
-    addsock(s, easy, what, g);
-  } else {
-    fprintf(stderr, "change socket\n");
-    setsock(fdp, s, easy, what, g);
-  }
-  return 0;
 }
 
 static void ConnectError(gboolean meta)
@@ -525,16 +431,10 @@ void NewGameDialog(Player *play)
   guint AccelKey;
 
 #ifdef NETWORKING
-  global_data.multi = MetaConn->multi;
-  global_data.timer_event = 0;
   GtkWidget *clist, *scrollwin, *table, *hbbox;
   gchar *server_titles[5], *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
-
-  curl_multi_setopt(MetaConn->multi, CURLMOPT_TIMERFUNCTION, timer_cb);
-  curl_multi_setopt(MetaConn->multi, CURLMOPT_TIMERDATA, &global_data);
-  curl_multi_setopt(MetaConn->multi, CURLMOPT_SOCKETFUNCTION, socket_cb);
-  curl_multi_setopt(MetaConn->multi, CURLMOPT_SOCKETDATA, &global_data);
+  SetCurlCallback(MetaConn, &global_data, glib_timeout, glib_socket);
 
   /* Column titles of metaserver information */
   server_titles[0] = _("Server");

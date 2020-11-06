@@ -232,6 +232,15 @@ GQuark dope_curl_error_quark(void);
 #define DOPE_CURLM_ERROR dope_curlm_error_quark()
 GQuark dope_curlm_error_quark(void);
 
+/* Global information, common to all connections */
+typedef struct _CurlGlobalData {
+  CURLM *multi;
+  guint timer_event;
+  int still_running;
+  GSourceFunc timer_cb;
+  GIOFunc socket_cb;
+} CurlGlobalData;
+
 void CurlInit(CurlConnection *conn);
 void CurlCleanup(CurlConnection *conn);
 gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
@@ -240,6 +249,8 @@ void CloseCurlConnection(CurlConnection *conn);
 gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
                                GError **err);
 char *CurlNextLine(CurlConnection *conn, char *ch);
+void SetCurlCallback(CurlConnection *conn, CurlGlobalData *g,
+                     GSourceFunc timer_cb, GIOFunc socket_cb);
 
 gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,
                             unsigned Port, gchar *Proxy,
