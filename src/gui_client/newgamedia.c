@@ -83,37 +83,39 @@ static void SetStartGameStatus(gchar *msg)
 
 #ifdef NETWORKING
 
+
+static void ReportMetaConnectError(GError *err)
+{
+  char *str = g_strdup_printf(_("Status: ERROR: %s"), err->message);
+  SetStartGameStatus(str);
+  g_free(str);
+}
+
 /* Called by glib when we get action on a multi socket */
 static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
                             gpointer data)
 {
   CurlConnection *g = (CurlConnection*) data;
-  CURLMcode rc;
   int still_running;
+  GError *err = NULL;
   int fd = g_io_channel_unix_get_fd(ch);
-  fprintf(stderr, "bw> glib socket\n");
   int action =
     ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
     ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
 
-  rc = curl_multi_socket_action(g->multi, fd, action, &still_running);
-  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
-  if (still_running) {
+  CurlConnectionSocketAction(g, fd, action, &still_running, &err);
+  if (!err && still_running) {
     return TRUE;
   } else {
-    GError *tmp_error = NULL;
-    fprintf(stderr, "got data %s\n", stgam.MetaConn->data);
-    fprintf(stderr, "last transfer done, kill timeout\n");
     if (g->timer_event) {
       g_source_remove(g->timer_event);
       g->timer_event = 0;
     }
-    if (!HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList,
-                                     &tmp_error)) {
-      char *str = g_strdup_printf(_("Status: ERROR: %s"), tmp_error->message);
-      SetStartGameStatus(str);
-      g_free(str);
-      g_error_free(tmp_error);
+    if (!err)
+      HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList, &err);
+    if (err) {
+      ReportMetaConnectError(err);
+      g_error_free(err);
     } else {
       SetStartGameStatus(NULL);
     }
@@ -127,11 +129,13 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
 static gboolean glib_timeout(gpointer userp)
 {
   CurlConnection *g = userp;
+  GError *err = NULL;
   int still_running;
-  CURLMcode rc;
-  fprintf(stderr, "bw> glib_timeout\n");
-  rc = curl_multi_socket_action(g->multi, CURL_SOCKET_TIMEOUT, 0, &still_running);
-  if (rc != CURLM_OK) fprintf(stderr, "action %d %s\n", rc, curl_multi_strerror(rc));
+  if (!CurlConnectionSocketAction(g, CURL_SOCKET_TIMEOUT, 0, &still_running,
+                                  &err)) {
+    ReportMetaConnectError(err);
+    g_error_free(err);
+  }
   g->timer_event = 0;
   return G_SOURCE_REMOVE;
 }
