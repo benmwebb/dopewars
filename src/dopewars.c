@@ -557,6 +557,7 @@ struct GLOBALS Globals[] = {
    N_("Format string used for expensive drugs 50% of time"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &Drugs.ExpensiveStr2, NULL, "Drugs.ExpensiveStr2",
+   /* xgettext:no-c-format */
    N_("Format string used for expensive drugs 50% of time"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {&(Drugs.CheapDivide), NULL, NULL, NULL, NULL, "Drugs.CheapDivide",
