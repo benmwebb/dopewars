@@ -1372,18 +1372,13 @@ char *CurlNextLine(CurlConnection *conn, char *ch)
 
 /* Information associated with a specific socket */
 typedef struct _SockData {
-  curl_socket_t sockfd;
-  CURL *easy;
-  int action;
-  long timeout;
   GIOChannel *ch;
   guint ev;
-  CurlGlobalData *global;
 } SockData;
 
 static int timer_function(CURLM *multi, long timeout_ms, void *userp)
 {
-  CurlGlobalData *g = userp;
+  CurlConnection *g = userp;
 
   if (g->timer_event) {
     g_source_remove(g->timer_event);
@@ -1411,15 +1406,12 @@ static void remsock(SockData *f)
 
 /* Assign information to a SockData structure */
 static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
-                    CurlGlobalData *g)
+                    CurlConnection *g)
 {
   GIOCondition kind =
     ((act & CURL_POLL_IN) ? G_IO_IN : 0) |
     ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
 
-  f->sockfd = s;
-  f->action = act;
-  f->easy = e;
   if (f->ev) {
     g_source_remove(f->ev);
   }
@@ -1427,11 +1419,10 @@ static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
 }
 
 /* Initialize a new SockData structure */
-static void addsock(curl_socket_t s, CURL *easy, int action, CurlGlobalData *g)
+static void addsock(curl_socket_t s, CURL *easy, int action, CurlConnection *g)
 {
   SockData *fdp = g_malloc0(sizeof(SockData));
 
-  fdp->global = g;
   fdp->ch = g_io_channel_unix_new(s);
   setsock(fdp, s, easy, action, g);
   curl_multi_assign(g->multi, s, fdp);
@@ -1440,7 +1431,7 @@ static void addsock(curl_socket_t s, CURL *easy, int action, CurlGlobalData *g)
 static int socket_function(CURL *easy, curl_socket_t s, int  what, void *userp,
                            void *socketp)
 {
-  CurlGlobalData *g = userp;
+  CurlConnection *g = userp;
   SockData *fdp = socketp;
   if (what == CURL_POLL_REMOVE) {
     remsock(fdp);
@@ -1452,18 +1443,17 @@ static int socket_function(CURL *easy, curl_socket_t s, int  what, void *userp,
   return 0;
 }
 
-void SetCurlCallback(CurlConnection *conn, CurlGlobalData *g,
-                     GSourceFunc timer_cb, GIOFunc socket_cb)
+void SetCurlCallback(CurlConnection *conn, GSourceFunc timer_cb,
+                     GIOFunc socket_cb)
 {
-  g->multi = conn->multi;
-  g->timer_event = 0;
-  g->timer_cb = timer_cb;
-  g->socket_cb = socket_cb;
+  conn->timer_event = 0;
+  conn->timer_cb = timer_cb;
+  conn->socket_cb = socket_cb;
 
-  curl_multi_setopt(g->multi, CURLMOPT_TIMERFUNCTION, timer_function);
-  curl_multi_setopt(g->multi, CURLMOPT_TIMERDATA, g);
-  curl_multi_setopt(g->multi, CURLMOPT_SOCKETFUNCTION, socket_function);
-  curl_multi_setopt(g->multi, CURLMOPT_SOCKETDATA, g);
+  curl_multi_setopt(conn->multi, CURLMOPT_TIMERFUNCTION, timer_function);
+  curl_multi_setopt(conn->multi, CURLMOPT_TIMERDATA, conn);
+  curl_multi_setopt(conn->multi, CURLMOPT_SOCKETFUNCTION, socket_function);
+  curl_multi_setopt(conn->multi, CURLMOPT_SOCKETDATA, conn);
 }
 
 gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
