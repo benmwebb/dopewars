@@ -356,7 +356,8 @@ gboolean HaveAbility(Player *Play, gint Type)
  * unless a fatal error (i.e. the connection was broken) occurred.
  */
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK)
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK)
 {
   gboolean DataWaiting = FALSE;
 
@@ -364,7 +365,8 @@ gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
   if (!Play)
     return DataWaiting;
   DataWaiting =
-      NetBufHandleNetwork(&Play->NetBuf, ReadReady, WriteReady, DoneOK);
+      NetBufHandleNetwork(&Play->NetBuf, ReadReady, WriteReady, ErrorReady,
+                          DoneOK);
 
   return DataWaiting;
 }

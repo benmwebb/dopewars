@@ -86,7 +86,8 @@ typedef struct _ConnBuf {
 typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack) (NetworkBuffer *NetBuf, gboolean Read,
-                            gboolean Write, gboolean CallNow);
+                            gboolean Write, gboolean Exception,
+                            gboolean CallNow);
 
 typedef void (*NBUserPasswd) (NetworkBuffer *NetBuf, gpointer data);
 
@@ -216,7 +217,8 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
                          fd_set *writefds, fd_set *errorfds,
                          gboolean *DoneOK);
 gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK);
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK);
 gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
 gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data);

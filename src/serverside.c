@@ -1364,7 +1364,7 @@ void ServerLoop(struct CMDLINE *cmdline)
 static GtkWidget *TextOutput;
 static gint ListenTag = 0;
 static void SocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                         gboolean Write, gboolean CallNow);
+                         gboolean Write, gboolean Exception, gboolean CallNow);
 static void GuiSetTimeouts(void);
 static time_t NextTimeout = 0;
 static guint TimeoutTag = 0;
@@ -1461,7 +1461,8 @@ static void GuiHandleSocket(gpointer data, gint socket,
     return;
 
   if (PlayerHandleNetwork(Play, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE, &DoneOK)) {
+                          condition & GDK_INPUT_WRITE,
+                          condition & GDK_INPUT_EXCEPTION, &DoneOK)) {
     HandleServerPlayer(Play);
     GuiSetTimeouts();           /* We may have set some new timeouts */
   }
@@ -1473,7 +1474,7 @@ static void GuiHandleSocket(gpointer data, gint socket,
 }
 
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                  gboolean CallNow)
+                  gboolean Exception, gboolean CallNow)
 {
   if (NetBuf->InputTag)
     gdk_input_remove(NetBuf->InputTag);
@@ -1481,7 +1482,8 @@ void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
   if (Read || Write) {
     NetBuf->InputTag = gdk_input_add(NetBuf->fd,
                                      (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
+                                     (Write ? GDK_INPUT_WRITE : 0) |
+                                     (Exception ? GDK_INPUT_EXCEPTION : 0),
                                      GuiHandleSocket,
                                      NetBuf->CallBackData);
   }

@@ -108,7 +108,7 @@ static void UpdateMenus(void);
 static void GetClientMessage(gpointer data, gint socket,
                              GdkInputCondition condition);
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                  gboolean CallNow);
+                  gboolean Exception, gboolean CallNow);
 
 /* Data waiting to be sent to/read from the metaserver */
 CurlConnection MetaConn;
@@ -374,8 +374,8 @@ void GetClientMessage(gpointer data, gint socket,
 
   datawaiting =
       PlayerHandleNetwork(ClientData.Play, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE, &DoneOK);
-
+                          condition & GDK_INPUT_WRITE,
+                          condition & GDK_INPUT_EXCEPTION, &DoneOK);
   status = NetBuf->status;
 
   /* Handle pre-game stuff */
@@ -408,15 +408,16 @@ void GetClientMessage(gpointer data, gint socket,
 }
 
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                  gboolean CallNow)
+                  gboolean Exception, gboolean CallNow)
 {
   if (NetBuf->InputTag)
     gdk_input_remove(NetBuf->InputTag);
   NetBuf->InputTag = 0;
-  if (Read || Write) {
+  if (Read || Write || Exception) {
     NetBuf->InputTag = gdk_input_add(NetBuf->fd,
                                      (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
+                                     (Write ? GDK_INPUT_WRITE : 0) |
+                                     (Exception ? GDK_INPUT_EXCEPTION : 0),
                                      GetClientMessage,
                                      NetBuf->CallBackData);
   }

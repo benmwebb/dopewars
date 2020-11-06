@@ -87,7 +87,8 @@ typedef enum {
 GQuark dope_meta_error_quark(void);
 
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK);
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
 void QueuePlayerMessageForSend(Player *Play, gchar *data);
 gboolean WritePlayerDataToWire(Player *Play);

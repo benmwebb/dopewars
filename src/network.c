@@ -155,14 +155,14 @@ static void NetBufCallBack(NetworkBuffer *NetBuf, gboolean CallNow)
                           && NetBuf->WriteBuf.DataPresent)
                          || (NetBuf->status == NBS_SOCKSCONNECT
                              && NetBuf->negbuf.DataPresent)
-                         || NetBuf->WaitConnect, CallNow);
+                         || NetBuf->WaitConnect, TRUE, CallNow);
   }
 }
 
 static void NetBufCallBackStop(NetworkBuffer *NetBuf)
 {
   if (NetBuf && NetBuf->CallBack) {
-    (*NetBuf->CallBack) (NetBuf, FALSE, FALSE, FALSE);
+    (*NetBuf->CallBack) (NetBuf, FALSE, FALSE, FALSE, FALSE);
   }
 }
 
@@ -733,7 +733,8 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
 }
 
 gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK)
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK)
 {
   gboolean ReadOK, WriteOK, ErrorOK;
   gboolean DataWaiting = FALSE;
@@ -742,7 +743,7 @@ gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
   if (!NetBuf || NetBuf->fd <= 0)
     return DataWaiting;
 
-  DataWaiting = DoNetworkBufferStuff(NetBuf, ReadReady, WriteReady, FALSE,
+  DataWaiting = DoNetworkBufferStuff(NetBuf, ReadReady, WriteReady, ErrorReady,
                                      &ReadOK, &WriteOK, &ErrorOK);
 
   *DoneOK = (WriteOK && ErrorOK && ReadOK);
