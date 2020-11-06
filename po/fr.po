@@ -10,7 +10,7 @@ msgstr ""
 "Last-Translator: leonard <triton@madchat.org>\n"
 "Language-Team: French <fr@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Name of a single bitch - if you need to use different words for
@@ -868,7 +868,7 @@ msgstr "Les junkies achetent %tde hors de prix !"
 #. * are used.
 #: src/dopewars.c:773
 msgid "Wouldn't it be funny if everyone suddenly quacked at once?"
-msgstr "`Vivons dans l'extase de l'illimité`"
+msgstr "`Vivons dans l'extase de l'illimitÃ©`"
 
 #: src/dopewars.c:774
 msgid "The Pope was once Jewish, you know"
@@ -934,7 +934,7 @@ msgstr "C'est vous que j'ai vu a la tele ?"
 
 #: src/dopewars.c:789
 msgid "I think hemorrhoid commercials are really neat!"
-msgstr "L'esprit n'est jamais né, l'esprit ne cessera jamais"
+msgstr "L'esprit n'est jamais nÃ©, l'esprit ne cessera jamais"
 
 #: src/dopewars.c:790
 msgid "We're winning the war for drugs!"
@@ -955,7 +955,7 @@ msgstr "`Question authority; think for yourself`. a dit Timothy Leary"
 
 #: src/dopewars.c:795
 msgid "I'd like to sell you an edible poodle"
-msgstr "Gnôthi seauton"
+msgstr "GnÃ´thi seauton"
 
 #: src/dopewars.c:796
 msgid "Winners don't do drugs... unless they do"
