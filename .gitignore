@@ -4,6 +4,7 @@ po/stamp-po
 *.a
 *.la
 *.lo
+src/plugins/.libs/
 src/dopewars
 config.cache
 configure
