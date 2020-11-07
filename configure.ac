@@ -88,14 +88,22 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT($mscompat)
    CFLAGS="$bkp_CFLAGS"
 
+   dnl If using older Cygwin -mno-cygwin is included in CPPFLAGS so the
+   dnl right headers are detected (in /usr/include/mingw/ rather than
+   dnl /usr/include) later on - e.g. sys/param.h isn't in mingw.
+   bkp_CFLAGS="$CFLAGS"
+   AC_MSG_CHECKING(for no-Cygwin flag)
+   CFLAGS="$CFLAGS -no-cygwin"
+   AC_COMPILE_IFELSE([ AC_LANG_PROGRAM() ], [ nocyg="-no-cygwin" ],
+                     [ nocyg="" ])
+   AC_MSG_RESULT($nocyg)
+   CFLAGS="$bkp_CFLAGS"
+
    dnl Libraries and flags
-   dnl N.B. -mno-cygwin is included in CPPFLAGS so the right headers
-   dnl are detected (in /usr/include/mingw/ rather than /usr/include)
-   dnl later on - e.g. sys/param.h isn't in mingw.
-   CFLAGS="$CFLAGS -mwindows $mscompat"
-   CPPFLAGS="$CPPFLAGS -mno-cygwin"
+   CFLAGS="$CFLAGS -mwindows $mscompat $nocyg"
+   CPPFLAGS="$CPPFLAGS $nocyg"
    LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
-   LDFLAGS="$LDFLAGS -mno-cygwin"
+   LDFLAGS="$LDFLAGS $nocyg"
 
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
 
