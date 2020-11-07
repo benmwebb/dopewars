@@ -18,6 +18,7 @@ AC_CANONICAL_HOST
 
 dnl Checks for programs.
 AC_PROG_CC
+AC_PROG_OBJC
 AC_ISC_POSIX
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
@@ -201,7 +202,6 @@ else
 
    dnl Add Cocoa (Mac) sound support if available
    if test "$USE_COCOA" != "no"; then
-     AC_PROG_OBJC
      if test "x$OBJC" != "x"; then
        AC_LANG_PUSH([Objective C])
        AC_CHECK_HEADERS(AppKit/AppKit.h, [HAVE_APPKIT="1"], [HAVE_APPKIT="0"])
