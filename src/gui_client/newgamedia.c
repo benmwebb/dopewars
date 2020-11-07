@@ -262,11 +262,11 @@ static void FillMetaServerList(gboolean UseNewList)
     titles[2] = ThisServer->Version;
     if (ThisServer->CurPlayers == -1) {
       /* Displayed if we don't know how many players are logged on to a
-       * server */
+         server */
       titles[3] = _("Unknown");
     } else {
       /* e.g. "5 of 20" means 5 players are logged on to a server, out of
-       * a maximum of 20 */
+         a maximum of 20 */
       titles[3] = g_strdup_printf(_("%d of %d"), ThisServer->CurPlayers,
                                   ThisServer->MaxPlayers);
     }
@@ -306,7 +306,7 @@ void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks)
     switch (sockstat) {
     case NBSS_METHODS:
       /* Tell the user that we've successfully connected to a SOCKS server,
-       * and are now ready to tell it to initiate the "real" connection */
+         and are now ready to tell it to initiate the "real" connection */
       text = g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
                              Socks.name);
       SetStartGameStatus(text);
@@ -314,14 +314,14 @@ void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks)
       break;
     case NBSS_USERPASSWD:
       /* Tell the user that the SOCKS server is asking us for a username
-       * and password */
+         and password */
       SetStartGameStatus(_("Status: Authenticating with SOCKS server"));
       break;
     case NBSS_CONNECT:
       text =
       /* Tell the user that all necessary SOCKS authentication has been
-       * completed, and now we're going to try to have it connect to
-       * the final destination */
+         completed, and now we're going to try to have it connect to
+         the final destination */
           g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
                           ServerName);
       SetStartGameStatus(text);
@@ -478,7 +478,7 @@ void NewGameDialog(Player *play)
 
   AccelKey = gtk_label_parse_uline(GTK_LABEL(label),
                                    /* Prompt for player's name in 'New
-                                    * Game' dialog */
+                                      Game' dialog */
                                    _("Hey dude, what's your _name?"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 

@@ -285,8 +285,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #endif
 
   /* Informational comment placed at the start of the Windows log file
-   * (this is used for messages printed during processing of the config
-   * files - under Unix these are just printed to stdout) */
+     (this is used for messages printed during processing of the config
+     files - under Unix these are just printed to stdout) */
   g_print(_("# This is the dopewars startup log, containing any\n"
             "# informative messages resulting from configuration\n"
             "# file processing and the like.\n\n"));

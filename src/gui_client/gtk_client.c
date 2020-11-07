@@ -463,7 +463,7 @@ void HandleClientMessage(char *pt, Player *Play)
     break;
   case C_PUSH:
     /* The server admin has asked us to leave - so warn the user, and do
-     * so */
+       so */
     g_warning(_("You have been pushed from the server.\n"
                 "Switching to single player mode."));
     SwitchToSinglePlayer(Play);
@@ -556,7 +556,7 @@ void HandleClientMessage(char *pt, Player *Play)
     g_free(text);
 
     /* Text to update the Errands/Tipoff menu item with the price for a
-     * tipoff */
+       tipoff */
     text = dpg_strdup_printf(_("_Tipoff (%P)"), Prices.Tipoff);
     MenuItem = gtk_item_factory_get_widget(ClientData.Menu,
                                            "<main>/Errands/Tipoff...");
@@ -943,14 +943,14 @@ static void CreateFightDialog(void)
   hbbox = my_hbbox_new();
 
   /* Button for closing the "Fight" dialog and going back to dealing drugs
-   * (%Tde = "Drugs" by default) */
+     (%Tde = "Drugs" by default) */
   buf = dpg_strdup_printf(_("_Deal %Tde"), Names.Drugs);
   button = AddFightButton(buf, accel_group, GTK_BOX(hbbox), 'D');
   gtk_object_set_data(GTK_OBJECT(dialog), "deal", button);
   g_free(buf);
 
   /* Button for shooting at other players in the "Fight" dialog, or for
-   * popping up the "Fight" dialog from the main window */
+     popping up the "Fight" dialog from the main window */
   button = AddFightButton(_("_Fight"), accel_group, GTK_BOX(hbbox), 'F');
   gtk_object_set_data(GTK_OBJECT(dialog), "fight", button);
 
@@ -1024,7 +1024,7 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
   }
 
   /* Display of number of bitches or deputies during combat
-   * (%tde="bitches" or "deputies" (etc.) by default) */
+     (%tde="bitches" or "deputies" (etc.) by default) */
   BitchText = dpg_strdup_printf(_("%/Combat: Bitches/%d %tde"),
                                 DefendBitches, BitchName);
 
@@ -1239,7 +1239,7 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   g_free(prstr);
 
   /* Display of carried guns in GTK+ client status window (%Tde="Guns" by
-   * default) */
+     default) */
   dpg_string_printf(text, _("%/GTK Stats: Guns/%Tde"), Names.Guns);
   gtk_label_set_text(GTK_LABEL(Status->GunsName), text->str);
   g_string_printf(text, "%d", TotalGunsCarried(Play));
@@ -1247,7 +1247,7 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
 
   if (!WantAntique) {
     /* Display of number of bitches in GTK+ client status window
-     * (%Tde="Bitches" by default) */
+       (%Tde="Bitches" by default) */
     dpg_string_printf(text, _("%/GTK Stats: Bitches/%Tde"),
                        Names.Bitches);
     gtk_label_set_text(GTK_LABEL(Status->BitchesName), text->str);
@@ -1493,7 +1493,7 @@ void Jet(GtkWidget *parent)
       button = gtk_button_new_with_label("");
 
       /* Display of locations in 'Jet' window (%tde="The Bronx" etc. by
-       * default) */
+         default) */
       name = dpg_strdup_printf(_("_%c. %tde"), AccelChar, Location[i].Name);
       SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
       /* Add keypad shortcuts as well */
@@ -1529,14 +1529,14 @@ static void UpdateDealDialog(void)
   Play = ClientData.Play;
 
   /* Display of the current price of the selected drug in 'Deal Drugs'
-   * dialog */
+     dialog */
   dpg_string_printf(text, _("at %P"), Play->Drugs[DrugInd].Price);
   gtk_label_set_text(GTK_LABEL(DealDialog.cost), text->str);
 
   CanDrop = Play->Drugs[DrugInd].Carried;
 
   /* Display of current inventory of the selected drug in 'Deal Drugs'
-   * dialog (%tde="Opium" etc. by default) */
+     dialog (%tde="Opium" etc. by default) */
   dpg_string_printf(text, _("You are currently carrying %d %tde"),
                      CanDrop, Drug[DrugInd].Name);
   gtk_label_set_text(GTK_LABEL(DealDialog.carrying), text->str);
@@ -1556,7 +1556,7 @@ static void UpdateDealDialog(void)
     }
 
     /* Number of the selected drug that you can afford in 'Deal Drugs'
-     * dialog */
+       dialog */
     g_string_printf(text, _("You can afford %d"), CanAfford);
     gtk_label_set_text(GTK_LABEL(DealDialog.afford), text->str);
     MaxDrug = MIN(CanCarry, CanAfford);
@@ -1875,7 +1875,7 @@ void QuestionDialog(char *Data, Player *From)
   gchar *Responses, **split, *LabelText, *trword, *underline;
 
   /* Button titles that correspond to the single-keypress options provided
-   * by the curses client (e.g. _Yes corresponds to 'Y' etc.) */
+     by the curses client (e.g. _Yes corresponds to 'Y' etc.) */
   gchar *Words[] = { N_("_Yes"), N_("_No"), N_("_Run"),
     N_("_Fight"), N_("_Attack"), N_("_Evade")
   };
@@ -2926,7 +2926,7 @@ void ErrandDialog(gint ErrandType)
     gtk_window_set_title(GTK_WINDOW(dialog), _("Spy On Player"));
 
     /* Informative text for "spy on player" dialog. (%tde = "bitch",
-     * "bitch", "guns", "drugs", respectively, by default) */
+       "bitch", "guns", "drugs", respectively, by default) */
     text = dpg_strdup_printf(_("Please choose the player to spy on. "
                                "Your %tde will\nthen offer his "
                                "services to the player, and if "
@@ -2945,7 +2945,7 @@ void ErrandDialog(gint ErrandType)
     gtk_window_set_title(GTK_WINDOW(dialog), _("Tip Off The Cops"));
 
     /* Informative text for "tip off cops" dialog. (%tde = "bitch",
-     * "bitch", "guns", "drugs", respectively, by default) */
+       "bitch", "guns", "drugs", respectively, by default) */
     text = dpg_strdup_printf(_("Please choose the player to tip off "
                                "the cops to. Your %tde will\nhelp "
                                "the cops to attack that player, "
@@ -3001,7 +3001,7 @@ void SackBitch(GtkWidget *widget, gpointer data)
                             Names.Bitch);
 
   /* Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
-   * "bitch", respectively, by default) */
+     "bitch", respectively, by default) */
   text = dpg_strdup_printf(_("Are you sure? (Any %tde or %tde carried\n"
                              "by this %tde may be lost!)"), Names.Guns,
                            Names.Drugs, Names.Bitch);
@@ -3029,7 +3029,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   gpointer button_type[3] = { BT_BUY, BT_SELL, BT_DROP };
 
   /* Column titles for display of drugs/guns carried or available for
-   * purchase */
+     purchase */
   titles[0][0] = titles[1][0] = _("Name");
   titles[0][1] = _("Price");
   titles[1][1] = _("Number");
@@ -3043,13 +3043,13 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
 
   if (CreateHere) {
     /* Title of the display of available drugs/guns (%Tde = "Guns" or
-     * "Drugs" by default) */
+       "Drugs" by default) */
     dpg_string_printf(text, _("%Tde here"), Objects);
     widgets->HereFrame = frame[0] = gtk_frame_new(text->str);
   }
 
   /* Title of the display of carried drugs/guns (%Tde = "Guns" or "Drugs"
-   * by default) */
+     by default) */
   dpg_string_printf(text, _("%Tde carried"), Objects);
 
   widgets->CarriedFrame = frame[1] = gtk_frame_new(text->str);
@@ -3207,7 +3207,7 @@ void GunShopDialog(void)
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
   /* Title of 'gun shop' dialog in GTK+ client (%Tde="Dan's House of Guns"
-   * by default) */
+     by default) */
   text = dpg_strdup_printf(_("%/GTK GunShop window title/%Tde"),
                            Names.GunShopName);
   gtk_window_set_title(GTK_WINDOW(window), text);

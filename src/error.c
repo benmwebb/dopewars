@@ -150,7 +150,7 @@ ErrorType *ET_ERRNO = &ETErrno;
 /* Winsock error handling */
 static ErrTable WSAErrStr[] = {
   /* These are the explanations of the various
-   * Windows Sockets error codes */
+     Windows Sockets error codes */
   {WSANOTINITIALISED, N_("WinSock has not been properly initialised")},
   {WSASYSNOTREADY, N_("Network subsystem is not ready")},
   {WSAVERNOTSUPPORTED, N_("WinSock version not supported")},

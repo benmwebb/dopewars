@@ -69,13 +69,13 @@ static const price_t MINTRENCHPRICE = 200, MAXTRENCHPRICE = 300;
 #define NUMDISCOVER 3
 char *Discover[NUMDISCOVER] = {
   /* Things that can "happen" to your spies - look for strings containing
-   * "The spy %s!" to see how these strings are used. */
+     "The spy %s!" to see how these strings are used. */
   N_("escaped"), N_("defected"), N_("was shot")
 };
 
 /* The two keys that are valid answers to the Attack/Evade question. If
- * you wish to translate them, do so in the same order as they given here.
- * You will also need to translate the answers given by the clients. */
+   you wish to translate them, do so in the same order as they given here.
+   You will also need to translate the answers given by the clients. */
 static char *attackquestiontr = N_("AE");
 
 /* If we haven't talked to the metaserver for 3 hours, then remind it that
@@ -395,14 +395,14 @@ void HandleServerMessage(gchar *buf, Player *Play)
         if (MaxClients == 1) {
           text = g_strdup_printf(
                                   /* Message sent to a player if the
-                                   * server is full */
+                                     server is full */
                                   _("Sorry, but this server has a limit of "
                                    "1 player, which has been reached.^"
                                    "Please try connecting again later."));
         } else {
           text = g_strdup_printf(
                                   /* Message sent to a player if the
-                                   * server is full */
+                                     server is full */
                                   _("Sorry, but this server has a limit of "
                                    "%d players, which has been reached.^"
                                    "Please try connecting again later."),
@@ -417,8 +417,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       }
     } else {
       /* A player changed their name during the game (unusual, and not
-       * really properly supported anyway) - notify all players of the
-       * change */
+         really properly supported anyway) - notify all players of the
+         change */
       dopelog(2, LF_SERVER, _("%s will now be known as %s"),
               GetPlayerName(Play), Data);
       BroadcastToClients(C_NONE, C_RENAME, Data, Play, Play);
@@ -452,7 +452,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     if (NumTurns > 0 && Play->Turn >= NumTurns
         && Play->EventNum != E_FINISH) {
       /* Message displayed when a player reaches their maximum number of
-       * turns */
+         turns */
       FinishGame(Play, _("Your dealing time is up..."));
     } else if (i != Play->IsAt && (NumTurns == 0 || Play->Turn < NumTurns)
                && Play->EventNum == E_NONE && Play->Health > 0) {
@@ -470,8 +470,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       SendEvent(Play);
     } else {
       /* A player has tried to jet to a new location, but we don't allow
-       * them to. (e.g. they're still fighting someone, or they're
-       * supposed to be dead) */
+         them to. (e.g. they're still fighting someone, or they're
+         supposed to be dead) */
       dopelog(3, LF_SERVER, _("%s: DENIED jet to %s"),
               GetPlayerName(Play), Location[i].Name);
     }
@@ -966,7 +966,7 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
       tmp = GetPlayerByName(string + 5, FirstServer);
       if (tmp) {
         /* The named user has been removed from the server following
-         * a "kill" command */
+           a "kill" command */
         g_print(_("%s killed\n"), GetPlayerName(tmp));
         BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp,
                            (Player *)FirstServer->data);
@@ -3061,7 +3061,7 @@ int RandomOffer(Player *To)
     SendPrintMessage(NULL, C_NONE, To, text->str);
   } else if (Sanitized) {
     /* Debugging message: we would normally have a random drug-related
-     * event here, but "Sanitized" mode is turned on */
+       event here, but "Sanitized" mode is turned on */
     dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
   } else if (r < 50) {
     amount = brandom(3, 7);
