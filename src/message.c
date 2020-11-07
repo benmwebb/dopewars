@@ -406,29 +406,6 @@ gboolean WritePlayerDataToWire(Player *Play)
   return WriteDataToWire(&Play->NetBuf);
 }
 
-typedef enum {
-  MEC_INTERNAL,
-  MEC_BADREPLY
-} MetaErrorCode;
-
-static void MetaAppendError(GString *str, LastError *error)
-{
-  switch (error->code) {
-  case MEC_INTERNAL:
-    g_string_append_printf(str, _("Internal metaserver error \"%s\""),
-                      (gchar *)error->data);
-    break;
-  case MEC_BADREPLY:
-    g_string_append_printf(str, _("Bad metaserver reply \"%s\""),
-                      (gchar *)error->data);
-    break;
-  default:
-    g_string_append_printf(str, _("Unknown metaserver error code %d"),
-                      error->code);
-    break;
-  }
-}
-
 gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err)
 {
   gboolean ret;

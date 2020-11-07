@@ -102,8 +102,6 @@ static void scroll_msg_area_down(void);
 
 
 #ifdef NETWORKING
-static void HttpAuthFunc(HttpConnection *conn, gboolean proxyauth,
-                         gchar *realm, gpointer data);
 static void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data);
 #endif
 
@@ -536,34 +534,6 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,
     refresh();
   }
   g_string_free(text, TRUE);
-}
-
-void HttpAuthFunc(HttpConnection *conn, gboolean proxyauth,
-                  gchar *realm, gpointer data)
-{
-  gchar *text, *user, *password = NULL;
-
-  attrset(TextAttr);
-  clear_bottom();
-  if (proxyauth) {
-    text = g_strdup_printf(_("Proxy authentication required for realm %s"),
-                           realm);
-  } else {
-    text =
-        g_strdup_printf(_("Authentication required for realm %s"), realm);
-  }
-  mvaddstr(17, 1, text);
-  mvaddstr(18, 1, _("(Enter a blank username to cancel)"));
-  g_free(text);
-
-  user = nice_input(_("User name: "), 19, 1, FALSE, NULL, '\0');
-  if (user && user[0]) {
-    password = nice_input(_("Password: "), 20, 1, FALSE, NULL, '*');
-  }
-
-  SetHttpAuthentication(conn, proxyauth, user, password);
-  g_free(user);
-  g_free(password);
 }
 
 void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data)

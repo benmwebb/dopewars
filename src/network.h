@@ -148,55 +148,6 @@ struct _NetworkBuffer {
   LastError *error;             /* Any error from the last operation */
 };
 
-/* Keeps track of the progress of an HTTP connection */
-typedef enum {
-  HS_CONNECTING,                /* Waiting for connect() to complete */
-  HS_READHEADERS,               /* Reading HTTP headers */
-  HS_READSEPARATOR,             /* Reading the header/body separator line */
-  HS_READBODY,                  /* Reading HTTP body */
-  HS_WAITCOMPLETE               /* Done reading, now waiting for
-                                 * authentication etc. before closing
-                                 * and/or retrying the connection */
-} HttpStatus;
-
-typedef struct _HttpConnection HttpConnection;
-
-typedef void (*HCAuthFunc) (HttpConnection *conn, gboolean proxyauth,
-                            gchar *realm, gpointer data);
-
-/* A structure used to keep track of an HTTP connection */
-struct _HttpConnection {
-  gchar *HostName;              /* The machine on which the desired page
-                                 * resides */
-  unsigned Port;                /* The port */
-  gchar *Proxy;                 /* If non-NULL, a web proxy to use */
-  unsigned ProxyPort;           /* The port to use for talking to
-                                 * the proxy */
-  char *bindaddr;               /* local IP address to bind to */
-  gchar *Method;                /* e.g. GET, POST */
-  gchar *Query;                 /* e.g. the path of the desired webpage */
-  gchar *Headers;               /* if non-NULL, e.g. Content-Type */
-  gchar *Body;                  /* if non-NULL, data to send */
-  gchar *RedirHost;             /* if non-NULL, a hostname to redirect to */
-  gchar *RedirQuery;            /* if non-NULL, the path to redirect to */
-  unsigned RedirPort;           /* The port on the host to redirect to */
-  HCAuthFunc authfunc;          /* Callback function for authentication */
-  gpointer authdata;            /* Data to be passed to authfunc */
-  gboolean waitinput;           /* TRUE if we're waiting for auth etc. to
-                                 * be supplied */
-  gchar *user;                  /* The supplied username for HTTP auth */
-  gchar *password;              /* The supplied password for HTTP auth */
-  gchar *proxyuser;             /* The supplied username for HTTP
-                                 * proxy auth */
-  gchar *proxypassword;         /* The supplied password for HTTP
-                                 * proxy auth */
-  NetworkBuffer NetBuf;         /* The actual network connection itself */
-  gint Tries;                   /* Number of requests actually sent so far */
-  gint StatusCode;              /* 0=no status yet, otherwise an HTTP
-                                 * status code */
-  HttpStatus Status;
-};
-
 void InitNetworkBuffer(NetworkBuffer *NetBuf, char Terminator,
                        char StripChar, SocksServer *socks);
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf, NBCallBack CallBack,
@@ -250,20 +201,6 @@ gboolean CurlConnectionSocketAction(CurlConnection *conn, int fd, int action,
 char *CurlNextLine(CurlConnection *conn, char *ch);
 void SetCurlCallback(CurlConnection *conn, GSourceFunc timer_cb,
                      GIOFunc socket_cb);
-
-gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,
-                            unsigned Port, gchar *Proxy,
-                            unsigned ProxyPort, const gchar *bindaddr,
-                            SocksServer *socks, gchar *Method,
-                            gchar *Query, gchar *Headers, gchar *Body);
-void CloseHttpConnection(HttpConnection *conn);
-gchar *ReadHttpResponse(HttpConnection *conn, gboolean *doneOK);
-void SetHttpAuthentication(HttpConnection *conn, gboolean proxy,
-                           gchar *user, gchar *password);
-void SetHttpAuthFunc(HttpConnection *conn, HCAuthFunc authfunc,
-                     gpointer data);
-gboolean HandleHttpCompletion(HttpConnection *conn);
-gboolean IsHttpError(HttpConnection *conn);
 
 int CreateTCPSocket(LastError **error);
 gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,
