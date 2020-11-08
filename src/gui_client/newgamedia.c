@@ -140,16 +140,13 @@ static gboolean glib_timeout(gpointer userp)
   return G_SOURCE_REMOVE;
 }
 
-static void ConnectError(gboolean meta)
+static void ConnectError(void)
 {
   GString *neterr;
   gchar *text;
   LastError *error;
 
-/*if (meta)
-    error = stgam.MetaConn->NetBuf.error;
-  else*/
-    error = stgam.play->NetBuf.error;
+  error = stgam.play->NetBuf.error;
 
   neterr = g_string_new("");
 
@@ -159,16 +156,8 @@ static void ConnectError(gboolean meta)
     g_string_assign(neterr, _("Connection closed by remote host"));
   }
 
-  if (meta) {
-    /* Error: GTK+ client could not connect to the metaserver */
-    text =
-        g_strdup_printf(_("Status: Could not connect to metaserver (%s)"),
-                        neterr->str);
-  } else {
-    /* Error: GTK+ client could not connect to the given dopewars server */
-    text =
-        g_strdup_printf(_("Status: Could not connect (%s)"), neterr->str);
-  }
+  /* Error: GTK+ client could not connect to the given dopewars server */
+  text = g_strdup_printf(_("Status: Could not connect (%s)"), neterr->str);
 
   SetStartGameStatus(text);
   g_free(text);
@@ -182,7 +171,7 @@ void FinishServerConnect(gboolean ConnectOK)
     gtk_widget_destroy(stgam.dialog);
     GuiStartGame();
   } else {
-    ConnectError(FALSE);
+    ConnectError();
   }
 }
 
@@ -214,7 +203,7 @@ static void DoConnect(void)
     SetNetworkBufferUserPasswdFunc(NetBuf, SocksAuthDialog, NULL);
     SetNetworkBufferCallBack(NetBuf, stgam.sockstat, NULL);
   } else {
-    ConnectError(FALSE);
+    ConnectError();
   }
 }
 
@@ -652,11 +641,10 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
 {
   GtkWidget *userentry, *passwdentry;
   gchar *username = NULL, *password = NULL;
-  gpointer authok, meta;
+  gpointer authok;
   NetworkBuffer *netbuf;
 
   authok = gtk_object_get_data(GTK_OBJECT(window), "authok");
-  meta = gtk_object_get_data(GTK_OBJECT(window), "meta");
   userentry =
       (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "username");
   passwdentry =
@@ -676,8 +664,7 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
   g_free(password);
 }
 
-static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
-                                gpointer data)
+static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
   GtkAccelGroup *accel_group;
@@ -689,7 +676,6 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
   gtk_signal_connect(GTK_OBJECT(window), "destroy",
                      GTK_SIGNAL_FUNC(DestroySocksAuth), NULL);
   gtk_object_set_data(GTK_OBJECT(window), "netbuf", (gpointer)netbuf);
-  gtk_object_set_data(GTK_OBJECT(window), "meta", GINT_TO_POINTER(meta));
 
   /* Title of dialog for authenticating with a SOCKS server */
   gtk_window_set_title(GTK_WINDOW(window),
@@ -749,11 +735,6 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
   gtk_widget_show_all(window);
-}
-
-void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
-{
-  RealSocksAuthDialog(netbuf, FALSE, data);
 }
 
 #endif /* NETWORKING */
