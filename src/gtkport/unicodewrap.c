@@ -370,21 +370,21 @@ void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam)
   }
 }
 
-LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong)
+LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
   if (unicode_support) {
-    return SetWindowLongW(hWnd, nIndex, dwNewLong);
+    return SetWindowLongPtrW(hWnd, nIndex, dwNewLong);
   } else {
-    return SetWindowLongA(hWnd, nIndex, dwNewLong);
+    return SetWindowLongPtrA(hWnd, nIndex, dwNewLong);
   }
 }
 
-LONG myGetWindowLong(HWND hWnd, int nIndex)
+LONG_PTR myGetWindowLong(HWND hWnd, int nIndex)
 {
   if (unicode_support) {
-    return GetWindowLongW(hWnd, nIndex);
+    return GetWindowLongPtrW(hWnd, nIndex);
   } else {
-    return GetWindowLongA(hWnd, nIndex);
+    return GetWindowLongPtrA(hWnd, nIndex);
   }
 }
 

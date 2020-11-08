@@ -98,7 +98,7 @@ static LRESULT APIENTRY ListWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   LRESULT retval;
   GtkWidget *widget;
 
-  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+  widget = GTK_WIDGET(GetWindowLongPtr(hwnd, GWLP_USERDATA));
   retval = myCallWindowProc(wpOrigListProc, hwnd, msg, wParam, lParam);
 
   if (msg == WM_HSCROLL && widget) {
@@ -250,13 +250,13 @@ void gtk_clist_realize(GtkWidget *widget)
   rcParent.right = rcParent.bottom = 800;
   scrollwin = myCreateWindow(WC_GTKCLISTHDR, NULL, WS_CHILD | WS_BORDER,
                              0, 0, 0, 0, Parent, NULL, hInst, NULL);
-  SetWindowLong(scrollwin, GWL_USERDATA, (LONG)widget);
+  SetWindowLongPtr(scrollwin, GWLP_USERDATA, (LONG_PTR)widget);
   header = myCreateWindowEx(0, WC_HEADER, NULL,
                             WS_CHILD | HDS_HORZ | WS_VISIBLE
                             | (GTK_CLIST(widget)->coldata[0].button_passive ?
                                0 : HDS_BUTTONS),
                             0, 0, 0, 0, scrollwin, NULL, hInst, NULL);
-  SetWindowLong(header, GWL_USERDATA, (LONG)widget);
+  SetWindowLongPtr(header, GWLP_USERDATA, (LONG_PTR)widget);
   GTK_CLIST(widget)->header = header;
   GTK_CLIST(widget)->scrollwin = scrollwin;
   gtk_set_default_font(header);
@@ -270,8 +270,8 @@ void gtk_clist_realize(GtkWidget *widget)
                                   | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
                                   hInst, NULL);
   /* Subclass the window */
-  wpOrigListProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                            GWL_WNDPROC, (LONG)ListWndProc);
+  wpOrigListProc = (WNDPROC)mySetWindowLong(widget->hWnd, GWLP_WNDPROC,
+                                            (LONG_PTR)ListWndProc);
   gtk_set_default_font(widget->hWnd);
 
   for (rows = clist->rowdata; rows; rows = g_slist_next(rows)) {
@@ -856,7 +856,7 @@ static LRESULT CALLBACK CListHdrWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
   gboolean retval = FALSE, dodef = TRUE;
 
-  widget = GTK_WIDGET(GetWindowLong(hwnd, GWL_USERDATA));
+  widget = GTK_WIDGET(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
   if (widget) {
     retval = gtk_clist_wndproc(widget, msg, wParam, lParam, &dodef);

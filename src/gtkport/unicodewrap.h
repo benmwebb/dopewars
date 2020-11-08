@@ -55,8 +55,8 @@ HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                     DLGPROC lpDialogFunc);
 LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam);
-LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong);
-LONG myGetWindowLong(HWND hWnd, int nIndex);
+LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+LONG_PTR myGetWindowLong(HWND hWnd, int nIndex);
 LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
                          WPARAM wParam, LPARAM lParam);
 LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

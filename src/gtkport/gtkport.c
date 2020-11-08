@@ -782,8 +782,8 @@ static void UpdatePanedGhostRect(GtkPaned *paned, RECT *OldRect,
   ReleaseDC(parent, hDC);
 }
 
-LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
-                              LONG lParam)
+LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, WPARAM wParam,
+                              LPARAM lParam)
 {
   PAINTSTRUCT ps;
   HPEN oldpen, dkpen, ltpen;
@@ -793,7 +793,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
   gint newpos;
   GtkPaned *paned;
 
-  paned = GTK_PANED(myGetWindowLong(hwnd, GWL_USERDATA));
+  paned = GTK_PANED(myGetWindowLong(hwnd, GWLP_USERDATA));
   switch (msg) {
   case WM_PAINT:
     if (GetUpdateRect(hwnd, NULL, TRUE)) {
@@ -871,7 +871,7 @@ void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
   ShellExecute(parent->hWnd, "open", target, NULL, NULL, 0);
 }
 
-LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   GtkWidget *widget;
 
@@ -882,7 +882,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     HDC hDC;
     HFONT oldFont;
 
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     text = GTK_LABEL(widget)->text;
     if (text && BeginPaint(hwnd, &ps)) {
       hDC = ps.hdc;
@@ -897,7 +897,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     }
     return TRUE;
   } else if (msg == WM_LBUTTONUP) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
 
     DisplayHTML(widget, NULL, GTK_URL(widget)->target);
     return FALSE;
@@ -905,7 +905,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     return myDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   PAINTSTRUCT ps;
   HPEN oldpen, dkpen, ltpen;
@@ -1030,7 +1030,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       && myCallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
     return TRUE;
 
-  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
   if (widget && (klass = GTK_OBJECT(widget)->klass)
       && klass->wndproc) {
     retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1039,7 +1039,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   switch (msg) {
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
-        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
+        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWLP_USERDATA)))
         && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1057,7 +1057,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     }
     break;
   case WM_COMMAND:
-    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWLP_USERDATA));
     klass = NULL;
     if (widget && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
@@ -1078,7 +1078,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     if (!nmhdr)
       break;
 
-    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWLP_USERDATA));
     if (widget && (klass = GTK_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1119,7 +1119,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   }
 }
 
-BOOL APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   gboolean dodef;
 
@@ -1136,7 +1136,7 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_KEYUP && wParam == VK_RETURN) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     if (widget)
       gtk_signal_emit(GTK_OBJECT(widget), "activate");
     return FALSE;
@@ -1150,7 +1150,7 @@ LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_GETDLGCODE) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     if (!GTK_EDITABLE(widget)->is_editable) {
       return DLGC_HASSETSEL | DLGC_WANTARROWS;
     }
@@ -1461,7 +1461,7 @@ static BOOL CALLBACK SetFocusEnum(HWND hWnd, LPARAM data)
   GtkWidget *widget;
   GtkWindow *window = GTK_WINDOW(data);
 
-  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWL_USERDATA));
+  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWLP_USERDATA));
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
       !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget) ||
       window->focus == widget) {
@@ -1504,7 +1504,7 @@ void gtk_window_update_focus(GtkWindow *window)
   FocusWnd = GetFocus();
   window->focus = NULL;
   if (FocusWnd) {
-    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWLP_USERDATA));
     if (widget && GTK_WIDGET(window)->hWnd &&
         IsChild(GTK_WIDGET(window)->hWnd, FocusWnd)) {
       window->focus = widget;
@@ -1520,7 +1520,7 @@ void gtk_widget_realize(GtkWidget *widget)
     return;
   gtk_signal_emit(GTK_OBJECT(widget), "realize", &req);
   if (widget->hWnd)
-    mySetWindowLong(widget->hWnd, GWL_USERDATA, (LONG)widget);
+    mySetWindowLong(widget->hWnd, GWLP_USERDATA, (LONG_PTR)widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
   gtk_widget_set_sensitive(widget, GTK_WIDGET_SENSITIVE(widget));
 
@@ -2595,8 +2595,8 @@ void gtk_entry_realize(GtkWidget *widget)
   /* Subclass the window (we assume that all edit boxes have the same
    * window procedure) */
   wpOrigEntryProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                             GWL_WNDPROC,
-                                             (LONG)EntryWndProc);
+                                             GWLP_WNDPROC,
+                                             (LONG_PTR)EntryWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -2623,8 +2623,8 @@ void gtk_text_realize(GtkWidget *widget)
   /* Subclass the window (we assume that all multiline edit boxes have the 
    * same window procedure) */
   wpOrigTextProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                            GWL_WNDPROC,
-                                            (LONG)TextWndProc);
+                                            GWLP_WNDPROC,
+                                            (LONG_PTR)TextWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -3389,7 +3389,7 @@ void gtk_main()
 
   while (myGetMessage(&msg, NULL, 0, 0)) {
     MsgDone = FALSE;
-    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWLP_USERDATA));
     window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     if (window) {
       hAccel = GTK_WINDOW(window)->hAccel;
