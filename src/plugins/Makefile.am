@@ -1,4 +1,13 @@
-noinst_LTLIBRARIES = libsound_esd.la libsound_sdl.la libsound_winmm.la libsound_cocoa.la
+noinst_LTLIBRARIES = libsound_winmm.la
+if ESD
+noinst_LTLIBRARIES += libsound_esd.la
+endif
+if SDL
+noinst_LTLIBRARIES += libsound_sdl.la
+endif
+if COCOA
+noinst_LTLIBRARIES += libsound_cocoa.la
+endif
 libsound_esd_la_SOURCES = sound_esd.c sound_esd.h
 libsound_esd_la_LDFLAGS = @ESD_LIBS@
 libsound_sdl_la_SOURCES = sound_sdl.c sound_sdl.h
