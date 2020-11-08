@@ -1779,17 +1779,10 @@ void DealGuns(GtkWidget *widget, gpointer data)
   GtkWidget *clist, *dialog;
   GList *selection;
   gint row, GunInd;
-  gchar *Action, *Title;
+  gchar *Title;
   GString *text;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  if (data == BT_BUY) {
-    Action = _("Buy");
-  } else if (data == BT_SELL) {
-    Action = _("Sell");
-  } else {
-    Action = _("Drop");
-  }
 
   if (data == BT_BUY) {
     clist = ClientData.Gun.HereList;
