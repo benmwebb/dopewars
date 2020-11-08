@@ -27,8 +27,8 @@
 #ifdef NETWORKING
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include <winsock.h>            /* For network functions */
 #else
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/socket.h>         /* For struct sockaddr etc. */

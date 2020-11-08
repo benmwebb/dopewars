@@ -29,6 +29,7 @@
 
 /* Various includes necessary for select() calls */
 #ifdef CYGWIN
+#include <winsock2.h>
 #include <windows.h>
 #else
 #include <sys/types.h>

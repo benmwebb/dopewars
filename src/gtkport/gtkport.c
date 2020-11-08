@@ -54,8 +54,8 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 
 #ifdef CYGWIN
 
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
 #include <commctrl.h>
 #include <richedit.h>
 #include <shlwapi.h>

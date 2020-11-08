@@ -29,6 +29,7 @@
 #endif
 
 #ifdef CYGWIN                   /* Definitions for native Win32 build */
+#include <winsock2.h>
 #include <windows.h>
 #include <string.h>
 

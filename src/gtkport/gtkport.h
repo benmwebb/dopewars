@@ -31,6 +31,7 @@
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
 
+#include <winsock2.h>
 #include <windows.h>
 #include <glib.h>
 #include <stdarg.h>

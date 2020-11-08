@@ -30,8 +30,8 @@
 #include <sys/stat.h>
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include <winsock.h>            /* For network functions */
 #include <process.h>            /* For getpid */
 #else
 #include <sys/socket.h>         /* For struct sockaddr etc. */

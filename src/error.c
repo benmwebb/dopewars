@@ -28,8 +28,8 @@
 #include <string.h>             /* For strerror */
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For WSAxxx constants */
 #include <windows.h>            /* For FormatMessage() etc. */
-#include <winsock.h>            /* For WSAxxx constants */
 #else
 #include <netdb.h>              /* For h_errno error codes */
 #endif
