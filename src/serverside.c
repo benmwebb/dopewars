@@ -1934,7 +1934,7 @@ static FILE *OpenHighScoreAppData(int *error, gboolean *empty)
     if (RegQueryValueEx(key, subval, NULL, &keytype, NULL,
                         &keylen) == ERROR_SUCCESS && keytype == REG_SZ) {
       char *keyval = g_malloc(keylen);
-      if (RegQueryValueEx(key, subval, NULL, &keytype, keyval,
+      if (RegQueryValueEx(key, subval, NULL, &keytype, (LPBYTE)keyval,
                           &keylen) == ERROR_SUCCESS) {
         GString *str = g_string_sized_new(keylen + 40);
         g_string_assign(str, keyval);
