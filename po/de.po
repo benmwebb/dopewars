@@ -1062,7 +1062,7 @@ msgstr "%s ist { "
 #: src/dopewars.c:2204
 #, c-format
 msgid "%s can be no smaller than %d - ignoring!"
-msgstr "%s kann nicht kleiner sein als &d  ignorieren!"
+msgstr "%s kann nicht kleiner sein als %d  ignorieren!"
 
 #: src/dopewars.c:2210
 #, c-format
@@ -3260,7 +3260,7 @@ msgid ""
 "Sorry, but this server has a limit of %d players, which has been reached."
 "^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier d?rfen max. %d %s spielen.^Bitte versuchs sp?ter nochmal."
+"Sorry, aber hier d?rfen max. %d spielen.^Bitte versuchs sp?ter nochmal."
 
 #. A player changed their name during the game (unusual, and not
 #. * really properly supported anyway) - notify all players of the
@@ -3490,7 +3490,7 @@ msgid ""
 "this file and directory, or specify an alternate high score file with the\n"
 "-f command line option."
 msgstr ""
-"Kann Bestenliste-Datei %s nicht öffnen. (%s)\n"
+"Kann Bestenliste-Datei %s nicht öffnen.\n"
 "(%s). Stell sicher, dass du die Berechtigung für den Zugriff\n"
 "auf die Datei/das Verzeichnis hast oder gib eine andere Bestenliste-Datei\n"
 "mit derm -f Kommandozeilen-Parameter an."
@@ -4021,7 +4021,7 @@ msgstr "Du plünderst die verdammte Leiche!"
 #: src/network.c:103
 #, c-format
 msgid "Cannot initialise WinSock (%s)!"
-msgstr "Kann WinSock nicht initialisieren"
+msgstr "Kann WinSock nicht initialisieren (%s)"
 
 #. SOCKS version 5 error messages
 #: src/network.c:379

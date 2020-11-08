@@ -2778,7 +2778,7 @@ msgstr "Rapports des espions"
 #: src/gui_client/optdialog.c:384
 #, c-format
 msgid "New %s"
-msgstr "Nouveau"
+msgstr "Nouveau %s"
 
 #: src/gui_client/optdialog.c:560
 msgid "Select sound file"

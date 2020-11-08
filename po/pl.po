@@ -3263,7 +3263,7 @@ msgstr "%s nasłał gliny na %s"
 #: src/serverside.c:622
 #, c-format
 msgid "%s tipoff about %s: DENIED"
-msgstr "%s nałanie glin na %S: ZABRONIONE"
+msgstr "%s nałanie glin na %s: ZABRONIONE"
 
 #: src/serverside.c:638
 #, c-format

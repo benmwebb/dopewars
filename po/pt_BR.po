@@ -2706,7 +2706,7 @@ msgstr "Informações de Espionagem"
 #: src/gui_client/optdialog.c:360
 #, c-format
 msgid "New %s"
-msgstr "Novo"
+msgstr "Novo %s"
 
 #: src/gui_client/optdialog.c:536
 msgid "Select sound file"
