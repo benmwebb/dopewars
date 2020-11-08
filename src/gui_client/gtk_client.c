@@ -1294,7 +1294,6 @@ void UpdateInventory(struct InventoryWidgets *Inven,
                      Inventory *Objects, int NumObjects, gboolean AreDrugs)
 {
   GtkWidget *herelist, *carrylist;
-  Player *Play;
   gint i, row, selectrow[2];
   gpointer rowdata;
   price_t price;
@@ -1304,7 +1303,6 @@ void UpdateInventory(struct InventoryWidgets *Inven,
   GtkCList *clist[2];
   int numlist;
 
-  Play = ClientData.Play;
   herelist = Inven->HereList;
   carrylist = Inven->CarriedList;
 
