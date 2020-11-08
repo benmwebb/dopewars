@@ -18,7 +18,6 @@ AC_CANONICAL_HOST
 
 dnl Checks for programs.
 AC_PROG_CC
-AC_PROG_OBJC
 AC_ISC_POSIX
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
@@ -59,9 +58,15 @@ AC_ARG_WITH(sdl,
 [  --without-sdl           do not support SDL sound output],
 [ USE_SDL="$withval" ], [ USE_SDL="probe" ])
 
+if test "$host_vendor" = "apple" ; then
+  default_cocoa="yes"
+else
+  default_cocoa="no"
+fi
+
 AC_ARG_WITH(cocoa,
 [  --without-cocoa         do not support Cocoa (Mac) sound output],
-[ USE_COCOA="$withval" ], [ USE_COCOA="probe" ])
+[ USE_COCOA="$withval" ], [ USE_COCOA="${default_cocoa}" ])
 
 ESD=no
 SDL=no
@@ -213,22 +218,17 @@ else
      fi
    fi
 
-   dnl Add Cocoa (Mac) sound support if available
+   dnl Add Cocoa (Mac) sound support if on Mac and so requested
    if test "$USE_COCOA" != "no"; then
-     if test "x$OBJC" != "x"; then
-       AC_LANG_PUSH([Objective C])
-       AC_CHECK_HEADERS(AppKit/AppKit.h, [HAVE_APPKIT="1"], [HAVE_APPKIT="0"])
-       AC_LANG_POP()
-       if test "x$HAVE_APPKIT" = "x1"; then
-	 COCOA="yes"
-         PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
-         AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
-       else
-         AC_MSG_ERROR([Cannot find AppKit.h, needed for Cocoa (Mac) sound])
-       fi
-    else
-       AC_MSG_ERROR([Cannot find Cocoa (Mac) sound library])
-     fi
+     AC_PROG_OBJC
+     COCOA="yes"
+     PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
+     AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
+   else
+     dnl Otherwise we get the error
+     dnl 'conditional "am__fastdepOBJC" was never defined'
+     am__fastdepOBJC_TRUE='#'
+     am__fastdepOBJC_FALSE=
    fi
 
    dnl Use console server by default
