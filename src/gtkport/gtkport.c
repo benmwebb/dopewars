@@ -78,9 +78,6 @@ static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
 
-static const int ETDT_DISABLE       = 0x1;
-static const int ETDT_ENABLE        = 0x2;
-static const int ETDT_USETABTEXTURE = 0x4;
 static const int ETDT_ENABLETAB     = 0x6;
 
 static void gtk_button_size_request(GtkWidget *widget,
@@ -1020,7 +1017,6 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   HDC hDC;
   TEXTMETRIC tm;
   LPDRAWITEMSTRUCT lpdis;
-  HD_NOTIFY FAR *phdr;
   NMHDR *nmhdr;
   gboolean retval = FALSE;
 
@@ -1073,7 +1069,6 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       return TRUE;
     break;
   case WM_NOTIFY:
-    phdr = (HD_NOTIFY FAR *)lParam;
     nmhdr = (NMHDR *)lParam;
     if (!nmhdr)
       break;
@@ -1206,11 +1201,10 @@ static void myEnableThemeDialogTexture(HWND hWnd, DWORD dwFlags)
   module = LoadLibrary("UXTHEME.DLL");
   if (module) {
     ENABLETHEMEDIALOGTEXTUREPROC func;
-    HRESULT result;
     func = (ENABLETHEMEDIALOGTEXTUREPROC)
                GetProcAddress(module, "EnableThemeDialogTexture");
     if (func) {
-      result = func(hWnd, dwFlags);
+      func(hWnd, dwFlags);
     }
     FreeLibrary(module);
   }
@@ -4014,9 +4008,8 @@ void gtk_menu_bar_realize(GtkWidget *widget)
 {
   GtkMenuBar *menu_bar = GTK_MENU_BAR(widget);
   GtkWidget *window;
-  HMENU hMenu;
 
-  hMenu = GTK_MENU_SHELL(widget)->menu = CreateMenu();
+  GTK_MENU_SHELL(widget)->menu = CreateMenu();
   menu_bar->LastID = 1000;
 
   gtk_menu_shell_realize(widget);
@@ -4389,11 +4382,10 @@ void gtk_spin_button_size_request(GtkWidget *widget,
 
 void gtk_spin_button_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
-  int width = allocation->width, udwidth;
+  int udwidth;
   HWND updown;
 
   udwidth = GetSystemMetrics(SM_CXVSCROLL);
-  width = allocation->width;
   allocation->width -= udwidth;
 
   updown = GTK_SPIN_BUTTON(widget)->updown;
@@ -4513,17 +4505,16 @@ gint gdk_input_add(gint source, GdkInputCondition condition,
                    GdkInputFunction function, gpointer data)
 {
   GdkInput *input;
-  int rc;
 
   input = g_new(GdkInput, 1);
   input->source = source;
   input->condition = condition;
   input->function = function;
   input->data = data;
-  rc = WSAAsyncSelect(source, TopLevel, MYWM_SOCKETDATA,
-                      (condition & GDK_INPUT_READ ? FD_READ | FD_CLOSE |
-                       FD_ACCEPT : 0) | (condition & GDK_INPUT_WRITE ?
-                                         FD_WRITE | FD_CONNECT : 0));
+  WSAAsyncSelect(source, TopLevel, MYWM_SOCKETDATA,
+                 (condition & GDK_INPUT_READ ? FD_READ | FD_CLOSE |
+                  FD_ACCEPT : 0) | (condition & GDK_INPUT_WRITE ?
+                                    FD_WRITE | FD_CONNECT : 0));
   GdkInputs = g_slist_append(GdkInputs, input);
   return source;
 }
