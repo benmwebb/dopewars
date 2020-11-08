@@ -201,7 +201,11 @@ static int get_prompt_line(void)
  */
 void CheckForResize(Player *Play)
 {
+#ifdef CYGWIN
+  int sigset;
+#else
   sigset_t sigset;
+#endif
 
   sigemptyset(&sigset);
   sigaddset(&sigset, SIGWINCH);
