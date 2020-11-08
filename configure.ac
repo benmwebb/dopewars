@@ -78,6 +78,7 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT([Configuring for native Win32 binary under Cygwin])
    AC_DEFINE(CYGWIN, 1, [Define if building under the Cygwin environment])
 
+   AC_CHECK_TOOL([WINDRES], [windres], [windres])
    dnl This flag allows linking with MSVC-generated DLLs. -fnative-struct was
    dnl used by gcc 2, and -mms-bitfields by gcc 3, so it is tested for here.
    bkp_CFLAGS="$CFLAGS"

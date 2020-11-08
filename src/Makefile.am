@@ -39,6 +39,7 @@ DOPEBIN    = ${DOPEDIR}/dopewars
 PIXMAPS    = dopewars-pill.png dopewars-shot.png dopewars-weed.png
 EXTRA_DIST = ${PIXMAPS} pill.ico magic dopewars.rc dopewars.manifest
 CLEANFILES = dopewars.res dopewars.exe
+WINDRES    = @WINDRES@
 
 install-exec-hook:
 	@chgrp games ${DOPEBIN} || chgrp wheel ${DOPEBIN} || \
@@ -58,4 +59,4 @@ uninstall-local:
 	done
 
 %.res: %.rc
-	windres -O coff -o $@ $<
+	${WINDRES} -O coff -o $@ $<
