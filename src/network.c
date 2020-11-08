@@ -1158,8 +1158,9 @@ gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
   return HandleCurlMultiReturn(conn, mres, err);
 }
 
-gboolean CurlConnectionSocketAction(CurlConnection *conn, int fd, int action,
-                                    int *still_running, GError **err)
+gboolean CurlConnectionSocketAction(CurlConnection *conn, curl_socket_t fd,
+                                    int action, int *still_running,
+                                    GError **err)
 {
   CURLMcode mres = curl_multi_socket_action(conn->multi, fd, action,
                                             still_running);
