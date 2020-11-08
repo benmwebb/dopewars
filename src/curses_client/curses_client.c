@@ -62,7 +62,7 @@ const static int MaxMessages = 1000;
 
 #ifdef NETWORKING
 /* Data waiting to be sent to/read from the metaserver */
-CurlConnection MetaConn;
+static CurlConnection MetaConn;
 
 static enum {
   CM_SERVER, CM_PROMPT, CM_META, CM_SINGLE

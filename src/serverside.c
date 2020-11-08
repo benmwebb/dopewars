@@ -112,7 +112,7 @@ GSList *FirstServer = NULL;
 
 #ifdef NETWORKING
 /* Data waiting to be sent to/read from the metaserver */
-CurlConnection MetaConn;
+static CurlConnection MetaConn;
 
 static GScanner *Scanner;
 
