@@ -625,7 +625,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   GtkWidget *hbox, *vbox, *hbbox, *clist, *scrollwin, *button, *table;
   gchar *titles[3];
   int ind, minlistlength = 0;
-  gint i, row, nummembers;
+  gint i, nummembers;
   struct GLOBALS *gvar;
   struct ConfigMembers namemember = { N_("Name"), "Name" };
 
@@ -665,7 +665,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 
   for (i = 1; i <= *gvar->MaxIndex; i++) {
     titles[0] = *GetGlobalString(ind, i);
-    row = gtk_clist_append(GTK_CLIST(clist), titles);
+    gtk_clist_append(GTK_CLIST(clist), titles);
   }
   gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
 
