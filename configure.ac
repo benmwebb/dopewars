@@ -108,6 +108,10 @@ if test "$CYGWIN" = "yes" ; then
 
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
 
+   dnl Find libcurl for metaserver support
+   dnl 7.17.0 or later is needed as prior versions did not copy input strings
+   LIBCURL_CHECK_CONFIG(7.17.0)
+
    dnl We need to compile and then link in the Windows resources
    WNDRES="dopewars.res"
    AC_SUBST(WNDRES)
