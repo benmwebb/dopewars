@@ -77,11 +77,8 @@ static HANDLE WINAPI GetConHandle(TCHAR *pszName)
 
 SCREEN *newterm(void *a, void *b, void *c)
 {
-  COORD coord;
   int i;
 
-  coord.X = 80;
-  coord.Y = 25;
   Width = COLS = 80;
   Depth = LINES = 25;
   CurAttr = 1 << 8;

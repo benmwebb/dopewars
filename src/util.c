@@ -124,7 +124,7 @@ int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   int retval;
   struct timeval tv, *tp;
   fd_set localread, localexcept;
-  char CheckKbHit = 0, KeyRead;
+  char CheckKbHit = 0;
 
   if (nfds == 0 && tm) {
     Sleep(tm->tv_sec * 1000 + tm->tv_usec / 1000);
@@ -138,7 +138,6 @@ int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     FD_CLR(0, readfds);
   } else
     tp = tm;
-  KeyRead = 0;
   while (1) {
     tv.tv_sec = 0;
     tv.tv_usec = 250000;

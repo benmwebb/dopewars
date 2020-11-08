@@ -598,12 +598,12 @@ void AISendAnswer(Player *From, Player *To, char *answer)
  */
 void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
 {
-  char *Prompt, *allowed;
+  char *Prompt;
 
   if (From == &Noone)
     From = NULL;
   Prompt = Data;
-  allowed = GetNextWord(&Prompt, "");
+  GetNextWord(&Prompt, "");
   PrintAIMessage(Prompt);
   switch (AI) {
   case C_ASKLOAN:

@@ -703,11 +703,11 @@ void SendInitialData(Player *To)
 
 void ReceiveInitialData(Player *Play, char *Data)
 {
-  char *pt, *ServerVersion, *curr;
+  char *pt, *curr;
   GSList *list;
 
   pt = Data;
-  ServerVersion = GetNextWord(&pt, "(unknown)");
+  GetNextWord(&pt, "(unknown)"); /* server version */
   ResizeLocations(GetNextInt(&pt, NumLocation));
   ResizeGuns(GetNextInt(&pt, NumGun));
   ResizeDrugs(GetNextInt(&pt, NumDrug));

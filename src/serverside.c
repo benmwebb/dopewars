@@ -1172,9 +1172,9 @@ void ServerLoop(struct CMDLINE *cmdline)
   GString *LineBuf;
 
   gboolean DoneOK;
-  gchar *buf;
 
 #ifndef CYGWIN
+  gchar *buf;
   int localsock;
   GSList *nextlist;
   GPrintFunc oldprint;
