@@ -620,6 +620,12 @@ GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
 void gdk_input_remove(gint tag);
 gint gdk_input_add(gint source, GdkInputCondition condition,
                    GdkInputFunction function, gpointer data);
+
+guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
+                        GIOFunc func, gpointer user_data);
+guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data);
+gboolean dp_g_source_remove(guint tag);
+
 GtkWidget *gtk_hseparator_new();
 GtkWidget *gtk_vseparator_new();
 void gtk_object_set_data(GtkObject *object, const gchar *key,

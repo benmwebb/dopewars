@@ -1144,7 +1144,7 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
     return TRUE;
   } else {
     if (g->timer_event) {
-      g_source_remove(g->timer_event);
+      dp_g_source_remove(g->timer_event);
       g->timer_event = 0;
     }
     LogMetaReply(g);

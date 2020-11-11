@@ -254,6 +254,21 @@ struct _GtkTimeout {
   guint id;
 };
 
+struct _OurSource {
+  guint id;     /* Unique identifier */
+
+  /* Used for timeouts (dp_g_timeout_add()) */
+  GSourceFunc timeout_function;
+
+  /* Used for IO channels (dp_g_io_watch()) */
+  GIOChannel *io_channel;
+  GIOFunc io_function;
+  int socket;
+
+  gpointer data;    /* Data passed to callback function */
+};
+typedef struct _OurSource OurSource;
+
 typedef struct _GtkItemFactoryChild GtkItemFactoryChild;
 
 struct _GtkItemFactoryChild {
@@ -638,6 +653,7 @@ HFONT defFont;
 static HFONT urlFont;
 static GSList *WindowList = NULL;
 static GSList *GdkInputs = NULL;
+static GSList *OurSources = NULL;
 static GSList *GtkTimeouts = NULL;
 static HWND TopLevel = NULL;
 
@@ -663,6 +679,7 @@ static void DispatchSocketEvent(SOCKET sock, long event)
 {
   GSList *list;
   GdkInput *input;
+  OurSource *s;
 
   for (list = GdkInputs; list; list = g_slist_next(list)) {
     input = (GdkInput *)(list->data);
@@ -675,11 +692,23 @@ static void DispatchSocketEvent(SOCKET sock, long event)
       break;
     }
   }
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)(list->data);
+    if (s->socket == sock) {
+      (*s->io_function) (s->io_channel,
+                          (event & (FD_READ | FD_CLOSE | FD_ACCEPT) ?
+                           G_IO_IN : 0) |
+                          (event & (FD_WRITE | FD_CONNECT) ?
+                           G_IO_OUT : 0), s->data);
+      break;
+    }
+  }
 }
 
 static void DispatchTimeoutEvent(UINT id)
 {
   GSList *list;
+  OurSource *s;
   GtkTimeout *timeout;
 
   for (list = GtkTimeouts; list; list = g_slist_next(list)) {
@@ -688,6 +717,17 @@ static void DispatchTimeoutEvent(UINT id)
       if (timeout->function) {
         if (!(*timeout->function) (timeout->data)) {
           gtk_timeout_remove(id);
+        }
+      }
+      break;
+    }
+  }
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)list->data;
+    if (s->id == id) {
+      if (s->timeout_function) {
+        if (!(*s->timeout_function) (s->data)) {
+          dp_g_source_remove(s->id);
         }
       }
       break;
@@ -5313,6 +5353,82 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   RecurseLevel--;
 
   return retval;
+}
+
+
+/* Add a new source and return a unique ID */
+static guint add_our_source(OurSource *source)
+{
+  GSList *list;
+  guint id = 1;
+
+  /* Get an unused ID */
+  list = OurSources;
+  while (list) {
+    OurSource *s = (OurSource *)list->data;
+    if (s->id == id) {
+      id++;
+      list = OurSources;  /* Back to the start */
+    } else {
+      list = g_slist_next(list);
+    }
+  }
+
+  source->id = id;
+  OurSources = g_slist_append(OurSources, source);
+  return source->id;
+}
+
+/* Like g_timeout_add(), but uses the Windows event loop */
+guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data)
+{
+  guint id;
+  OurSource *source = g_new0(OurSource, 1);
+  source->timeout_function = function;
+  source->data = data;
+  id = add_our_source(source);
+  if (SetTimer(TopLevel, id, interval, NULL) == 0) {
+    g_warning("Failed to create timer!");
+  }
+  return id;
+}
+
+/* Like g_io_add_watch(), but uses the Windows event loop */
+guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
+                        GIOFunc func, gpointer user_data)
+{
+  OurSource *source = g_new0(OurSource, 1);
+  source->io_channel = channel;
+  source->io_function = func;
+  source->socket = g_io_channel_unix_get_fd(channel);
+  source->data = user_data;
+  WSAAsyncSelect(source->socket, TopLevel, MYWM_SOCKETDATA,
+                 (condition & G_IO_IN ? FD_READ | FD_CLOSE | FD_ACCEPT : 0)
+                 | (condition & G_IO_OUT ? FD_WRITE | FD_CONNECT : 0));
+  return add_our_source(source);
+}
+
+/* Like g_source_remove(), but uses the Windows event loop */
+gboolean dp_g_source_remove(guint tag)
+{
+  GSList *list;
+  OurSource *s;
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)list->data;
+    if (s->id == tag) {
+      if (s->timeout_function) {
+        if (KillTimer(TopLevel, s->id) == 0) {
+          g_warning("Failed to kill timer!");
+        }
+      } else {
+        WSAAsyncSelect(s->socket, TopLevel, 0, 0);
+      }
+      OurSources = g_slist_remove(OurSources, s);
+      g_free(s);
+      break;
+    }
+  }
+  return TRUE;
 }
 
 guint gtk_timeout_add(guint32 interval, GtkFunction function,

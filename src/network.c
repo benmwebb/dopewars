@@ -1288,13 +1288,13 @@ static int timer_function(CURLM *multi, long timeout_ms, void *userp)
   CurlConnection *g = userp;
 
   if (g->timer_event) {
-    g_source_remove(g->timer_event);
+    dp_g_source_remove(g->timer_event);
     g->timer_event = 0;
   }
 
   /* -1 means we should just delete our timer. */
   if (timeout_ms >= 0) {
-    g->timer_event = g_timeout_add(timeout_ms, g->timer_cb, g);
+    g->timer_event = dp_g_timeout_add(timeout_ms, g->timer_cb, g);
   }
   return 0;
 }
@@ -1306,7 +1306,7 @@ static void remsock(SockData *f)
     return;
   }
   if (f->ev) {
-    g_source_remove(f->ev);
+    dp_g_source_remove(f->ev);
   }
   g_free(f);
 }
@@ -1320,9 +1320,9 @@ static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
     ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
 
   if (f->ev) {
-    g_source_remove(f->ev);
+    dp_g_source_remove(f->ev);
   }
-  f->ev = g_io_add_watch(f->ch, kind, g->socket_cb, g);
+  f->ev = dp_g_io_add_watch(f->ch, kind, g->socket_cb, g);
 }
 
 /* Initialize a new SockData structure */

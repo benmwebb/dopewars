@@ -62,6 +62,15 @@
 #define SOCKET_ERROR -1
 #endif
 
+#ifdef CYGWIN
+/* Need GUI main loop to handle timers/events */
+#include "gtkport/gtkport.h"
+#else
+#define dp_g_source_remove g_source_remove
+#define dp_g_io_add_watch g_io_add_watch
+#define dp_g_timeout_add g_timeout_add
+#endif
+
 typedef struct _CurlConnection {
   CURLM *multi;
   CURL *h;
