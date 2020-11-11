@@ -1369,7 +1369,7 @@ static void GuiSetTimeouts(void);
 static time_t NextTimeout = 0;
 static guint TimeoutTag = 0;
 
-static gint GuiDoTimeouts(gpointer data)
+static gboolean GuiDoTimeouts(gpointer data)
 {
   /* Forget the TimeoutTag so that GuiSetTimeouts doesn't delete it -
    * it'll be deleted automatically anyway when we return FALSE */
@@ -1390,10 +1390,10 @@ void GuiSetTimeouts(void)
   MinTimeout = GetMinimumTimeout(FirstServer);
   if (TimeNow + MinTimeout < NextTimeout || NextTimeout < TimeNow) {
     if (TimeoutTag > 0)
-      gtk_timeout_remove(TimeoutTag);
+      dp_g_source_remove(TimeoutTag);
     TimeoutTag = 0;
     if (MinTimeout > 0) {
-      TimeoutTag = gtk_timeout_add(MinTimeout * 1000, GuiDoTimeouts, NULL);
+      TimeoutTag = dp_g_timeout_add(MinTimeout * 1000, GuiDoTimeouts, NULL);
       NextTimeout = TimeNow + MinTimeout;
     }
   }

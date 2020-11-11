@@ -245,15 +245,6 @@ struct _GdkInput {
   gpointer data;
 };
 
-typedef struct _GtkTimeout GtkTimeout;
-
-struct _GtkTimeout {
-  guint32 interval;
-  GtkFunction function;
-  gpointer data;
-  guint id;
-};
-
 struct _OurSource {
   guint id;     /* Unique identifier */
 
@@ -654,7 +645,6 @@ static HFONT urlFont;
 static GSList *WindowList = NULL;
 static GSList *GdkInputs = NULL;
 static GSList *OurSources = NULL;
-static GSList *GtkTimeouts = NULL;
 static HWND TopLevel = NULL;
 
 static WNDPROC wpOrigEntryProc, wpOrigTextProc;
@@ -709,19 +699,7 @@ static void DispatchTimeoutEvent(UINT id)
 {
   GSList *list;
   OurSource *s;
-  GtkTimeout *timeout;
 
-  for (list = GtkTimeouts; list; list = g_slist_next(list)) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == id) {
-      if (timeout->function) {
-        if (!(*timeout->function) (timeout->data)) {
-          gtk_timeout_remove(id);
-        }
-      }
-      break;
-    }
-  }
   for (list = OurSources; list; list = g_slist_next(list)) {
     s = (OurSource *)list->data;
     if (s->id == id) {
@@ -5429,57 +5407,6 @@ gboolean dp_g_source_remove(guint tag)
     }
   }
   return TRUE;
-}
-
-guint gtk_timeout_add(guint32 interval, GtkFunction function,
-                      gpointer data)
-{
-  GtkTimeout *timeout;
-  GSList *list;
-  guint id = 1;
-
-  /* Get an unused ID */
-  list = GtkTimeouts;
-  while (list) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == id) {
-      id++;
-      list = GtkTimeouts;
-    } else {
-      list = g_slist_next(list);
-    }
-  }
-
-  timeout = g_new(GtkTimeout, 1);
-  timeout->interval = interval;
-  timeout->function = function;
-  timeout->data = data;
-
-  timeout->id = SetTimer(TopLevel, id, interval, NULL);
-  if (timeout->id == 0) {
-    g_warning("Failed to create timer!");
-  }
-
-  GtkTimeouts = g_slist_append(GtkTimeouts, timeout);
-  return timeout->id;
-}
-
-void gtk_timeout_remove(guint timeout_handler_id)
-{
-  GSList *list;
-  GtkTimeout *timeout;
-
-  for (list = GtkTimeouts; list; list = g_slist_next(list)) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == timeout_handler_id) {
-      if (KillTimer(TopLevel, timeout->id) == 0) {
-        g_warning("Failed to kill timer!");
-      }
-      GtkTimeouts = g_slist_remove(GtkTimeouts, timeout);
-      g_free(timeout);
-      break;
-    }
-  }
 }
 
 GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)

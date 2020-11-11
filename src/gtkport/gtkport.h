@@ -688,9 +688,6 @@ GtkWidget *gtk_progress_bar_new();
 void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
                                       GtkProgressBarOrientation orientation);
 void gtk_progress_bar_update(GtkProgressBar *pbar, gfloat percentage);
-guint gtk_timeout_add(guint32 interval, GtkFunction function,
-                      gpointer data);
-void gtk_timeout_remove(guint timeout_handler_id);
 guint gtk_main_level(void);
 GtkObject *GtkNewObject(GtkClass *klass);
 BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
