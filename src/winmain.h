@@ -25,6 +25,8 @@
 
 #ifdef CYGWIN
 
+#include <glib.h>
+
 gchar *GetBinaryDir(void);
 
 #endif /* CYGWIN */

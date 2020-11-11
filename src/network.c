@@ -29,6 +29,7 @@
 #ifdef CYGWIN
 #include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
+#include "winmain.h"
 #else
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/socket.h>         /* For struct sockaddr etc. */
@@ -1188,6 +1189,27 @@ gboolean CurlEasySetopt1(CURL *curl, CURLoption option, void *arg, GError **err)
   }
 }
 
+#ifdef CYGWIN
+/* Set the path to TLS CA certificates. Without this, curl connections
+   to the metaserver may fail on Windows as it cannot verify the
+   certificate.
+ */
+static gboolean SetCaInfo(CurlConnection *conn, GError **err)
+{
+  gchar *bindir, *cainfo;
+  gboolean ret;
+
+  /* Point to a .crt file in the same directory as dopewars.exe */
+  bindir = GetBinaryDir();
+  cainfo = g_strdup_printf("%s\\ca-bundle.crt", bindir);
+  g_free(bindir);
+
+  ret = CurlEasySetopt1(conn->h, CURLOPT_CAINFO, cainfo, err);
+  g_free(cainfo);
+  return ret;
+}
+#endif
+
 gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
                             GError **err)
 {
@@ -1210,6 +1232,9 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
         || !CurlEasySetopt1(conn->h, CURLOPT_WRITEDATA, conn, err)
         || !CurlEasySetopt1(conn->h, CURLOPT_HEADERFUNCTION,
                             MetaConnHeaderFunc, err)
+#ifdef CYGWIN
+        || !SetCaInfo(conn, err)
+#endif
         || !CurlEasySetopt1(conn->h, CURLOPT_HEADERDATA, conn, err)) {
       return FALSE;
     }
