@@ -54,6 +54,8 @@ static void SoundPlay_Cocoa(const gchar *snd)
     p = [[NSSound alloc] initWithContentsOfFile:sound byReference:YES];
     [play_by_name setObject:p forKey:sound];
   }
+  /* First, stop any currently playing sound */
+  [p stop];
   [p play];
 }
 
