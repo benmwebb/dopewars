@@ -20,7 +20,7 @@ Var MUI_TEMP
 
 !if "@host@" == "i686-w64-mingw32"
   ; 32-bit build; no special setup
-!else if "@host@" == "x86_64-w64-mingw64"
+!else if "@host@" == "x86_64-w64-mingw32"
   ; 64-bit build
   !define DOPEWARS_64BIT
 !else
