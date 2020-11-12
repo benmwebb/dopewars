@@ -562,7 +562,7 @@ void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data)
 static gboolean DoConnect(Player *Play, GString *errstr)
 {
   NetworkBuffer *netbuf;
-  fd_set readfds, writefds;
+  fd_set readfds, writefds, errorfds;
   int maxsock, c;
   gboolean doneOK = TRUE;
   NBStatus oldstatus;
@@ -583,11 +583,12 @@ static gboolean DoConnect(Player *Play, GString *errstr)
       oldsocks = netbuf->sockstat;
       FD_ZERO(&readfds);
       FD_ZERO(&writefds);
+      FD_ZERO(&errorfds);
       FD_SET(0, &readfds);
       maxsock = 1;
-      SetSelectForNetworkBuffer(netbuf, &readfds, &writefds, NULL,
+      SetSelectForNetworkBuffer(netbuf, &readfds, &writefds, &errorfds,
                                 &maxsock);
-      if (bselect(maxsock, &readfds, &writefds, NULL, NULL) == -1) {
+      if (bselect(maxsock, &readfds, &writefds, &errorfds, NULL) == -1) {
         if (errno == EINTR) {
           CheckForResize(Play);
           continue;
@@ -603,7 +604,7 @@ static gboolean DoConnect(Player *Play, GString *errstr)
           wrefresh(curscr);
 #endif
       }
-      RespondToSelect(netbuf, &readfds, &writefds, NULL, &doneOK);
+      RespondToSelect(netbuf, &readfds, &writefds, &errorfds, &doneOK);
     }
   }
 
@@ -665,7 +666,9 @@ static gboolean ConnectToServer(Player *Play)
            server (the error message itself is displayed on the next
            screen line) */
         mvaddstr(top, 1, _("Could not start multiplayer dopewars"));
-        text = g_strdup_printf("   (%s)", errstr->str);
+        text = g_strdup_printf("   (%s)",
+                               errstr->str[0] ? errstr->str
+                                  : _("connection to server failed"));
         mvaddstr(top + 1, 1, text);
         g_free(text);
       }
