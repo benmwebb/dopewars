@@ -113,7 +113,7 @@ if test "$CYGWIN" = "yes" ; then
    dnl Libraries and flags
    CFLAGS="$CFLAGS -mwindows $mscompat $nocyg"
    CPPFLAGS="$CPPFLAGS $nocyg"
-   LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
+   LIBS="$LIBS -lwsock32 -lcomctl32 -luxtheme -lmpr"
    LDFLAGS="$LDFLAGS $nocyg"
 
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])

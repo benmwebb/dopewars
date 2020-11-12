@@ -58,6 +58,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 #include <windows.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <uxtheme.h>
 #include <shlwapi.h>
 
 #define LISTITEMVPACK  0
@@ -77,8 +78,6 @@ static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
 static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
-
-static const int ETDT_ENABLETAB     = 0x6;
 
 static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
@@ -1202,30 +1201,6 @@ static gboolean CheckForXPControls(void)
     FreeLibrary(hDll);
   }
   return retval;
-}
-
-/*
- * On systems with suitable DLLs, sets the background texture of the
- * given dialog. dwFlags can be one or more of the ETDT_ constants.
- */
-static void myEnableThemeDialogTexture(HWND hWnd, DWORD dwFlags)
-{
-  typedef HRESULT (*ENABLETHEMEDIALOGTEXTUREPROC)(HWND hWnd, DWORD dwFlags);
-  HINSTANCE module;
-
-  /* Dialog textures are only worth setting when using XP common controls */
-  if (!HaveXPControls) return;
-
-  module = LoadLibrary("UXTHEME.DLL");
-  if (module) {
-    ENABLETHEMEDIALOGTEXTUREPROC func;
-    func = (ENABLETHEMEDIALOGTEXTUREPROC)
-               GetProcAddress(module, "EnableThemeDialogTexture");
-    if (func) {
-      func(hWnd, dwFlags);
-    }
-    FreeLibrary(module);
-  }
 }
 
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -4168,7 +4143,7 @@ void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
   note_child->tabpage = myCreateDialog(hInst, "tabpage",
                                        gtk_get_parent_hwnd(widget->parent),
                                        MainDlgProc);
-  myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
+  EnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
   notebook->children =
       g_slist_insert(notebook->children, note_child, position);
   child->parent = GTK_WIDGET(notebook);
@@ -4240,7 +4215,7 @@ void gtk_notebook_realize(GtkWidget *widget)
       note_child->tabpage = myCreateDialog(hInst, "tabpage",
                                            gtk_get_parent_hwnd(widget->parent),
                                            MainDlgProc);
-      myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
+      EnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
       if (note_child->child) {
         gtk_widget_realize(note_child->child);
       }
