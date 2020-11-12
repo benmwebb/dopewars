@@ -427,6 +427,7 @@ doc/Makefile
 doc/help/Makefile
 dopewars.spec
 doc/dopewars.6
+win32/install.nsi
 po/Makefile.in],
 [])
 
