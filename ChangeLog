@@ -15,6 +15,7 @@ SVN
       variable instead, as per
       https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment)
     - Add sound support on Mac.
+    - Add 64-bit Windows binaries.
     - Fix for a DOS against the server using the REQUESTJET message type
       (thanks to Doug Prostko for reporting the problem).
 
