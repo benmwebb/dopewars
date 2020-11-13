@@ -1964,13 +1964,13 @@ int GetGlobalIndex(gchar *ID1, gchar *ID2)
   if (!ID1)
     return -1;
   for (i = 0; i < NumGlob; i++) {
-    if (g_ascii_strncasecmp(ID1, Globals[i].Name, strlen(Globals[i].Name)) == 0
-        && !Globals[i].NameStruct[0]) {
+    if (!ID2 && !Globals[i].NameStruct[0]
+        && g_ascii_strcasecmp(ID1, Globals[i].Name) == 0) {
       /* Just a bog-standard ID1=value */
       return i;
     }
-    if (g_ascii_strncasecmp(ID1, Globals[i].NameStruct, strlen(Globals[i].NameStruct)) == 0 && ID2
-        && g_ascii_strncasecmp(ID2, Globals[i].Name, strlen(Globals[i].Name)) == 0
+    if (g_ascii_strcasecmp(ID1, Globals[i].NameStruct) == 0 && ID2
+        && g_ascii_strcasecmp(ID2, Globals[i].Name) == 0
         && Globals[i].StructStaticPt && Globals[i].StructListPt) {
       /* ID1[index].ID2=value */
       return i;
