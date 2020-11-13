@@ -3678,7 +3678,9 @@ long GetMinimumTimeout(GSList *First)
   time_t timenow;
 
   timenow = time(NULL);
+#ifdef NETWORKING
   curl_multi_timeout(MetaConn.multi, &mintime);
+#endif
   if (AddTimeout(MetaMinTimeout, timenow, &mintime))
     return 0;
   if (AddTimeout(MetaUpdateTimeout, timenow, &mintime))

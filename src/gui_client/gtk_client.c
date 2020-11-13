@@ -2334,11 +2334,15 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   SetIcon(window, dopewars_pill_xpm);
 
+#ifdef NETWORKING
   CurlInit(&MetaConn);
+#endif
 
   gtk_main();
 
+#ifdef NETWORKING
   CurlCleanup(&MetaConn);
+#endif
 
   /* Free the main player */
   FirstClient = RemovePlayer(ClientData.Play, FirstClient);

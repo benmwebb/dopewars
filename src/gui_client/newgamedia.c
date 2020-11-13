@@ -400,6 +400,7 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
+#ifdef NETWORKING
 static void metalist_row_select(GtkWidget *clist, gint row, gint column,
                                 GdkEvent *event, GtkWidget *conn_button)
 {
@@ -411,6 +412,7 @@ static void metalist_row_unselect(GtkWidget *clist, gint row, gint column,
 {
   gtk_widget_set_sensitive(conn_button, FALSE);
 }
+#endif
 
 #ifdef NETWORKING
 void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn)
@@ -419,12 +421,12 @@ void NewGameDialog(Player *play)
 #endif
 {
   GtkWidget *vbox, *vbox2, *hbox, *label, *entry, *notebook;
-  GtkWidget *frame, *button, *dialog, *defbutton;
+  GtkWidget *frame, *button, *dialog;
   GtkAccelGroup *accel_group;
   guint AccelKey;
 
 #ifdef NETWORKING
-  GtkWidget *clist, *scrollwin, *table, *hbbox;
+  GtkWidget *clist, *scrollwin, *table, *hbbox, *defbutton;
   gchar *server_titles[5], *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
   SetCurlCallback(MetaConn, glib_timeout, glib_socket);

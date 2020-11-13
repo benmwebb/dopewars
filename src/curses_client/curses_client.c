@@ -2662,7 +2662,9 @@ void CursesLoop(struct CMDLINE *cmdline)
   BackupConfig();
 
   start_curses();
+#ifdef NETWORKING
   CurlInit(&MetaConn);
+#endif
   Width = COLS;
   Depth = LINES;
 
@@ -2693,5 +2695,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   } while (c == 'Y');
   FirstClient = RemovePlayer(Play, FirstClient);
   end_curses();
+#ifdef NETWORKING
   CurlCleanup(&MetaConn);
+#endif
 }
