@@ -901,6 +901,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Cops"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
+#ifdef NETWORKING
   table = gtk_table_new(6, 4, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 5);
@@ -935,6 +936,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("Server"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+#endif
 
   vbox2 = gtk_vbox_new(FALSE, 5);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
