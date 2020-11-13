@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/benmwebb/dopewars.svg?branch=develop)](https://travis-ci.com/benmwebb/dopewars)
+
 This is dopewars 1.5.12, a game simulating the life of a drug dealer in 
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
