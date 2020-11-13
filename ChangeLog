@@ -14,6 +14,8 @@ SVN
       and MetaServer.UseSocks are removed (set the https_proxy environment
       variable instead, as per
       https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment)
+    - The default web browser on Linux has changed from 'mozilla' to
+      'firefox'.
     - Add sound support on Mac.
     - Add 64-bit Windows binaries.
     - Fix for a DOS against the server using the REQUESTJET message type

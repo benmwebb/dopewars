@@ -2405,7 +2405,7 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   AssignName(&ServerName, "localhost");
   AssignName(&ServerMOTD, "");
   AssignName(&BindAddress, "");
-  AssignName(&WebBrowser, "/usr/bin/mozilla");
+  AssignName(&WebBrowser, "/usr/bin/firefox");
 
   AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
   AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");
