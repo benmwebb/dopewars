@@ -109,6 +109,27 @@ Section ""
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/zlib1.dll"
 !endif
 
+  SetOutPath "$INSTDIR\locale\de\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\de.gmo"
+
+  SetOutPath "$INSTDIR\locale\es\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\es.gmo"
+
+  SetOutPath "$INSTDIR\locale\es_ES\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\es_ES.gmo"
+
+  SetOutPath "$INSTDIR\locale\fr\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\fr.gmo"
+
+  SetOutPath "$INSTDIR\locale\fr_CA\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\fr_CA.gmo"
+
+  SetOutPath "$INSTDIR\locale\nn\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\nn.gmo"
+
+  SetOutPath "$INSTDIR\locale\pl\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\pl.gmo"
+
   SetOutPath "$INSTDIR\locale\pt_BR\LC_MESSAGES"
   File /oname=dopewars.mo "..\po\pt_BR.gmo"
 
