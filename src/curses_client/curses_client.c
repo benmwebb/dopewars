@@ -2650,6 +2650,13 @@ void CursesLoop(struct CMDLINE *cmdline)
   char c;
   Player *Play;
 
+#ifdef CYGWIN
+  /* On Windows, force UTF-8 rather than the non-Unicode codepage */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
+  Conv_SetInternalCodeset("UTF-8");
+  WantUTF8Errors(TRUE);
+#endif
+
   InitConfiguration(cmdline);
   if (!CheckHighScoreFileConfig())
     return;

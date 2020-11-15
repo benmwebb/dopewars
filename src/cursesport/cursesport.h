@@ -44,18 +44,18 @@ extern int COLS, LINES;
 #define COLOR_BLUE    4
 #define COLOR_RED     5
 
-#define COLOR_PAIR(i) ((i) << 8)
+#define COLOR_PAIR(i) ((i) << 16)
 
-#define ACS_VLINE       179
-#define ACS_ULCORNER    218
-#define ACS_HLINE       196
-#define ACS_URCORNER    191
-#define ACS_TTEE        194
-#define ACS_LLCORNER    192
-#define ACS_LRCORNER    217
-#define ACS_BTEE        193
-#define ACS_LTEE        195
-#define ACS_RTEE        180
+#define ACS_VLINE       0x2502
+#define ACS_ULCORNER    0x250c
+#define ACS_HLINE       0x2500
+#define ACS_URCORNER    0x2510
+#define ACS_TTEE        0x252c
+#define ACS_LLCORNER    0x2514
+#define ACS_LRCORNER    0x2518
+#define ACS_BTEE        0x2534
+#define ACS_LTEE        0x251c
+#define ACS_RTEE        0x2524
 
 typedef int SCREEN;
 
@@ -77,9 +77,9 @@ void keypad(void *, char);
 void curs_set(BOOL visible);
 void endwin(void);
 void move(int y, int x);
-void attrset(WORD newAttr);
+void attrset(int newAttr);
 void addstr(const char *str);
-void addch(int ch);
+void addch(unsigned ch);
 void mvaddstr(int x, int y, const char *str);
 void mvaddch(int x, int y, int ch);
 
