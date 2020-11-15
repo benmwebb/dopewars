@@ -41,6 +41,10 @@
 #include "gtkport.h"
 #include "nls.h"
 
+#ifdef APPLE
+#include "mac_helpers.h"
+#endif
+
 #if CYGWIN
 #include "unicodewrap.h"
 const gchar *GTK_STOCK_OK = N_("_OK");
@@ -5641,7 +5645,9 @@ static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
 
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 {
-#ifdef HAVE_FORK
+#ifdef APPLE
+  mac_open_url(target);
+#elif defined(HAVE_FORK)
   char *args[3];
   pid_t pid;
   int status;

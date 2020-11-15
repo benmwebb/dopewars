@@ -5,7 +5,6 @@ MYLINK = $(LIBTOOL) --mode=link --tag=CC $(CCLD)
 else
 MYLINK = $(CCLD)
 endif
-LINK = $(MYLINK) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 
 if GUI_CLIENT
 GUISUBDIR = gui_client
@@ -32,6 +31,13 @@ dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    serverside.c serverside.h sound.c sound.h \
                    tstring.c tstring.h winmain.c winmain.h
 AM_CPPFLAGS= -I../intl -I${srcdir} -I.. @GLIB_CFLAGS@ @GTK_CFLAGS@ @LIBCURL_CPPFLAGS@
+if APPLE
+dopewars_SOURCES += mac_helpers.m
+MACLDFLAGS = -framework AppKit
+else
+MACLDFLAGS =
+endif
+LINK = $(MYLINK) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) $(MACLDFLAGS) -o $@
 DEFS       = @DEFS@
 PIXDIR     = ${DESTDIR}${datadir}/pixmaps
 DOPEDIR    = ${DESTDIR}${bindir}

@@ -59,10 +59,14 @@ AC_ARG_WITH(sdl,
 [ USE_SDL="$withval" ], [ USE_SDL="probe" ])
 
 if test "$host_vendor" = "apple" ; then
+  APPLE=yes
+  AC_DEFINE(APPLE, 1, [Are we building on an Apple Mac?])
   default_cocoa="yes"
 else
+  APPLE=no
   default_cocoa="no"
 fi
+AM_CONDITIONAL(APPLE, test "$APPLE" = "yes")
 
 AC_ARG_WITH(cocoa,
 [  --without-cocoa         do not support Cocoa (Mac) sound output],
