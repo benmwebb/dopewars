@@ -1477,26 +1477,26 @@ void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
                   gboolean Exception, gboolean CallNow)
 {
   if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
+    dp_g_source_remove(NetBuf->InputTag);
   NetBuf->InputTag = 0;
   if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0) |
-                                     (Exception ? GDK_INPUT_EXCEPTION : 0),
+    NetBuf->InputTag = dp_g_io_add_watch(NetBuf->ioch,
+                                     (Read ? G_IO_IN : 0) |
+                                     (Write ? G_IO_OUT : 0) |
+                                     (Exception ? G_IO_ERR : 0),
                                      GuiHandleSocket,
                                      NetBuf->CallBackData);
   }
   if (CallNow)
-    GuiHandleSocket(NetBuf->CallBackData, NetBuf->fd, 0);
+    GuiHandleSocket(NetBuf->ioch, 0, NetBuf->CallBackData);
 }
 
-static void GuiNewConnect(gpointer data, gint socket,
-                          GdkInputCondition condition)
+static void GuiNewConnect(GIOChannel *source, GIOCondition condition,
+                          gpointer data)
 {
   Player *Play;
 
-  if (condition & GDK_INPUT_READ) {
+  if (condition & G_IO_IN) {
     Play = HandleNewConnection();
     SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
   }
@@ -1643,6 +1643,7 @@ static void SetupTaskBarIcon(GtkWidget *widget)
 void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 {
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
+  GIOChannel *listench;
 
   if (HaveUnicodeSupport()) {
     /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
@@ -1699,8 +1700,12 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   if (!StartServer())
     return;
 
-  ListenTag =
-      gdk_input_add(ListenSock, GDK_INPUT_READ, GuiNewConnect, NULL);
+#ifdef CYGIN
+  listench = g_io_channel_win32_new_socket(ListenSock);
+#else
+  listench = g_io_channel_unix_new(ListenSock);
+#endif
+  ListenTag = dp_g_io_add_watch(listench, G_IO_IN, GuiNewConnect, NULL);
 #ifdef CYGWIN
   mainhwnd = window->hWnd;
   SetupTaskBarIcon(window);

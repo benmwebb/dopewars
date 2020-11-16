@@ -239,15 +239,6 @@ static void gtk_accel_group_set_id(GtkAccelGroup *accel_group, gint ind,
                                    gint ID);
 static void EnableParent(GtkWindow *window);
 
-typedef struct _GdkInput GdkInput;
-
-struct _GdkInput {
-  gint source;
-  GdkInputCondition condition;
-  GdkInputFunction function;
-  gpointer data;
-};
-
 struct _OurSource {
   guint id;     /* Unique identifier */
 
@@ -646,7 +637,6 @@ HINSTANCE hInst;
 HFONT defFont;
 static HFONT urlFont;
 static GSList *WindowList = NULL;
-static GSList *GdkInputs = NULL;
 static GSList *OurSources = NULL;
 static HWND TopLevel = NULL;
 
@@ -671,20 +661,8 @@ GtkObject *GtkNewObject(GtkClass *klass)
 static void DispatchSocketEvent(SOCKET sock, long event)
 {
   GSList *list;
-  GdkInput *input;
   OurSource *s;
 
-  for (list = GdkInputs; list; list = g_slist_next(list)) {
-    input = (GdkInput *)(list->data);
-    if (input->source == sock) {
-      (*input->function) (input->data, input->source,
-                          (event & (FD_READ | FD_CLOSE | FD_ACCEPT) ?
-                           GDK_INPUT_READ : 0) |
-                          (event & (FD_WRITE | FD_CONNECT) ?
-                           GDK_INPUT_WRITE : 0));
-      break;
-    }
-  }
   for (list = OurSources; list; list = g_slist_next(list)) {
     s = (OurSource *)(list->data);
     if (s->socket == sock) {
@@ -4480,40 +4458,6 @@ void gtk_spin_button_hide(GtkWidget *widget)
 
 void gtk_spin_button_update(GtkSpinButton *spin_button)
 {
-}
-
-void gdk_input_remove(gint tag)
-{
-  GSList *list;
-  GdkInput *input;
-
-  for (list = GdkInputs; list; list = g_slist_next(list)) {
-    input = (GdkInput *)list->data;
-    if (input->source == tag) {
-      WSAAsyncSelect(input->source, TopLevel, 0, 0);
-      GdkInputs = g_slist_remove(GdkInputs, input);
-      g_free(input);
-      break;
-    }
-  }
-}
-
-gint gdk_input_add(gint source, GdkInputCondition condition,
-                   GdkInputFunction function, gpointer data)
-{
-  GdkInput *input;
-
-  input = g_new(GdkInput, 1);
-  input->source = source;
-  input->condition = condition;
-  input->function = function;
-  input->data = data;
-  WSAAsyncSelect(source, TopLevel, MYWM_SOCKETDATA,
-                 (condition & GDK_INPUT_READ ? FD_READ | FD_CLOSE |
-                  FD_ACCEPT : 0) | (condition & GDK_INPUT_WRITE ?
-                                    FD_WRITE | FD_CONNECT : 0));
-  GdkInputs = g_slist_append(GdkInputs, input);
-  return source;
 }
 
 GtkWidget *gtk_hseparator_new()

@@ -133,7 +133,8 @@ typedef enum {
 /* Handles reading and writing messages from/to a network connection */
 struct _NetworkBuffer {
   int fd;                       /* File descriptor of the socket */
-  gint InputTag;                /* Identifier for gdk_input routines */
+  GIOChannel *ioch;             /* GLib representation of the descriptor */
+  gint InputTag;                /* Identifier for GLib event routines */
   NBCallBack CallBack;          /* Function called when the socket
                                  * status changes */
   gpointer CallBackData;        /* Data accessible to the callback

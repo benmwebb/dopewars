@@ -190,6 +190,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf, char Terminator,
                        char StripChar, SocksServer *socks)
 {
   NetBuf->fd = -1;
+  NetBuf->ioch = NULL;
   NetBuf->InputTag = 0;
   NetBuf->CallBack = NULL;
   NetBuf->CallBackData = NULL;
@@ -233,6 +234,12 @@ void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
 {
   NetBuf->fd = fd;
+#ifdef CYGIN
+  NetBuf->ioch = g_io_channel_win32_new_socket(fd);
+#else
+  NetBuf->ioch = g_io_channel_unix_new(fd);
+#endif
+
   SetBlocking(fd, FALSE);       /* We only deal with non-blocking sockets */
   NetBuf->status = NBS_CONNECTED;       /* Assume the socket is connected */
 }
@@ -266,6 +273,11 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
 
   if (StartConnect(&NetBuf->fd, bindaddr, realhost, realport, &doneOK,
                    &NetBuf->error)) {
+#ifdef CYGIN
+    NetBuf->ioch = g_io_channel_win32_new_socket(NetBuf->fd);
+#else
+    NetBuf->ioch = g_io_channel_unix_new(NetBuf->fd);
+#endif
     /* If we connected immediately, then set status, otherwise signal that 
      * we're waiting for the connect to complete */
     if (doneOK) {
@@ -298,8 +310,11 @@ void ShutdownNetworkBuffer(NetworkBuffer *NetBuf)
 {
   NetBufCallBackStop(NetBuf);
 
-  if (NetBuf->fd >= 0)
+  if (NetBuf->fd >= 0) {
     CloseSocket(NetBuf->fd);
+    g_io_channel_unref(NetBuf->ioch);
+    NetBuf->fd = -1;
+  }
 
   FreeConnBuf(&NetBuf->ReadBuf);
   FreeConnBuf(&NetBuf->WriteBuf);

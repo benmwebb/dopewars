@@ -60,8 +60,6 @@ extern HICON mainIcon;
 #define GDK_KP_9 0xFFB9
 
 typedef gint (*GtkFunction) (gpointer data);
-typedef void (*GdkInputFunction) (gpointer data, gint source,
-                                  GdkInputCondition condition);
 typedef gchar *(*GtkTranslateFunc) (const gchar *path, gpointer func_data);
 typedef void (*GtkDestroyNotify) (gpointer data);
 
@@ -617,9 +615,6 @@ GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
                               gfloat page_size);
 GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
                                gfloat climb_rate, guint digits);
-void gdk_input_remove(gint tag);
-gint gdk_input_add(gint source, GdkInputCondition condition,
-                   GdkInputFunction function, gpointer data);
 
 guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
                         GIOFunc func, gpointer user_data);

@@ -80,12 +80,6 @@ typedef enum {
 } GtkSelectionMode;
 
 typedef enum {
-  GDK_INPUT_READ      = 1 << 0,
-  GDK_INPUT_WRITE     = 1 << 1,
-  GDK_INPUT_EXCEPTION = 1 << 2
-} GdkInputCondition;
-
-typedef enum {
   GTK_SHADOW_NONE,
   GTK_SHADOW_IN,
   GTK_SHADOW_OUT,

@@ -105,8 +105,8 @@ static void Jet(GtkWidget *parent);
 static void UpdateMenus(void);
 
 #ifdef NETWORKING
-static void GetClientMessage(gpointer data, gint socket,
-                             GdkInputCondition condition);
+gboolean GetClientMessage(GIOChannel *source, GIOCondition condition,
+                          gpointer data);
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
                   gboolean Exception, gboolean CallNow);
 
@@ -358,8 +358,8 @@ void ListInventory(GtkWidget *widget, gpointer data)
 }
 
 #ifdef NETWORKING
-void GetClientMessage(gpointer data, gint socket,
-                      GdkInputCondition condition)
+gboolean GetClientMessage(GIOChannel *source, GIOCondition condition,
+                          gpointer data)
 {
   gchar *pt;
   NetworkBuffer *NetBuf;
@@ -373,9 +373,9 @@ void GetClientMessage(gpointer data, gint socket,
   oldsocks = NetBuf->sockstat;
 
   datawaiting =
-      PlayerHandleNetwork(ClientData.Play, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE,
-                          condition & GDK_INPUT_EXCEPTION, &DoneOK);
+      PlayerHandleNetwork(ClientData.Play, condition & G_IO_IN,
+                          condition & G_IO_OUT,
+                          condition & G_IO_ERR, &DoneOK);
   status = NetBuf->status;
 
   /* Handle pre-game stuff */
@@ -405,24 +405,25 @@ void GetClientMessage(gpointer data, gint socket,
       ShutdownNetworkBuffer(&ClientData.Play->NetBuf);
     }
   }
+  return TRUE;
 }
 
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
                   gboolean Exception, gboolean CallNow)
 {
   if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
+    dp_g_source_remove(NetBuf->InputTag);
   NetBuf->InputTag = 0;
   if (Read || Write || Exception) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0) |
-                                     (Exception ? GDK_INPUT_EXCEPTION : 0),
+    NetBuf->InputTag = dp_g_io_add_watch(NetBuf->ioch,
+                                     (Read ? G_IO_IN : 0) |
+                                     (Write ? G_IO_OUT : 0) |
+                                     (Exception ? G_IO_ERR : 0),
                                      GetClientMessage,
                                      NetBuf->CallBackData);
   }
   if (CallNow)
-    GetClientMessage(NetBuf->CallBackData, NetBuf->fd, 0);
+    GetClientMessage(NetBuf->ioch, 0, NetBuf->CallBackData);
 }
 #endif /* NETWORKING */
 
