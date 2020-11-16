@@ -1308,6 +1308,7 @@ static void remsock(SockData *f)
   if (f->ev) {
     dp_g_source_remove(f->ev);
   }
+  g_io_channel_unref(f->ch);
   g_free(f);
 }
 
