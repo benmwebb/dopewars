@@ -290,7 +290,7 @@ void ToggleSound(GtkWidget *widget, gpointer data)
   widget = gtk_item_factory_get_widget(ClientData.Menu,
                                        "<main>/Game/Enable sound");
   if (widget) {
-    enable = GTK_CHECK_MENU_ITEM(widget)->active;
+    enable = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
     SoundEnable(enable);
   }
 }
