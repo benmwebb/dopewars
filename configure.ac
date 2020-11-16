@@ -167,15 +167,19 @@ else
 
    gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
-      AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
-      if test "$gtk2_found" = "no" ; then
-         if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-            AC_MSG_ERROR(Cannot find GTK+)
-         else
-            AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
-            GUI_CLIENT="no"
-            GUI_SERVER="no"
-         fi
+      PKG_PROG_PKG_CONFIG()
+      PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+      if test "$gtk3_found" = "no" ; then
+        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+        if test "$gtk2_found" = "no" ; then
+          if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+             AC_MSG_ERROR(Cannot find GTK+)
+          else
+             AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
+             GUI_CLIENT="no"
+             GUI_SERVER="no"
+          fi
+        fi
       fi
    fi
 
