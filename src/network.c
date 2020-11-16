@@ -1331,7 +1331,11 @@ static void addsock(curl_socket_t s, CURL *easy, int action, CurlConnection *g)
 {
   SockData *fdp = g_malloc0(sizeof(SockData));
 
+#ifdef CYGIN
+  fdp->ch = g_io_channel_win32_new_socket(s);
+#else
   fdp->ch = g_io_channel_unix_new(s);
+#endif
   setsock(fdp, s, easy, action, g);
   curl_multi_assign(g->multi, s, fdp);
 }
