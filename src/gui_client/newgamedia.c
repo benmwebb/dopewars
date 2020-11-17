@@ -223,20 +223,31 @@ static void ConnectToServer(GtkWidget *widget, gpointer data)
   }
 }
 
+/* Columns in metaserver list */
+enum {
+  META_COL_SERVER = 0,
+  META_COL_PORT,
+  META_COL_VERSION,
+  META_COL_PLAYERS,
+  META_COL_COMMENT,
+  META_NUM_COLS
+};
+
 static void FillMetaServerList(gboolean UseNewList)
 {
   GtkWidget *metaserv;
+  GtkListStore *store;
   ServerData *ThisServer;
-  gchar *titles[5];
+  GtkTreeIter iter;
   GSList *ListPt;
-  gint row, width;
 
   if (UseNewList && !stgam.NewMetaList)
     return;
 
   metaserv = stgam.metaserv;
-  gtk_clist_freeze(GTK_CLIST(metaserv));
-  gtk_clist_clear(GTK_CLIST(metaserv));
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(metaserv)));
+
+  gtk_list_store_clear(store);
 
   if (UseNewList) {
     ClearServerList(&MetaList);
@@ -245,36 +256,27 @@ static void FillMetaServerList(gboolean UseNewList)
   }
 
   for (ListPt = MetaList; ListPt; ListPt = g_slist_next(ListPt)) {
+    char *players;
     ThisServer = (ServerData *)(ListPt->data);
-    titles[0] = ThisServer->Name;
-    titles[1] = g_strdup_printf("%d", ThisServer->Port);
-    titles[2] = ThisServer->Version;
     if (ThisServer->CurPlayers == -1) {
       /* Displayed if we don't know how many players are logged on to a
          server */
-      titles[3] = _("Unknown");
+      players = _("Unknown");
     } else {
       /* e.g. "5 of 20" means 5 players are logged on to a server, out of
          a maximum of 20 */
-      titles[3] = g_strdup_printf(_("%d of %d"), ThisServer->CurPlayers,
+      players = g_strdup_printf(_("%d of %d"), ThisServer->CurPlayers,
                                   ThisServer->MaxPlayers);
     }
-    titles[4] = ThisServer->Comment;
-    row = gtk_clist_append(GTK_CLIST(metaserv), titles);
-    gtk_clist_set_row_data(GTK_CLIST(metaserv), row, (gpointer)ThisServer);
-    g_free(titles[1]);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, META_COL_SERVER, ThisServer->Name,
+		       META_COL_PORT, ThisServer->Port,
+		       META_COL_VERSION, ThisServer->Version,
+		       META_COL_PLAYERS, players,
+		       META_COL_COMMENT, ThisServer->Comment, -1);
     if (ThisServer->CurPlayers != -1)
-      g_free(titles[3]);
+      g_free(players);
   }
-  if (MetaList) {
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 4);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 4, width);
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 3);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 3, width);
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 0);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 0, width);
-  }
-  gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
 void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks)
@@ -352,18 +354,18 @@ static void UpdateMetaServerList(GtkWidget *widget)
 
 static void MetaServerConnect(GtkWidget *widget, gpointer data)
 {
-  GList *selection;
-  gint row;
-  GtkWidget *clist;
-  ServerData *ThisServer;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
 
-  clist = stgam.metaserv;
-  selection = GTK_CLIST(clist)->selection;
-  if (selection) {
-    row = GPOINTER_TO_INT(selection->data);
-    ThisServer = (ServerData *)gtk_clist_get_row_data(GTK_CLIST(clist), row);
-    AssignName(&ServerName, ThisServer->Name);
-    Port = ThisServer->Port;
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(stgam.metaserv));
+
+  if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
+    gchar *name;
+    gtk_tree_model_get(model, &iter, META_COL_SERVER, &name,
+                       META_COL_PORT, &Port, -1);
+    AssignName(&ServerName, name);
+    g_free(name);
 
     if (GetStartGamePlayerName(&stgam.play->Name)) {
       DoConnect();
@@ -401,16 +403,54 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
 }
 
 #ifdef NETWORKING
-static void metalist_row_select(GtkWidget *clist, gint row, gint column,
-                                GdkEvent *event, GtkWidget *conn_button)
+static void metalist_changed(GtkTreeSelection *sel, GtkWidget *conn_button)
 {
-  gtk_widget_set_sensitive(conn_button, TRUE);
+  gtk_widget_set_sensitive(conn_button,
+                           gtk_tree_selection_count_selected_rows(sel) > 0);
+}
+#endif
+
+#ifdef NETWORKING
+static GtkTreeModel *create_metaserver_model(void)
+{
+  GtkListStore *store;
+
+  store = gtk_list_store_new(META_NUM_COLS, G_TYPE_STRING, G_TYPE_UINT,
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  return GTK_TREE_MODEL(store);
 }
 
-static void metalist_row_unselect(GtkWidget *clist, gint row, gint column,
-                                  GdkEvent *event, GtkWidget *conn_button)
+static GtkWidget *create_metaserver_view(void)
 {
-  gtk_widget_set_sensitive(conn_button, FALSE);
+  int i;
+  GtkWidget *view;
+  GtkTreeModel *model;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *col;
+  gchar *server_titles[META_NUM_COLS];
+  gboolean expand[META_NUM_COLS];
+
+  /* Column titles of metaserver information */
+  server_titles[0] = _("Server");  expand[0] = TRUE;
+  server_titles[1] = _("Port");    expand[1] = FALSE;
+  server_titles[2] = _("Version"); expand[2] = FALSE;
+  server_titles[3] = _("Players"); expand[3] = FALSE;
+  server_titles[4] = _("Comment"); expand[4] = TRUE;
+
+  view = gtk_tree_view_new();
+  renderer = gtk_cell_renderer_text_new();
+  for (i = 0; i < META_NUM_COLS; ++i) {
+    col = gtk_tree_view_column_new_with_attributes(
+              server_titles[i], renderer, "text", i, NULL);
+    gtk_tree_view_column_set_resizable(col, TRUE);
+    gtk_tree_view_column_set_expand(col, expand[i]);
+    gtk_tree_view_insert_column(GTK_TREE_VIEW(view), col, -1);
+  }
+  model = create_metaserver_model();
+  gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+  /* Tree view keeps a reference, so we can drop ours */
+  g_object_unref(model);
+  return view;
 }
 #endif
 
@@ -427,16 +467,10 @@ void NewGameDialog(Player *play)
 
 #ifdef NETWORKING
   GtkWidget *clist, *scrollwin, *table, *hbbox, *defbutton;
-  gchar *server_titles[5], *ServerEntry, *text;
+  GtkTreeSelection *treesel;
+  gchar *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
   SetCurlCallback(MetaConn, glib_timeout, glib_socket);
-
-  /* Column titles of metaserver information */
-  server_titles[0] = _("Server");
-  server_titles[1] = _("Port");
-  server_titles[2] = _("Version");
-  server_titles[3] = _("Players");
-  server_titles[4] = _("Comment");
 
   stgam.MetaConn = MetaConn;
   stgam.NewMetaList = NULL;
@@ -571,12 +605,15 @@ void NewGameDialog(Player *play)
   vbox2 = gtk_vbox_new(FALSE, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 
-  clist = stgam.metaserv =
-      gtk_scrolled_clist_new_with_titles(5, server_titles, &scrollwin);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 0, 130);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 1, 35);
+  clist = stgam.metaserv = create_metaserver_view();
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(clist), FALSE);
+  gtk_tree_selection_set_mode(
+       gtk_tree_view_get_selection(GTK_TREE_VIEW(clist)), GTK_SELECTION_SINGLE);
+  scrollwin = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                 GTK_POLICY_AUTOMATIC,
+                                 GTK_POLICY_AUTOMATIC);
+  gtk_container_add (GTK_CONTAINER(scrollwin), clist);
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
@@ -593,10 +630,8 @@ void NewGameDialog(Player *play)
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(MetaServerConnect), NULL);
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(metalist_row_select), button);
-  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(metalist_row_unselect), button);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
+  g_signal_connect(treesel, "changed", G_CALLBACK(metalist_changed), button);
   gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
