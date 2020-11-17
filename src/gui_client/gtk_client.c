@@ -2710,14 +2710,34 @@ struct TalkStruct {
   GtkWidget *dialog, *clist, *entry, *checkbutton;
 };
 
+/* Columns in player list */
+enum {
+  PLAYER_COL_NAME = 0,
+  PLAYER_COL_PT,
+  PLAYER_NUM_COLS
+};
+
+static void TalkSendSelected(GtkTreeModel *model, GtkTreePath *path,
+                             GtkTreeIter *iter, gpointer data)
+{
+  Player *Play;
+  gchar *text = data;
+  gtk_tree_model_get(model, iter, PLAYER_COL_PT, &Play, -1);
+  if (Play) {
+    gchar *msg = g_strdup_printf(
+                     "%s->%s: %s", GetPlayerName(ClientData.Play),
+                     GetPlayerName(Play), text);
+    SendClientMessage(ClientData.Play, C_NONE, C_MSGTO, Play, text);
+    PrintMessage(msg, "page");
+    g_free(msg);
+  }
+}
+
 static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
 {
   gboolean AllPlayers;
   gchar *text;
   GString *msg;
-  GList *selection;
-  gint row;
-  Player *Play;
 
   AllPlayers =
       gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON
@@ -2734,17 +2754,9 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
     g_string_printf(msg, "%s: %s", GetPlayerName(ClientData.Play), text);
     PrintMessage(msg->str, "talk");
   } else {
-    for (selection = GTK_CLIST(TalkData->clist)->selection; selection;
-         selection = g_list_next(selection)) {
-      row = GPOINTER_TO_INT(selection->data);
-      Play = (Player *)gtk_clist_get_row_data(GTK_CLIST(TalkData->clist), row);
-      if (Play) {
-        SendClientMessage(ClientData.Play, C_NONE, C_MSGTO, Play, text);
-        g_string_printf(msg, "%s->%s: %s", GetPlayerName(ClientData.Play),
-                         GetPlayerName(Play), text);
-        PrintMessage(msg->str, "page");
-      }
-    }
+    GtkTreeSelection *tsel = gtk_tree_view_get_selection(
+                                        GTK_TREE_VIEW(TalkData->clist));
+    gtk_tree_selection_selected_foreach(tsel, TalkSendSelected, text);
   }
   g_free(text);
   g_string_free(msg, TRUE);
@@ -2789,7 +2801,9 @@ void TalkDialog(gboolean TalkToAll)
 
   clist = TalkData.clist = ClientData.TalkList = CreatePlayerList();
   UpdatePlayerList(clist, FALSE);
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_MULTIPLE);
+  gtk_tree_selection_set_mode(
+          gtk_tree_view_get_selection(GTK_TREE_VIEW(clist)),
+          GTK_SELECTION_MULTIPLE);
   gtk_box_pack_start(GTK_BOX(vbox), clist, TRUE, TRUE, 0);
 
   checkbutton = TalkData.checkbutton =
@@ -2835,51 +2849,66 @@ void TalkDialog(gboolean TalkToAll)
 
 GtkWidget *CreatePlayerList(void)
 {
-  GtkWidget *clist;
-  gchar *text[1];
+  GtkWidget *view;
+  GtkListStore *store;
+  GtkCellRenderer *renderer;
 
-  text[0] = "Name";
-  clist = gtk_clist_new_with_titles(1, text);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_column_auto_resize(GTK_CLIST(clist), 0, TRUE);
-  return clist;
+  store = gtk_list_store_new(PLAYER_NUM_COLS, G_TYPE_STRING, G_TYPE_POINTER);
+
+  view = gtk_tree_view_new();
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(view), -1, "Name", renderer, "text",
+               PLAYER_COL_NAME, NULL);
+  gtk_tree_view_set_model(GTK_TREE_VIEW(view), GTK_TREE_MODEL(store));
+  g_object_unref(store);  /* so it is freed when the view is */
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(view), FALSE);
+  return view;
 }
 
 void UpdatePlayerList(GtkWidget *clist, gboolean IncludeSelf)
 {
+  GtkListStore *store;
   GSList *list;
-  gchar *text[1];
-  gint row;
+  GtkTreeIter iter;
   Player *Play;
 
-  gtk_clist_freeze(GTK_CLIST(clist));
-  gtk_clist_clear(GTK_CLIST(clist));
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(clist)));
+
+  /* Don't update the widget until we're done */
+  g_object_ref(store);
+  gtk_tree_view_set_model(GTK_TREE_VIEW(clist), NULL);
+
+  gtk_list_store_clear(store);
   for (list = FirstClient; list; list = g_slist_next(list)) {
     Play = (Player *)list->data;
     if (IncludeSelf || Play != ClientData.Play) {
-      text[0] = GetPlayerName(Play);
-      row = gtk_clist_append(GTK_CLIST(clist), text);
-      gtk_clist_set_row_data(GTK_CLIST(clist), row, Play);
+      gtk_list_store_append(store, &iter);
+      gtk_list_store_set(store, &iter, PLAYER_COL_NAME, GetPlayerName(Play),
+                         PLAYER_COL_PT, Play, -1);
     }
   }
-  gtk_clist_thaw(GTK_CLIST(clist));
+
+  gtk_tree_view_set_model(GTK_TREE_VIEW(clist), GTK_TREE_MODEL(store));
+  g_object_unref(store);
 }
 
 static void ErrandOK(GtkWidget *widget, GtkWidget *clist)
 {
-  GList *selection;
-  Player *Play;
-  gint row;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
   GtkWidget *dialog;
   gint ErrandType;
+
 
   dialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget), "dialog"));
   ErrandType = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),
                                                    "errandtype"));
-  selection = GTK_CLIST(clist)->selection;
-  if (selection) {
-    row = GPOINTER_TO_INT(selection->data);
-    Play = (Player *)gtk_clist_get_row_data(GTK_CLIST(clist), row);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
+  if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
+    Player *Play;
+    gtk_tree_model_get(model, &iter, PLAYER_COL_PT, &Play, -1);
     if (ErrandType == ET_SPY) {
       SendClientMessage(ClientData.Play, C_NONE, C_SPYON, Play, NULL);
     } else {
