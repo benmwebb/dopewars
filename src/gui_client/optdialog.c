@@ -654,9 +654,9 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   clist = gtk_scrolled_clist_new_with_titles(1, titles, &scrollwin);
 
   gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(list_row_select), structname);
+                     G_CALLBACK(list_row_select), structname);
   gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(list_row_unselect), structname);
+                     G_CALLBACK(list_row_unselect), structname);
   gtk_clist_column_titles_passive(GTK_CLIST(clist));
   gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
   gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
@@ -674,7 +674,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   button = gtk_button_new_with_label(_("New"));
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_new), structname);
+                     G_CALLBACK(list_new), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Delete"));
@@ -684,7 +684,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_object_set_data(GTK_OBJECT(clist), "minlistlength",
                       GINT_TO_POINTER(minlistlength));
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_delete), structname);
+                     G_CALLBACK(list_delete), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Up"));
@@ -692,7 +692,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
   gtk_object_set_data(GTK_OBJECT(clist), "up", button);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_up), structname);
+                     G_CALLBACK(list_up), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Down"));
@@ -700,7 +700,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
   gtk_object_set_data(GTK_OBJECT(clist), "down", button);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_down), structname);
+                     G_CALLBACK(list_down), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -948,9 +948,9 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
   FillSoundsList(GTK_CLIST(clist));
   gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(sound_row_select), NULL);
+                     G_CALLBACK(sound_row_select), NULL);
   gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(sound_row_unselect), NULL);
+                     G_CALLBACK(sound_row_unselect), NULL);
 
   clists = g_slist_append(clists, clist);
 
@@ -966,12 +966,12 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   button = gtk_button_new_with_label(_("Browse..."));
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(BrowseSound), GTK_OBJECT(entry));
+                            G_CALLBACK(BrowseSound), GTK_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   button = gtk_button_new_with_label(_("Play"));
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(TestPlaySound), GTK_OBJECT(entry));
+                            G_CALLBACK(TestPlaySound), GTK_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, FALSE, 0);
@@ -990,20 +990,20 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
+                     G_CALLBACK(OKCallback), (gpointer)dialog);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_HELP, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(HelpCallback), (gpointer)notebook);
+                     G_CALLBACK(HelpCallback), (gpointer)notebook);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                            G_CALLBACK(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                     GTK_SIGNAL_FUNC(FinishOptDialog), NULL);
+                     G_CALLBACK(FinishOptDialog), NULL);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
