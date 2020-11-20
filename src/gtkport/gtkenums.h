@@ -121,6 +121,13 @@ typedef enum
   GTK_WIN_POS_CENTER_ON_PARENT
 } GtkWindowPosition;
 
+enum
+{
+  G_TYPE_STRING,
+  G_TYPE_UINT,
+  G_TYPE_POINTER
+};
+
 #endif /* CYGWIN */
 
 #endif /* __GTKENUMS_H__ */

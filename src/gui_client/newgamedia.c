@@ -420,7 +420,7 @@ static GtkTreeModel *create_metaserver_model(void)
   return GTK_TREE_MODEL(store);
 }
 
-static GtkWidget *create_metaserver_view(void)
+static GtkWidget *create_metaserver_view(GtkWidget **pack_widg)
 {
   int i;
   GtkWidget *view;
@@ -437,7 +437,7 @@ static GtkWidget *create_metaserver_view(void)
   server_titles[3] = _("Players"); expand[3] = FALSE;
   server_titles[4] = _("Comment"); expand[4] = TRUE;
 
-  view = gtk_tree_view_new();
+  view = gtk_scrolled_tree_view_new(pack_widg);
   renderer = gtk_cell_renderer_text_new();
   for (i = 0; i < META_NUM_COLS; ++i) {
     col = gtk_tree_view_column_new_with_attributes(
@@ -605,15 +605,10 @@ void NewGameDialog(Player *play)
   vbox2 = gtk_vbox_new(FALSE, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 
-  clist = stgam.metaserv = create_metaserver_view();
+  clist = stgam.metaserv = create_metaserver_view(&scrollwin);
   gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(clist), FALSE);
   gtk_tree_selection_set_mode(
        gtk_tree_view_get_selection(GTK_TREE_VIEW(clist)), GTK_SELECTION_SINGLE);
-  scrollwin = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                 GTK_POLICY_AUTOMATIC,
-                                 GTK_POLICY_AUTOMATIC);
-  gtk_container_add (GTK_CONTAINER(scrollwin), clist);
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 

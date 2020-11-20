@@ -172,6 +172,7 @@ struct _GtkContainer {
 };
 
 #include "clist.h"
+#include "treeview.h"
 
 struct _GtkMisc {
   GtkWidget widget;
@@ -579,6 +580,7 @@ void gtk_main_quit();
 void gtk_main();
 guint gtk_signal_connect(GtkObject *object, const gchar *name,
                          GtkSignalFunc func, gpointer func_data);
+#define g_signal_connect gtk_signal_connect
 guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
                                 GtkSignalFunc func,
                                 GtkObject *slot_object);

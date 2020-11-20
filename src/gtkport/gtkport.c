@@ -1294,6 +1294,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     myRegisterClass(&wc);
 
     InitCListClass(hInstance);
+    InitTreeViewClass(hInstance);
   }
 }
 
