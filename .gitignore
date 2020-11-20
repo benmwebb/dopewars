@@ -5,6 +5,8 @@ win32/install.nsi
 *.a
 *.la
 *.lo
+*~
+src/dopewars.res
 src/plugins/.libs/
 src/dopewars
 config.cache
