@@ -141,8 +141,6 @@ gint gtk_tree_view_insert_column(GtkTreeView *tree_view,
 
 GtkCellRenderer *gtk_cell_renderer_text_new(void);
 
-GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg);
-
 void g_object_unref(gpointer object);
 gpointer g_object_ref(gpointer object);
 
