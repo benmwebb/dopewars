@@ -564,7 +564,7 @@ void NewGameDialog(Player *play)
                    G_CALLBACK(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(frame), vbox2);
-  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button, TRUE);
   defbutton = button;
   
   label = gtk_label_new(_("Server"));

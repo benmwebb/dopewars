@@ -802,7 +802,7 @@ void CompleteHighScoreDialog(gboolean AtEnd)
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), hbbox, FALSE, FALSE, 0);
 
-  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button, TRUE);
   gtk_widget_grab_default(button);
   gtk_widget_show_all(hbbox);
 
@@ -1766,7 +1766,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   button = NewStockButton(GTK_STOCK_OK, accel_group);
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(DealOKCallback), data);
-  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button, TRUE);
   defbutton = button;
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
@@ -2489,7 +2489,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
-  GTK_WIDGET_SET_FLAGS(OKButton, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(OKButton, TRUE);
   gtk_widget_grab_default(OKButton);
 
   gtk_widget_show_all(dialog);
@@ -3219,7 +3219,7 @@ void NewNameDialog(void)
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(NewNameOK), window);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button, TRUE);
   gtk_widget_grab_default(button);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
