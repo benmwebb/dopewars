@@ -991,12 +991,12 @@ void OptDialog(GtkWidget *widget, gpointer data)
   button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_HELP, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(HelpCallback), (gpointer)notebook);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
@@ -1004,7 +1004,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
                             GTK_OBJECT(dialog));
   gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
                      GTK_SIGNAL_FUNC(FinishOptDialog), NULL);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 

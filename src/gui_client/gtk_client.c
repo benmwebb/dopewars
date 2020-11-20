@@ -216,6 +216,20 @@ GtkWidget *my_hbbox_new(void)
 }
 
 /*
+ * Do the equivalent of gtk_box_pack_start_defaults().
+ * This has been removed from GTK+3.
+ */
+void my_gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
+{
+#ifdef CYGWIN
+  /* For compatibility with older dopewars */
+  gtk_box_pack_start(box, child, FALSE, FALSE, 0);
+#else
+  gtk_box_pack_start(box, child, TRUE, TRUE, 0);
+#endif
+}
+
+/*
  * Sets the initial size and window manager hints of a dialog.
  */
 void my_set_dialog_position(GtkWindow *dialog)
@@ -344,7 +358,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -785,7 +799,7 @@ void CompleteHighScoreDialog(gboolean AtEnd)
     gtk_signal_connect_object(GTK_OBJECT(dialog), "destroy",
                               GTK_SIGNAL_FUNC(EndHighScore), NULL);
   }
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), hbbox, FALSE, FALSE, 0);
 
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
@@ -1755,13 +1769,13 @@ void DealDrugs(GtkWidget *widget, gpointer data)
                      GTK_SIGNAL_FUNC(DealOKCallback), data);
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
   defbutton = button;
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -1941,7 +1955,7 @@ void QuestionDialog(char *Data, Player *From)
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(QuestionCallback),
                        GINT_TO_POINTER((gint)Responses[i]));
-    gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+    my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -2471,7 +2485,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_signal_connect_object(GTK_OBJECT(OKButton), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), OKButton);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), OKButton);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -2639,20 +2653,20 @@ void TransferDialog(gboolean Debt)
   button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(TransferOK), dialog);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   if (Debt && ClientData.Play->Cash >= ClientData.Play->Debt) {
     /* Button to pay back the entire loan/debt */
     button = gtk_button_new_with_label(_("Pay all"));
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(TransferPayAll), dialog);
-    gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+    my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -2699,7 +2713,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -2833,13 +2847,13 @@ void TalkDialog(gboolean TalkToAll)
 
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(TalkSend), (gpointer)&TalkData);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
@@ -3001,12 +3015,12 @@ void ErrandDialog(gint ErrandType)
                       GINT_TO_POINTER(ErrandType));
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(ErrandOK), (gpointer)clist);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(dialog));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -3260,7 +3274,7 @@ void GunShopDialog(void)
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(window), vbox);

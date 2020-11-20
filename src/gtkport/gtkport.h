@@ -538,7 +538,6 @@ void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
 void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
                         gboolean Fill, gint Padding);
-void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child);
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button);
 gboolean gtk_toggle_button_get_active(GtkToggleButton *toggle_button);
 void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,

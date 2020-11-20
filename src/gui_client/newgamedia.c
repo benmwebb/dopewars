@@ -618,7 +618,7 @@ void NewGameDialog(Player *play)
   button = NewStockButton(GTK_STOCK_REFRESH, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(UpdateMetaServerList), NULL);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = gtk_button_new_with_label("");
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
@@ -627,7 +627,7 @@ void NewGameDialog(Player *play)
   gtk_widget_set_sensitive(button, FALSE);
   treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
   g_signal_connect(treesel, "changed", G_CALLBACK(metalist_changed), button);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(frame), vbox2);
@@ -755,13 +755,13 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   button = NewStockButton(GTK_STOCK_OK, accel_group);
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
                      GTK_SIGNAL_FUNC(OKSocksAuth), (gpointer)window);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
   gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
                             GTK_SIGNAL_FUNC(gtk_widget_destroy),
                             GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
 

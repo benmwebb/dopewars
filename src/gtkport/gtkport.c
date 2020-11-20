@@ -2157,11 +2157,6 @@ void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
   }
 }
 
-void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
-{
-  gtk_box_pack_start(box, child, FALSE, FALSE, 0);
-}
-
 void gtk_button_destroy(GtkWidget *widget)
 {
   g_free(GTK_BUTTON(widget)->text);
