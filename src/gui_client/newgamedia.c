@@ -758,9 +758,9 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  g_signal_connect_object(G_OBJECT(button), "clicked",
-                          G_CALLBACK(gtk_widget_destroy),
-                          G_OBJECT(window), 0);
+  g_signal_connect_swapped(G_OBJECT(button), "clicked",
+                           G_CALLBACK(gtk_widget_destroy),
+                           G_OBJECT(window));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
