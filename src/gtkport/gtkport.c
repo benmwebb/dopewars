@@ -4961,13 +4961,7 @@ GtkWidget *gtk_progress_bar_new()
   return GTK_WIDGET(prog);
 }
 
-void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
-                                      GtkProgressBarOrientation orientation)
-{
-  pbar->orient = orientation;
-}
-
-void gtk_progress_bar_update(GtkProgressBar *pbar, gfloat percentage)
+void gtk_progress_bar_set_fraction(GtkProgressBar *pbar, gfloat percentage)
 {
   GtkWidget *widget;
 

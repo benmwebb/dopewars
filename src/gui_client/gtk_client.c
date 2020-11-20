@@ -1062,8 +1062,8 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
       gtk_label_set_text(GTK_LABEL(compt->bitches), BitchText);
     }
     gtk_label_set_text(GTK_LABEL(compt->healthlabel), HealthText);
-    gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
-                            ProgPercent);
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
+                                  ProgPercent);
   } else {
     /* Display of the current player's name during combat */
     compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
@@ -1074,10 +1074,8 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     gtk_table_attach(GTK_TABLE(table), compt->bitches, 1, 2,
                      RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
     compt->healthprog = gtk_progress_bar_new();
-    gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(compt->healthprog),
-                                     GTK_PROGRESS_LEFT_TO_RIGHT);
-    gtk_progress_bar_update(GTK_PROGRESS_BAR(compt->healthprog),
-                            ProgPercent);
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
+                                  ProgPercent);
     gtk_table_attach_defaults(GTK_TABLE(table), compt->healthprog, 2, 3,
                               RowIndex, RowIndex + 1);
     compt->healthlabel = gtk_label_new(HealthText);
