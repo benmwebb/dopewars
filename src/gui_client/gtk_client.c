@@ -995,7 +995,7 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
                             gchar *BitchName, int DefendHealth)
 {
   guint i, RowIndex;
-  gchar *name;
+  const gchar *name;
   struct combatant *compt;
   GArray *combatants;
   GtkWidget *table;
@@ -1018,7 +1018,7 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
         compt = NULL;
         continue;
       }
-      gtk_label_get(GTK_LABEL(compt->name), &name);
+      name = gtk_label_get_text(GTK_LABEL(compt->name));
       if (name && strcmp(name, DefendName) == 0) {
         break;
       }

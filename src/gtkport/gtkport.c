@@ -4826,9 +4826,9 @@ guint gtk_label_parse_uline(GtkLabel *label, const gchar *str)
   return 0;
 }
 
-void gtk_label_get(GtkLabel *label, gchar **str)
+const char *gtk_label_get_text(GtkLabel *label)
 {
-  *str = label->text;
+  return label->text;
 }
 
 void gtk_text_set_point(GtkText *text, guint index)

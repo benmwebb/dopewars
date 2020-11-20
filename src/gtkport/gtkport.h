@@ -635,7 +635,7 @@ void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu);
 void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index);
 void gtk_label_set_text(GtkLabel *label, const gchar *str);
 guint gtk_label_parse_uline(GtkLabel *label, const gchar *str);
-void gtk_label_get(GtkLabel *label, gchar **str);
+const gchar *gtk_label_get_text(GtkLabel *label);
 void gtk_text_set_point(GtkText *text, guint index);
 void gtk_widget_set_size_request(GtkWidget *widget, gint width, gint height);
 gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button);
