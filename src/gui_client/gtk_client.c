@@ -943,7 +943,7 @@ static void CreateFightDialog(void)
   g_object_set_data(G_OBJECT(dialog), "combatants", combatants);
 
   text = gtk_scrolled_text_view_new(&hbox);
-  gtk_widget_set_usize(text, 150, 120);
+  gtk_widget_set_size_request(text, 150, 120);
 
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
@@ -2303,7 +2303,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
   make_tags(GTK_TEXT_VIEW(text));
-  gtk_widget_set_usize(text, 100, 80);
+  gtk_widget_set_size_request(text, 100, 80);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_paned_pack1(GTK_PANED(vpaned), hbox, TRUE, TRUE);

@@ -4836,7 +4836,7 @@ void gtk_text_set_point(GtkText *text, guint index)
   gtk_editable_set_position(GTK_EDITABLE(text), index);
 }
 
-void gtk_widget_set_usize(GtkWidget *widget, gint width, gint height)
+void gtk_widget_set_size_request(GtkWidget *widget, gint width, gint height)
 {
   widget->usize.width = width;
   widget->usize.height = height;
