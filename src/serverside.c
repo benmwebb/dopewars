@@ -1661,8 +1661,8 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_signal_connect(GTK_OBJECT(window), "delete_event",
-                     GTK_SIGNAL_FUNC(GuiRequestDelete), NULL);
+  g_signal_connect(GTK_OBJECT(window), "delete_event",
+                   G_CALLBACK(GuiRequestDelete), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 500, 250);
 
   /* Title of dopewars server window (if used) */
@@ -1680,8 +1680,8 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   label = gtk_label_new(_("Command:"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   entry = gtk_entry_new();
-  gtk_signal_connect(GTK_OBJECT(entry), "activate",
-                     GTK_SIGNAL_FUNC(GuiDoCommand), NULL);
+  g_signal_connect(GTK_OBJECT(entry), "activate",
+                   G_CALLBACK(GuiDoCommand), NULL);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
