@@ -1448,8 +1448,8 @@ static void GuiDoCommand(GtkWidget *widget, gpointer data)
     GuiQuitServer();
 }
 
-static void GuiHandleSocket(gpointer data, gint socket,
-                            GdkInputCondition condition)
+static gboolean GuiHandleSocket(GIOChannel *source, GIOCondition condition,
+                                gpointer data)
 {
   Player *Play;
   gboolean DoneOK;
@@ -1458,11 +1458,10 @@ static void GuiHandleSocket(gpointer data, gint socket,
 
   /* Sanity check - is the player still around? */
   if (!g_slist_find(FirstServer, (gpointer)Play))
-    return;
+    return TRUE;
 
-  if (PlayerHandleNetwork(Play, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE,
-                          condition & GDK_INPUT_EXCEPTION, &DoneOK)) {
+  if (PlayerHandleNetwork(Play, condition & G_IO_IN, condition & G_IO_OUT,
+                          condition & G_IO_ERR, &DoneOK)) {
     HandleServerPlayer(Play);
     GuiSetTimeouts();           /* We may have set some new timeouts */
   }
@@ -1471,6 +1470,7 @@ static void GuiHandleSocket(gpointer data, gint socket,
     if (IsServerShutdown())
       GuiQuitServer();
   }
+  return TRUE;
 }
 
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
@@ -1491,8 +1491,8 @@ void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
     GuiHandleSocket(NetBuf->ioch, 0, NetBuf->CallBackData);
 }
 
-static void GuiNewConnect(GIOChannel *source, GIOCondition condition,
-                          gpointer data)
+static gboolean GuiNewConnect(GIOChannel *source, GIOCondition condition,
+                              gpointer data)
 {
   Player *Play;
 
@@ -1500,6 +1500,7 @@ static void GuiNewConnect(GIOChannel *source, GIOCondition condition,
     Play = HandleNewConnection();
     SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
   }
+  return TRUE;
 }
 
 static gboolean TriedPoliteShutdown = FALSE;
