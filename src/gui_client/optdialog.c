@@ -342,10 +342,10 @@ static void list_delete(GtkWidget *widget, gchar *structname)
   GtkCList *clist;
   int minlistlength;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
+  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
   g_assert(clist);
-  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
-                                                      "minlistlength"));
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(clist),
+                                                    "minlistlength"));
 
   if (clist->rows > minlistlength && clist->selection) {
     GSList *listpt;
@@ -378,7 +378,7 @@ static void list_new(GtkWidget *widget, gchar *structname)
   GSList *listpt;
   gchar *text[3];
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
+  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
   g_assert(clist);
 
   text[0] = g_strdup_printf(_("New %s"), structname);
@@ -409,7 +409,7 @@ static void list_up(GtkWidget *widget, gchar *structname)
 {
   GtkCList *clist;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
+  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
   g_assert(clist);
 
   if (clist->selection) {
@@ -425,7 +425,7 @@ static void list_down(GtkWidget *widget, gchar *structname)
 {
   GtkCList *clist;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
+  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
   g_assert(clist);
 
   if (clist->selection) {
@@ -445,11 +445,11 @@ static void list_row_select(GtkCList *clist, gint row, gint column,
   GtkWidget *delbut, *upbut, *downbut;
   int minlistlength;
 
-  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
-                                                      "minlistlength"));
-  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(clist),
+                                                    "minlistlength"));
+  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "delete"));
+  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "up"));
+  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "down"));
   g_assert(delbut && upbut && downbut);
   gtk_widget_set_sensitive(delbut, clist->rows > minlistlength);
   gtk_widget_set_sensitive(upbut, row > 0);
@@ -478,9 +478,9 @@ static void list_row_unselect(GtkCList *clist, gint row, gint column,
   GSList *listpt;
   GtkWidget *delbut, *upbut, *downbut;
 
-  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
+  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "delete"));
+  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "up"));
+  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "down"));
   g_assert(delbut && upbut && downbut);
   gtk_widget_set_sensitive(delbut, FALSE);
   gtk_widget_set_sensitive(upbut, FALSE);
@@ -520,7 +520,7 @@ static void sound_row_select(GtkCList *clist, gint row, gint column,
   int globind;
   gchar **text;
 
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "entry"));
   globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
   g_assert(globind >=0 && globind < NUMGLOB);
 
@@ -535,7 +535,7 @@ static void sound_row_unselect(GtkCList *clist, gint row, gint column,
   int globind;
   gchar *text, **oldtext;
 
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "entry"));
   globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
   g_assert(globind >=0 && globind < NUMGLOB);
 
@@ -583,8 +583,8 @@ static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
   GtkToggleButton *unicode_check;
 
   SaveConfigWidgets();
-  unicode_check = GTK_TOGGLE_BUTTON(gtk_object_get_data(GTK_OBJECT(dialog),
-                                                        "unicode_check"));
+  unicode_check = GTK_TOGGLE_BUTTON(g_object_get_data(G_OBJECT(dialog),
+                                                      "unicode_check"));
   UpdateConfigFile(NULL, gtk_toggle_button_get_active(unicode_check));
   gtk_widget_destroy(dialog);
 }
@@ -672,33 +672,33 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   hbbox = gtk_hbox_new(TRUE, 5);
 
   button = gtk_button_new_with_label(_("New"));
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
+  g_object_set_data(G_OBJECT(button), "clist", clist);
   g_signal_connect(GTK_OBJECT(button), "clicked",
                    G_CALLBACK(list_new), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Delete"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "delete", button);
-  gtk_object_set_data(GTK_OBJECT(clist), "minlistlength",
-                      GINT_TO_POINTER(minlistlength));
+  g_object_set_data(G_OBJECT(button), "clist", clist);
+  g_object_set_data(G_OBJECT(clist), "delete", button);
+  g_object_set_data(G_OBJECT(clist), "minlistlength",
+                    GINT_TO_POINTER(minlistlength));
   g_signal_connect(GTK_OBJECT(button), "clicked",
                    G_CALLBACK(list_delete), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Up"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "up", button);
+  g_object_set_data(G_OBJECT(button), "clist", clist);
+  g_object_set_data(G_OBJECT(clist), "up", button);
   g_signal_connect(GTK_OBJECT(button), "clicked",
                    G_CALLBACK(list_up), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Down"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "down", button);
+  g_object_set_data(G_OBJECT(button), "clist", clist);
+  g_object_set_data(G_OBJECT(clist), "down", button);
   g_signal_connect(GTK_OBJECT(button), "clicked",
                    G_CALLBACK(list_down), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
@@ -805,7 +805,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   check = gtk_check_button_new_with_label(_("Unicode config file"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
   gtk_table_attach_defaults(GTK_TABLE(table), check, 1, 3, 0, 1);
-  gtk_object_set_data(GTK_OBJECT(dialog), "unicode_check", check);
+  g_object_set_data(G_OBJECT(dialog), "unicode_check", check);
 
   label = gtk_label_new(_("Game length (turns)"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
@@ -961,7 +961,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(clist), "entry", entry);
+  g_object_set_data(G_OBJECT(clist), "entry", entry);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Browse..."));

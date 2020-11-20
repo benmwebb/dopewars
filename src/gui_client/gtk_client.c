@@ -840,7 +840,7 @@ static void FightCallback(GtkWidget *widget, gpointer data)
 
   window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
   if (window) {
-    CanRunHere = gtk_object_get_data(GTK_OBJECT(window), "CanRunHere");
+    CanRunHere = g_object_get_data(G_OBJECT(window), "CanRunHere");
   }
 
   Answer = GPOINTER_TO_INT(data);
@@ -936,18 +936,18 @@ static void CreateFightDialog(void)
   gtk_table_attach_defaults(GTK_TABLE(table), hsep, 0, 4, 1, 2);
   gtk_widget_show_all(table);
   gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
-  gtk_object_set_data(GTK_OBJECT(dialog), "table", table);
+  g_object_set_data(G_OBJECT(dialog), "table", table);
 
   combatants = g_array_new(FALSE, TRUE, sizeof(struct combatant));
   g_array_set_size(combatants, 1);
-  gtk_object_set_data(GTK_OBJECT(dialog), "combatants", combatants);
+  g_object_set_data(G_OBJECT(dialog), "combatants", combatants);
 
   text = gtk_scrolled_text_view_new(&hbox);
   gtk_widget_set_usize(text, 150, 120);
 
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
-  gtk_object_set_data(GTK_OBJECT(dialog), "text", text);
+  g_object_set_data(G_OBJECT(dialog), "text", text);
   gtk_widget_show_all(hbox);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
@@ -961,21 +961,21 @@ static void CreateFightDialog(void)
      (%Tde = "Drugs" by default) */
   buf = dpg_strdup_printf(_("_Deal %Tde"), Names.Drugs);
   button = AddFightButton(buf, accel_group, GTK_BOX(hbbox), 'D');
-  gtk_object_set_data(GTK_OBJECT(dialog), "deal", button);
+  g_object_set_data(G_OBJECT(dialog), "deal", button);
   g_free(buf);
 
   /* Button for shooting at other players in the "Fight" dialog, or for
      popping up the "Fight" dialog from the main window */
   button = AddFightButton(_("_Fight"), accel_group, GTK_BOX(hbbox), 'F');
-  gtk_object_set_data(GTK_OBJECT(dialog), "fight", button);
+  g_object_set_data(G_OBJECT(dialog), "fight", button);
 
   /* Button to stand and take it in the "Fight" dialog */
   button = AddFightButton(_("_Stand"), accel_group, GTK_BOX(hbbox), 'S');
-  gtk_object_set_data(GTK_OBJECT(dialog), "stand", button);
+  g_object_set_data(G_OBJECT(dialog), "stand", button);
 
   /* Button to run from combat in the "Fight" dialog */
   button = AddFightButton(_("_Run"), accel_group, GTK_BOX(hbbox), 'R');
-  gtk_object_set_data(GTK_OBJECT(dialog), "run", button);
+  g_object_set_data(G_OBJECT(dialog), "run", button);
 
   gtk_widget_show(hsep);
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -1002,9 +1002,9 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
   gchar *BitchText, *HealthText;
   gfloat ProgPercent;
 
-  combatants = (GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
-                                             "combatants");
-  table = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "table"));
+  combatants = (GArray *)g_object_get_data(G_OBJECT(FightDialog),
+                                           "combatants");
+  table = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "table"));
   if (!combatants) {
     return;
   }
@@ -1100,8 +1100,8 @@ static void FreeCombatants(void)
 {
   GArray *combatants;
 
-  combatants = (GArray *)gtk_object_get_data(GTK_OBJECT(FightDialog),
-                                             "combatants");
+  combatants = (GArray *)g_object_get_data(G_OBJECT(FightDialog),
+                                           "combatants");
   if (combatants) {
     g_array_free(combatants, TRUE);
   }
@@ -1158,12 +1158,11 @@ void DisplayFightMessage(char *Data)
     return;
   }
 
-  Deal = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "deal"));
-  Fight = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "fight"));
-  Stand = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "stand"));
-  Run = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(FightDialog), "run"));
-  textview = GTK_TEXT_VIEW(gtk_object_get_data(GTK_OBJECT(FightDialog),
-                                               "text"));
+  Deal = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "deal"));
+  Fight = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "fight"));
+  Stand = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "stand"));
+  Run = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "run"));
+  textview = GTK_TEXT_VIEW(g_object_get_data(G_OBJECT(FightDialog), "text"));
 
   Play = ClientData.Play;
 
@@ -1191,7 +1190,7 @@ void DisplayFightMessage(char *Data)
       break;
     }
     accel_group = (GtkAccelGroup *)
-        gtk_object_get_data(GTK_OBJECT(ClientData.window), "accel_group");
+        g_object_get_data(G_OBJECT(ClientData.window), "accel_group");
     SetJetButtonTitle(accel_group);
   } else {
     Message = Data;
@@ -1203,8 +1202,8 @@ void DisplayFightMessage(char *Data)
     CanFire = (Play->Flags & CANSHOOT);
     CanRunHere = FALSE;
   }
-  gtk_object_set_data(GTK_OBJECT(FightDialog), "CanRunHere",
-                      GINT_TO_POINTER(CanRunHere));
+  g_object_set_data(G_OBJECT(FightDialog), "CanRunHere",
+                    GINT_TO_POINTER(CanRunHere));
 
   g_strdelimit(Message, "^", '\n');
   if (strlen(Message) > 0) {
@@ -1292,7 +1291,7 @@ void UpdateStatus(Player *Play)
   UpdateInventory(&ClientData.Drug, ClientData.Play->Drugs, NumDrug, TRUE);
   gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
   accel_group = (GtkAccelGroup *)
-      gtk_object_get_data(GTK_OBJECT(ClientData.window), "accel_group");
+      g_object_get_data(G_OBJECT(ClientData.window), "accel_group");
   SetJetButtonTitle(accel_group);
   if (IsShowingGunShop) {
     UpdateInventory(&ClientData.Gun, ClientData.Play->Guns, NumGun, FALSE);
@@ -1425,7 +1424,7 @@ static void JetCallback(GtkWidget *widget, gpointer data)
   gchar *text;
   GtkWidget *JetDialog;
 
-  JetDialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget), "dialog"));
+  JetDialog = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "dialog"));
   NewLocation = GPOINTER_TO_INT(data);
   gtk_widget_destroy(JetDialog);
   text = g_strdup_printf("%d", NewLocation);
@@ -1518,7 +1517,7 @@ void Jet(GtkWidget *parent)
       g_free(name);
     }
     gtk_widget_set_sensitive(button, i != ClientData.Play->IsAt);
-    gtk_object_set_data(GTK_OBJECT(button), "dialog", dialog);
+    g_object_set_data(G_OBJECT(button), "dialog", dialog);
     g_signal_connect(GTK_OBJECT(button), "clicked",
                      G_CALLBACK(JetCallback), GINT_TO_POINTER(i));
     gtk_table_attach_defaults(GTK_TABLE(table), button, col, col + 1, row,
@@ -1863,8 +1862,8 @@ static void QuestionCallback(GtkWidget *widget, gpointer data)
   GtkWidget *dialog;
   Player *To;
 
-  dialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget), "dialog"));
-  To = (Player *)gtk_object_get_data(GTK_OBJECT(dialog), "From");
+  dialog = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "dialog"));
+  To = (Player *)g_object_get_data(G_OBJECT(dialog), "From");
   Answer = GPOINTER_TO_INT(data);
 
   text[0] = (gchar)Answer;
@@ -1903,7 +1902,7 @@ void QuestionDialog(char *Data, Player *From)
   accel_group = gtk_accel_group_new();
   g_signal_connect(GTK_OBJECT(dialog), "delete_event",
                    G_CALLBACK(DisallowDelete), NULL);
-  gtk_object_set_data(GTK_OBJECT(dialog), "From", (gpointer)From);
+  g_object_set_data(G_OBJECT(dialog), "From", (gpointer)From);
 
   /* Title of the 'ask player a question' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Question"));
@@ -1951,7 +1950,7 @@ void QuestionDialog(char *Data, Player *From)
       }
       break;
     }
-    gtk_object_set_data(GTK_OBJECT(button), "dialog", (gpointer)dialog);
+    g_object_set_data(G_OBJECT(button), "dialog", (gpointer)dialog);
     g_signal_connect(GTK_OBJECT(button), "clicked",
                      G_CALLBACK(QuestionCallback),
                      GINT_TO_POINTER((gint)Responses[i]));
@@ -2269,7 +2268,7 @@ gboolean GtkLoop(int *argc, char **argv[],
                    G_CALLBACK(DestroyGtk), NULL);
 
   accel_group = gtk_accel_group_new();
-  gtk_object_set_data(GTK_OBJECT(window), "accel_group", accel_group);
+  g_object_set_data(G_OBJECT(window), "accel_group", accel_group);
   item_factory = ClientData.Menu = dp_gtk_item_factory_new(GTK_TYPE_MENU_BAR,
                                                            "<main>",
                                                            accel_group);
@@ -2519,8 +2518,8 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
   price_t money;
   gboolean withdraw = FALSE;
 
-  Debt = gtk_object_get_data(GTK_OBJECT(dialog), "debt");
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog), "entry"));
+  Debt = g_object_get_data(G_OBJECT(dialog), "debt");
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "entry"));
   text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
   money = strtoprice(text);
   g_free(text);
@@ -2536,7 +2535,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     /* Title of bank dialog - (%Tde="The Bank" by default) */
     title = dpg_strdup_printf(_("%/BankName window title/%Tde"),
                               Names.BankName);
-    deposit = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog), "deposit"));
+    deposit = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "deposit"));
     if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit))) {
       withdraw = TRUE;
     }
@@ -2613,7 +2612,7 @@ void TransferDialog(gboolean Debt)
   label = gtk_label_new(text->str);
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 1, 2);
 
-  gtk_object_set_data(GTK_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
+  g_object_set_data(G_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
   if (Debt) {
     /* Prompt for paying back a loan */
     label = gtk_label_new(_("Pay back:"));
@@ -2621,7 +2620,7 @@ void TransferDialog(gboolean Debt)
   } else {
     /* Radio button selected if you want to pay money into the bank */
     radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
-    gtk_object_set_data(GTK_OBJECT(dialog), "deposit", radio);
+    g_object_set_data(G_OBJECT(dialog), "deposit", radio);
     group = gtk_radio_button_group(GTK_RADIO_BUTTON(radio));
     gtk_table_attach_defaults(GTK_TABLE(table), radio, 0, 1, 2, 3);
 
@@ -2632,7 +2631,7 @@ void TransferDialog(gboolean Debt)
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
   gtk_entry_set_text(GTK_ENTRY(entry), "0");
-  gtk_object_set_data(GTK_OBJECT(dialog), "entry", entry);
+  g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(GTK_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
 
@@ -2916,9 +2915,9 @@ static void ErrandOK(GtkWidget *widget, GtkWidget *clist)
   gint ErrandType;
 
 
-  dialog = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(widget), "dialog"));
-  ErrandType = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(widget),
-                                                   "errandtype"));
+  dialog = GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "dialog"));
+  ErrandType = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+                                                 "errandtype"));
   treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
   if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
     Player *Play;
@@ -3010,9 +3009,9 @@ void ErrandDialog(gint ErrandType)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  gtk_object_set_data(GTK_OBJECT(button), "dialog", dialog);
-  gtk_object_set_data(GTK_OBJECT(button), "errandtype",
-                      GINT_TO_POINTER(ErrandType));
+  g_object_set_data(G_OBJECT(button), "dialog", dialog);
+  g_object_set_data(G_OBJECT(button), "errandtype",
+                    GINT_TO_POINTER(ErrandType));
   g_signal_connect(GTK_OBJECT(button), "clicked",
                    G_CALLBACK(ErrandOK), (gpointer)clist);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -3168,7 +3167,7 @@ static void NewNameOK(GtkWidget *widget, GtkWidget *window)
   GtkWidget *entry;
   gchar *text;
 
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(window), "entry"));
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(window), "entry"));
   text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
   if (text[0]) {
     StripTerminators(text);
@@ -3207,7 +3206,7 @@ void NewNameDialog(void)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "entry", entry);
+  g_object_set_data(G_OBJECT(window), "entry", entry);
   g_signal_connect(GTK_OBJECT(entry), "activate",
                    G_CALLBACK(NewNameOK), window);
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(ClientData.Play));
@@ -3310,7 +3309,7 @@ static void CreateSpyReports(void)
 
   SpyReportsDialog = window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
-  gtk_object_set_data(GTK_OBJECT(window), "accel_group", accel_group);
+  g_object_set_data(G_OBJECT(window), "accel_group", accel_group);
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
   /* Title of window to display reports from spies with other players */
@@ -3326,7 +3325,7 @@ static void CreateSpyReports(void)
 
   vbox = gtk_vbox_new(FALSE, 5);
   notebook = gtk_notebook_new();
-  gtk_object_set_data(GTK_OBJECT(window), "notebook", notebook);
+  g_object_set_data(G_OBJECT(window), "notebook", notebook);
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
@@ -3351,9 +3350,9 @@ void DisplaySpyReports(Player *Play)
   if (!SpyReportsDialog)
     CreateSpyReports();
   dialog = SpyReportsDialog;
-  notebook = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(dialog), "notebook"));
+  notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "notebook"));
   accel_group =
-      (GtkAccelGroup *)(gtk_object_get_data(GTK_OBJECT(dialog), "accel_group"));
+      (GtkAccelGroup *)(g_object_get_data(G_OBJECT(dialog), "accel_group"));
   vbox = gtk_vbox_new(FALSE, 5);
   frame = gtk_frame_new("Stats");
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);

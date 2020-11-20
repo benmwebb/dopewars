@@ -665,7 +665,7 @@ void NewGameDialog(Player *play)
 #ifdef NETWORKING
 static void OKSocksAuth(GtkWidget *widget, GtkWidget *window)
 {
-  gtk_object_set_data(GTK_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
+  g_object_set_data(G_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
   gtk_widget_destroy(window);
 }
 
@@ -676,13 +676,13 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
   gpointer authok;
   NetworkBuffer *netbuf;
 
-  authok = gtk_object_get_data(GTK_OBJECT(window), "authok");
+  authok = g_object_get_data(G_OBJECT(window), "authok");
   userentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "username");
+      (GtkWidget *)g_object_get_data(G_OBJECT(window), "username");
   passwdentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "password");
+      (GtkWidget *)g_object_get_data(G_OBJECT(window), "password");
   netbuf =
-      (NetworkBuffer *)gtk_object_get_data(GTK_OBJECT(window), "netbuf");
+      (NetworkBuffer *)g_object_get_data(G_OBJECT(window), "netbuf");
 
   g_assert(userentry && passwdentry && netbuf);
 
@@ -707,7 +707,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 
   g_signal_connect(GTK_OBJECT(window), "destroy",
                    G_CALLBACK(DestroySocksAuth), NULL);
-  gtk_object_set_data(GTK_OBJECT(window), "netbuf", (gpointer)netbuf);
+  g_object_set_data(G_OBJECT(window), "netbuf", (gpointer)netbuf);
 
   /* Title of dialog for authenticating with a SOCKS server */
   gtk_window_set_title(GTK_WINDOW(window),
@@ -729,14 +729,14 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "username", (gpointer)entry);
+  g_object_set_data(G_OBJECT(window), "username", (gpointer)entry);
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
 
   label = gtk_label_new("Password:");
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "password", (gpointer)entry);
+  g_object_set_data(G_OBJECT(window), "password", (gpointer)entry);
 
 #ifdef HAVE_FIXED_GTK
   /* GTK+ versions earlier than 1.2.10 do bad things with this */
