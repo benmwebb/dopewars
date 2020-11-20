@@ -1320,11 +1320,16 @@ void gtk_widget_show(GtkWidget *widget)
   gtk_widget_show_full(widget, TRUE);
 }
 
+gboolean gtk_widget_get_visible(GtkWidget *widget)
+{
+  return GTK_WIDGET_FLAGS(widget) & GTK_VISIBLE != 0;
+}
+
 void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
 {
   GtkAllocation alloc;
 
-  if (GTK_WIDGET_VISIBLE(widget))
+  if (gtk_widget_get_visible(widget))
     return;
   GTK_WIDGET_SET_FLAGS(widget, GTK_VISIBLE);
 
@@ -1364,7 +1369,7 @@ void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse)
   GtkRequisition req;
   GtkWidget *window;
 
-  if (!GTK_WIDGET_VISIBLE(widget))
+  if (!gtk_widget_get_visible(widget))
     return;
 
   if (recurse)
@@ -1397,7 +1402,7 @@ void gtk_widget_set_focus(GtkWidget *widget)
   GtkWidget *window;
 
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget)
-      || !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget))
+      || !GTK_WIDGET_SENSITIVE(widget) || !gtk_widget_get_visible(widget))
     return;
   window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
   gtk_window_update_focus(GTK_WINDOW(window));
@@ -1422,7 +1427,7 @@ static BOOL CALLBACK SetFocusEnum(HWND hWnd, LPARAM data)
 
   widget = GTK_WIDGET(myGetWindowLong(hWnd, GWLP_USERDATA));
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
-      !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget) ||
+      !GTK_WIDGET_SENSITIVE(widget) || !gtk_widget_get_visible(widget) ||
       window->focus == widget) {
     return TRUE;
   } else {
@@ -1540,7 +1545,7 @@ void gtk_widget_size_request(GtkWidget *widget,
   GtkRequisition req;
 
   requisition->width = requisition->height = 0;
-  if (GTK_WIDGET_VISIBLE(widget)) {
+  if (gtk_widget_get_visible(widget)) {
     gtk_signal_emit(GTK_OBJECT(widget), "size_request", requisition);
   }
   if (requisition->width < widget->usize.width)
@@ -2220,7 +2225,7 @@ static void EnableParent(GtkWindow *window)
     for (list = WindowList; list; list = g_slist_next(list)) {
       listwin = GTK_WINDOW(list->data);
       if (listwin != window && listwin->modal
-          && GTK_WIDGET_VISIBLE(GTK_WIDGET(listwin))
+          && gtk_widget_get_visible(GTK_WIDGET(listwin))
           && GTK_WIDGET(listwin)->parent == parent)
         return;
     }
@@ -2273,7 +2278,7 @@ void gtk_hbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       if (first) {
         first = FALSE;
       } else {
@@ -2311,7 +2316,7 @@ void gtk_vbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       if (first) {
         first = FALSE;
       } else {
@@ -2347,7 +2352,7 @@ static void gtk_box_count_children(GtkBox *box, gint16 allocation,
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget) &&
+    if (child && child->widget && gtk_widget_get_visible(child->widget) &&
         child->expand)
       NumCanExpand++;
   }
@@ -2413,7 +2418,7 @@ void gtk_hbox_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       gtk_box_size_child(box, child, extra, maxpos,
                          box->homogeneous ? box->maxreq :
                          child->widget->requisition.width,
@@ -2449,7 +2454,7 @@ void gtk_vbox_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       gtk_box_size_child(box, child, extra, maxpos,
                          box->homogeneous ? box->maxreq :
                          child->widget->requisition.height,
@@ -2773,7 +2778,7 @@ void gtk_widget_show_all_full(GtkWidget *widget, gboolean hWndOnly)
   gtk_signal_emit(GTK_OBJECT(widget), "show_all", hWndOnly);
 
   if (hWndOnly) {
-    if (GTK_WIDGET_VISIBLE(widget)) {
+    if (gtk_widget_get_visible(widget)) {
       gtk_signal_emit(GTK_OBJECT(widget), "show");
       if (widget->hWnd)
         ShowWindow(widget->hWnd, SW_SHOWNORMAL);
@@ -3019,7 +3024,7 @@ static void gtk_table_get_size_children(GtkTable *table,
     child_wid = child->widget;
     if (child_wid && child->left_attach < child->right_attach
         && child->top_attach < child->bottom_attach
-        && GTK_WIDGET_VISIBLE(child_wid)) {
+        && gtk_widget_get_visible(child_wid)) {
       child_req.width = child_wid->requisition.width;
       child_req.height = child_wid->requisition.height;
       child_req.height /= (child->bottom_attach - child->top_attach);
@@ -3139,7 +3144,7 @@ void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
     child_wid = child->widget;
     if (child_wid && child->left_attach < child->right_attach &&
         child->top_attach < child->bottom_attach &&
-        GTK_WIDGET_VISIBLE(child_wid)) {
+        gtk_widget_get_visible(child_wid)) {
       if (child->xoptions & GTK_SHRINK) {
         for (i = child->left_attach; i < child->right_attach; i++) {
           colopt[i] |= GTK_SHRINK;
@@ -3185,7 +3190,7 @@ void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = table->children; children;
        children = g_list_next(children)) {
     child = (GtkTableChild *)(children->data);
-    if (!child || !child->widget || !GTK_WIDGET_VISIBLE(child->widget))
+    if (!child || !child->widget || !gtk_widget_get_visible(child->widget))
       continue;
     child_alloc.x = allocation->x + border_width;
     child_alloc.y = allocation->y + border_width;
@@ -4086,7 +4091,7 @@ void gtk_notebook_size_request(GtkWidget *widget,
        children = g_slist_next(children)) {
     note_child = (GtkNotebookChild *)(children->data);
     if (note_child && note_child->child &&
-        GTK_WIDGET_VISIBLE(note_child->child)) {
+        gtk_widget_get_visible(note_child->child)) {
       child_req = &note_child->child->requisition;
       if (child_req->width > requisition->width)
         requisition->width = child_req->width;

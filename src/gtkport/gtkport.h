@@ -459,7 +459,6 @@ extern HINSTANCE hInst;
 #define GTK_OBJECT_FLAGS(obj) (GTK_OBJECT(obj)->flags)
 #define GTK_WIDGET_FLAGS(wid) (GTK_OBJECT_FLAGS(wid))
 #define GTK_WIDGET_REALIZED(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_REALIZED) != 0)
-#define GTK_WIDGET_VISIBLE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_VISIBLE) != 0)
 #define GTK_WIDGET_SENSITIVE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_SENSITIVE) != 0)
 #define GTK_WIDGET_CAN_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_CAN_FOCUS) != 0)
 #define GTK_WIDGET_HAS_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_HAS_FOCUS) != 0)
@@ -468,6 +467,7 @@ extern HINSTANCE hInst;
 
 typedef int GdkEvent;
 
+gboolean gtk_widget_get_visible(GtkWidget *widget);
 void gtk_widget_show(GtkWidget *widget);
 void gtk_widget_show_all(GtkWidget *widget);
 void gtk_widget_hide_all(GtkWidget *widget);

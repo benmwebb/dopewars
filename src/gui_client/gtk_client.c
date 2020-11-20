@@ -1146,7 +1146,7 @@ void DisplayFightMessage(char *Data)
     if (IsShowingDealDrugs) {
       gtk_widget_destroy(DealDialog.dialog);
     }
-    if (!GTK_WIDGET_VISIBLE(FightDialog)) {
+    if (!gtk_widget_get_visible(FightDialog)) {
       gtk_widget_show(FightDialog);
     }
   } else {
