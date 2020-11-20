@@ -480,7 +480,7 @@ void NewGameDialog(Player *play)
 
   stgam.play = play;
   stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(GTK_OBJECT(dialog), "destroy",
+  g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(CloseNewGameDia), NULL);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
@@ -560,7 +560,7 @@ void NewGameDialog(Player *play)
   button = gtk_button_new_with_label("");
   /* Button to connect to a named dopewars server */
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(frame), vbox2);
@@ -590,7 +590,7 @@ void NewGameDialog(Player *play)
   SetAccelerator(button, _("_Start single-player game"), button,
                  "clicked", accel_group, TRUE);
 
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(StartSinglePlayer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(frame), vbox2);
@@ -616,13 +616,13 @@ void NewGameDialog(Player *play)
 
   /* Button to update metaserver information */
   button = NewStockButton(GTK_STOCK_REFRESH, accel_group);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(UpdateMetaServerList), NULL);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = gtk_button_new_with_label("");
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(MetaServerConnect), NULL);
   gtk_widget_set_sensitive(button, FALSE);
   treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
@@ -705,7 +705,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
-  g_signal_connect(GTK_OBJECT(window), "destroy",
+  g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroySocksAuth), NULL);
   g_object_set_data(G_OBJECT(window), "netbuf", (gpointer)netbuf);
 
@@ -753,14 +753,14 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   hbbox = my_hbbox_new();
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(OKSocksAuth), (gpointer)window);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(window), 0);
+                          G_OBJECT(window), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);

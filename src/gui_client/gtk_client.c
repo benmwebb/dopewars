@@ -355,9 +355,9 @@ void ListInventory(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(window), 0);
+                          G_OBJECT(window), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
@@ -791,12 +791,12 @@ void CompleteHighScoreDialog(gboolean AtEnd)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_CLOSE, HiScoreDialog.accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   if (AtEnd) {
     InGame = FALSE;
-    g_signal_connect_object(GTK_OBJECT(dialog), "destroy",
+    g_signal_connect_object(G_OBJECT(dialog), "destroy",
                             G_CALLBACK(EndHighScore), NULL, 0);
   }
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -886,7 +886,7 @@ static GtkWidget *AddFightButton(gchar *Text, GtkAccelGroup *accel_group,
 
   button = gtk_button_new_with_label("");
   SetAccelerator(button, Text, button, "clicked", accel_group, FALSE);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(FightCallback),
                    GINT_TO_POINTER(Answer));
   gtk_box_pack_start(box, button, TRUE, TRUE, 0);
@@ -914,7 +914,7 @@ static void CreateFightDialog(void)
 
   FightDialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(dialog), 350, 250);
-  g_signal_connect(GTK_OBJECT(dialog), "delete_event",
+  g_signal_connect(G_OBJECT(dialog), "delete_event",
                    G_CALLBACK(DisallowDelete), NULL);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
@@ -1518,7 +1518,7 @@ void Jet(GtkWidget *parent)
     }
     gtk_widget_set_sensitive(button, i != ClientData.Play->IsAt);
     g_object_set_data(G_OBJECT(button), "dialog", dialog);
-    g_signal_connect(GTK_OBJECT(button), "clicked",
+    g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(JetCallback), GINT_TO_POINTER(i));
     gtk_table_attach_defaults(GTK_TABLE(table), button, col, col + 1, row,
                               row + 1);
@@ -1711,7 +1711,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
         || (data == BT_BUY && Play->Drugs[i].Price != 0)) {
       dpg_string_printf(text, _("%/DealDrugs drug name/%tde"), Drug[i].Name);
       menuitem = gtk_menu_item_new_with_label(text->str);
-      g_signal_connect(GTK_OBJECT(menuitem), "activate",
+      g_signal_connect(G_OBJECT(menuitem), "activate",
                        G_CALLBACK(DealSelectCallback),
                        GINT_TO_POINTER(i));
       gtk_menu_append(GTK_MENU(menu), menuitem);
@@ -1754,7 +1754,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 2.0,
                                                  1.0, 10.0, 0.0);
   spinner = DealDialog.amount = gtk_spin_button_new(spin_adj, 1.0, 0);
-  g_signal_connect(GTK_OBJECT(spinner), "activate",
+  g_signal_connect(G_OBJECT(spinner), "activate",
                    G_CALLBACK(DealOKCallback), data);
   gtk_box_pack_start(GTK_BOX(hbox), spinner, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -1764,16 +1764,16 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(DealOKCallback), data);
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
   defbutton = button;
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -1900,7 +1900,7 @@ void QuestionDialog(char *Data, Player *From)
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
-  g_signal_connect(GTK_OBJECT(dialog), "delete_event",
+  g_signal_connect(G_OBJECT(dialog), "delete_event",
                    G_CALLBACK(DisallowDelete), NULL);
   g_object_set_data(G_OBJECT(dialog), "From", (gpointer)From);
 
@@ -1951,7 +1951,7 @@ void QuestionDialog(char *Data, Player *From)
       break;
     }
     g_object_set_data(G_OBJECT(button), "dialog", (gpointer)dialog);
-    g_signal_connect(GTK_OBJECT(button), "clicked",
+    g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(QuestionCallback),
                      GINT_TO_POINTER((gint)Responses[i]));
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -2262,9 +2262,9 @@ gboolean GtkLoop(int *argc, char **argv[],
   /* Title of main window in GTK+ client */
   gtk_window_set_title(GTK_WINDOW(window), _("dopewars"));
   gtk_window_set_default_size(GTK_WINDOW(window), 450, 390);
-  g_signal_connect(GTK_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), "delete_event",
                    G_CALLBACK(MainDelete), NULL);
-  g_signal_connect(GTK_OBJECT(window), "destroy",
+  g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroyGtk), NULL);
 
   accel_group = gtk_accel_group_new();
@@ -2314,12 +2314,12 @@ gboolean GtkLoop(int *argc, char **argv[],
   clist = ClientData.Drug.HereList;
   gtk_clist_column_titles_active(GTK_CLIST(clist));
   gtk_clist_set_compare_func(GTK_CLIST(clist), DrugSortFunc);
-  g_signal_connect(GTK_OBJECT(clist), "click-column",
+  g_signal_connect(G_OBJECT(clist), "click-column",
                    G_CALLBACK(ChangeDrugSort), NULL);
 
   button = ClientData.JetButton = gtk_button_new_with_label("");
   ClientData.JetAccel = 0;
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(JetButtonPressed), NULL);
   gtk_box_pack_start(GTK_BOX(ClientData.Drug.vbbox), button, TRUE, TRUE, 0);
   SetJetButtonTitle(accel_group);
@@ -2481,9 +2481,9 @@ void display_intro(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
   OKButton = NewStockButton(GTK_STOCK_OK, accel_group);
-  g_signal_connect_object(GTK_OBJECT(OKButton), "clicked",
+  g_signal_connect_object(G_OBJECT(OKButton), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), OKButton);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -2574,7 +2574,7 @@ void TransferDialog(gboolean Debt)
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
-  g_signal_connect(GTK_OBJECT(dialog), "destroy",
+  g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(SendDoneMessage), NULL);
   if (Debt) {
     /* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
@@ -2632,7 +2632,7 @@ void TransferDialog(gboolean Debt)
   entry = gtk_entry_new();
   gtk_entry_set_text(GTK_ENTRY(entry), "0");
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
-  g_signal_connect(GTK_OBJECT(entry), "activate",
+  g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
 
   if (Currency.Prefix) {
@@ -2650,21 +2650,21 @@ void TransferDialog(gboolean Debt)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(TransferOK), dialog);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   if (Debt && ClientData.Play->Cash >= ClientData.Play->Debt) {
     /* Button to pay back the entire loan/debt */
     button = gtk_button_new_with_label(_("Pay all"));
-    g_signal_connect(GTK_OBJECT(button), "clicked",
+    g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(TransferPayAll), dialog);
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
@@ -2709,9 +2709,9 @@ void ListPlayers(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -2832,7 +2832,7 @@ void TalkDialog(gboolean TalkToAll)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   entry = TalkData.entry = gtk_entry_new();
-  g_signal_connect(GTK_OBJECT(entry), "activate",
+  g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TalkSend), (gpointer)&TalkData);
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
@@ -2844,14 +2844,14 @@ void TalkDialog(gboolean TalkToAll)
   /* Button to send a message to other players */
   button = gtk_button_new_with_label(_("Send"));
 
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(TalkSend), (gpointer)&TalkData);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -3012,13 +3012,13 @@ void ErrandDialog(gint ErrandType)
   g_object_set_data(G_OBJECT(button), "dialog", dialog);
   g_object_set_data(G_OBJECT(button), "errandtype",
                     GINT_TO_POINTER(ErrandType));
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(ErrandOK), (gpointer)clist);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(dialog), 0);
+                          G_OBJECT(dialog), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -3127,7 +3127,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
       SetAccelerator(button[i], _(button_text[i]), button[i],
                      "clicked", accel_group, FALSE);
       if (CallBack) {
-        g_signal_connect(GTK_OBJECT(button[i]), "clicked",
+        g_signal_connect(G_OBJECT(button[i]), "clicked",
                          G_CALLBACK(CallBack), button_type[i]);
       }
       gtk_box_pack_start(GTK_BOX(vbbox), button[i], TRUE, TRUE, 0);
@@ -3149,7 +3149,7 @@ void SetShowing(GtkWidget *window, gboolean *showing)
   g_assert(showing);
 
   *showing = TRUE;
-  g_signal_connect(GTK_OBJECT(window), "destroy",
+  g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroyShowing), (gpointer)showing);
 }
 
@@ -3195,7 +3195,7 @@ void NewNameDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-  g_signal_connect(GTK_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), "delete_event",
                    G_CALLBACK(DisallowDelete), NULL);
 
   vbox = gtk_vbox_new(FALSE, 7);
@@ -3207,7 +3207,7 @@ void NewNameDialog(void)
 
   entry = gtk_entry_new();
   g_object_set_data(G_OBJECT(window), "entry", entry);
-  g_signal_connect(GTK_OBJECT(entry), "activate",
+  g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(NewNameOK), window);
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(ClientData.Play));
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
@@ -3216,7 +3216,7 @@ void NewNameDialog(void)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  g_signal_connect(GTK_OBJECT(button), "clicked",
+  g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(NewNameOK), window);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
   GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
@@ -3239,7 +3239,7 @@ void GunShopDialog(void)
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), 600, 190);
-  g_signal_connect(GTK_OBJECT(window), "destroy",
+  g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(SendDoneMessage), NULL);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
@@ -3270,9 +3270,9 @@ void GunShopDialog(void)
 
   hbbox = my_hbbox_new();
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(window), 0);
+                          G_OBJECT(window), 0);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -3320,7 +3320,7 @@ static void CreateSpyReports(void)
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-  g_signal_connect(GTK_OBJECT(window), "destroy",
+  g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroySpyReports), NULL);
 
   vbox = gtk_vbox_new(FALSE, 5);
@@ -3330,9 +3330,9 @@ static void CreateSpyReports(void)
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
   button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
-  g_signal_connect_object(GTK_OBJECT(button), "clicked",
+  g_signal_connect_object(G_OBJECT(button), "clicked",
                           G_CALLBACK(gtk_widget_destroy),
-                          GTK_OBJECT(window), 0);
+                          G_OBJECT(window), 0);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
