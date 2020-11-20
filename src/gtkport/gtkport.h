@@ -602,6 +602,7 @@ void gtk_menu_prepend(GtkMenu *menu, GtkWidget *child);
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label);
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu);
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active);
+gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item);
 void gtk_menu_set_active(GtkMenu *menu, guint index);
 GtkWidget *gtk_notebook_new();
 void gtk_notebook_append_page(GtkNotebook *notebook, GtkWidget *child,

@@ -3928,6 +3928,11 @@ void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu)
   submenu->parent = GTK_WIDGET(menu_item);
 }
 
+gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item)
+{
+  return menu_item->active;
+}
+
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active)
 {
   GtkWidget *widget = GTK_WIDGET(menu_item);
