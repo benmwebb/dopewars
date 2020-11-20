@@ -27,6 +27,8 @@
 #include <config.h>
 #endif
 
+#include "itemfactory.h"
+
 #ifdef CYGWIN
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
@@ -60,7 +62,6 @@ extern HICON mainIcon;
 #define GDK_KP_9 0xFFB9
 
 typedef gint (*GtkFunction) (gpointer data);
-typedef gchar *(*GtkTranslateFunc) (const gchar *path, gpointer func_data);
 typedef void (*GtkDestroyNotify) (gpointer data);
 
 #define GTK_VISIBLE 1
@@ -75,7 +76,6 @@ typedef struct _GtkSignalType GtkSignalType;
 typedef struct _GtkContainer GtkContainer;
 
 typedef void (*GtkSignalFunc) ();
-typedef void (*GtkItemFactoryCallback) ();
 typedef void (*GtkSignalMarshaller) (GtkObject *object, GSList *actions,
                                      GtkSignalFunc default_action,
                                      va_list args);
@@ -298,26 +298,6 @@ typedef struct _GtkHBox GtkHBox;
 typedef struct _GtkVBox GtkVBox;
 typedef struct _GtkNotebookChild GtkNotebookChild;
 typedef struct _GtkNotebook GtkNotebook;
-typedef struct _GtkItemFactoryEntry GtkItemFactoryEntry;
-typedef struct _GtkItemFactory GtkItemFactory;
-
-struct _GtkItemFactoryEntry {
-  gchar *path;
-  gchar *accelerator;
-  GtkItemFactoryCallback callback;
-  guint callback_action;
-  gchar *item_type;
-};
-
-struct _GtkItemFactory {
-  GtkObject object;
-  GSList *children;
-  gchar *path;
-  GtkAccelGroup *accel_group;
-  GtkWidget *top_widget;
-  GtkTranslateFunc translate_func;
-  gpointer translate_data;
-};
 
 struct _GtkBoxChild {
   GtkWidget *widget;
@@ -525,19 +505,6 @@ GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
 GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
 void gtk_table_resize(GtkTable *table, guint rows, guint cols);
-GtkItemFactory *gtk_item_factory_new(GtkType container_type,
-                                     const gchar *path,
-                                     GtkAccelGroup *accel_group);
-void gtk_item_factory_create_item(GtkItemFactory *ifactory,
-                                  GtkItemFactoryEntry *entry,
-                                  gpointer callback_data,
-                                  guint callback_type);
-void gtk_item_factory_create_items(GtkItemFactory *ifactory,
-                                   guint n_entries,
-                                   GtkItemFactoryEntry *entries,
-                                   gpointer callback_data);
-GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
-                                       const gchar *path);
 GSList *gtk_radio_button_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
                               gint new_text_length, gint *position);
@@ -631,10 +598,6 @@ void gtk_object_set_data(GtkObject *object, const gchar *key,
 gpointer gtk_object_get_data(GtkObject *object, const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
-void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
-                                         GtkTranslateFunc func,
-                                         gpointer data,
-                                         GtkDestroyNotify notify);
 void gtk_widget_grab_default(GtkWidget *widget);
 void gtk_widget_grab_focus(GtkWidget *widget);
 void gtk_window_set_modal(GtkWindow *window, gboolean modal);
