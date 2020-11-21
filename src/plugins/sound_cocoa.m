@@ -52,6 +52,8 @@ static void SoundPlay_Cocoa(const gchar *snd)
   p = [play_by_name objectForKey:sound];
   if (!p) {
     p = [[NSSound alloc] initWithContentsOfFile:sound byReference:YES];
+    /* If the sound file doesn't exist, do nothing */
+    if (!p) return;
     [play_by_name setObject:p forKey:sound];
   }
   /* First, stop any currently playing sound */
