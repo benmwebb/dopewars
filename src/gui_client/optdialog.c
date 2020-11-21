@@ -66,15 +66,11 @@ static void UpdateAllLists(void)
   GSList *listpt;
 
   for (listpt = clists; listpt; listpt = g_slist_next(listpt)) {
-    GtkCList *clist = GTK_CLIST(listpt->data);
-
-    if (clist->selection) {
-      int row = GPOINTER_TO_INT(clist->selection->data);
-
-      if (row >= 0) {
-        gtk_clist_unselect_row(clist, row, 0);
-      }
-    }
+    GtkTreeView *tv = GTK_TREE_VIEW(listpt->data);
+    GtkTreeSelection *treesel = gtk_tree_view_get_selection(tv);
+    /* Force unselection, which should trigger *_sel_changed function to
+       copy widget data into configuration */
+    gtk_tree_selection_unselect_all(treesel);
   }
 }
 
@@ -309,12 +305,19 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
   }
 }
 
-static void swap_rows(GtkCList *clist, gint selrow, gint swaprow,
+static void swap_rows(GtkTreeView *tv, gint selrow, gint swaprow,
                       gchar *structname)
 {
   GSList *listpt;
+  GtkTreeIter seliter, swapiter;
+  GtkTreeModel *model = gtk_tree_view_get_model(tv);
+  GtkTreeSelection *treesel = gtk_tree_view_get_selection(tv);
 
-  gtk_clist_unselect_row(clist, selrow, 0);
+  g_assert(gtk_tree_model_iter_nth_child(model, &seliter, NULL, selrow));
+  g_assert(gtk_tree_model_iter_nth_child(model, &swapiter, NULL, swaprow));
+
+  gtk_tree_selection_unselect_iter(treesel, &seliter);
+  gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &swapiter);
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
@@ -327,31 +330,57 @@ static void swap_rows(GtkCList *clist, gint selrow, gint swaprow,
 
       cwid->data[selrow] = cwid->data[swaprow];
       cwid->data[swaprow] = tmp;
-      if (strcmp(gvar->Name, "Name") == 0) {
-        gtk_clist_set_text(clist, selrow, 0, cwid->data[selrow]);
-        gtk_clist_set_text(clist, swaprow, 0, cwid->data[swaprow]);
-      }
     }
   }
 
-  gtk_clist_select_row(clist, swaprow, 0);
+  gtk_tree_selection_select_iter(treesel, &seliter);
+}
+
+/* Return the index of the currently selected row, or -1 if none is selected.
+   This works only for lists (not trees) with GTK_SELECTION_SINGLE mode */
+static int get_tree_selection_row_index(GtkTreeSelection *treesel,
+                                        GtkTreeModel **model)
+{
+  int row = -1;
+  GList *selrows = gtk_tree_selection_get_selected_rows(treesel, model);
+  if (selrows) {
+    GtkTreePath *path = selrows->data;
+    gint depth;
+    gint *inds = gtk_tree_path_get_indices_with_depth(path, &depth);
+    g_assert(selrows->next == NULL);
+    g_assert(depth == 1);
+    row = inds[0];
+  }
+  g_list_free_full(selrows, (GDestroyNotify)gtk_tree_path_free);
+  return row;
 }
 
 static void list_delete(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
-  int minlistlength;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  int minlistlength, nrows, row;
 
-  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
-  g_assert(clist);
-  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(clist),
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, &model);
+
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model),
                                                     "minlistlength"));
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
 
-  if (clist->rows > minlistlength && clist->selection) {
+  if (nrows > minlistlength && row >= 0) {
+    GtkTreeIter iter;
     GSList *listpt;
-    int row = GPOINTER_TO_INT(clist->selection->data);
+    gboolean valid;
+    /* Prevent selection changed from reading deleted entry */
+    g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(-1));
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, row));
+    gtk_tree_selection_unselect_iter(treesel, &iter);
+    valid = gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
 
-    gtk_clist_remove(clist, row);
     for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
       struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
       struct GLOBALS *gvar;
@@ -368,21 +397,31 @@ static void list_delete(GtkWidget *widget, gchar *structname)
         cwid->data = g_realloc(cwid->data, sizeof(gchar *) * cwid->maxindex);
       }
     }
+    if (valid) {
+      gtk_tree_selection_select_iter(treesel, &iter);
+    }
   }
 }
 
 static void list_new(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkListStore *store;
+  GtkTreeSelection *treesel;
+  GtkTreeIter iter;
   int row;
   GSList *listpt;
-  gchar *text[3];
+  gchar *newname;
 
-  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(tv));
 
-  text[0] = g_strdup_printf(_("New %s"), structname);
-  row = gtk_clist_append(clist, text);
+  newname = g_strdup_printf(_("New %s"), structname);
+  gtk_list_store_append(store, &iter);
+  gtk_list_store_set(store, &iter, 0, newname, -1);
+  row = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL) - 1;
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
@@ -394,160 +433,165 @@ static void list_new(GtkWidget *widget, gchar *structname)
       g_assert(cwid->maxindex == row + 1);
       cwid->data = g_realloc(cwid->data, sizeof(gchar *) * cwid->maxindex);
       if (strcmp(gvar->Name, "Name") == 0) {
-        cwid->data[row] = g_strdup(text[0]);
+        cwid->data[row] = g_strdup(newname);
       } else {
         cwid->data[row] = g_strdup("");
       }
     }
   }
-  g_free(text[0]);
+  g_free(newname);
 
-  gtk_clist_select_row(clist, row, 0);
+  gtk_tree_selection_select_iter(treesel, &iter);
 }
 
 static void list_up(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  int row;
 
-  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, NULL);
 
-  if (clist->selection) {
-    int row = GPOINTER_TO_INT(clist->selection->data);
-
-    if (row > 0) {
-      swap_rows(clist, row, row - 1, structname);
-    }
+  if (row > 0) {
+    swap_rows(tv, row, row - 1, structname);
   }
 }
 
 static void list_down(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  int row, nrows;
 
-  clist = GTK_CLIST(g_object_get_data(G_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, &model);
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
 
-  if (clist->selection) {
-    int row = GPOINTER_TO_INT(clist->selection->data);
-    int numrows = clist->rows;
-
-    if (row < numrows - 1 && row >= 0) {
-      swap_rows(clist, row, row + 1, structname);
-    }
+  if (row < nrows - 1 && row >= 0) {
+    swap_rows(tv, row, row + 1, structname);
   }
 }
 
-static void list_row_select(GtkCList *clist, gint row, gint column,
-                            GdkEvent *event, gchar *structname)
+static void list_sel_changed(GtkTreeSelection *treesel, gpointer data)
 {
-  GSList *listpt;
+  GtkTreeModel *model;
   GtkWidget *delbut, *upbut, *downbut;
-  int minlistlength;
+  int minlistlength, nrows, row, oldsel;
+  GSList *listpt;
+  gchar *structname = data;
 
-  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(clist),
+  row = get_tree_selection_row_index(treesel, &model);
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
+
+  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "delete"));
+  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "up"));
+  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "down"));
+  oldsel = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "oldsel"));
+  g_assert(delbut && upbut && downbut);
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model),
                                                     "minlistlength"));
-  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "down"));
-  g_assert(delbut && upbut && downbut);
-  gtk_widget_set_sensitive(delbut, clist->rows > minlistlength);
+
+  gtk_widget_set_sensitive(delbut, nrows > minlistlength);
   gtk_widget_set_sensitive(upbut, row > 0);
-  gtk_widget_set_sensitive(downbut, row < clist->rows - 1);
+  gtk_widget_set_sensitive(downbut, row < nrows - 1);
 
-  for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
-    struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
-    struct GLOBALS *gvar;
+  /* Store any edited data from old-selected row */
+  if (oldsel >= 0) {
+    for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
+      struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
+      struct GLOBALS *gvar;
 
-    gvar = &Globals[conf->globind];
+      gvar = &Globals[conf->globind];
 
-    if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
-      if (gvar->BoolVal) {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(conf->widget),
-                                     conf->data[row] != NULL);
-      } else {
-        gtk_entry_set_text(GTK_ENTRY(conf->widget), conf->data[row]);
-      }
-    }
-  }
-}
+      if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
+        g_free(conf->data[oldsel]);
+        conf->data[oldsel] = NULL;
 
-static void list_row_unselect(GtkCList *clist, gint row, gint column,
-                              GdkEvent *event, gchar *structname)
-{
-  GSList *listpt;
-  GtkWidget *delbut, *upbut, *downbut;
-
-  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "down"));
-  g_assert(delbut && upbut && downbut);
-  gtk_widget_set_sensitive(delbut, FALSE);
-  gtk_widget_set_sensitive(upbut, FALSE);
-  gtk_widget_set_sensitive(downbut, FALSE);
-
-
-  for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
-    struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
-    struct GLOBALS *gvar;
-
-    gvar = &Globals[conf->globind];
-
-    if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
-      g_free(conf->data[row]);
-      conf->data[row] = NULL;
-
-      if (gvar->BoolVal) {
-        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(conf->widget))) {
-          conf->data[row] = g_strdup("1");
+        if (gvar->BoolVal) {
+          if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(conf->widget))) {
+            conf->data[oldsel] = g_strdup("1");
+          }
+        } else {
+          conf->data[oldsel] = gtk_editable_get_chars(
+                                         GTK_EDITABLE(conf->widget), 0, -1);
+          gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
         }
-      } else {
-        conf->data[row] = gtk_editable_get_chars(GTK_EDITABLE(conf->widget),
-                                                 0, -1);
-        gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
+        if (strcmp(gvar->Name, "Name") == 0) {
+          GtkTreeIter ositer;
+	  g_assert(gtk_tree_model_iter_nth_child(model, &ositer, NULL, oldsel));
+	  gtk_list_store_set(GTK_LIST_STORE(model), &ositer, 0,
+                             conf->data[oldsel], -1);
+        }
       }
-      if (strcmp(gvar->Name, "Name") == 0) {
-        gtk_clist_set_text(clist, row, 0, conf->data[row]);
+    }
+  }
+  g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(row));
+
+  /* Update widgets with selected row */
+  if (row >= 0) {
+    for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
+      struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
+      struct GLOBALS *gvar;
+
+      gvar = &Globals[conf->globind];
+
+      if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
+        if (gvar->BoolVal) {
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(conf->widget),
+                                       conf->data[row] != NULL);
+        } else {
+          gtk_entry_set_text(GTK_ENTRY(conf->widget), conf->data[row]);
+	}
       }
     }
   }
 }
 
-static void sound_row_select(GtkCList *clist, gint row, gint column,
-                             GdkEvent *event, gpointer data)
+static void sound_sel_changed(GtkTreeSelection *treesel, gpointer data)
 {
+  GtkTreeModel *model;
+  GtkTreeIter iter;
   GtkWidget *entry;
-  int globind;
-  gchar **text;
+  int row, oldsel, globind;
 
-  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "entry"));
-  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
-  g_assert(globind >=0 && globind < NUMGLOB);
+  row = get_tree_selection_row_index(treesel, &model);
+  oldsel = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "oldsel"));
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "entry"));
 
-  text = GetGlobalString(globind, 0);
-  gtk_entry_set_text(GTK_ENTRY(entry), *text);
-}
+  /* Store any edited data from old-selected row */
+  if (oldsel >= 0) {
+    gchar *text, **oldtext;
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, oldsel));
+    gtk_tree_model_get(model, &iter, 2, &globind, -1);
+    g_assert(globind >=0 && globind < NUMGLOB);
 
-static void sound_row_unselect(GtkCList *clist, gint row, gint column,
-                               GdkEvent *event, gpointer data)
-{
-  GtkWidget *entry;
-  int globind;
-  gchar *text, **oldtext;
-
-  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(clist), "entry"));
-  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
-  g_assert(globind >=0 && globind < NUMGLOB);
-
-  text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
-  oldtext = GetGlobalString(globind, 0);
-  g_assert(text && oldtext);
-  if (strcmp(text, *oldtext) != 0) {
-    AssignName(GetGlobalString(globind, 0), text);
-    Globals[globind].Modified = TRUE;
+    text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+    oldtext = GetGlobalString(globind, 0);
+    g_assert(text && oldtext);
+    if (strcmp(text, *oldtext) != 0) {
+      AssignName(GetGlobalString(globind, 0), text);
+      Globals[globind].Modified = TRUE;
+    }
+    gtk_entry_set_text(GTK_ENTRY(entry), "");
+    g_free(text);
   }
-  gtk_entry_set_text(GTK_ENTRY(entry), "");
-  g_free(text);
+
+  g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(row));
+  /* Update new selection */
+  if (row >= 0) {
+    gchar **text;
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, row));
+    gtk_tree_model_get(model, &iter, 2, &globind, -1);
+    g_assert(globind >=0 && globind < NUMGLOB);
+    text = GetGlobalString(globind, 0);
+    gtk_entry_set_text(GTK_ENTRY(entry), *text);
+  }
 }
 
 static void BrowseSound(GtkWidget *entry)
@@ -622,8 +666,12 @@ static void FinishOptDialog(GtkWidget *widget, gpointer data)
 
 static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 {
-  GtkWidget *hbox, *vbox, *hbbox, *clist, *scrollwin, *button, *table;
-  gchar *titles[3];
+  GtkWidget *hbox, *vbox, *hbbox, *tv, *scrollwin, *button, *table;
+  GtkTreeSelection *treesel;
+  GtkListStore *store;
+  GtkCellRenderer *renderer;
+  GtkTreeIter iter;
+
   int ind, minlistlength = 0;
   gint i, nummembers;
   struct GLOBALS *gvar;
@@ -650,38 +698,44 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 
   vbox = gtk_vbox_new(FALSE, 5);
 
-  titles[0] = structname;
-  clist = gtk_scrolled_clist_new_with_titles(1, titles, &scrollwin);
+  tv = gtk_scrolled_tree_view_new(&scrollwin);
+  store = gtk_list_store_new(1, G_TYPE_STRING);
+  gtk_tree_view_set_model(GTK_TREE_VIEW(tv), GTK_TREE_MODEL(store));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, structname, renderer, "text", 0, NULL);
+  g_object_unref(store);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), FALSE);
 
-  g_signal_connect(G_OBJECT(clist), "select_row",
-                   G_CALLBACK(list_row_select), structname);
-  g_signal_connect(G_OBJECT(clist), "unselect_row",
-                   G_CALLBACK(list_row_unselect), structname);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
+  g_signal_connect(G_OBJECT(treesel), "changed", G_CALLBACK(list_sel_changed),
+                   structname);
+  gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
+  gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(store),
+	  GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID, GTK_SORT_ASCENDING);
 
-  clists = g_slist_append(clists, clist);
+  clists = g_slist_append(clists, tv);
 
   for (i = 1; i <= *gvar->MaxIndex; i++) {
-    titles[0] = *GetGlobalString(ind, i);
-    gtk_clist_append(GTK_CLIST(clist), titles);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, *GetGlobalString(ind, i), -1);
   }
   gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
 
   hbbox = gtk_hbox_new(TRUE, 5);
+  g_object_set_data(G_OBJECT(store), "oldsel", GINT_TO_POINTER(-1));
 
   button = gtk_button_new_with_label(_("New"));
-  g_object_set_data(G_OBJECT(button), "clist", clist);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(list_new), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Delete"));
   gtk_widget_set_sensitive(button, FALSE);
-  g_object_set_data(G_OBJECT(button), "clist", clist);
-  g_object_set_data(G_OBJECT(clist), "delete", button);
-  g_object_set_data(G_OBJECT(clist), "minlistlength",
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "delete", button);
+  g_object_set_data(G_OBJECT(store), "minlistlength",
                     GINT_TO_POINTER(minlistlength));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(list_delete), structname);
@@ -689,16 +743,16 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 
   button = gtk_button_new_with_label(_("Up"));
   gtk_widget_set_sensitive(button, FALSE);
-  g_object_set_data(G_OBJECT(button), "clist", clist);
-  g_object_set_data(G_OBJECT(clist), "up", button);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "up", button);
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(list_up), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Down"));
   gtk_widget_set_sensitive(button, FALSE);
-  g_object_set_data(G_OBJECT(button), "clist", clist);
-  g_object_set_data(G_OBJECT(clist), "down", button);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "down", button);
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(list_down), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
@@ -720,34 +774,40 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   return hbox;
 }
 
-static void FillSoundsList(GtkCList *clist)
+static void FillSoundsList(GtkTreeView *tv)
 {
-  gchar *rowtext[2];
-  gint i, row;
+  GtkListStore *store;
+  GtkTreeIter iter;
+  gint i;
 
-  gtk_clist_freeze(clist);
-  gtk_clist_clear(clist);
+  /* Don't update the widget until we're done */
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(tv));
+  g_object_ref(store);
+  gtk_tree_view_set_model(tv, NULL);
+
+  gtk_list_store_clear(store);
   for (i = 0; i < NUMGLOB; i++) {
     if (strlen(Globals[i].Name) > 7
 	&& strncmp(Globals[i].Name, "Sounds.", 7) == 0) {
-      rowtext[0] = &Globals[i].Name[7];
-      rowtext[1] = _(Globals[i].Help);
-      row = gtk_clist_append(clist, rowtext);
-      gtk_clist_set_row_data(clist, row, GINT_TO_POINTER(i));
+      gtk_list_store_append(store, &iter);
+      gtk_list_store_set(store, &iter, 0, &Globals[i].Name[7],
+                         1, _(Globals[i].Help), 2, i, -1);
     }
   }
 
-  gtk_clist_thaw(clist);
+  gtk_tree_view_set_model(tv, GTK_TREE_MODEL(store));
 }
 
 void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
-  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *clist;
+  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *tv;
   GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
   gchar *sound_titles[2];
-  int width;
+  GtkCellRenderer *renderer;
+  GtkListStore *store;
+  GtkTreeSelection *treesel;
 
   struct ConfigMembers locmembers[] = {
     { N_("Police presence"), "PolicePresence" },
@@ -943,16 +1003,27 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   sound_titles[0] = _("Sound name");
   sound_titles[1] = _("Description");
-  clist = gtk_scrolled_clist_new_with_titles(2, sound_titles, &scrollwin);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  FillSoundsList(GTK_CLIST(clist));
-  g_signal_connect(G_OBJECT(clist), "select_row",
-                   G_CALLBACK(sound_row_select), NULL);
-  g_signal_connect(G_OBJECT(clist), "unselect_row",
-                   G_CALLBACK(sound_row_unselect), NULL);
+  tv = gtk_scrolled_tree_view_new(&scrollwin);
+  store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+  g_object_set_data(G_OBJECT(store), "oldsel", GINT_TO_POINTER(-1));
+  gtk_tree_view_set_model(GTK_TREE_VIEW(tv), GTK_TREE_MODEL(store));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, sound_titles[0], renderer,
+	       "text", 0, NULL);
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, sound_titles[1], renderer,
+	       "text", 1, NULL);
+  g_object_unref(store);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), FALSE);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
+  gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
 
-  clists = g_slist_append(clists, clist);
+  FillSoundsList(GTK_TREE_VIEW(tv));
+  g_signal_connect(G_OBJECT(treesel), "changed",
+                   G_CALLBACK(sound_sel_changed), NULL);
+
+  clists = g_slist_append(clists, tv);
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
@@ -961,7 +1032,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = gtk_entry_new();
-  g_object_set_data(G_OBJECT(clist), "entry", entry);
+  g_object_set_data(G_OBJECT(store), "entry", entry);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Browse..."));
@@ -1011,7 +1082,4 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
   gtk_widget_show_all(dialog);
-
-  width = gtk_clist_optimal_column_width(GTK_CLIST(clist), 0);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 0, width);
 }
