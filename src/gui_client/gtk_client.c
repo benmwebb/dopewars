@@ -2150,18 +2150,12 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group)
                                        "clicked", accel_group, FALSE);
 }
 
-static void SetIcon(GtkWidget *window, gchar **xpmdata)
+static void SetIcon(GtkWidget *window, char **xpmdata)
 {
 #ifndef CYGWIN
-  GdkBitmap *mask;
-  GdkPixmap *icon;
-  GtkStyle *style;
-
-  style = gtk_widget_get_style(window);
-  icon = gdk_pixmap_create_from_xpm_d(window->window, &mask,
-                                      &style->bg[GTK_STATE_NORMAL],
-                                      xpmdata);
-  gdk_window_set_icon(window->window, NULL, icon, mask);
+  GdkPixbuf *icon;
+  icon = gdk_pixbuf_new_from_xpm_data((const char**)xpmdata);
+  gtk_window_set_icon(GTK_WINDOW(window), icon);
 #endif
 }
 
