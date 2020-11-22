@@ -27,6 +27,14 @@
 #include "gtkport.h"
 
 /* No need to reimplement functions if we have GTK+2 */
+#if GTK_MAJOR_VERSION == 2
+GtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
+                                        GtkAccelGroup *accel_group)
+{
+  return gtk_item_factory_new(GTK_TYPE_MENU_BAR, path, accel_group);
+}
+#endif
+
 #if defined(CYGWIN) || GTK_MAJOR_VERSION > 2
 
 #ifdef CYGWIN

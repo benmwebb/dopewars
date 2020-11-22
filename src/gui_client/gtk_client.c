@@ -2259,8 +2259,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   accel_group = gtk_accel_group_new();
   g_object_set_data(G_OBJECT(window), "accel_group", accel_group);
-  item_factory = ClientData.Menu = dp_gtk_item_factory_new(GTK_TYPE_MENU_BAR,
-                                                           "<main>",
+  item_factory = ClientData.Menu = dp_gtk_item_factory_new("<main>",
                                                            accel_group);
   dp_gtk_item_factory_set_translate_func(item_factory, MenuTranslate, NULL,
                                          NULL);

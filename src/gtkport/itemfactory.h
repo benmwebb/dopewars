@@ -40,7 +40,10 @@
 #define DPGtkItemFactoryCallback GtkItemFactoryCallback
 #define DPGtkItemFactoryEntry GtkItemFactoryEntry
 #define DPGtkItemFactory GtkItemFactory
-#define dp_gtk_item_factory_new gtk_item_factory_new
+
+GtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
+                                        GtkAccelGroup *accel_group);
+
 #define dp_gtk_item_factory_create_items gtk_item_factory_create_items
 #define dp_gtk_item_factory_create_item gtk_item_factory_create_item
 #define dp_gtk_item_factory_get_widget gtk_item_factory_get_widget
@@ -71,8 +74,7 @@ struct _DPGtkItemFactory {
   gpointer translate_data;
 };
 
-DPGtkItemFactory *dp_gtk_item_factory_new(GtkType container_type,
-                                          const gchar *path,
+DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
                                           GtkAccelGroup *accel_group);
 void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
                                      DPGtkItemFactoryEntry *entry,
@@ -87,7 +89,7 @@ GtkWidget *dp_gtk_item_factory_get_widget(DPGtkItemFactory *ifactory,
 void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             DPGtkTranslateFunc func,
                                             gpointer data,
-                                            GtkDestroyNotify notify);
+                                            GDestroyNotify notify);
 #endif /* GTK+2 */
 
 #endif /* __ITEM_FACTORY_H__ */
