@@ -201,17 +201,13 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 /*
- * Creates an hbutton_box widget, and sets a sensible spacing.
- * N.B. Should use gtk_hbutton_box_set_spacing_default() instead, but
- * this doesn't seem to actually work with GTK+2...
+ * Creates an hbutton_box widget, and sets a sensible spacing and layout.
  */
 GtkWidget *my_hbbox_new(void)
 {
   GtkWidget *hbbox = gtk_hbutton_box_new();
-
-#if !CYGWIN
-  gtk_box_set_spacing(GTK_BOX(hbbox), 8);
-#endif
+  gtk_button_box_set_layout(GTK_BUTTON_BOX(hbbox), GTK_BUTTONBOX_END);
+  gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbbox), 8);
   return hbbox;
 }
 
@@ -2233,13 +2229,6 @@ gboolean GtkLoop(int *argc, char **argv[],
     SetPlayerName(ClientData.Play, PlayerName);
   }
 
-  gtk_hbutton_box_set_layout_default(GTK_BUTTONBOX_END);
-  gtk_vbutton_box_set_layout_default(GTK_BUTTONBOX_SPREAD);
-
-#if CYGWIN
-  gtk_hbutton_box_set_spacing_default(8);
-#endif
-
   window = MainWindow = ClientData.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
   /* Title of main window in GTK+ client */
@@ -3126,6 +3115,8 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
 
   if (CreateButtons) {
     widgets->vbbox = vbbox = gtk_vbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(vbbox), GTK_BUTTONBOX_SPREAD);
+
 
     for (i = 0; i < 3; i++) {
       button[i] = gtk_button_new_with_label("");
