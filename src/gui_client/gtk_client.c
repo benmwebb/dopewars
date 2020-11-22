@@ -1987,7 +1987,7 @@ void GuiStartGame(void)
 void EndGame(void)
 {
   DisplayFightMessage(NULL);
-  gtk_widget_hide_all(ClientData.vbox);
+  gtk_widget_hide(ClientData.vbox);
   TextViewClear(GTK_TEXT_VIEW(ClientData.messages));
   ShutdownNetwork(ClientData.Play);
   UpdatePlayerLists();
@@ -2200,7 +2200,6 @@ gboolean GtkLoop(int *argc, char **argv[],
 #ifdef CYGWIN
   win32_init(hInstance, hPrevInstance, "mainicon");
 #else
-  gtk_set_locale();
   if (ReturnOnFail && !gtk_init_check(argc, argv))
     return FALSE;
   else if (!ReturnOnFail)
@@ -2408,7 +2407,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
-  gtk_container_border_width(GTK_CONTAINER(dialog), 10);
+  gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
   vbox = gtk_vbox_new(FALSE, 5);
 
