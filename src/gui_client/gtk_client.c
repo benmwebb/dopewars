@@ -207,7 +207,7 @@ GtkWidget *my_hbbox_new(void)
 {
   GtkWidget *hbbox = gtk_hbutton_box_new();
   gtk_button_box_set_layout(GTK_BUTTON_BOX(hbbox), GTK_BUTTONBOX_END);
-  gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbbox), 8);
+  gtk_box_set_spacing(GTK_BOX(hbbox), 8);
   return hbbox;
 }
 
@@ -2596,7 +2596,7 @@ void TransferDialog(gboolean Debt)
     /* Radio button selected if you want to pay money into the bank */
     radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
     g_object_set_data(G_OBJECT(dialog), "deposit", radio);
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(radio));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
     gtk_table_attach_defaults(GTK_TABLE(table), radio, 0, 1, 2, 3);
 
     /* Radio button selected if you want to withdraw money from the bank */
