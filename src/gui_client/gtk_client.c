@@ -592,7 +592,6 @@ void HandleClientMessage(char *pt, Player *Play)
     break;
   case C_DRUGHERE:
     UpdateInventory(&ClientData.Drug, Play->Drugs, NumDrug, TRUE);
-    gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
     if (IsShowingInventory) {
       UpdateInventory(&ClientData.InvenDrug, Play->Drugs, NumDrug, TRUE);
     }
@@ -1287,7 +1286,6 @@ void UpdateStatus(Player *Play)
 
   DisplayStats(Play, &ClientData.Status);
   UpdateInventory(&ClientData.Drug, ClientData.Play->Drugs, NumDrug, TRUE);
-  gtk_clist_sort(GTK_CLIST(ClientData.Drug.HereList));
   accel_group = (GtkAccelGroup *)
       g_object_get_data(G_OBJECT(ClientData.window), "accel_group");
   SetJetButtonTitle(accel_group);
@@ -1302,49 +1300,72 @@ void UpdateStatus(Player *Play)
   }
 }
 
+/* Columns in inventory list */
+enum {
+  INVEN_COL_NAME = 0,
+  INVEN_COL_NUM,
+  INVEN_COL_INDEX,
+  INVEN_NUM_COLS
+};
+
+/* Get the currently selected inventory item (drug/gun) as an index into
+   the drug/gun array, or -1 if none is selected */
+static int get_selected_inventory(GtkTreeSelection *treesel)
+{
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+  if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
+    int ind;
+    gtk_tree_model_get(model, &iter, INVEN_COL_INDEX, &ind, -1);
+    return ind;
+  } else {
+    return -1;
+  }
+}
+
+static void scroll_to_selection(GtkTreeModel *model, GtkTreePath *path,
+                                GtkTreeIter *iter, gpointer data)
+{
+  GtkTreeView *tv = data;
+  gtk_tree_view_scroll_to_cell(tv, path, NULL, FALSE, 0., 0.);
+}
+
 void UpdateInventory(struct InventoryWidgets *Inven,
                      Inventory *Objects, int NumObjects, gboolean AreDrugs)
 {
   GtkWidget *herelist, *carrylist;
-  gint i, row, selectrow[2];
-  gpointer rowdata;
+  gint i;
   price_t price;
   gchar *titles[2];
   gboolean CanBuy = FALSE, CanSell = FALSE, CanDrop = FALSE;
-  GList *glist[2], *selection;
-  GtkCList *clist[2];
-  int numlist;
+  GtkTreeIter iter;
+  GtkTreeView *tv[2];
+  GtkListStore *carrystore, *herestore;
+  int numlist, selectrow[2];
 
   herelist = Inven->HereList;
   carrylist = Inven->CarriedList;
 
   numlist = (herelist ? 2 : 1);
 
-  /* Make lists of the current selections */
-  clist[0] = GTK_CLIST(carrylist);
+  /* Get current selections */
+  tv[0] = GTK_TREE_VIEW(carrylist);
+  carrystore = GTK_LIST_STORE(gtk_tree_view_get_model(tv[0]));
   if (herelist) {
-    clist[1] = GTK_CLIST(herelist);
+    tv[1] = GTK_TREE_VIEW(herelist);
+    herestore = GTK_LIST_STORE(gtk_tree_view_get_model(tv[1]));
   } else {
-    clist[1] = NULL;
+    tv[1] = NULL;
   }
 
   for (i = 0; i < numlist; i++) {
-    glist[i] = NULL;
-    selectrow[i] = -1;
-    for (selection = clist[i]->selection; selection;
-         selection = g_list_next(selection)) {
-      row = GPOINTER_TO_INT(selection->data);
-      rowdata = gtk_clist_get_row_data(clist[i], row);
-      glist[i] = g_list_append(glist[i], rowdata);
-    }
+    selectrow[i] = get_selected_inventory(gtk_tree_view_get_selection(tv[i]));
   }
 
-  gtk_clist_freeze(GTK_CLIST(carrylist));
-  gtk_clist_clear(GTK_CLIST(carrylist));
+  gtk_list_store_clear(carrystore);
 
   if (herelist) {
-    gtk_clist_freeze(GTK_CLIST(herelist));
-    gtk_clist_clear(GTK_CLIST(herelist));
+    gtk_list_store_clear(herestore);
   }
 
   for (i = 0; i < NumObjects; i++) {
@@ -1361,12 +1382,13 @@ void UpdateInventory(struct InventoryWidgets *Inven,
     if (herelist && price > 0) {
       CanBuy = TRUE;
       titles[1] = FormatPrice(price);
-      row = gtk_clist_append(GTK_CLIST(herelist), titles);
+      gtk_list_store_append(herestore, &iter);
+      gtk_list_store_set(herestore, &iter, INVEN_COL_NAME, titles[0],
+                         INVEN_COL_NUM, titles[1], INVEN_COL_INDEX, i, -1);
       g_free(titles[1]);
-      gtk_clist_set_row_data(GTK_CLIST(herelist), row, GINT_TO_POINTER(i));
-      if (g_list_find(glist[1], GINT_TO_POINTER(i))) {
-        selectrow[1] = row;
-        gtk_clist_select_row(GTK_CLIST(herelist), row, 0);
+      if (i == selectrow[1]) {
+        gtk_tree_selection_select_iter(gtk_tree_view_get_selection(tv[1]),
+                                       &iter);
       }
     }
 
@@ -1383,30 +1405,22 @@ void UpdateInventory(struct InventoryWidgets *Inven,
       } else {
         titles[1] = g_strdup_printf("%d", Objects[i].Carried);
       }
-      row = gtk_clist_append(GTK_CLIST(carrylist), titles);
+      gtk_list_store_append(carrystore, &iter);
+      gtk_list_store_set(carrystore, &iter, INVEN_COL_NAME, titles[0],
+                         INVEN_COL_NUM, titles[1], INVEN_COL_INDEX, i, -1);
       g_free(titles[1]);
-      gtk_clist_set_row_data(GTK_CLIST(carrylist), row,
-                             GINT_TO_POINTER(i));
-      if (g_list_find(glist[0], GINT_TO_POINTER(i))) {
-        selectrow[0] = row;
-        gtk_clist_select_row(GTK_CLIST(carrylist), row, 0);
+      if (i == selectrow[0]) {
+        gtk_tree_selection_select_iter(gtk_tree_view_get_selection(tv[0]),
+                                       &iter);
       }
     }
     g_free(titles[0]);
   }
 
+  /* Scroll so that selection is visible */
   for (i = 0; i < numlist; i++) {
-    if (selectrow[i] != -1
-        && gtk_clist_row_is_visible(clist[i], selectrow[i])
-            != GTK_VISIBILITY_FULL) {
-      gtk_clist_moveto(clist[i], selectrow[i], 0, 0.0, 0.0);
-    }
-    g_list_free(glist[i]);
-  }
-
-  gtk_clist_thaw(GTK_CLIST(carrylist));
-  if (herelist) {
-    gtk_clist_thaw(GTK_CLIST(herelist));
+    gtk_tree_selection_selected_foreach(gtk_tree_view_get_selection(tv[i]),
+		    scroll_to_selection, tv[i]);
   }
 
   if (Inven->vbbox) {
@@ -1615,11 +1629,9 @@ void DealDrugs(GtkWidget *widget, gpointer data)
       *optionmenu, *menuitem, *vbox, *hsep, *defbutton;
   GtkAdjustment *spin_adj;
   GtkAccelGroup *accel_group;
-  GtkWidget *clist;
+  GtkWidget *tv;
   gchar *Action;
   GString *text;
-  GList *selection;
-  gint row;
   Player *Play;
   gint DrugInd, i, SelIndex, FirstInd;
   gboolean DrugIndOK;
@@ -1642,17 +1654,12 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   Play = ClientData.Play;
 
   if (data == BT_BUY) {
-    clist = ClientData.Drug.HereList;
+    tv = ClientData.Drug.HereList;
   } else {
-    clist = ClientData.Drug.CarriedList;
+    tv = ClientData.Drug.CarriedList;
   }
-  selection = GTK_CLIST(clist)->selection;
-  if (selection) {
-    row = GPOINTER_TO_INT(selection->data);
-    DrugInd = GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
-  } else {
-    DrugInd = -1;
-  }
+  DrugInd = get_selected_inventory(
+                     gtk_tree_view_get_selection(GTK_TREE_VIEW(tv)));
 
   DrugIndOK = FALSE;
   FirstInd = -1;
@@ -1786,24 +1793,21 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
 void DealGuns(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *clist, *dialog;
-  GList *selection;
-  gint row, GunInd;
+  GtkWidget *tv, *dialog;
+  gint GunInd;
   gchar *Title;
   GString *text;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
 
   if (data == BT_BUY) {
-    clist = ClientData.Gun.HereList;
+    tv = ClientData.Gun.HereList;
   } else {
-    clist = ClientData.Gun.CarriedList;
+    tv = ClientData.Gun.CarriedList;
   }
-  selection = GTK_CLIST(clist)->selection;
-  if (selection) {
-    row = GPOINTER_TO_INT(selection->data);
-    GunInd = GPOINTER_TO_INT(gtk_clist_get_row_data(GTK_CLIST(clist), row));
-  } else {
+  GunInd = get_selected_inventory(
+                     gtk_tree_view_get_selection(GTK_TREE_VIEW(tv)));
+  if (GunInd < 0) {
     return;
   }
 
@@ -1994,45 +1998,31 @@ void EndGame(void)
   SoundPlay(Sounds.EndGame);
 }
 
-static void ChangeDrugSort(GtkCList *clist, gint column,
-                           gpointer user_data)
+static gint DrugSortByName(GtkTreeModel *model, GtkTreeIter *a,
+                           GtkTreeIter *b, gpointer data)
 {
-  if (column == 0) {
-    DrugSortMethod = (DrugSortMethod == DS_ATOZ ? DS_ZTOA : DS_ATOZ);
-  } else {
-    DrugSortMethod = (DrugSortMethod == DS_CHEAPFIRST ? DS_CHEAPLAST :
-                      DS_CHEAPFIRST);
-  }
-  gtk_clist_sort(clist);
-}
-
-static gint DrugSortFunc(GtkCList *clist, gconstpointer ptr1,
-                         gconstpointer ptr2)
-{
-  int index1, index2;
-  price_t pricediff;
-
-  index1 = GPOINTER_TO_INT(((const GtkCListRow *)ptr1)->data);
-  index2 = GPOINTER_TO_INT(((const GtkCListRow *)ptr2)->data);
-  if (index1 < 0 || index1 >= NumDrug || index2 < 0 || index2 >= NumDrug) {
+  int indexa, indexb;
+  gtk_tree_model_get(model, a, INVEN_COL_INDEX, &indexa, -1);
+  gtk_tree_model_get(model, b, INVEN_COL_INDEX, &indexb, -1);
+  if (indexa < 0 || indexa >= NumDrug || indexb < 0 || indexb >= NumDrug) {
     return 0;
   }
+  return g_ascii_strcasecmp(Drug[indexa].Name, Drug[indexb].Name);
+}
 
-  switch (DrugSortMethod) {
-  case DS_ATOZ:
-    return g_ascii_strncasecmp(Drug[index1].Name, Drug[index2].Name, strlen(Drug[index2].Name));
-  case DS_ZTOA:
-    return g_ascii_strncasecmp(Drug[index2].Name, Drug[index1].Name, strlen(Drug[index1].Name));
-  case DS_CHEAPFIRST:
-    pricediff = ClientData.Play->Drugs[index1].Price -
-                ClientData.Play->Drugs[index2].Price;
-    return pricediff == 0 ? 0 : pricediff < 0 ? -1 : 1;
-  case DS_CHEAPLAST:
-    pricediff = ClientData.Play->Drugs[index2].Price -
-                ClientData.Play->Drugs[index1].Price;
-    return pricediff == 0 ? 0 : pricediff < 0 ? -1 : 1;
+static gint DrugSortByPrice(GtkTreeModel *model, GtkTreeIter *a,
+                            GtkTreeIter *b, gpointer data)
+{
+  int indexa, indexb;
+  price_t pricediff;
+  gtk_tree_model_get(model, a, INVEN_COL_INDEX, &indexa, -1);
+  gtk_tree_model_get(model, b, INVEN_COL_INDEX, &indexb, -1);
+  if (indexa < 0 || indexa >= NumDrug || indexb < 0 || indexb >= NumDrug) {
+    return 0;
   }
-  return 0;
+  pricediff = ClientData.Play->Drugs[indexa].Price -
+              ClientData.Play->Drugs[indexb].Price;
+  return pricediff == 0 ? 0 : pricediff < 0 ? -1 : 1;
 }
 
 void UpdateMenus(void)
@@ -2200,8 +2190,10 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
 {
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
-      *vpaned, *button, *clist, *widget;
+      *vpaned, *button, *tv, *widget;
   GtkAccelGroup *accel_group;
+  GtkTreeSortable *sortable;
+  int i;
   DPGtkItemFactory *item_factory;
   gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
 
@@ -2309,11 +2301,15 @@ gboolean GtkLoop(int *argc, char **argv[],
   hbox = gtk_hbox_new(FALSE, 7);
   CreateInventory(hbox, Names.Drugs, accel_group, TRUE, TRUE,
                   &ClientData.Drug, G_CALLBACK(DealDrugs));
-  clist = ClientData.Drug.HereList;
-  gtk_clist_column_titles_active(GTK_CLIST(clist));
-  gtk_clist_set_compare_func(GTK_CLIST(clist), DrugSortFunc);
-  g_signal_connect(G_OBJECT(clist), "click-column",
-                   G_CALLBACK(ChangeDrugSort), NULL);
+  tv = ClientData.Drug.HereList;
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), TRUE);
+  sortable = GTK_TREE_SORTABLE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
+  gtk_tree_sortable_set_sort_func(sortable, 0, DrugSortByName, NULL, NULL);
+  gtk_tree_sortable_set_sort_func(sortable, 1, DrugSortByPrice, NULL, NULL);
+  for (i = 0; i < 2; ++i) {
+    GtkTreeViewColumn *col = gtk_tree_view_get_column(GTK_TREE_VIEW(tv), i);
+    gtk_tree_view_column_set_sort_column_id(col, i);
+  }
 
   button = ClientData.JetButton = gtk_button_new_with_label("");
   ClientData.JetAccel = 0;
@@ -3057,8 +3053,11 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
                      gboolean CreateHere, struct InventoryWidgets *widgets,
                      GCallback CallBack)
 {
-  GtkWidget *scrollwin, *clist, *vbbox, *frame[2], *button[3];
-  gint i, mini;
+  GtkWidget *scrollwin, *tv, *vbbox, *frame[2], *button[3];
+  GtkCellRenderer *renderer;
+  GtkListStore *store;
+  GtkTreeSelection *treesel;
+  gint i, mini, icol;
   GString *text;
   gchar *titles[2][2];
   gchar *button_text[3];
@@ -3096,21 +3095,37 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     GtkWidget *hbox2 = gtk_hbox_new(TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(frame[i]), 3);
 
-    clist = gtk_scrolled_clist_new_with_titles(2, titles[i], &scrollwin);
-    gtk_clist_set_column_auto_resize(GTK_CLIST(clist), 0, TRUE);
-    gtk_clist_set_column_auto_resize(GTK_CLIST(clist), 1, TRUE);
-    gtk_clist_column_titles_passive(GTK_CLIST(clist));
-    gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-    gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
+    tv = gtk_scrolled_tree_view_new(&scrollwin);
+    renderer = gtk_cell_renderer_text_new();
+    store = gtk_list_store_new(INVEN_NUM_COLS, G_TYPE_STRING,
+                               G_TYPE_STRING, G_TYPE_INT);
+    gtk_tree_view_set_model(GTK_TREE_VIEW(tv), GTK_TREE_MODEL(store));
+    g_object_unref(store);
+    for (icol = 0; icol < 2; ++icol) {
+      GtkTreeViewColumn *col;
+      if (i == 0 && icol == 1) {
+        /* Right align prices */
+        GtkCellRenderer *rren = gtk_cell_renderer_text_new();
+        g_object_set(G_OBJECT(rren), "xalign", 1.0, NULL);
+        col = gtk_tree_view_column_new_with_attributes(
+                       titles[i][icol], rren, "text", icol, NULL);
+        gtk_tree_view_column_set_alignment(col, 1.0);
+      } else {
+        col = gtk_tree_view_column_new_with_attributes(
+                       titles[i][icol], renderer, "text", icol, NULL);
+      }
+      gtk_tree_view_insert_column(GTK_TREE_VIEW(tv), col, -1);
+    }
+    gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), FALSE);
+    treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
+    gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
     gtk_box_pack_start(GTK_BOX(hbox2), scrollwin, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(hbox2), 3);
     gtk_container_add(GTK_CONTAINER(frame[i]), hbox2);
     if (i == 0) {
-      gtk_clist_set_column_justification(GTK_CLIST(clist), 1,
-                                         GTK_JUSTIFY_RIGHT);
-      widgets->HereList = clist;
+      widgets->HereList = tv;
     } else {
-      widgets->CarriedList = clist;
+      widgets->CarriedList = tv;
     }
   }
   if (CreateHere) {
