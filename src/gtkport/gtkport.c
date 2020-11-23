@@ -5186,6 +5186,19 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
 }
 
 #else /* CYGWIN */
+
+#if GTK_MAJOR_VERSION == 2
+GtkWidget *gtk_button_box_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hbutton_box_new();
+  } else {
+    return gtk_vbutton_box_new();
+  }
+}
+
+#endif
+
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)

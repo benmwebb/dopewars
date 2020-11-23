@@ -695,6 +695,11 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+/* Provide compatibility functions for GTK+2 so we can use GTK+3 syntax */
+#if GTK_MAJOR_VERSION == 2
+GtkWidget *gtk_button_box_new(GtkOrientation orientation);
+#endif
+
 /* Defines for GtkMessageBox options */
 #define MB_OK     1
 #define MB_CANCEL 2

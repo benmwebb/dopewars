@@ -205,7 +205,7 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
  */
 GtkWidget *my_hbbox_new(void)
 {
-  GtkWidget *hbbox = gtk_hbutton_box_new();
+  GtkWidget *hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_button_box_set_layout(GTK_BUTTON_BOX(hbbox), GTK_BUTTONBOX_END);
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
   return hbbox;
@@ -3114,7 +3114,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   }
 
   if (CreateButtons) {
-    widgets->vbbox = vbbox = gtk_vbutton_box_new();
+    widgets->vbbox = vbbox = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(vbbox), GTK_BUTTONBOX_SPREAD);
 
 
