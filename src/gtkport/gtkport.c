@@ -5483,49 +5483,27 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   return eventbox;
 }
 
-static void store_filename(GtkWidget *widget, gchar **filename)
-{
-  GtkWidget *file_select = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-
-  g_assert(file_select != NULL);
-  *filename = g_strdup(gtk_file_selection_get_filename(
-	                       GTK_FILE_SELECTION(file_select)));
-}
-
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title)
 {
-  GtkWidget *file_select, *ok, *cancel;
-  gchar *filename = NULL;
+  GtkWidget *dialog;
+  GtkFileChooser *chooser;
+  gint res;
+  gchar *ret;
 
-  file_select = gtk_file_selection_new(title);
-  if (parent) {
-    gtk_window_set_modal(GTK_WINDOW(file_select), TRUE);
-    gtk_window_set_transient_for(GTK_WINDOW(file_select),
-	                         GTK_WINDOW(parent));
+  dialog = gtk_file_chooser_dialog_new(
+                 title, GTK_WINDOW(parent), GTK_FILE_CHOOSER_ACTION_OPEN,
+                 _("_Cancel"), GTK_RESPONSE_CANCEL,
+                 _("_Select"), GTK_RESPONSE_ACCEPT, NULL);
+  chooser = GTK_FILE_CHOOSER(dialog);
+  gtk_file_chooser_set_filename(chooser, oldname);
+  res = gtk_dialog_run(GTK_DIALOG(dialog));
+  ret = NULL;
+  if (res == GTK_RESPONSE_ACCEPT) {
+    ret = gtk_file_chooser_get_filename(chooser);
   }
-
-  ok = GTK_FILE_SELECTION(file_select)->ok_button;
-  cancel = GTK_FILE_SELECTION(file_select)->cancel_button;
-  if (oldname) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), oldname);
-  }
-  g_signal_connect(G_OBJECT(ok), "clicked",
-                   G_CALLBACK(store_filename),
-                   (gpointer)&filename);
-  g_signal_connect_swapped(G_OBJECT(ok), "clicked",
-                           G_CALLBACK(gtk_widget_destroy),
-                           G_OBJECT(file_select));
-  g_signal_connect_swapped(G_OBJECT(cancel), "clicked",
-                           G_CALLBACK(gtk_widget_destroy),
-                           G_OBJECT(file_select));
-  g_signal_connect(G_OBJECT(file_select), "destroy",
-                   G_CALLBACK(gtk_main_quit), NULL);
-
-  gtk_widget_show(file_select);
-  gtk_main();
-
-  return filename;
+  gtk_widget_destroy(dialog);
+  return ret;
 }
 
 gboolean HaveUnicodeSupport(void)
