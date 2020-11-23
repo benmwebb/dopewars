@@ -694,9 +694,9 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
     nummembers++;
   }
 
-  hbox = gtk_hbox_new(FALSE, 10);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
   tv = gtk_scrolled_tree_view_new(&scrollwin);
   store = gtk_list_store_new(1, G_TYPE_STRING);
@@ -722,7 +722,8 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   }
   gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
 
-  hbbox = gtk_hbox_new(TRUE, 5);
+  hbbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  gtk_box_set_homogeneous(GTK_BOX(hbbox), TRUE);
   g_object_set_data(G_OBJECT(store), "oldsel", GINT_TO_POINTER(-1));
 
   button = gtk_button_new_with_label(_("New"));
@@ -851,7 +852,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(MainWindow));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   notebook = gtk_notebook_new();
 
@@ -923,7 +924,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Locations"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
-  vbox2 = gtk_vbox_new(FALSE, 8);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
 
   hbox = CreateList("Drug", drugmembers);
@@ -998,7 +999,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
 #endif
 
-  vbox2 = gtk_vbox_new(FALSE, 5);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
 
   sound_titles[0] = _("Sound name");
@@ -1027,7 +1028,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
-  hbox = gtk_hbox_new(FALSE, 5);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   label = gtk_label_new(_("Sound file"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 

@@ -5197,6 +5197,15 @@ GtkWidget *gtk_button_box_new(GtkOrientation orientation)
   }
 }
 
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hbox_new(FALSE, spacing);
+  } else {
+    return gtk_vbox_new(FALSE, spacing);
+  }
+}
+
 #endif
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,

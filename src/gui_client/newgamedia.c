@@ -496,8 +496,8 @@ void NewGameDialog(Player *play)
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
-  vbox = gtk_vbox_new(FALSE, 7);
-  hbox = gtk_hbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
 
   label = gtk_label_new("");
 
@@ -520,7 +520,7 @@ void NewGameDialog(Player *play)
 #ifdef NETWORKING
   frame = gtk_frame_new(_("Server"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-  vbox2 = gtk_vbox_new(FALSE, 7);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
   table = gtk_table_new(2, 2, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 4);
@@ -574,7 +574,7 @@ void NewGameDialog(Player *play)
   /* Title of 'New Game' dialog notebook tab for single-player mode */
   frame = gtk_frame_new(_("Single player"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-  vbox2 = gtk_vbox_new(FALSE, 7);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
   stgam.antique = gtk_check_button_new_with_label("");
 
@@ -602,7 +602,7 @@ void NewGameDialog(Player *play)
   frame = gtk_frame_new(_("Metaserver"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
 
-  vbox2 = gtk_vbox_new(FALSE, 7);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
 
   clist = stgam.metaserv = create_metaserver_view(&scrollwin);
@@ -719,7 +719,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
                                GTK_WINDOW(MainWindow));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   table = gtk_table_new(2, 2, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 10);

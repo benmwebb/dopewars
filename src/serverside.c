@@ -1670,13 +1670,13 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   TextOutput = text = gtk_scrolled_text_view_new(&hbox);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
-  hbox = gtk_hbox_new(FALSE, 4);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
   label = gtk_label_new(_("Command:"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   entry = gtk_entry_new();

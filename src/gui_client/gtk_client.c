@@ -336,9 +336,9 @@ void ListInventory(GtkWidget *widget, gpointer data)
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  hbox = gtk_hbox_new(FALSE, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
   CreateInventory(hbox, Names.Drugs, accel_group, FALSE, FALSE,
                   &ClientData.InvenDrug, NULL);
   CreateInventory(hbox, Names.Guns, accel_group, FALSE, FALSE,
@@ -634,7 +634,7 @@ void PrepareHighScoreDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
 
-  HiScoreDialog.vbox = vbox = gtk_vbox_new(FALSE, 7);
+  HiScoreDialog.vbox = vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   HiScoreDialog.table = table = gtk_table_new(NUMHISCORE, 4, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 30);
@@ -921,7 +921,7 @@ static void CreateFightDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   table = gtk_table_new(2, 4, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 7);
@@ -1472,7 +1472,7 @@ void Jet(GtkWidget *parent)
                                parent ? GTK_WINDOW(parent)
                                : GTK_WINDOW(ClientData.window));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   /* Prompt in 'Jet' dialog */
   label = gtk_label_new(_("Where to, dude ? "));
@@ -1694,9 +1694,9 @@ void DealDrugs(GtkWidget *widget, gpointer data)
                                GTK_WINDOW(ClientData.window));
   SetShowing(dialog, &IsShowingDealDrugs);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  hbox = gtk_hbox_new(FALSE, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
 
   label = gtk_label_new(Action);
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
@@ -1741,7 +1741,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
     label = DealDialog.afford = gtk_label_new(NULL);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   }
-  hbox = gtk_hbox_new(FALSE, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
   if (data == BT_BUY) {
     /* Prompts for action in the "deal drugs" dialog */
     g_string_printf(text, _("Buy how many?"));
@@ -1912,7 +1912,7 @@ void QuestionDialog(char *Data, Player *From)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   while (*LabelText == '\n')
     LabelText++;
   label = gtk_label_new(LabelText);
@@ -2251,7 +2251,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
   menubar = dp_gtk_item_factory_get_widget(item_factory, "<main>");
 
-  vbox2 = gtk_vbox_new(FALSE, 0);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_box_pack_start(GTK_BOX(vbox2), menubar, FALSE, FALSE, 0);
   gtk_widget_show_all(menubar);
   UpdateMenus();
@@ -2260,7 +2260,7 @@ gboolean GtkLoop(int *argc, char **argv[],
                                           "<main>/Game/Enable sound");
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), UseSounds);
 
-  vbox = ClientData.vbox = gtk_vbox_new(FALSE, 5);
+  vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   frame = gtk_frame_new(_("Stats"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
 
@@ -2279,7 +2279,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_paned_pack1(GTK_PANED(vpaned), hbox, TRUE, TRUE);
 
-  hbox = gtk_hbox_new(FALSE, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
   CreateInventory(hbox, Names.Drugs, accel_group, TRUE, TRUE,
                   &ClientData.Drug, G_CALLBACK(DealDrugs));
   tv = ClientData.Drug.HereList;
@@ -2346,7 +2346,7 @@ static void PackCentredURL(GtkWidget *vbox, gchar *title, gchar *target,
 
   /* There must surely be a nicer way of making the URL centred - but I
    * can't think of one... */
-  hbox = gtk_hbox_new(FALSE, 0);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   label = gtk_label_new("");
   gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
 
@@ -2392,7 +2392,7 @@ void display_intro(GtkWidget *widget, gpointer data)
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 10);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
   /* Main content of GTK+ 'about' dialog */
   label = gtk_label_new(_("Based on John E. Dell's old Drug Wars game, "
@@ -2567,7 +2567,7 @@ void TransferDialog(gboolean Debt)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   table = gtk_table_new(4, 3, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 4);
   gtk_table_set_col_spacings(GTK_TABLE(table), 4);
@@ -2673,7 +2673,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
                                GTK_WINDOW(ClientData.window));
   SetShowing(dialog, &IsShowingPlayerList);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   clist = ClientData.PlayerList = CreatePlayerList();
   UpdatePlayerList(clist, FALSE);
@@ -2785,7 +2785,7 @@ void TalkDialog(gboolean TalkToAll)
                                GTK_WINDOW(ClientData.window));
   SetShowing(dialog, &IsShowingTalkList);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   clist = TalkData.clist = ClientData.TalkList = CreatePlayerList();
   UpdatePlayerList(clist, FALSE);
@@ -2932,7 +2932,7 @@ void ErrandDialog(gint ErrandType)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(ClientData.window));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   if (ErrandType == ET_SPY) {
     /* Title of dialog to select a player to spy on */
@@ -3073,7 +3073,8 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   widgets->HereList = widgets->CarriedList = NULL;
   mini = (CreateHere ? 0 : 1);
   for (i = mini; i < 2; i++) {
-    GtkWidget *hbox2 = gtk_hbox_new(TRUE, 0);
+    GtkWidget *hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_box_set_homogeneous(GTK_BOX(hbox2), TRUE);
     gtk_container_set_border_width(GTK_CONTAINER(frame[i]), 3);
 
     tv = gtk_scrolled_tree_view_new(&scrollwin);
@@ -3194,7 +3195,7 @@ void NewNameDialog(void)
   g_signal_connect(G_OBJECT(window), "delete_event",
                    G_CALLBACK(DisallowDelete), NULL);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   /* Informational text to prompt the player to change his/her name */
   label = gtk_label_new(_("Unfortunately, somebody else is already "
@@ -3253,9 +3254,9 @@ void GunShopDialog(void)
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
   SetShowing(window, &IsShowingGunShop);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  hbox = gtk_hbox_new(FALSE, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
   CreateInventory(hbox, Names.Guns, accel_group, TRUE, TRUE,
                   &ClientData.Gun, G_CALLBACK(DealGuns));
 
@@ -3319,7 +3320,7 @@ static void CreateSpyReports(void)
   g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroySpyReports), NULL);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   notebook = gtk_notebook_new();
   g_object_set_data(G_OBJECT(window), "notebook", notebook);
 
@@ -3349,14 +3350,14 @@ void DisplaySpyReports(Player *Play)
   notebook = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "notebook"));
   accel_group =
       (GtkAccelGroup *)(g_object_get_data(G_OBJECT(dialog), "accel_group"));
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   frame = gtk_frame_new("Stats");
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
   table = CreateStatusWidgets(&Status);
   gtk_container_add(GTK_CONTAINER(frame), table);
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-  hbox = gtk_hbox_new(FALSE, 5);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   CreateInventory(hbox, Names.Drugs, accel_group, FALSE, FALSE, &SpyDrugs,
                   NULL);
   CreateInventory(hbox, Names.Guns, accel_group, FALSE, FALSE, &SpyGuns,
