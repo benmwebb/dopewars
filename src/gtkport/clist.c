@@ -887,22 +887,4 @@ void InitCListClass(HINSTANCE hInstance)
   myRegisterClass(&wc);
 }
 
-#else /* for systems with GTK+ */
-
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                              gchar *titles[],
-                                              GtkWidget **pack_widg)
-{
-  GtkWidget *scrollwin, *clist;
-
-  clist = gtk_clist_new_with_titles(columns, titles);
-  scrollwin = gtk_scrolled_window_new(NULL, NULL);
-  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
-                                 GTK_POLICY_AUTOMATIC,
-                                 GTK_POLICY_AUTOMATIC);
-  gtk_container_add(GTK_CONTAINER(scrollwin), clist);
-  *pack_widg = scrollwin;
-  return clist;
-}
-
 #endif
