@@ -699,6 +699,7 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 #if GTK_MAJOR_VERSION == 2
 GtkWidget *gtk_button_box_new(GtkOrientation orientation);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
+GtkWidget *gtk_separator_new(GtkOrientation orientation);
 #endif
 
 /* Defines for GtkMessageBox options */

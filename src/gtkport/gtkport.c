@@ -5206,6 +5206,15 @@ GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
   }
 }
 
+GtkWidget *gtk_separator_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hseparator_new();
+  } else {
+    return gtk_vseparator_new();
+  }
+}
+
 #endif
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,

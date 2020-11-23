@@ -346,7 +346,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -640,7 +640,7 @@ void PrepareHighScoreDialog(void)
   gtk_table_set_col_spacings(GTK_TABLE(table), 30);
 
   gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
@@ -927,7 +927,7 @@ static void CreateFightDialog(void)
   gtk_table_set_row_spacings(GTK_TABLE(table), 7);
   gtk_table_set_col_spacings(GTK_TABLE(table), 10);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_table_attach_defaults(GTK_TABLE(table), hsep, 0, 4, 1, 2);
   gtk_widget_show_all(table);
   gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
@@ -946,7 +946,7 @@ static void CreateFightDialog(void)
   gtk_widget_show_all(hbox);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
   gtk_widget_show(hsep);
 
@@ -1760,7 +1760,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(hbox), spinner, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -1918,7 +1918,7 @@ void QuestionDialog(char *Data, Player *From)
   label = gtk_label_new(LabelText);
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -2451,7 +2451,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   PackCentredURL(vbox, "https://dopewars.sourceforge.io/",
                  "https://dopewars.sourceforge.io/", WebBrowser);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -2620,7 +2620,7 @@ void TransferDialog(gboolean Debt)
 
   gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -2679,7 +2679,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   UpdatePlayerList(clist, FALSE);
   gtk_box_pack_start(GTK_BOX(vbox), clist, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -2811,7 +2811,7 @@ void TalkDialog(gboolean TalkToAll)
                    G_CALLBACK(TalkSend), (gpointer)&TalkData);
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -2979,7 +2979,7 @@ void ErrandDialog(gint ErrandType)
   UpdatePlayerList(clist, FALSE);
   gtk_box_pack_start(GTK_BOX(vbox), clist, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
@@ -3209,7 +3209,7 @@ void NewNameDialog(void)
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(ClientData.Play));
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
@@ -3262,7 +3262,7 @@ void GunShopDialog(void)
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();

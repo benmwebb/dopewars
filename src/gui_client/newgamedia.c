@@ -747,7 +747,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 
   gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();

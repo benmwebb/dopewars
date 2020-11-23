@@ -930,7 +930,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   hbox = CreateList("Drug", drugmembers);
   gtk_box_pack_start(GTK_BOX(vbox2), hbox, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox2), hsep, FALSE, FALSE, 0);
 
   table = gtk_table_new(2, 2, FALSE);
@@ -1055,7 +1055,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
