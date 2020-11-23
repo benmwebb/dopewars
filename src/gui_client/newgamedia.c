@@ -656,7 +656,7 @@ void NewGameDialog(Player *play)
 
   SetStartGameStatus(NULL);
   gtk_widget_show_all(dialog);
-  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), NewGameType);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), NewGameType);
 #ifdef NETWORKING
   gtk_widget_grab_default(defbutton);
 #endif

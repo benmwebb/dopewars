@@ -1050,7 +1050,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Sounds"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 
-  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
