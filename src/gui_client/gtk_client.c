@@ -1519,7 +1519,7 @@ void Jet(GtkWidget *parent)
       /* Add keypad shortcuts as well */
       if (i < 9) {
         gtk_widget_add_accelerator(button, "clicked", accel_group,
-                                   GDK_KP_1 + i, 0,
+                                   GDK_KEY_KP_1 + i, 0,
                                    GTK_ACCEL_VISIBLE);
       }
       g_free(name);
