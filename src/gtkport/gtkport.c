@@ -5289,7 +5289,7 @@ static void GtkMessageBoxCallback(GtkWidget *widget, gpointer data)
   GtkWidget *dialog;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  retval = (gint *)gtk_object_get_data(GTK_OBJECT(widget), "retval");
+  retval = (gint *)g_object_get_data(G_OBJECT(widget), "retval");
   if (retval)
     *retval = GPOINTER_TO_INT(data);
   gtk_widget_destroy(dialog);
@@ -5316,8 +5316,8 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   if (parent)
     gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   if (!imm_return) {
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                       GTK_SIGNAL_FUNC(DestroyGtkMessageBox), NULL);
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+                     G_CALLBACK(DestroyGtkMessageBox), NULL);
   }
   if (Title)
     gtk_window_set_title(GTK_WINDOW(dialog), Title);
@@ -5339,11 +5339,11 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
     if (Options & (1 << i)) {
       button = NewStockButton(ButtonData[i], accel_group);
       if (!imm_return) {
-        gtk_object_set_data(GTK_OBJECT(button), "retval", &retval);
+        g_object_set_data(G_OBJECT(button), "retval", &retval);
       }
-      gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                         GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
-                         GINT_TO_POINTER(1 << i));
+      g_signal_connect(G_OBJECT(button), "clicked",
+                       G_CALLBACK(GtkMessageBoxCallback),
+                       GINT_TO_POINTER(1 << i));
       gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
     }
   }
@@ -5390,8 +5390,8 @@ static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
   GdkCursor *cursor;
 
   cursor = gdk_cursor_new(GDK_HAND2);
-  gdk_window_set_cursor(label->window, cursor);
-  gdk_cursor_destroy(cursor);
+  gdk_window_set_cursor(gtk_widget_get_window(label), cursor);
+  gdk_cursor_unref(cursor);
 }
 
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
@@ -5430,8 +5430,8 @@ static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
 {
   gchar *bin, *target;
 
-  bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
-  target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
+  bin = (gchar *)g_object_get_data(G_OBJECT(widget), "bin");
+  target = (gchar *)g_object_get_data(G_OBJECT(widget), "target");
   DisplayHTML(widget, bin, target);
   return TRUE;
 }
@@ -5453,12 +5453,12 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   /* Set the text colour */
   style = gtk_rc_get_style(label);
   if (!style) {
-    style = label->style;
+    style = gtk_widget_get_style(label);
   }
   style = gtk_style_copy(style);
   style->fg[GTK_STATE_NORMAL] = color;
   gtk_widget_set_style(label, style);
-  gtk_style_unref(style);
+  g_object_unref(G_OBJECT(style));
 
   /* Make the text underlined */
   pattern = g_strnfill(strlen(text), '_');
@@ -5467,16 +5467,16 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
 
   /* We cannot set the cursor until the widget is realized, so set up a
    * handler to do this later */
-  gtk_signal_connect(GTK_OBJECT(label), "realize",
-                     GTK_SIGNAL_FUNC(gtk_url_set_cursor), label);
+  g_signal_connect(G_OBJECT(label), "realize",
+                   G_CALLBACK(gtk_url_set_cursor), label);
 
   eventbox = gtk_event_box_new();
-  gtk_object_set_data_full(GTK_OBJECT(eventbox), "target",
+  g_object_set_data_full(G_OBJECT(eventbox), "target",
                            g_strdup(target), g_free);
-  gtk_object_set_data_full(GTK_OBJECT(eventbox), "bin",
+  g_object_set_data_full(G_OBJECT(eventbox), "bin",
                            g_strdup(bin), g_free);
-  gtk_signal_connect(GTK_OBJECT(eventbox), "button-release-event",
-                     GTK_SIGNAL_FUNC(gtk_url_triggered), NULL);
+  g_signal_connect(G_OBJECT(eventbox), "button-release-event",
+                   G_CALLBACK(gtk_url_triggered), NULL);
 
   gtk_container_add(GTK_CONTAINER(eventbox), label);
 
@@ -5510,15 +5510,17 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   if (oldname) {
     gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), oldname);
   }
-  gtk_signal_connect(GTK_OBJECT(ok), "clicked",
-                     GTK_SIGNAL_FUNC(store_filename),
-		     (gpointer)&filename);
-  gtk_signal_connect_object(GTK_OBJECT(ok), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
-  gtk_signal_connect_object(GTK_OBJECT(cancel), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
-  gtk_signal_connect(GTK_OBJECT(file_select), "destroy",
-                     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
+  g_signal_connect(G_OBJECT(ok), "clicked",
+                   G_CALLBACK(store_filename),
+                   (gpointer)&filename);
+  g_signal_connect_swapped(G_OBJECT(ok), "clicked",
+                           G_CALLBACK(gtk_widget_destroy),
+                           G_OBJECT(file_select));
+  g_signal_connect_swapped(G_OBJECT(cancel), "clicked",
+                           G_CALLBACK(gtk_widget_destroy),
+                           G_OBJECT(file_select));
+  g_signal_connect(G_OBJECT(file_select), "destroy",
+                   G_CALLBACK(gtk_main_quit), NULL);
 
   gtk_widget_show(file_select);
   gtk_main();
