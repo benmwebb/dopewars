@@ -57,8 +57,7 @@ struct _DPGtkItemFactoryChild {
   GtkWidget *widget;
 };
 
-DPGtkItemFactory *dp_gtk_item_factory_new(GtkType container_type,
-                                          const gchar *path,
+DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
                                           GtkAccelGroup *accel_group)
 {
   DPGtkItemFactory *new_fac;
@@ -220,19 +219,19 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
   }
   new_child->widget = menu_item;
   if (entry->callback) {
-    gtk_signal_connect(GTK_OBJECT(menu_item), "activate",
-                       entry->callback, callback_data);
+    g_signal_connect(G_OBJECT(menu_item), "activate",
+                     entry->callback, callback_data);
   }
 
   if (parent) {
-    menu = GTK_WIDGET(GTK_MENU_ITEM(parent->widget)->submenu);
+    menu = GTK_WIDGET(gtk_menu_item_get_submenu(GTK_MENU_ITEM(parent->widget)));
     if (!menu) {
       menu = gtk_menu_new();
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(parent->widget), menu);
     }
-    gtk_menu_append(GTK_MENU(menu), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
   } else {
-    gtk_menu_bar_append(GTK_MENU_BAR(ifactory->top_widget), menu_item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(ifactory->top_widget), menu_item);
   }
 
   if (haveaccel && ifactory->accel_group) {
@@ -289,7 +288,7 @@ GtkWidget *dp_gtk_item_factory_get_widget(DPGtkItemFactory *ifactory,
 void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             DPGtkTranslateFunc func,
                                             gpointer data,
-                                            GtkDestroyNotify notify)
+                                            GDestroyNotify notify)
 {
   ifactory->translate_func = func;
   ifactory->translate_data = data;
