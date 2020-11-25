@@ -463,7 +463,9 @@ void NewGameDialog(Player *play)
   GtkWidget *vbox, *vbox2, *hbox, *label, *entry, *notebook;
   GtkWidget *frame, *button, *dialog;
   GtkAccelGroup *accel_group;
+#if GTK_MAJOR_VERSION == 2
   guint AccelKey;
+#endif
 
 #ifdef NETWORKING
   GtkWidget *clist, *scrollwin, *table, *hbbox, *defbutton;
@@ -501,15 +503,23 @@ void NewGameDialog(Player *play)
 
   label = gtk_label_new("");
 
+#if GTK_MAJOR_VERSION == 2
   AccelKey = gtk_label_parse_uline(GTK_LABEL(label),
+#else
+  gtk_label_set_text_with_mnemonic(GTK_LABEL(label),
+#endif
                                    /* Prompt for player's name in 'New
                                       Game' dialog */
                                    _("Hey dude, what's your _name?"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = stgam.name = gtk_entry_new();
+#if GTK_MAJOR_VERSION == 2
   gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey,
                              GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
+#else
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
+#endif
   gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(stgam.play));
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 

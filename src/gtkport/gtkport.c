@@ -5221,6 +5221,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
 {
+#if GTK_MAJOR_VERSION == 2
   guint AccelKey;
 
   AccelKey =
@@ -5231,6 +5232,15 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                                GTK_ACCEL_VISIBLE);
   }
   return AccelKey;
+#else
+  gtk_label_set_text_with_mnemonic(
+                   GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), Text);
+  if (sendto) {
+    gtk_label_set_mnemonic_widget(
+                   GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), sendto);
+  }
+  return 0;
+#endif
 }
 
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
