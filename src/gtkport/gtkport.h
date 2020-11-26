@@ -33,6 +33,9 @@
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
 
+/* Provide prototypes compatible with GTK+3 */
+#define GTK_MAJOR_VERSION 3
+
 #include <winsock2.h>
 #include <windows.h>
 #include <glib.h>
@@ -377,7 +380,7 @@ GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
 GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
 void gtk_table_resize(GtkTable *table, guint rows, guint cols);
-GSList *gtk_radio_button_group(GtkRadioButton *radio_button);
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
                               gint new_text_length, gint *position);
 void gtk_editable_delete_text(GtkEditable *editable,

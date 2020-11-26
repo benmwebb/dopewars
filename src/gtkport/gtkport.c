@@ -1867,7 +1867,7 @@ GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
 {
   GSList *list;
 
-  list = gtk_radio_button_group(group);
+  list = gtk_radio_button_get_group(group);
   return (gtk_radio_button_new_with_label(list, label));
 }
 
@@ -1978,7 +1978,7 @@ GtkWidget *gtk_entry_new()
   return GTK_WIDGET(entry);
 }
 
-GSList *gtk_radio_button_group(GtkRadioButton *radio_button)
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button)
 {
   return radio_button->group;
 }
