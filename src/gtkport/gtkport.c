@@ -5188,6 +5188,15 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   }
 }
 
+void gtk_widget_set_can_default(GtkWidget *wid, gboolean flag)
+{
+  if (flag) {
+    GTK_WIDGET_SET_FLAGS(wid, GTK_CAN_DEFAULT);
+  } else {
+    GTK_WIDGET_UNSET_FLAGS(wid, GTK_CAN_DEFAULT);
+  }
+}
+
 #else /* CYGWIN */
 
 #if GTK_MAJOR_VERSION == 2

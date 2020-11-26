@@ -335,6 +335,8 @@ extern HINSTANCE hInst;
 #define GTK_WIDGET_SET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) |= (flag))
 #define GTK_WIDGET_UNSET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) &= ~(flag))
 
+void gtk_widget_set_can_default(GtkWidget *wid, gboolean flag);
+
 typedef int GdkEvent;
 
 gboolean gtk_widget_get_visible(GtkWidget *widget);
