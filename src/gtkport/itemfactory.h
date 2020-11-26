@@ -32,7 +32,12 @@
 #endif
 
 #include <glib.h>
+
+#ifdef CYGWIN
+#include "gtktypes.h"
+#else
 #include <gtk/gtk.h>
+#endif
 
 /* Use GTK+2's own implementation of these functions */
 #if GTK_MAJOR_VERSION == 2
