@@ -2619,10 +2619,10 @@ void gtk_check_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_signal_connect(GTK_OBJECT(widget), "clicked",
-                     gtk_toggle_button_toggled, NULL);
-  gtk_signal_connect(GTK_OBJECT(widget), "toggled",
-                     gtk_check_button_toggled, NULL);
+  g_signal_connect(GTK_OBJECT(widget), "clicked",
+                   gtk_toggle_button_toggled, NULL);
+  g_signal_connect(GTK_OBJECT(widget), "toggled",
+                   gtk_check_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -2643,10 +2643,10 @@ void gtk_radio_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_signal_connect(GTK_OBJECT(widget), "clicked",
-                     gtk_radio_button_clicked, NULL);
-  gtk_signal_connect(GTK_OBJECT(widget), "toggled",
-                     gtk_radio_button_toggled, NULL);
+  g_signal_connect(GTK_OBJECT(widget), "clicked",
+                   gtk_radio_button_clicked, NULL);
+  g_signal_connect(GTK_OBJECT(widget), "toggled",
+                   gtk_radio_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -3580,8 +3580,8 @@ void gtk_signal_emit(GObject *object, const gchar *name, ...)
     g_warning("gtk_signal_emit: unknown signal %s", name);
 }
 
-guint gtk_signal_connect(GObject *object, const gchar *name,
-                         GtkSignalFunc func, gpointer func_data)
+guint g_signal_connect(GObject *object, const gchar *name,
+                       GtkSignalFunc func, gpointer func_data)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -3591,7 +3591,7 @@ guint gtk_signal_connect(GObject *object, const gchar *name,
     return 0;
   signal_type = gtk_get_signal_type(object, name);
   if (!signal_type) {
-    g_warning("gtk_signal_connect: unknown signal %s", name);
+    g_warning("g_signal_connect: unknown signal %s", name);
     return 0;
   }
   signal_list = (GSList *)g_datalist_get_data(&object->signals, name);
@@ -3604,8 +3604,8 @@ guint gtk_signal_connect(GObject *object, const gchar *name,
   return 0;
 }
 
-guint gtk_signal_connect_object(GObject *object, const gchar *name,
-                                GtkSignalFunc func, GObject *slot_object)
+guint g_signal_connect_swapped(GObject *object, const gchar *name,
+                               GtkSignalFunc func, GObject *slot_object)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -3615,7 +3615,7 @@ guint gtk_signal_connect_object(GObject *object, const gchar *name,
     return 0;
   signal_type = gtk_get_signal_type(object, name);
   if (!signal_type) {
-    g_warning("gtk_signal_connect_object: unknown signal %s", name);
+    g_warning("g_signal_connect_swapped: unknown signal %s", name);
     return 0;
   }
   signal_list = (GSList *)g_datalist_get_data(&object->signals, name);

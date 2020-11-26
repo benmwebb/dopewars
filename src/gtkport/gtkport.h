@@ -414,12 +414,11 @@ void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,
                                   gboolean is_active);
 void gtk_main_quit();
 void gtk_main();
-guint gtk_signal_connect(GObject *object, const gchar *name,
-                         GtkSignalFunc func, gpointer func_data);
-#define g_signal_connect gtk_signal_connect
-guint gtk_signal_connect_object(GObject *object, const gchar *name,
-                                GtkSignalFunc func,
-                                GObject *slot_object);
+guint g_signal_connect(GObject *object, const gchar *name,
+                       GtkSignalFunc func, gpointer func_data);
+guint g_signal_connect_swapped(GObject *object, const gchar *name,
+                               GtkSignalFunc func,
+                               GObject *slot_object);
 void gtk_signal_emit(GObject *object, const gchar *name, ...);
 void SetCustomWndProc(WNDPROC wndproc);
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
