@@ -284,7 +284,8 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     GtkWidget *check;
 
     check = gtk_check_button_new_with_label(_(member->label));
-    gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 2, row, row + 1);
+    gtk_table_attach(GTK_TABLE(table), check, 0, 2, row, row + 1,
+                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
     AddConfigWidget(check, ind);
   } else {
     GtkWidget *label, *entry;
@@ -300,7 +301,8 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     } else {
       entry = gtk_entry_new();
     }
-    gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
+    gtk_table_attach(GTK_TABLE(table), entry, 1, 2, row, row + 1,
+                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
     AddConfigWidget(entry, ind);
   }
 }
@@ -969,30 +971,35 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   check = NewConfigCheck("MetaServer.Active",
                          _("Server reports to metaserver"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 2, 0, 1);
+  gtk_table_attach(GTK_TABLE(table), check, 0, 2, 0, 1,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 #ifdef CYGWIN
   check = NewConfigCheck("MinToSysTray", _("Minimize to System Tray"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 2, 4, 0, 1);
+  gtk_table_attach(GTK_TABLE(table), check, 2, 4, 0, 1,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 #endif
 
   label = gtk_label_new(_("Metaserver URL"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("MetaServer.URL");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 1, 2);
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 1, 2,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   label = gtk_label_new(_("Comment"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("MetaServer.Comment");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 4, 5);
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 4, 5,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   label = gtk_label_new(_("MOTD (welcome message)"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("ServerMOTD");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 5, 6);
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 5, 6,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("Server"));
