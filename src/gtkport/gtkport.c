@@ -5332,19 +5332,19 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   if (Title)
     gtk_window_set_title(GTK_WINDOW(dialog), Title);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   if (Text) {
     label = gtk_label_new(Text);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   }
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   retval = MB_CANCEL;
 
-  hbbox = gtk_hbutton_box_new();
+  hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
       button = NewStockButton(ButtonData[i], accel_group);
