@@ -128,6 +128,7 @@ void gtk_tree_selection_select_path(GtkTreeSelection *selection,
                                     GtkTreePath *path);
 void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
                                       GtkTreePath *path);
+#define gtk_tree_selection_select_iter(sel, iter) gtk_tree_selection_select_path(sel, iter)
 
 GtkTreeViewColumn *gtk_tree_view_column_new_with_attributes
                    (const gchar *title, GtkCellRenderer *cell, ...);
