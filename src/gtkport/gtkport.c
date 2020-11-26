@@ -696,13 +696,13 @@ static HWND gtk_get_window_hwnd(GtkWidget *widget)
 HWND gtk_get_parent_hwnd(GtkWidget *widget)
 {
   GtkWidget *child = NULL;
-  while (widget && GTK_OBJECT(widget)->klass != GTK_TYPE_WINDOW
-         && GTK_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
+  while (widget && G_OBJECT(widget)->klass != GTK_TYPE_WINDOW
+         && G_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
     child = widget;
     widget = widget->parent;
   }
   if (widget) {
-    if (GTK_OBJECT(widget)->klass == GTK_TYPE_NOTEBOOK) {
+    if (G_OBJECT(widget)->klass == GTK_TYPE_NOTEBOOK) {
       GSList *children;
       for (children = GTK_NOTEBOOK(widget)->children; children;
            children = g_slist_next(children)) {
@@ -974,7 +974,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     }
     return FALSE;
   case WM_CLOSE:
-    gtk_signal_emit(GTK_OBJECT(widget), "delete_event",
+    gtk_signal_emit(G_OBJECT(widget), "delete_event",
                     &event, &signal_return);
     *dodef = FALSE;
     return TRUE;
@@ -986,7 +986,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
           gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu),
                                          !GTK_CHECK_MENU_ITEM(menu)->active);
         }
-        gtk_signal_emit(GTK_OBJECT(menu), "activate");
+        gtk_signal_emit(G_OBJECT(menu), "activate");
         return FALSE;
       }
     }
@@ -1015,7 +1015,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     return TRUE;
 
   widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
-  if (widget && (klass = GTK_OBJECT(widget)->klass)
+  if (widget && (klass = G_OBJECT(widget)->klass)
       && klass->wndproc) {
     retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
   }
@@ -1024,7 +1024,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
         && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWLP_USERDATA)))
-        && (klass = GTK_OBJECT(widget)->klass)
+        && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
@@ -1043,7 +1043,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   case WM_COMMAND:
     widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWLP_USERDATA));
     klass = NULL;
-    if (widget && (klass = GTK_OBJECT(widget)->klass)
+    if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
@@ -1052,7 +1052,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                HIWORD(wParam) == CBN_SELENDOK) {
       gtk_option_menu_update_selection(widget);
     } else if (lParam && HIWORD(wParam) == BN_CLICKED) {
-      gtk_signal_emit(GTK_OBJECT(widget), "clicked");
+      gtk_signal_emit(G_OBJECT(widget), "clicked");
     } else
       return TRUE;
     break;
@@ -1062,7 +1062,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       break;
 
     widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWLP_USERDATA));
-    if (widget && (klass = GTK_OBJECT(widget)->klass)
+    if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
@@ -1121,7 +1121,7 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   if (msg == WM_KEYUP && wParam == VK_RETURN) {
     widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     if (widget)
-      gtk_signal_emit(GTK_OBJECT(widget), "activate");
+      gtk_signal_emit(G_OBJECT(widget), "activate");
     return FALSE;
   }
   return myCallWindowProc(wpOrigEntryProc, hwnd, msg, wParam, lParam);
@@ -1336,10 +1336,10 @@ void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
   if (recurse)
     gtk_widget_show_all_full(widget, TRUE);
   else
-    gtk_signal_emit(GTK_OBJECT(widget), "show");
+    gtk_signal_emit(G_OBJECT(widget), "show");
 
   if (!GTK_WIDGET_REALIZED(widget)
-      && GTK_OBJECT(widget)->klass == &GtkWindowClass) {
+      && G_OBJECT(widget)->klass == &GtkWindowClass) {
     gtk_widget_realize(widget);
     alloc.x = alloc.y = 0;
     alloc.width = widget->requisition.width;
@@ -1349,7 +1349,7 @@ void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
     ShowWindow(widget->hWnd, SW_SHOWNORMAL);
     UpdateWindow(widget->hWnd);
   } else if (GTK_WIDGET_REALIZED(widget)
-             && GTK_OBJECT(widget)->klass != &GtkWindowClass) {
+             && G_OBJECT(widget)->klass != &GtkWindowClass) {
     gtk_widget_update(widget, TRUE);
     if (!recurse)
       ShowWindow(widget->hWnd, SW_SHOWNORMAL);
@@ -1375,7 +1375,7 @@ void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse)
   if (recurse)
     gtk_widget_hide_all_full(widget, TRUE);
   else {
-    gtk_signal_emit(GTK_OBJECT(widget), "hide");
+    gtk_signal_emit(G_OBJECT(widget), "hide");
     if (widget->hWnd)
       ShowWindow(widget->hWnd, SW_HIDE);
   }
@@ -1410,7 +1410,7 @@ void gtk_widget_set_focus(GtkWidget *widget)
     return;
 
   // g_print("Window %p focus set to widget %p
-  // (%s)\n",window,widget,GTK_OBJECT(widget)->klass->Name);
+  // (%s)\n",window,widget,G_OBJECT(widget)->klass->Name);
   GTK_WINDOW(window)->focus = widget;
   if (widget->hWnd) {
     // if (!SetFocus(widget->hWnd)) g_print("SetFocus failed on widget
@@ -1482,7 +1482,7 @@ void gtk_widget_realize(GtkWidget *widget)
 
   if (GTK_WIDGET_REALIZED(widget))
     return;
-  gtk_signal_emit(GTK_OBJECT(widget), "realize", &req);
+  gtk_signal_emit(G_OBJECT(widget), "realize", &req);
   if (widget->hWnd)
     mySetWindowLong(widget->hWnd, GWLP_USERDATA, (LONG_PTR)widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
@@ -1507,7 +1507,7 @@ void gtk_widget_destroy(GtkWidget *widget)
    * calling DestroyWindow, to avoid annoying flicker caused if Windows
    * chooses to reactivate another application when we close the modal
    * dialog */
-  if (GTK_OBJECT(widget)->klass == &GtkWindowClass) {
+  if (G_OBJECT(widget)->klass == &GtkWindowClass) {
     EnableParent(GTK_WINDOW(widget));
   }
 
@@ -1515,7 +1515,7 @@ void gtk_widget_destroy(GtkWidget *widget)
   if (widget->hWnd)
     DestroyWindow(widget->hWnd);
   widget->hWnd = NULL;
-  gtk_signal_emit(GTK_OBJECT(widget), "destroy");
+  gtk_signal_emit(G_OBJECT(widget), "destroy");
   g_free(widget);
 }
 
@@ -1533,9 +1533,9 @@ void gtk_widget_set_sensitive(GtkWidget *widget, gboolean sensitive)
       EnableWindow(widget->hWnd, sensitive);
   }
 
-  gtk_signal_emit(GTK_OBJECT(widget), sensitive ? "enable" : "disable");
+  gtk_signal_emit(G_OBJECT(widget), sensitive ? "enable" : "disable");
   if (sensitive && widget->hWnd
-      && GTK_OBJECT(widget)->klass == &GtkWindowClass)
+      && G_OBJECT(widget)->klass == &GtkWindowClass)
     SetActiveWindow(widget->hWnd);
 }
 
@@ -1546,7 +1546,7 @@ void gtk_widget_size_request(GtkWidget *widget,
 
   requisition->width = requisition->height = 0;
   if (gtk_widget_get_visible(widget)) {
-    gtk_signal_emit(GTK_OBJECT(widget), "size_request", requisition);
+    gtk_signal_emit(G_OBJECT(widget), "size_request", requisition);
   }
   if (requisition->width < widget->usize.width)
     requisition->width = widget->usize.width;
@@ -1573,7 +1573,7 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt)
 
 void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
-  gtk_signal_emit(GTK_OBJECT(widget), "set_size", allocation);
+  gtk_signal_emit(G_OBJECT(widget), "set_size", allocation);
   memcpy(&widget->allocation, allocation, sizeof(GtkAllocation));
   if (widget->hWnd) {
     POINT pt;
@@ -1584,7 +1584,7 @@ void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
     SetWindowPos(widget->hWnd, HWND_TOP, pt.x, pt.y,
                  allocation->width, allocation->height,
                  SWP_NOZORDER |
-                 (GTK_OBJECT(widget)->klass ==
+                 (G_OBJECT(widget)->klass ==
                   &GtkWindowClass ? SWP_NOMOVE : 0));
   }
 }
@@ -2619,9 +2619,9 @@ void gtk_check_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  g_signal_connect(GTK_OBJECT(widget), "clicked",
+  g_signal_connect(G_OBJECT(widget), "clicked",
                    gtk_toggle_button_toggled, NULL);
-  g_signal_connect(GTK_OBJECT(widget), "toggled",
+  g_signal_connect(G_OBJECT(widget), "toggled",
                    gtk_check_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
@@ -2643,9 +2643,9 @@ void gtk_radio_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  g_signal_connect(GTK_OBJECT(widget), "clicked",
+  g_signal_connect(G_OBJECT(widget), "clicked",
                    gtk_radio_button_clicked, NULL);
-  g_signal_connect(GTK_OBJECT(widget), "toggled",
+  g_signal_connect(G_OBJECT(widget), "toggled",
                    gtk_radio_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
@@ -2747,9 +2747,9 @@ void gtk_widget_hide_all(GtkWidget *widget)
 
 void gtk_widget_hide_all_full(GtkWidget *widget, gboolean hWndOnly)
 {
-  gtk_signal_emit(GTK_OBJECT(widget), "hide_all", hWndOnly);
+  gtk_signal_emit(G_OBJECT(widget), "hide_all", hWndOnly);
   if (hWndOnly) {
-    gtk_signal_emit(GTK_OBJECT(widget), "hide");
+    gtk_signal_emit(G_OBJECT(widget), "hide");
     if (widget->hWnd)
       ShowWindow(widget->hWnd, SW_HIDE);
   } else
@@ -2767,17 +2767,17 @@ void gtk_widget_show_all_full(GtkWidget *widget, gboolean hWndOnly)
   gboolean InitWindow = FALSE;
 
   if (!GTK_WIDGET_REALIZED(widget) &&
-      GTK_OBJECT(widget)->klass == &GtkWindowClass)
+      G_OBJECT(widget)->klass == &GtkWindowClass)
     InitWindow = TRUE;
 
   if (InitWindow)
     gtk_widget_realize(widget);
 
-  gtk_signal_emit(GTK_OBJECT(widget), "show_all", hWndOnly);
+  gtk_signal_emit(G_OBJECT(widget), "show_all", hWndOnly);
 
   if (hWndOnly) {
     if (gtk_widget_get_visible(widget)) {
-      gtk_signal_emit(GTK_OBJECT(widget), "show");
+      gtk_signal_emit(G_OBJECT(widget), "show");
       if (widget->hWnd)
         ShowWindow(widget->hWnd, SW_SHOWNORMAL);
     }
@@ -2800,7 +2800,7 @@ GtkWidget *gtk_widget_get_ancestor(GtkWidget *widget, GtkType type)
 {
   if (!widget)
     return NULL;
-  while (widget && GTK_OBJECT(widget)->klass != type) {
+  while (widget && G_OBJECT(widget)->klass != type) {
     widget = widget->parent;
   }
   return widget;
@@ -3265,7 +3265,7 @@ void gtk_table_set_col_spacings(GtkTable *table, guint spacing)
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button)
 {
   toggle_button->toggled = !toggle_button->toggled;
-  gtk_signal_emit(GTK_OBJECT(toggle_button), "toggled");
+  gtk_signal_emit(G_OBJECT(toggle_button), "toggled");
 }
 
 void gtk_check_button_toggled(GtkCheckButton *check_button, gpointer data)
@@ -4122,7 +4122,7 @@ GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
   adj->page_increment = page_increment;
   adj->page_size = page_size;
 
-  return GTK_OBJECT(adj);
+  return G_OBJECT(adj);
 }
 
 GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
@@ -4361,7 +4361,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
 {
-  gtk_signal_emit(GTK_OBJECT(labelparent), "set_text", Text);
+  gtk_signal_emit(G_OBJECT(labelparent), "set_text", Text);
   return 0;
 }
 
@@ -4869,7 +4869,7 @@ void gtk_option_menu_update_selection(GtkWidget *widget)
   if (menu) {
     menu_item = GTK_WIDGET(g_slist_nth_data(menu->children, lres));
     if (menu_item)
-      gtk_signal_emit(GTK_OBJECT(menu_item), "activate");
+      gtk_signal_emit(G_OBJECT(menu_item), "activate");
   }
 }
 
