@@ -366,7 +366,10 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
       row->data[colind] = g_strdup(va_arg(ap, const char*));
       break;
     case G_TYPE_UINT:
-      row->data[colind] = GINT_TO_POINTER(va_arg(ap, unsigned));
+      row->data[colind] = GUINT_TO_POINTER(va_arg(ap, unsigned));
+      break;
+    case G_TYPE_INT:
+      row->data[colind] = GINT_TO_POINTER(va_arg(ap, int));
       break;
     case G_TYPE_POINTER:
       row->data[colind] = va_arg(ap, gpointer);
@@ -393,6 +396,7 @@ void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...)
   va_list ap;
   char **strpt;
   unsigned *uintpt;
+  int *intpt;
   gpointer *ptpt;
   int colind;
   GtkListStoreRow *row = &g_array_index(tree_model->rows, GtkListStoreRow,
@@ -407,7 +411,11 @@ void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...)
       break;
     case G_TYPE_UINT:
       uintpt = va_arg(ap, unsigned *);
-      *uintpt = GPOINTER_TO_INT(row->data[colind]);
+      *uintpt = GPOINTER_TO_UINT(row->data[colind]);
+      break;
+    case G_TYPE_INT:
+      intpt = va_arg(ap, int *);
+      *intpt = GPOINTER_TO_INT(row->data[colind]);
       break;
     case G_TYPE_POINTER:
       ptpt = va_arg(ap, gpointer *);
@@ -486,6 +494,11 @@ static void draw_cell_text(GtkTreeViewColumn *col, GtkTreeModel *model,
     }
     break;
   case G_TYPE_UINT:
+    val = g_strdup_printf("%u", GPOINTER_TO_UINT(row->data[modcol]));
+    myDrawText(lpdis->hDC, val, -1, rcCol, align);
+    g_free(val);
+    break;
+  case G_TYPE_INT:
     val = g_strdup_printf("%d", GPOINTER_TO_INT(row->data[modcol]));
     myDrawText(lpdis->hDC, val, -1, rcCol, align);
     g_free(val);
@@ -618,6 +631,7 @@ void gtk_tree_view_update_widths(GtkTreeView *tv, GtkTreeModel *model,
       text = row->data[modcol];
       break;
     case G_TYPE_UINT:
+    case G_TYPE_INT:
       text = "9999"; /* hack */
       break;
     default:
