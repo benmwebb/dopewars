@@ -144,11 +144,6 @@ GtkCellRenderer *gtk_cell_renderer_text_new(void);
 void g_object_unref(gpointer object);
 gpointer g_object_ref(gpointer object);
 
-typedef void (*GCallback) (void);
-#define G_CALLBACK(f) ((GCallback) (f))
-void g_signal_connect(gpointer instance, const char *signal,
-                      GCallback handler, gpointer data);
-
 /* Private functions */
 void InitTreeViewClass(HINSTANCE hInstance);
 #endif /* CYGWIN */

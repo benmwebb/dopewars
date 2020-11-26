@@ -3372,7 +3372,7 @@ void gtk_main()
 typedef struct _GtkSignal GtkSignal;
 
 struct _GtkSignal {
-  GtkSignalFunc func;
+  GCallback func;
   GObject *slot_object;
   gpointer func_data;
 };
@@ -3380,7 +3380,7 @@ struct _GtkSignal {
 typedef gint (*GtkGIntSignalFunc) ();
 
 void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+                            GCallback default_action, va_list args)
 {
   gboolean *retval;
   gint arg1;
@@ -3412,7 +3412,7 @@ void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
-                             GtkSignalFunc default_action, va_list args)
+                             GCallback default_action, va_list args)
 {
   gboolean *retval;
   gpointer arg1;
@@ -3444,7 +3444,7 @@ void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+                            GCallback default_action, va_list args)
 {
   GtkSignal *signal;
 
@@ -3461,7 +3461,7 @@ void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+                            GCallback default_action, va_list args)
 {
   gint arg1;
   GtkSignal *signal;
@@ -3481,7 +3481,7 @@ void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
-                             GtkSignalFunc default_action, va_list args)
+                             GCallback default_action, va_list args)
 {
   gpointer arg1;
   GtkSignal *signal;
@@ -3501,7 +3501,7 @@ void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+                            GCallback default_action, va_list args)
 {
   gboolean arg1;
   GtkSignal *signal;
@@ -3521,7 +3521,7 @@ void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
 }
 
 void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
-                                       GtkSignalFunc default_action,
+                                       GCallback default_action,
                                        va_list args)
 {
   gint arg1, arg2;
@@ -3581,7 +3581,7 @@ void gtk_signal_emit(GObject *object, const gchar *name, ...)
 }
 
 guint g_signal_connect(GObject *object, const gchar *name,
-                       GtkSignalFunc func, gpointer func_data)
+                       GCallback func, gpointer func_data)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -3605,7 +3605,7 @@ guint g_signal_connect(GObject *object, const gchar *name,
 }
 
 guint g_signal_connect_swapped(GObject *object, const gchar *name,
-                               GtkSignalFunc func, GObject *slot_object)
+                               GCallback func, GObject *slot_object)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;

@@ -62,9 +62,9 @@ typedef struct _GtkWidget GtkWidget;
 typedef struct _GtkSignalType GtkSignalType;
 typedef struct _GtkContainer GtkContainer;
 
-typedef void (*GtkSignalFunc) ();
+typedef void (*GCallback) (void);
 typedef void (*GtkSignalMarshaller) (GObject *object, GSList *actions,
-                                     GtkSignalFunc default_action,
+                                     GCallback default_action,
                                      va_list args);
 
 typedef struct _GdkColor GdkColor;
@@ -94,7 +94,7 @@ struct _GtkAccelGroup {
 struct _GtkSignalType {
   gchar *name;
   GtkSignalMarshaller marshaller;
-  GtkSignalFunc default_action;
+  GCallback default_action;
 };
 
 struct _GdkColor {

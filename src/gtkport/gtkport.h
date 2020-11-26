@@ -324,7 +324,7 @@ extern HINSTANCE hInst;
 #define GTK_MENU(obj) ((GtkMenu *)(obj))
 #define GTK_MISC(obj) ((GtkMisc *)(obj))
 #define GTK_PROGRESS_BAR(obj) ((GtkProgressBar *)(obj))
-#define GTK_SIGNAL_FUNC(f) ((GtkSignalFunc) f)
+#define G_CALLBACK(f) ((GCallback) (f))
 
 #define GTK_OBJECT_FLAGS(obj) (GTK_OBJECT(obj)->flags)
 #define GTK_WIDGET_FLAGS(wid) (GTK_OBJECT_FLAGS(wid))
@@ -417,9 +417,9 @@ void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,
 void gtk_main_quit();
 void gtk_main();
 guint g_signal_connect(GObject *object, const gchar *name,
-                       GtkSignalFunc func, gpointer func_data);
+                       GCallback func, gpointer func_data);
 guint g_signal_connect_swapped(GObject *object, const gchar *name,
-                               GtkSignalFunc func,
+                               GCallback func,
                                GObject *slot_object);
 void gtk_signal_emit(GObject *object, const gchar *name, ...);
 void SetCustomWndProc(WNDPROC wndproc);
@@ -526,25 +526,25 @@ void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position);
 
 /* Functions for handling emitted signals */
 void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
-                             GtkSignalFunc default_action,
+                             GCallback default_action,
                              va_list args);
 void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+                            GCallback default_action,
                             va_list args);
 void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+                            GCallback default_action,
                             va_list args);
 void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+                            GCallback default_action,
                             va_list args);
 void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
-                             GtkSignalFunc default_action,
+                             GCallback default_action,
                              va_list args);
 void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+                            GCallback default_action,
                             va_list args);
 void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
-                                       GtkSignalFunc default_action,
+                                       GCallback default_action,
                                        va_list args);
 
 /* Private functions */
