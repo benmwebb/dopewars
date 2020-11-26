@@ -1919,26 +1919,24 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   return GTK_WIDGET(url);
 }
 
-GtkWidget *gtk_hbox_new(gboolean homogeneous, gint spacing)
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
 {
-  GtkBox *hbox;
+  GtkBox *box;
 
-  hbox = GTK_BOX(GtkNewObject(&GtkHBoxClass));
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    box = GTK_BOX(GtkNewObject(&GtkHBoxClass));
+  } else {
+    box = GTK_BOX(GtkNewObject(&GtkVBoxClass));
+  }
 
-  hbox->spacing = spacing;
-  hbox->homogeneous = homogeneous;
-  return GTK_WIDGET(hbox);
+  box->spacing = spacing;
+  box->homogeneous = FALSE;
+  return GTK_WIDGET(box);
 }
 
-GtkWidget *gtk_vbox_new(gboolean homogeneous, gint spacing)
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogenenous)
 {
-  GtkBox *vbox;
-
-  vbox = GTK_BOX(GtkNewObject(&GtkVBoxClass));
-
-  vbox->spacing = spacing;
-  vbox->homogeneous = homogeneous;
-  return GTK_WIDGET(vbox);
+  box->homogeneous = homogeneous;
 }
 
 GtkWidget *gtk_frame_new(const gchar *text)
@@ -4251,14 +4249,13 @@ void gtk_spin_button_update(GtkSpinButton *spin_button)
 {
 }
 
-GtkWidget *gtk_hseparator_new()
+GtkWidget *gtk_separator_new(GtkOrientation orientation)
 {
-  return GTK_WIDGET(GtkNewObject(&GtkHSeparatorClass));
-}
-
-GtkWidget *gtk_vseparator_new()
-{
-  return GTK_WIDGET(GtkNewObject(&GtkVSeparatorClass));
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return GTK_WIDGET(GtkNewObject(&GtkHSeparatorClass));
+  } else {
+    return GTK_WIDGET(GtkNewObject(&GtkVSeparatorClass));
+  }
 }
 
 void gtk_separator_size_request(GtkWidget *widget,
@@ -5124,21 +5121,27 @@ void gtk_widget_set_style(GtkWidget *widget, GtkStyle *style)
 {
 }
 
-static gint hbbox_spacing = 0;
-
-GtkWidget *gtk_hbutton_box_new()
+GtkWidget *gtk_button_box_new(GtkOrientation orientation)
 {
-  GtkWidget *hbbox, *spacer;
+  GtkWidget *bbox, *spacer;
 
-  hbbox = gtk_hbox_new(TRUE, hbbox_spacing);
-  spacer = gtk_label_new("");
-  gtk_box_pack_start(GTK_BOX(hbbox), spacer, TRUE, TRUE, 0);
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    bbox = gtk_box_new(orientation, 0);
+  } else {
+    bbox = gtk_box_new(orientation, 5);
+  }
+  gtk_box_set_homogeneous(GTK_BOX(bbox), TRUE);
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    /* Add a spacer so that all hboxes are right-aligned */
+    spacer = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(bbox), spacer, TRUE, TRUE, 0);
+  } else {
   return hbbox;
 }
 
-void gtk_hbutton_box_set_spacing_default(gint spacing)
+void gtk_box_set_spacing(GtkBox *box, gint spacing)
 {
-  hbbox_spacing = spacing;
+  box->spacing = spacing;
 }
 
 /*

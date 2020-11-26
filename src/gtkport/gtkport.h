@@ -361,8 +361,8 @@ void gtk_container_set_border_width(GtkContainer *container,
                                     guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
-GtkWidget *gtk_hbox_new(gboolean homogeneous, gint spacing);
-GtkWidget *gtk_vbox_new(gboolean homogeneous, gint spacing);
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogenenous);
 GtkWidget *gtk_check_button_new_with_label(const gchar *label);
 GtkWidget *gtk_radio_button_new_with_label(GSList *group,
                                            const gchar *label);
@@ -460,8 +460,7 @@ guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
 guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data);
 gboolean dp_g_source_remove(guint tag);
 
-GtkWidget *gtk_hseparator_new();
-GtkWidget *gtk_vseparator_new();
+GtkWidget *gtk_separator_new(GtkOrientation orientation);
 void gtk_object_set_data(GtkObject *object, const gchar *key,
                          gpointer data);
 gpointer gtk_object_get_data(GtkObject *object, const gchar *key);
@@ -493,12 +492,9 @@ void gtk_paned_pack2(GtkPaned *paned, GtkWidget *child, gboolean resize,
 void gtk_paned_set_position(GtkPaned *paned, gint position);
 
 #define gtk_container_border_width gtk_container_set_border_width
-GtkWidget *gtk_hbutton_box_new();
-void gtk_hbutton_box_set_spacing_default(gint spacing);
-#define gtk_vbutton_box_new() gtk_vbox_new(TRUE, 5)
-#define gtk_hbutton_box_set_layout_default(layout) {}
-#define gtk_vbutton_box_set_spacing_default(spacing) {}
-#define gtk_vbutton_box_set_layout_default(layout) {}
+GtkWidget *gtk_button_box_new(GtkOrientation orientation);
+void gtk_box_set_spacing(GtkBox *box, gint spacing);
+#define gtk_button_box_set_layout(box, layout) {}
 GtkWidget *gtk_option_menu_new(void);
 GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu);
 void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu);
