@@ -462,9 +462,9 @@ guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data);
 gboolean dp_g_source_remove(guint tag);
 
 GtkWidget *gtk_separator_new(GtkOrientation orientation);
-void gtk_object_set_data(GObject *object, const gchar *key,
-                         gpointer data);
-gpointer gtk_object_get_data(GObject *object, const gchar *key);
+void g_object_set_data(GObject *object, const gchar *key,
+                       gpointer data);
+gpointer g_object_get_data(GObject *object, const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
 void gtk_widget_grab_default(GtkWidget *widget);

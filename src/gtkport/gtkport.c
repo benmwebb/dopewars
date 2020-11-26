@@ -4273,13 +4273,13 @@ void gtk_separator_realize(GtkWidget *widget)
                                 0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
-void gtk_object_set_data(GObject *object, const gchar *key,
-                         gpointer data)
+void g_object_set_data(GObject *object, const gchar *key,
+                       gpointer data)
 {
   g_datalist_set_data(&object->object_data, key, data);
 }
 
-gpointer gtk_object_get_data(GObject *object, const gchar *key)
+gpointer g_object_get_data(GObject *object, const gchar *key)
 {
   return g_datalist_get_data(&object->object_data, key);
 }
