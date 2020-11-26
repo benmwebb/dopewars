@@ -50,6 +50,10 @@ AC_ARG_ENABLE(gui-server,
 [  --enable-gui-server     use a simple GTK+/Win32 GUI for the server],
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
 
+AC_ARG_ENABLE(gtk3,
+[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found],
+[ USE_GTK3="$enableval" ],[ USE_GTK3="yes" ])
+
 AC_ARG_WITH(esd,
 [  --without-esd           do not support ESD sound output],
 [ USE_ESD="$withval" ], [ USE_ESD="probe" ])
@@ -168,7 +172,10 @@ else
    gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
       PKG_PROG_PKG_CONFIG()
-      PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+      gtk3_found="no"
+      if test "$USE_GTK3" = "yes" ; then
+        PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+      fi
       if test "$gtk3_found" = "no" ; then
         AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
         if test "$gtk2_found" = "no" ; then
