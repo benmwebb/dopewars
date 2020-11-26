@@ -54,7 +54,7 @@ typedef gint (*GtkFunction) (gpointer data);
 typedef void (*GtkDestroyNotify) (gpointer data);
 
 typedef struct _GtkClass GtkClass;
-typedef struct _GtkObject GtkObject;
+typedef struct _GObject GObject;
 
 typedef struct _GtkRequisition GtkRequisition;
 typedef struct _GtkAllocation GtkAllocation;
@@ -63,7 +63,7 @@ typedef struct _GtkSignalType GtkSignalType;
 typedef struct _GtkContainer GtkContainer;
 
 typedef void (*GtkSignalFunc) ();
-typedef void (*GtkSignalMarshaller) (GtkObject *object, GSList *actions,
+typedef void (*GtkSignalMarshaller) (GObject *object, GSList *actions,
                                      GtkSignalFunc default_action,
                                      va_list args);
 
@@ -122,7 +122,7 @@ struct _GtkClass {
 
 typedef GtkClass *GtkType;
 
-struct _GtkObject {
+struct _GObject {
   GtkClass *klass;
   GData *object_data;
   GData *signals;
@@ -130,7 +130,7 @@ struct _GtkObject {
 };
 
 struct _GtkAdjustment {
-  GtkObject object;
+  GObject object;
   gfloat value, lower, upper;
   gfloat step_increment, page_increment, page_size;
 };
@@ -144,7 +144,7 @@ struct _GtkAllocation {
 };
 
 struct _GtkWidget {
-  GtkObject object;
+  GObject object;
   HWND hWnd;
   GtkRequisition requisition;
   GtkAllocation allocation;

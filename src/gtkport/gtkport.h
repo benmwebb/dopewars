@@ -292,7 +292,7 @@ extern GtkClass GtkContainerClass;
 extern HFONT defFont;
 extern HINSTANCE hInst;
 
-#define GTK_OBJECT(obj) ((GtkObject *)(obj))
+#define G_OBJECT(obj) ((GObject *)(obj))
 #define GTK_CONTAINER(obj) ((GtkContainer *)(obj))
 #define GTK_PANED(obj) ((GtkPaned *)(obj))
 #define GTK_VPANED(obj) ((GtkVPaned *)(obj))
@@ -414,13 +414,13 @@ void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,
                                   gboolean is_active);
 void gtk_main_quit();
 void gtk_main();
-guint gtk_signal_connect(GtkObject *object, const gchar *name,
+guint gtk_signal_connect(GObject *object, const gchar *name,
                          GtkSignalFunc func, gpointer func_data);
 #define g_signal_connect gtk_signal_connect
-guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
+guint gtk_signal_connect_object(GObject *object, const gchar *name,
                                 GtkSignalFunc func,
-                                GtkObject *slot_object);
-void gtk_signal_emit(GtkObject *object, const gchar *name, ...);
+                                GObject *slot_object);
+void gtk_signal_emit(GObject *object, const gchar *name, ...);
 void SetCustomWndProc(WNDPROC wndproc);
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 char *MainIcon);
@@ -449,9 +449,9 @@ void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label, gint position);
 void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num);
 gint gtk_notebook_get_current_page(GtkNotebook *notebook);
-GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
-                              gfloat step_increment, gfloat page_increment,
-                              gfloat page_size);
+GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
+                            gfloat step_increment, gfloat page_increment,
+                            gfloat page_size);
 GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
                                gfloat climb_rate, guint digits);
 
@@ -461,9 +461,9 @@ guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data);
 gboolean dp_g_source_remove(guint tag);
 
 GtkWidget *gtk_separator_new(GtkOrientation orientation);
-void gtk_object_set_data(GtkObject *object, const gchar *key,
+void gtk_object_set_data(GObject *object, const gchar *key,
                          gpointer data);
-gpointer gtk_object_get_data(GtkObject *object, const gchar *key);
+gpointer gtk_object_get_data(GObject *object, const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
 void gtk_widget_grab_default(GtkWidget *widget);
@@ -513,7 +513,7 @@ void gtk_misc_set_alignment(GtkMisc *misc, gfloat xalign, gfloat yalign);
 GtkWidget *gtk_progress_bar_new();
 void gtk_progress_bar_set_fraction(GtkProgressBar *pbar, gfloat percentage);
 guint gtk_main_level(void);
-GtkObject *GtkNewObject(GtkClass *klass);
+GObject *GtkNewObject(GtkClass *klass);
 BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
 void gtk_container_realize(GtkWidget *widget);
 void gtk_set_default_font(HWND hWnd);
@@ -524,25 +524,25 @@ void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint);
 void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position);
 
 /* Functions for handling emitted signals */
-void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
+void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
                              GtkSignalFunc default_action,
                              va_list args);
-void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
+void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
                             GtkSignalFunc default_action,
                             va_list args);
-void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
                             GtkSignalFunc default_action,
                             va_list args);
-void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
                             GtkSignalFunc default_action,
                             va_list args);
-void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
                              GtkSignalFunc default_action,
                              va_list args);
-void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
                             GtkSignalFunc default_action,
                             va_list args);
-void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
                                        GtkSignalFunc default_action,
                                        va_list args);
 

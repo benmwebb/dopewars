@@ -260,7 +260,7 @@ static GtkSignalType GtkObjectSignals[] = {
 };
 
 static GtkClass GtkObjectClass = {
-  "object", NULL, sizeof(GtkObject), GtkObjectSignals, NULL
+  "object", NULL, sizeof(GObject), GtkObjectSignals, NULL
 };
 
 static GtkClass GtkAdjustmentClass = {
@@ -636,9 +636,9 @@ void gtk_set_default_font(HWND hWnd)
   mySendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
 }
 
-GtkObject *GtkNewObject(GtkClass *klass)
+GObject *GtkNewObject(GtkClass *klass)
 {
-  GtkObject *newObj;
+  GObject *newObj;
 
   newObj = g_malloc0(klass->Size);
   newObj->klass = klass;
@@ -3373,13 +3373,13 @@ typedef struct _GtkSignal GtkSignal;
 
 struct _GtkSignal {
   GtkSignalFunc func;
-  GtkObject *slot_object;
+  GObject *slot_object;
   gpointer func_data;
 };
 
 typedef gint (*GtkGIntSignalFunc) ();
 
-void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
+void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
                             GtkSignalFunc default_action, va_list args)
 {
   gboolean *retval;
@@ -3411,7 +3411,7 @@ void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
     *retval = (*sigfunc) (object, arg1);
 }
 
-void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
+void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
                              GtkSignalFunc default_action, va_list args)
 {
   gboolean *retval;
@@ -3443,7 +3443,7 @@ void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
     *retval = (*sigfunc) (object, arg1);
 }
 
-void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
                             GtkSignalFunc default_action, va_list args)
 {
   GtkSignal *signal;
@@ -3460,7 +3460,7 @@ void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
     (*default_action) (object);
 }
 
-void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
                             GtkSignalFunc default_action, va_list args)
 {
   gint arg1;
@@ -3480,7 +3480,7 @@ void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
                              GtkSignalFunc default_action, va_list args)
 {
   gpointer arg1;
@@ -3500,7 +3500,7 @@ void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
                             GtkSignalFunc default_action, va_list args)
 {
   gboolean arg1;
@@ -3520,7 +3520,7 @@ void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
+void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
                                        GtkSignalFunc default_action,
                                        va_list args)
 {
@@ -3544,7 +3544,7 @@ void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1, arg2, arg3);
 }
 
-static GtkSignalType *gtk_get_signal_type(GtkObject *object,
+static GtkSignalType *gtk_get_signal_type(GObject *object,
                                           const gchar *name)
 {
   GtkClass *klass;
@@ -3559,7 +3559,7 @@ static GtkSignalType *gtk_get_signal_type(GtkObject *object,
   return NULL;
 }
 
-void gtk_signal_emit(GtkObject *object, const gchar *name, ...)
+void gtk_signal_emit(GObject *object, const gchar *name, ...)
 {
   GSList *signal_list;
   GtkSignalType *signal_type;
@@ -3580,7 +3580,7 @@ void gtk_signal_emit(GtkObject *object, const gchar *name, ...)
     g_warning("gtk_signal_emit: unknown signal %s", name);
 }
 
-guint gtk_signal_connect(GtkObject *object, const gchar *name,
+guint gtk_signal_connect(GObject *object, const gchar *name,
                          GtkSignalFunc func, gpointer func_data)
 {
   GtkSignal *signal;
@@ -3604,8 +3604,8 @@ guint gtk_signal_connect(GtkObject *object, const gchar *name,
   return 0;
 }
 
-guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
-                                GtkSignalFunc func, GtkObject *slot_object)
+guint gtk_signal_connect_object(GObject *object, const gchar *name,
+                                GtkSignalFunc func, GObject *slot_object)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -4107,9 +4107,9 @@ void gtk_notebook_size_request(GtkWidget *widget,
   requisition->height = rect.bottom - rect.top;
 }
 
-GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
-                              gfloat step_increment, gfloat page_increment,
-                              gfloat page_size)
+GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
+                            gfloat step_increment, gfloat page_increment,
+                            gfloat page_size)
 {
   GtkAdjustment *adj;
 
@@ -4273,13 +4273,13 @@ void gtk_separator_realize(GtkWidget *widget)
                                 0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
-void gtk_object_set_data(GtkObject *object, const gchar *key,
+void gtk_object_set_data(GObject *object, const gchar *key,
                          gpointer data)
 {
   g_datalist_set_data(&object->object_data, key, data);
 }
 
-gpointer gtk_object_get_data(GtkObject *object, const gchar *key)
+gpointer gtk_object_get_data(GObject *object, const gchar *key)
 {
   return g_datalist_get_data(&object->object_data, key);
 }
