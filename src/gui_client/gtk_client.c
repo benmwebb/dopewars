@@ -1593,10 +1593,21 @@ static void UpdateDealDialog(void)
   g_string_free(text, TRUE);
 }
 
+/* Columns in deal list */
+enum {
+  DEAL_COL_NAME = 0,
+  DEAL_COL_INDEX = 1,
+  DEAL_NUM_COLS
+};
+
 static void DealSelectCallback(GtkWidget *widget, gpointer data)
 {
-  DealDialog.DrugInd = GPOINTER_TO_INT(data);
-  UpdateDealDialog();
+  GtkTreeIter iter;
+  if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(widget), &iter)) {
+    GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(widget));
+    gtk_tree_model_get(model, &iter, DEAL_COL_INDEX, &DealDialog.DrugInd, -1);
+    UpdateDealDialog();
+  }
 }
 
 static void DealOKCallback(GtkWidget *widget, gpointer data)
@@ -1621,8 +1632,11 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
 
 void DealDrugs(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *label, *hbox, *hbbox, *button, *spinner, *menu,
-      *optionmenu, *menuitem, *vbox, *hsep, *defbutton;
+  GtkWidget *dialog, *label, *hbox, *hbbox, *button, *spinner, *combo_box,
+      *vbox, *hsep, *defbutton;
+  GtkListStore *store;
+  GtkTreeIter iter;
+  GtkCellRenderer *renderer;
   GtkAdjustment *spin_adj;
   GtkAccelGroup *accel_group;
   GtkWidget *tv;
@@ -1701,8 +1715,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   label = gtk_label_new(Action);
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
-  optionmenu = gtk_option_menu_new();
-  menu = gtk_menu_new();
+  store = gtk_list_store_new(DEAL_NUM_COLS, G_TYPE_STRING, G_TYPE_INT);
   SelIndex = -1;
   for (i = 0; i < NumDrug; i++) {
     if ((data == BT_DROP && Play->Drugs[i].Carried > 0
@@ -1711,19 +1724,22 @@ void DealDrugs(GtkWidget *widget, gpointer data)
          && Play->Drugs[i].Price != 0)
         || (data == BT_BUY && Play->Drugs[i].Price != 0)) {
       dpg_string_printf(text, _("%/DealDrugs drug name/%tde"), Drug[i].Name);
-      menuitem = gtk_menu_item_new_with_label(text->str);
-      g_signal_connect(G_OBJECT(menuitem), "activate",
-                       G_CALLBACK(DealSelectCallback),
-                       GINT_TO_POINTER(i));
-      gtk_menu_append(GTK_MENU(menu), menuitem);
+      gtk_list_store_append(store, &iter);
+      gtk_list_store_set(store, &iter, DEAL_COL_NAME, text->str,
+                         DEAL_COL_INDEX, i, -1);
       if (DrugInd >= i) {
         SelIndex++;
       }
     }
   }
-  gtk_menu_set_active(GTK_MENU(menu), SelIndex);
-  gtk_option_menu_set_menu(GTK_OPTION_MENU(optionmenu), menu);
-  gtk_box_pack_start(GTK_BOX(hbox), optionmenu, TRUE, TRUE, 0);
+  combo_box = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+  g_object_unref(store);
+  renderer = gtk_cell_renderer_text_new();
+  gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo_box), renderer, TRUE);
+  gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo_box), renderer,
+                                 "text", DEAL_COL_NAME, NULL);
+  gtk_combo_box_set_active(GTK_COMBO_BOX(combo_box), SelIndex);
+  gtk_box_pack_start(GTK_BOX(hbox), combo_box, TRUE, TRUE, 0);
 
   DealDialog.DrugInd = DrugInd;
 
@@ -1779,6 +1795,9 @@ void DealDrugs(GtkWidget *widget, gpointer data)
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
+
+  g_signal_connect(G_OBJECT(combo_box), "changed",
+                   G_CALLBACK(DealSelectCallback), NULL);
 
   g_string_free(text, TRUE);
   UpdateDealDialog();
