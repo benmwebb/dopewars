@@ -45,7 +45,7 @@ typedef struct _GtkTreeView GtkTreeSelection;
 /* A list row is just a list of pointers to column data */
 typedef struct _GtkListStoreRow GtkListStoreRow;
 
-/* Tree iterators and paths are eaach just a row index */
+/* Tree iterators and paths are each just a row index */
 typedef guint GtkTreeIter;
 typedef guint GtkTreePath;
 
