@@ -791,8 +791,8 @@ void CompleteHighScoreDialog(gboolean AtEnd)
                            G_OBJECT(dialog));
   if (AtEnd) {
     InGame = FALSE;
-    g_signal_connect_object(G_OBJECT(dialog), "destroy",
-                            G_CALLBACK(EndHighScore), NULL, 0);
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+                     G_CALLBACK(EndHighScore), NULL);
   }
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), hbbox, FALSE, FALSE, 0);
