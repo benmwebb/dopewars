@@ -127,6 +127,12 @@ typedef enum
   GTK_ORIENTATION_VERTICAL
 } GtkOrientation;
 
+typedef enum
+{
+  GTK_SORT_ASCENDING,
+  GTK_SORT_DESCENDING
+} GtkSortType;
+
 enum
 {
   G_TYPE_STRING,

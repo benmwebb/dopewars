@@ -426,6 +426,15 @@ void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...)
   va_end(ap);
 }
 
+gboolean gtk_tree_model_iter_nth_child(GtkTreeModel *tree_model,
+                                       GtkTreeIter *iter,
+                                       GtkTreeIter *parent, gint n)
+{
+  /* We only work with one level (lists) for now */
+  g_assert(parent == NULL);
+  *iter = n;
+}
+
 static void gtk_tree_view_column_free(gpointer data)
 {
   GtkTreeViewColumn *col = data;
@@ -736,6 +745,28 @@ void gtk_tree_selection_select_path(GtkTreeSelection *selection,
   }
 }
 
+void gtk_tree_selection_unselect_all(GtkTreeSelection *selection)
+{
+  GList *sel;
+  for (sel = selection->selection; sel; sel = g_list_next(sel)) {
+    int row = GPOINTER_TO_INT(sel->data);
+    gtk_tree_selection_unselect_path(selection, &row);
+  }
+}
+
+GList *gtk_tree_selection_get_selected_rows(GtkTreeSelection *selection,
+                                            GtkTreeModel **model)
+{
+  GList *sel, *pathsel = NULL;
+  for (sel = selection->selection; sel; sel = g_list_next(sel)) {
+    int row = GPOINTER_TO_INT(sel->data);
+    GtkTreePath *path = g_new(GtkTreePath, 1);
+    *path = row;
+    pathsel = g_list_append(pathsel, path);
+  }
+  return pathsel;
+}
+
 void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
                                       GtkTreePath *path)
 {
@@ -879,6 +910,7 @@ static GtkTreeViewColumn *new_column_internal(const char *title, va_list args)
   col->title = g_strdup(title);
   col->resizeable = FALSE;
   col->expand = FALSE;
+  col->sort_column_id = -1;
   col->model_column = -1;
 
   /* Currently we only support the "text" attribute to point to the
@@ -928,12 +960,23 @@ void gtk_tree_view_column_set_expand(GtkTreeViewColumn *tree_column,
   tree_column->expand = expand;
 }
 
+void gtk_tree_view_column_set_sort_column_id(GtkTreeViewColumn *tree_column,
+                                             gint sort_column_id)
+{
+  tree_column->sort_column_id = sort_column_id;
+}
+
 gint gtk_tree_view_insert_column(GtkTreeView *tree_view,
                                  GtkTreeViewColumn *column,
                                  gint position)
 {
   tree_view->columns = g_slist_insert(tree_view->columns, column, position);
   return g_slist_length(tree_view->columns);
+}
+
+GtkTreeViewColumn *gtk_tree_view_get_column(GtkTreeView *tree_view, gint n)
+{
+  return g_slist_nth_data(tree_view->columns, n);
 }
 
 void gtk_tree_view_set_model(GtkTreeView *tree_view, GtkTreeModel *model)

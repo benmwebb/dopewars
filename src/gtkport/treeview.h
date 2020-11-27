@@ -39,6 +39,9 @@ typedef struct _GtkListStore GtkListStore;
 typedef struct _GtkListStore GtkTreeModel;
 typedef struct _GtkCellRenderer GtkCellRenderer;
 
+/* Our TreeModel is sortable, so this can be a synonym */
+typedef struct _GtkListStore GtkTreeSortable;
+
 /* We only support one selection per tree view, so make them synonyms */
 typedef struct _GtkTreeView GtkTreeSelection;
 
@@ -64,6 +67,7 @@ struct _GtkTreeView {
 struct _GtkTreeViewColumn {
   gchar *title;       /* header title */
   int model_column;   /* the index of the column in the GtkTreeModel */
+  gint sort_column_id; /* what to sort by when this column is selected */
   gint width;
   gint optimal_width;
   GtkJustification justification;
@@ -93,7 +97,11 @@ typedef void (*GtkTreeSelectionForeachFunc) (GtkTreeModel *model,
 
 #define GTK_TREE_VIEW(obj) ((GtkTreeView *)(obj))
 #define GTK_TREE_MODEL(obj) ((GtkTreeModel *)(obj))
+#define GTK_TREE_SORTABLE(obj) ((GtkTreeSortable *)(obj))
 #define GTK_LIST_STORE(obj) ((GtkListStore *)(obj))
+
+#define GTK_TREE_SORTABLE_DEFAULT_SORT_COLUMN_ID (-1)
+#define GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID (-2)
 
 GtkListStore *gtk_list_store_new(gint n_columns, ...);
 void gtk_list_store_clear(GtkListStore *list_store);
@@ -104,6 +112,9 @@ gboolean gtk_list_store_remove(GtkListStore *list_store, GtkTreeIter *iter);
 void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...);
 
 void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...);
+gboolean gtk_tree_model_iter_nth_child(GtkTreeModel *tree_model,
+                                       GtkTreeIter *iter,
+                                       GtkTreeIter *parent, gint n);
 
 GtkWidget *gtk_tree_view_new(void);
 GtkTreeSelection *gtk_tree_view_get_selection(GtkTreeView *tree_view);
@@ -128,17 +139,24 @@ void gtk_tree_selection_select_path(GtkTreeSelection *selection,
                                     GtkTreePath *path);
 void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
                                       GtkTreePath *path);
+void gtk_tree_selection_unselect_all(GtkTreeSelection *selection);
 #define gtk_tree_selection_select_iter(sel, iter) gtk_tree_selection_select_path(sel, iter)
-
+#define gtk_tree_selection_unselect_iter(sel, iter) gtk_tree_selection_unselect_path(sel, iter)
+GList *gtk_tree_selection_get_selected_rows(GtkTreeSelection *selection,
+                                            GtkTreeModel **model);
+#define gtk_tree_path_free g_free
 GtkTreeViewColumn *gtk_tree_view_column_new_with_attributes
                    (const gchar *title, GtkCellRenderer *cell, ...);
 void gtk_tree_view_column_set_resizable(GtkTreeViewColumn *tree_column,
                                         gboolean resizable);
 void gtk_tree_view_column_set_expand(GtkTreeViewColumn *tree_column,
                                      gboolean expand);
+void gtk_tree_view_column_set_sort_column_id(GtkTreeViewColumn *tree_column,
+                                             gint sort_column_id);
 gint gtk_tree_view_insert_column(GtkTreeView *tree_view,
                                  GtkTreeViewColumn *column,
                                  gint position);
+GtkTreeViewColumn *gtk_tree_view_get_column(GtkTreeView *tree_view, gint n);
 
 GtkCellRenderer *gtk_cell_renderer_text_new(void);
 
