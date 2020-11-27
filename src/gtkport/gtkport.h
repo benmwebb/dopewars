@@ -229,10 +229,11 @@ struct _GtkButton {
   gchar *text;
 };
 
-struct _GtkOptionMenu {
-  GtkButton button;
-  GtkWidget *menu;
-  guint selection;
+struct _GtkComboBox {
+  GtkWidget widget;
+  GtkTreeModel *model;
+  gint model_column;
+  gint active;
 };
 
 struct _GtkToggleButton {
@@ -313,7 +314,8 @@ extern HINSTANCE hInst;
 #define GTK_TEXT(obj) ((GtkText *)(obj))
 #define GTK_WINDOW(obj) ((GtkWindow *)(obj))
 #define GTK_BUTTON(obj) ((GtkButton *)(obj))
-#define GTK_OPTION_MENU(obj) ((GtkOptionMenu *)(obj))
+#define GTK_COMBO_BOX(obj) ((GtkComboBox *)(obj))
+#define GTK_CELL_LAYOUT(obj) ((GtkCellLayout *)(obj))
 #define GTK_TOGGLE_BUTTON(obj) ((GtkToggleButton *)(obj))
 #define GTK_RADIO_BUTTON(obj) ((GtkRadioButton *)(obj))
 #define GTK_CHECK_BUTTON(obj) ((GtkCheckButton *)(obj))
@@ -499,10 +501,15 @@ void gtk_paned_set_position(GtkPaned *paned, gint position);
 GtkWidget *gtk_button_box_new(GtkOrientation orientation);
 void gtk_box_set_spacing(GtkBox *box, gint spacing);
 #define gtk_button_box_set_layout(box, layout) {}
-GtkWidget *gtk_option_menu_new(void);
-GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu);
-void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu);
-void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index);
+GtkWidget *gtk_combo_box_new_with_model(GtkTreeModel *model);
+void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model);
+void gtk_combo_box_set_active(GtkComboBox *combo_box, gint index);
+void gtk_cell_layout_set_attributes(GtkCellLayout *cell_layout,
+                                    GtkCellRenderer *cell, ...);
+#define gtk_cell_layout_pack_start(layout, renderer, expand) {}
+GtkTreeModel *gtk_combo_box_get_model(GtkComboBox *combo_box);
+gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
+                                       GtkTreeIter *iter);
 void gtk_label_set_text(GtkLabel *label, const gchar *str);
 guint gtk_label_parse_uline(GtkLabel *label, const gchar *str);
 const gchar *gtk_label_get_text(GtkLabel *label);

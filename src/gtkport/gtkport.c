@@ -209,15 +209,16 @@ static void gtk_vpaned_set_size(GtkWidget *widget,
                                 GtkAllocation *allocation);
 static void gtk_hpaned_set_size(GtkWidget *widget,
                                 GtkAllocation *allocation);
-static void gtk_option_menu_size_request(GtkWidget *widget,
-                                         GtkRequisition *requisition);
-static void gtk_option_menu_set_size(GtkWidget *widget,
-                                     GtkAllocation *allocation);
-static void gtk_option_menu_realize(GtkWidget *widget);
+static void gtk_combo_box_size_request(GtkWidget *widget,
+                                       GtkRequisition *requisition);
+static void gtk_combo_box_set_size(GtkWidget *widget,
+                                   GtkAllocation *allocation);
+static void gtk_combo_box_realize(GtkWidget *widget);
+static void gtk_combo_box_destroy(GtkWidget *widget);
 static void gtk_button_set_text(GtkButton *button, gchar *text);
 static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text);
 static void gtk_editable_create(GtkWidget *widget);
-static void gtk_option_menu_update_selection(GtkWidget *widget);
+static void gtk_combo_box_update_selection(GtkWidget *widget);
 static void gtk_widget_set_focus(GtkWidget *widget);
 static void gtk_widget_lose_focus(GtkWidget *widget);
 static void gtk_window_update_focus(GtkWindow *window);
@@ -435,16 +436,17 @@ static GtkClass GtkButtonClass = {
   "button", &GtkWidgetClass, sizeof(GtkButton), GtkButtonSignals, NULL
 };
 
-static GtkSignalType GtkOptionMenuSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_option_menu_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_option_menu_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_option_menu_realize},
+static GtkSignalType GtkComboBoxSignals[] = {
+  {"size_request", gtk_marshal_VOID__GPOIN, gtk_combo_box_size_request},
+  {"set_size", gtk_marshal_VOID__GPOIN, gtk_combo_box_set_size},
+  {"realize", gtk_marshal_VOID__VOID, gtk_combo_box_realize},
+  {"destroy", gtk_marshal_VOID__VOID, gtk_combo_box_destroy},
   {"", NULL, NULL}
 };
 
-static GtkClass GtkOptionMenuClass = {
-  "optionmenu", &GtkButtonClass, sizeof(GtkOptionMenu),
-  GtkOptionMenuSignals, NULL
+static GtkClass GtkComboxBoxClass = {
+  "combobox", &GtkWidgetClass, sizeof(GtkComboBox),
+  GtkComboBoxSignals, NULL
 };
 
 static GtkSignalType GtkToggleButtonSignals[] = {
@@ -1048,9 +1050,9 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
 
-    if (lParam && klass == &GtkOptionMenuClass &&
+    if (lParam && klass == &GtkComboBoxClass &&
                HIWORD(wParam) == CBN_SELENDOK) {
-      gtk_option_menu_update_selection(widget);
+      gtk_combo_box_update_selection(widget);
     } else if (lParam && HIWORD(wParam) == BN_CLICKED) {
       gtk_signal_emit(G_OBJECT(widget), "clicked");
     } else
@@ -4687,54 +4689,82 @@ void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...)
   va_end(ap);
 }
 
-GtkWidget *gtk_option_menu_new()
+GtkWidget *gtk_combo_box_new_with_model(GtkTreeModel *model)
 {
-  GtkOptionMenu *option_menu;
+  GtkComboBox *combo_box;
 
-  option_menu = GTK_OPTION_MENU(GtkNewObject(&GtkOptionMenuClass));
-  return GTK_WIDGET(option_menu);
+  combo_box = GTK_COMBO_BOX(GtkNewObject(&GtkComboBoxClass));
+  combo_box->active = -1;
+  combo_box->model_column = -1;
+  gtk_combo_box_set_model(combo_box, model);
+  return GTK_WIDGET(combo_box);
 }
 
-GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu)
+void gtk_cell_layout_set_attributes(GtkCellLayout *cell_layout,
+                                    GtkCellRenderer *cell, ...)
 {
-  return option_menu->menu;
+  const char *name;
+  va_list args;
+
+  va_start(args, cell);
+  /* Currently we only support the "text" attribute to point to the
+     ListStore column */
+  while ((name = va_arg(args, const char *)) != NULL) {
+    if (strcmp(name, "text") == 0) {
+      cell_layout->model_column = va_arg(args, int);
+    }
+  }
+  va_end(args);
 }
 
-void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu)
+void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model)
 {
-  GSList *list;
-  GtkMenuItem *menu_item;
   HWND hWnd;
 
-  if (!menu)
+  if (!model)
     return;
-  option_menu->menu = menu;
-  hWnd = GTK_WIDGET(option_menu)->hWnd;
+  combo_box->model = model;
+  hWnd = GTK_WIDGET(combo_box)->hWnd;
 
+  /* For now we work only with a single column of string type */
   if (hWnd) {
     mySendMessage(hWnd, CB_RESETCONTENT, 0, 0);
-    for (list = GTK_MENU_SHELL(menu)->children; list;
-         list = g_slist_next(list)) {
-      menu_item = GTK_MENU_ITEM(list->data);
-      if (menu_item && menu_item->text) {
-        myComboBox_AddString(hWnd, menu_item->text);
-      }
+  }
+  if (hWnd && combo_box->model_column >= 0) {
+    int nrow;
+    int col = combo_box->model_column;
+    assert(model->coltype[col] == G_TYPE_STRING);
+    for (nrow = 0; nrow < combo_box->model->rows->len; ++nrow) {
+      row = &g_array_index(combo_box->model->rows, GtkListStoreRow, nrow);
+      myComboBox_AddString(hWnd, row->data[col]);
     }
-    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)GTK_MENU(menu)->active, 0);
+    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)combo_box->active, 0);
   }
 }
 
-void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index)
+GtkTreeModel *gtk_combo_box_get_model(GtkComboBox *combo_box)
 {
-  GtkWidget *menu;
-
-  menu = gtk_option_menu_get_menu(option_menu);
-  if (menu)
-    gtk_menu_set_active(GTK_MENU(menu), index);
+  return combo_box->model;
 }
 
-void gtk_option_menu_size_request(GtkWidget *widget,
-                                  GtkRequisition *requisition)
+void gtk_combo_box_set_active(GtkComboBox *combo_box, gint index)
+{
+  combo_box->active = index;
+}
+
+gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
+                                       GtkTreeIter *iter);
+{
+  if (combo_box->active >= 0) {
+    *iter = combo_box->active;
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+void gtk_combo_box_size_request(GtkWidget *widget,
+                                GtkRequisition *requisition)
 {
   SIZE size;
 
@@ -4744,15 +4774,15 @@ void gtk_option_menu_size_request(GtkWidget *widget,
   }
 }
 
-void gtk_option_menu_set_size(GtkWidget *widget, GtkAllocation *allocation)
+void gtk_combo_box_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   allocation->height *= 6;
 }
 
-void gtk_option_menu_realize(GtkWidget *widget)
+void gtk_combo_box_realize(GtkWidget *widget)
 {
   HWND Parent;
-  GtkOptionMenu *option_menu = GTK_OPTION_MENU(widget);
+  GtkComboBox *combo_box = GTK_COMBO_BOX(widget);
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
@@ -4761,7 +4791,16 @@ void gtk_option_menu_realize(GtkWidget *widget)
                                   CBS_HASSTRINGS | CBS_DROPDOWNLIST,
                                   0, 0, 0, 0, Parent, NULL, hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_option_menu_set_menu(option_menu, option_menu->menu);
+  gtk_combo_box_set_model(combo_box, combo_box->model);
+}
+
+void gtk_combo_box_destroy(GtkWidget *widget)
+{
+  GtkComboBox *combo_box = GTK_COMBO_BOX(widget);
+  if (combo_box->model) {
+    gtk_tree_model_free(combo_box->model);
+  }
+  combo_box->model = NULL;
 }
 
 void gtk_label_set_text(GtkLabel *label, const gchar *str)
@@ -4853,11 +4892,9 @@ void gtk_editable_create(GtkWidget *widget)
   editable->text = g_string_new("");
 }
 
-void gtk_option_menu_update_selection(GtkWidget *widget)
+void gtk_combo_box_update_selection(GtkWidget *widget)
 {
   LRESULT lres;
-  GtkMenuShell *menu;
-  GtkWidget *menu_item;
 
   if (widget->hWnd == NULL)
     return;
@@ -4865,12 +4902,8 @@ void gtk_option_menu_update_selection(GtkWidget *widget)
   if (lres == CB_ERR)
     return;
 
-  menu = GTK_MENU_SHELL(gtk_option_menu_get_menu(GTK_OPTION_MENU(widget)));
-  if (menu) {
-    menu_item = GTK_WIDGET(g_slist_nth_data(menu->children, lres));
-    if (menu_item)
-      gtk_signal_emit(G_OBJECT(menu_item), "activate");
-  }
+  GTK_COMBO_BOX(widget)->active = lres;
+  gtk_signal_emit(G_OBJECT(widget), "changed");
 }
 
 void gtk_window_handle_user_size(GtkWindow *window,

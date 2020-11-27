@@ -84,7 +84,10 @@ typedef struct _GtkPanedChild GtkPanedChild;
 typedef struct _GtkPaned GtkPaned;
 typedef struct _GtkVPaned GtkVPaned;
 typedef struct _GtkHPaned GtkHPaned;
-typedef struct _GtkOptionMenu GtkOptionMenu;
+typedef struct _GtkComboBox GtkComboBox;
+
+/* Currently we only use cell_layout for combo box, so make it a synonym */
+typedef struct _GtkComboBox GtkCellLayout;
 
 struct _GtkAccelGroup {
   ACCEL *accel;                 /* list of ACCEL structures */
