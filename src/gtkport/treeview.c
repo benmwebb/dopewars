@@ -433,7 +433,7 @@ static void gtk_tree_view_column_free(gpointer data)
   g_free(col);
 }
 
-static void gtk_tree_model_free(GtkTreeModel *model)
+void gtk_tree_model_free(GtkTreeModel *model)
 {
   gtk_list_store_clear(model);  /* Remove all rows */
   g_array_free(model->rows, TRUE);

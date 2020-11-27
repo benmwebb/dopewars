@@ -34,6 +34,8 @@
 #include <glib.h>
 
 #ifdef CYGWIN
+#include <winsock2.h>
+#include <windows.h>
 #include "gtktypes.h"
 #else
 #include <gtk/gtk.h>

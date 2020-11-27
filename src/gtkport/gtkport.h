@@ -331,7 +331,7 @@ extern HINSTANCE hInst;
 #define GTK_PROGRESS_BAR(obj) ((GtkProgressBar *)(obj))
 #define G_CALLBACK(f) ((GCallback) (f))
 
-#define GTK_OBJECT_FLAGS(obj) (GTK_OBJECT(obj)->flags)
+#define GTK_OBJECT_FLAGS(obj) (G_OBJECT(obj)->flags)
 #define GTK_WIDGET_FLAGS(wid) (GTK_OBJECT_FLAGS(wid))
 #define GTK_WIDGET_REALIZED(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_REALIZED) != 0)
 #define GTK_WIDGET_SENSITIVE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_SENSITIVE) != 0)
@@ -369,7 +369,7 @@ void gtk_container_set_border_width(GtkContainer *container,
 GtkWidget *gtk_button_new_with_label(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
-void gtk_box_set_homogeneous(GtkBox *box, gboolean homogenenous);
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous);
 GtkWidget *gtk_check_button_new_with_label(const gchar *label);
 GtkWidget *gtk_radio_button_new_with_label(GSList *group,
                                            const gchar *label);

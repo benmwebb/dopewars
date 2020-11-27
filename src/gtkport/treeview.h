@@ -147,6 +147,7 @@ gpointer g_object_ref(gpointer object);
 
 /* Private functions */
 void InitTreeViewClass(HINSTANCE hInstance);
+void gtk_tree_model_free(GtkTreeModel *model);
 #endif /* CYGWIN */
 
 #endif

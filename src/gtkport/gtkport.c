@@ -444,7 +444,7 @@ static GtkSignalType GtkComboBoxSignals[] = {
   {"", NULL, NULL}
 };
 
-static GtkClass GtkComboxBoxClass = {
+static GtkClass GtkComboBoxClass = {
   "combobox", &GtkWidgetClass, sizeof(GtkComboBox),
   GtkComboBoxSignals, NULL
 };
@@ -611,7 +611,7 @@ static GtkSignalType GtkWindowSignals[] = {
   {"show", gtk_marshal_VOID__VOID, gtk_window_show},
   {"hide", gtk_marshal_VOID__VOID, gtk_window_hide},
   {"delete_event", gtk_marshal_BOOL__GPOIN,
-   GTK_SIGNAL_FUNC(gtk_window_delete_event)},
+   G_CALLBACK(gtk_window_delete_event)},
   {"", NULL, NULL}
 };
 
@@ -1324,7 +1324,7 @@ void gtk_widget_show(GtkWidget *widget)
 
 gboolean gtk_widget_get_visible(GtkWidget *widget)
 {
-  return GTK_WIDGET_FLAGS(widget) & GTK_VISIBLE != 0;
+  return (GTK_WIDGET_FLAGS(widget) & GTK_VISIBLE) != 0;
 }
 
 void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
@@ -1936,7 +1936,7 @@ GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
   return GTK_WIDGET(box);
 }
 
-void gtk_box_set_homogeneous(GtkBox *box, gboolean homogenenous)
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous)
 {
   box->homogeneous = homogeneous;
 }
@@ -4733,9 +4733,10 @@ void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model)
   if (hWnd && combo_box->model_column >= 0) {
     int nrow;
     int col = combo_box->model_column;
-    assert(model->coltype[col] == G_TYPE_STRING);
+    g_assert(model->coltype[col] == G_TYPE_STRING);
     for (nrow = 0; nrow < combo_box->model->rows->len; ++nrow) {
-      row = &g_array_index(combo_box->model->rows, GtkListStoreRow, nrow);
+      GtkListStoreRow *row = &g_array_index(combo_box->model->rows,
+                                            GtkListStoreRow, nrow);
       myComboBox_AddString(hWnd, row->data[col]);
     }
     mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)combo_box->active, 0);
@@ -4753,7 +4754,7 @@ void gtk_combo_box_set_active(GtkComboBox *combo_box, gint index)
 }
 
 gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
-                                       GtkTreeIter *iter);
+                                       GtkTreeIter *iter)
 {
   if (combo_box->active >= 0) {
     *iter = combo_box->active;
@@ -5168,8 +5169,8 @@ GtkWidget *gtk_button_box_new(GtkOrientation orientation)
     /* Add a spacer so that all hboxes are right-aligned */
     spacer = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(bbox), spacer, TRUE, TRUE, 0);
-  } else {
-  return hbbox;
+  }
+  return bbox;
 }
 
 void gtk_box_set_spacing(GtkBox *box, gint spacing)

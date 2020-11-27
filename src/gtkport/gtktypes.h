@@ -62,7 +62,7 @@ typedef struct _GtkWidget GtkWidget;
 typedef struct _GtkSignalType GtkSignalType;
 typedef struct _GtkContainer GtkContainer;
 
-typedef void (*GCallback) (void);
+typedef void (*GCallback) ();
 typedef void (*GtkSignalMarshaller) (GObject *object, GSList *actions,
                                      GCallback default_action,
                                      va_list args);

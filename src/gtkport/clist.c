@@ -149,11 +149,11 @@ gboolean gtk_clist_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
         return FALSE;
       case HDN_ITEMCLICKA:
         phdr = (HD_NOTIFYA FAR *)lParam;
-        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdr->iItem);
+        gtk_signal_emit(G_OBJECT(widget), "click-column", (gint)phdr->iItem);
         return FALSE;
       case HDN_ITEMCLICKW:
         phdrw = (HD_NOTIFYW FAR *)lParam;
-        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdrw->iItem);
+        gtk_signal_emit(G_OBJECT(widget), "click-column", (gint)phdrw->iItem);
         return FALSE;
       default:
         break;
@@ -830,7 +830,7 @@ void gtk_clist_update_selection(GtkWidget *widget)
       gint row = GPOINTER_TO_INT(selpt->data);
 
       if (!g_list_find(clist->selection, GINT_TO_POINTER(row))) {
-        gtk_signal_emit(GTK_OBJECT(widget), "unselect_row", row, 0, NULL);
+        gtk_signal_emit(G_OBJECT(widget), "unselect_row", row, 0, NULL);
       }
     }
 
@@ -838,7 +838,7 @@ void gtk_clist_update_selection(GtkWidget *widget)
       gint row = GPOINTER_TO_INT(selpt->data);
 
       if (!g_list_find(oldsel, GINT_TO_POINTER(row))) {
-        gtk_signal_emit(GTK_OBJECT(widget), "select_row", row, 0, NULL);
+        gtk_signal_emit(G_OBJECT(widget), "select_row", row, 0, NULL);
       }
     }
   }
