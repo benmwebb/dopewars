@@ -52,6 +52,10 @@ typedef struct _GtkListStoreRow GtkListStoreRow;
 typedef guint GtkTreeIter;
 typedef guint GtkTreePath;
 
+typedef gint (*GtkTreeIterCompareFunc) (GtkTreeModel *model,
+                                        GtkTreeIter *a, GtkTreeIter *b,
+                                        gpointer user_data);
+
 struct _GtkTreeView {
   GtkContainer container;
   HWND header, scrollwin;
@@ -70,7 +74,7 @@ struct _GtkTreeViewColumn {
   gint sort_column_id; /* what to sort by when this column is selected */
   gint width;
   gint optimal_width;
-  GtkJustification justification;
+  gfloat xalign; /* 0.0 for left, 0.5 for center, 1.0 for right align */
   guint visible:1;
   guint resizeable:1;
   guint auto_resize:1;
@@ -86,6 +90,10 @@ struct _GtkListStore {
   int *coltype;      /* Type of each column (e.g. G_TYPE_STRING) */
   GArray *rows;      /* All rows in the list as GtkListStoreRow */
   GtkTreeView *view; /* The currently connected view (only one supported) */
+  gint sort_column_id; /* what to sort by, if >= 0 */
+  GtkSortType sort_order;
+  GArray *sort_func;   /* callback functions for sorting, by sort_column_id */
+  gint need_sort:1;  /* set once data is added/changed */
 };
 
 /* Empty struct; we don't support customizing the renderer */
@@ -110,11 +118,14 @@ void gtk_list_store_insert(GtkListStore *list_store, GtkTreeIter *iter,
 void gtk_list_store_append(GtkListStore *list_store, GtkTreeIter *iter);
 gboolean gtk_list_store_remove(GtkListStore *list_store, GtkTreeIter *iter);
 void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...);
+void gtk_list_store_swap(GtkListStore *store, GtkTreeIter *a, GtkTreeIter *b);
 
 void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...);
 gboolean gtk_tree_model_iter_nth_child(GtkTreeModel *tree_model,
                                        GtkTreeIter *iter,
                                        GtkTreeIter *parent, gint n);
+gint gtk_tree_model_iter_n_children(GtkTreeModel *tree_model,
+                                    GtkTreeIter *iter);
 
 GtkWidget *gtk_tree_view_new(void);
 GtkTreeSelection *gtk_tree_view_get_selection(GtkTreeView *tree_view);
@@ -125,7 +136,11 @@ void gtk_tree_view_set_headers_clickable(GtkTreeView *tree_view,
 gint gtk_tree_view_insert_column_with_attributes
             (GtkTreeView *tree_view, gint position, const gchar *title,
              GtkCellRenderer *cell, ...);
-
+void gtk_tree_view_scroll_to_cell(GtkTreeView *tree_view,
+                                  GtkTreePath *path,
+                                  GtkTreeViewColumn *column,
+                                  gboolean use_align, gfloat row_align,
+                                  gfloat col_align);
 void gtk_tree_selection_selected_foreach(GtkTreeSelection *selection,
                                          GtkTreeSelectionForeachFunc func,
                                          gpointer data);
@@ -145,6 +160,7 @@ void gtk_tree_selection_unselect_all(GtkTreeSelection *selection);
 GList *gtk_tree_selection_get_selected_rows(GtkTreeSelection *selection,
                                             GtkTreeModel **model);
 #define gtk_tree_path_free g_free
+gint *gtk_tree_path_get_indices_with_depth(GtkTreePath *path, gint *depth);
 GtkTreeViewColumn *gtk_tree_view_column_new_with_attributes
                    (const gchar *title, GtkCellRenderer *cell, ...);
 void gtk_tree_view_column_set_resizable(GtkTreeViewColumn *tree_column,
@@ -153,11 +169,25 @@ void gtk_tree_view_column_set_expand(GtkTreeViewColumn *tree_column,
                                      gboolean expand);
 void gtk_tree_view_column_set_sort_column_id(GtkTreeViewColumn *tree_column,
                                              gint sort_column_id);
+/* We treat this as the alignment of all cells in this column, not just the
+   alignment of the header */
+void gtk_tree_view_column_set_alignment(GtkTreeViewColumn *tree_column,
+                                        gfloat xalign);
+/* This is only used to set the xalign property, so make it a noop */
+#define g_object_set(object, name, value, end) {}
 gint gtk_tree_view_insert_column(GtkTreeView *tree_view,
                                  GtkTreeViewColumn *column,
                                  gint position);
 GtkTreeViewColumn *gtk_tree_view_get_column(GtkTreeView *tree_view, gint n);
 
+void gtk_tree_sortable_set_sort_func(GtkTreeSortable *sortable,
+                                     gint sort_column_id,
+                                     GtkTreeIterCompareFunc sort_func,
+                                     gpointer user_data,
+                                     GDestroyNotify destroy);
+void gtk_tree_sortable_set_sort_column_id(GtkTreeSortable *sortable,
+                                          gint sort_column_id,
+                                          GtkSortType order);
 GtkCellRenderer *gtk_cell_renderer_text_new(void);
 
 void g_object_unref(gpointer object);

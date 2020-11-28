@@ -636,7 +636,8 @@ void NewGameDialog(Player *play)
                    G_CALLBACK(MetaServerConnect), NULL);
   gtk_widget_set_sensitive(button, FALSE);
   treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
-  g_signal_connect(treesel, "changed", G_CALLBACK(metalist_changed), button);
+  g_signal_connect(G_OBJECT(treesel), "changed", G_CALLBACK(metalist_changed),
+                   button);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);

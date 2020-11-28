@@ -1661,7 +1661,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(GTK_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), "delete_event",
                    G_CALLBACK(GuiRequestDelete), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 500, 250);
 
@@ -1680,7 +1680,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   label = gtk_label_new(_("Command:"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   entry = gtk_entry_new();
-  g_signal_connect(GTK_OBJECT(entry), "activate",
+  g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(GuiDoCommand), NULL);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);

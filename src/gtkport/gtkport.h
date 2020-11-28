@@ -444,6 +444,11 @@ void gtk_menu_insert(GtkMenu *menu, GtkWidget *child, gint position);
 void gtk_menu_append(GtkMenu *menu, GtkWidget *child);
 void gtk_menu_prepend(GtkMenu *menu, GtkWidget *child);
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label);
+void gtk_menu_item_set_right_justified(GtkMenuItem *menu_item,
+                                       gboolean right_justified);
+#define gtk_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
+#define gtk_check_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
+GtkMenu *gtk_menu_item_get_submenu(GtkMenuItem *menu_item);
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu);
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active);
 gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item);
@@ -453,7 +458,7 @@ void gtk_notebook_append_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label);
 void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label, gint position);
-void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num);
+void gtk_notebook_set_current_page(GtkNotebook *notebook, gint page_num);
 gint gtk_notebook_get_current_page(GtkNotebook *notebook);
 GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
                             gfloat step_increment, gfloat page_increment,
@@ -472,6 +477,8 @@ void g_object_set_data(GObject *object, const gchar *key,
 gpointer g_object_get_data(GObject *object, const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
+gint gtk_accel_group_add(GtkAccelGroup *accel_group,
+                         ACCEL *newaccel);
 void gtk_widget_grab_default(GtkWidget *widget);
 void gtk_widget_grab_focus(GtkWidget *widget);
 void gtk_window_set_modal(GtkWindow *window, gboolean modal);
@@ -511,7 +518,9 @@ GtkTreeModel *gtk_combo_box_get_model(GtkComboBox *combo_box);
 gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
                                        GtkTreeIter *iter);
 void gtk_label_set_text(GtkLabel *label, const gchar *str);
-guint gtk_label_parse_uline(GtkLabel *label, const gchar *str);
+/* Not currently supported */
+#define gtk_label_set_text_with_mnemonic gtk_label_set_text
+#define gtk_label_set_mnemonic_widget(label, widget) {}
 const gchar *gtk_label_get_text(GtkLabel *label);
 void gtk_text_set_point(GtkText *text, guint index);
 void gtk_widget_set_size_request(GtkWidget *widget, gint width, gint height);

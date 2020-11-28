@@ -153,11 +153,11 @@ gboolean gtk_tree_view_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
         return FALSE;
       case HDN_ITEMCLICKA:
         phdr = (HD_NOTIFYA FAR *)lParam;
-        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdr->iItem);
+        gtk_signal_emit(G_OBJECT(widget), "click-column", (gint)phdr->iItem);
         return FALSE;
       case HDN_ITEMCLICKW:
         phdrw = (HD_NOTIFYW FAR *)lParam;
-        gtk_signal_emit(GTK_OBJECT(widget), "click-column", (gint)phdrw->iItem);
+        gtk_signal_emit(G_OBJECT(widget), "click-column", (gint)phdrw->iItem);
         return FALSE;
       default:
         break;
@@ -320,6 +320,7 @@ void gtk_list_store_clear(GtkListStore *list_store)
     gtk_list_store_row_free(row, list_store);
   }
   g_array_set_size(list_store->rows, 0);
+  list_store->need_sort = FALSE;  /* an empty store is sorted */
 
   if (list_store->view) {
     HWND hWnd;
@@ -357,6 +358,7 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
   int colind;
   GtkListStoreRow *row = &g_array_index(list_store->rows, GtkListStoreRow,
                                         *iter);
+  list_store->need_sort = TRUE;
 
   va_start(ap, iter);
   while ((colind = va_arg(ap, int)) >= 0) {
@@ -389,6 +391,16 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
       mySendMessage(hWnd, LB_INSERTSTRING, (WPARAM)*iter, 1);
     }
   }
+}
+
+void gtk_list_store_swap(GtkListStore *store, GtkTreeIter *a, GtkTreeIter *b)
+{
+  GtkListStoreRow rowa = g_array_index(store->rows, GtkListStoreRow, *a);
+  GtkListStoreRow rowb = g_array_index(store->rows, GtkListStoreRow, *b);
+
+  g_array_index(store->rows, GtkListStoreRow, *a) = rowb;
+  g_array_index(store->rows, GtkListStoreRow, *b) = rowa;
+  store->need_sort = TRUE;
 }
 
 void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...)
@@ -433,7 +445,20 @@ gboolean gtk_tree_model_iter_nth_child(GtkTreeModel *tree_model,
   /* We only work with one level (lists) for now */
   g_assert(parent == NULL);
   *iter = n;
+  return TRUE;
 }
+
+gint gtk_tree_model_iter_n_children(GtkTreeModel *tree_model,
+                                    GtkTreeIter *iter)
+{
+  /* We only work with one level (lists) for now */
+  if (iter) {
+    return 1;
+  } else {
+    return tree_model->rows->len;
+  }
+}
+
 
 static void gtk_tree_view_column_free(gpointer data)
 {
@@ -446,6 +471,7 @@ void gtk_tree_model_free(GtkTreeModel *model)
 {
   gtk_list_store_clear(model);  /* Remove all rows */
   g_array_free(model->rows, TRUE);
+  g_array_free(model->sort_func, TRUE);
   g_free(model->coltype);
   g_free(model);
 }
@@ -483,11 +509,12 @@ static void draw_cell_text(GtkTreeViewColumn *col, GtkTreeModel *model,
   UINT align;
   char *val;
   int modcol = col->model_column;
-  switch(col->justification) {
-  case GTK_JUSTIFY_RIGHT:
+  /* Convert float 0.0, 0.5 or 1.0 into int, allow for some rounding error */
+  switch((int)(col->xalign * 10. + 0.1)) {
+  case 10:
     align = DT_RIGHT;
     break;
-  case GTK_JUSTIFY_CENTER:
+  case 5:
     align = DT_CENTER;
     break;
   default:
@@ -749,7 +776,7 @@ void gtk_tree_selection_unselect_all(GtkTreeSelection *selection)
 {
   GList *sel;
   for (sel = selection->selection; sel; sel = g_list_next(sel)) {
-    int row = GPOINTER_TO_INT(sel->data);
+    guint row = GPOINTER_TO_UINT(sel->data);
     gtk_tree_selection_unselect_path(selection, &row);
   }
 }
@@ -759,12 +786,19 @@ GList *gtk_tree_selection_get_selected_rows(GtkTreeSelection *selection,
 {
   GList *sel, *pathsel = NULL;
   for (sel = selection->selection; sel; sel = g_list_next(sel)) {
-    int row = GPOINTER_TO_INT(sel->data);
+    guint row = GPOINTER_TO_UINT(sel->data);
     GtkTreePath *path = g_new(GtkTreePath, 1);
     *path = row;
     pathsel = g_list_append(pathsel, path);
   }
   return pathsel;
+}
+
+gint *gtk_tree_path_get_indices_with_depth(GtkTreePath *path, gint *depth)
+{
+  /* Only one level; path *is* the row index */
+  *depth = 1;
+  return path;
 }
 
 void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
@@ -815,7 +849,7 @@ void gtk_tree_selection_selected_foreach(GtkTreeSelection *selection,
 {
   GList *sel;
   for (sel = selection->selection; sel; sel = g_list_next(sel)) {
-    int row = GPOINTER_TO_INT(sel->data);
+    guint row = GPOINTER_TO_UINT(sel->data);
     func(selection->model, &row, &row, data);
   }
 }
@@ -834,7 +868,7 @@ void gtk_tree_view_update_selection(GtkWidget *widget)
       }
     }
 
-    gtk_signal_emit(GTK_OBJECT(widget), "changed");
+    gtk_signal_emit(G_OBJECT(widget), "changed");
   }
 }
 
@@ -888,11 +922,39 @@ GtkListStore *gtk_list_store_new(gint n_columns, ...)
   store->ncols = n_columns;
   store->coltype = g_new(int, n_columns);
   store->rows = g_array_new(FALSE, FALSE, sizeof(GtkListStoreRow));
+  store->sort_column_id = GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID;
+  store->sort_func = g_array_new(FALSE, TRUE, sizeof(gpointer));
+  store->need_sort = FALSE;
   for (i = 0; i < n_columns; ++i) {
     store->coltype[i] = va_arg(ap, int);
   }
   va_end(ap);
   return store;
+}
+
+void gtk_tree_sortable_set_sort_func(GtkTreeSortable *sortable,
+                                     gint sort_column_id,
+                                     GtkTreeIterCompareFunc sort_func,
+                                     gpointer user_data,
+                                     GDestroyNotify destroy)
+{
+  /* We don't currently support user_data */
+  if (sort_column_id >= sortable->sort_func->len) {
+    g_array_set_size(sortable->sort_func, sort_column_id+1);
+  }
+  g_array_index(sortable->sort_func, gpointer, sort_column_id) = sort_func;
+}
+
+void gtk_tree_sortable_set_sort_column_id(GtkTreeSortable *sortable,
+                                          gint sort_column_id,
+                                          GtkSortType order)
+{
+  if (sortable->sort_column_id != sort_column_id
+      || sortable->sort_order != order) {
+    sortable->sort_column_id = sort_column_id;
+    sortable->sort_order = order;
+    sortable->need_sort = TRUE;
+  }
 }
 
 /* We don't support customizing renderers right now */
@@ -912,6 +974,7 @@ static GtkTreeViewColumn *new_column_internal(const char *title, va_list args)
   col->expand = FALSE;
   col->sort_column_id = -1;
   col->model_column = -1;
+  col->xalign = 0.0;   /* left align by default */
 
   /* Currently we only support the "text" attribute to point to the
      ListStore column */
@@ -948,6 +1011,15 @@ gint gtk_tree_view_insert_column_with_attributes
   return gtk_tree_view_insert_column(tree_view, col, position);
 }
 
+void gtk_tree_view_scroll_to_cell(GtkTreeView *tree_view,
+                                  GtkTreePath *path,
+                                  GtkTreeViewColumn *column,
+                                  gboolean use_align, gfloat row_align,
+                                  gfloat col_align)
+{
+  /* not implemented */
+}
+
 void gtk_tree_view_column_set_resizable(GtkTreeViewColumn *tree_column,
                                         gboolean resizable)
 {
@@ -964,6 +1036,12 @@ void gtk_tree_view_column_set_sort_column_id(GtkTreeViewColumn *tree_column,
                                              gint sort_column_id)
 {
   tree_column->sort_column_id = sort_column_id;
+}
+
+void gtk_tree_view_column_set_alignment(GtkTreeViewColumn *tree_column,
+                                        gfloat xalign)
+{
+  tree_column->xalign = xalign;
 }
 
 gint gtk_tree_view_insert_column(GtkTreeView *tree_view,

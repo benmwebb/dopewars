@@ -234,8 +234,6 @@ static void gtk_window_set_initial_position(GtkWindow *window,
 static void gtk_progress_bar_size_request(GtkWidget *widget,
                                           GtkRequisition *requisition);
 static void gtk_progress_bar_realize(GtkWidget *widget);
-static gint gtk_accel_group_add(GtkAccelGroup *accel_group,
-                                ACCEL *newaccel);
 static void gtk_accel_group_set_id(GtkAccelGroup *accel_group, gint ind,
                                    gint ID);
 static void EnableParent(GtkWindow *window);
@@ -1070,8 +1068,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     }
 
     if (widget && nmhdr->code == TCN_SELCHANGE) {
-      gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                            TabCtrl_GetCurSel(nmhdr->hwndFrom));
+      gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                    TabCtrl_GetCurSel(nmhdr->hwndFrom));
       return FALSE;
     }
     break;
@@ -3708,10 +3706,21 @@ GtkWidget *gtk_menu_item_new_with_label(const gchar *label)
   return GTK_WIDGET(menu_item);
 }
 
+void gtk_menu_item_set_right_justified(GtkMenuItem *menu_item,
+                                       gboolean right_justified)
+{
+  /* noop */
+}
+
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu)
 {
   menu_item->submenu = GTK_MENU(submenu);
   submenu->parent = GTK_WIDGET(menu_item);
+}
+
+GtkMenu *gtk_menu_item_get_submenu(GtkMenuItem *menu_item)
+{
+  return menu_item->submenu;
 }
 
 gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item)
@@ -3922,7 +3931,7 @@ void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
   child->parent = GTK_WIDGET(notebook);
 }
 
-void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num)
+void gtk_notebook_set_current_page(GtkNotebook *notebook, gint page_num)
 {
   GSList *children;
   GtkNotebookChild *note_child;
@@ -3994,8 +4003,8 @@ void gtk_notebook_realize(GtkWidget *widget)
       }
     }
   }
-  gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                        GTK_NOTEBOOK(widget)->selection);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                GTK_NOTEBOOK(widget)->selection);
 }
 
 void gtk_notebook_show_all(GtkWidget *widget, gboolean hWndOnly)
@@ -4010,8 +4019,8 @@ void gtk_notebook_show_all(GtkWidget *widget, gboolean hWndOnly)
       if (note_child && note_child->child)
         gtk_widget_show_all_full(note_child->child, hWndOnly);
     }
-  gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                        GTK_NOTEBOOK(widget)->selection);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                GTK_NOTEBOOK(widget)->selection);
 }
 
 void gtk_notebook_hide_all(GtkWidget *widget, gboolean hWndOnly)
@@ -4852,20 +4861,6 @@ static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
     mii.cch = myw32strlen(menuitem->text);
     mySetMenuItemInfo(parent_menu, menuitem->ID, FALSE, &mii);
   }
-}
-
-guint gtk_label_parse_uline(GtkLabel *label, const gchar *str)
-{
-  gint i;
-
-  gtk_label_set_text(label, str);
-  if (str)
-    for (i = 0; i < strlen(str); i++) {
-      if (str[i] == '_') {
-        return str[i + 1];
-      }
-    }
-  return 0;
 }
 
 const char *gtk_label_get_text(GtkLabel *label)
