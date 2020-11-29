@@ -44,7 +44,6 @@
 #include "gtkenums.h"
 #include "gtktypes.h"
 
-#include "clist.h"
 #include "treeview.h"
 
 struct _GtkMisc {
@@ -637,9 +636,6 @@ typedef enum
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, GtkMessageType type, gint Options);
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                              gchar *titles[],
-                                              GtkWidget **pack_widg);
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt);

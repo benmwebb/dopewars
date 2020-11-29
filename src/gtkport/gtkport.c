@@ -1283,7 +1283,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKURL;
     myRegisterClass(&wc);
 
-    InitCListClass(hInstance);
     InitTreeViewClass(hInstance);
   }
 }
