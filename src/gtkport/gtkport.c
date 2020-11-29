@@ -439,6 +439,7 @@ static GtkSignalType GtkComboBoxSignals[] = {
   {"set_size", gtk_marshal_VOID__GPOIN, gtk_combo_box_set_size},
   {"realize", gtk_marshal_VOID__VOID, gtk_combo_box_realize},
   {"destroy", gtk_marshal_VOID__VOID, gtk_combo_box_destroy},
+  {"changed", gtk_marshal_VOID__GPOIN, NULL},
   {"", NULL, NULL}
 };
 
@@ -4899,7 +4900,7 @@ void gtk_combo_box_update_selection(GtkWidget *widget)
     return;
 
   GTK_COMBO_BOX(widget)->active = lres;
-  gtk_signal_emit(G_OBJECT(widget), "changed");
+  gtk_signal_emit(G_OBJECT(widget), "changed", NULL);
 }
 
 void gtk_window_handle_user_size(GtkWindow *window,

@@ -868,7 +868,7 @@ void gtk_tree_view_update_selection(GtkWidget *widget)
       }
     }
 
-    gtk_signal_emit(G_OBJECT(widget), "changed");
+    gtk_signal_emit(G_OBJECT(widget), "changed", NULL);
   }
 }
 
