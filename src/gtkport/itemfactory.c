@@ -208,11 +208,10 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
       gtk_item_factory_parse_accel(ifactory, entry->accelerator,
                                    menu_title, &accel);
 
+  menu_item = gtk_menu_item_new_with_mnemonic(menu_title->str);
   if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
-    menu_item = gtk_check_menu_item_new_with_mnemonic(menu_title->str);
-    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), TRUE);
+    GTK_CHECK_MENU_ITEM(menu_item)->check = 1;
   } else {
-    menu_item = gtk_menu_item_new_with_mnemonic(menu_title->str);
     if (entry->item_type && strcmp(entry->item_type, "<LastBranch>") == 0) {
       gtk_menu_item_set_right_justified(GTK_MENU_ITEM(menu_item), TRUE);
     }
