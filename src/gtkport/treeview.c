@@ -407,12 +407,19 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
 
 void gtk_list_store_swap(GtkListStore *store, GtkTreeIter *a, GtkTreeIter *b)
 {
+  GtkTreeIter tmp;
   GtkListStoreRow rowa = g_array_index(store->rows, GtkListStoreRow, *a);
   GtkListStoreRow rowb = g_array_index(store->rows, GtkListStoreRow, *b);
 
   g_array_index(store->rows, GtkListStoreRow, *a) = rowb;
   g_array_index(store->rows, GtkListStoreRow, *b) = rowa;
   store->need_sort = TRUE;
+
+  /* Swap the iterators too since in our implementation they are just row
+     indices */
+  tmp = *a;
+  *a = *b;
+  *b = tmp;
 }
 
 void gtk_tree_model_get(GtkTreeModel *tree_model, GtkTreeIter *iter, ...)
