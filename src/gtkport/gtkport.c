@@ -3732,6 +3732,7 @@ gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item)
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active)
 {
   GtkWidget *widget = GTK_WIDGET(menu_item);
+  menu_item->check = 1;
   menu_item->active = active;
 
   if (GTK_WIDGET_REALIZED(widget)) {
