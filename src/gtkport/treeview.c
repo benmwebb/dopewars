@@ -360,6 +360,7 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
 {
   va_list ap;
   int colind;
+  gboolean new_row = TRUE;
   GtkListStoreRow *row = &g_array_index(list_store->rows, GtkListStoreRow,
                                         *iter);
   list_store->need_sort = TRUE;
@@ -369,6 +370,9 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
     switch(list_store->coltype[colind]) {
     case G_TYPE_STRING:
       g_free(row->data[colind]);  /* Free any existing string */
+      if (row->data[colind]) {
+        new_row = FALSE;
+      }
       row->data[colind] = g_strdup(va_arg(ap, const char*));
       break;
     case G_TYPE_UINT:
@@ -392,7 +396,11 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
 
     if (GTK_WIDGET_REALIZED(widget)) {
       HWND hWnd = widget->hWnd;
-      mySendMessage(hWnd, LB_INSERTSTRING, (WPARAM)*iter, 1);
+      if (new_row) {
+        mySendMessage(hWnd, LB_INSERTSTRING, (WPARAM)*iter, 1);
+      } else {
+        InvalidateRect(hWnd, NULL, FALSE);
+      }
     }
   }
 }
