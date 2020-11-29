@@ -1973,11 +1973,11 @@ msgstr "A>takujesz"
 
 #: src/curses_client/curses_client.c:2424
 msgid "S>tand, "
-msgstr "S>toisz"
+msgstr "S>toisz, "
 
 #: src/curses_client/curses_client.c:2428
 msgid "R>un, "
-msgstr "U>ciekasz"
+msgstr "U>ciekasz, "
 
 #. (%tde = "drugs" by default here)
 #: src/curses_client/curses_client.c:2431
@@ -1987,7 +1987,7 @@ msgstr "D>ilujesz %tde, "
 
 #: src/curses_client/curses_client.c:2432
 msgid "or Q>uit? "
-msgstr "czy W>yjście"
+msgstr "czy W>yjście "
 
 #: src/curses_client/curses_client.c:2497
 msgid "Connection to server lost! Reverting to single player mode"
@@ -2005,7 +2005,7 @@ msgstr "KSUGPZDAJW"
 #. * Q>uit)
 #: src/curses_client/curses_client.c:2528
 msgid "DRFSQ"
-msgstr "ASUDW"
+msgstr "DUASW"
 
 #: src/curses_client/curses_client.c:2560
 msgid "List what? P>layers or S>cores? "
