@@ -158,7 +158,7 @@ static void GetSpyReports(GtkWidget *widget, gpointer data);
 static void DisplaySpyReports(Player *Play);
 
 static DPGtkItemFactoryEntry menu_items[] = {
-  /* The names of the the menus and their items in the GTK+ client */
+  /* The names of the menus and their items in the GTK+ client */
   {N_("/_Game"), NULL, NULL, 0, "<Branch>"},
   {N_("/Game/_New..."), "<control>N", NewGame, 0, NULL},
   {N_("/Game/_Abandon..."), "<control>A", AbandonGame, 0, NULL},
