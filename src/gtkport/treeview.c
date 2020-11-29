@@ -69,7 +69,7 @@ static GtkSignalType GtkTreeViewSignals[] = {
   {"realize", gtk_marshal_VOID__VOID, gtk_tree_view_realize},
   {"destroy", gtk_marshal_VOID__VOID, gtk_tree_view_destroy},
   {"click-column", gtk_marshal_VOID__GINT, NULL},
-  {"changed", gtk_marshal_VOID__GPOIN, NULL},
+  {"changed", gtk_marshal_VOID__VOID, NULL},
   {"show", gtk_marshal_VOID__VOID, gtk_tree_view_show},
   {"hide", gtk_marshal_VOID__VOID, gtk_tree_view_hide},
   {"", NULL, NULL}
@@ -872,7 +872,7 @@ void gtk_tree_view_update_selection(GtkWidget *widget)
       }
     }
 
-    gtk_signal_emit(G_OBJECT(widget), "changed", NULL);
+    gtk_signal_emit(G_OBJECT(widget), "changed");
   }
 }
 
