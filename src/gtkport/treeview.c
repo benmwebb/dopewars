@@ -795,6 +795,9 @@ GList *gtk_tree_selection_get_selected_rows(GtkTreeSelection *selection,
     *path = row;
     pathsel = g_list_append(pathsel, path);
   }
+  if (model) {
+    *model = selection->model;
+  }
   return pathsel;
 }
 
