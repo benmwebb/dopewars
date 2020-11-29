@@ -181,6 +181,9 @@ gint gtk_tree_view_insert_column(GtkTreeView *tree_view,
                                  gint position);
 GtkTreeViewColumn *gtk_tree_view_get_column(GtkTreeView *tree_view, gint n);
 
+/* Force a sort of the view */
+void gtk_tree_view_sort(GtkTreeView *tv);
+
 void gtk_tree_sortable_set_sort_func(GtkTreeSortable *sortable,
                                      gint sort_column_id,
                                      GtkTreeIterCompareFunc sort_func,

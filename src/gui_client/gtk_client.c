@@ -1352,6 +1352,7 @@ void UpdateInventory(struct InventoryWidgets *Inven,
     herestore = GTK_LIST_STORE(gtk_tree_view_get_model(tv[1]));
   } else {
     tv[1] = NULL;
+    herestore = NULL;
   }
 
   for (i = 0; i < numlist; i++) {
@@ -1412,6 +1413,13 @@ void UpdateInventory(struct InventoryWidgets *Inven,
     }
     g_free(titles[0]);
   }
+
+#ifdef CYGWIN
+  /* Our Win32 GtkTreeView implementation doesn't auto-sort, so force it */
+  if (herelist) {
+    gtk_tree_view_sort(GTK_TREE_VIEW(herelist));
+  }
+#endif
 
   /* Scroll so that selection is visible */
   for (i = 0; i < numlist; i++) {

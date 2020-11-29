@@ -62,13 +62,14 @@ static void gtk_tree_view_set_column_width(GtkTreeView *tv, gint column,
 static void gtk_tree_view_set_column_width_full(GtkTreeView *tv, gint column,
                                                 gint width,
                                                 gboolean ResizeHeader);
+static void gtk_tree_view_click_column(GtkWidget *widget, gint column);
 
 static GtkSignalType GtkTreeViewSignals[] = {
   {"size_request", gtk_marshal_VOID__GPOIN, gtk_tree_view_size_request},
   {"set_size", gtk_marshal_VOID__GPOIN, gtk_tree_view_set_size},
   {"realize", gtk_marshal_VOID__VOID, gtk_tree_view_realize},
   {"destroy", gtk_marshal_VOID__VOID, gtk_tree_view_destroy},
-  {"click-column", gtk_marshal_VOID__GINT, NULL},
+  {"click-column", gtk_marshal_VOID__GINT, gtk_tree_view_click_column},
   {"changed", gtk_marshal_VOID__VOID, NULL},
   {"show", gtk_marshal_VOID__VOID, gtk_tree_view_show},
   {"hide", gtk_marshal_VOID__VOID, gtk_tree_view_hide},
@@ -506,6 +507,28 @@ void gtk_tree_view_destroy(GtkWidget *widget)
   view->model = NULL;
 }
 
+void gtk_tree_view_click_column(GtkWidget *widget, gint column)
+{
+  GtkTreeView *view = GTK_TREE_VIEW(widget);
+  GtkTreeViewColumn *col = g_slist_nth_data(view->columns, column);
+  GtkListStore *model = view->model;
+  if (!model || !view->headers_clickable) return;
+
+  if (col->sort_column_id == model->sort_column_id) {
+    /* toggle order */
+    if (model->sort_order == GTK_SORT_ASCENDING) {
+      model->sort_order = GTK_SORT_DESCENDING;
+    } else {
+      model->sort_order = GTK_SORT_ASCENDING;
+    }
+  } else {
+    model->sort_column_id = col->sort_column_id;
+    model->sort_order = GTK_SORT_ASCENDING;
+  }
+  model->need_sort = TRUE;
+  gtk_tree_view_sort(view);
+}
+
 void gtk_tree_view_show(GtkWidget *widget)
 {
   if (GTK_WIDGET_REALIZED(widget)) {
@@ -820,7 +843,7 @@ gint *gtk_tree_path_get_indices_with_depth(GtkTreePath *path, gint *depth)
 {
   /* Only one level; path *is* the row index */
   *depth = 1;
-  return path;
+  return (gint *)path;
 }
 
 void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
@@ -1086,8 +1109,89 @@ void gtk_tree_view_set_model(GtkTreeView *tree_view, GtkTreeModel *model)
   if (model) {
     tree_view->model = model;
     model->view = tree_view;
-    /* todo: update view if necessary */
   }
+}
+
+struct ListStoreSortData {
+  GtkTreeIterCompareFunc sort_func;
+  GtkListStore *store;
+  gboolean reversed;
+};
+
+static gint tree_view_sort_func(gconstpointer a, gconstpointer b, gpointer data){
+  /* Map from sorting an array of guint indices into sorting a GtkListStore */
+  struct ListStoreSortData *d = data;
+  const guint *inda = a, *indb = b;
+  if (d->reversed) {
+    return d->sort_func(d->store, (guint*)indb, (guint*)inda, NULL);
+  } else {
+    return d->sort_func(d->store, (guint*)inda, (guint*)indb, NULL);
+  }
+}
+
+void gtk_tree_view_sort(GtkTreeView *tv)
+{
+  GtkListStore *model = tv->model;
+  struct ListStoreSortData data;
+  HWND hWnd;
+  GArray *inds, *revinds;
+  guint i;
+  GArray *newrows;
+  if (!model || !model->need_sort
+      || model->sort_column_id == GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID) {
+    return;
+  }
+
+  /* Before sort, inds[row] = row */
+  inds = g_array_sized_new(FALSE, FALSE, sizeof(guint), model->rows->len);
+  for (i = 0; i < model->rows->len; ++i) {
+    g_array_append_val(inds, i);
+  }
+  data.sort_func = g_array_index(model->sort_func, GtkTreeIterCompareFunc,
+                                 model->sort_column_id);
+  data.store = model;
+  data.reversed = model->sort_order == GTK_SORT_DESCENDING;
+  g_array_sort_with_data(inds, tree_view_sort_func, &data);
+
+  /* After sort, inds[newrow] = oldrow */
+  /* Now we can reconstruct model->rows in the new order */
+  newrows = g_array_sized_new(FALSE, FALSE, sizeof(GtkListStoreRow),
+                              model->rows->len);
+  for (i = 0; i < model->rows->len; ++i) {
+    guint oldrow = g_array_index(inds, guint, i);
+    g_array_append_val(newrows,
+                       g_array_index(model->rows, GtkListStoreRow, oldrow));
+  }
+
+  /* Make revinds[oldrow] = newrow */
+  revinds = g_array_sized_new(FALSE, FALSE, sizeof(guint), model->rows->len);
+  g_array_set_size(revinds, model->rows->len);
+  for (i = 0; i < model->rows->len; ++i) {
+    guint oldrow = g_array_index(inds, guint, i);
+    g_array_index(revinds, guint, oldrow) = i;
+  }
+
+  /* Update selection (only works for a single selection currently) */
+  if (tv->selection) {
+    guint oldrow = GPOINTER_TO_UINT(tv->selection->data);
+    guint newrow = g_array_index(revinds, guint, oldrow);
+    if (oldrow != newrow) {
+      gtk_tree_selection_unselect_path(tv, &oldrow);
+      gtk_tree_selection_select_path(tv, &newrow);
+    }
+  }
+
+  /* No need to free the old row data since the new structure takes ownership */
+  g_array_free(model->rows, TRUE);
+  model->rows = newrows;
+
+  g_array_free(inds, TRUE);
+  g_array_free(revinds, TRUE);
+  model->need_sort = FALSE;
+
+  hWnd = GTK_WIDGET(tv)->hWnd;
+  if (hWnd)
+    InvalidateRect(hWnd, NULL, FALSE);
 }
 
 GtkTreeModel *gtk_tree_view_get_model(GtkTreeView *tree_view)
