@@ -972,6 +972,7 @@ static GtkTreeViewColumn *new_column_internal(const char *title, va_list args)
   col->title = g_strdup(title);
   col->resizeable = FALSE;
   col->expand = FALSE;
+  col->auto_resize = TRUE;
   col->sort_column_id = -1;
   col->model_column = -1;
   col->xalign = 0.0;   /* left align by default */
