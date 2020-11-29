@@ -258,7 +258,7 @@ static GtkSignalType GtkObjectSignals[] = {
   {"", NULL, NULL}
 };
 
-static GtkClass GtkObjectClass = {
+GtkClass GtkObjectClass = {
   "object", NULL, sizeof(GObject), GtkObjectSignals, NULL
 };
 

@@ -86,6 +86,7 @@ struct _GtkListStoreRow {
 };
 
 struct _GtkListStore {
+  GObject object;
   int ncols;         /* Number of columns */
   int *coltype;      /* Type of each column (e.g. G_TYPE_STRING) */
   GArray *rows;      /* All rows in the list as GtkListStoreRow */

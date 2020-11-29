@@ -80,6 +80,10 @@ static GtkClass GtkTreeViewClass = {
   gtk_tree_view_wndproc
 };
 
+static GtkClass GtkListStoreClass = {
+  "list_store", &GtkObjectClass, sizeof(GtkListStore), NULL, NULL
+};
+
 static void SetTreeViewHeaderSize(GtkTreeView *clist)
 {
   RECT rc;
@@ -917,7 +921,7 @@ GtkListStore *gtk_list_store_new(gint n_columns, ...)
   va_list ap;
   va_start(ap, n_columns);
 
-  store = g_new0(GtkListStore, 1);
+  store = GTK_LIST_STORE(GtkNewObject(&GtkListStoreClass));
   store->view = NULL;
   store->ncols = n_columns;
   store->coltype = g_new(int, n_columns);

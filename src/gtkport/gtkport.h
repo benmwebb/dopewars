@@ -293,6 +293,7 @@ struct _GtkTableRowCol {
 };
 
 extern GtkClass GtkContainerClass;
+extern GtkClass GtkObjectClass;
 extern HFONT defFont;
 extern HINSTANCE hInst;
 
