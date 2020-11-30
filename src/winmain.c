@@ -254,6 +254,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 #ifdef ENABLE_NLS
   gchar *winlocale;
+  const char *charset;
 #endif
 
   /* Are we running as an NT service? */
