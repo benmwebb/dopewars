@@ -2063,7 +2063,7 @@ msgstr "CVTHJLMEIS"
 #. * Q>uit)
 #: src/curses_client/curses_client.c:2528
 msgid "DRFSQ"
-msgstr "LECVS"
+msgstr "VCLES"
 
 #: src/curses_client/curses_client.c:2560
 msgid "List what? P>layers or S>cores? "
