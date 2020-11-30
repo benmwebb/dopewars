@@ -654,7 +654,7 @@ static void HelpCallback(GtkWidget *widget, GtkWidget *notebook)
   gchar *help;
 
   help = GetHelpPage(pagehelp[page]);
-  DisplayHTML(widget, WebBrowser, help);
+  DisplayHTML(widget, OurWebBrowser, help);
   g_free(help);
 }
 

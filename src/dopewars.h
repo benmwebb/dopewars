@@ -183,7 +183,7 @@ extern gboolean MinToSysTray;
 #else
 extern gboolean Daemonize;
 #endif
-extern gchar *WebBrowser;
+extern gchar *OurWebBrowser;
 extern int LoanSharkLoc, BankLoc, GunShopLoc, RoughPubLoc;
 extern int DrugSortMethod, FightTimeout, IdleTimeout, ConnectTimeout;
 extern int MaxClients, AITurnPause;

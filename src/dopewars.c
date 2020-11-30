@@ -99,7 +99,7 @@ gboolean Daemonize = TRUE;
 #define SNDPATH DPDATADIR"/dopewars/"
 #endif
 
-gchar *WebBrowser = NULL;
+gchar *OurWebBrowser = NULL;
 gint ConfigErrors = 0;
 gboolean LocaleIsUTF8 = FALSE;
 
@@ -298,7 +298,7 @@ struct GLOBALS Globals[] = {
   {NULL, &Daemonize, NULL, NULL, NULL, "Daemonize",
    N_("If TRUE, the server runs in the background"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &WebBrowser, NULL, "WebBrowser",
+  {NULL, NULL, NULL, &OurWebBrowser, NULL, "WebBrowser",
    N_("The command used to start your web browser"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
 #endif
@@ -2406,7 +2406,7 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   AssignName(&ServerName, "localhost");
   AssignName(&ServerMOTD, "");
   AssignName(&BindAddress, "");
-  AssignName(&WebBrowser, "/usr/bin/firefox");
+  AssignName(&OurWebBrowser, "/usr/bin/firefox");
 
   AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
   AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");

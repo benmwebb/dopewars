@@ -2472,11 +2472,11 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   docindex = GetDocIndex();
-  PackCentredURL(vbox, _("Local HTML documentation"), docindex, WebBrowser);
+  PackCentredURL(vbox, _("Local HTML documentation"), docindex, OurWebBrowser);
   g_free(docindex);
 
   PackCentredURL(vbox, "https://dopewars.sourceforge.io/",
-                 "https://dopewars.sourceforge.io/", WebBrowser);
+                 "https://dopewars.sourceforge.io/", OurWebBrowser);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
