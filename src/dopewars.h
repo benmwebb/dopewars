@@ -371,6 +371,7 @@ extern GSList *ServerList;
 extern GScannerConfig ScannerConfig;
 extern struct LOG Log;
 extern gint ConfigErrors;
+extern gboolean LocaleIsUTF8;
 
 GSList *RemovePlayer(Player *Play, GSList *First);
 Player *GetPlayerByID(guint ID, GSList *First);

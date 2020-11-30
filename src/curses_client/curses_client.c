@@ -2241,6 +2241,25 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   return ReturnString;
 }
 
+/* Return a blank string long enough to pad `name` out to `pad_len`.
+   This works with characters, not bytes, if in a UTF-8 locale */
+static char *pad_name(const char *name, guint pad_len)
+{
+  /* 40 character blank string (must be longer than max value of pad_len) */
+  static char *pad = "                                        ";
+  int slen;
+  if (LocaleIsUTF8) {
+    slen = g_utf8_strlen(name, -1);
+  } else {
+    slen = strlen(name);
+  }
+  if (slen > pad_len || slen > 40) {
+    return "";
+  } else {
+    return pad + 40 - pad_len + slen;
+  }
+}
+
 static void DisplayDrugsHere(Player *Play)
 {
   int NumDrugsHere, i, c;
@@ -2265,8 +2284,9 @@ static void DisplayDrugsHere(Player *Play)
        c++, i = GetNextDrugIndex(i, Play)) {
     /* List of individual drug names for selection (%tde="Opium" etc.
        by default) */
-    text = dpg_strdup_printf( _("%c. %-10tde %8P"), 'A' + c,
-                             Drug[i].Name, Play->Drugs[i].Price);
+    text = dpg_strdup_printf( _("%c. %tde%s %8P"), 'A' + c,
+                             Drug[i].Name, pad_name(Drug[i].Name, 10),
+                             Play->Drugs[i].Price);
     names = g_slist_append(names, text);
   }
   display_select_list(names);
@@ -2654,6 +2674,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   /* On Windows, force UTF-8 rather than the non-Unicode codepage */
   bind_textdomain_codeset(PACKAGE, "UTF-8");
   Conv_SetInternalCodeset("UTF-8");
+  LocaleIsUTF8 = TRUE;
   WantUTF8Errors(TRUE);
 #endif
 

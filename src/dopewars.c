@@ -101,6 +101,7 @@ gboolean Daemonize = TRUE;
 
 gchar *WebBrowser = NULL;
 gint ConfigErrors = 0;
+gboolean LocaleIsUTF8 = FALSE;
 
 int NumLocation = 0, NumGun = 0, NumCop = 0, NumDrug = 0, NumSubway = 0;
 int NumPlaying = 0, NumStoppedTo = 0;
@@ -2924,9 +2925,11 @@ int main(int argc, char *argv[])
 {
   struct CMDLINE *cmdline;
 #ifdef ENABLE_NLS
+  const char *charset;
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  LocaleIsUTF8 = g_get_charset(&charset);
 #endif
   WantUTF8Errors(FALSE);
   g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);

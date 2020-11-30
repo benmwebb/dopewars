@@ -283,6 +283,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  LocaleIsUTF8 = g_get_charset(&charset);
 #endif
 
   /* Informational comment placed at the start of the Windows log file
