@@ -2337,6 +2337,10 @@ gchar *GetDocIndex(void)
   return file;
 }
 
+#ifdef CYGWIN
+extern gchar *appdata_path;
+#endif
+
 /*
  * Returns the pathname of the global (all users) configuration file,
  * as a dynamically-allocated string that must be later freed. On
@@ -2367,7 +2371,8 @@ gchar *GetGlobalConfigFile(void)
 gchar *GetLocalConfigFile(void)
 {
 #ifdef CYGWIN
-  return g_strdup("dopewars-config.txt");
+  return g_strdup_printf("%s/dopewars-config.txt",
+                         appdata_path ? appdata_path : ".");
 #else
   gchar *home, *conf = NULL;
 
@@ -2771,7 +2776,12 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
 {
   /* First, open the hard-coded high score file with possibly
    * elevated privileges */
+#ifdef CYGWIN
+  priv_hiscore = g_strdup_printf("%s/dopewars.sco",
+                                 appdata_path ? appdata_path : DPSCOREDIR);
+#else
   priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPSCOREDIR);
+#endif
   HiScoreFile = g_strdup(priv_hiscore);
   OpenHighScoreFile();
   DropPrivileges();

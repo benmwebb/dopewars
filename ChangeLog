@@ -16,6 +16,10 @@ SVN
       https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment)
     - The default web browser on Linux has changed from 'mozilla' to
       'firefox'; on Mac the system-configured default browser is used.
+    - On Windows the high score file and config file are now stored in the
+      user application data directory (e.g.
+      C:\Users\foo\AppData\Local\dopewars) rather than the same directory as
+      the dopewars binary.
     - Add sound support on Mac.
     - Add 64-bit Windows binaries.
     - Fix for a DOS against the server using the REQUESTJET message type

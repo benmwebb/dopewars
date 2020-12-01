@@ -26,9 +26,11 @@
 
 #ifdef CYGWIN
 
+#include <direct.h>
 #include <winsock2.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <shlobj.h>
 #include <glib.h>
 #include <stdlib.h>
 
@@ -104,9 +106,25 @@ static void WindowPrintEnd()
 
 static FILE *LogFile = NULL;
 
+gchar *appdata_path = NULL;
+
+static void GetAppDataPath()
+{
+  char shfolder[MAX_PATH];
+
+  if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA,
+                                 NULL, 0, shfolder))) {
+    appdata_path = g_strdup_printf("%s/dopewars", shfolder);
+    mkdir(appdata_path);
+  }
+}
+
 static void LogFileStart()
 {
-  LogFile = fopen("dopewars-log.txt", "w");
+  char *logfile = g_strdup_printf("%s/dopewars-log.txt",
+                                  appdata_path ? appdata_path : ".");
+  LogFile = fopen(logfile, "w");
+  g_free(logfile);
 }
 
 static void LogFilePrintFunc(const gchar *string)
@@ -265,6 +283,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     SetCurrentDirectory(modpath);
     g_free(modpath);
   }
+
+  GetAppDataPath();
 
   LogFileStart();
   g_set_print_handler(LogFilePrintFunc);
