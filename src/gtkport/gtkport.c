@@ -1360,7 +1360,7 @@ void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
 
 void gtk_widget_hide(GtkWidget *widget)
 {
-  gtk_widget_hide_full(widget, TRUE);
+  gtk_widget_hide_all_full(widget, FALSE);
 }
 
 void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse)
