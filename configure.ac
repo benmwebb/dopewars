@@ -441,7 +441,7 @@ sounds/Makefile
 sounds/19.5degs/Makefile
 doc/Makefile
 doc/help/Makefile
-dopewars.spec
+rpm/dopewars.spec
 doc/dopewars.6
 win32/install.nsi
 po/Makefile.in],
