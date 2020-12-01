@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT([dopewars], [SVN])
 AC_CONFIG_SRCDIR([src/dopewars.c])
+AC_CONFIG_AUX_DIR(auxbuild)
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -11,7 +12,7 @@ dnl Initialise automake
 AM_INIT_AUTOMAKE
 
 dnl Write configuration defines into config.h
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER([src/config.h])
 
 dnl We need this for the Darwin test, plus gettext uses it anyway
 AC_CANONICAL_HOST
