@@ -454,6 +454,26 @@ static GtkWidget *create_metaserver_view(GtkWidget **pack_widg)
 }
 #endif
 
+static void set_initial_player_name(GtkEntry *entry, Player *play)
+{
+  char *name = GetPlayerName(play);
+  if (*name) {
+    gtk_entry_set_text(entry, name);
+  } else {
+    /* If name is blank, use the first word from the user's full login name */
+    char *firstspace;
+    name = g_strdup(g_get_real_name());
+    g_strstrip(name);
+    firstspace = strchr(name, ' ');
+    if (firstspace) {
+      *firstspace = '\0';
+    }
+    /* "Unknown" is returned from g_get_real_name() on error */
+    gtk_entry_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
+    g_free(name);
+  }
+}
+
 #ifdef NETWORKING
 void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn)
 #else
@@ -520,7 +540,7 @@ void NewGameDialog(Player *play)
 #else
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
 #endif
-  gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(stgam.play));
+  set_initial_player_name(GTK_ENTRY(entry), stgam.play);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
