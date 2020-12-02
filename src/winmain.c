@@ -30,7 +30,6 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <commctrl.h>
-#include <shlobj.h>
 #include <glib.h>
 #include <stdlib.h>
 
@@ -110,13 +109,8 @@ gchar *appdata_path = NULL;
 
 static void GetAppDataPath()
 {
-  char shfolder[MAX_PATH];
-
-  if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_LOCAL_APPDATA,
-                                 NULL, 0, shfolder))) {
-    appdata_path = g_strdup_printf("%s/dopewars", shfolder);
-    mkdir(appdata_path);
-  }
+  appdata_path = g_strdup_printf("%s/dopewars", g_get_user_config_dir());
+  mkdir(appdata_path);
 }
 
 static void LogFileStart()
