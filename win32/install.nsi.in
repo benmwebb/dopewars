@@ -13,7 +13,7 @@ Var MUI_TEMP
 
 !define PRODUCT "dopewars"
 !define VERSION "@PACKAGE_VERSION@"
-!define PRODVER "${PRODUCT}${VERSION}"
+!define PRODVER "${PRODUCT}-${VERSION}"
 
 !define MUI_ICON "setup.ico"
 !define MUI_UNICON "setup.ico"
