@@ -481,7 +481,7 @@ void NewGameDialog(Player *play)
 #endif
 {
   GtkWidget *vbox, *vbox2, *hbox, *label, *entry, *notebook;
-  GtkWidget *frame, *button, *dialog;
+  GtkWidget *button, *dialog;
   GtkAccelGroup *accel_group;
 #if GTK_MAJOR_VERSION == 2
   guint AccelKey;
@@ -548,10 +548,8 @@ void NewGameDialog(Player *play)
   notebook = stgam.notebook = gtk_notebook_new();
 
 #ifdef NETWORKING
-  frame = gtk_frame_new(_("Server"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
   table = gtk_table_new(2, 2, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 4);
   gtk_table_set_col_spacings(GTK_TABLE(table), 4);
@@ -593,19 +591,15 @@ void NewGameDialog(Player *play)
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
   gtk_widget_set_can_default(button, TRUE);
   defbutton = button;
   
   label = gtk_label_new(_("Server"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 #endif /* NETWORKING */
 
-  /* Title of 'New Game' dialog notebook tab for single-player mode */
-  frame = gtk_frame_new(_("Single player"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
   stgam.antique = gtk_check_button_new_with_label("");
 
   /* Checkbox to activate 'antique mode' in single-player games */
@@ -623,17 +617,13 @@ void NewGameDialog(Player *play)
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(StartSinglePlayer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
+  /* Title of 'New Game' dialog notebook tab for single-player mode */
   label = gtk_label_new(_("Single player"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 
 #ifdef NETWORKING
-  /* Title of Metaserver frame in New Game dialog */
-  frame = gtk_frame_new(_("Metaserver"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
 
   clist = stgam.metaserv = create_metaserver_view(&scrollwin);
   gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(clist), FALSE);
@@ -661,10 +651,10 @@ void NewGameDialog(Player *play)
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
 
+  /* Title of Metaserver notebook tab in New Game dialog */
   label = gtk_label_new(_("Metaserver"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 #endif /* NETWORKING */
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
