@@ -4,20 +4,20 @@ SVN
     - Updated German and French Canadian translations from Benjamin Karaca
       and Francois Marier.
     - Support for old GTK1 and GLIB1 libraries removed - we now need version 2
-      of these libraries to build dopewars.
+      of these libraries to build dopewars. GTK+3 is also supported.
     - Update metaserver to work with new SourceForge; older versions can no
       longer successfully register with the metaserver.
     - Switch to using libcurl to talk to the metaserver (this supports https,
       unlike the old internal code). The metaserver configuration has changed
       accordingly; MetaServer.Name, MetaServer.Port and MetaServer.Path are
-      replaced with MetaServer.URL, and MetaServer.Auth, MetaServer.Proxy*,
+      replaced with MetaServer.URL, while MetaServer.Auth, MetaServer.Proxy*,
       and MetaServer.UseSocks are removed (set the https_proxy environment
       variable instead, as per
       https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment)
     - The default web browser on Linux has changed from 'mozilla' to
       'firefox'; on Mac the system-configured default browser is used.
-    - On Windows the high score file and config file are now stored in the
-      user application data directory (e.g.
+    - On Windows the high score file, log file, and config file are now
+      stored in the user application data directory (e.g.
       C:\Users\foo\AppData\Local\dopewars) rather than the same directory as
       the dopewars binary.
     - Add sound support on Mac.
