@@ -1,7 +1,5 @@
 ## Building dopewars on Windows
 
-(This is experimental.)
-
 dopewars is built for Windows via cross-compilation on Linux using the
 MinGW tools. See the `mingw` subdirectory for a suitable `Dockerfile` to set up
 a [Docker](https://www.docker.com/) or [Podman](https://podman.io/)
@@ -22,10 +20,6 @@ the same directory as `dopewars.exe`.
 
 ## Windows installer
 
-This directory contains the code for a simple Windows install/uninstall
-package. The `makeinstall` program takes a list of files (in `filelist`) to
-install, and produces a compressed copy of these files, which are placed
-into the resources of the `setup` program. This program installs the listed
-files to a target machine, and sets up the necessary registry keys for the
-`uninstall` program to then be able to remove those files again. The only
-file that should need to be distributed, therefore, is `setup.exe`.
+The top-level `configure` script will also generate `install.nsi` in this
+directory. This can be used as input to
+[NSIS](https://nsis.sourceforge.io/) to build a Windows installer.
