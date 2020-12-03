@@ -1159,7 +1159,7 @@ msgid ""
 msgstr ""
 "Verwende: dopewars [OPTION]...\n"
 "Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
-"  -b       \"schwarz und wei?\" - benutze keine Farben\n"
+"  -b       \"schwarz und weiß\" - benutze keine Farben\n"
 "  -n       verbinde zu keinem verf?gbaren dopewars server\n"
 "              (z.B. Einzelspieler-Modus)\n"
 "  -a       \"antik\" dopewars - emuliere original version \n"
@@ -1182,7 +1182,7 @@ msgstr ""
 "  -v       Zeige Version und beende\n"
 "\n"
 "dopewars steht unter dem Copyright (C) von Ben Webb 1998-2020 und ist "
-"ver?ffentlicht unter der GNU GPL\n"
+"veröffentlicht unter der GNU GPL\n"
 "Melde Programmierfehler dem Autor Ben Webb, benwebb@users.sf.net\n"
 "Melde ?bersetzungsfehler an Benjamin Karaca, mister-freeze@web.de\n"
 
@@ -1311,7 +1311,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:272
 msgid "English Translation           Ben Webb"
-msgstr "Deutsche ?bersetzung         Benjamin Karaca"
+msgstr "Deutsche Übersetzung         Benjamin Karaca"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:280
@@ -2316,20 +2316,20 @@ msgstr ""
 #. * dialog
 #: src/gui_client/gtk_client.c:1539
 msgid "at %P"
-msgstr "f?r %P"
+msgstr "für %P"
 
 #. Display of current inventory of the selected drug in 'Deal Drugs'
 #. * dialog (%tde="Opium" etc. by default)
 #: src/gui_client/gtk_client.c:1546
 #, c-format
 msgid "You are currently carrying %d %tde"
-msgstr "Zur Zeit tr?gst Du %d %tde"
+msgstr "Zur Zeit trägst Du %d %tde"
 
 #. Available space for drugs in 'Deal Drugs' dialog
 #: src/gui_client/gtk_client.c:1553
 #, c-format
 msgid "Available space: %d"
-msgstr "Verf?gbarer Platz: %d"
+msgstr "Verfügbarer Platz: %d"
 
 #. Number of the selected drug that you can afford in 'Deal Drugs'
 #. * dialog
@@ -2480,7 +2480,7 @@ msgstr "Unkonstruktive Kritik"
 #. Title of GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2411
 msgid "About dopewars"
-msgstr "?ber Dopewars"
+msgstr "Über Dopewars"
 
 #. Main content of GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2422
@@ -2512,7 +2512,7 @@ msgid ""
 "dopewars is released under the GNU General Public Licence\n"
 msgstr ""
 "Version %s     Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net\n"
-"Dopewars wurde unter der GNU General Public Licence ver?ffentlicht.\n"
+"Dopewars wurde unter der GNU General Public Licence veröffentlicht.\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2465
@@ -2523,7 +2523,7 @@ msgid ""
 "options.\n"
 msgstr ""
 "\n"
-"F?r Informationen ?ber Kommandozeilen-Parameter, gib 'dopewars -h' in deiner \n"
+"Für Informationen über Kommandozeilen-Parameter, gib 'dopewars -h' in deiner \n"
 "UNIX-shell ein. Alle verfügbaren Kommandos werden dann angezeigt.\n"
 
 #: src/gui_client/gtk_client.c:2472
@@ -2542,7 +2542,7 @@ msgstr "%/BankName Fenstertitel/%Tde"
 
 #: src/gui_client/gtk_client.c:2544
 msgid "You must enter a positive amount of money!"
-msgstr "Sie m?ßen einen positiven Geldbetrag eingeben!"
+msgstr "Sie müßen einen positiven Geldbetrag eingeben!"
 
 #: src/gui_client/gtk_client.c:2547
 msgid "There isn't that much money available..."
@@ -2566,7 +2566,7 @@ msgstr "Konto: %P"
 #. Prompt for paying back a loan
 #: src/gui_client/gtk_client.c:2617
 msgid "Pay back:"
-msgstr "Zur?ckzahlen:"
+msgstr "Zurückzahlen:"
 
 #. Radio button selected if you want to pay money into the bank
 #: src/gui_client/gtk_client.c:2621
@@ -2624,7 +2624,7 @@ msgid ""
 "\"Get spy reports\" menu. Remember that the %tde will leave\n"
 "you, so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
-"Bitte w?hle einen Spieler aus den Du ausspionieren m?chtest.\n"
+"Bitte wähle einen Spieler aus den Du ausspionieren m?chtest.\n"
 "Deine %tde wird dann dem anderen Spieler ihre Dienste anbieten,\n"
 "und wenn sie erfolgreich ist, kannst du Dir die Statistik deines\n"
 "Kontrahenten im \"Spion Report\" Menu anschauen\n"
@@ -2645,9 +2645,9 @@ msgid ""
 "on the encounter. Remember that the %tde will leave you temporarily,\n"
 "so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
-"Bitte w?hle einen Spieler den Du an die Bullen verpfeiffen m?chtest.\n"
+"Bitte wähle einen Spieler den Du an die Bullen verpfeiffen m?chtest.\n"
 "Deine %tde wird der Polizei helfen Deinen Kontrahenten zu finden,\n"
-"aber keine Angst sie wird nach getaner Arbeit zur?ckkehren."
+"aber keine Angst sie wird nach getaner Arbeit zurückkehren."
 
 #. Title of dialog to sack a bitch (%Tde = "Bitch" by default)
 #: src/gui_client/gtk_client.c:3008
@@ -2707,14 +2707,14 @@ msgstr "%Tde dabei"
 #. Title of dialog for changing a player's name
 #: src/gui_client/gtk_client.c:3161
 msgid "Change Name"
-msgstr "?ndere Name"
+msgstr "Ändere Name"
 
 #. Informational text to prompt the player to change his/her name
 #: src/gui_client/gtk_client.c:3174
 msgid ""
 "Unfortunately, somebody else is already using \"your\" name. Please change "
 "it:-"
-msgstr "Leider benutzt schon jemand anders \"deinen\" Namen, ?ndere Ihn bitte."
+msgstr "Leider benutzt schon jemand anders \"deinen\" Namen, ändere Ihn bitte."
 
 #. Title of 'gun shop' dialog in GTK+ client (%Tde="Dan's House of Guns"
 #. * by default)
@@ -2734,7 +2734,7 @@ msgstr "Neu %s"
 
 #: src/gui_client/optdialog.c:560
 msgid "Select sound file"
-msgstr "Sound-Datei ausw?hlen"
+msgstr "Sound-Datei auswählen"
 
 #: src/gui_client/optdialog.c:674
 msgid "New"
@@ -2742,7 +2742,7 @@ msgstr "Neu"
 
 #: src/gui_client/optdialog.c:680
 msgid "Delete"
-msgstr "L?schen"
+msgstr "Löschen"
 
 #: src/gui_client/optdialog.c:690
 msgid "Up"
@@ -2754,7 +2754,7 @@ msgstr "Runter"
 
 #: src/gui_client/optdialog.c:753
 msgid "Police presence"
-msgstr "Polizeipr?senz"
+msgstr "Polizeipräsenz"
 
 #: src/gui_client/optdialog.c:754
 msgid "Minimum no. of drugs"
@@ -2778,7 +2778,7 @@ msgstr "Kann ?u?erst billig sein"
 
 #: src/gui_client/optdialog.c:762
 msgid "Cheap string"
-msgstr "Nachricht f?r g?nstigen Preis"
+msgstr "Nachricht für g?nstigen Preis"
 
 #: src/gui_client/optdialog.c:763
 msgid "Can be specially expensive"
@@ -2794,11 +2794,11 @@ msgstr "Schaden"
 
 #: src/gui_client/optdialog.c:773
 msgid "Name of one deputy"
-msgstr "Name f?r einen Hilfssheriffs"
+msgstr "Name für einen Hilfssheriffs"
 
 #: src/gui_client/optdialog.c:774
 msgid "Name of several deputies"
-msgstr "Name f?r mehrere Hilfssheriffs"
+msgstr "Name für mehrere Hilfssheriffs"
 
 #: src/gui_client/optdialog.c:775
 msgid "Minimum no. of deputies"
@@ -2810,11 +2810,11 @@ msgstr "Maximale Anzahl an Hilfssheriffs"
 
 #: src/gui_client/optdialog.c:777
 msgid "Cop armour"
-msgstr "R?stung des Polizisten"
+msgstr "Rüstung des Polizisten"
 
 #: src/gui_client/optdialog.c:778
 msgid "Deputy armour"
-msgstr "R?stung des Hilfssheriffs"
+msgstr "Rüstung des Hilfssheriffs"
 
 #: src/gui_client/optdialog.c:786
 msgid "Options"
@@ -2830,7 +2830,7 @@ msgstr "Unicode Konfigurationsdatei"
 
 #: src/gui_client/optdialog.c:812
 msgid "Game length (turns)"
-msgstr "Spiell?nge (Runden)"
+msgstr "Spiellänge (Runden)"
 
 #: src/gui_client/optdialog.c:818
 msgid "Starting cash"
@@ -2842,19 +2842,19 @@ msgstr "Startschulden"
 
 #: src/gui_client/optdialog.c:830
 msgid "Currency symbol"
-msgstr "W?hrungssymbol"
+msgstr "Währungssymbol"
 
 #: src/gui_client/optdialog.c:835
 msgid "Symbol prefixes prices"
-msgstr "W?hrungssymbol dem Preis voranstellen"
+msgstr "Währungssymbol dem Preis voranstellen"
 
 #: src/gui_client/optdialog.c:838
 msgid "Name of one bitch"
-msgstr "Name f?r eine Hure"
+msgstr "Name für eine Hure"
 
 #: src/gui_client/optdialog.c:844
 msgid "Name of several bitches"
-msgstr "Name f?r mehrere Huren"
+msgstr "Name für mehrere Huren"
 
 #: src/gui_client/optdialog.c:851
 msgid "Web browser"
@@ -2870,11 +2870,11 @@ msgstr "Orte"
 
 #: src/gui_client/optdialog.c:880
 msgid "Expensive string 1"
-msgstr "Nachricht f?r teuren Preis 1"
+msgstr "Nachricht für teuren Preis 1"
 
 #: src/gui_client/optdialog.c:886
 msgid "Expensive string 2"
-msgstr "Nachricht f?r teuren Preis 2"
+msgstr "Nachricht für teuren Preis 2"
 
 #: src/gui_client/optdialog.c:893
 msgid "Drugs"
@@ -2919,7 +2919,7 @@ msgstr "Kommentar"
 
 #: src/gui_client/optdialog.c:955
 msgid "MOTD (welcome message)"
-msgstr "Begr??ungsnachricht"
+msgstr "Begrüßungsnachricht"
 
 #. Column titles of metaserver information
 #: src/gui_client/optdialog.c:962 src/gui_client/newgamedia.c:462
@@ -3031,7 +3031,7 @@ msgstr "Spieler"
 #. * Game' dialog
 #: src/gui_client/newgamedia.c:500
 msgid "Hey dude, what's your _name?"
-msgstr "Hey Kleiner, wie hei?t Du? "
+msgstr "Hey Kleiner, wie heißt Du? "
 
 #. Prompt for hostname to connect to in GTK+ new game dialog
 #: src/gui_client/newgamedia.c:523
@@ -3067,16 +3067,16 @@ msgstr "MetaServer"
 #. * proxy server
 #: src/gui_client/newgamedia.c:717
 msgid "Proxy Authentication Required"
-msgstr "Proxy Authentifizierung ben?tigt"
+msgstr "Proxy Authentifizierung benötigt"
 
 #. Title of dialog for authenticating with a web server
 #: src/gui_client/newgamedia.c:720
 msgid "Authentication Required"
-msgstr "Authentifizierung ben?tigt"
+msgstr "Authentifizierung benötigt"
 
 #: src/gui_client/newgamedia.c:836
 msgid "SOCKS Authentication Required"
-msgstr "SOCKS Authentifizierung ben?tigt"
+msgstr "SOCKS Authentifizierung benötigt"
 
 #: src/gtkport/gtkport.c:46
 msgid "_OK"
@@ -3084,7 +3084,7 @@ msgstr "_OK"
 
 #: src/gtkport/gtkport.c:47
 msgid "_Close"
-msgstr "_Schlie?en"
+msgstr "_Schließen"
 
 #: src/gtkport/gtkport.c:48
 msgid "_Cancel"
@@ -3250,7 +3250,7 @@ msgid ""
 "Sorry, but this server has a limit of 1 player, which has been reached."
 "^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier d?rfen max. %d %s spielen.^Bitte versuchs sp?ter nochmal."
+"Sorry, aber hier d?rfen max. %d %s spielen.^Bitte versuchs später nochmal."
 
 #. Message sent to a player if the
 #. * server is full
@@ -3260,7 +3260,7 @@ msgid ""
 "Sorry, but this server has a limit of %d players, which has been reached."
 "^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier d?rfen max. %d spielen.^Bitte versuchs sp?ter nochmal."
+"Sorry, aber hier d?rfen max. %d spielen.^Bitte versuchs später nochmal."
 
 #. A player changed their name during the game (unusual, and not
 #. * really properly supported anyway) - notify all players of the
@@ -3377,7 +3377,7 @@ msgstr "Du bist ganz allein auf der Welt!\n"
 #: src/serverside.c:1023
 #, c-format
 msgid "Pushing %s\n"
-msgstr "Dr?cke %s\n"
+msgstr "Drücke %s\n"
 
 #: src/serverside.c:1026 src/serverside.c:1037
 msgid "No such user!\n"
@@ -3388,11 +3388,11 @@ msgstr "Kein solcher Benutzer!\n"
 #: src/serverside.c:1032
 #, c-format
 msgid "%s killed\n"
-msgstr "%s get?tet\n"
+msgstr "%s getötet\n"
 
 #: src/serverside.c:1039
 msgid "Unknown command - try \"help\" for help...\n"
-msgstr "Unbekanntes Kommando - versuch mal \"help\" f?r Hilfe...\n"
+msgstr "Unbekanntes Kommando - versuch mal \"help\" für Hilfe...\n"
 
 #: src/serverside.c:1058
 #, c-format
@@ -3700,7 +3700,7 @@ msgstr "YN^Hey Kumpel! Ich trage dir %tde für %P. Wie wär's? Ja oder Nein?"
 
 #: src/serverside.c:3212
 msgid "YN^Would you like to buy a %tde for %P?"
-msgstr "YN^Willst Du eine %tde f?r %P kaufen?"
+msgstr "YN^Willst Du eine %tde für %P kaufen?"
 
 #: src/serverside.c:3355 src/serverside.c:3465
 #, c-format
@@ -4277,11 +4277,11 @@ msgstr "Verkaufe %d %tde in %P\n"
 
 #: src/AIPlayer.c:495
 msgid "Buying %d %tde at %P\n"
-msgstr "Kaufe %d %tde f?r %P\n"
+msgstr "Kaufe %d %tde für %P\n"
 
 #: src/AIPlayer.c:528
 msgid "Buying a %tde for %P at the gun shop\n"
-msgstr "Kaufe eine %tde f?r %P im Waffenladen\n"
+msgstr "Kaufe eine %tde für %P im Waffenladen\n"
 
 #: src/AIPlayer.c:579
 msgid "Debt of %P paid off to loan shark\n"
