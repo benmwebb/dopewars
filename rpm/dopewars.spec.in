@@ -9,7 +9,7 @@ Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz
 Obsoletes:     dopewars-esd = 1.5.7
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires: SDL_mixer-devel, SDL-devel, esound-devel
+BuildRequires: SDL2_mixer-devel, SDL2-devel, esound-devel
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -30,7 +30,7 @@ Group:    Amusements/Games
 Requires: %{name}
 %description sdl
 This package adds a plugin to dopewars to allow sound to be output via.
-the Simple DirectMedia Layer mixer (SDL_mixer).
+the Simple DirectMedia Layer mixer (SDL2 and SDL_mixer).
 
 %prep
 %setup
@@ -84,6 +84,9 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %{_libdir}/dopewars/libsound_sdl.so
 
 %changelog
+* Wed Dec 02 2020 Ben Webb <benwebb@users.sf.net>
+- Build with SDL2 rather than SDL 1.
+
 * Mon Jul 28 2003 Ben Webb <benwebb@users.sf.net>
 - High score file moved to /var/lib/games for consistency with
   other packages
