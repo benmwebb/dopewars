@@ -215,22 +215,44 @@ else
    dnl Add SDL_mixer sound support if available
    if test "$USE_SDL" != "no"; then
      SDL_ALL=no
-     AM_PATH_SDL(1.0.0, SDL=yes)
+     SDL2=yes
+     AM_PATH_SDL2(2.0.0, SDL=yes)
+     if test "$SDL" != "yes"; then
+       SDL2=no
+       AM_PATH_SDL(1.0.0, SDL=yes)
+     fi
      if test "$SDL" = "yes"; then
        headers=no
        libs=no
-       AC_CHECK_HEADER(SDL/SDL_mixer.h, headers=yes)
-       AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+       ORIG_CPPFLAGS="$CPPFLAGS"
+       ORIG_LDFLAGS="$LDFLAGS"
+       CPPFLAGS="$ORIG_CPPFLAGS $SDL_CFLAGS"
+       LDLAGS="$ORIG_LDFLAGS $SDL_LIBS"
+       AC_CHECK_HEADER(SDL_mixer.h, headers=yes)
+       if test "$SDL2" = "yes"; then
+         AC_CHECK_LIB(SDL2_mixer, Mix_OpenAudio, libs=yes)
+       else
+         AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+       fi
+       CPPFLAGS="$ORIG_CPPFLAGS"
+       LDFLAGS="$ORIG_LDFLAGS"
        if test "$libs" = "yes"; then
          if test "$headers" = "yes"; then
            SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
-           SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+           if test "$SDL2" = "yes"; then
+             SDL_LIBS="$SDL_LIBS -lSDL2_mixer"
+           else
+             SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+           fi
            SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
            PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
            AC_SUBST(SDL_LIBS)
            AC_DEFINE(HAVE_SDL_MIXER, 1,
                      [Do we have the SDL_mixer sound library?])
            SDL_ALL=yes
+           if test "$APPLE" = "yes"; then
+             SDL_LIBS="$SDL_LIBS -module"
+	   fi
          fi
        fi
      fi
