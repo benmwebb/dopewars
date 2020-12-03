@@ -2319,7 +2319,7 @@ gchar *GetDocRoot(void)
   path = g_strdup_printf("file://%s\\", bindir);
   g_free(bindir);
 #else
-  path = g_strdup_printf("file://%s/doc/%s-%s/", DPDATADIR, PACKAGE, VERSION);
+  path = g_strdup_printf("file://%s/", DPDOCDIR);
 #endif
   return path;
 }

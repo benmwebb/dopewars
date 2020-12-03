@@ -1,4 +1,4 @@
-DOCPATH        = ${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/
+DOCPATH        = ${DESTDIR}${docdir}
 DOCS           = aiplayer.html configfile.html index.html i18n.html \
                  server.html clientplay.html credits.html example-cfg \
                  installation.html servercommands.html commandline.html \

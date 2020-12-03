@@ -413,8 +413,12 @@ AC_SUBST(DPSCOREDIR)
 
 DP_EXPAND_DIR(DPDATADIR, '${datadir}')
 AC_DEFINE_UNQUOTED(DPDATADIR, "$DPDATADIR",
-                   [The directory containing the docs and sounds])
+                   [The directory containing the sounds])
 AC_SUBST(DPDATADIR)
+
+DP_EXPAND_DIR(DPDOCDIR, '${docdir}')
+AC_DEFINE_UNQUOTED(DPDOCDIR, "$DPDOCDIR",
+                   [The directory containing the docs])
 
 localedir=${datadir}/locale
 AC_SUBST(localedir)
