@@ -8,7 +8,8 @@ License:       GPL
 Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires: SDL2_mixer-devel, SDL2-devel
+BuildRequires: SDL2_mixer-devel SDL2-devel glib2-devel gcc libcurl-devel
+BuildRequires: gtk3-devel ncurses-devel gettext-devel
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -51,7 +52,7 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 
 %files -f %{name}.lang
 %defattr(-,root,root)
-%doc ChangeLog LICENCE README doc/aiplayer.html doc/clientplay.html
+%doc ChangeLog LICENCE README.md doc/aiplayer.html doc/clientplay.html
 %doc doc/configfile.html doc/contribute.html doc/credits.html
 %doc doc/developer.html doc/example-cfg doc/i18n.html doc/index.html
 %doc doc/installation.html doc/metaserver.html doc/server.html
