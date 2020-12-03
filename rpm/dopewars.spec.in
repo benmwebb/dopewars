@@ -7,9 +7,8 @@ URL:           https://dopewars.sourceforge.io/
 License:       GPL
 Group:         Amusements/Games
 Source0:       %{name}-%{version}.tar.gz
-Obsoletes:     dopewars-esd = 1.5.7
 BuildRoot:     %{_tmppath}/%{name}-%{version}-root-%(id -u -n)
-BuildRequires: SDL2_mixer-devel, SDL2-devel, esound-devel
+BuildRequires: SDL2_mixer-devel, SDL2-devel
 
 %description
 Based on John E. Dell's old Drug Wars game, dopewars is a simulation of an    
@@ -37,7 +36,7 @@ the Simple DirectMedia Layer mixer (SDL2 and SDL_mixer).
 
 %build
 %define _localstatedir /var/lib/games
-%configure --with-sdl --with-esd
+%configure --with-sdl
 make
 
 %install
@@ -60,7 +59,6 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 %attr(2755,root,games) %{_bindir}/dopewars
 %attr(0660,root,games) %config %{_localstatedir}/dopewars.sco
 %{_mandir}/man6/dopewars.6.gz
-%{_libdir}/dopewars/libsound_esd.so
 %{_datadir}/gnome/apps/Games/dopewars.desktop
 %{_datadir}/pixmaps/dopewars-pill.png
 %{_datadir}/pixmaps/dopewars-weed.png
