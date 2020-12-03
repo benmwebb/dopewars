@@ -104,7 +104,7 @@ typedef void (*NBUserPasswd) (NetworkBuffer *NetBuf, gpointer data);
 /* Information about a SOCKS server */
 typedef struct _SocksServer {
   gchar *name;                  /* hostname */
-  unsigned port;                /* port number */
+  int port;                     /* port number */
   int version;                  /* desired protocol version (usually
                                  * 4 or 5) */
   gboolean numuid;              /* if TRUE, send numeric user IDs rather

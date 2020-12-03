@@ -171,7 +171,7 @@ extern gboolean WantAntique;
 extern struct DATE StartDate;
 extern int ClientSock, ListenSock;
 extern gboolean Network, Client, Server, UseSounds;
-extern unsigned Port;
+extern int Port;
 extern gboolean Sanitized, ConfigVerbose, DrugValue;
 extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;

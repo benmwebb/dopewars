@@ -78,7 +78,7 @@ gboolean Network, Client, Server, WantAntique = FALSE, UseSounds = TRUE;
  * dopewars in single-player or antique mode:
  *           Network=Server=Client=FALSE
  */
-unsigned Port = 7902;
+int Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue, Antique = FALSE;
 gchar *HiScoreFile = NULL, *ServerName = NULL;
 gchar *ServerMOTD = NULL, *BindAddress = NULL, *PlayerName = NULL;
