@@ -176,6 +176,11 @@ else
       gtk3_found="no"
       if test "$USE_GTK3" = "yes" ; then
         PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+        if test "$gtk3_found" = "yes" ; then
+          # We use GtkTable a lot so don't clutter the compiler output with
+          # recommendations to use GtkGrid instead
+          CPPFLAGS="$CPPFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+        fi
       fi
       if test "$gtk3_found" = "no" ; then
         AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
