@@ -5437,15 +5437,6 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   return retval;
 }
 
-static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
-{
-  GdkCursor *cursor;
-
-  cursor = gdk_cursor_new(GDK_HAND2);
-  gdk_window_set_cursor(gtk_widget_get_window(label), cursor);
-  gdk_cursor_unref(cursor);
-}
-
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 {
 #ifdef APPLE
@@ -5477,62 +5468,13 @@ void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 #endif
 }
 
-static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
-                                  gpointer data)
-{
-  gchar *bin, *target;
-
-  bin = (gchar *)g_object_get_data(G_OBJECT(widget), "bin");
-  target = (gchar *)g_object_get_data(G_OBJECT(widget), "target");
-  DisplayHTML(widget, bin, target);
-  return TRUE;
-}
-
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin)
 {
-  GtkWidget *label, *eventbox;
-  gchar *pattern;
-  GtkStyle *style;
-  GdkColor color;
-
-  color.red = 0;
-  color.green = 0;
-  color.blue = 0xDDDD;
-
-  label = gtk_label_new(text);
-
-  /* Set the text colour */
-  style = gtk_rc_get_style(label);
-  if (!style) {
-    style = gtk_widget_get_style(label);
-  }
-  style = gtk_style_copy(style);
-  style->fg[GTK_STATE_NORMAL] = color;
-  gtk_widget_set_style(label, style);
-  g_object_unref(G_OBJECT(style));
-
-  /* Make the text underlined */
-  pattern = g_strnfill(strlen(text), '_');
-  gtk_label_set_pattern(GTK_LABEL(label), pattern);
-  g_free(pattern);
-
-  /* We cannot set the cursor until the widget is realized, so set up a
-   * handler to do this later */
-  g_signal_connect(G_OBJECT(label), "realize",
-                   G_CALLBACK(gtk_url_set_cursor), label);
-
-  eventbox = gtk_event_box_new();
-  g_object_set_data_full(G_OBJECT(eventbox), "target",
-                           g_strdup(target), g_free);
-  g_object_set_data_full(G_OBJECT(eventbox), "bin",
-                           g_strdup(bin), g_free);
-  g_signal_connect(G_OBJECT(eventbox), "button-release-event",
-                   G_CALLBACK(gtk_url_triggered), NULL);
-
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-
-  return eventbox;
+  GtkWidget *button;
+  button = gtk_link_button_new(text);
+  gtk_link_button_set_uri(GTK_LINK_BUTTON(button), target);
+  return button;
 }
 
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
