@@ -9,7 +9,8 @@ AC_CANONICAL_TARGET
 AC_USE_SYSTEM_EXTENSIONS
 
 dnl Initialise automake
-AM_INIT_AUTOMAKE
+dnl 'foreign' because we have README.md instead of README
+AM_INIT_AUTOMAKE([foreign])
 
 dnl Write configuration defines into config.h
 AM_CONFIG_HEADER([src/config.h])

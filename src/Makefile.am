@@ -29,7 +29,7 @@ dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    dopewars.c dopewars.h error.c error.h log.c log.h \
                    message.c message.h network.c network.h nls.h \
                    serverside.c serverside.h sound.c sound.h \
-                   tstring.c tstring.h winmain.c winmain.h
+                   tstring.c tstring.h winmain.c winmain.h mac_helpers.h
 AM_CPPFLAGS= -I${srcdir} @GLIB_CFLAGS@ @GTK_CFLAGS@ @LIBCURL_CPPFLAGS@
 if APPLE
 dopewars_SOURCES += mac_helpers.m
