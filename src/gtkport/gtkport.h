@@ -444,8 +444,6 @@ void gtk_menu_insert(GtkMenu *menu, GtkWidget *child, gint position);
 void gtk_menu_append(GtkMenu *menu, GtkWidget *child);
 void gtk_menu_prepend(GtkMenu *menu, GtkWidget *child);
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label);
-void gtk_menu_item_set_right_justified(GtkMenuItem *menu_item,
-                                       gboolean right_justified);
 #define gtk_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
 #define gtk_check_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
 GtkMenu *gtk_menu_item_get_submenu(GtkMenuItem *menu_item);

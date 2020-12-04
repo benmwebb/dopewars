@@ -3706,12 +3706,6 @@ GtkWidget *gtk_menu_item_new_with_label(const gchar *label)
   return GTK_WIDGET(menu_item);
 }
 
-void gtk_menu_item_set_right_justified(GtkMenuItem *menu_item,
-                                       gboolean right_justified)
-{
-  /* noop */
-}
-
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu)
 {
   menu_item->submenu = GTK_MENU(submenu);

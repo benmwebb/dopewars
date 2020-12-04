@@ -179,7 +179,7 @@ static DPGtkItemFactoryEntry menu_items[] = {
    * start of each game, below, so is not marked for gettext here */
   {"/Errands/S_ack Bitch...", NULL, SackBitch, 0, NULL},
   {N_("/Errands/_Get spy reports..."), NULL, GetSpyReports, 0, NULL},
-  {N_("/_Help"), NULL, NULL, 0, "<LastBranch>"},
+  {N_("/_Help"), NULL, NULL, 0, "<Branch>"},
   {N_("/Help/_About..."), "F1", display_intro, 0, NULL}
 };
 

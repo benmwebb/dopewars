@@ -213,9 +213,6 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), TRUE);
   } else {
     menu_item = gtk_menu_item_new_with_mnemonic(menu_title->str);
-    if (entry->item_type && strcmp(entry->item_type, "<LastBranch>") == 0) {
-      gtk_menu_item_set_right_justified(GTK_MENU_ITEM(menu_item), TRUE);
-    }
   }
   new_child->widget = menu_item;
   if (entry->callback) {
