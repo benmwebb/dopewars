@@ -766,11 +766,6 @@ static gboolean StartServer(void)
   Scanner->msg_handler = ScannerErrorHandler;
   Scanner->input_name = "(stdin)";
 
-  CurlInit(&MetaConn);
-#ifdef GUI_SERVER
-  SetCurlCallback(&MetaConn, glib_timeout, glib_socket);
-#endif
-
   /* Make the output line-buffered, so that the log file (if used) is
    * updated regularly */
   fflush(stdout);
@@ -858,9 +853,16 @@ static gboolean StartServer(void)
     g_warning(_("Cannot install pipe handler!"));
   }
 #endif
-
-  RegisterWithMetaServer(TRUE, TRUE, FALSE);
   return TRUE;
+}
+
+static void InitMetaServer()
+{
+  CurlInit(&MetaConn);
+#ifdef GUI_SERVER
+  SetCurlCallback(&MetaConn, glib_timeout, glib_socket);
+#endif
+  RegisterWithMetaServer(TRUE, TRUE, FALSE);
 }
 
 /* 
@@ -1193,6 +1195,7 @@ void ServerLoop(struct CMDLINE *cmdline)
     return;
 #endif
   CreatePidFile();
+  InitMetaServer();
 
 #ifndef CYGWIN
   localsock = SetupLocalSocket();
