@@ -640,7 +640,7 @@ static gchar *GetHelpPage(const gchar *pagename)
   gchar *root, *file;
 
   root = GetDocRoot();
-  file = g_strdup_printf("%shelp%c%s.html", root, G_DIR_SEPARATOR, pagename);
+  file = g_strdup_printf("%shelp/%s.html", root, pagename);
   g_free(root);
   return file;
 }

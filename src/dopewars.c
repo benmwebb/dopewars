@@ -2316,7 +2316,7 @@ gchar *GetDocRoot(void)
   gchar *bindir;
 
   bindir = GetBinaryDir();
-  path = g_strdup_printf("file://%s\\", bindir);
+  path = g_strdup_printf("file://%s/doc/", bindir);
   g_free(bindir);
 #else
   path = g_strdup_printf("file://%s/", DPDOCDIR);

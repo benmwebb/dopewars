@@ -72,8 +72,6 @@ Section ""
   SetOutPath "$INSTDIR"
   File "..\LICENCE"
 
-  File "..\doc\*.html"
-
   File "..\src\dopewars.exe"
   File "/etc/pki/tls/certs/ca-bundle.crt"
 
@@ -105,6 +103,12 @@ Section ""
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll"
   File "/usr/i686-w64-mingw32/sys-root/mingw/bin/zlib1.dll"
 !endif
+
+  SetOutPath "$INSTDIR\doc"
+  File "..\doc\*.html"
+
+  SetOutPath "$INSTDIR\doc\help"
+  File "..\doc\help\*.html"
 
   SetOutPath "$INSTDIR\locale\de\LC_MESSAGES"
   File /oname=dopewars.mo "..\po\de.gmo"
@@ -150,7 +154,7 @@ Section ""
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\text-mode dopewars.lnk" "$INSTDIR\dopewars.exe -t"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars AI player.lnk" "$INSTDIR\dopewars.exe -c"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars command line options.lnk" "$INSTDIR\dopewars.exe -h"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars help.lnk" "$INSTDIR\index.html"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars help.lnk" "$INSTDIR\doc\index.html"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
 SectionEnd
