@@ -1703,6 +1703,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
   if (!StartServer())
     return;
+  InitMetaServer();
 
 #ifdef CYGIN
   listench = g_io_channel_win32_new_socket(ListenSock);
