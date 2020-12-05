@@ -12,26 +12,17 @@
 <body>
 <h1>dopewars and Microsoft Windows</h1>
 
-<p>dopewars now runs natively on Win32 systems (95, 98, NT, 2000). It runs by
-default as a dopewars client, using the familiar Windows interface. However,
-if you prefer the "original look" text mode interface, this is still
-available; just right click on a shortcut to dopewars, and add <tt>-t</tt> to
-the end of the command line. To run a dopewars server, add <tt>-s</tt>
-instead.</p>
+<p>dopewars runs natively on Win32 systems (XP or later). It runs by
+default as a dopewars client, using the familiar Windows interface, but
+the traditional text-mode client is also available on Windows, as well as
+the dopewars server and AI players.
+</p>
 
 <p>Binaries can be obtained from the main
 <a href="https://dopewars.sourceforge.io/download.html">download site</a>, or
-dopewars will compile with the free
-<a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> tools under Win32.
-dopewars uses the <a href="http://www.gtk.org/">GLib</a> library, which can
-be obtained for Windows from <a href="http://www.gimp.org/~tml/gimp/win32/">
-http://www.gimp.org/~tml/gimp/win32/</a>. The installation procedure is the
-same as <a href="installation.html">that for Unix systems</a> - download the
-tarball, extract the files, change into the created directory, run the
-<tt><b>configure</b></tt> script, and then <b>make</b>. This builds a native
-Win32 binary, which does not need the Cygwin libraries to run. See the
-INSTALL file in the source code distribution (.tar.gz file) for further
-details.</p>
+dopewars can be
+<a href="https://github.com/benmwebb/dopewars/blob/develop/win32/README.md">built
+from source code</a>.</p>
 
 <p>In virtually all respects, the Unix and Win32 versions of dopewars should be
 identical. Both will accept the same command line parameters and configuration
@@ -44,12 +35,23 @@ configuration file <b>dopewars-config.txt</b> from the directory in which the
 dopewars binary was installed, followed by a per-user configuration file of
 the same name in the AppData directory.</p>
 
+<p>The dopewars server can function as a
+<a href="https://docs.microsoft.com/en-us/dotnet/framework/windows-services/introduction-to-windows-service-applications">Windows service</a> when run with
+the <tt>-N</tt> flag. One way to set this up is to use the
+<a href="https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/sc-create">sc create</a> utility from a command prompt, e.g.</p>
+
+<p><tt>sc create dopewars binpath= "C:\Program Files\dopewars-1.5.12\dopewars.exe -N"</tt></p>
+
+<p>Note that this will run dopewars as the Local System user, so will look for
+high score/config files (and create a log file) in the corresponding AppData
+directory, e.g. <tt>C:\Windows\System32\config\systemprofile\AppData\Local</tt>.</p>
+
 <hr />
 <ul>
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>30-11-2020</b><br />
+  Last update: <b>05-12-2020</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>
