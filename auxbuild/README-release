@@ -1,5 +1,6 @@
 New version checklist:
 
+- cd po; rm dopewars.pot; make dopewars.pot
 - Update po/*.po
 - Add version number, date to ChangeLog
 - Change stable version number in NEWS README.md doc/installation.html doc/index.html doc/windows.html
