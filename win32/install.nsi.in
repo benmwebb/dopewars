@@ -15,9 +15,6 @@ Var MUI_TEMP
 !define VERSION "@PACKAGE_VERSION@"
 !define PRODVER "${PRODUCT}-${VERSION}"
 
-!define MUI_ICON "setup.ico"
-!define MUI_UNICON "setup.ico"
-
 !if "@host@" == "i686-w64-mingw32"
   ; 32-bit build; no special setup
 !else if "@host@" == "x86_64-w64-mingw32"
