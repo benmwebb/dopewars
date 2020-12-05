@@ -11,7 +11,7 @@ dopewars 1.5.12 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
 recommended that both clients and servers are upgraded to 1.5.12!
 
-INSTALLATION
+## Installation
 
 Either...
 
@@ -31,19 +31,18 @@ dopewars stores its high score files by default in `/usr/share/dopewars.sco`
 This will be created by make install or by RPM installation. A different high 
 score file can be selected with the `-f` switch.
 
-WIN32 INSTALLATION
+## Windows installation
 
 dopewars now compiles as a console or regular application under Win32
-(Windows 95, 98, NT, 2000, XP). Almost all functionality of the standard Unix
-binary is retained; for example, all of the same command line switches are
-supported. However, for convenience, the configuration file is the more
-Windows-friendly "dopewars-config.txt".
+(XP or later). Almost all functionality of the standard Unix binary is retained;
+for example, all of the same command line switches are supported. However, for
+convenience, the configuration file is the more Windows-friendly
+"dopewars-config.txt".
 
 The easiest way to install the Win32 version is to download the precompiled
-binary. The supplied configure script, however, should build the binary
-correctly under Cygwin (see the `INSTALL` file for details).
+binary. To build from source, see the `win32` directory.
 
-USAGE
+## Usage
 
 dopewars has built-in client-server support for multi-player games. For a
 full list of options configurable on the command line, run dopewars with
@@ -68,7 +67,7 @@ Create and run a computer dopewars player. This will attempt to connect
 to a dopewars server, and if this succeeds, it will then participate in
 multi-player dopewars games.
 
-CONFIGURATION
+## Configuration
 
 Most of the dopewars defaults (for example, the location of the high score file,
 the port and server to connect to, the names of the drugs and guns, etc.) can be
@@ -81,7 +80,7 @@ and for a brief explanation of each option, type "help" in an interactive
 server. A subset of the configuration options can also be tweaked via the
 "Options" menu item in the GTK+/Win32 client.
 
-PLAYING
+## Playing
 
 dopewars is supposed to be fairly self-explanatory. You should be able to 
 pick the basics up fairly quickly, but still be discovering subtleties for 
@@ -90,18 +89,21 @@ _ages_ ;) If you're _really_ stuck, send me an email. I might even answer it!
 Clue: buy drugs when they're cheap, sell them when they're expensive. The Bronx
 and Ghetto are "special" locations. Anything more would spoil the fun. ;)
 
-BUGS
+## Bugs
 
-Well, there are bound to be lots. Let me know if you find any, and I'll see
-if I can fix 'em... of course, a working patch would be even nicer! ;)
+Well, there are bound to be lots. Let me know if you find any by
+[opening an issue](https://github.com/benmwebb/dopewars/issues), and I'll see
+if I can fix 'em... of course, a
+[working patch](https://github.com/benmwebb/dopewars/pulls) would be even
+nicer! ;)
 
-LICENCE
+## Licence
 
 dopewars is released under the GNU General Public License; see the text file
 LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2020.
 The dopewars icons are copyright (C) Ocelot Mantis 2001.
 
-SUPPORT
+## Support
 
 dopewars is written and maintained by Ben Webb <benwebb@users.sf.net>
 Enquiries about dopewars may be sent to this address (keep them sensible 
