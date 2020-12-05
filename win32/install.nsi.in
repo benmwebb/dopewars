@@ -11,6 +11,8 @@ SetCompressor /SOLID lzma
 Var STARTMENU_FOLDER
 Var MUI_TEMP
 
+Unicode true
+
 !define PRODUCT "dopewars"
 !define VERSION "@PACKAGE_VERSION@"
 !define PRODVER "${PRODUCT}-${VERSION}"
