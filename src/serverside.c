@@ -1602,7 +1602,7 @@ static LRESULT CALLBACK GuiServerWndProc(HWND hwnd, UINT msg,
     switch (msg) {
     case MYWM_SERVICE:
       if (lparam == SERVICE_CONTROL_STOP) {
-        GuiQuitServer();
+        RequestServerShutdown();
       }
       break;
     case MYWM_TASKBAR:
