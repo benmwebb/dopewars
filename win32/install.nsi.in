@@ -150,10 +150,11 @@ Section ""
   !insertmacro MUI_STARTMENU_WRITE_BEGIN ${PRODVER}
     CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars.lnk" "$INSTDIR\dopewars.exe"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars server.lnk" "$INSTDIR\dopewars.exe -s"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\text-mode dopewars.lnk" "$INSTDIR\dopewars.exe -t"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars AI player.lnk" "$INSTDIR\dopewars.exe -c"
-    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars command line options.lnk" "$INSTDIR\dopewars.exe -h"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars public server.lnk" "$INSTDIR\dopewars.exe" "-s"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars private server.lnk" "$INSTDIR\dopewars.exe" "-S"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\text-mode dopewars.lnk" "$INSTDIR\dopewars.exe" "-t"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars AI player.lnk" "$INSTDIR\dopewars.exe" "-c"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars command line options.lnk" "$INSTDIR\dopewars.exe" "-h"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars help.lnk" "$INSTDIR\doc\index.html"
     CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -179,11 +180,13 @@ Section "Uninstall"
     StrCmp $0 "all" 0 +2
       SetShellVarContext all
     Delete "$SMPROGRAMS\$MUI_TEMP\dopewars.lnk"
-    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars server.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars public server.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars private server.lnk"
     Delete "$SMPROGRAMS\$MUI_TEMP\text-mode dopewars.lnk"
     Delete "$SMPROGRAMS\$MUI_TEMP\dopewars AI player.lnk"
     Delete "$SMPROGRAMS\$MUI_TEMP\dopewars command line options.lnk"
     Delete "$SMPROGRAMS\$MUI_TEMP\dopewars help.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\Uninstall.lnk"
     RMDir "$SMPROGRAMS\$MUI_TEMP" ;Only if empty, so it won't delete other shortcuts
     
   noshortcuts:
