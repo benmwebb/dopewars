@@ -50,17 +50,14 @@ see the <a href="#tarball">tarball installation</a> section below, and also
 see the <a href="windows.html">Windows page</a>.</p>
 
 <h2><a id="rpmbinary">RPM binary installation</a></h2>
-<p>The binary RPMs are built for Intel (also Intel compatibles, such as AMD,
-Cyrix, etc.) systems running RedHat Linux 9. On other systems, these binary
-RPMs may refuse to install, or may run but then crash with mysterious
-segmentation faults due to library conflicts.</p>
+<p>The binary RPMs are built for Intel systems running RedHat or Fedora Linux.
+On other systems, these binary RPMs may refuse to install, or may run but then
+crash with mysterious segmentation faults due to library conflicts.</p>
 
 <ol>
 <li>Download the 
 <a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.5.12-1.i386.rpm">
-i386 (Intel)</a> RPM with your web browser. (If your browser is incorrectly set
-up, it may try and display the file, in which case tell it explicitly to save
-the file - Shift+Mouse button 1 in Netscape.)</li>
+i386 (Intel)</a> RPM with your web browser.</li>
 
 <li>Become root on your Unix box (if you cannot become root, then you will
 probably not be able to use RPM installation, depending on how "rpm" is set
@@ -86,7 +83,7 @@ source code RPM</a>.</li>
 <li>Become root and change to the directory containing the new rpm.</li>
 
 <li>Build a binary rpm with the command<br />
-<tt><b>rpm --rebuild dopewars-1.5.12-1.src.rpm</b></tt></li>
+<tt><b>rpmbuild --rebuild dopewars-1.5.12-1.src.rpm</b></tt></li>
 
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
@@ -104,13 +101,11 @@ This is also usually a necessity if you cannot become root (the superuser) on
 your Unix box, or if you wish to build the Windows version from source code.</p>
 
 <p>Before beginning, you should ensure that you have all the necessary
-prequisites (see above). To compile on a Windows system, you should install
-the free <a href="http://sourceware.cygnus.com/cygwin/">Cygwin</a> suite, and
-use the included compiler. (You could use a different C/C++ Windows compiler,
-but you'll have to write your project files if you do this.) On either Windows
-or Unix systems, you will need to get the GLib library first, available for
-Unix <a href="http://www.gtk.org/download/">here</a> or for Windows
-<a href="http://www.gimp.org/win32/downloads.html">here</a>.</p>
+prequisites (see above). To compile on a Windows system, you will need
+the MinGW compiler and libraries; see the
+<a href="https://github.com/benmwebb/dopewars/tree/develop/win32">Windows-specific
+build page</a> for more information.
+</p>
 
 <ol>
 <li>Download the
@@ -124,7 +119,7 @@ with the command <br />
 
 <li>Change into the dopewars-1.5.12 directory, and read all the important
 documentation in there ;) Most notably, the INSTALL file gives more details
-on setup and installation on Windows systems.</li>
+on setup and installation.</li>
 
 <li>Build the binary with the commands<br />
 <tt><b>./configure</b><br />
@@ -133,11 +128,9 @@ on setup and installation on Windows systems.</li>
 <li>Become root and install the dopewars files with<br />
 <tt><b>make install</b></tt><br />
 <p>The configure script will test your system and set up dopewars so that it
-should compile cleanly. If you are running the Cygwin tools under Microsoft
-Windows, the script should detect this and allow you to build a native
-Windows binary; this will then run on any Win32 system, even one without Cygwin
-installed. The configure script supports a number of configurable options; for
-more details, read the INSTALL file in the dopewars-1.5.12 directory.</p>
+should compile cleanly.  The configure script supports a number of
+configurable options; for more details, read the INSTALL file in the
+dopewars-1.5.12 directory.</p>
 
 <p>If you cannot become root, run the configure script specifying directories
 for which you have write access for the dopewars files, with a command
@@ -150,7 +143,7 @@ such as<br />
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>28-07-2003</b><br />
+  Last update: <b>05-12-2020</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>
