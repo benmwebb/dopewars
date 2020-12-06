@@ -1,15 +1,15 @@
 [![Build Status](https://travis-ci.com/benmwebb/dopewars.svg?branch=develop)](https://travis-ci.com/benmwebb/dopewars)
 
-This is dopewars 1.5.12, a game simulating the life of a drug dealer in 
+This is dopewars 1.6.0, a game simulating the life of a drug dealer in
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.5.12 servers should handle clients as old as version 1.4.3 with
+dopewars 1.6.0 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.5.12!
+recommended that both clients and servers are upgraded to 1.6.0!
 
 ## Installation
 
@@ -19,10 +19,10 @@ Either...
    
 Or...
 
-1. Get the tarball `dopewars-1.5.12.tar.gz` from the same URL
-2. Extract it via `tar -xvzf dopewars-1.5.12.tar.gz`
+1. Get the tarball `dopewars-1.6.0.tar.gz` from the same URL
+2. Extract it via `tar -xvzf dopewars-1.6.0.tar.gz`
 3. Follow the instructions in the `INSTALL` file in the newly-created
-   `dopewars-1.5.12` directory
+   `dopewars-1.6.0` directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
