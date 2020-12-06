@@ -5,5 +5,8 @@ New version checklist:
 - Change stable version number in NEWS README.md doc/installation.html doc/index.html doc/windows.html
 - git checkout -b release/x.y.z
 - Change SVN to x.y.z in configure.ac and commit
-- Merge into master, git tag -s x.y.z, git push
-- make dist, upload tar.gz plus RPMs and .exes
+- Merge into master, tag, and push:
+  git checkout master; git merge --no-ff -m 'Merge for x.y.z release' origin/release/x.y.z; git tag -s -u 22A3BF2B vx.y.z; git push origin vx.y.z
+- Delete temporary branch:
+  git branch -d release/x.y.z; git push origin :release/x.y.z
+- make dist, upload tar.gz plus RPMs and .exes to GitHub and SourceForge
