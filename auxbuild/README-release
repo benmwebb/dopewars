@@ -1,6 +1,6 @@
 New version checklist:
 
-- cd po; rm dopewars.pot; make dopewars.pot; make update-po
+- cd po; rm dopewars.pot; make dopewars.pot; make update-po; ./check-cformat.sh
 - Add version number, date to ChangeLog
 - Change stable version number in NEWS README.md doc/installation.html doc/index.html doc/windows.html
 - git checkout -b release/x.y.z
