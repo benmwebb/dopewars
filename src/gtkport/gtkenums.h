@@ -2,7 +2,7 @@
  * gtkenums.h     Enumerated types for gtkport code                     *
  * Copyright (C)  2002-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -80,12 +80,6 @@ typedef enum {
 } GtkSelectionMode;
 
 typedef enum {
-  GDK_INPUT_READ      = 1 << 0,
-  GDK_INPUT_WRITE     = 1 << 1,
-  GDK_INPUT_EXCEPTION = 1 << 2
-} GdkInputCondition;
-
-typedef enum {
   GTK_SHADOW_NONE,
   GTK_SHADOW_IN,
   GTK_SHADOW_OUT,
@@ -126,6 +120,26 @@ typedef enum
   GTK_WIN_POS_CENTER_ALWAYS,
   GTK_WIN_POS_CENTER_ON_PARENT
 } GtkWindowPosition;
+
+typedef enum
+{
+  GTK_ORIENTATION_HORIZONTAL,
+  GTK_ORIENTATION_VERTICAL
+} GtkOrientation;
+
+typedef enum
+{
+  GTK_SORT_ASCENDING,
+  GTK_SORT_DESCENDING
+} GtkSortType;
+
+enum
+{
+  G_TYPE_STRING,
+  G_TYPE_UINT,
+  G_TYPE_INT,
+  G_TYPE_POINTER
+};
 
 #endif /* CYGWIN */
 

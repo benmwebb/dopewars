@@ -1,8 +1,8 @@
 /************************************************************************
  * curses_client.c  dopewars client using the (n)curses console library *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -61,6 +61,9 @@ static int Width, Depth;
 const static int MaxMessages = 1000;
 
 #ifdef NETWORKING
+/* Data waiting to be sent to/read from the metaserver */
+static CurlConnection MetaConn;
+
 static enum {
   CM_SERVER, CM_PROMPT, CM_META, CM_SINGLE
 } ConnectMethod = CM_SERVER;
@@ -99,8 +102,6 @@ static void scroll_msg_area_down(void);
 
 
 #ifdef NETWORKING
-static void HttpAuthFunc(HttpConnection *conn, gboolean proxyauth,
-                         gchar *realm, gpointer data);
 static void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data);
 #endif
 
@@ -200,7 +201,11 @@ static int get_prompt_line(void)
  */
 void CheckForResize(Player *Play)
 {
+#ifdef CYGWIN
+  int sigset;
+#else
   sigset_t sigset;
+#endif
 
   sigemptyset(&sigset);
   sigaddset(&sigset, SIGWINCH);
@@ -294,7 +299,7 @@ void display_intro(void)
                     "possible (and stay alive)!"));
   mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
-  g_string_sprintf(text, _("Version %-8s Copyright (C) 1998-2013  Ben Webb "
+  g_string_printf(text, _("Version %-8s Copyright (C) 1998-2020  Ben Webb "
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
@@ -343,7 +348,7 @@ static void SelectServerManually(void)
   clear_bottom();
   mvaddstr(top + 1, 1,
            /* Prompts for hostname and port when selecting a server
-            * manually */
+              manually */
            _("Please enter the hostname and port of a dopewars server:-"));
   text = nice_input(_("Hostname: "), top + 2, 1, FALSE, ServerName, '\0');
   AssignName(&ServerName, text);
@@ -364,14 +369,13 @@ static void SelectServerManually(void)
 static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
 {
   int c;
+  GError *tmp_error = NULL;
   GSList *ListPt;
   ServerData *ThisServer;
   GString *text;
   gint index;
-  fd_set readfds, writefds;
+  fd_set readfds, writefds, errorfds;
   int maxsock;
-  gboolean DoneOK;
-  HttpConnection *MetaConn;
   int top = get_ui_area_top();
 
   attrset(TextAttr);
@@ -379,25 +383,29 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
   mvaddstr(top + 1, 1, _("Please wait... attempting to contact metaserver..."));
   refresh();
 
-  if (OpenMetaHttpConnection(&MetaConn)) {
-    SetHttpAuthFunc(MetaConn, HttpAuthFunc, NULL);
-    SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf, SocksAuthFunc, NULL);
-  } else {
-    g_string_assign_error(errstr, MetaConn->NetBuf.error);
-    CloseHttpConnection(MetaConn);
+  if (!OpenMetaHttpConnection(&MetaConn, &tmp_error)) {
+    g_string_assign(errstr, tmp_error->message);
+    g_error_free(tmp_error);
     return FALSE;
   }
 
   ClearServerList(&ServerList);
 
-  do {
+  while(TRUE) {
+    long mintime;
+    struct timeval timeout;
+    int still_running;
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
+    FD_ZERO(&errorfds);
     FD_SET(0, &readfds);
-    maxsock = 1;
-    SetSelectForNetworkBuffer(&MetaConn->NetBuf, &readfds, &writefds,
-                              NULL, &maxsock);
-    if (bselect(maxsock, &readfds, &writefds, NULL, NULL) == -1) {
+    curl_multi_fdset(MetaConn.multi, &readfds, &writefds, &errorfds, &maxsock);
+    curl_multi_timeout(MetaConn.multi, &mintime);
+    timeout.tv_sec = mintime < 0 ? 5 : mintime;
+    timeout.tv_usec = 0;
+    maxsock = MAX(maxsock+1, 1);
+
+    if (bselect(maxsock, &readfds, &writefds, &errorfds, &timeout) == -1) {
       if (errno == EINTR) {
         CheckForResize(Play);
         continue;
@@ -411,20 +419,21 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
       if (c == '\f')
         wrefresh(curscr);
     }
-    if (RespondToSelect
-        (&MetaConn->NetBuf, &readfds, &writefds, NULL, &DoneOK)) {
-      while (HandleWaitingMetaServerData(MetaConn, &ServerList, &DoneOK)) {
+    if (!CurlConnectionPerform(&MetaConn, &still_running, &tmp_error)) {
+      g_string_assign(errstr, tmp_error->message);
+      g_error_free(tmp_error);
+      return FALSE;
+    } else if (still_running == 0) {
+      if (!HandleWaitingMetaServerData(&MetaConn, &ServerList, &tmp_error)) {
+        CloseCurlConnection(&MetaConn);
+        g_string_assign(errstr, tmp_error->message);
+	g_error_free(tmp_error);
+	return FALSE;
       }
+      CloseCurlConnection(&MetaConn);
+      break;
     }
-    if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-      if (IsHttpError(MetaConn)) {
-        g_string_assign_error(errstr, MetaConn->NetBuf.error);
-        CloseHttpConnection(MetaConn);
-        return FALSE;
-      }
-    }
-  } while (DoneOK);
-  CloseHttpConnection(MetaConn);
+  }
 
   text = g_string_new("");
 
@@ -434,32 +443,32 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
     attrset(TextAttr);
     clear_bottom();
     /* Printout of metaserver information in curses client */
-    g_string_sprintf(text, _("Server : %s"), ThisServer->Name);
+    g_string_printf(text, _("Server : %s"), ThisServer->Name);
     mvaddstr(top + 1, 1, text->str);
-    g_string_sprintf(text, _("Port   : %d"), ThisServer->Port);
+    g_string_printf(text, _("Port   : %d"), ThisServer->Port);
     mvaddstr(top + 2, 1, text->str);
-    g_string_sprintf(text, _("Version    : %s"), ThisServer->Version);
+    g_string_printf(text, _("Version    : %s"), ThisServer->Version);
     mvaddstr(top + 2, 40, text->str);
     if (ThisServer->CurPlayers == -1) {
-      g_string_sprintf(text, _("Players: -unknown- (maximum %d)"),
+      g_string_printf(text, _("Players: -unknown- (maximum %d)"),
                        ThisServer->MaxPlayers);
     } else {
-      g_string_sprintf(text, _("Players: %d (maximum %d)"),
+      g_string_printf(text, _("Players: %d (maximum %d)"),
                        ThisServer->CurPlayers, ThisServer->MaxPlayers);
     }
     mvaddstr(top + 3, 1, text->str);
-    g_string_sprintf(text, _("Up since   : %s"), ThisServer->UpSince);
+    g_string_printf(text, _("Up since   : %s"), ThisServer->UpSince);
     mvaddstr(top + 3, 40, text->str);
-    g_string_sprintf(text, _("Comment: %s"), ThisServer->Comment);
+    g_string_printf(text, _("Comment: %s"), ThisServer->Comment);
     mvaddstr(top + 4, 1, text->str);
     attrset(PromptAttr);
     mvaddstr(top + 5, 1,
              _("N>ext server; P>revious server; S>elect this server... "));
 
     /* The three keys that are valid responses to the previous question -
-     * if you translate them, keep the keys in the same order (N>ext,
-     * P>revious, S>elect) as they are here, otherwise they'll do the
-     * wrong things. */
+       if you translate them, keep the keys in the same order (N>ext,
+       P>revious, S>elect) as they are here, otherwise they'll do the
+       wrong things. */
     c = GetKey(_("NPS"), "NPS", FALSE, FALSE, FALSE);
     switch (c) {
     case 'S':
@@ -480,10 +489,6 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
         ListPt = g_slist_last(ListPt);
       break;
     }
-  }
-  if (!ServerList) {
-    g_string_assign(errstr, "No servers listed on metaserver");
-    return FALSE;
   }
   clear_line(top + 1);
   refresh();
@@ -513,14 +518,14 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,
   case NBS_SOCKSCONNECT:
     switch (sockstat) {
     case NBSS_METHODS:
-      g_string_sprintf(text, _("Connected to SOCKS server %s..."),
+      g_string_printf(text, _("Connected to SOCKS server %s..."),
                        Socks.name);
       break;
     case NBSS_USERPASSWD:
       g_string_assign(text, _("Authenticating with SOCKS server"));
       break;
     case NBSS_CONNECT:
-      g_string_sprintf(text, _("Asking SOCKS for connect to %s..."),
+      g_string_printf(text, _("Asking SOCKS for connect to %s..."),
                        ServerName);
       break;
     }
@@ -533,34 +538,6 @@ static void DisplayConnectStatus(NetworkBuffer *netbuf,
     refresh();
   }
   g_string_free(text, TRUE);
-}
-
-void HttpAuthFunc(HttpConnection *conn, gboolean proxyauth,
-                  gchar *realm, gpointer data)
-{
-  gchar *text, *user, *password = NULL;
-
-  attrset(TextAttr);
-  clear_bottom();
-  if (proxyauth) {
-    text = g_strdup_printf(_("Proxy authentication required for realm %s"),
-                           realm);
-  } else {
-    text =
-        g_strdup_printf(_("Authentication required for realm %s"), realm);
-  }
-  mvaddstr(17, 1, text);
-  mvaddstr(18, 1, _("(Enter a blank username to cancel)"));
-  g_free(text);
-
-  user = nice_input(_("User name: "), 19, 1, FALSE, NULL, '\0');
-  if (user && user[0]) {
-    password = nice_input(_("Password: "), 20, 1, FALSE, NULL, '*');
-  }
-
-  SetHttpAuthentication(conn, proxyauth, user, password);
-  g_free(user);
-  g_free(password);
 }
 
 void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data)
@@ -585,7 +562,7 @@ void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data)
 static gboolean DoConnect(Player *Play, GString *errstr)
 {
   NetworkBuffer *netbuf;
-  fd_set readfds, writefds;
+  fd_set readfds, writefds, errorfds;
   int maxsock, c;
   gboolean doneOK = TRUE;
   NBStatus oldstatus;
@@ -606,11 +583,12 @@ static gboolean DoConnect(Player *Play, GString *errstr)
       oldsocks = netbuf->sockstat;
       FD_ZERO(&readfds);
       FD_ZERO(&writefds);
+      FD_ZERO(&errorfds);
       FD_SET(0, &readfds);
       maxsock = 1;
-      SetSelectForNetworkBuffer(netbuf, &readfds, &writefds, NULL,
+      SetSelectForNetworkBuffer(netbuf, &readfds, &writefds, &errorfds,
                                 &maxsock);
-      if (bselect(maxsock, &readfds, &writefds, NULL, NULL) == -1) {
+      if (bselect(maxsock, &readfds, &writefds, &errorfds, NULL) == -1) {
         if (errno == EINTR) {
           CheckForResize(Play);
           continue;
@@ -626,7 +604,7 @@ static gboolean DoConnect(Player *Play, GString *errstr)
           wrefresh(curscr);
 #endif
       }
-      RespondToSelect(netbuf, &readfds, &writefds, NULL, &doneOK);
+      RespondToSelect(netbuf, &readfds, &writefds, &errorfds, &doneOK);
     }
   }
 
@@ -685,10 +663,12 @@ static gboolean ConnectToServer(Player *Play)
         g_free(text);
       } else if (!NetOK) {
         /* Display of an error message while trying to contact a dopewars
-         * server (the error message itself is displayed on the next
-         * screen line) */
+           server (the error message itself is displayed on the next
+           screen line) */
         mvaddstr(top, 1, _("Could not start multiplayer dopewars"));
-        text = g_strdup_printf("   (%s)", errstr->str);
+        text = g_strdup_printf("   (%s)",
+                               errstr->str[0] ? errstr->str
+                                  : _("connection to server failed"));
         mvaddstr(top + 1, 1, text);
         g_free(text);
       }
@@ -706,7 +686,7 @@ static gboolean ConnectToServer(Player *Play)
       attrset(TextAttr);
 
       /* Translate these 4 keys in line with the above options, keeping
-       * the order the same (C>onnect, L>ist, Q>uit, P>lay single-player) */
+         the order the same (C>onnect, L>ist, Q>uit, P>lay single-player) */
       c = GetKey(_("CLQP"), "CLQP", FALSE, FALSE, FALSE);
       switch (c) {
       case 'Q':
@@ -813,11 +793,11 @@ static gboolean jet(Player *Play, gboolean AllowReturn)
   do {
     c = bgetch();
     if (c >= '1' && c < '1' + NumLocation) {
-      dpg_string_sprintf(str, _("%/Location display/%tde"),
+      dpg_string_printf(str, _("%/Location display/%tde"),
                          Location[c - '1'].Name);
       addstr(str->str);
       if (Play->IsAt != c - '1') {
-        g_string_sprintf(str, "%d", c - '1');
+        g_string_printf(str, "%d", c - '1');
         DisplayMode = DM_NONE;
         SendClientMessage(Play, C_NONE, C_REQUESTJET, NULL, str->str);
       } else {
@@ -846,16 +826,16 @@ static void DropDrugs(Player *Play)
   attrset(TextAttr);
   clear_bottom();
   text = g_string_new("");
-  dpg_string_sprintf(text,
+  dpg_string_printf(text,
                      /* List of drugs that you can drop (%tde = "drugs" by 
-                      * default) */
+                        default) */
                      _("You can\'t get any cash for the following "
                        "carried %tde :"), Names.Drugs);
   mvaddstr(top, 1, text->str);
   NumDrugs = 0;
   for (i = 0; i < NumDrug; i++) {
     if (Play->Drugs[i].Carried > 0 && Play->Drugs[i].Price == 0) {
-      g_string_sprintf(text, "%c. %-10s %-8d", NumDrugs + 'A',
+      g_string_printf(text, "%c. %-10s %-8d", NumDrugs + 'A',
                        Drug[i].Name, Play->Drugs[i].Carried);
       mvaddstr(top + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
       NumDrugs++;
@@ -877,7 +857,7 @@ static void DropDrugs(Player *Play)
         num = atoi(buf);
         g_free(buf);
         if (num > 0) {
-          g_string_sprintf(text, "drug^%d^%d", i, -num);
+          g_string_printf(text, "drug^%d^%d", i, -num);
           SendClientMessage(Play, C_NONE, C_BUYOBJECT, NULL, text->str);
         }
       }
@@ -927,7 +907,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
 
     if (Buy) {
       /* Display of number of drugs you could buy and/or carry, when
-       * buying drugs */
+         buying drugs */
       text = g_strdup_printf(_("You can afford %d, and can carry %d. "),
                              CanAfford, CanCarry);
       mvaddstr(get_prompt_line() + 1, 2, text);
@@ -979,17 +959,17 @@ static void GiveErrand(Player *Play)
 
   /* Prompt for sending your bitches out to spy etc. (%tde = "bitches" by
    * default) */
-  dpg_string_sprintf(text,
+  dpg_string_printf(text,
                      _("Choose an errand to give one of your %tde..."),
                      Names.Bitches);
   mvaddstr(y++, 1, text->str);
   attrset(PromptAttr);
   if (Play->Bitches.Carried > 0) {
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("   S>py on another dealer                  "
                          "(cost: %P)"), Prices.Spy);
     mvaddstr(y++, 2, text->str);
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("   T>ip off the cops to another dealer     "
                          "(cost: %P)"), Prices.Tipoff);
     mvaddstr(y++, 2, text->str);
@@ -1003,8 +983,8 @@ static void GiveErrand(Player *Play)
   attrset(TextAttr);
 
   /* Translate these 5 keys to match the above options, keeping the
-   * original order the same (S>py, T>ip off, G>et stuffed, C>ontact spy,
-   * N>o errand) */
+     original order the same (S>py, T>ip off, G>et stuffed, C>ontact spy,
+     N>o errand) */
   c = GetKey(_("STGCN"), "STGCN", TRUE, FALSE, FALSE);
 
   if (Play->Bitches.Carried > 0 || c == 'C')
@@ -1026,8 +1006,8 @@ static void GiveErrand(Player *Play)
       addstr(_(" Are you sure? "));
 
       /* The two keys that are valid for answering Yes/No - if you
-       * translate them, keep them in the same order - i.e. "Yes" before
-       * "No" */
+         translate them, keep them in the same order - i.e. "Yes" before
+         "No" */
       c = GetKey(_("YN"), "YN", FALSE, TRUE, FALSE);
 
       if (c == 'Y')
@@ -1335,7 +1315,7 @@ static void SellGun(Player *Play)
   clear_line(get_prompt_line());
   if (TotalGunsCarried(Play) == 0) {
     /* Error - player tried to sell guns that he/she doesn't have
-     * (%tde="guns" by default) */
+       (%tde="guns" by default) */
     text = dpg_strdup_printf(_("You don't have any %tde to sell!"),
                              Names.Guns);
     mvaddcentstr(get_prompt_line(), text);
@@ -1380,9 +1360,9 @@ static void BuyGun(Player *Play)
   if (TotalGunsCarried(Play) >= Play->Bitches.Carried + 2) {
     text = dpg_strdup_printf(
                               /* Error - player tried to buy more guns
-                               * than his/her bitches can carry (1st
-                               * %tde="bitches", 2nd %tde="guns" by
-                               * default) */
+                                 than his/her bitches can carry (1st
+                                 %tde="bitches", 2nd %tde="guns" by
+                                 default) */
                               _("You'll need more %tde to carry "
                                 "any more %tde!"),
                               Names.Bitches, Names.Guns);
@@ -1403,7 +1383,7 @@ static void BuyGun(Player *Play)
       if (Gun[gunind].Space > Play->CoatSize) {
         clear_line(get_prompt_line());
         /* Error - player tried to buy a gun that he/she doesn't have
-         * space for (%tde="gun" by default) */
+           space for (%tde="gun" by default) */
         text = dpg_strdup_printf(_("You don't have enough space to "
                                    "carry that %tde!"), Names.Gun);
         mvaddcentstr(get_prompt_line(), text);
@@ -1413,7 +1393,7 @@ static void BuyGun(Player *Play)
       } else if (Gun[gunind].Price > Play->Cash) {
         clear_line(get_prompt_line());
         /* Error - player tried to buy a gun that he/she can't afford
-         * (%tde="gun" by default) */
+           (%tde="gun" by default) */
         text = dpg_strdup_printf(_("You don't have enough cash to buy "
                                    "that %tde!"), Names.Gun);
 	mvaddcentstr(get_prompt_line(), text);
@@ -1461,9 +1441,9 @@ void GunShop(Player *Play)
     attrset(TextAttr);
 
     /* Translate these three keys in line with the above options, keeping
-     * the order (B>uy, S>ell, L>eave) the same - you can change the
-     * wording of the prompt, but if you change the order in this key
-     * list, the keys will do the wrong things! */
+       the order (B>uy, S>ell, L>eave) the same - you can change the
+       wording of the prompt, but if you change the order in this key
+       list, the keys will do the wrong things! */
     action = GetKey(_("BSL"), "BSL", FALSE, FALSE, FALSE);
     if (action == 'S')
       SellGun(Play);
@@ -1528,7 +1508,7 @@ void Bank(Player *Play)
     attrset(TextAttr);
 
     /* Make sure you keep the order the same if you translate these keys!
-     * (D>eposit, W>ithdraw, L>eave) */
+       (D>eposit, W>ithdraw, L>eave) */
     action = GetKey(_("DWL"), "DWL", FALSE, FALSE, FALSE);
 
     if (action == 'D' || action == 'W') {
@@ -1543,12 +1523,12 @@ void Bank(Player *Play)
         money = -money;
       if (money > Play->Cash) {
         /* Error - player has tried to put more money into the bank than
-         * he/she has */
+           he/she has */
         mvaddstr(20, 1, _("You don't have that much money!"));
         nice_wait();
       } else if (-money > Play->Bank) {
         /* Error - player has tried to withdraw more money from the bank
-         * than there is in the account */
+           than there is in the account */
         mvaddstr(20, 1, _("There isn't that much money in the bank..."));
         nice_wait();
       } else if (money != 0) {
@@ -1580,9 +1560,9 @@ int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
   guint AllowInd, WordInd, i;
 
   /* Expansions of the single-letter keypresses for the benefit of the
-   * user. i.e. "Yes" is printed for the key "Y" etc. You should indicate
-   * to the user which letter in the word corresponds to the keypress, by
-   * capitalising it or similar. */
+     user. i.e. "Yes" is printed for the key "Y" etc. You should indicate
+     to the user which letter in the word corresponds to the keypress, by
+     capitalising it or similar. */
   gchar *Words[] = { N_("Y:Yes"), N_("N:No"), N_("R:Run"),
     N_("F:Fight"), N_("A:Attack"), N_("E:Evade")
   };
@@ -1975,41 +1955,41 @@ void print_status(Player *Play, gboolean DispDrug)
   attrset(StatsAttr);
 
   /* Display of the player's cash in the stats window (careful to keep the
-   * formatting if you change the length of the "Cash" word) */
-  dpg_string_sprintf(text, _("Cash %17P"), Play->Cash);
+     formatting if you change the length of the "Cash" word) */
+  dpg_string_printf(text, _("Cash %17P"), Play->Cash);
   mvaddstr(3, 9, text->str);
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
-  dpg_string_sprintf(text, _("%-19Tde%3d"), Names.Guns,
+  dpg_string_printf(text, _("%-19Tde%3d"), Names.Guns,
                      TotalGunsCarried(Play));
   mvaddstr(Network ? 4 : 5, 9, text->str);
 
   /* Display of the player's health */
-  g_string_sprintf(text, _("Health             %3d"), Play->Health);
+  g_string_printf(text, _("Health             %3d"), Play->Health);
   mvaddstr(Network ? 5 : 7, 9, text->str);
 
   /* Display of the player's bank balance */
-  dpg_string_sprintf(text, _("Bank %17P"), Play->Bank);
+  dpg_string_printf(text, _("Bank %17P"), Play->Bank);
   mvaddstr(Network ? 6 : 9, 9, text->str);
 
   if (Play->Debt > 0)
     attrset(DebtAttr);
   /* Display of the player's debt */
-  dpg_string_sprintf(text, _("Debt %17P"), Play->Debt);
+  dpg_string_printf(text, _("Debt %17P"), Play->Debt);
   mvaddstr(Network ? 7 : 11, 9, text->str);
   attrset(TitleAttr);
 
   /* Display of the player's trenchcoat size (antique mode only) */
   if (WantAntique)
-    g_string_sprintf(text, _("Space %6d"), Play->CoatSize);
+    g_string_printf(text, _("Space %6d"), Play->CoatSize);
   else {
     /* Display of the player's number of bitches, and available space
-     * (%Tde="Bitches" by default) */
-    dpg_string_sprintf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
+       (%Tde="Bitches" by default) */
+    dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
                        Play->Bitches.Carried, Play->CoatSize);
   }
   mvaddstr(0, Width - 2 - strlen(text->str), text->str);
-  dpg_string_sprintf(text, _("%/Current location/%tde"),
+  dpg_string_printf(text, _("%/Current location/%tde"),
                      Location[Play->IsAt].Name);
   print_location(text->str);
   attrset(StatsAttr);
@@ -2021,25 +2001,25 @@ void print_status(Player *Play, gboolean DispDrug)
       mvaddstr(1, Width * 3 / 4 - 5, _("Trenchcoat"));
     else {
       /* Title of the "drugs" window (the only important bit in this
-       * string is the "%Tde" which is "Drugs" by default; the %/.../ part 
-       * is ignored, so you don't need to translate it; see doc/i18n.html) 
+         string is the "%Tde" which is "Drugs" by default; the %/.../ part
+         is ignored, so you don't need to translate it; see doc/i18n.html)
        */
-      dpg_string_sprintf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
+      dpg_string_printf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
       mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
     }
     for (i = 0; i < NumDrug; i++) {
       if (Play->Drugs[i].Carried > 0) {
         /* Display of carried drugs with price (%tde="Opium", etc. by
-         * default) */
+           default) */
         if (HaveAbility(Play, A_DRUGVALUE)) {
-          dpg_string_sprintf(text, _("%-7tde  %3d @ %P"), Drug[i].Name,
+          dpg_string_printf(text, _("%-7tde  %3d @ %P"), Drug[i].Name,
                              Play->Drugs[i].Carried,
                              Play->Drugs[i].TotalValue /
                              Play->Drugs[i].Carried);
           mvaddstr(3 + c, Width / 2 + 3, text->str);
         } else {
           /* Display of carried drugs (%tde="Opium", etc. by default) */
-          dpg_string_sprintf(text, _("%-7tde  %3d"), Drug[i].Name,
+          dpg_string_printf(text, _("%-7tde  %3d"), Drug[i].Name,
                              Play->Drugs[i].Carried);
           mvaddstr(3 + c / 2, Width / 2 + 3 + (c % 2) * 17, text->str);
         }
@@ -2048,13 +2028,13 @@ void print_status(Player *Play, gboolean DispDrug)
     }
   } else {
     /* Title of the "guns" window (the only important bit in this string
-     * is the "%Tde" which is "Guns" by default) */
-    dpg_string_sprintf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
+       is the "%Tde" which is "Guns" by default) */
+    dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
     mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
     for (i = 0; i < NumGun; i++) {
       if (Play->Guns[i].Carried > 0) {
         /* Display of carried guns (%tde="Baretta", etc. by default) */
-        dpg_string_sprintf(text, _("%-22tde %3d"), Gun[i].Name,
+        dpg_string_printf(text, _("%-22tde %3d"), Gun[i].Name,
                            Play->Guns[i].Carried);
         mvaddstr(3 + c, Width / 2 + 3, text->str);
         c++;
@@ -2084,7 +2064,7 @@ void DisplaySpyReports(char *Data, Player *From, Player *To)
   g_free(text);
 
   /* Message displayed with a spy's list of drugs (%Tde="Drugs" by
-   * default) */
+     default) */
   text = dpg_strdup_printf(_("%/Spy: Drugs/%Tde..."), Names.Drugs);
   mvaddstr(19, 20, text);
   g_free(text);
@@ -2261,6 +2241,25 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   return ReturnString;
 }
 
+/* Return a blank string long enough to pad `name` out to `pad_len`.
+   This works with characters, not bytes, if in a UTF-8 locale */
+static char *pad_name(const char *name, guint pad_len)
+{
+  /* 40 character blank string (must be longer than max value of pad_len) */
+  static char *pad = "                                        ";
+  int slen;
+  if (LocaleIsUTF8) {
+    slen = g_utf8_strlen(name, -1);
+  } else {
+    slen = strlen(name);
+  }
+  if (slen > pad_len || slen > 40) {
+    return "";
+  } else {
+    return pad + 40 - pad_len + slen;
+  }
+}
+
 static void DisplayDrugsHere(Player *Play)
 {
   int NumDrugsHere, i, c;
@@ -2284,9 +2283,10 @@ static void DisplayDrugsHere(Player *Play)
        c < NumDrugsHere && i != -1;
        c++, i = GetNextDrugIndex(i, Play)) {
     /* List of individual drug names for selection (%tde="Opium" etc.
-     * by default) */
-    text = dpg_strdup_printf( _("%c. %-10tde %8P"), 'A' + c,
-                             Drug[i].Name, Play->Drugs[i].Price);
+       by default) */
+    text = dpg_strdup_printf( _("%c. %tde%s %8P"), 'A' + c,
+                             Drug[i].Name, pad_name(Drug[i].Name, 10),
+                             Play->Drugs[i].Price);
     names = g_slist_append(names, text);
   }
   display_select_list(names);
@@ -2307,7 +2307,7 @@ static void Curses_DoGame(Player *Play)
   int i, c;
   char IsCarrying;
 
-#if NETWORKING || HAVE_SELECT
+#if defined(NETWORKING) || defined(HAVE_SELECT)
   fd_set readfs;
 #endif
 #ifdef NETWORKING
@@ -2350,7 +2350,7 @@ static void Curses_DoGame(Player *Play)
                        get_ui_area_top() + 1, 1, FALSE, OldName, '\0');
     } while (buf[0] == 0);
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (WantNetwork) {
     if (!ConnectToServer(Play)) {
       end_curses();
@@ -2428,7 +2428,7 @@ static void Curses_DoGame(Player *Play)
         g_string_append(text, _("R>un, "));
       if (!RunHere || fp == F_LASTLEAVE)
         /* (%tde = "drugs" by default here) */
-        dpg_string_sprintfa(text, _("D>eal %tde, "), Names.Drugs);
+        dpg_string_append_printf(text, _("D>eal %tde, "), Names.Drugs);
       g_string_append(text, _("or Q>uit? "));
       mvaddcentstr(get_prompt_line(), text->str);
       attrset(TextAttr);
@@ -2454,7 +2454,7 @@ static void Curses_DoGame(Player *Play)
 
     if (QuitRequest)
       return;
-#if NETWORKING
+#ifdef NETWORKING
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_SET(0, &readfs);
@@ -2502,7 +2502,7 @@ static void Curses_DoGame(Player *Play)
       }
     }
     if (FD_ISSET(0, &readfs)) {
-#elif HAVE_SELECT
+#elif defined(HAVE_SELECT)
     FD_ZERO(&readfs);
     FD_SET(0, &readfs);
     MaxSock = 1;
@@ -2517,19 +2517,19 @@ static void Curses_DoGame(Player *Play)
 #endif /* NETWORKING */
     if (DisplayMode == DM_STREET) {
       /* N.B. You must keep the order of these keys the same as the
-       * original when you translate (B>uy, S>ell, D>rop, T>alk, P>age,
-       * L>ist, G>ive errand, F>ight, J>et, Q>uit) */
+         original when you translate (B>uy, S>ell, D>rop, T>alk, P>age,
+         L>ist, G>ive errand, F>ight, J>et, Q>uit) */
       c = GetKey(_("BSDTPLGFJQ"), "BSDTPLGFJQ", TRUE, FALSE, FALSE);
 
     } else if (DisplayMode == DM_FIGHT) {
       /* N.B. You must keep the order of these keys the same as the
-       * original when you translate (D>eal drugs, R>un, F>ight, S>tand,
-       * Q>uit) */
+         original when you translate (D>eal drugs, R>un, F>ight, S>tand,
+         Q>uit) */
       c = GetKey(_("DRFSQ"), "DRFSQ", TRUE, FALSE, FALSE);
 
     } else
       c = 0;
-#if ! (NETWORKING || HAVE_SELECT)
+#if ! (defined(NETWORKING) || defined(HAVE_SELECT))
     CheckForResize(Play);
 #endif
     if (DisplayMode == DM_STREET) {
@@ -2657,7 +2657,7 @@ static void Curses_DoGame(Player *Play)
         break;
       }
     }
-#if NETWORKING
+#ifdef NETWORKING
     }
 #endif
     curs_set(0);
@@ -2669,6 +2669,14 @@ void CursesLoop(struct CMDLINE *cmdline)
 {
   char c;
   Player *Play;
+
+#ifdef CYGWIN
+  /* On Windows, force UTF-8 rather than the non-Unicode codepage */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
+  Conv_SetInternalCodeset("UTF-8");
+  LocaleIsUTF8 = TRUE;
+  WantUTF8Errors(TRUE);
+#endif
 
   InitConfiguration(cmdline);
   if (!CheckHighScoreFileConfig())
@@ -2682,6 +2690,9 @@ void CursesLoop(struct CMDLINE *cmdline)
   BackupConfig();
 
   start_curses();
+#ifdef NETWORKING
+  CurlInit(&MetaConn);
+#endif
   Width = COLS;
   Depth = LINES;
 
@@ -2712,4 +2723,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   } while (c == 'Y');
   FirstClient = RemovePlayer(Play, FirstClient);
   end_curses();
+#ifdef NETWORKING
+  CurlCleanup(&MetaConn);
+#endif
 }

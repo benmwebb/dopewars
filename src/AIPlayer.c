@@ -1,8 +1,8 @@
 /************************************************************************
  * AIPlayer.c     Code for dopewars computer players                    *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -37,7 +37,7 @@
 #include "util.h"
 #include "AIPlayer.h"
 
-#if NETWORKING
+#ifdef NETWORKING
 static int HandleAIMessage(char *Message, Player *AIPlay);
 static void PrintAIMessage(char *Text);
 static void AIDealDrugs(Player *AIPlay);
@@ -598,12 +598,12 @@ void AISendAnswer(Player *From, Player *To, char *answer)
  */
 void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
 {
-  char *Prompt, *allowed;
+  char *Prompt;
 
   if (From == &Noone)
     From = NULL;
   Prompt = Data;
-  allowed = GetNextWord(&Prompt, "");
+  GetNextWord(&Prompt, "");
   PrintAIMessage(Prompt);
   switch (AI) {
   case C_ASKLOAN:

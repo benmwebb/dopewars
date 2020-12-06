@@ -1,8 +1,8 @@
 /************************************************************************
  * tstring.h      "Translated string" wrappers for dopewars             *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -31,8 +31,8 @@
 
 void dpg_print(gchar *format, ...);
 gchar *dpg_strdup_printf(gchar *format, ...);
-void dpg_string_sprintf(GString *string, gchar *format, ...);
-void dpg_string_sprintfa(GString *string, gchar *format, ...);
+void dpg_string_printf(GString *string, gchar *format, ...);
+void dpg_string_append_printf(GString *string, gchar *format, ...);
 
 gchar *GetDefaultTString(gchar *tstring);
 

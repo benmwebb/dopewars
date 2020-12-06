@@ -1,8 +1,8 @@
 /************************************************************************
- * guifunc.h      GUI-specific shared functions for installer           *
- * Copyright (C)  2001-2004  Ben Webb                                   *
+ * mac_helpers.m  Helper functions for Mac builds                       *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -20,7 +20,16 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#include <windows.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-void RegisterSepClass(HINSTANCE hInstance);
-void SetGuiFont(HWND hWnd);
+#import <AppKit/AppKit.h>
+
+#include "mac_helpers.h"
+
+void mac_open_url(const char *url)
+{
+  NSString *urlstr = [[NSString alloc] initWithUTF8String:url];
+  [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlstr]];
+}

@@ -1,8 +1,8 @@
 /************************************************************************
  * error.c        Error-handling routines for dopewars                  *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -28,8 +28,8 @@
 #include <string.h>             /* For strerror */
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For WSAxxx constants */
 #include <windows.h>            /* For FormatMessage() etc. */
-#include <winsock.h>            /* For WSAxxx constants */
 #else
 #include <netdb.h>              /* For h_errno error codes */
 #endif
@@ -114,7 +114,7 @@ void LookupErrorCode(GString *str, gint code, ErrTable *table,
       return;
     }
   }
-  g_string_sprintfa(str, fallbackstr, code);
+  g_string_append_printf(str, fallbackstr, code);
 }
 
 /* "Custom" error handling */
@@ -150,7 +150,7 @@ ErrorType *ET_ERRNO = &ETErrno;
 /* Winsock error handling */
 static ErrTable WSAErrStr[] = {
   /* These are the explanations of the various
-   * Windows Sockets error codes */
+     Windows Sockets error codes */
   {WSANOTINITIALISED, N_("WinSock has not been properly initialised")},
   {WSASYSNOTREADY, N_("Network subsystem is not ready")},
   {WSAVERNOTSUPPORTED, N_("WinSock version not supported")},

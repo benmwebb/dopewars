@@ -1,8 +1,8 @@
 /************************************************************************
  * network.c      Low-level networking routines                         *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -27,8 +27,9 @@
 #ifdef NETWORKING
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include <winsock.h>            /* For network functions */
+#include "winmain.h"
 #else
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/socket.h>         /* For struct sockaddr etc. */
@@ -155,14 +156,14 @@ static void NetBufCallBack(NetworkBuffer *NetBuf, gboolean CallNow)
                           && NetBuf->WriteBuf.DataPresent)
                          || (NetBuf->status == NBS_SOCKSCONNECT
                              && NetBuf->negbuf.DataPresent)
-                         || NetBuf->WaitConnect, CallNow);
+                         || NetBuf->WaitConnect, TRUE, CallNow);
   }
 }
 
 static void NetBufCallBackStop(NetworkBuffer *NetBuf)
 {
   if (NetBuf && NetBuf->CallBack) {
-    (*NetBuf->CallBack) (NetBuf, FALSE, FALSE, FALSE);
+    (*NetBuf->CallBack) (NetBuf, FALSE, FALSE, FALSE, FALSE);
   }
 }
 
@@ -189,6 +190,7 @@ void InitNetworkBuffer(NetworkBuffer *NetBuf, char Terminator,
                        char StripChar, SocksServer *socks)
 {
   NetBuf->fd = -1;
+  NetBuf->ioch = NULL;
   NetBuf->InputTag = 0;
   NetBuf->CallBack = NULL;
   NetBuf->CallBackData = NULL;
@@ -232,6 +234,12 @@ void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
 {
   NetBuf->fd = fd;
+#ifdef CYGIN
+  NetBuf->ioch = g_io_channel_win32_new_socket(fd);
+#else
+  NetBuf->ioch = g_io_channel_unix_new(fd);
+#endif
+
   SetBlocking(fd, FALSE);       /* We only deal with non-blocking sockets */
   NetBuf->status = NBS_CONNECTED;       /* Assume the socket is connected */
 }
@@ -265,6 +273,11 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
 
   if (StartConnect(&NetBuf->fd, bindaddr, realhost, realport, &doneOK,
                    &NetBuf->error)) {
+#ifdef CYGIN
+    NetBuf->ioch = g_io_channel_win32_new_socket(NetBuf->fd);
+#else
+    NetBuf->ioch = g_io_channel_unix_new(NetBuf->fd);
+#endif
     /* If we connected immediately, then set status, otherwise signal that 
      * we're waiting for the connect to complete */
     if (doneOK) {
@@ -297,8 +310,11 @@ void ShutdownNetworkBuffer(NetworkBuffer *NetBuf)
 {
   NetBufCallBackStop(NetBuf);
 
-  if (NetBuf->fd >= 0)
+  if (NetBuf->fd >= 0) {
     CloseSocket(NetBuf->fd);
+    g_io_channel_unref(NetBuf->ioch);
+    NetBuf->fd = -1;
+  }
 
   FreeConnBuf(&NetBuf->ReadBuf);
   FreeConnBuf(&NetBuf->WriteBuf);
@@ -394,72 +410,6 @@ static void SocksAppendError(GString *str, LastError *error)
 }
 
 static ErrorType ETSocks = { SocksAppendError, NULL };
-
-typedef enum {
-  HEC_TRIESEX = 1,
-  HEC_BADAUTH,
-  HEC_BADREDIR,
-  HEC_BADSTATUS,
-  HEC_OK = 200,
-  HEC_REDIRECT = 300,
-  HEC_MOVEPERM = 301,
-  HEC_MOVETEMP = 302,
-  HEC_CLIENTERR = 400,
-  HEC_AUTHREQ = 401,
-  HEC_PROXYAUTH = 407,
-  HEC_FORBIDDEN = 403,
-  HEC_NOTFOUND = 404,
-  HEC_SERVERERR = 500
-} HTTPErrorCode;
-
-static void HTTPAppendError(GString *str, LastError *error)
-{
-  switch (error->code) {
-  case HEC_TRIESEX:
-    /* Various HTTP error messages */
-    g_string_append(str, _("Number of tries exceeded"));
-    break;
-  case HEC_BADAUTH:
-    g_string_sprintfa(str, _("Bad auth header: %s"), (gchar *)error->data);
-    break;
-  case HEC_BADREDIR:
-    g_string_sprintfa(str, _("Bad redirect: %s"), (gchar *)error->data);
-    break;
-  case HEC_BADSTATUS:
-    g_string_sprintfa(str, _("Invalid HTTP status line: %s"),
-                      (gchar *)error->data);
-    break;
-  case HEC_FORBIDDEN:
-    g_string_append(str, _("403: forbidden"));
-    break;
-  case HEC_NOTFOUND:
-    g_string_append(str, _("404: page not found"));
-    break;
-  case HEC_AUTHREQ:
-    g_string_append(str, _("401: HTTP authentication failed"));
-    break;
-  case HEC_PROXYAUTH:
-    g_string_append(str, _("407: HTTP proxy authentication failed"));
-    break;
-  case HEC_MOVETEMP:
-  case HEC_MOVEPERM:
-    g_string_append(str, _("Bad redirect message from server"));
-    break;
-  default:
-    if (error->code < HEC_REDIRECT || error->code >= 600) {
-      g_string_sprintfa(str, _("Unknown HTTP error %d"), error->code);
-    } else if (error->code < HEC_CLIENTERR) {
-      g_string_sprintfa(str, _("%d: redirect error"), error->code);
-    } else if (error->code < HEC_SERVERERR) {
-      g_string_sprintfa(str, _("%d: HTTP client error"), error->code);
-    } else {
-      g_string_sprintfa(str, _("%d: HTTP server error"), error->code);
-    }
-    break;
-  }
-}
-
-static ErrorType ETHTTP = { HTTPAppendError, NULL };
 
 static gboolean Socks5UserPasswd(NetworkBuffer *NetBuf)
 {
@@ -733,7 +683,8 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
 }
 
 gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK)
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK)
 {
   gboolean ReadOK, WriteOK, ErrorOK;
   gboolean DataWaiting = FALSE;
@@ -742,7 +693,7 @@ gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
   if (!NetBuf || NetBuf->fd <= 0)
     return DataWaiting;
 
-  DataWaiting = DoNetworkBufferStuff(NetBuf, ReadReady, WriteReady, FALSE,
+  DataWaiting = DoNetworkBufferStuff(NetBuf, ReadReady, WriteReady, ErrorReady,
                                      &ReadOK, &WriteOK, &ErrorOK);
 
   *DoneOK = (WriteOK && ErrorOK && ReadOK);
@@ -1131,369 +1082,305 @@ gboolean WriteDataToWire(NetworkBuffer *NetBuf)
   }
 }
 
-static void SendHttpRequest(HttpConnection *conn)
+static size_t MetaConnWriteFunc(void *contents, size_t size, size_t nmemb,
+                                void *userp)
 {
-  GString *text;
-  char *userpasswd;
-
-  conn->Tries++;
-  conn->StatusCode = 0;
-  conn->Status = HS_CONNECTING;
-
-  text = g_string_new("");
-
-  g_string_sprintf(text, "%s %s HTTP/1.0",
-                   conn->Method, conn->Query);
-  QueueMessageForSend(&conn->NetBuf, text->str);
-
-  g_string_sprintf(text, "Host: %s", conn->HostName);
-  QueueMessageForSend(&conn->NetBuf, text->str);
-
-  if (conn->Headers)
-    QueueMessageForSend(&conn->NetBuf, conn->Headers);
-
-  if (conn->user && conn->password) {
-    userpasswd = g_strdup_printf("%s:%s", conn->user, conn->password);
-    g_string_assign(text, "Authorization: Basic ");
-    AddB64Enc(text, userpasswd);
-    g_free(userpasswd);
-    QueueMessageForSend(&conn->NetBuf, text->str);
-  }
-  if (conn->proxyuser && conn->proxypassword) {
-    userpasswd =
-        g_strdup_printf("%s:%s", conn->proxyuser, conn->proxypassword);
-    g_string_assign(text, "Proxy-Authenticate: Basic ");
-    AddB64Enc(text, userpasswd);
-    g_free(userpasswd);
-    QueueMessageForSend(&conn->NetBuf, text->str);
-  }
-
-  g_string_sprintf(text, "User-Agent: dopewars/%s", VERSION);
-  QueueMessageForSend(&conn->NetBuf, text->str);
-
-  /* Insert a blank line between headers and body */
-  QueueMessageForSend(&conn->NetBuf, "");
-
-  if (conn->Body)
-    QueueMessageForSend(&conn->NetBuf, conn->Body);
-
-  g_string_free(text, TRUE);
+  size_t realsize = size * nmemb;
+  CurlConnection *conn = (CurlConnection *)userp;
+ 
+  conn->data = g_realloc(conn->data, conn->data_size + realsize + 1);
+  memcpy(&(conn->data[conn->data_size]), contents, realsize);
+  conn->data_size += realsize;
+  conn->data[conn->data_size] = 0;
+ 
+  return realsize;
 }
 
-static gboolean StartHttpConnect(HttpConnection *conn)
+static size_t MetaConnHeaderFunc(char *contents, size_t size, size_t nmemb,
+                                 void *userp)
 {
-  gchar *ConnectHost;
-  unsigned ConnectPort;
+  size_t realsize = size * nmemb;
+  CurlConnection *conn = (CurlConnection *)userp;
 
-  if (conn->Proxy) {
-    ConnectHost = conn->Proxy;
-    ConnectPort = conn->ProxyPort;
-  } else {
-    ConnectHost = conn->HostName;
-    ConnectPort = conn->Port;
-  }
-
-  if (!StartNetworkBufferConnect(&conn->NetBuf, conn->bindaddr, ConnectHost,
-                                 ConnectPort)) {
-    return FALSE;
-  }
-  return TRUE;
+  gchar *str = g_strchomp(g_strndup(contents, realsize));
+  g_ptr_array_add(conn->headers, (gpointer)str);
+  return realsize;
 }
 
-gboolean OpenHttpConnection(HttpConnection **connpt, gchar *HostName,
-                            unsigned Port, gchar *Proxy,
-                            unsigned ProxyPort, const gchar *bindaddr,
-                            SocksServer *socks, gchar *Method,
-                            gchar *Query, gchar *Headers, gchar *Body)
+void CurlInit(CurlConnection *conn)
 {
-  HttpConnection *conn;
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+  conn->multi = curl_multi_init();
+  conn->h = curl_easy_init();
+  conn->running = FALSE;
+  conn->Terminator = '\n';
+  conn->StripChar = '\r';
+  conn->data_size = 0;
+  conn->headers = NULL;
+  conn->timer_cb = NULL;
+  conn->socket_cb = NULL;
+}
 
-  g_assert(HostName && Method && Query && connpt);
-
-  conn = g_new0(HttpConnection, 1);
-
-  InitNetworkBuffer(&conn->NetBuf, '\n', '\r', socks);
-  conn->HostName = g_strdup(HostName);
-  if (Proxy && Proxy[0])
-    conn->Proxy = g_strdup(Proxy);
-  conn->bindaddr = g_strdup(bindaddr);
-  conn->Method = g_strdup(Method);
-  conn->Query = g_strdup(Query);
-  if (Headers && Headers[0])
-    conn->Headers = g_strdup(Headers);
-  if (Body && Body[0])
-    conn->Body = g_strdup(Body);
-  conn->Port = Port;
-  conn->ProxyPort = ProxyPort;
-  *connpt = conn;
-
-  if (StartHttpConnect(conn)) {
-    SendHttpRequest(conn);
-    return TRUE;
-  } else {
-    return FALSE;
+void CloseCurlConnection(CurlConnection *conn)
+{
+  if (conn->running) {
+    curl_multi_remove_handle(conn->multi, conn->h);
+    g_free(conn->data);
+    conn->data_size = 0;
+    conn->running = FALSE;
+    g_ptr_array_free(conn->headers, TRUE);
+    conn->headers = NULL;
   }
 }
 
-void CloseHttpConnection(HttpConnection *conn)
+void CurlCleanup(CurlConnection *conn)
 {
-  ShutdownNetworkBuffer(&conn->NetBuf);
-  g_free(conn->HostName);
-  g_free(conn->Proxy);
-  g_free(conn->bindaddr);
-  g_free(conn->Method);
-  g_free(conn->Query);
-  g_free(conn->Headers);
-  g_free(conn->Body);
-  g_free(conn->RedirHost);
-  g_free(conn->RedirQuery);
-  g_free(conn->user);
-  g_free(conn->password);
-  g_free(conn->proxyuser);
-  g_free(conn->proxypassword);
-  g_free(conn);
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+  curl_easy_cleanup(conn->h);
+  curl_multi_cleanup(conn->multi);
+  curl_global_cleanup();
 }
 
-void SetHttpAuthentication(HttpConnection *conn, gboolean proxy,
-                           gchar *user, gchar *password)
+gboolean HandleCurlMultiReturn(CurlConnection *conn, CURLMcode mres,
+                               GError **err)
 {
-  gchar **ptuser, **ptpassword;
-
-  g_assert(conn);
-  if (proxy) {
-    ptuser = &conn->proxyuser;
-    ptpassword = &conn->proxypassword;
-  } else {
-    ptuser = &conn->user;
-    ptpassword = &conn->password;
-  }
-  g_free(*ptuser);
-  g_free(*ptpassword);
-  if (user && password && user[0] && password[0]) {
-    *ptuser = g_strdup(user);
-    *ptpassword = g_strdup(password);
-  } else {
-    *ptuser = *ptpassword = NULL;
-  }
-  conn->waitinput = FALSE;
-  if (conn->Status == HS_WAITCOMPLETE) {
-    NetBufCallBack(&conn->NetBuf, TRUE);
-  }
-}
-
-void SetHttpAuthFunc(HttpConnection *conn, HCAuthFunc authfunc,
-                     gpointer data)
-{
-  g_assert(conn && authfunc);
-  conn->authfunc = authfunc;
-  conn->authdata = data;
-}
-
-static gboolean ParseHtmlLocation(gchar *uri, gchar **host, unsigned *port,
-                                  gchar **query)
-{
-  gchar *uris, *colon, *slash;
-
-  uris = g_strstrip(uri);
-  if (!uris || strlen(uris) < 7 || g_ascii_strncasecmp(uris, "http://", 7) != 0)
-    return FALSE;
-
-  uris += 7;                    /* skip to hostname */
-
-  /* ':' denotes the port to connect to */
-  colon = strchr(uris, ':');
-  if (colon && colon == uris)
-    return FALSE;               /* No hostname */
-
-  /* '/' denotes the start of the path of the HTML file */
-  slash = strchr(uris, '/');
-  if (slash && slash == uris)
-    return FALSE;               /* No hostname */
-
-  if (colon && (!slash || slash > colon)) {
-    if (slash)
-      *slash = '\0';
-    *port = atoi(colon + 1);
-    if (slash)
-      *slash = '\\';
-    if (*port == 0)
-      return FALSE;             /* Invalid port */
-    *host = g_strndup(uris, colon - uris);
-  } else {
-    *port = 80;
-    if (slash)
-      *host = g_strndup(uris, slash - uris);
-    else
-      *host = g_strdup(uris);
-  }
-
-  if (slash) {
-    *query = g_strdup(slash);
-  } else {
-    *query = g_strdup("/");
-  }
-  return TRUE;
-}
-
-static void StartHttpAuth(HttpConnection *conn, gboolean proxy,
-                          gchar *header, gboolean *doneOK)
-{
-  gchar *realm, **split;
-
-  if (!conn->authfunc)
-    return;
-
-  split = g_strsplit(header, " ", 2);
-
-  if (split[0] && split[1] && g_ascii_strncasecmp(split[0], "Basic", 5) == 0 &&
-      g_ascii_strncasecmp(split[1], "realm=", 6) == 0 && strlen(split[1]) > 6) {
-    realm = &split[1][6];
-    conn->waitinput = TRUE;
-    (*conn->authfunc) (conn, proxy, realm, conn->authdata);
-  } else {
-    *doneOK = FALSE;
-    SetError(&conn->NetBuf.error, &ETHTTP, HEC_BADAUTH, g_strdup(header));
-  }
-
-  g_strfreev(split);
-}
-
-static void ParseHtmlHeader(gchar *line, HttpConnection *conn,
-                            gboolean *doneOK)
-{
-  gchar **split, *host, *query;
-  unsigned port;
-
-  split = g_strsplit(line, " ", 2);
-  if (split[0] && split[1]) {
-    if (g_ascii_strncasecmp(split[0], "Location:", 9) == 0 &&
-        (conn->StatusCode == HEC_MOVETEMP
-         || conn->StatusCode == HEC_MOVEPERM)) {
-      if (ParseHtmlLocation(split[1], &host, &port, &query)) {
-        g_free(conn->RedirHost);
-        g_free(conn->RedirQuery);
-        conn->RedirHost = host;
-        conn->RedirQuery = query;
-        conn->RedirPort = port;
-      } else {
-        *doneOK = FALSE;
-        SetError(&conn->NetBuf.error, &ETHTTP, HEC_BADREDIR,
-                 g_strdup(line));
-      }
-    } else if (g_ascii_strncasecmp(split[0], "WWW-Authenticate:", 17) == 0 &&
-               conn->StatusCode == HEC_AUTHREQ) {
-      StartHttpAuth(conn, FALSE, split[1], doneOK);
-    } else if (g_ascii_strncasecmp(split[0], "Proxy-Authenticate:", 19) == 0 &&
-               conn->StatusCode == HEC_PROXYAUTH) {
-      /* Proxy-Authenticate is, strictly speaking, an HTTP/1.1 thing, but
-       * some HTTP/1.0 proxies seem to support it anyway */
-      StartHttpAuth(conn, TRUE, split[1], doneOK);
-    }
-  }
-  g_strfreev(split);
-}
-
-gchar *ReadHttpResponse(HttpConnection *conn, gboolean *doneOK)
-{
-  gchar *msg, **split;
-
-  msg = GetWaitingMessage(&conn->NetBuf);
-  if (msg)
-    switch (conn->Status) {
-    case HS_CONNECTING:        /* OK, we should have the HTTP status line */
-      conn->Status = HS_READHEADERS;
-      split = g_strsplit(msg, " ", 3);
-      if (split[0] && split[1]) {
-        conn->StatusCode = atoi(split[1]);
-      } else {
-        *doneOK = FALSE;
-        SetError(&conn->NetBuf.error, &ETHTTP, HEC_BADSTATUS,
-                 g_strdup(msg));
-      }
-      g_strfreev(split);
-      break;
-    case HS_READHEADERS:
-      if (msg[0] == 0)
-        conn->Status = HS_READSEPARATOR;
-      else
-        ParseHtmlHeader(msg, conn, doneOK);
-      break;
-    case HS_READSEPARATOR:
-      conn->Status = HS_READBODY;
-      break;
-    case HS_READBODY:          /* At present, we do nothing special
-                                * with the body */
-      break;
-    case HS_WAITCOMPLETE:      /* Well, we shouldn't be here at all... */
-      g_free(msg);
-      msg = NULL;
-      break;
-    }
-  return msg;
-}
-
-gboolean HandleHttpCompletion(HttpConnection *conn)
-{
-  NBCallBack CallBack;
-  gpointer CallBackData, userpasswddata;
-  NBUserPasswd userpasswd;
-  gboolean retry = FALSE;
-  LastError **error;
-
-  error = &conn->NetBuf.error;
-
-  /* If we're still waiting for authentication etc., then signal that the
-   * connection shouldn't be closed yet, and go into the "WAITCOMPLETE"
-   * state */
-  if (conn->waitinput) {
-    conn->Status = HS_WAITCOMPLETE;
+  struct CURLMsg *m;
+  if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+    CloseCurlConnection(conn);
+    g_set_error_literal(err, DOPE_CURLM_ERROR, mres, curl_multi_strerror(mres));
     return FALSE;
   }
 
-  if (conn->Tries >= 5) {
-    SetError(error, &ETHTTP, HEC_TRIESEX, NULL);
-    return TRUE;
-  }
-
-  if (conn->RedirHost) {
-    g_free(conn->HostName);
-    g_free(conn->Query);
-    conn->HostName = conn->RedirHost;
-    conn->Query = conn->RedirQuery;
-    conn->Port = conn->RedirPort;
-    conn->RedirHost = conn->RedirQuery = NULL;
-    retry = TRUE;
-  }
-  if (conn->StatusCode == HEC_AUTHREQ && conn->user && conn->password) {
-    retry = TRUE;
-  }
-  if (conn->StatusCode == HEC_PROXYAUTH && conn->proxyuser &&
-      conn->proxypassword) {
-    retry = TRUE;
-  }
-
-  if (retry) {
-    CallBack = conn->NetBuf.CallBack;
-    userpasswd = conn->NetBuf.userpasswd;
-    userpasswddata = conn->NetBuf.userpasswddata;
-    CallBackData = conn->NetBuf.CallBackData;
-    ShutdownNetworkBuffer(&conn->NetBuf);
-    if (StartHttpConnect(conn)) {
-      SendHttpRequest(conn);
-      SetNetworkBufferCallBack(&conn->NetBuf, CallBack, CallBackData);
-      SetNetworkBufferUserPasswdFunc(&conn->NetBuf,
-                                     userpasswd, userpasswddata);
+  do {
+    int msgq = 0;
+    m = curl_multi_info_read(conn->multi, &msgq);
+    if (m && m->msg == CURLMSG_DONE && m->data.result != CURLE_OK) {
+      CloseCurlConnection(conn);
+      g_set_error_literal(err, DOPE_CURL_ERROR, m->data.result,
+                          curl_easy_strerror(m->data.result));
       return FALSE;
     }
-  } else if (conn->StatusCode >= 300) {
-    SetError(error, &ETHTTP, conn->StatusCode, NULL);
+  } while(m);
+  
+  return TRUE;
+}
+
+gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
+                               GError **err)
+{
+  CURLMcode mres = curl_multi_perform(conn->multi, still_running);
+  return HandleCurlMultiReturn(conn, mres, err);
+}
+
+gboolean CurlConnectionSocketAction(CurlConnection *conn, curl_socket_t fd,
+                                    int action, int *still_running,
+                                    GError **err)
+{
+  CURLMcode mres = curl_multi_socket_action(conn->multi, fd, action,
+                                            still_running);
+  return HandleCurlMultiReturn(conn, mres, err);
+}
+
+GQuark dope_curl_error_quark(void)
+{
+  return g_quark_from_static_string("dope-curl-error-quark");
+}
+
+GQuark dope_curlm_error_quark(void)
+{
+  return g_quark_from_static_string("dope-curlm-error-quark");
+}
+
+gboolean CurlEasySetopt1(CURL *curl, CURLoption option, void *arg, GError **err)
+{
+  CURLcode res = curl_easy_setopt(curl, option, arg);
+  if (res == CURLE_OK) {
+    return TRUE;
+  } else {
+    g_set_error_literal(err, DOPE_CURL_ERROR, res, curl_easy_strerror(res));
+    return FALSE;
+  }
+}
+
+#ifdef CYGWIN
+/* Set the path to TLS CA certificates. Without this, curl connections
+   to the metaserver may fail on Windows as it cannot verify the
+   certificate.
+ */
+static gboolean SetCaInfo(CurlConnection *conn, GError **err)
+{
+  gchar *bindir, *cainfo;
+  gboolean ret;
+
+  /* Point to a .crt file in the same directory as dopewars.exe */
+  bindir = GetBinaryDir();
+  cainfo = g_strdup_printf("%s\\ca-bundle.crt", bindir);
+  g_free(bindir);
+
+  ret = CurlEasySetopt1(conn->h, CURLOPT_CAINFO, cainfo, err);
+  g_free(cainfo);
+  return ret;
+}
+#endif
+
+gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
+                            GError **err)
+{
+  /* If the previous connect hung for so long that it's still active, then
+   * break the connection before we start a new one */
+  if (conn->running) {
+    CloseCurlConnection(conn);
+  }
+
+  if (conn->h) {
+    int still_running;
+    CURLMcode mres;
+    if (body && !CurlEasySetopt1(conn->h, CURLOPT_COPYPOSTFIELDS, body, err)) {
+      return FALSE;
+    }
+
+    if (!CurlEasySetopt1(conn->h, CURLOPT_URL, URL, err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_WRITEFUNCTION, MetaConnWriteFunc,
+                            err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_WRITEDATA, conn, err)
+        || !CurlEasySetopt1(conn->h, CURLOPT_HEADERFUNCTION,
+                            MetaConnHeaderFunc, err)
+#ifdef CYGWIN
+        || !SetCaInfo(conn, err)
+#endif
+        || !CurlEasySetopt1(conn->h, CURLOPT_HEADERDATA, conn, err)) {
+      return FALSE;
+    }
+
+    mres = curl_multi_add_handle(conn->multi, conn->h);
+    if (mres != CURLM_OK && mres != CURLM_CALL_MULTI_PERFORM) {
+      g_set_error_literal(err, DOPE_CURLM_ERROR, mres,
+                          curl_multi_strerror(mres));
+      return FALSE;
+    }
+    conn->data = g_malloc(1);
+    conn->data_size = 0;
+    conn->headers = g_ptr_array_new_with_free_func(g_free);
+    conn->running = TRUE;
+    if (conn->timer_cb) {
+      /* If we set a callback, we must not do _perform, but wait for the cb */
+      return TRUE;
+    } else {
+      return CurlConnectionPerform(conn, &still_running, err);
+    }
+  } else {
+    g_set_error_literal(err, DOPE_CURLM_ERROR, 0, _("Could not init curl"));
+    return FALSE;
   }
   return TRUE;
 }
 
-gboolean IsHttpError(HttpConnection *conn)
+char *CurlNextLine(CurlConnection *conn, char *ch)
 {
-  return (conn->NetBuf.error != NULL);
+  char *sep_pt;
+  if (!ch) return NULL;
+  sep_pt = strchr(ch, conn->Terminator);
+  if (sep_pt) {
+    *sep_pt = '\0';
+    if (sep_pt > ch && sep_pt[-1] == conn->StripChar) {
+      sep_pt[-1] = '\0';
+    }
+    sep_pt++;
+  }
+  return sep_pt;
+}
+
+/* Information associated with a specific socket */
+typedef struct _SockData {
+  GIOChannel *ch;
+  guint ev;
+} SockData;
+
+static int timer_function(CURLM *multi, long timeout_ms, void *userp)
+{
+  CurlConnection *g = userp;
+
+  if (g->timer_event) {
+    dp_g_source_remove(g->timer_event);
+    g->timer_event = 0;
+  }
+
+  /* -1 means we should just delete our timer. */
+  if (timeout_ms >= 0) {
+    g->timer_event = dp_g_timeout_add(timeout_ms, g->timer_cb, g);
+  }
+  return 0;
+}
+
+/* Clean up the SockData structure */
+static void remsock(SockData *f)
+{
+  if (!f) {
+    return;
+  }
+  if (f->ev) {
+    dp_g_source_remove(f->ev);
+  }
+  g_io_channel_unref(f->ch);
+  g_free(f);
+}
+
+/* Assign information to a SockData structure */
+static void setsock(SockData *f, curl_socket_t s, CURL *e, int act,
+                    CurlConnection *g)
+{
+  GIOCondition kind =
+    ((act & CURL_POLL_IN) ? G_IO_IN : 0) |
+    ((act & CURL_POLL_OUT) ? G_IO_OUT : 0);
+
+  if (f->ev) {
+    dp_g_source_remove(f->ev);
+  }
+  f->ev = dp_g_io_add_watch(f->ch, kind, g->socket_cb, g);
+}
+
+/* Initialize a new SockData structure */
+static void addsock(curl_socket_t s, CURL *easy, int action, CurlConnection *g)
+{
+  SockData *fdp = g_malloc0(sizeof(SockData));
+
+#ifdef CYGIN
+  fdp->ch = g_io_channel_win32_new_socket(s);
+#else
+  fdp->ch = g_io_channel_unix_new(s);
+#endif
+  setsock(fdp, s, easy, action, g);
+  curl_multi_assign(g->multi, s, fdp);
+}
+
+static int socket_function(CURL *easy, curl_socket_t s, int  what, void *userp,
+                           void *socketp)
+{
+  CurlConnection *g = userp;
+  SockData *fdp = socketp;
+  if (what == CURL_POLL_REMOVE) {
+    remsock(fdp);
+  } else if (!fdp) {
+    addsock(s, easy, what, g);
+  } else {
+    setsock(fdp, s, easy, what, g);
+  }
+  return 0;
+}
+
+void SetCurlCallback(CurlConnection *conn, GSourceFunc timer_cb,
+                     GIOFunc socket_cb)
+{
+  conn->timer_event = 0;
+  conn->timer_cb = timer_cb;
+  conn->socket_cb = socket_cb;
+
+  curl_multi_setopt(conn->multi, CURLMOPT_TIMERFUNCTION, timer_function);
+  curl_multi_setopt(conn->multi, CURLMOPT_TIMERDATA, conn);
+  curl_multi_setopt(conn->multi, CURLMOPT_SOCKETFUNCTION, socket_function);
+  curl_multi_setopt(conn->multi, CURLMOPT_SOCKETDATA, conn);
 }
 
 int CreateTCPSocket(LastError **error)

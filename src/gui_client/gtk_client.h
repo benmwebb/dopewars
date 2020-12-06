@@ -1,8 +1,8 @@
 /************************************************************************
  * gtk_client.h   dopewars client using the GTK+ toolkit                *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -43,6 +43,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
 void GuiStartGame(void);
 GtkWidget *my_hbbox_new(void);
+void my_gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child);
 void my_set_dialog_position(GtkWindow *dialog);
 
 #endif

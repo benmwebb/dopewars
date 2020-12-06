@@ -34,8 +34,7 @@ version</a></li>
 "Native Language Support" is compiled in; binary installations should be
 already set up for i18n. When compiling dopewars from source code, the
 <tt>configure</tt> script should detect whether your system can support
-GNU gettext. If it can, but the gettext utilities themselves are not present,
-an included copy in the <tt>intl/</tt> subdirectory is used. To disable i18n,
+GNU gettext. To disable i18n,
 pass the <tt>--disable-nls</tt> option to the <tt>configure</tt> script.</p>
 
 <p>When you run your installed copy of dopewars, it should detect your "locale"
@@ -66,15 +65,18 @@ They are simple text files, consisting of lists of the original English string
 (labelled by "msgid") followed by the translated string (labelled by
 "msgstr").</p>
 
-<p>Adding a new translation is simply a matter of copying the reference file
-<tt>dopewars.pot</tt> to your language-specific <tt>.po</tt> file in the
-<tt>po/</tt> directory, and filling in the "msgstr" entries. Once this is done,
-edit the <tt>configure.in</tt> file in the top dopewars directory to add your
+<p>To add a new translation, first
+<a href="installation.html">install dopewars from source code</a>. This will
+generate the reference file <tt>dopewars.pot</tt> in the <tt>po</tt>
+subdirectory. Then, copy <tt>dopewars.pot</tt> to your language-specific
+<tt>.po</tt> file in the
+<tt>po/</tt> directory, and fill in the "msgstr" entries. Once this is done,
+edit the <tt>configure.ac</tt> file in the top dopewars directory to add your
 language code to the <tt>ALL_LINGUAS</tt> variable. Then run <tt>autoconf</tt>
 to rebuild the <tt>configure</tt> script, before making and installing dopewars
 as usual. The new translation should now be available. Once this is complete,
-please <a href="mailto:benwebb@users.sf.net">send</a> the translation to
-be included in the next dopewars version.</p>
+please <a href="https://github.com/benmwebb/dopewars/pulls">open a pull
+request</a> to have the translation included in the next dopewars version.</p>
 
 <p>Please note that some strings are <b>format strings</b> containing the %
 character. These are used in the program code for substituting numbers and
@@ -226,7 +228,7 @@ contributed to the main dopewars distribution!</p>
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>11-05-2006</b><br />
+  Last update: <b>05-12-2020</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 

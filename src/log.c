@@ -1,8 +1,8 @@
 /************************************************************************
  * log.c          dopewars - logging functions                          *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -96,7 +96,7 @@ GString *GetLogString(GLogLevelFlags log_level, const gchar *message)
         g_string_free(text, TRUE);
         return NULL;
       }
-      g_string_sprintfa(text, "%d: ", i);
+      g_string_append_printf(text, "%d: ", i);
     }
   g_string_append(text, message);
   return text;

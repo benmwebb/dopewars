@@ -2,7 +2,7 @@
  * optdialog.c    Configuration file editing dialog                     *
  * Copyright (C)  2002-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -66,15 +66,11 @@ static void UpdateAllLists(void)
   GSList *listpt;
 
   for (listpt = clists; listpt; listpt = g_slist_next(listpt)) {
-    GtkCList *clist = GTK_CLIST(listpt->data);
-
-    if (clist->selection) {
-      int row = GPOINTER_TO_INT(clist->selection->data);
-
-      if (row >= 0) {
-        gtk_clist_unselect_row(clist, row, 0);
-      }
-    }
+    GtkTreeView *tv = GTK_TREE_VIEW(listpt->data);
+    GtkTreeSelection *treesel = gtk_tree_view_get_selection(tv);
+    /* Force unselection, which should trigger *_sel_changed function to
+       copy widget data into configuration */
+    gtk_tree_selection_unselect_all(treesel);
   }
 }
 
@@ -256,7 +252,7 @@ static GtkWidget *NewConfigEntry(gchar *name)
       spin_adj = (GtkAdjustment *)gtk_adjustment_new(*gvar->IntVal,
                                                      gvar->MinVal,
                                                      gvar->MaxVal,
-                                                     1.0, 10.0, 10.0);
+                                                     1.0, 10.0, 0.0);
       entry = gtk_spin_button_new(spin_adj, 1.0, 0);
     } else {
       tmpstr = g_strdup_printf("%d", *gvar->IntVal);
@@ -288,7 +284,8 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     GtkWidget *check;
 
     check = gtk_check_button_new_with_label(_(member->label));
-    gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 2, row, row + 1);
+    gtk_table_attach(GTK_TABLE(table), check, 0, 2, row, row + 1,
+                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
     AddConfigWidget(check, ind);
   } else {
     GtkWidget *label, *entry;
@@ -299,22 +296,30 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
       GtkAdjustment *spin_adj = (GtkAdjustment *)
           gtk_adjustment_new(gvar->MinVal, gvar->MinVal, gvar->MaxVal,
-                             1.0, 10.0, 10.0);
+                             1.0, 10.0, 0.0);
       entry = gtk_spin_button_new(spin_adj, 1.0, 0);
     } else {
       entry = gtk_entry_new();
     }
-    gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
+    gtk_table_attach(GTK_TABLE(table), entry, 1, 2, row, row + 1,
+                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
     AddConfigWidget(entry, ind);
   }
 }
 
-static void swap_rows(GtkCList *clist, gint selrow, gint swaprow,
+static void swap_rows(GtkTreeView *tv, gint selrow, gint swaprow,
                       gchar *structname)
 {
   GSList *listpt;
+  GtkTreeIter seliter, swapiter;
+  GtkTreeModel *model = gtk_tree_view_get_model(tv);
+  GtkTreeSelection *treesel = gtk_tree_view_get_selection(tv);
 
-  gtk_clist_unselect_row(clist, selrow, 0);
+  g_assert(gtk_tree_model_iter_nth_child(model, &seliter, NULL, selrow));
+  g_assert(gtk_tree_model_iter_nth_child(model, &swapiter, NULL, swaprow));
+
+  gtk_tree_selection_unselect_iter(treesel, &seliter);
+  gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &swapiter);
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
@@ -327,31 +332,57 @@ static void swap_rows(GtkCList *clist, gint selrow, gint swaprow,
 
       cwid->data[selrow] = cwid->data[swaprow];
       cwid->data[swaprow] = tmp;
-      if (strcmp(gvar->Name, "Name") == 0) {
-        gtk_clist_set_text(clist, selrow, 0, cwid->data[selrow]);
-        gtk_clist_set_text(clist, swaprow, 0, cwid->data[swaprow]);
-      }
     }
   }
 
-  gtk_clist_select_row(clist, swaprow, 0);
+  gtk_tree_selection_select_iter(treesel, &seliter);
+}
+
+/* Return the index of the currently selected row, or -1 if none is selected.
+   This works only for lists (not trees) with GTK_SELECTION_SINGLE mode */
+static int get_tree_selection_row_index(GtkTreeSelection *treesel,
+                                        GtkTreeModel **model)
+{
+  int row = -1;
+  GList *selrows = gtk_tree_selection_get_selected_rows(treesel, model);
+  if (selrows) {
+    GtkTreePath *path = selrows->data;
+    gint depth;
+    gint *inds = gtk_tree_path_get_indices_with_depth(path, &depth);
+    g_assert(selrows->next == NULL);
+    g_assert(depth == 1);
+    row = inds[0];
+  }
+  g_list_free_full(selrows, (GDestroyNotify)gtk_tree_path_free);
+  return row;
 }
 
 static void list_delete(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
-  int minlistlength;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  int minlistlength, nrows, row;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
-  g_assert(clist);
-  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
-                                                      "minlistlength"));
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, &model);
 
-  if (clist->rows > minlistlength && clist->selection) {
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model),
+                                                    "minlistlength"));
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
+
+  if (nrows > minlistlength && row >= 0) {
+    GtkTreeIter iter;
     GSList *listpt;
-    int row = GPOINTER_TO_INT(clist->selection->data);
+    gboolean valid;
+    /* Prevent selection changed from reading deleted entry */
+    g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(-1));
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, row));
+    gtk_tree_selection_unselect_iter(treesel, &iter);
+    valid = gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
 
-    gtk_clist_remove(clist, row);
     for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
       struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
       struct GLOBALS *gvar;
@@ -368,21 +399,31 @@ static void list_delete(GtkWidget *widget, gchar *structname)
         cwid->data = g_realloc(cwid->data, sizeof(gchar *) * cwid->maxindex);
       }
     }
+    if (valid) {
+      gtk_tree_selection_select_iter(treesel, &iter);
+    }
   }
 }
 
 static void list_new(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkListStore *store;
+  GtkTreeSelection *treesel;
+  GtkTreeIter iter;
   int row;
   GSList *listpt;
-  gchar *text[3];
+  gchar *newname;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(tv));
 
-  text[0] = g_strdup_printf(_("New %s"), structname);
-  row = gtk_clist_append(clist, text);
+  newname = g_strdup_printf(_("New %s"), structname);
+  gtk_list_store_append(store, &iter);
+  gtk_list_store_set(store, &iter, 0, newname, -1);
+  row = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(store), NULL) - 1;
 
   for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
     struct ConfigWidget *cwid = (struct ConfigWidget *)listpt->data;
@@ -394,160 +435,165 @@ static void list_new(GtkWidget *widget, gchar *structname)
       g_assert(cwid->maxindex == row + 1);
       cwid->data = g_realloc(cwid->data, sizeof(gchar *) * cwid->maxindex);
       if (strcmp(gvar->Name, "Name") == 0) {
-        cwid->data[row] = g_strdup(text[0]);
+        cwid->data[row] = g_strdup(newname);
       } else {
         cwid->data[row] = g_strdup("");
       }
     }
   }
-  g_free(text[0]);
+  g_free(newname);
 
-  gtk_clist_select_row(clist, row, 0);
+  gtk_tree_selection_select_iter(treesel, &iter);
 }
 
 static void list_up(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  int row;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, NULL);
 
-  if (clist->selection) {
-    int row = GPOINTER_TO_INT(clist->selection->data);
-
-    if (row > 0) {
-      swap_rows(clist, row, row - 1, structname);
-    }
+  if (row > 0) {
+    swap_rows(tv, row, row - 1, structname);
   }
 }
 
 static void list_down(GtkWidget *widget, gchar *structname)
 {
-  GtkCList *clist;
+  GtkTreeView *tv;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  int row, nrows;
 
-  clist = GTK_CLIST(gtk_object_get_data(GTK_OBJECT(widget), "clist"));
-  g_assert(clist);
+  tv = GTK_TREE_VIEW(g_object_get_data(G_OBJECT(widget), "treeview"));
+  g_assert(tv);
+  treesel = gtk_tree_view_get_selection(tv);
+  row = get_tree_selection_row_index(treesel, &model);
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
 
-  if (clist->selection) {
-    int row = GPOINTER_TO_INT(clist->selection->data);
-    int numrows = clist->rows;
-
-    if (row < numrows - 1 && row >= 0) {
-      swap_rows(clist, row, row + 1, structname);
-    }
+  if (row < nrows - 1 && row >= 0) {
+    swap_rows(tv, row, row + 1, structname);
   }
 }
 
-static void list_row_select(GtkCList *clist, gint row, gint column,
-                            GdkEvent *event, gchar *structname)
+static void list_sel_changed(GtkTreeSelection *treesel, gpointer data)
 {
-  GSList *listpt;
+  GtkTreeModel *model;
   GtkWidget *delbut, *upbut, *downbut;
-  int minlistlength;
+  int minlistlength, nrows, row, oldsel;
+  GSList *listpt;
+  gchar *structname = data;
 
-  minlistlength = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(clist),
-                                                      "minlistlength"));
-  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
+  row = get_tree_selection_row_index(treesel, &model);
+  nrows = gtk_tree_model_iter_n_children(model, NULL);
+
+  delbut  = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "delete"));
+  upbut   = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "up"));
+  downbut = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "down"));
+  oldsel = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "oldsel"));
   g_assert(delbut && upbut && downbut);
-  gtk_widget_set_sensitive(delbut, clist->rows > minlistlength);
+  minlistlength = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model),
+                                                    "minlistlength"));
+
+  gtk_widget_set_sensitive(delbut, nrows > minlistlength);
   gtk_widget_set_sensitive(upbut, row > 0);
-  gtk_widget_set_sensitive(downbut, row < clist->rows - 1);
+  gtk_widget_set_sensitive(downbut, row < nrows - 1);
 
-  for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
-    struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
-    struct GLOBALS *gvar;
+  /* Store any edited data from old-selected row */
+  if (oldsel >= 0) {
+    for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
+      struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
+      struct GLOBALS *gvar;
 
-    gvar = &Globals[conf->globind];
+      gvar = &Globals[conf->globind];
 
-    if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
-      if (gvar->BoolVal) {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(conf->widget),
-                                     conf->data[row] != NULL);
-      } else {
-        gtk_entry_set_text(GTK_ENTRY(conf->widget), conf->data[row]);
-      }
-    }
-  }
-}
+      if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
+        g_free(conf->data[oldsel]);
+        conf->data[oldsel] = NULL;
 
-static void list_row_unselect(GtkCList *clist, gint row, gint column,
-                              GdkEvent *event, gchar *structname)
-{
-  GSList *listpt;
-  GtkWidget *delbut, *upbut, *downbut;
-
-  delbut  = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "delete"));
-  upbut   = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "up"));
-  downbut = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "down"));
-  g_assert(delbut && upbut && downbut);
-  gtk_widget_set_sensitive(delbut, FALSE);
-  gtk_widget_set_sensitive(upbut, FALSE);
-  gtk_widget_set_sensitive(downbut, FALSE);
-
-
-  for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
-    struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
-    struct GLOBALS *gvar;
-
-    gvar = &Globals[conf->globind];
-
-    if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
-      g_free(conf->data[row]);
-      conf->data[row] = NULL;
-
-      if (gvar->BoolVal) {
-        if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(conf->widget))) {
-          conf->data[row] = g_strdup("1");
+        if (gvar->BoolVal) {
+          if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(conf->widget))) {
+            conf->data[oldsel] = g_strdup("1");
+          }
+        } else {
+          conf->data[oldsel] = gtk_editable_get_chars(
+                                         GTK_EDITABLE(conf->widget), 0, -1);
+          gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
         }
-      } else {
-        conf->data[row] = gtk_editable_get_chars(GTK_EDITABLE(conf->widget),
-                                                 0, -1);
-        gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
+        if (strcmp(gvar->Name, "Name") == 0) {
+          GtkTreeIter ositer;
+	  g_assert(gtk_tree_model_iter_nth_child(model, &ositer, NULL, oldsel));
+	  gtk_list_store_set(GTK_LIST_STORE(model), &ositer, 0,
+                             conf->data[oldsel], -1);
+        }
       }
-      if (strcmp(gvar->Name, "Name") == 0) {
-        gtk_clist_set_text(clist, row, 0, conf->data[row]);
+    }
+  }
+  g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(row));
+
+  /* Update widgets with selected row */
+  if (row >= 0) {
+    for (listpt = configlist; listpt; listpt = g_slist_next(listpt)) {
+      struct ConfigWidget *conf = (struct ConfigWidget *)listpt->data;
+      struct GLOBALS *gvar;
+
+      gvar = &Globals[conf->globind];
+
+      if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
+        if (gvar->BoolVal) {
+          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(conf->widget),
+                                       conf->data[row] != NULL);
+        } else {
+          gtk_entry_set_text(GTK_ENTRY(conf->widget), conf->data[row]);
+	}
       }
     }
   }
 }
 
-static void sound_row_select(GtkCList *clist, gint row, gint column,
-                             GdkEvent *event, gpointer data)
+static void sound_sel_changed(GtkTreeSelection *treesel, gpointer data)
 {
+  GtkTreeModel *model;
+  GtkTreeIter iter;
   GtkWidget *entry;
-  int globind;
-  gchar **text;
+  int row, oldsel, globind;
 
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
-  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
-  g_assert(globind >=0 && globind < NUMGLOB);
+  row = get_tree_selection_row_index(treesel, &model);
+  oldsel = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "oldsel"));
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(model), "entry"));
 
-  text = GetGlobalString(globind, 0);
-  gtk_entry_set_text(GTK_ENTRY(entry), *text);
-}
+  /* Store any edited data from old-selected row */
+  if (oldsel >= 0) {
+    gchar *text, **oldtext;
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, oldsel));
+    gtk_tree_model_get(model, &iter, 2, &globind, -1);
+    g_assert(globind >=0 && globind < NUMGLOB);
 
-static void sound_row_unselect(GtkCList *clist, gint row, gint column,
-                               GdkEvent *event, gpointer data)
-{
-  GtkWidget *entry;
-  int globind;
-  gchar *text, **oldtext;
-
-  entry = GTK_WIDGET(gtk_object_get_data(GTK_OBJECT(clist), "entry"));
-  globind = GPOINTER_TO_INT(gtk_clist_get_row_data(clist, row));
-  g_assert(globind >=0 && globind < NUMGLOB);
-
-  text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
-  oldtext = GetGlobalString(globind, 0);
-  g_assert(text && oldtext);
-  if (strcmp(text, *oldtext) != 0) {
-    AssignName(GetGlobalString(globind, 0), text);
-    Globals[globind].Modified = TRUE;
+    text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
+    oldtext = GetGlobalString(globind, 0);
+    g_assert(text && oldtext);
+    if (strcmp(text, *oldtext) != 0) {
+      AssignName(GetGlobalString(globind, 0), text);
+      Globals[globind].Modified = TRUE;
+    }
+    gtk_entry_set_text(GTK_ENTRY(entry), "");
+    g_free(text);
   }
-  gtk_entry_set_text(GTK_ENTRY(entry), "");
-  g_free(text);
+
+  g_object_set_data(G_OBJECT(model), "oldsel", GINT_TO_POINTER(row));
+  /* Update new selection */
+  if (row >= 0) {
+    gchar **text;
+    g_assert(gtk_tree_model_iter_nth_child(model, &iter, NULL, row));
+    gtk_tree_model_get(model, &iter, 2, &globind, -1);
+    g_assert(globind >=0 && globind < NUMGLOB);
+    text = GetGlobalString(globind, 0);
+    gtk_entry_set_text(GTK_ENTRY(entry), *text);
+  }
 }
 
 static void BrowseSound(GtkWidget *entry)
@@ -583,8 +629,8 @@ static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
   GtkToggleButton *unicode_check;
 
   SaveConfigWidgets();
-  unicode_check = GTK_TOGGLE_BUTTON(gtk_object_get_data(GTK_OBJECT(dialog),
-                                                        "unicode_check"));
+  unicode_check = GTK_TOGGLE_BUTTON(g_object_get_data(G_OBJECT(dialog),
+                                                      "unicode_check"));
   UpdateConfigFile(NULL, gtk_toggle_button_get_active(unicode_check));
   gtk_widget_destroy(dialog);
 }
@@ -594,7 +640,7 @@ static gchar *GetHelpPage(const gchar *pagename)
   gchar *root, *file;
 
   root = GetDocRoot();
-  file = g_strdup_printf("%shelp%c%s.html", root, G_DIR_SEPARATOR, pagename);
+  file = g_strdup_printf("%shelp/%s.html", root, pagename);
   g_free(root);
   return file;
 }
@@ -608,7 +654,7 @@ static void HelpCallback(GtkWidget *widget, GtkWidget *notebook)
   gchar *help;
 
   help = GetHelpPage(pagehelp[page]);
-  DisplayHTML(widget, WebBrowser, help);
+  DisplayHTML(widget, OurWebBrowser, help);
   g_free(help);
 }
 
@@ -622,10 +668,14 @@ static void FinishOptDialog(GtkWidget *widget, gpointer data)
 
 static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 {
-  GtkWidget *hbox, *vbox, *hbbox, *clist, *scrollwin, *button, *table;
-  gchar *titles[3];
+  GtkWidget *hbox, *vbox, *hbbox, *tv, *scrollwin, *button, *table;
+  GtkTreeSelection *treesel;
+  GtkListStore *store;
+  GtkCellRenderer *renderer;
+  GtkTreeIter iter;
+
   int ind, minlistlength = 0;
-  gint i, row, nummembers;
+  gint i, nummembers;
   struct GLOBALS *gvar;
   struct ConfigMembers namemember = { N_("Name"), "Name" };
 
@@ -646,61 +696,68 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
     nummembers++;
   }
 
-  hbox = gtk_hbox_new(FALSE, 10);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
 
-  vbox = gtk_vbox_new(FALSE, 5);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-  titles[0] = structname;
-  clist = gtk_scrolled_clist_new_with_titles(1, titles, &scrollwin);
+  tv = gtk_scrolled_tree_view_new(&scrollwin);
+  store = gtk_list_store_new(1, G_TYPE_STRING);
+  gtk_tree_view_set_model(GTK_TREE_VIEW(tv), GTK_TREE_MODEL(store));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, structname, renderer, "text", 0, NULL);
+  g_object_unref(store);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), FALSE);
 
-  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(list_row_select), structname);
-  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(list_row_unselect), structname);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  gtk_clist_set_auto_sort(GTK_CLIST(clist), FALSE);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
+  g_signal_connect(G_OBJECT(treesel), "changed", G_CALLBACK(list_sel_changed),
+                   structname);
+  gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
+  gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(store),
+	  GTK_TREE_SORTABLE_UNSORTED_SORT_COLUMN_ID, GTK_SORT_ASCENDING);
 
-  clists = g_slist_append(clists, clist);
+  clists = g_slist_append(clists, tv);
 
   for (i = 1; i <= *gvar->MaxIndex; i++) {
-    titles[0] = *GetGlobalString(ind, i);
-    row = gtk_clist_append(GTK_CLIST(clist), titles);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, *GetGlobalString(ind, i), -1);
   }
   gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
 
-  hbbox = gtk_hbox_new(TRUE, 5);
+  hbbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+  gtk_box_set_homogeneous(GTK_BOX(hbbox), TRUE);
+  g_object_set_data(G_OBJECT(store), "oldsel", GINT_TO_POINTER(-1));
 
   button = gtk_button_new_with_label(_("New"));
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_new), structname);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(list_new), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Delete"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "delete", button);
-  gtk_object_set_data(GTK_OBJECT(clist), "minlistlength",
-                      GINT_TO_POINTER(minlistlength));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_delete), structname);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "delete", button);
+  g_object_set_data(G_OBJECT(store), "minlistlength",
+                    GINT_TO_POINTER(minlistlength));
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(list_delete), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Up"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "up", button);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_up), structname);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "up", button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(list_up), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Down"));
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_object_set_data(GTK_OBJECT(button), "clist", clist);
-  gtk_object_set_data(GTK_OBJECT(clist), "down", button);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(list_down), structname);
+  g_object_set_data(G_OBJECT(button), "treeview", tv);
+  g_object_set_data(G_OBJECT(store), "down", button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(list_down), structname);
   gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
@@ -720,34 +777,40 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   return hbox;
 }
 
-static void FillSoundsList(GtkCList *clist)
+static void FillSoundsList(GtkTreeView *tv)
 {
-  gchar *rowtext[2];
-  gint i, row;
+  GtkListStore *store;
+  GtkTreeIter iter;
+  gint i;
 
-  gtk_clist_freeze(clist);
-  gtk_clist_clear(clist);
+  /* Don't update the widget until we're done */
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(tv));
+  g_object_ref(store);
+  gtk_tree_view_set_model(tv, NULL);
+
+  gtk_list_store_clear(store);
   for (i = 0; i < NUMGLOB; i++) {
     if (strlen(Globals[i].Name) > 7
 	&& strncmp(Globals[i].Name, "Sounds.", 7) == 0) {
-      rowtext[0] = &Globals[i].Name[7];
-      rowtext[1] = _(Globals[i].Help);
-      row = gtk_clist_append(clist, rowtext);
-      gtk_clist_set_row_data(clist, row, GINT_TO_POINTER(i));
+      gtk_list_store_append(store, &iter);
+      gtk_list_store_set(store, &iter, 0, &Globals[i].Name[7],
+                         1, _(Globals[i].Help), 2, i, -1);
     }
   }
 
-  gtk_clist_thaw(clist);
+  gtk_tree_view_set_model(tv, GTK_TREE_MODEL(store));
 }
 
 void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
-  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *clist;
+  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *tv;
   GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
   gchar *sound_titles[2];
-  int width;
+  GtkCellRenderer *renderer;
+  GtkListStore *store;
+  GtkTreeSelection *treesel;
 
   struct ConfigMembers locmembers[] = {
     { N_("Police presence"), "PolicePresence" },
@@ -791,7 +854,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_window_set_transient_for(GTK_WINDOW(dialog),
                                GTK_WINDOW(MainWindow));
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   notebook = gtk_notebook_new();
 
@@ -805,7 +868,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   check = gtk_check_button_new_with_label(_("Unicode config file"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
   gtk_table_attach_defaults(GTK_TABLE(table), check, 1, 3, 0, 1);
-  gtk_object_set_data(GTK_OBJECT(dialog), "unicode_check", check);
+  g_object_set_data(G_OBJECT(dialog), "unicode_check", check);
 
   label = gtk_label_new(_("Game length (turns)"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
@@ -863,13 +926,13 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Locations"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
-  vbox2 = gtk_vbox_new(FALSE, 8);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
 
   hbox = CreateList("Drug", drugmembers);
   gtk_box_pack_start(GTK_BOX(vbox2), hbox, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox2), hsep, FALSE, FALSE, 0);
 
   table = gtk_table_new(2, 2, FALSE);
@@ -901,99 +964,93 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Cops"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
+#ifdef NETWORKING
   table = gtk_table_new(6, 4, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 5);
   gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
   check = NewConfigCheck("MetaServer.Active",
                          _("Server reports to metaserver"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 2, 0, 1);
+  gtk_table_attach(GTK_TABLE(table), check, 0, 2, 0, 1,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
 #ifdef CYGWIN
   check = NewConfigCheck("MinToSysTray", _("Minimize to System Tray"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 2, 4, 0, 1);
+  gtk_table_attach(GTK_TABLE(table), check, 2, 4, 0, 1,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 #endif
 
-  label = gtk_label_new(_("Metaserver hostname"));
+  label = gtk_label_new(_("Metaserver URL"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Name");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
-
-  label = gtk_label_new(_("Port"));
-  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Port");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 1, 2);
-
-  label = gtk_label_new(_("Web proxy hostname"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.ProxyName");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
-
-  label = gtk_label_new(_("Port"));
-  gtk_table_attach(GTK_TABLE(table), label, 2, 3, 2, 3,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.ProxyPort");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 3, 4, 2, 3);
-
-  label = gtk_label_new(_("Script path"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
-  entry = NewConfigEntry("MetaServer.Path");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 3, 4);
+  entry = NewConfigEntry("MetaServer.URL");
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 1, 2,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   label = gtk_label_new(_("Comment"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("MetaServer.Comment");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 4, 5);
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 4, 5,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   label = gtk_label_new(_("MOTD (welcome message)"));
   gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
                    GTK_SHRINK, GTK_SHRINK, 0, 0);
   entry = NewConfigEntry("ServerMOTD");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 4, 5, 6);
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 5, 6,
+                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
 
   gtk_container_set_border_width(GTK_CONTAINER(table), 7);
   label = gtk_label_new(_("Server"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+#endif
 
-  vbox2 = gtk_vbox_new(FALSE, 5);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 7);
 
   sound_titles[0] = _("Sound name");
   sound_titles[1] = _("Description");
-  clist = gtk_scrolled_clist_new_with_titles(2, sound_titles, &scrollwin);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  FillSoundsList(GTK_CLIST(clist));
-  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(sound_row_select), NULL);
-  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(sound_row_unselect), NULL);
+  tv = gtk_scrolled_tree_view_new(&scrollwin);
+  store = gtk_list_store_new(3, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
+  g_object_set_data(G_OBJECT(store), "oldsel", GINT_TO_POINTER(-1));
+  gtk_tree_view_set_model(GTK_TREE_VIEW(tv), GTK_TREE_MODEL(store));
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, sound_titles[0], renderer,
+	       "text", 0, NULL);
+  gtk_tree_view_insert_column_with_attributes(
+               GTK_TREE_VIEW(tv), -1, sound_titles[1], renderer,
+	       "text", 1, NULL);
+  g_object_unref(store);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), FALSE);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(tv));
+  gtk_tree_selection_set_mode(treesel, GTK_SELECTION_SINGLE);
 
-  clists = g_slist_append(clists, clist);
+  FillSoundsList(GTK_TREE_VIEW(tv));
+  g_signal_connect(G_OBJECT(treesel), "changed",
+                   G_CALLBACK(sound_sel_changed), NULL);
+
+  clists = g_slist_append(clists, tv);
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
-  hbox = gtk_hbox_new(FALSE, 5);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
   label = gtk_label_new(_("Sound file"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(clist), "entry", entry);
+  g_object_set_data(G_OBJECT(store), "entry", entry);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   button = gtk_button_new_with_label(_("Browse..."));
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(BrowseSound), GTK_OBJECT(entry));
+  g_signal_connect_swapped(G_OBJECT(button), "clicked",
+                           G_CALLBACK(BrowseSound), G_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   button = gtk_button_new_with_label(_("Play"));
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(TestPlaySound), GTK_OBJECT(entry));
+  g_signal_connect_swapped(G_OBJECT(button), "clicked",
+                           G_CALLBACK(TestPlaySound), G_OBJECT(entry));
   gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbox, FALSE, FALSE, 0);
@@ -1001,39 +1058,36 @@ void OptDialog(GtkWidget *widget, gpointer data)
   label = gtk_label_new(_("Sounds"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 
-  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), 0);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(OKCallback), (gpointer)dialog);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(OKCallback), (gpointer)dialog);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_HELP, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(HelpCallback), (gpointer)notebook);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(HelpCallback), (gpointer)notebook);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            GTK_OBJECT(dialog));
-  gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                     GTK_SIGNAL_FUNC(FinishOptDialog), NULL);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect_swapped(G_OBJECT(button), "clicked",
+                           G_CALLBACK(gtk_widget_destroy),
+                           G_OBJECT(dialog));
+  g_signal_connect(G_OBJECT(dialog), "destroy",
+                   G_CALLBACK(FinishOptDialog), NULL);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
   gtk_widget_show_all(dialog);
-
-  width = gtk_clist_optimal_column_width(GTK_CLIST(clist), 0);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 0, width);
 }

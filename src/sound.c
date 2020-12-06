@@ -1,8 +1,8 @@
 /************************************************************************
  * sound.c        dopewars sound system                                 *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -35,6 +35,9 @@
 #include "plugins/sound_sdl.h"
 #include "plugins/sound_esd.h"
 #include "plugins/sound_winmm.h"
+#ifdef HAVE_COCOA
+SoundDriver *sound_cocoa_init(void);
+#endif
 #endif
 
 #include "dopewars.h"
@@ -60,7 +63,7 @@ gchar *GetPluginList(void)
     SoundDriver *drivpt = (SoundDriver *)listpt->data;
 
     if (drivpt && drivpt->name) {
-      g_string_sprintfa(plugins, ", \"%s\"", drivpt->name);
+      g_string_append_printf(plugins, ", \"%s\"", drivpt->name);
     }
   }
   retstr = plugins->str;
@@ -154,6 +157,9 @@ void SoundInit(void)
 #endif
 #ifdef HAVE_WINMM
   AddPlugin(sound_winmm_init, NULL);
+#endif
+#ifdef HAVE_COCOA
+  AddPlugin(sound_cocoa_init, NULL);
 #endif
 #endif
   driver = NULL;

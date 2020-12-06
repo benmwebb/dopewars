@@ -1,0 +1,225 @@
+; NSIS (http://nsis.sf.net/) install script
+
+!include "MUI2.nsh"
+!include "FileFunc.nsh"
+!include "WinVer.nsh"
+!include "LogicLib.nsh"
+
+; Use solid LZMA compression
+SetCompressor /SOLID lzma
+
+Var STARTMENU_FOLDER
+Var MUI_TEMP
+
+Unicode true
+
+!define PRODUCT "dopewars"
+!define VERSION "@PACKAGE_VERSION@"
+!define PRODVER "${PRODUCT}-${VERSION}"
+
+!if "@host@" == "i686-w64-mingw32"
+  ; 32-bit build; no special setup
+!else if "@host@" == "x86_64-w64-mingw32"
+  ; 64-bit build
+  !define DOPEWARS_64BIT
+!else
+  !error "Supported only for 32-bit and 64-bit Windows"
+!endif
+
+Name ${PRODVER}
+
+!ifdef DOPEWARS_64BIT
+  Caption "${PRODUCT} ${VERSION} (64 bit) Setup"
+  OutFile "dopewars-${VERSION}-64bit.exe"
+  InstallDir "$PROGRAMFILES64\${PRODVER}"
+  # Note that we don't use InstallDirRegKey on x64 since it ignores SetRegView
+  !define FULL_PRODVER "${PRODUCT} ${VERSION} (64 bit)"
+!else
+  Caption "${PRODUCT} ${VERSION} (32 bit) Setup"
+  OutFile "dopewars-${VERSION}-32bit.exe"
+  InstallDir "$PROGRAMFILES\${PRODVER}"
+  InstallDirRegKey HKLM "Software\${PRODVER}" ""
+  !define FULL_PRODVER "${PRODUCT} ${VERSION} (32 bit)"
+!endif
+
+!define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKLM"
+!define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\${PRODVER}"
+!define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
+
+!define MUI_TEMP $R0
+
+!define MUI_ABORTWARNING
+
+!define MUI_WELCOMEPAGE_TITLE "Welcome to the ${FULL_PRODVER} Setup Wizard"
+!define MUI_WELCOMEPAGE_TEXT "This wizard will guide you through the installation of ${FULL_PRODVER}, a game simulating the life of a drug dealer in New York."
+
+!define MUI_FINISHPAGE_LINK "https://dopewars.sourceforge.io/"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://dopewars.sourceforge.io/"
+
+!define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODVER}"
+
+;Pages
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_STARTMENU ${PRODVER} $STARTMENU_FOLDER
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+
+Section ""
+  SetOutPath "$INSTDIR"
+  File "..\LICENCE"
+
+  File "..\src\dopewars.exe"
+  File "/etc/pki/tls/certs/ca-bundle.crt"
+
+!ifdef DOPEWARS_64BIT
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/iconv.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libcrypto-1_1-x64.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libcurl-4.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libglib-2.0-0.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libidn2-0.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libintl-8.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libpcre-1.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libssh2-1.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libssl-1_1-x64.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libssp-0.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll"
+  File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/zlib1.dll"
+!else
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/iconv.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libcrypto-1_1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libcurl-4.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libgcc_s_dw2-1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libglib-2.0-0.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libidn2-0.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libintl-8.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libpcre-1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libssh2-1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libssl-1_1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libssp-0.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/libwinpthread-1.dll"
+  File "/usr/i686-w64-mingw32/sys-root/mingw/bin/zlib1.dll"
+!endif
+
+  SetOutPath "$INSTDIR\doc"
+  File "..\doc\*.html"
+
+  SetOutPath "$INSTDIR\doc\help"
+  File "..\doc\help\*.html"
+
+  SetOutPath "$INSTDIR\locale\de\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\de.gmo"
+
+  SetOutPath "$INSTDIR\locale\es\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\es.gmo"
+
+  SetOutPath "$INSTDIR\locale\es_ES\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\es_ES.gmo"
+
+  SetOutPath "$INSTDIR\locale\fr\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\fr.gmo"
+
+  SetOutPath "$INSTDIR\locale\fr_CA\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\fr_CA.gmo"
+
+  SetOutPath "$INSTDIR\locale\nn\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\nn.gmo"
+
+  SetOutPath "$INSTDIR\locale\pl\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\pl.gmo"
+
+  SetOutPath "$INSTDIR\locale\pt_BR\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\pt_BR.gmo"
+
+  SetOutPath "$INSTDIR\sounds\19.5degs"
+  File "..\sounds\19.5degs\*.wav"
+
+  WriteRegStr HKLM "Software\${PRODVER}" "" $INSTDIR
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+  WriteRegStr HKLM "${UNINST_KEY}" "DisplayName" "${FULL_PRODVER}"
+  WriteRegStr HKLM "${UNINST_KEY}" "UninstallString" "$INSTDIR\Uninstall.exe"
+  WriteRegStr HKLM "${UNINST_KEY}" "DisplayVersion" "${VERSION}"
+  WriteRegStr HKLM "${UNINST_KEY}" "Publisher" "Ben Webb"
+  WriteRegStr HKLM "${UNINST_KEY}" "URLInfoAbout" "https://dopewars.sourceforge.io/"
+  WriteRegDWORD HKLM "${UNINST_KEY}" "NoModify" 1
+  WriteRegDWORD HKLM "${UNINST_KEY}" "NoRepair" 1
+
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN ${PRODVER}
+    CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars.lnk" "$INSTDIR\dopewars.exe"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars public server.lnk" "$INSTDIR\dopewars.exe" "-s"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars private server.lnk" "$INSTDIR\dopewars.exe" "-S"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\text-mode dopewars.lnk" "$INSTDIR\dopewars.exe" "-t"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars AI player.lnk" "$INSTDIR\dopewars.exe" "-c"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars command line options.lnk" "$INSTDIR\dopewars.exe" "-h"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\dopewars help.lnk" "$INSTDIR\doc\index.html"
+    CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
+  !insertmacro MUI_STARTMENU_WRITE_END
+SectionEnd
+
+Section "Uninstall"
+!ifdef DOPEWARS_64BIT
+  SetRegView 64
+!endif
+  Delete "$INSTDIR\Uninstall.exe"
+  Delete "$INSTDIR\dopewars.exe"
+  Delete "$INSTDIR\*.dll"
+  Delete "$INSTDIR\LICENCE"
+  Delete "$INSTDIR\ca-bundle.crt"
+  RMDir /r "$INSTDIR\doc"
+  RMDir /r "$INSTDIR\locale"
+  RMDir /r "$INSTDIR\sounds"
+  RMDir "$INSTDIR"
+
+  ReadRegStr $MUI_TEMP HKLM "Software\${PRODVER}" "Start Menu Folder"
+
+  StrCmp $MUI_TEMP "" noshortcuts
+    ReadRegStr $0 HKLM "Software\${PRODVER}" "ShellVarContext"
+    StrCmp $0 "all" 0 +2
+      SetShellVarContext all
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars public server.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars private server.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\text-mode dopewars.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars AI player.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars command line options.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\dopewars help.lnk"
+    Delete "$SMPROGRAMS\$MUI_TEMP\Uninstall.lnk"
+    RMDir "$SMPROGRAMS\$MUI_TEMP" ;Only if empty, so it won't delete other shortcuts
+    
+  noshortcuts:
+
+  DeleteRegKey /ifempty HKLM "Software\${PRODVER}"
+  DeleteRegKey HKLM "${UNINST_KEY}"
+ 
+SectionEnd
+
+Function .onInit
+!ifdef DOPEWARS_64BIT
+  SetRegView 64
+!endif
+
+  ClearErrors
+
+  UserInfo::GetAccountType
+  IfErrors add_reg_keys
+  Pop $0
+  StrCmp $0 "Admin" add_reg_keys
+  IfSilent silent_not_admin
+  MessageBox MB_YESNO|MB_ICONEXCLAMATION \
+      "You do not appear to be a computer administrator; \
+       this installer may not function correctly. \
+       Do you want to continue anyway?" /SD IDYES IDYES acccheck_done
+    Quit
+  silent_not_admin:
+    Abort "This installer must be run by the administrator"
+  add_reg_keys:
+    SetShellVarContext all ; install for all users
+    WriteRegStr HKLM "Software\${PRODVER}" "ShellVarContext" "all"
+  acccheck_done:
+FunctionEnd

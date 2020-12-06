@@ -1,8 +1,8 @@
 /************************************************************************
  * serverside.h   Server-side parts of dopewars                         *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -52,7 +52,7 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs);
 void GainBitch(Player *Play);
 void SetFightTimeout(Player *Play);
 void ClearFightTimeout(Player *Play);
-int GetMinimumTimeout(GSList *First);
+long GetMinimumTimeout(GSList *First);
 GSList *HandleTimeouts(GSList *First);
 void ConvertHighScoreFile(const gchar *convertfile);
 void OpenHighScoreFile(void);

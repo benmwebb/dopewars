@@ -46,7 +46,7 @@ servers and clients are upgraded to the latest version.</p>
 <h2><a id="client">Using the metaserver from the client</a></h2>
 <p>Players who want to use the metaserver to list the currently available
 servers should go to
-<a href="http://dopewars.sourceforge.net/metaserver.php?getlist=2">this
+<a href="https://dopewars.sourceforge.io/metaserver.php?getlist=2">this
 link</a>, or just follow the "Active servers" link from the main dopewars web
 page. It cannot be guaranteed that all the listed servers are functional - they
 may, for example, have been registered in error, or a server may have crashed
@@ -55,15 +55,8 @@ and so there is at least a good chance that the servers listed there will
 be working.</p>
 
 <p>The metaserver, being an ordinary web page, should work happily on
-most machines which have web access. A problem occurs, however, if your
-connection to the Web is via an enforced proxy server (i.e. traffic on
-port 80 from your machine is blocked by firewall). dopewars can be
-configured to connect via a proxy server without too much difficulty; if
-your proxy server is at <i>proxy.com</i> on port <i>8080</i> then you should
-add the following lines to your dopewars <a href="configfile.html">
-configuration file</a>:-<br />
-<b>MetaServer.ProxyName="proxy.com"<br />
-MetaServer.ProxyPort=8080</b></p>
+most machines which have web access. If you require a proxy to connect to
+the Web, set the <a href="https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment">https_proxy environment variable</a>.</p>
 
 <h2><a id="server">Using the metaserver from the server</a></h2>
 <p>People running servers who <b>do not</b> want their details listed by the
@@ -133,7 +126,7 @@ will automatically replace the "old" one.</p>
 <li><a href="index.html">Main index</a></li>
 </ul>
 <p>
-  Last update: <b>15-07-2002</b><br />
+  Last update: <b>02-11-2020</b><br />
   Valid <a href="http://validator.w3.org/check/referer">XHTML 1.1</a>
 </p>
 </body>

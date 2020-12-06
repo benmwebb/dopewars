@@ -1,8 +1,8 @@
 /************************************************************************
  * util.c         Miscellaneous utility and portability functions       *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -40,6 +40,7 @@
 #include <conio.h>
 #endif
 
+#include <string.h>
 #include "util.h"
 #include "dopewars.h"
 
@@ -123,7 +124,7 @@ int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
   int retval;
   struct timeval tv, *tp;
   fd_set localread, localexcept;
-  char CheckKbHit = 0, KeyRead;
+  char CheckKbHit = 0;
 
   if (nfds == 0 && tm) {
     Sleep(tm->tv_sec * 1000 + tm->tv_usec / 1000);
@@ -137,7 +138,6 @@ int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
     FD_CLR(0, readfds);
   } else
     tp = tm;
-  KeyRead = 0;
   while (1) {
     tv.tv_sec = 0;
     tv.tv_usec = 250000;
@@ -231,7 +231,7 @@ void ReleaseLock(FILE * fp)
  */
 void MicroSleep(int microsec)
 {
-#if HAVE_SELECT || CYGWIN
+#if defined(HAVE_SELECT) || CYGWIN
   struct timeval tv;
 
   tv.tv_sec = 0;

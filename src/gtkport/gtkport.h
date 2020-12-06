@@ -1,8 +1,8 @@
 /************************************************************************
  * gtkport.h      Portable "almost-GTK+" for Unix/Win32                 *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -27,152 +27,24 @@
 #include <config.h>
 #endif
 
+#include "itemfactory.h"
+
 #ifdef CYGWIN
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
 
+/* Provide prototypes compatible with GTK+3 */
+#define GTK_MAJOR_VERSION 3
+
+#include <winsock2.h>
 #include <windows.h>
 #include <glib.h>
 #include <stdarg.h>
 
 #include "gtkenums.h"
+#include "gtktypes.h"
 
-#define MB_IMMRETURN 0
-
-#define MYWM_SOCKETDATA (WM_USER+100)
-#define MYWM_TASKBAR    (WM_USER+101)
-#define MYWM_SERVICE    (WM_USER+102)
-
-#define GDK_MOD1_MASK 0
-
-extern HICON mainIcon;
-
-#define GDK_KP_0 0xFFB0
-#define GDK_KP_1 0xFFB1
-#define GDK_KP_2 0xFFB2
-#define GDK_KP_3 0xFFB3
-#define GDK_KP_4 0xFFB4
-#define GDK_KP_5 0xFFB5
-#define GDK_KP_6 0xFFB6
-#define GDK_KP_7 0xFFB7
-#define GDK_KP_8 0xFFB8
-#define GDK_KP_9 0xFFB9
-
-typedef gint (*GtkFunction) (gpointer data);
-typedef void (*GdkInputFunction) (gpointer data, gint source,
-                                  GdkInputCondition condition);
-typedef gchar *(*GtkTranslateFunc) (const gchar *path, gpointer func_data);
-typedef void (*GtkDestroyNotify) (gpointer data);
-
-#define GTK_VISIBLE 1
-
-typedef struct _GtkClass GtkClass;
-typedef struct _GtkObject GtkObject;
-
-typedef struct _GtkRequisition GtkRequisition;
-typedef struct _GtkAllocation GtkAllocation;
-typedef struct _GtkWidget GtkWidget;
-typedef struct _GtkSignalType GtkSignalType;
-typedef struct _GtkContainer GtkContainer;
-
-typedef void (*GtkSignalFunc) ();
-typedef void (*GtkItemFactoryCallback) ();
-typedef void (*GtkSignalMarshaller) (GtkObject *object, GSList *actions,
-                                     GtkSignalFunc default_action,
-                                     va_list args);
-
-typedef struct _GdkColor GdkColor;
-typedef struct _GtkStyle GtkStyle;
-typedef struct _GtkMenuShell GtkMenuShell;
-typedef struct _GtkMenuBar GtkMenuBar;
-typedef struct _GtkMenuItem GtkMenuItem;
-typedef struct _GtkMenu GtkMenu;
-typedef struct _GtkAdjustment GtkAdjustment;
-typedef struct _GtkSeparator GtkSeparator;
-typedef struct _GtkMisc GtkMisc;
-typedef struct _GtkProgressBar GtkProgressBar;
-typedef struct _GtkHSeparator GtkHSeparator;
-typedef struct _GtkVSeparator GtkVSeparator;
-typedef struct _GtkAccelGroup GtkAccelGroup;
-typedef struct _GtkPanedChild GtkPanedChild;
-typedef struct _GtkPaned GtkPaned;
-typedef struct _GtkVPaned GtkVPaned;
-typedef struct _GtkHPaned GtkHPaned;
-typedef struct _GtkOptionMenu GtkOptionMenu;
-
-struct _GtkAccelGroup {
-  ACCEL *accel;                 /* list of ACCEL structures */
-  gint numaccel;
-};
-
-struct _GtkSignalType {
-  gchar *name;
-  GtkSignalMarshaller marshaller;
-  GtkSignalFunc default_action;
-};
-
-struct _GdkColor {
-  gulong  pixel;
-  gushort red;
-  gushort green;
-  gushort blue;
-};
-
-struct _GtkStyle {
-  GdkColor fg[5];
-  GdkColor bg[5];
-};
-
-typedef gboolean (*GtkWndProc) (GtkWidget *widget, UINT msg,
-                                WPARAM wParam, LPARAM lParam, gboolean *dodef);
-
-struct _GtkClass {
-  gchar *Name;
-  GtkClass *parent;
-  gint Size;
-  GtkSignalType *signals;
-  GtkWndProc wndproc;
-};
-
-typedef GtkClass *GtkType;
-
-struct _GtkObject {
-  GtkClass *klass;
-  GData *object_data;
-  GData *signals;
-  guint32 flags;
-};
-
-struct _GtkAdjustment {
-  GtkObject object;
-  gfloat value, lower, upper;
-  gfloat step_increment, page_increment, page_size;
-};
-
-struct _GtkRequisition {
-  gint16 width, height;
-};
-
-struct _GtkAllocation {
-  gint16 x, y, width, height;
-};
-
-struct _GtkWidget {
-  GtkObject object;
-  HWND hWnd;
-  GtkRequisition requisition;
-  GtkAllocation allocation;
-  GtkRequisition usize;
-  GtkWidget *parent;
-};
-
-struct _GtkContainer {
-  GtkWidget widget;
-  GtkWidget *child;
-  guint border_width:16;
-};
-
-#include "clist.h"
+#include "treeview.h"
 
 struct _GtkMisc {
   GtkWidget widget;
@@ -298,26 +170,6 @@ typedef struct _GtkHBox GtkHBox;
 typedef struct _GtkVBox GtkVBox;
 typedef struct _GtkNotebookChild GtkNotebookChild;
 typedef struct _GtkNotebook GtkNotebook;
-typedef struct _GtkItemFactoryEntry GtkItemFactoryEntry;
-typedef struct _GtkItemFactory GtkItemFactory;
-
-struct _GtkItemFactoryEntry {
-  gchar *path;
-  gchar *accelerator;
-  GtkItemFactoryCallback callback;
-  guint callback_action;
-  gchar *item_type;
-};
-
-struct _GtkItemFactory {
-  GtkObject object;
-  GSList *children;
-  gchar *path;
-  GtkAccelGroup *accel_group;
-  GtkWidget *top_widget;
-  GtkTranslateFunc translate_func;
-  gpointer translate_data;
-};
 
 struct _GtkBoxChild {
   GtkWidget *widget;
@@ -376,10 +228,11 @@ struct _GtkButton {
   gchar *text;
 };
 
-struct _GtkOptionMenu {
-  GtkButton button;
-  GtkWidget *menu;
-  guint selection;
+struct _GtkComboBox {
+  GtkWidget widget;
+  GtkTreeModel *model;
+  gint model_column;
+  gint active;
 };
 
 struct _GtkToggleButton {
@@ -439,10 +292,11 @@ struct _GtkTableRowCol {
 };
 
 extern GtkClass GtkContainerClass;
+extern GtkClass GtkObjectClass;
 extern HFONT defFont;
 extern HINSTANCE hInst;
 
-#define GTK_OBJECT(obj) ((GtkObject *)(obj))
+#define G_OBJECT(obj) ((GObject *)(obj))
 #define GTK_CONTAINER(obj) ((GtkContainer *)(obj))
 #define GTK_PANED(obj) ((GtkPaned *)(obj))
 #define GTK_VPANED(obj) ((GtkVPaned *)(obj))
@@ -460,7 +314,8 @@ extern HINSTANCE hInst;
 #define GTK_TEXT(obj) ((GtkText *)(obj))
 #define GTK_WINDOW(obj) ((GtkWindow *)(obj))
 #define GTK_BUTTON(obj) ((GtkButton *)(obj))
-#define GTK_OPTION_MENU(obj) ((GtkOptionMenu *)(obj))
+#define GTK_COMBO_BOX(obj) ((GtkComboBox *)(obj))
+#define GTK_CELL_LAYOUT(obj) ((GtkCellLayout *)(obj))
 #define GTK_TOGGLE_BUTTON(obj) ((GtkToggleButton *)(obj))
 #define GTK_RADIO_BUTTON(obj) ((GtkRadioButton *)(obj))
 #define GTK_CHECK_BUTTON(obj) ((GtkCheckButton *)(obj))
@@ -474,20 +329,22 @@ extern HINSTANCE hInst;
 #define GTK_MENU(obj) ((GtkMenu *)(obj))
 #define GTK_MISC(obj) ((GtkMisc *)(obj))
 #define GTK_PROGRESS_BAR(obj) ((GtkProgressBar *)(obj))
-#define GTK_SIGNAL_FUNC(f) ((GtkSignalFunc) f)
+#define G_CALLBACK(f) ((GCallback) (f))
 
-#define GTK_OBJECT_FLAGS(obj) (GTK_OBJECT(obj)->flags)
+#define GTK_OBJECT_FLAGS(obj) (G_OBJECT(obj)->flags)
 #define GTK_WIDGET_FLAGS(wid) (GTK_OBJECT_FLAGS(wid))
 #define GTK_WIDGET_REALIZED(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_REALIZED) != 0)
-#define GTK_WIDGET_VISIBLE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_VISIBLE) != 0)
 #define GTK_WIDGET_SENSITIVE(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_SENSITIVE) != 0)
 #define GTK_WIDGET_CAN_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_CAN_FOCUS) != 0)
 #define GTK_WIDGET_HAS_FOCUS(wid) ((GTK_WIDGET_FLAGS(wid)&GTK_HAS_FOCUS) != 0)
 #define GTK_WIDGET_SET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) |= (flag))
 #define GTK_WIDGET_UNSET_FLAGS(wid,flag) (GTK_WIDGET_FLAGS(wid) &= ~(flag))
 
+void gtk_widget_set_can_default(GtkWidget *wid, gboolean flag);
+
 typedef int GdkEvent;
 
+gboolean gtk_widget_get_visible(GtkWidget *widget);
 void gtk_widget_show(GtkWidget *widget);
 void gtk_widget_show_all(GtkWidget *widget);
 void gtk_widget_hide_all(GtkWidget *widget);
@@ -511,8 +368,8 @@ void gtk_container_set_border_width(GtkContainer *container,
                                     guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
-GtkWidget *gtk_hbox_new(gboolean homogeneous, gint spacing);
-GtkWidget *gtk_vbox_new(gboolean homogeneous, gint spacing);
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous);
 GtkWidget *gtk_check_button_new_with_label(const gchar *label);
 GtkWidget *gtk_radio_button_new_with_label(GSList *group,
                                            const gchar *label);
@@ -525,20 +382,7 @@ GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
 GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
 void gtk_table_resize(GtkTable *table, guint rows, guint cols);
-GtkItemFactory *gtk_item_factory_new(GtkType container_type,
-                                     const gchar *path,
-                                     GtkAccelGroup *accel_group);
-void gtk_item_factory_create_item(GtkItemFactory *ifactory,
-                                  GtkItemFactoryEntry *entry,
-                                  gpointer callback_data,
-                                  guint callback_type);
-void gtk_item_factory_create_items(GtkItemFactory *ifactory,
-                                   guint n_entries,
-                                   GtkItemFactoryEntry *entries,
-                                   gpointer callback_data);
-GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
-                                       const gchar *path);
-GSList *gtk_radio_button_group(GtkRadioButton *radio_button);
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
                               gint new_text_length, gint *position);
 void gtk_editable_delete_text(GtkEditable *editable,
@@ -571,19 +415,18 @@ void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
 void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
                         gboolean Fill, gint Padding);
-void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child);
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button);
 gboolean gtk_toggle_button_get_active(GtkToggleButton *toggle_button);
 void gtk_toggle_button_set_active(GtkToggleButton *toggle_button,
                                   gboolean is_active);
 void gtk_main_quit();
 void gtk_main();
-guint gtk_signal_connect(GtkObject *object, const gchar *name,
-                         GtkSignalFunc func, gpointer func_data);
-guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
-                                GtkSignalFunc func,
-                                GtkObject *slot_object);
-void gtk_signal_emit(GtkObject *object, const gchar *name, ...);
+guint g_signal_connect(GObject *object, const gchar *name,
+                       GCallback func, gpointer func_data);
+guint g_signal_connect_swapped(GObject *object, const gchar *name,
+                               GCallback func,
+                               GObject *slot_object);
+void gtk_signal_emit(GObject *object, const gchar *name, ...);
 void SetCustomWndProc(WNDPROC wndproc);
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 char *MainIcon);
@@ -601,35 +444,39 @@ void gtk_menu_insert(GtkMenu *menu, GtkWidget *child, gint position);
 void gtk_menu_append(GtkMenu *menu, GtkWidget *child);
 void gtk_menu_prepend(GtkMenu *menu, GtkWidget *child);
 GtkWidget *gtk_menu_item_new_with_label(const gchar *label);
+#define gtk_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
+#define gtk_check_menu_item_new_with_mnemonic gtk_menu_item_new_with_label
+GtkMenu *gtk_menu_item_get_submenu(GtkMenuItem *menu_item);
 void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu);
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active);
+gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item);
 void gtk_menu_set_active(GtkMenu *menu, guint index);
 GtkWidget *gtk_notebook_new();
 void gtk_notebook_append_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label);
 void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
                               GtkWidget *tab_label, gint position);
-void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num);
+void gtk_notebook_set_current_page(GtkNotebook *notebook, gint page_num);
 gint gtk_notebook_get_current_page(GtkNotebook *notebook);
-GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
-                              gfloat step_increment, gfloat page_increment,
-                              gfloat page_size);
+GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
+                            gfloat step_increment, gfloat page_increment,
+                            gfloat page_size);
 GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
                                gfloat climb_rate, guint digits);
-void gdk_input_remove(gint tag);
-gint gdk_input_add(gint source, GdkInputCondition condition,
-                   GdkInputFunction function, gpointer data);
-GtkWidget *gtk_hseparator_new();
-GtkWidget *gtk_vseparator_new();
-void gtk_object_set_data(GtkObject *object, const gchar *key,
-                         gpointer data);
-gpointer gtk_object_get_data(GtkObject *object, const gchar *key);
+
+guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
+                        GIOFunc func, gpointer user_data);
+guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data);
+gboolean dp_g_source_remove(guint tag);
+
+GtkWidget *gtk_separator_new(GtkOrientation orientation);
+void g_object_set_data(GObject *object, const gchar *key,
+                       gpointer data);
+gpointer g_object_get_data(GObject *object, const gchar *key);
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
-void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
-                                         GtkTranslateFunc func,
-                                         gpointer data,
-                                         GtkDestroyNotify notify);
+gint gtk_accel_group_add(GtkAccelGroup *accel_group,
+                         ACCEL *newaccel);
 void gtk_widget_grab_default(GtkWidget *widget);
 void gtk_widget_grab_focus(GtkWidget *widget);
 void gtk_window_set_modal(GtkWindow *window, gboolean modal);
@@ -656,21 +503,25 @@ void gtk_paned_pack2(GtkPaned *paned, GtkWidget *child, gboolean resize,
 void gtk_paned_set_position(GtkPaned *paned, gint position);
 
 #define gtk_container_border_width gtk_container_set_border_width
-GtkWidget *gtk_hbutton_box_new();
-void gtk_hbutton_box_set_spacing_default(gint spacing);
-#define gtk_vbutton_box_new() gtk_vbox_new(TRUE, 5)
-#define gtk_hbutton_box_set_layout_default(layout) {}
-#define gtk_vbutton_box_set_spacing_default(spacing) {}
-#define gtk_vbutton_box_set_layout_default(layout) {}
-GtkWidget *gtk_option_menu_new(void);
-GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu);
-void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu);
-void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index);
+GtkWidget *gtk_button_box_new(GtkOrientation orientation);
+void gtk_box_set_spacing(GtkBox *box, gint spacing);
+#define gtk_button_box_set_layout(box, layout) {}
+GtkWidget *gtk_combo_box_new_with_model(GtkTreeModel *model);
+void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model);
+void gtk_combo_box_set_active(GtkComboBox *combo_box, gint index);
+void gtk_cell_layout_set_attributes(GtkCellLayout *cell_layout,
+                                    GtkCellRenderer *cell, ...);
+#define gtk_cell_layout_pack_start(layout, renderer, expand) {}
+GtkTreeModel *gtk_combo_box_get_model(GtkComboBox *combo_box);
+gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
+                                       GtkTreeIter *iter);
 void gtk_label_set_text(GtkLabel *label, const gchar *str);
-guint gtk_label_parse_uline(GtkLabel *label, const gchar *str);
-void gtk_label_get(GtkLabel *label, gchar **str);
+/* Not currently supported */
+#define gtk_label_set_text_with_mnemonic gtk_label_set_text
+#define gtk_label_set_mnemonic_widget(label, widget) {}
+const gchar *gtk_label_get_text(GtkLabel *label);
 void gtk_text_set_point(GtkText *text, guint index);
-void gtk_widget_set_usize(GtkWidget *widget, gint width, gint height);
+void gtk_widget_set_size_request(GtkWidget *widget, gint width, gint height);
 gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button);
 void gtk_spin_button_set_value(GtkSpinButton *spin_button, gfloat value);
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
@@ -678,14 +529,9 @@ void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
 void gtk_spin_button_update(GtkSpinButton *spin_button);
 void gtk_misc_set_alignment(GtkMisc *misc, gfloat xalign, gfloat yalign);
 GtkWidget *gtk_progress_bar_new();
-void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
-                                      GtkProgressBarOrientation orientation);
-void gtk_progress_bar_update(GtkProgressBar *pbar, gfloat percentage);
-guint gtk_timeout_add(guint32 interval, GtkFunction function,
-                      gpointer data);
-void gtk_timeout_remove(guint timeout_handler_id);
+void gtk_progress_bar_set_fraction(GtkProgressBar *pbar, gfloat percentage);
 guint gtk_main_level(void);
-GtkObject *GtkNewObject(GtkClass *klass);
+GObject *GtkNewObject(GtkClass *klass);
 BOOL GetTextSize(HWND hWnd, char *text, LPSIZE lpSize, HFONT hFont);
 void gtk_container_realize(GtkWidget *widget);
 void gtk_set_default_font(HWND hWnd);
@@ -696,26 +542,26 @@ void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint);
 void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position);
 
 /* Functions for handling emitted signals */
-void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
-                             GtkSignalFunc default_action,
+void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
+                             GCallback default_action,
                              va_list args);
-void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
+                            GCallback default_action,
                             va_list args);
-void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
+                            GCallback default_action,
                             va_list args);
-void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
+                            GCallback default_action,
                             va_list args);
-void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
-                             GtkSignalFunc default_action,
+void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
+                             GCallback default_action,
                              va_list args);
-void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action,
+void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
+                            GCallback default_action,
                             va_list args);
-void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
-                                       GtkSignalFunc default_action,
+void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
+                                       GCallback default_action,
                                        va_list args);
 
 /* Private functions */
@@ -732,6 +578,13 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
  */
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+
+/* Provide compatibility functions for GTK+2 so we can use GTK+3 syntax */
+#if GTK_MAJOR_VERSION == 2
+GtkWidget *gtk_button_box_new(GtkOrientation orientation);
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
+GtkWidget *gtk_separator_new(GtkOrientation orientation);
+#endif
 
 /* Defines for GtkMessageBox options */
 #define MB_OK     1
@@ -781,9 +634,6 @@ typedef enum
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, GtkMessageType type, gint Options);
-GtkWidget *gtk_scrolled_clist_new_with_titles(gint columns,
-                                              gchar *titles[],
-                                              GtkWidget **pack_widg);
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt);
@@ -798,5 +648,6 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
 gboolean HaveUnicodeSupport(void);
+GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg);
 
 #endif /* __GTKPORT_H__ */

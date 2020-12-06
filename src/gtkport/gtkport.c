@@ -1,8 +1,8 @@
 /************************************************************************
  * gtkport.c      Portable "almost-GTK+" for Unix/Win32                 *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -41,6 +41,10 @@
 #include "gtkport.h"
 #include "nls.h"
 
+#ifdef APPLE
+#include "mac_helpers.h"
+#endif
+
 #if CYGWIN
 #include "unicodewrap.h"
 const gchar *GTK_STOCK_OK = N_("_OK");
@@ -54,10 +58,11 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 
 #ifdef CYGWIN
 
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
 #include <commctrl.h>
 #include <richedit.h>
+#include <uxtheme.h>
 #include <shlwapi.h>
 
 #define LISTITEMVPACK  0
@@ -77,11 +82,6 @@ static const gchar *WC_GTKVPANED = "WC_GTKVPANED";
 static const gchar *WC_GTKHPANED = "WC_GTKHPANED";
 static const gchar *WC_GTKDIALOG = "WC_GTKDIALOG";
 static const gchar *WC_GTKURL    = "WC_GTKURL";
-
-static const int ETDT_DISABLE       = 0x1;
-static const int ETDT_ENABLE        = 0x2;
-static const int ETDT_USETABTEXTURE = 0x4;
-static const int ETDT_ENABLETAB     = 0x6;
 
 static void gtk_button_size_request(GtkWidget *widget,
                                     GtkRequisition *requisition);
@@ -209,15 +209,16 @@ static void gtk_vpaned_set_size(GtkWidget *widget,
                                 GtkAllocation *allocation);
 static void gtk_hpaned_set_size(GtkWidget *widget,
                                 GtkAllocation *allocation);
-static void gtk_option_menu_size_request(GtkWidget *widget,
-                                         GtkRequisition *requisition);
-static void gtk_option_menu_set_size(GtkWidget *widget,
-                                     GtkAllocation *allocation);
-static void gtk_option_menu_realize(GtkWidget *widget);
+static void gtk_combo_box_size_request(GtkWidget *widget,
+                                       GtkRequisition *requisition);
+static void gtk_combo_box_set_size(GtkWidget *widget,
+                                   GtkAllocation *allocation);
+static void gtk_combo_box_realize(GtkWidget *widget);
+static void gtk_combo_box_destroy(GtkWidget *widget);
 static void gtk_button_set_text(GtkButton *button, gchar *text);
 static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text);
 static void gtk_editable_create(GtkWidget *widget);
-static void gtk_option_menu_update_selection(GtkWidget *widget);
+static void gtk_combo_box_update_selection(GtkWidget *widget);
 static void gtk_widget_set_focus(GtkWidget *widget);
 static void gtk_widget_lose_focus(GtkWidget *widget);
 static void gtk_window_update_focus(GtkWindow *window);
@@ -233,52 +234,36 @@ static void gtk_window_set_initial_position(GtkWindow *window,
 static void gtk_progress_bar_size_request(GtkWidget *widget,
                                           GtkRequisition *requisition);
 static void gtk_progress_bar_realize(GtkWidget *widget);
-static gint gtk_accel_group_add(GtkAccelGroup *accel_group,
-                                ACCEL *newaccel);
 static void gtk_accel_group_set_id(GtkAccelGroup *accel_group, gint ind,
                                    gint ID);
 static void EnableParent(GtkWindow *window);
 
-typedef struct _GdkInput GdkInput;
+struct _OurSource {
+  guint id;     /* Unique identifier */
 
-struct _GdkInput {
-  gint source;
-  GdkInputCondition condition;
-  GdkInputFunction function;
-  gpointer data;
+  /* Used for timeouts (dp_g_timeout_add()) */
+  GSourceFunc timeout_function;
+
+  /* Used for IO channels (dp_g_io_watch()) */
+  GIOChannel *io_channel;
+  GIOFunc io_function;
+  int socket;
+
+  gpointer data;    /* Data passed to callback function */
 };
-
-typedef struct _GtkTimeout GtkTimeout;
-
-struct _GtkTimeout {
-  guint32 interval;
-  GtkFunction function;
-  gpointer data;
-  guint id;
-};
-
-typedef struct _GtkItemFactoryChild GtkItemFactoryChild;
-
-struct _GtkItemFactoryChild {
-  gchar *path;
-  GtkWidget *widget;
-};
+typedef struct _OurSource OurSource;
 
 static GtkSignalType GtkObjectSignals[] = {
   {"create", gtk_marshal_VOID__VOID, NULL},
   {"", NULL, NULL}
 };
 
-static GtkClass GtkObjectClass = {
-  "object", NULL, sizeof(GtkObject), GtkObjectSignals, NULL
+GtkClass GtkObjectClass = {
+  "object", NULL, sizeof(GObject), GtkObjectSignals, NULL
 };
 
 static GtkClass GtkAdjustmentClass = {
   "adjustment", &GtkObjectClass, sizeof(GtkAdjustment), NULL, NULL
-};
-
-static GtkClass GtkItemFactoryClass = {
-  "itemfactory", &GtkObjectClass, sizeof(GtkItemFactory), NULL, NULL
 };
 
 static GtkSignalType GtkWidgetSignals[] = {
@@ -449,16 +434,18 @@ static GtkClass GtkButtonClass = {
   "button", &GtkWidgetClass, sizeof(GtkButton), GtkButtonSignals, NULL
 };
 
-static GtkSignalType GtkOptionMenuSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_option_menu_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_option_menu_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_option_menu_realize},
+static GtkSignalType GtkComboBoxSignals[] = {
+  {"size_request", gtk_marshal_VOID__GPOIN, gtk_combo_box_size_request},
+  {"set_size", gtk_marshal_VOID__GPOIN, gtk_combo_box_set_size},
+  {"realize", gtk_marshal_VOID__VOID, gtk_combo_box_realize},
+  {"destroy", gtk_marshal_VOID__VOID, gtk_combo_box_destroy},
+  {"changed", gtk_marshal_VOID__VOID, NULL},
   {"", NULL, NULL}
 };
 
-static GtkClass GtkOptionMenuClass = {
-  "optionmenu", &GtkButtonClass, sizeof(GtkOptionMenu),
-  GtkOptionMenuSignals, NULL
+static GtkClass GtkComboBoxClass = {
+  "combobox", &GtkWidgetClass, sizeof(GtkComboBox),
+  GtkComboBoxSignals, NULL
 };
 
 static GtkSignalType GtkToggleButtonSignals[] = {
@@ -623,7 +610,7 @@ static GtkSignalType GtkWindowSignals[] = {
   {"show", gtk_marshal_VOID__VOID, gtk_window_show},
   {"hide", gtk_marshal_VOID__VOID, gtk_window_hide},
   {"delete_event", gtk_marshal_BOOL__GPOIN,
-   GTK_SIGNAL_FUNC(gtk_window_delete_event)},
+   G_CALLBACK(gtk_window_delete_event)},
   {"", NULL, NULL}
 };
 
@@ -640,8 +627,7 @@ HINSTANCE hInst;
 HFONT defFont;
 static HFONT urlFont;
 static GSList *WindowList = NULL;
-static GSList *GdkInputs = NULL;
-static GSList *GtkTimeouts = NULL;
+static GSList *OurSources = NULL;
 static HWND TopLevel = NULL;
 
 static WNDPROC wpOrigEntryProc, wpOrigTextProc;
@@ -651,9 +637,9 @@ void gtk_set_default_font(HWND hWnd)
   mySendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
 }
 
-GtkObject *GtkNewObject(GtkClass *klass)
+GObject *GtkNewObject(GtkClass *klass)
 {
-  GtkObject *newObj;
+  GObject *newObj;
 
   newObj = g_malloc0(klass->Size);
   newObj->klass = klass;
@@ -665,16 +651,16 @@ GtkObject *GtkNewObject(GtkClass *klass)
 static void DispatchSocketEvent(SOCKET sock, long event)
 {
   GSList *list;
-  GdkInput *input;
+  OurSource *s;
 
-  for (list = GdkInputs; list; list = g_slist_next(list)) {
-    input = (GdkInput *)(list->data);
-    if (input->source == sock) {
-      (*input->function) (input->data, input->source,
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)(list->data);
+    if (s->socket == sock) {
+      (*s->io_function) (s->io_channel,
                           (event & (FD_READ | FD_CLOSE | FD_ACCEPT) ?
-                           GDK_INPUT_READ : 0) |
+                           G_IO_IN : 0) |
                           (event & (FD_WRITE | FD_CONNECT) ?
-                           GDK_INPUT_WRITE : 0));
+                           G_IO_OUT : 0), s->data);
       break;
     }
   }
@@ -683,14 +669,14 @@ static void DispatchSocketEvent(SOCKET sock, long event)
 static void DispatchTimeoutEvent(UINT id)
 {
   GSList *list;
-  GtkTimeout *timeout;
+  OurSource *s;
 
-  for (list = GtkTimeouts; list; list = g_slist_next(list)) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == id) {
-      if (timeout->function) {
-        if (!(*timeout->function) (timeout->data)) {
-          gtk_timeout_remove(id);
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)list->data;
+    if (s->id == id) {
+      if (s->timeout_function) {
+        if (!(*s->timeout_function) (s->data)) {
+          dp_g_source_remove(s->id);
         }
       }
       break;
@@ -711,13 +697,13 @@ static HWND gtk_get_window_hwnd(GtkWidget *widget)
 HWND gtk_get_parent_hwnd(GtkWidget *widget)
 {
   GtkWidget *child = NULL;
-  while (widget && GTK_OBJECT(widget)->klass != GTK_TYPE_WINDOW
-         && GTK_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
+  while (widget && G_OBJECT(widget)->klass != GTK_TYPE_WINDOW
+         && G_OBJECT(widget)->klass != GTK_TYPE_NOTEBOOK) {
     child = widget;
     widget = widget->parent;
   }
   if (widget) {
-    if (GTK_OBJECT(widget)->klass == GTK_TYPE_NOTEBOOK) {
+    if (G_OBJECT(widget)->klass == GTK_TYPE_NOTEBOOK) {
       GSList *children;
       for (children = GTK_NOTEBOOK(widget)->children; children;
            children = g_slist_next(children)) {
@@ -782,8 +768,8 @@ static void UpdatePanedGhostRect(GtkPaned *paned, RECT *OldRect,
   ReleaseDC(parent, hDC);
 }
 
-LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
-                              LONG lParam)
+LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, WPARAM wParam,
+                              LPARAM lParam)
 {
   PAINTSTRUCT ps;
   HPEN oldpen, dkpen, ltpen;
@@ -793,7 +779,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, UINT wParam,
   gint newpos;
   GtkPaned *paned;
 
-  paned = GTK_PANED(myGetWindowLong(hwnd, GWL_USERDATA));
+  paned = GTK_PANED(myGetWindowLong(hwnd, GWLP_USERDATA));
   switch (msg) {
   case WM_PAINT:
     if (GetUpdateRect(hwnd, NULL, TRUE)) {
@@ -871,7 +857,7 @@ void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
   ShellExecute(parent->hWnd, "open", target, NULL, NULL, 0);
 }
 
-LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   GtkWidget *widget;
 
@@ -882,7 +868,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     HDC hDC;
     HFONT oldFont;
 
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     text = GTK_LABEL(widget)->text;
     if (text && BeginPaint(hwnd, &ps)) {
       hDC = ps.hdc;
@@ -897,7 +883,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     }
     return TRUE;
   } else if (msg == WM_LBUTTONUP) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
 
     DisplayHTML(widget, NULL, GTK_URL(widget)->target);
     return FALSE;
@@ -905,7 +891,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
     return myDefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, UINT wParam, LONG lParam)
+LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   PAINTSTRUCT ps;
   HPEN oldpen, dkpen, ltpen;
@@ -989,7 +975,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
     }
     return FALSE;
   case WM_CLOSE:
-    gtk_signal_emit(GTK_OBJECT(widget), "delete_event",
+    gtk_signal_emit(G_OBJECT(widget), "delete_event",
                     &event, &signal_return);
     *dodef = FALSE;
     return TRUE;
@@ -1001,7 +987,7 @@ gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
           gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu),
                                          !GTK_CHECK_MENU_ITEM(menu)->active);
         }
-        gtk_signal_emit(GTK_OBJECT(menu), "activate");
+        gtk_signal_emit(G_OBJECT(menu), "activate");
         return FALSE;
       }
     }
@@ -1020,7 +1006,6 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   HDC hDC;
   TEXTMETRIC tm;
   LPDRAWITEMSTRUCT lpdis;
-  HD_NOTIFY FAR *phdr;
   NMHDR *nmhdr;
   gboolean retval = FALSE;
 
@@ -1030,8 +1015,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
       && myCallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
     return TRUE;
 
-  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
-  if (widget && (klass = GTK_OBJECT(widget)->klass)
+  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+  if (widget && (klass = G_OBJECT(widget)->klass)
       && klass->wndproc) {
     retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
   }
@@ -1039,8 +1024,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   switch (msg) {
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
-        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWL_USERDATA)))
-        && (klass = GTK_OBJECT(widget)->klass)
+        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWLP_USERDATA)))
+        && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
@@ -1057,36 +1042,35 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     }
     break;
   case WM_COMMAND:
-    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWLP_USERDATA));
     klass = NULL;
-    if (widget && (klass = GTK_OBJECT(widget)->klass)
+    if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
 
-    if (lParam && klass == &GtkOptionMenuClass &&
+    if (lParam && klass == &GtkComboBoxClass &&
                HIWORD(wParam) == CBN_SELENDOK) {
-      gtk_option_menu_update_selection(widget);
+      gtk_combo_box_update_selection(widget);
     } else if (lParam && HIWORD(wParam) == BN_CLICKED) {
-      gtk_signal_emit(GTK_OBJECT(widget), "clicked");
+      gtk_signal_emit(G_OBJECT(widget), "clicked");
     } else
       return TRUE;
     break;
   case WM_NOTIFY:
-    phdr = (HD_NOTIFY FAR *)lParam;
     nmhdr = (NMHDR *)lParam;
     if (!nmhdr)
       break;
 
-    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWL_USERDATA));
-    if (widget && (klass = GTK_OBJECT(widget)->klass)
+    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWLP_USERDATA));
+    if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
     }
 
     if (widget && nmhdr->code == TCN_SELCHANGE) {
-      gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                            TabCtrl_GetCurSel(nmhdr->hwndFrom));
+      gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                    TabCtrl_GetCurSel(nmhdr->hwndFrom));
       return FALSE;
     }
     break;
@@ -1119,7 +1103,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   }
 }
 
-BOOL APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+INT_PTR APIENTRY MainDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   gboolean dodef;
 
@@ -1136,9 +1120,9 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_KEYUP && wParam == VK_RETURN) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     if (widget)
-      gtk_signal_emit(GTK_OBJECT(widget), "activate");
+      gtk_signal_emit(G_OBJECT(widget), "activate");
     return FALSE;
   }
   return myCallWindowProc(wpOrigEntryProc, hwnd, msg, wParam, lParam);
@@ -1150,7 +1134,7 @@ LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_GETDLGCODE) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
     if (!GTK_EDITABLE(widget)->is_editable) {
       return DLGC_HASSETSEL | DLGC_WANTARROWS;
     }
@@ -1189,31 +1173,6 @@ static gboolean CheckForXPControls(void)
     FreeLibrary(hDll);
   }
   return retval;
-}
-
-/*
- * On systems with suitable DLLs, sets the background texture of the
- * given dialog. dwFlags can be one or more of the ETDT_ constants.
- */
-static void myEnableThemeDialogTexture(HWND hWnd, DWORD dwFlags)
-{
-  typedef HRESULT (*ENABLETHEMEDIALOGTEXTUREPROC)(HWND hWnd, DWORD dwFlags);
-  HINSTANCE module;
-
-  /* Dialog textures are only worth setting when using XP common controls */
-  if (!HaveXPControls) return;
-
-  module = LoadLibrary("UXTHEME.DLL");
-  if (module) {
-    ENABLETHEMEDIALOGTEXTUREPROC func;
-    HRESULT result;
-    func = (ENABLETHEMEDIALOGTEXTUREPROC)
-               GetProcAddress(module, "EnableThemeDialogTexture");
-    if (func) {
-      result = func(hWnd, dwFlags);
-    }
-    FreeLibrary(module);
-  }
 }
 
 void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -1324,7 +1283,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.lpszClassName = WC_GTKURL;
     myRegisterClass(&wc);
 
-    InitCListClass(hInstance);
+    InitTreeViewClass(hInstance);
   }
 }
 
@@ -1361,21 +1320,26 @@ void gtk_widget_show(GtkWidget *widget)
   gtk_widget_show_full(widget, TRUE);
 }
 
+gboolean gtk_widget_get_visible(GtkWidget *widget)
+{
+  return (GTK_WIDGET_FLAGS(widget) & GTK_VISIBLE) != 0;
+}
+
 void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
 {
   GtkAllocation alloc;
 
-  if (GTK_WIDGET_VISIBLE(widget))
+  if (gtk_widget_get_visible(widget))
     return;
   GTK_WIDGET_SET_FLAGS(widget, GTK_VISIBLE);
 
   if (recurse)
     gtk_widget_show_all_full(widget, TRUE);
   else
-    gtk_signal_emit(GTK_OBJECT(widget), "show");
+    gtk_signal_emit(G_OBJECT(widget), "show");
 
   if (!GTK_WIDGET_REALIZED(widget)
-      && GTK_OBJECT(widget)->klass == &GtkWindowClass) {
+      && G_OBJECT(widget)->klass == &GtkWindowClass) {
     gtk_widget_realize(widget);
     alloc.x = alloc.y = 0;
     alloc.width = widget->requisition.width;
@@ -1385,7 +1349,7 @@ void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
     ShowWindow(widget->hWnd, SW_SHOWNORMAL);
     UpdateWindow(widget->hWnd);
   } else if (GTK_WIDGET_REALIZED(widget)
-             && GTK_OBJECT(widget)->klass != &GtkWindowClass) {
+             && G_OBJECT(widget)->klass != &GtkWindowClass) {
     gtk_widget_update(widget, TRUE);
     if (!recurse)
       ShowWindow(widget->hWnd, SW_SHOWNORMAL);
@@ -1396,7 +1360,7 @@ void gtk_widget_show_full(GtkWidget *widget, gboolean recurse)
 
 void gtk_widget_hide(GtkWidget *widget)
 {
-  gtk_widget_hide_full(widget, TRUE);
+  gtk_widget_hide_all_full(widget, FALSE);
 }
 
 void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse)
@@ -1405,13 +1369,13 @@ void gtk_widget_hide_full(GtkWidget *widget, gboolean recurse)
   GtkRequisition req;
   GtkWidget *window;
 
-  if (!GTK_WIDGET_VISIBLE(widget))
+  if (!gtk_widget_get_visible(widget))
     return;
 
   if (recurse)
     gtk_widget_hide_all_full(widget, TRUE);
   else {
-    gtk_signal_emit(GTK_OBJECT(widget), "hide");
+    gtk_signal_emit(G_OBJECT(widget), "hide");
     if (widget->hWnd)
       ShowWindow(widget->hWnd, SW_HIDE);
   }
@@ -1438,7 +1402,7 @@ void gtk_widget_set_focus(GtkWidget *widget)
   GtkWidget *window;
 
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget)
-      || !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget))
+      || !GTK_WIDGET_SENSITIVE(widget) || !gtk_widget_get_visible(widget))
     return;
   window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
   gtk_window_update_focus(GTK_WINDOW(window));
@@ -1446,7 +1410,7 @@ void gtk_widget_set_focus(GtkWidget *widget)
     return;
 
   // g_print("Window %p focus set to widget %p
-  // (%s)\n",window,widget,GTK_OBJECT(widget)->klass->Name);
+  // (%s)\n",window,widget,G_OBJECT(widget)->klass->Name);
   GTK_WINDOW(window)->focus = widget;
   if (widget->hWnd) {
     // if (!SetFocus(widget->hWnd)) g_print("SetFocus failed on widget
@@ -1461,9 +1425,9 @@ static BOOL CALLBACK SetFocusEnum(HWND hWnd, LPARAM data)
   GtkWidget *widget;
   GtkWindow *window = GTK_WINDOW(data);
 
-  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWL_USERDATA));
+  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWLP_USERDATA));
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
-      !GTK_WIDGET_SENSITIVE(widget) || !GTK_WIDGET_VISIBLE(widget) ||
+      !GTK_WIDGET_SENSITIVE(widget) || !gtk_widget_get_visible(widget) ||
       window->focus == widget) {
     return TRUE;
   } else {
@@ -1504,7 +1468,7 @@ void gtk_window_update_focus(GtkWindow *window)
   FocusWnd = GetFocus();
   window->focus = NULL;
   if (FocusWnd) {
-    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWLP_USERDATA));
     if (widget && GTK_WIDGET(window)->hWnd &&
         IsChild(GTK_WIDGET(window)->hWnd, FocusWnd)) {
       window->focus = widget;
@@ -1518,9 +1482,9 @@ void gtk_widget_realize(GtkWidget *widget)
 
   if (GTK_WIDGET_REALIZED(widget))
     return;
-  gtk_signal_emit(GTK_OBJECT(widget), "realize", &req);
+  gtk_signal_emit(G_OBJECT(widget), "realize", &req);
   if (widget->hWnd)
-    mySetWindowLong(widget->hWnd, GWL_USERDATA, (LONG)widget);
+    mySetWindowLong(widget->hWnd, GWLP_USERDATA, (LONG_PTR)widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
   gtk_widget_set_sensitive(widget, GTK_WIDGET_SENSITIVE(widget));
 
@@ -1543,7 +1507,7 @@ void gtk_widget_destroy(GtkWidget *widget)
    * calling DestroyWindow, to avoid annoying flicker caused if Windows
    * chooses to reactivate another application when we close the modal
    * dialog */
-  if (GTK_OBJECT(widget)->klass == &GtkWindowClass) {
+  if (G_OBJECT(widget)->klass == &GtkWindowClass) {
     EnableParent(GTK_WINDOW(widget));
   }
 
@@ -1551,7 +1515,7 @@ void gtk_widget_destroy(GtkWidget *widget)
   if (widget->hWnd)
     DestroyWindow(widget->hWnd);
   widget->hWnd = NULL;
-  gtk_signal_emit(GTK_OBJECT(widget), "destroy");
+  gtk_signal_emit(G_OBJECT(widget), "destroy");
   g_free(widget);
 }
 
@@ -1569,9 +1533,9 @@ void gtk_widget_set_sensitive(GtkWidget *widget, gboolean sensitive)
       EnableWindow(widget->hWnd, sensitive);
   }
 
-  gtk_signal_emit(GTK_OBJECT(widget), sensitive ? "enable" : "disable");
+  gtk_signal_emit(G_OBJECT(widget), sensitive ? "enable" : "disable");
   if (sensitive && widget->hWnd
-      && GTK_OBJECT(widget)->klass == &GtkWindowClass)
+      && G_OBJECT(widget)->klass == &GtkWindowClass)
     SetActiveWindow(widget->hWnd);
 }
 
@@ -1581,8 +1545,8 @@ void gtk_widget_size_request(GtkWidget *widget,
   GtkRequisition req;
 
   requisition->width = requisition->height = 0;
-  if (GTK_WIDGET_VISIBLE(widget)) {
-    gtk_signal_emit(GTK_OBJECT(widget), "size_request", requisition);
+  if (gtk_widget_get_visible(widget)) {
+    gtk_signal_emit(G_OBJECT(widget), "size_request", requisition);
   }
   if (requisition->width < widget->usize.width)
     requisition->width = widget->usize.width;
@@ -1609,7 +1573,7 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt)
 
 void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
-  gtk_signal_emit(GTK_OBJECT(widget), "set_size", allocation);
+  gtk_signal_emit(G_OBJECT(widget), "set_size", allocation);
   memcpy(&widget->allocation, allocation, sizeof(GtkAllocation));
   if (widget->hWnd) {
     POINT pt;
@@ -1620,7 +1584,7 @@ void gtk_widget_set_size(GtkWidget *widget, GtkAllocation *allocation)
     SetWindowPos(widget->hWnd, HWND_TOP, pt.x, pt.y,
                  allocation->width, allocation->height,
                  SWP_NOZORDER |
-                 (GTK_OBJECT(widget)->klass ==
+                 (G_OBJECT(widget)->klass ==
                   &GtkWindowClass ? SWP_NOMOVE : 0));
   }
 }
@@ -1903,7 +1867,7 @@ GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
 {
   GSList *list;
 
-  list = gtk_radio_button_group(group);
+  list = gtk_radio_button_get_group(group);
   return (gtk_radio_button_new_with_label(list, label));
 }
 
@@ -1955,26 +1919,24 @@ GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
   return GTK_WIDGET(url);
 }
 
-GtkWidget *gtk_hbox_new(gboolean homogeneous, gint spacing)
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
 {
-  GtkBox *hbox;
+  GtkBox *box;
 
-  hbox = GTK_BOX(GtkNewObject(&GtkHBoxClass));
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    box = GTK_BOX(GtkNewObject(&GtkHBoxClass));
+  } else {
+    box = GTK_BOX(GtkNewObject(&GtkVBoxClass));
+  }
 
-  hbox->spacing = spacing;
-  hbox->homogeneous = homogeneous;
-  return GTK_WIDGET(hbox);
+  box->spacing = spacing;
+  box->homogeneous = FALSE;
+  return GTK_WIDGET(box);
 }
 
-GtkWidget *gtk_vbox_new(gboolean homogeneous, gint spacing)
+void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous)
 {
-  GtkBox *vbox;
-
-  vbox = GTK_BOX(GtkNewObject(&GtkVBoxClass));
-
-  vbox->spacing = spacing;
-  vbox->homogeneous = homogeneous;
-  return GTK_WIDGET(vbox);
+  box->homogeneous = homogeneous;
 }
 
 GtkWidget *gtk_frame_new(const gchar *text)
@@ -2016,7 +1978,7 @@ GtkWidget *gtk_entry_new()
   return GTK_WIDGET(entry);
 }
 
-GSList *gtk_radio_button_group(GtkRadioButton *radio_button)
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button)
 {
   return radio_button->group;
 }
@@ -2198,11 +2160,6 @@ void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
   }
 }
 
-void gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
-{
-  gtk_box_pack_start(box, child, FALSE, FALSE, 0);
-}
-
 void gtk_button_destroy(GtkWidget *widget)
 {
   g_free(GTK_BUTTON(widget)->text);
@@ -2266,7 +2223,7 @@ static void EnableParent(GtkWindow *window)
     for (list = WindowList; list; list = g_slist_next(list)) {
       listwin = GTK_WINDOW(list->data);
       if (listwin != window && listwin->modal
-          && GTK_WIDGET_VISIBLE(GTK_WIDGET(listwin))
+          && gtk_widget_get_visible(GTK_WIDGET(listwin))
           && GTK_WIDGET(listwin)->parent == parent)
         return;
     }
@@ -2319,7 +2276,7 @@ void gtk_hbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       if (first) {
         first = FALSE;
       } else {
@@ -2357,7 +2314,7 @@ void gtk_vbox_size_request(GtkWidget *widget, GtkRequisition *requisition)
   for (children = GTK_BOX(widget)->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       if (first) {
         first = FALSE;
       } else {
@@ -2393,7 +2350,7 @@ static void gtk_box_count_children(GtkBox *box, gint16 allocation,
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget) &&
+    if (child && child->widget && gtk_widget_get_visible(child->widget) &&
         child->expand)
       NumCanExpand++;
   }
@@ -2459,7 +2416,7 @@ void gtk_hbox_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       gtk_box_size_child(box, child, extra, maxpos,
                          box->homogeneous ? box->maxreq :
                          child->widget->requisition.width,
@@ -2495,7 +2452,7 @@ void gtk_vbox_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = box->children; children;
        children = g_list_next(children)) {
     child = (GtkBoxChild *)(children->data);
-    if (child && child->widget && GTK_WIDGET_VISIBLE(child->widget)) {
+    if (child && child->widget && gtk_widget_get_visible(child->widget)) {
       gtk_box_size_child(box, child, extra, maxpos,
                          box->homogeneous ? box->maxreq :
                          child->widget->requisition.height,
@@ -2595,8 +2552,8 @@ void gtk_entry_realize(GtkWidget *widget)
   /* Subclass the window (we assume that all edit boxes have the same
    * window procedure) */
   wpOrigEntryProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                             GWL_WNDPROC,
-                                             (LONG)EntryWndProc);
+                                             GWLP_WNDPROC,
+                                             (LONG_PTR)EntryWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -2623,8 +2580,8 @@ void gtk_text_realize(GtkWidget *widget)
   /* Subclass the window (we assume that all multiline edit boxes have the 
    * same window procedure) */
   wpOrigTextProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                            GWL_WNDPROC,
-                                            (LONG)TextWndProc);
+                                            GWLP_WNDPROC,
+                                            (LONG_PTR)TextWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -2662,10 +2619,10 @@ void gtk_check_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_signal_connect(GTK_OBJECT(widget), "clicked",
-                     gtk_toggle_button_toggled, NULL);
-  gtk_signal_connect(GTK_OBJECT(widget), "toggled",
-                     gtk_check_button_toggled, NULL);
+  g_signal_connect(G_OBJECT(widget), "clicked",
+                   gtk_toggle_button_toggled, NULL);
+  g_signal_connect(G_OBJECT(widget), "toggled",
+                   gtk_check_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -2686,10 +2643,10 @@ void gtk_radio_button_realize(GtkWidget *widget)
                                 widget->allocation.height, Parent, NULL,
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_signal_connect(GTK_OBJECT(widget), "clicked",
-                     gtk_radio_button_clicked, NULL);
-  gtk_signal_connect(GTK_OBJECT(widget), "toggled",
-                     gtk_radio_button_toggled, NULL);
+  g_signal_connect(G_OBJECT(widget), "clicked",
+                   gtk_radio_button_clicked, NULL);
+  g_signal_connect(G_OBJECT(widget), "toggled",
+                   gtk_radio_button_toggled, NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -2790,9 +2747,9 @@ void gtk_widget_hide_all(GtkWidget *widget)
 
 void gtk_widget_hide_all_full(GtkWidget *widget, gboolean hWndOnly)
 {
-  gtk_signal_emit(GTK_OBJECT(widget), "hide_all", hWndOnly);
+  gtk_signal_emit(G_OBJECT(widget), "hide_all", hWndOnly);
   if (hWndOnly) {
-    gtk_signal_emit(GTK_OBJECT(widget), "hide");
+    gtk_signal_emit(G_OBJECT(widget), "hide");
     if (widget->hWnd)
       ShowWindow(widget->hWnd, SW_HIDE);
   } else
@@ -2810,17 +2767,17 @@ void gtk_widget_show_all_full(GtkWidget *widget, gboolean hWndOnly)
   gboolean InitWindow = FALSE;
 
   if (!GTK_WIDGET_REALIZED(widget) &&
-      GTK_OBJECT(widget)->klass == &GtkWindowClass)
+      G_OBJECT(widget)->klass == &GtkWindowClass)
     InitWindow = TRUE;
 
   if (InitWindow)
     gtk_widget_realize(widget);
 
-  gtk_signal_emit(GTK_OBJECT(widget), "show_all", hWndOnly);
+  gtk_signal_emit(G_OBJECT(widget), "show_all", hWndOnly);
 
   if (hWndOnly) {
-    if (GTK_WIDGET_VISIBLE(widget)) {
-      gtk_signal_emit(GTK_OBJECT(widget), "show");
+    if (gtk_widget_get_visible(widget)) {
+      gtk_signal_emit(G_OBJECT(widget), "show");
       if (widget->hWnd)
         ShowWindow(widget->hWnd, SW_SHOWNORMAL);
     }
@@ -2843,7 +2800,7 @@ GtkWidget *gtk_widget_get_ancestor(GtkWidget *widget, GtkType type)
 {
   if (!widget)
     return NULL;
-  while (widget && GTK_OBJECT(widget)->klass != type) {
+  while (widget && G_OBJECT(widget)->klass != type) {
     widget = widget->parent;
   }
   return widget;
@@ -3065,7 +3022,7 @@ static void gtk_table_get_size_children(GtkTable *table,
     child_wid = child->widget;
     if (child_wid && child->left_attach < child->right_attach
         && child->top_attach < child->bottom_attach
-        && GTK_WIDGET_VISIBLE(child_wid)) {
+        && gtk_widget_get_visible(child_wid)) {
       child_req.width = child_wid->requisition.width;
       child_req.height = child_wid->requisition.height;
       child_req.height /= (child->bottom_attach - child->top_attach);
@@ -3185,7 +3142,7 @@ void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
     child_wid = child->widget;
     if (child_wid && child->left_attach < child->right_attach &&
         child->top_attach < child->bottom_attach &&
-        GTK_WIDGET_VISIBLE(child_wid)) {
+        gtk_widget_get_visible(child_wid)) {
       if (child->xoptions & GTK_SHRINK) {
         for (i = child->left_attach; i < child->right_attach; i++) {
           colopt[i] |= GTK_SHRINK;
@@ -3231,7 +3188,7 @@ void gtk_table_set_size(GtkWidget *widget, GtkAllocation *allocation)
   for (children = table->children; children;
        children = g_list_next(children)) {
     child = (GtkTableChild *)(children->data);
-    if (!child || !child->widget || !GTK_WIDGET_VISIBLE(child->widget))
+    if (!child || !child->widget || !gtk_widget_get_visible(child->widget))
       continue;
     child_alloc.x = allocation->x + border_width;
     child_alloc.y = allocation->y + border_width;
@@ -3308,7 +3265,7 @@ void gtk_table_set_col_spacings(GtkTable *table, guint spacing)
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button)
 {
   toggle_button->toggled = !toggle_button->toggled;
-  gtk_signal_emit(GTK_OBJECT(toggle_button), "toggled");
+  gtk_signal_emit(G_OBJECT(toggle_button), "toggled");
 }
 
 void gtk_check_button_toggled(GtkCheckButton *check_button, gpointer data)
@@ -3389,7 +3346,7 @@ void gtk_main()
 
   while (myGetMessage(&msg, NULL, 0, 0)) {
     MsgDone = FALSE;
-    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWL_USERDATA));
+    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWLP_USERDATA));
     window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     if (window) {
       hAccel = GTK_WINDOW(window)->hAccel;
@@ -3415,15 +3372,15 @@ void gtk_main()
 typedef struct _GtkSignal GtkSignal;
 
 struct _GtkSignal {
-  GtkSignalFunc func;
-  GtkObject *slot_object;
+  GCallback func;
+  GObject *slot_object;
   gpointer func_data;
 };
 
 typedef gint (*GtkGIntSignalFunc) ();
 
-void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
+                            GCallback default_action, va_list args)
 {
   gboolean *retval;
   gint arg1;
@@ -3454,8 +3411,8 @@ void gtk_marshal_BOOL__GINT(GtkObject *object, GSList *actions,
     *retval = (*sigfunc) (object, arg1);
 }
 
-void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
-                             GtkSignalFunc default_action, va_list args)
+void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
+                             GCallback default_action, va_list args)
 {
   gboolean *retval;
   gpointer arg1;
@@ -3486,8 +3443,8 @@ void gtk_marshal_BOOL__GPOIN(GtkObject *object, GSList *actions,
     *retval = (*sigfunc) (object, arg1);
 }
 
-void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
+                            GCallback default_action, va_list args)
 {
   GtkSignal *signal;
 
@@ -3503,8 +3460,8 @@ void gtk_marshal_VOID__VOID(GtkObject *object, GSList *actions,
     (*default_action) (object);
 }
 
-void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
+                            GCallback default_action, va_list args)
 {
   gint arg1;
   GtkSignal *signal;
@@ -3523,8 +3480,8 @@ void gtk_marshal_VOID__GINT(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
-                             GtkSignalFunc default_action, va_list args)
+void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
+                             GCallback default_action, va_list args)
 {
   gpointer arg1;
   GtkSignal *signal;
@@ -3543,8 +3500,8 @@ void gtk_marshal_VOID__GPOIN(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
-                            GtkSignalFunc default_action, va_list args)
+void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
+                            GCallback default_action, va_list args)
 {
   gboolean arg1;
   GtkSignal *signal;
@@ -3563,8 +3520,8 @@ void gtk_marshal_VOID__BOOL(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1);
 }
 
-void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
-                                       GtkSignalFunc default_action,
+void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
+                                       GCallback default_action,
                                        va_list args)
 {
   gint arg1, arg2;
@@ -3587,7 +3544,7 @@ void gtk_marshal_VOID__GINT_GINT_EVENT(GtkObject *object, GSList *actions,
     (*default_action) (object, arg1, arg2, arg3);
 }
 
-static GtkSignalType *gtk_get_signal_type(GtkObject *object,
+static GtkSignalType *gtk_get_signal_type(GObject *object,
                                           const gchar *name)
 {
   GtkClass *klass;
@@ -3602,7 +3559,7 @@ static GtkSignalType *gtk_get_signal_type(GtkObject *object,
   return NULL;
 }
 
-void gtk_signal_emit(GtkObject *object, const gchar *name, ...)
+void gtk_signal_emit(GObject *object, const gchar *name, ...)
 {
   GSList *signal_list;
   GtkSignalType *signal_type;
@@ -3623,8 +3580,8 @@ void gtk_signal_emit(GtkObject *object, const gchar *name, ...)
     g_warning("gtk_signal_emit: unknown signal %s", name);
 }
 
-guint gtk_signal_connect(GtkObject *object, const gchar *name,
-                         GtkSignalFunc func, gpointer func_data)
+guint g_signal_connect(GObject *object, const gchar *name,
+                       GCallback func, gpointer func_data)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -3634,7 +3591,7 @@ guint gtk_signal_connect(GtkObject *object, const gchar *name,
     return 0;
   signal_type = gtk_get_signal_type(object, name);
   if (!signal_type) {
-    g_warning("gtk_signal_connect: unknown signal %s", name);
+    g_warning("g_signal_connect: unknown signal %s", name);
     return 0;
   }
   signal_list = (GSList *)g_datalist_get_data(&object->signals, name);
@@ -3647,8 +3604,8 @@ guint gtk_signal_connect(GtkObject *object, const gchar *name,
   return 0;
 }
 
-guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
-                                GtkSignalFunc func, GtkObject *slot_object)
+guint g_signal_connect_swapped(GObject *object, const gchar *name,
+                               GCallback func, GObject *slot_object)
 {
   GtkSignal *signal;
   GtkSignalType *signal_type;
@@ -3658,7 +3615,7 @@ guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
     return 0;
   signal_type = gtk_get_signal_type(object, name);
   if (!signal_type) {
-    g_warning("gtk_signal_connect_object: unknown signal %s", name);
+    g_warning("g_signal_connect_swapped: unknown signal %s", name);
     return 0;
   }
   signal_list = (GSList *)g_datalist_get_data(&object->signals, name);
@@ -3669,210 +3626,6 @@ guint gtk_signal_connect_object(GtkObject *object, const gchar *name,
   signal_list = g_slist_append(signal_list, signal);
   g_datalist_set_data(&object->signals, name, signal_list);
   return 0;
-}
-
-GtkItemFactory *gtk_item_factory_new(GtkType container_type,
-                                     const gchar *path,
-                                     GtkAccelGroup *accel_group)
-{
-  GtkItemFactory *new_fac;
-
-  new_fac = (GtkItemFactory *)GtkNewObject(&GtkItemFactoryClass);
-  new_fac->path = g_strdup(path);
-  new_fac->accel_group = accel_group;
-  new_fac->top_widget = gtk_menu_bar_new();
-  new_fac->translate_func = NULL;
-  return new_fac;
-}
-
-static gint PathCmp(const gchar *path1, const gchar *path2)
-{
-  gint Match = 1;
-
-  if (!path1 || !path2)
-    return 0;
-
-  while (*path1 && *path2 && Match) {
-    while (*path1 == '_')
-      path1++;
-    while (*path2 == '_')
-      path2++;
-    if (*path1 == *path2) {
-      path1++;
-      path2++;
-    } else
-      Match = 0;
-  }
-  if (*path1 || *path2)
-    Match = 0;
-  return Match;
-}
-
-static gchar *TransPath(GtkItemFactory *ifactory, gchar *path)
-{
-  gchar *transpath = NULL;
-
-  if (ifactory->translate_func) {
-    transpath =
-        (*ifactory->translate_func) (path, ifactory->translate_data);
-  }
-
-  return transpath ? transpath : path;
-}
-
-static void gtk_item_factory_parse_path(GtkItemFactory *ifactory,
-                                        gchar *path,
-                                        GtkItemFactoryChild **parent,
-                                        GString *menu_title)
-{
-  GSList *list;
-  GtkItemFactoryChild *child;
-  gchar *root, *pt, *transpath;
-
-  transpath = TransPath(ifactory, path);
-  pt = strrchr(transpath, '/');
-  if (pt)
-    g_string_assign(menu_title, pt + 1);
-
-  pt = strrchr(path, '/');
-  if (!pt)
-    return;
-  root = g_strdup(path);
-  root[pt - path] = '\0';
-
-  for (list = ifactory->children; list; list = g_slist_next(list)) {
-    child = (GtkItemFactoryChild *)list->data;
-    if (PathCmp(child->path, root) == 1) {
-      *parent = child;
-      break;
-    }
-  }
-  g_free(root);
-}
-
-static gboolean gtk_item_factory_parse_accel(GtkItemFactory *ifactory,
-                                             gchar *accelerator,
-                                             GString *menu_title,
-                                             ACCEL *accel)
-{
-  gchar *apt;
-
-  if (!accelerator)
-    return FALSE;
-
-  apt = accelerator;
-  accel->fVirt = 0;
-  accel->key = 0;
-  accel->cmd = 0;
-
-  g_string_append(menu_title, "\t");
-
-  if (strncmp(apt, "<control>", 9) == 0) {
-    accel->fVirt |= FCONTROL;
-    g_string_append(menu_title, "Ctrl+");
-    apt += 9;
-  }
-
-  if (strlen(apt) == 1) {
-    g_string_append_c(menu_title, *apt);
-    accel->key = *apt;
-    accel->fVirt |= FVIRTKEY;
-  } else if (strcmp(apt, "F1") == 0) {
-    g_string_append(menu_title, apt);
-    accel->fVirt |= FVIRTKEY;
-    accel->key = VK_F1;
-  }
-  return (accel->key != 0);
-}
-
-void gtk_item_factory_create_item(GtkItemFactory *ifactory,
-                                  GtkItemFactoryEntry *entry,
-                                  gpointer callback_data,
-                                  guint callback_type)
-{
-  GtkItemFactoryChild *new_child, *parent = NULL;
-  GString *menu_title;
-  GtkWidget *menu_item, *menu;
-  ACCEL accel;
-  gboolean haveaccel;
-
-  new_child = g_new0(GtkItemFactoryChild, 1);
-
-  new_child->path = g_strdup(entry->path);
-
-  menu_title = g_string_new("");
-
-  gtk_item_factory_parse_path(ifactory, new_child->path, &parent,
-                              menu_title);
-  haveaccel =
-      gtk_item_factory_parse_accel(ifactory, entry->accelerator,
-                                   menu_title, &accel);
-
-  menu_item = gtk_menu_item_new_with_label(menu_title->str);
-  if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
-    GTK_CHECK_MENU_ITEM(menu_item)->check = 1;
-  }
-  new_child->widget = menu_item;
-  if (entry->callback) {
-    gtk_signal_connect(GTK_OBJECT(menu_item), "activate",
-                       entry->callback, callback_data);
-  }
-
-  if (parent) {
-    menu = GTK_WIDGET(GTK_MENU_ITEM(parent->widget)->submenu);
-    if (!menu) {
-      menu = gtk_menu_new();
-      gtk_menu_item_set_submenu(GTK_MENU_ITEM(parent->widget), menu);
-    }
-    gtk_menu_append(GTK_MENU(menu), menu_item);
-  } else {
-    gtk_menu_bar_append(GTK_MENU_BAR(ifactory->top_widget), menu_item);
-  }
-
-  if (haveaccel && ifactory->accel_group) {
-    GTK_MENU_ITEM(menu_item)->accelind =
-        gtk_accel_group_add(ifactory->accel_group, &accel);
-  }
-
-  g_string_free(menu_title, TRUE);
-
-  ifactory->children = g_slist_append(ifactory->children, new_child);
-}
-
-void gtk_item_factory_create_items(GtkItemFactory *ifactory,
-                                   guint n_entries,
-                                   GtkItemFactoryEntry *entries,
-                                   gpointer callback_data)
-{
-  gint i;
-
-  for (i = 0; i < n_entries; i++) {
-    gtk_item_factory_create_item(ifactory, &entries[i], callback_data, 0);
-  }
-}
-
-GtkWidget *gtk_item_factory_get_widget(GtkItemFactory *ifactory,
-                                       const gchar *path)
-{
-  gint root_len;
-  GSList *list;
-  GtkItemFactoryChild *child;
-
-  root_len = strlen(ifactory->path);
-  if (!path || strlen(path) < root_len)
-    return NULL;
-
-  if (strncmp(ifactory->path, path, root_len) != 0)
-    return NULL;
-  if (strlen(path) == root_len)
-    return ifactory->top_widget;
-
-  for (list = ifactory->children; list; list = g_slist_next(list)) {
-    child = (GtkItemFactoryChild *)list->data;
-    if (PathCmp(child->path, &path[root_len]) == 1)
-      return child->widget;
-  }
-  return NULL;
 }
 
 void gtk_menu_shell_insert(GtkMenuShell *menu_shell, GtkWidget *child,
@@ -3959,9 +3712,20 @@ void gtk_menu_item_set_submenu(GtkMenuItem *menu_item, GtkWidget *submenu)
   submenu->parent = GTK_WIDGET(menu_item);
 }
 
+GtkMenu *gtk_menu_item_get_submenu(GtkMenuItem *menu_item)
+{
+  return menu_item->submenu;
+}
+
+gboolean gtk_check_menu_item_get_active(GtkMenuItem *menu_item)
+{
+  return menu_item->active;
+}
+
 void gtk_check_menu_item_set_active(GtkMenuItem *menu_item, gboolean active)
 {
   GtkWidget *widget = GTK_WIDGET(menu_item);
+  menu_item->check = 1;
   menu_item->active = active;
 
   if (GTK_WIDGET_REALIZED(widget)) {
@@ -4014,9 +3778,8 @@ void gtk_menu_bar_realize(GtkWidget *widget)
 {
   GtkMenuBar *menu_bar = GTK_MENU_BAR(widget);
   GtkWidget *window;
-  HMENU hMenu;
 
-  hMenu = GTK_MENU_SHELL(widget)->menu = CreateMenu();
+  GTK_MENU_SHELL(widget)->menu = CreateMenu();
   menu_bar->LastID = 1000;
 
   gtk_menu_shell_realize(widget);
@@ -4157,13 +3920,13 @@ void gtk_notebook_insert_page(GtkNotebook *notebook, GtkWidget *child,
   note_child->tabpage = myCreateDialog(hInst, "tabpage",
                                        gtk_get_parent_hwnd(widget->parent),
                                        MainDlgProc);
-  myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
+  EnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
   notebook->children =
       g_slist_insert(notebook->children, note_child, position);
   child->parent = GTK_WIDGET(notebook);
 }
 
-void gtk_notebook_set_page(GtkNotebook *notebook, gint page_num)
+void gtk_notebook_set_current_page(GtkNotebook *notebook, gint page_num)
 {
   GSList *children;
   GtkNotebookChild *note_child;
@@ -4229,14 +3992,14 @@ void gtk_notebook_realize(GtkWidget *widget)
       note_child->tabpage = myCreateDialog(hInst, "tabpage",
                                            gtk_get_parent_hwnd(widget->parent),
                                            MainDlgProc);
-      myEnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
+      EnableThemeDialogTexture(note_child->tabpage, ETDT_ENABLETAB);
       if (note_child->child) {
         gtk_widget_realize(note_child->child);
       }
     }
   }
-  gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                        GTK_NOTEBOOK(widget)->selection);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                GTK_NOTEBOOK(widget)->selection);
 }
 
 void gtk_notebook_show_all(GtkWidget *widget, gboolean hWndOnly)
@@ -4251,8 +4014,8 @@ void gtk_notebook_show_all(GtkWidget *widget, gboolean hWndOnly)
       if (note_child && note_child->child)
         gtk_widget_show_all_full(note_child->child, hWndOnly);
     }
-  gtk_notebook_set_page(GTK_NOTEBOOK(widget),
-                        GTK_NOTEBOOK(widget)->selection);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+                                GTK_NOTEBOOK(widget)->selection);
 }
 
 void gtk_notebook_hide_all(GtkWidget *widget, gboolean hWndOnly)
@@ -4332,7 +4095,7 @@ void gtk_notebook_size_request(GtkWidget *widget,
        children = g_slist_next(children)) {
     note_child = (GtkNotebookChild *)(children->data);
     if (note_child && note_child->child &&
-        GTK_WIDGET_VISIBLE(note_child->child)) {
+        gtk_widget_get_visible(note_child->child)) {
       child_req = &note_child->child->requisition;
       if (child_req->width > requisition->width)
         requisition->width = child_req->width;
@@ -4350,9 +4113,9 @@ void gtk_notebook_size_request(GtkWidget *widget,
   requisition->height = rect.bottom - rect.top;
 }
 
-GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
-                              gfloat step_increment, gfloat page_increment,
-                              gfloat page_size)
+GObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
+                            gfloat step_increment, gfloat page_increment,
+                            gfloat page_size)
 {
   GtkAdjustment *adj;
 
@@ -4365,7 +4128,7 @@ GtkObject *gtk_adjustment_new(gfloat value, gfloat lower, gfloat upper,
   adj->page_increment = page_increment;
   adj->page_size = page_size;
 
-  return GTK_OBJECT(adj);
+  return G_OBJECT(adj);
 }
 
 GtkWidget *gtk_spin_button_new(GtkAdjustment *adjustment,
@@ -4389,11 +4152,10 @@ void gtk_spin_button_size_request(GtkWidget *widget,
 
 void gtk_spin_button_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
-  int width = allocation->width, udwidth;
+  int udwidth;
   HWND updown;
 
   udwidth = GetSystemMetrics(SM_CXVSCROLL);
-  width = allocation->width;
   allocation->width -= udwidth;
 
   updown = GTK_SPIN_BUTTON(widget)->updown;
@@ -4493,49 +4255,13 @@ void gtk_spin_button_update(GtkSpinButton *spin_button)
 {
 }
 
-void gdk_input_remove(gint tag)
+GtkWidget *gtk_separator_new(GtkOrientation orientation)
 {
-  GSList *list;
-  GdkInput *input;
-
-  for (list = GdkInputs; list; list = g_slist_next(list)) {
-    input = (GdkInput *)list->data;
-    if (input->source == tag) {
-      WSAAsyncSelect(input->source, TopLevel, 0, 0);
-      GdkInputs = g_slist_remove(GdkInputs, input);
-      g_free(input);
-      break;
-    }
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return GTK_WIDGET(GtkNewObject(&GtkHSeparatorClass));
+  } else {
+    return GTK_WIDGET(GtkNewObject(&GtkVSeparatorClass));
   }
-}
-
-gint gdk_input_add(gint source, GdkInputCondition condition,
-                   GdkInputFunction function, gpointer data)
-{
-  GdkInput *input;
-  int rc;
-
-  input = g_new(GdkInput, 1);
-  input->source = source;
-  input->condition = condition;
-  input->function = function;
-  input->data = data;
-  rc = WSAAsyncSelect(source, TopLevel, MYWM_SOCKETDATA,
-                      (condition & GDK_INPUT_READ ? FD_READ | FD_CLOSE |
-                       FD_ACCEPT : 0) | (condition & GDK_INPUT_WRITE ?
-                                         FD_WRITE | FD_CONNECT : 0));
-  GdkInputs = g_slist_append(GdkInputs, input);
-  return source;
-}
-
-GtkWidget *gtk_hseparator_new()
-{
-  return GTK_WIDGET(GtkNewObject(&GtkHSeparatorClass));
-}
-
-GtkWidget *gtk_vseparator_new()
-{
-  return GTK_WIDGET(GtkNewObject(&GtkVSeparatorClass));
 }
 
 void gtk_separator_size_request(GtkWidget *widget,
@@ -4553,13 +4279,13 @@ void gtk_separator_realize(GtkWidget *widget)
                                 0, 0, 0, 0, Parent, NULL, hInst, NULL);
 }
 
-void gtk_object_set_data(GtkObject *object, const gchar *key,
-                         gpointer data)
+void g_object_set_data(GObject *object, const gchar *key,
+                       gpointer data)
 {
   g_datalist_set_data(&object->object_data, key, data);
 }
 
-gpointer gtk_object_get_data(GtkObject *object, const gchar *key)
+gpointer g_object_get_data(GObject *object, const gchar *key)
 {
   return g_datalist_get_data(&object->object_data, key);
 }
@@ -4594,15 +4320,6 @@ void gtk_accel_group_destroy(GtkAccelGroup *accel_group)
 {
   g_free(accel_group->accel);
   g_free(accel_group);
-}
-
-void gtk_item_factory_set_translate_func(GtkItemFactory *ifactory,
-                                         GtkTranslateFunc func,
-                                         gpointer data,
-                                         GtkDestroyNotify notify)
-{
-  ifactory->translate_func = func;
-  ifactory->translate_data = data;
 }
 
 void gtk_widget_grab_default(GtkWidget *widget)
@@ -4650,7 +4367,7 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
 {
-  gtk_signal_emit(GTK_OBJECT(labelparent), "set_text", Text);
+  gtk_signal_emit(G_OBJECT(labelparent), "set_text", Text);
   return 0;
 }
 
@@ -4976,54 +4693,83 @@ void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...)
   va_end(ap);
 }
 
-GtkWidget *gtk_option_menu_new()
+GtkWidget *gtk_combo_box_new_with_model(GtkTreeModel *model)
 {
-  GtkOptionMenu *option_menu;
+  GtkComboBox *combo_box;
 
-  option_menu = GTK_OPTION_MENU(GtkNewObject(&GtkOptionMenuClass));
-  return GTK_WIDGET(option_menu);
+  combo_box = GTK_COMBO_BOX(GtkNewObject(&GtkComboBoxClass));
+  combo_box->active = -1;
+  combo_box->model_column = -1;
+  gtk_combo_box_set_model(combo_box, model);
+  return GTK_WIDGET(combo_box);
 }
 
-GtkWidget *gtk_option_menu_get_menu(GtkOptionMenu *option_menu)
+void gtk_cell_layout_set_attributes(GtkCellLayout *cell_layout,
+                                    GtkCellRenderer *cell, ...)
 {
-  return option_menu->menu;
+  const char *name;
+  va_list args;
+
+  va_start(args, cell);
+  /* Currently we only support the "text" attribute to point to the
+     ListStore column */
+  while ((name = va_arg(args, const char *)) != NULL) {
+    if (strcmp(name, "text") == 0) {
+      cell_layout->model_column = va_arg(args, int);
+    }
+  }
+  va_end(args);
 }
 
-void gtk_option_menu_set_menu(GtkOptionMenu *option_menu, GtkWidget *menu)
+void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model)
 {
-  GSList *list;
-  GtkMenuItem *menu_item;
   HWND hWnd;
 
-  if (!menu)
+  if (!model)
     return;
-  option_menu->menu = menu;
-  hWnd = GTK_WIDGET(option_menu)->hWnd;
+  combo_box->model = model;
+  hWnd = GTK_WIDGET(combo_box)->hWnd;
 
+  /* For now we work only with a single column of string type */
   if (hWnd) {
     mySendMessage(hWnd, CB_RESETCONTENT, 0, 0);
-    for (list = GTK_MENU_SHELL(menu)->children; list;
-         list = g_slist_next(list)) {
-      menu_item = GTK_MENU_ITEM(list->data);
-      if (menu_item && menu_item->text) {
-        myComboBox_AddString(hWnd, menu_item->text);
-      }
+  }
+  if (hWnd && combo_box->model_column >= 0) {
+    int nrow;
+    int col = combo_box->model_column;
+    g_assert(model->coltype[col] == G_TYPE_STRING);
+    for (nrow = 0; nrow < combo_box->model->rows->len; ++nrow) {
+      GtkListStoreRow *row = &g_array_index(combo_box->model->rows,
+                                            GtkListStoreRow, nrow);
+      myComboBox_AddString(hWnd, row->data[col]);
     }
-    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)GTK_MENU(menu)->active, 0);
+    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)combo_box->active, 0);
   }
 }
 
-void gtk_option_menu_set_history(GtkOptionMenu *option_menu, guint index)
+GtkTreeModel *gtk_combo_box_get_model(GtkComboBox *combo_box)
 {
-  GtkWidget *menu;
-
-  menu = gtk_option_menu_get_menu(option_menu);
-  if (menu)
-    gtk_menu_set_active(GTK_MENU(menu), index);
+  return combo_box->model;
 }
 
-void gtk_option_menu_size_request(GtkWidget *widget,
-                                  GtkRequisition *requisition)
+void gtk_combo_box_set_active(GtkComboBox *combo_box, gint index)
+{
+  combo_box->active = index;
+}
+
+gboolean gtk_combo_box_get_active_iter(GtkComboBox *combo_box,
+                                       GtkTreeIter *iter)
+{
+  if (combo_box->active >= 0) {
+    *iter = combo_box->active;
+    return TRUE;
+  } else {
+    return FALSE;
+  }
+}
+
+void gtk_combo_box_size_request(GtkWidget *widget,
+                                GtkRequisition *requisition)
 {
   SIZE size;
 
@@ -5033,15 +4779,15 @@ void gtk_option_menu_size_request(GtkWidget *widget,
   }
 }
 
-void gtk_option_menu_set_size(GtkWidget *widget, GtkAllocation *allocation)
+void gtk_combo_box_set_size(GtkWidget *widget, GtkAllocation *allocation)
 {
   allocation->height *= 6;
 }
 
-void gtk_option_menu_realize(GtkWidget *widget)
+void gtk_combo_box_realize(GtkWidget *widget)
 {
   HWND Parent;
-  GtkOptionMenu *option_menu = GTK_OPTION_MENU(widget);
+  GtkComboBox *combo_box = GTK_COMBO_BOX(widget);
 
   Parent = gtk_get_parent_hwnd(widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_CAN_FOCUS);
@@ -5050,7 +4796,16 @@ void gtk_option_menu_realize(GtkWidget *widget)
                                   CBS_HASSTRINGS | CBS_DROPDOWNLIST,
                                   0, 0, 0, 0, Parent, NULL, hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  gtk_option_menu_set_menu(option_menu, option_menu->menu);
+  gtk_combo_box_set_model(combo_box, combo_box->model);
+}
+
+void gtk_combo_box_destroy(GtkWidget *widget)
+{
+  GtkComboBox *combo_box = GTK_COMBO_BOX(widget);
+  if (combo_box->model) {
+    gtk_tree_model_free(combo_box->model);
+  }
+  combo_box->model = NULL;
 }
 
 void gtk_label_set_text(GtkLabel *label, const gchar *str)
@@ -5103,23 +4858,9 @@ static void gtk_menu_item_set_text(GtkMenuItem *menuitem, gchar *text)
   }
 }
 
-guint gtk_label_parse_uline(GtkLabel *label, const gchar *str)
+const char *gtk_label_get_text(GtkLabel *label)
 {
-  gint i;
-
-  gtk_label_set_text(label, str);
-  if (str)
-    for (i = 0; i < strlen(str); i++) {
-      if (str[i] == '_') {
-        return str[i + 1];
-      }
-    }
-  return 0;
-}
-
-void gtk_label_get(GtkLabel *label, gchar **str)
-{
-  *str = label->text;
+  return label->text;
 }
 
 void gtk_text_set_point(GtkText *text, guint index)
@@ -5127,7 +4868,7 @@ void gtk_text_set_point(GtkText *text, guint index)
   gtk_editable_set_position(GTK_EDITABLE(text), index);
 }
 
-void gtk_widget_set_usize(GtkWidget *widget, gint width, gint height)
+void gtk_widget_set_size_request(GtkWidget *widget, gint width, gint height)
 {
   widget->usize.width = width;
   widget->usize.height = height;
@@ -5142,11 +4883,9 @@ void gtk_editable_create(GtkWidget *widget)
   editable->text = g_string_new("");
 }
 
-void gtk_option_menu_update_selection(GtkWidget *widget)
+void gtk_combo_box_update_selection(GtkWidget *widget)
 {
   LRESULT lres;
-  GtkMenuShell *menu;
-  GtkWidget *menu_item;
 
   if (widget->hWnd == NULL)
     return;
@@ -5154,12 +4893,8 @@ void gtk_option_menu_update_selection(GtkWidget *widget)
   if (lres == CB_ERR)
     return;
 
-  menu = GTK_MENU_SHELL(gtk_option_menu_get_menu(GTK_OPTION_MENU(widget)));
-  if (menu) {
-    menu_item = GTK_WIDGET(g_slist_nth_data(menu->children, lres));
-    if (menu_item)
-      gtk_signal_emit(GTK_OBJECT(menu_item), "activate");
-  }
+  GTK_COMBO_BOX(widget)->active = lres;
+  gtk_signal_emit(G_OBJECT(widget), "changed");
 }
 
 void gtk_window_handle_user_size(GtkWindow *window,
@@ -5252,13 +4987,7 @@ GtkWidget *gtk_progress_bar_new()
   return GTK_WIDGET(prog);
 }
 
-void gtk_progress_bar_set_orientation(GtkProgressBar *pbar,
-                                      GtkProgressBarOrientation orientation)
-{
-  pbar->orient = orientation;
-}
-
-void gtk_progress_bar_update(GtkProgressBar *pbar, gfloat percentage)
+void gtk_progress_bar_set_fraction(GtkProgressBar *pbar, gfloat percentage)
 {
   GtkWidget *widget;
 
@@ -5324,55 +5053,80 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   return retval;
 }
 
-guint gtk_timeout_add(guint32 interval, GtkFunction function,
-                      gpointer data)
+
+/* Add a new source and return a unique ID */
+static guint add_our_source(OurSource *source)
 {
-  GtkTimeout *timeout;
   GSList *list;
   guint id = 1;
 
   /* Get an unused ID */
-  list = GtkTimeouts;
+  list = OurSources;
   while (list) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == id) {
+    OurSource *s = (OurSource *)list->data;
+    if (s->id == id) {
       id++;
-      list = GtkTimeouts;
+      list = OurSources;  /* Back to the start */
     } else {
       list = g_slist_next(list);
     }
   }
 
-  timeout = g_new(GtkTimeout, 1);
-  timeout->interval = interval;
-  timeout->function = function;
-  timeout->data = data;
-
-  timeout->id = SetTimer(TopLevel, id, interval, NULL);
-  if (timeout->id == 0) {
-    g_warning("Failed to create timer!");
-  }
-
-  GtkTimeouts = g_slist_append(GtkTimeouts, timeout);
-  return timeout->id;
+  source->id = id;
+  OurSources = g_slist_append(OurSources, source);
+  return source->id;
 }
 
-void gtk_timeout_remove(guint timeout_handler_id)
+/* Like g_timeout_add(), but uses the Windows event loop */
+guint dp_g_timeout_add(guint interval, GSourceFunc function, gpointer data)
+{
+  guint id;
+  OurSource *source = g_new0(OurSource, 1);
+  source->timeout_function = function;
+  source->data = data;
+  id = add_our_source(source);
+  if (SetTimer(TopLevel, id, interval, NULL) == 0) {
+    g_warning("Failed to create timer!");
+  }
+  return id;
+}
+
+/* Like g_io_add_watch(), but uses the Windows event loop */
+guint dp_g_io_add_watch(GIOChannel *channel, GIOCondition condition,
+                        GIOFunc func, gpointer user_data)
+{
+  OurSource *source = g_new0(OurSource, 1);
+  source->io_channel = channel;
+  source->io_function = func;
+  source->socket = g_io_channel_unix_get_fd(channel);
+  source->data = user_data;
+  WSAAsyncSelect(source->socket, TopLevel, MYWM_SOCKETDATA,
+                 (condition & G_IO_IN ? FD_READ | FD_CLOSE | FD_ACCEPT : 0)
+                 | (condition & G_IO_OUT ? FD_WRITE | FD_CONNECT : 0));
+  return add_our_source(source);
+}
+
+/* Like g_source_remove(), but uses the Windows event loop */
+gboolean dp_g_source_remove(guint tag)
 {
   GSList *list;
-  GtkTimeout *timeout;
-
-  for (list = GtkTimeouts; list; list = g_slist_next(list)) {
-    timeout = (GtkTimeout *)list->data;
-    if (timeout->id == timeout_handler_id) {
-      if (KillTimer(TopLevel, timeout->id) == 0) {
-        g_warning("Failed to kill timer!");
+  OurSource *s;
+  for (list = OurSources; list; list = g_slist_next(list)) {
+    s = (OurSource *)list->data;
+    if (s->id == tag) {
+      if (s->timeout_function) {
+        if (KillTimer(TopLevel, s->id) == 0) {
+          g_warning("Failed to kill timer!");
+        }
+      } else {
+        WSAAsyncSelect(s->socket, TopLevel, 0, 0);
       }
-      GtkTimeouts = g_slist_remove(GtkTimeouts, timeout);
-      g_free(timeout);
+      OurSources = g_slist_remove(OurSources, s);
+      g_free(s);
       break;
     }
   }
+  return TRUE;
 }
 
 GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
@@ -5391,21 +5145,27 @@ void gtk_widget_set_style(GtkWidget *widget, GtkStyle *style)
 {
 }
 
-static gint hbbox_spacing = 0;
-
-GtkWidget *gtk_hbutton_box_new()
+GtkWidget *gtk_button_box_new(GtkOrientation orientation)
 {
-  GtkWidget *hbbox, *spacer;
+  GtkWidget *bbox, *spacer;
 
-  hbbox = gtk_hbox_new(TRUE, hbbox_spacing);
-  spacer = gtk_label_new("");
-  gtk_box_pack_start(GTK_BOX(hbbox), spacer, TRUE, TRUE, 0);
-  return hbbox;
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    bbox = gtk_box_new(orientation, 0);
+  } else {
+    bbox = gtk_box_new(orientation, 5);
+  }
+  gtk_box_set_homogeneous(GTK_BOX(bbox), TRUE);
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    /* Add a spacer so that all hboxes are right-aligned */
+    spacer = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(bbox), spacer, TRUE, TRUE, 0);
+  }
+  return bbox;
 }
 
-void gtk_hbutton_box_set_spacing_default(gint spacing)
+void gtk_box_set_spacing(GtkBox *box, gint spacing)
 {
-  hbbox_spacing = spacing;
+  box->spacing = spacing;
 }
 
 /*
@@ -5452,11 +5212,52 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   }
 }
 
+void gtk_widget_set_can_default(GtkWidget *wid, gboolean flag)
+{
+  if (flag) {
+    GTK_WIDGET_SET_FLAGS(wid, GTK_CAN_DEFAULT);
+  } else {
+    GTK_WIDGET_UNSET_FLAGS(wid, GTK_CAN_DEFAULT);
+  }
+}
+
 #else /* CYGWIN */
+
+#if GTK_MAJOR_VERSION == 2
+GtkWidget *gtk_button_box_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hbutton_box_new();
+  } else {
+    return gtk_vbutton_box_new();
+  }
+}
+
+GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hbox_new(FALSE, spacing);
+  } else {
+    return gtk_vbox_new(FALSE, spacing);
+  }
+}
+
+GtkWidget *gtk_separator_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hseparator_new();
+  } else {
+    return gtk_vseparator_new();
+  }
+}
+
+#endif
+
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
 {
+#if GTK_MAJOR_VERSION == 2
   guint AccelKey;
 
   AccelKey =
@@ -5467,6 +5268,15 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                                GTK_ACCEL_VISIBLE);
   }
   return AccelKey;
+#else
+  gtk_label_set_text_with_mnemonic(
+                   GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), Text);
+  if (sendto) {
+    gtk_label_set_mnemonic_widget(
+                   GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), sendto);
+  }
+  return 0;
+#endif
 }
 
 GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
@@ -5525,7 +5335,7 @@ static void GtkMessageBoxCallback(GtkWidget *widget, gpointer data)
   GtkWidget *dialog;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-  retval = (gint *)gtk_object_get_data(GTK_OBJECT(widget), "retval");
+  retval = (gint *)g_object_get_data(G_OBJECT(widget), "retval");
   if (retval)
     *retval = GPOINTER_TO_INT(data);
   gtk_widget_destroy(dialog);
@@ -5552,34 +5362,34 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   if (parent)
     gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(parent));
   if (!imm_return) {
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                       GTK_SIGNAL_FUNC(DestroyGtkMessageBox), NULL);
+    g_signal_connect(G_OBJECT(dialog), "destroy",
+                     G_CALLBACK(DestroyGtkMessageBox), NULL);
   }
   if (Title)
     gtk_window_set_title(GTK_WINDOW(dialog), Title);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   if (Text) {
     label = gtk_label_new(Text);
     gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   }
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   retval = MB_CANCEL;
 
-  hbbox = gtk_hbutton_box_new();
+  hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
       button = NewStockButton(ButtonData[i], accel_group);
       if (!imm_return) {
-        gtk_object_set_data(GTK_OBJECT(button), "retval", &retval);
+        g_object_set_data(G_OBJECT(button), "retval", &retval);
       }
-      gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                         GTK_SIGNAL_FUNC(GtkMessageBoxCallback),
-                         GINT_TO_POINTER(1 << i));
+      g_signal_connect(G_OBJECT(button), "clicked",
+                       G_CALLBACK(GtkMessageBoxCallback),
+                       GINT_TO_POINTER(1 << i));
       gtk_box_pack_start(GTK_BOX(hbbox), button, TRUE, TRUE, 0);
     }
   }
@@ -5621,18 +5431,11 @@ gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
   return retval;
 }
 
-static void gtk_url_set_cursor(GtkWidget *widget, GtkWidget *label)
-{
-  GdkCursor *cursor;
-
-  cursor = gdk_cursor_new(GDK_HAND2);
-  gdk_window_set_cursor(label->window, cursor);
-  gdk_cursor_destroy(cursor);
-}
-
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 {
-#ifdef HAVE_FORK
+#ifdef APPLE
+  mac_open_url(target);
+#elif defined(HAVE_FORK)
   char *args[3];
   pid_t pid;
   int status;
@@ -5659,105 +5462,36 @@ void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target)
 #endif
 }
 
-static gboolean gtk_url_triggered(GtkWidget *widget, GdkEventButton *event,
-                                  gpointer data)
-{
-  gchar *bin, *target;
-
-  bin = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "bin");
-  target = (gchar *)gtk_object_get_data(GTK_OBJECT(widget), "target");
-  DisplayHTML(widget, bin, target);
-  return TRUE;
-}
-
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin)
 {
-  GtkWidget *label, *eventbox;
-  gchar *pattern;
-  GtkStyle *style;
-  GdkColor color;
-
-  color.red = 0;
-  color.green = 0;
-  color.blue = 0xDDDD;
-
-  label = gtk_label_new(text);
-
-  /* Set the text colour */
-  style = gtk_rc_get_style(label);
-  if (!style) {
-    style = label->style;
-  }
-  style = gtk_style_copy(style);
-  style->fg[GTK_STATE_NORMAL] = color;
-  gtk_widget_set_style(label, style);
-  gtk_style_unref(style);
-
-  /* Make the text underlined */
-  pattern = g_strnfill(strlen(text), '_');
-  gtk_label_set_pattern(GTK_LABEL(label), pattern);
-  g_free(pattern);
-
-  /* We cannot set the cursor until the widget is realized, so set up a
-   * handler to do this later */
-  gtk_signal_connect(GTK_OBJECT(label), "realize",
-                     GTK_SIGNAL_FUNC(gtk_url_set_cursor), label);
-
-  eventbox = gtk_event_box_new();
-  gtk_object_set_data_full(GTK_OBJECT(eventbox), "target",
-                           g_strdup(target), g_free);
-  gtk_object_set_data_full(GTK_OBJECT(eventbox), "bin",
-                           g_strdup(bin), g_free);
-  gtk_signal_connect(GTK_OBJECT(eventbox), "button-release-event",
-                     GTK_SIGNAL_FUNC(gtk_url_triggered), NULL);
-
-  gtk_container_add(GTK_CONTAINER(eventbox), label);
-
-  return eventbox;
-}
-
-static void store_filename(GtkWidget *widget, gchar **filename)
-{
-  GtkWidget *file_select = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
-
-  g_assert(file_select != NULL);
-  *filename = g_strdup(gtk_file_selection_get_filename(
-	                       GTK_FILE_SELECTION(file_select)));
+  GtkWidget *button;
+  button = gtk_link_button_new(text);
+  gtk_link_button_set_uri(GTK_LINK_BUTTON(button), target);
+  return button;
 }
 
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title)
 {
-  GtkWidget *file_select, *ok, *cancel;
-  gchar *filename = NULL;
+  GtkWidget *dialog;
+  GtkFileChooser *chooser;
+  gint res;
+  gchar *ret;
 
-  file_select = gtk_file_selection_new(title);
-  if (parent) {
-    gtk_window_set_modal(GTK_WINDOW(file_select), TRUE);
-    gtk_window_set_transient_for(GTK_WINDOW(file_select),
-	                         GTK_WINDOW(parent));
+  dialog = gtk_file_chooser_dialog_new(
+                 title, GTK_WINDOW(parent), GTK_FILE_CHOOSER_ACTION_OPEN,
+                 _("_Cancel"), GTK_RESPONSE_CANCEL,
+                 _("_Select"), GTK_RESPONSE_ACCEPT, NULL);
+  chooser = GTK_FILE_CHOOSER(dialog);
+  gtk_file_chooser_set_filename(chooser, oldname);
+  res = gtk_dialog_run(GTK_DIALOG(dialog));
+  ret = NULL;
+  if (res == GTK_RESPONSE_ACCEPT) {
+    ret = gtk_file_chooser_get_filename(chooser);
   }
-
-  ok = GTK_FILE_SELECTION(file_select)->ok_button;
-  cancel = GTK_FILE_SELECTION(file_select)->cancel_button;
-  if (oldname) {
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_select), oldname);
-  }
-  gtk_signal_connect(GTK_OBJECT(ok), "clicked",
-                     GTK_SIGNAL_FUNC(store_filename),
-		     (gpointer)&filename);
-  gtk_signal_connect_object(GTK_OBJECT(ok), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
-  gtk_signal_connect_object(GTK_OBJECT(cancel), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy), file_select);
-  gtk_signal_connect(GTK_OBJECT(file_select), "destroy",
-                     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
-
-  gtk_widget_show(file_select);
-  gtk_main();
-
-  return filename;
+  gtk_widget_destroy(dialog);
+  return ret;
 }
 
 gboolean HaveUnicodeSupport(void)

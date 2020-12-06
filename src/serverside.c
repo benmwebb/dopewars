@@ -1,8 +1,8 @@
 /************************************************************************
  * serverside.c   Handles the server side of dopewars                   *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -30,8 +30,8 @@
 #include <sys/stat.h>
 
 #ifdef CYGWIN
+#include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include <winsock.h>            /* For network functions */
 #include <process.h>            /* For getpid */
 #else
 #include <sys/socket.h>         /* For struct sockaddr etc. */
@@ -69,13 +69,13 @@ static const price_t MINTRENCHPRICE = 200, MAXTRENCHPRICE = 300;
 #define NUMDISCOVER 3
 char *Discover[NUMDISCOVER] = {
   /* Things that can "happen" to your spies - look for strings containing
-   * "The spy %s!" to see how these strings are used. */
+     "The spy %s!" to see how these strings are used. */
   N_("escaped"), N_("defected"), N_("was shot")
 };
 
 /* The two keys that are valid answers to the Attack/Evade question. If
- * you wish to translate them, do so in the same order as they given here.
- * You will also need to translate the answers given by the clients. */
+   you wish to translate them, do so in the same order as they given here.
+   You will also need to translate the answers given by the clients. */
 static char *attackquestiontr = N_("AE");
 
 /* If we haven't talked to the metaserver for 3 hours, then remind it that
@@ -90,12 +90,19 @@ static char *attackquestiontr = N_("AE");
 int TerminateRequest, ReregisterRequest, RelogRequest;
 
 int MetaUpdateTimeout;
-int MetaMinTimeout;
+long MetaMinTimeout;
 gboolean WantQuit = FALSE;
 
 #ifdef CYGWIN
 static SERVICE_STATUS_HANDLE scHandle;
 #endif
+
+#ifdef GUI_SERVER
+static gboolean glib_timeout(gpointer userp);
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data);
+#endif
+
 
 /* Do we want to update the player details on the metaserver when the
  * timeout expires? */
@@ -104,10 +111,11 @@ gboolean MetaPlayerPending = FALSE;
 GSList *FirstServer = NULL;
 
 #ifdef NETWORKING
+/* Data waiting to be sent to/read from the metaserver */
+static CurlConnection MetaConn;
+
 static GScanner *Scanner;
 
-/* Data waiting to be sent to/read from the metaserver */
-HttpConnection *MetaConn = NULL;
 #endif
 
 /* Handle to the high score file */
@@ -146,70 +154,18 @@ static int OfferObject(Player *To, gboolean ForceBitch);
 static gboolean HighScoreWrite(FILE *fp, struct HISCORE *MultiScore,
                                struct HISCORE *AntiqueScore);
 
-#ifdef GUI_SERVER
-static void GuiHandleMeta(gpointer data, gint socket,
-                          GdkInputCondition condition);
-static void MetaSocketStatus(NetworkBuffer *NetBuf,
-                             gboolean Read, gboolean Write,
-                             gboolean CallNow);
-#endif
-
 #ifdef NETWORKING
-static gboolean MetaConnectError(HttpConnection *conn)
+static void MetaConnectError(CurlConnection *conn, GError *err)
 {
-  GString *errstr;
-
-  if (!IsHttpError(conn))
-    return FALSE;
-  errstr = g_string_new("");
-  g_string_assign_error(errstr, MetaConn->NetBuf.error);
-  dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s:%u (%s)"),
-          MetaServer.Name, MetaServer.Port, errstr->str);
-  g_string_free(errstr, TRUE);
-  return TRUE;
+  dopelog(1, LF_SERVER, _("Failed to connect to metaserver at %s (%s)"),
+          MetaServer.URL, err->message);
 }
 
-static void ServerHttpAuth(HttpConnection *conn, gboolean proxyauth,
-                           gchar *realm, gpointer data)
+void log_meta_headers(gpointer data, gpointer user_data)
 {
-  gchar *user = NULL, *password = NULL;
-
-  if (proxyauth) {
-    if (MetaServer.proxyuser[0] && MetaServer.proxypassword[0]) {
-      user = MetaServer.proxyuser;
-      password = MetaServer.proxypassword;
-      dopelog(3, LF_SERVER,
-              _("Using MetaServer.Proxy.User and "
-                "MetaServer.Proxy.Password for HTTP proxy authentication"));
-    } else {
-      dopelog(0, LF_SERVER,
-              _("Unable to authenticate with HTTP proxy; please "
-                "set MetaServer.Proxy.User and "
-                "MetaServer.Proxy.Password variables"));
-    }
-  } else {
-    if (MetaServer.authuser[0] && MetaServer.authpassword[0]) {
-      user = MetaServer.authuser;
-      password = MetaServer.authpassword;
-      dopelog(3, LF_SERVER,
-              _("Using MetaServer.Auth.User and MetaServer.Auth.Password "
-                "for HTTP authentication"));
-    } else {
-      dopelog(0, LF_SERVER,
-              _("Unable to authenticate with HTTP server; please set "
-                "MetaServer.Auth.User and "
-                "MetaServer.Auth.Password variables"));
-    }
-  }
-  SetHttpAuthentication(conn, proxyauth, user, password);
-}
-
-static void ServerNetBufAuth(NetworkBuffer *netbuf, gpointer data)
-{
-  dopelog(3, LF_SERVER,
-          _("Using Socks.Auth.User and Socks.Auth.Password "
-            "for SOCKS5 authentication"));
-  SendSocks5UserPasswd(netbuf, Socks.authuser, Socks.authpassword);
+  char *header = data;
+  if (*header)
+    dopelog(4, LF_SERVER, _("MetaServer: %s"), header);
 }
 #endif
 
@@ -225,11 +181,12 @@ static void ServerNetBufAuth(NetworkBuffer *netbuf, gpointer data)
 void RegisterWithMetaServer(gboolean Up, gboolean SendData,
                             gboolean RespectTimeout)
 {
-#if NETWORKING
+#ifdef NETWORKING
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE];
-  GString *headers, *body;
+  GString *body;
   gchar *prstr;
-  gboolean retval;
+  gboolean ret;
+  GError *tmp_error = NULL;
   int i;
 
   if (!MetaServer.Active || WantQuit || !Server) {
@@ -244,19 +201,13 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     return;
   }
 
-  /* If the previous connect hung for so long that it's still active, then
-   * break the connection before we start a new one */
-  if (MetaConn)
-    CloseHttpConnection(MetaConn);
-
-  headers = g_string_new("");
   body = g_string_new("");
 
   g_string_assign(body, "output=text&");
 
-  g_string_sprintfa(body, "up=%d&port=%d&version=", Up ? 1 : 0, Port);
+  g_string_append_printf(body, "up=%d&port=%d&version=", Up ? 1 : 0, Port);
   AddURLEnc(body, VERSION);
-  g_string_sprintfa(body, "&players=%d&maxplay=%d&comment=",
+  g_string_append_printf(body, "&players=%d&maxplay=%d&comment=",
                     CountPlayers(FirstServer), MaxClients);
   AddURLEnc(body, MetaServer.Comment);
 
@@ -272,11 +223,11 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
   if (SendData && HighScoreRead(ScoreFP, MultiScore, AntiqueScore, TRUE)) {
     for (i = 0; i < NUMHISCORE; i++) {
       if (MultiScore[i].Name && MultiScore[i].Name[0]) {
-        g_string_sprintfa(body, "&nm[%d]=", i);
+        g_string_append_printf(body, "&nm[%d]=", i);
         AddURLEnc(body, MultiScore[i].Name);
-        g_string_sprintfa(body, "&dt[%d]=", i);
+        g_string_append_printf(body, "&dt[%d]=", i);
         AddURLEnc(body, MultiScore[i].Time);
-        g_string_sprintfa(body, "&st[%d]=%s&sc[%d]=", i,
+        g_string_append_printf(body, "&st[%d]=%s&sc[%d]=", i,
                           MultiScore[i].Dead ? "dead" : "alive", i);
         AddURLEnc(body, prstr = FormatPrice(MultiScore[i].Money));
         g_free(prstr);
@@ -284,38 +235,15 @@ void RegisterWithMetaServer(gboolean Up, gboolean SendData,
     }
   }
 
-  g_string_sprintf(headers,
-                   "Content-Type: application/x-www-form-urlencoded\n"
-                   "Content-Length: %d", (int)strlen(body->str));
+  ret = OpenCurlConnection(&MetaConn, MetaServer.URL, body->str, &tmp_error);
 
-  retval = OpenHttpConnection(&MetaConn, MetaServer.Name, MetaServer.Port,
-                              MetaServer.ProxyName, MetaServer.ProxyPort,
-                              BindAddress,
-                              UseSocks && MetaServer.UseSocks ? &Socks : NULL,
-                              "POST", MetaServer.Path, headers->str,
-                              body->str);
-  g_string_free(headers, TRUE);
+  dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s..."),
+          MetaServer.URL);
   g_string_free(body, TRUE);
-
-  if (retval) {
-    dopelog(2, LF_SERVER, _("Waiting for connect to metaserver at %s:%u..."),
-            MetaServer.Name, MetaServer.Port);
-  } else {
-    MetaConnectError(MetaConn);
-    CloseHttpConnection(MetaConn);
-    MetaConn = NULL;
-    return;
+  if (!ret) {
+    MetaConnectError(&MetaConn, tmp_error);
+    g_error_free(tmp_error);
   }
-  SetHttpAuthFunc(MetaConn, ServerHttpAuth, NULL);
-
-  if (Socks.authuser && Socks.authuser[0] &&
-      Socks.authpassword && Socks.authpassword[0]) {
-    SetNetworkBufferUserPasswdFunc(&MetaConn->NetBuf, ServerNetBufAuth,
-                                   NULL);
-  }
-#ifdef GUI_SERVER
-  SetNetworkBufferCallBack(&MetaConn->NetBuf, MetaSocketStatus, NULL);
-#endif
   MetaPlayerPending = FALSE;
 
   MetaUpdateTimeout = time(NULL) + METAUPDATETIME;
@@ -351,7 +279,7 @@ void SendPlayerDetails(Player *Play, Player *To, MsgCode Code)
 
   text = g_string_new(GetPlayerName(Play));
   if (HaveAbility(To, A_PLAYERID)) {
-    g_string_sprintfa(text, "^%d", Play->ID);
+    g_string_append_printf(text, "^%d", Play->ID);
   }
   SendServerMessage(NULL, C_NONE, Code, To, text->str);
   g_string_free(text, TRUE);
@@ -370,7 +298,7 @@ void RemoteVersionCheck(Player *Play)
         _("You appear to be using an extremely old (version 1.4.x) client.^"
           "While this will probably work, many of the newer features^"
           "will be unsupported. Get the latest version from the^"
-          "dopewars website, http://dopewars.sourceforge.net/."));
+          "dopewars website, https://dopewars.sourceforge.io/."));
 
   /* The client has a smaller value of A_NUM; this means that not only does
    * it not support some features, it doesn't even know they might exist. */
@@ -379,7 +307,7 @@ void RemoteVersionCheck(Player *Play)
         _("Warning: your client is too old to support all of this^"
           "server's features. For the full \"experience\", get^"
           "the latest version of dopewars from the^"
-          "website, http://dopewars.sourceforge.net/."));
+          "website, https://dopewars.sourceforge.io/."));
   }
 
   /* Otherwise, the client is either the same version as the server, or
@@ -467,14 +395,14 @@ void HandleServerMessage(gchar *buf, Player *Play)
         if (MaxClients == 1) {
           text = g_strdup_printf(
                                   /* Message sent to a player if the
-                                   * server is full */
+                                     server is full */
                                   _("Sorry, but this server has a limit of "
                                    "1 player, which has been reached.^"
                                    "Please try connecting again later."));
         } else {
           text = g_strdup_printf(
                                   /* Message sent to a player if the
-                                   * server is full */
+                                     server is full */
                                   _("Sorry, but this server has a limit of "
                                    "%d players, which has been reached.^"
                                    "Please try connecting again later."),
@@ -489,8 +417,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       }
     } else {
       /* A player changed their name during the game (unusual, and not
-       * really properly supported anyway) - notify all players of the
-       * change */
+         really properly supported anyway) - notify all players of the
+         change */
       dopelog(2, LF_SERVER, _("%s will now be known as %s"),
               GetPlayerName(Play), Data);
       BroadcastToClients(C_NONE, C_RENAME, Data, Play, Play);
@@ -524,7 +452,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     if (NumTurns > 0 && Play->Turn >= NumTurns
         && Play->EventNum != E_FINISH) {
       /* Message displayed when a player reaches their maximum number of
-       * turns */
+         turns */
       FinishGame(Play, _("Your dealing time is up..."));
     } else if (i != Play->IsAt && (NumTurns == 0 || Play->Turn < NumTurns)
                && Play->EventNum == E_NONE && Play->Health > 0) {
@@ -542,8 +470,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
       SendEvent(Play);
     } else {
       /* A player has tried to jet to a new location, but we don't allow
-       * them to. (e.g. they're still fighting someone, or they're
-       * supposed to be dead) */
+         them to. (e.g. they're still fighting someone, or they're
+         supposed to be dead) */
       dopelog(3, LF_SERVER, _("%s: DENIED jet to %s"),
               GetPlayerName(Play), Location[i].Name);
     }
@@ -680,7 +608,7 @@ void CleanUpServer()
   while (FirstServer) {
     FirstServer = RemovePlayer((Player *)FirstServer->data, FirstServer);
   }
-#if NETWORKING
+#ifdef NETWORKING
   if (Server)
     CloseSocket(ListenSock);
 #endif
@@ -735,7 +663,7 @@ void PrintHelpTo(FILE *fp)
   fprintf(fp, _(HelpText), VERSION);
   for (i = 0; i < NUMGLOB; i++) {
     if (Globals[i].NameStruct[0]) {
-      g_string_sprintf(VarName, "%s%s.%s", Globals[i].NameStruct,
+      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
                        Globals[i].StructListPt ? "[x]" : "",
                        Globals[i].Name);
     } else {
@@ -759,7 +687,7 @@ void ServerHelp(void)
   g_print(_(HelpText), VERSION);
   for (i = 0; i < NUMGLOB; i++) {
     if (Globals[i].NameStruct[0]) {
-      g_string_sprintf(VarName, "%s%s.%s", Globals[i].NameStruct,
+      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
                        Globals[i].StructListPt ? "[x]" : "",
                        Globals[i].Name);
     } else {
@@ -770,7 +698,7 @@ void ServerHelp(void)
   g_string_free(VarName, TRUE);
 }
 
-#if NETWORKING
+#ifdef NETWORKING
 static NetworkBuffer *reply_netbuf;
 static void ServerReply(const gchar *msg)
 {
@@ -925,9 +853,16 @@ static gboolean StartServer(void)
     g_warning(_("Cannot install pipe handler!"));
   }
 #endif
-
-  RegisterWithMetaServer(TRUE, TRUE, FALSE);
   return TRUE;
+}
+
+static void InitMetaServer()
+{
+  CurlInit(&MetaConn);
+#ifdef GUI_SERVER
+  SetCurlCallback(&MetaConn, glib_timeout, glib_socket);
+#endif
+  RegisterWithMetaServer(TRUE, TRUE, FALSE);
 }
 
 /* 
@@ -952,7 +887,7 @@ void RequestServerShutdown(void)
  */
 gboolean IsServerShutdown(void)
 {
-  return (WantQuit && !FirstServer && !MetaConn);
+  return (WantQuit && !FirstServer && !MetaConn.running);
 }
 
 static GPrintFunc StartServerReply(NetworkBuffer *netbuf)
@@ -1033,7 +968,7 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
       tmp = GetPlayerByName(string + 5, FirstServer);
       if (tmp) {
         /* The named user has been removed from the server following
-         * a "kill" command */
+           a "kill" command */
         g_print(_("%s killed\n"), GetPlayerName(tmp));
         BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp,
                            (Player *)FirstServer->data);
@@ -1157,6 +1092,73 @@ static int SetupLocalSocket(void)
 }
 #endif
 
+static void LogMetaReply(CurlConnection *conn)
+{
+  g_ptr_array_foreach(conn->headers, log_meta_headers, NULL);
+  char *ch = conn->data;
+  while(ch && *ch) {
+    char *nextch = CurlNextLine(conn, ch);
+    if (*ch)
+      dopelog(2, LF_SERVER, _("MetaServer: %s"), ch);
+    ch = nextch;
+  }
+  dopelog(4, LF_SERVER, _("MetaServer: (closed)"));
+}
+
+#ifdef GUI_SERVER
+static gboolean glib_timeout(gpointer userp)
+{
+  CurlConnection *g = userp;
+  int still_running;
+  GError *err = NULL;
+  if (!CurlConnectionSocketAction(g, CURL_SOCKET_TIMEOUT, 0, &still_running,
+                                  &err)) {
+    MetaConnectError(g, err);
+    g_error_free(err);
+  }
+  g->timer_event = 0;
+  return G_SOURCE_REMOVE;
+}
+
+static void GuiQuitServer()
+{
+  gtk_main_quit();
+  StopServer();
+}
+
+/* Called by glib when we get action on a multi socket */
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data)
+{
+  CurlConnection *g = (CurlConnection*) data;
+  int still_running;
+  GError *err = NULL;
+  int fd = g_io_channel_unix_get_fd(ch);
+  int action =
+    ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
+    ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
+
+  if (!CurlConnectionSocketAction(g, fd, action, &still_running, &err)) {
+    MetaConnectError(g, err);
+    g_error_free(err);
+  }
+  if (still_running) {
+    return TRUE;
+  } else {
+    if (g->timer_event) {
+      dp_g_source_remove(g->timer_event);
+      g->timer_event = 0;
+    }
+    LogMetaReply(g);
+    CloseCurlConnection(g);
+    if (IsServerShutdown())
+      GuiQuitServer();
+    return FALSE;
+  }
+}
+
+#endif
+
 /* 
  * Initialises server, processes network and interactive messages, and
  * finally cleans up the server on exit.
@@ -1170,10 +1172,11 @@ void ServerLoop(struct CMDLINE *cmdline)
   struct timeval timeout;
   int MinTimeout;
   GString *LineBuf;
+
   gboolean DoneOK;
-  gchar *buf;
 
 #ifndef CYGWIN
+  gchar *buf;
   int localsock;
   GSList *nextlist;
   GPrintFunc oldprint;
@@ -1192,6 +1195,7 @@ void ServerLoop(struct CMDLINE *cmdline)
     return;
 #endif
   CreatePidFile();
+  InitMetaServer();
 
 #ifndef CYGWIN
   localsock = SetupLocalSocket();
@@ -1207,9 +1211,10 @@ void ServerLoop(struct CMDLINE *cmdline)
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_ZERO(&errorfs);
+    curl_multi_fdset(MetaConn.multi, &readfs, &writefs, &errorfs, &topsock);
     FD_SET(ListenSock, &readfs);
     FD_SET(ListenSock, &errorfs);
-    topsock = ListenSock + 1;
+    topsock = MAX(topsock + 1, ListenSock + 1);
 #ifndef CYGWIN
     if (localsock >= 0) {
       FD_SET(localsock, &readfs);
@@ -1223,10 +1228,6 @@ void ServerLoop(struct CMDLINE *cmdline)
                                 &topsock);
     }
 #endif
-    if (MetaConn) {
-      SetSelectForNetworkBuffer(&MetaConn->NetBuf, &readfs, &writefs,
-                                &errorfs, &topsock);
-    }
     for (list = FirstServer; list; list = g_slist_next(list)) {
       tmp = (Player *)list->data;
       if (!IsCop(tmp)) {
@@ -1311,24 +1312,17 @@ void ServerLoop(struct CMDLINE *cmdline)
     if (IsServerShutdown())
       break;
 #endif
-    if (MetaConn) {
-      if (RespondToSelect(&MetaConn->NetBuf, &readfs, &writefs,
-                          &errorfs, &DoneOK)) {
-        while ((buf = ReadHttpResponse(MetaConn, &DoneOK))) {
-          gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
-
-          if (buf[0] || !ReadingBody) {
-            dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
-          }
-          g_free(buf);
-        }
-      }
-      if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-        if (!MetaConnectError(MetaConn)) {
-          dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
-        }
-        CloseHttpConnection(MetaConn);
-        MetaConn = NULL;
+    if (MetaConn.running) {
+      GError *tmp_error = NULL;
+      int still_running;
+      if (!CurlConnectionPerform(&MetaConn, &still_running, &tmp_error)) {
+        MetaConnectError(&MetaConn, tmp_error);
+	g_error_free(tmp_error);
+        if (IsServerShutdown())
+          break;
+      } else if (still_running == 0) {
+        LogMetaReply(&MetaConn);
+        CloseCurlConnection(&MetaConn);
         if (IsServerShutdown())
           break;
       }
@@ -1365,18 +1359,20 @@ void ServerLoop(struct CMDLINE *cmdline)
 #endif
   StopServer();
   g_string_free(LineBuf, TRUE);
+
+  CurlCleanup(&MetaConn);
 }
 
 #ifdef GUI_SERVER
 static GtkWidget *TextOutput;
 static gint ListenTag = 0;
 static void SocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                         gboolean Write, gboolean CallNow);
+                         gboolean Write, gboolean Exception, gboolean CallNow);
 static void GuiSetTimeouts(void);
 static time_t NextTimeout = 0;
 static guint TimeoutTag = 0;
 
-static gint GuiDoTimeouts(gpointer data)
+static gboolean GuiDoTimeouts(gpointer data)
 {
   /* Forget the TimeoutTag so that GuiSetTimeouts doesn't delete it -
    * it'll be deleted automatically anyway when we return FALSE */
@@ -1397,10 +1393,10 @@ void GuiSetTimeouts(void)
   MinTimeout = GetMinimumTimeout(FirstServer);
   if (TimeNow + MinTimeout < NextTimeout || NextTimeout < TimeNow) {
     if (TimeoutTag > 0)
-      gtk_timeout_remove(TimeoutTag);
+      dp_g_source_remove(TimeoutTag);
     TimeoutTag = 0;
     if (MinTimeout > 0) {
-      TimeoutTag = gtk_timeout_add(MinTimeout * 1000, GuiDoTimeouts, NULL);
+      TimeoutTag = dp_g_timeout_add(MinTimeout * 1000, GuiDoTimeouts, NULL);
       NextTimeout = TimeNow + MinTimeout;
     }
   }
@@ -1443,12 +1439,6 @@ static void ServiceFailure(const gchar *log_domain,
 }
 #endif
 
-static void GuiQuitServer()
-{
-  gtk_main_quit();
-  StopServer();
-}
-
 static void GuiDoCommand(GtkWidget *widget, gpointer data)
 {
   gchar *text;
@@ -1461,37 +1451,8 @@ static void GuiDoCommand(GtkWidget *widget, gpointer data)
     GuiQuitServer();
 }
 
-void GuiHandleMeta(gpointer data, gint socket, GdkInputCondition condition)
-{
-  gboolean DoneOK;
-  gchar *buf;
-
-  if (!MetaConn)
-    return;
-  if (NetBufHandleNetwork(&MetaConn->NetBuf, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE, &DoneOK)) {
-    while ((buf = ReadHttpResponse(MetaConn, &DoneOK))) {
-      gboolean ReadingBody = (MetaConn->Status == HS_READBODY);
-
-      if (buf[0] || !ReadingBody) {
-        dopelog(ReadingBody ? 2 : 4, LF_SERVER, "MetaServer: %s", buf);
-      }
-      g_free(buf);
-    }
-  }
-  if (!DoneOK && HandleHttpCompletion(MetaConn)) {
-    if (!MetaConnectError(MetaConn)) {
-      dopelog(4, LF_SERVER, "MetaServer: (closed)\n");
-    }
-    CloseHttpConnection(MetaConn);
-    MetaConn = NULL;
-    if (IsServerShutdown())
-      GuiQuitServer();
-  }
-}
-
-static void GuiHandleSocket(gpointer data, gint socket,
-                            GdkInputCondition condition)
+static gboolean GuiHandleSocket(GIOChannel *source, GIOCondition condition,
+                                gpointer data)
 {
   Player *Play;
   gboolean DoneOK;
@@ -1500,10 +1461,10 @@ static void GuiHandleSocket(gpointer data, gint socket,
 
   /* Sanity check - is the player still around? */
   if (!g_slist_find(FirstServer, (gpointer)Play))
-    return;
+    return TRUE;
 
-  if (PlayerHandleNetwork(Play, condition & GDK_INPUT_READ,
-                          condition & GDK_INPUT_WRITE, &DoneOK)) {
+  if (PlayerHandleNetwork(Play, condition & G_IO_IN, condition & G_IO_OUT,
+                          condition & G_IO_ERR, &DoneOK)) {
     HandleServerPlayer(Play);
     GuiSetTimeouts();           /* We may have set some new timeouts */
   }
@@ -1512,50 +1473,37 @@ static void GuiHandleSocket(gpointer data, gint socket,
     if (IsServerShutdown())
       GuiQuitServer();
   }
+  return TRUE;
 }
 
 void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                  gboolean CallNow)
+                  gboolean Exception, gboolean CallNow)
 {
   if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
+    dp_g_source_remove(NetBuf->InputTag);
   NetBuf->InputTag = 0;
   if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
+    NetBuf->InputTag = dp_g_io_add_watch(NetBuf->ioch,
+                                     (Read ? G_IO_IN : 0) |
+                                     (Write ? G_IO_OUT : 0) |
+                                     (Exception ? G_IO_ERR : 0),
                                      GuiHandleSocket,
                                      NetBuf->CallBackData);
   }
   if (CallNow)
-    GuiHandleSocket(NetBuf->CallBackData, NetBuf->fd, 0);
+    GuiHandleSocket(NetBuf->ioch, 0, NetBuf->CallBackData);
 }
 
-void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
-                      gboolean CallNow)
-{
-  if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
-  NetBuf->InputTag = 0;
-  if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
-                                     GuiHandleMeta, NetBuf->CallBackData);
-  }
-  if (CallNow)
-    GuiHandleMeta(NetBuf->CallBackData, NetBuf->fd, 0);
-}
-
-static void GuiNewConnect(gpointer data, gint socket,
-                          GdkInputCondition condition)
+static gboolean GuiNewConnect(GIOChannel *source, GIOCondition condition,
+                              gpointer data)
 {
   Player *Play;
 
-  if (condition & GDK_INPUT_READ) {
+  if (condition & G_IO_IN) {
     Play = HandleNewConnection();
     SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
   }
+  return TRUE;
 }
 
 static gboolean TriedPoliteShutdown = FALSE;
@@ -1654,7 +1602,7 @@ static LRESULT CALLBACK GuiServerWndProc(HWND hwnd, UINT msg,
     switch (msg) {
     case MYWM_SERVICE:
       if (lparam == SERVICE_CONTROL_STOP) {
-        GuiQuitServer();
+        RequestServerShutdown();
       }
       break;
     case MYWM_TASKBAR:
@@ -1699,6 +1647,7 @@ static void SetupTaskBarIcon(GtkWidget *widget)
 void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 {
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
+  GIOChannel *listench;
 
   if (HaveUnicodeSupport()) {
     /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
@@ -1715,8 +1664,8 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_signal_connect(GTK_OBJECT(window), "delete_event",
-                     GTK_SIGNAL_FUNC(GuiRequestDelete), NULL);
+  g_signal_connect(G_OBJECT(window), "delete_event",
+                   G_CALLBACK(GuiRequestDelete), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 500, 250);
 
   /* Title of dopewars server window (if used) */
@@ -1724,18 +1673,18 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
 
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   TextOutput = text = gtk_scrolled_text_view_new(&hbox);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
   gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
-  hbox = gtk_hbox_new(FALSE, 4);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
   label = gtk_label_new(_("Command:"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
   entry = gtk_entry_new();
-  gtk_signal_connect(GTK_OBJECT(entry), "activate",
-                     GTK_SIGNAL_FUNC(GuiDoCommand), NULL);
+  g_signal_connect(G_OBJECT(entry), "activate",
+                   G_CALLBACK(GuiDoCommand), NULL);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -1754,9 +1703,14 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
   if (!StartServer())
     return;
+  InitMetaServer();
 
-  ListenTag =
-      gdk_input_add(ListenSock, GDK_INPUT_READ, GuiNewConnect, NULL);
+#ifdef CYGIN
+  listench = g_io_channel_win32_new_socket(ListenSock);
+#else
+  listench = g_io_channel_unix_new(ListenSock);
+#endif
+  ListenTag = dp_g_io_add_watch(listench, G_IO_IN, GuiNewConnect, NULL);
 #ifdef CYGWIN
   mainhwnd = window->hWnd;
   SetupTaskBarIcon(window);
@@ -1854,6 +1808,11 @@ void CloseHighScoreFile()
 void DropPrivileges()
 {
 #ifndef CYGWIN
+
+#ifdef HAVE_ISSETUGID
+  if (issetugid() == 0) return;
+#endif
+
   /* Ignore the return from setregid; we'll check it ourselves to be sure
    * (this avoids problems when running under fakeroot) */
   setregid(getgid(), getgid());
@@ -1988,7 +1947,7 @@ static FILE *OpenHighScoreAppData(int *error, gboolean *empty)
     if (RegQueryValueEx(key, subval, NULL, &keytype, NULL,
                         &keylen) == ERROR_SUCCESS && keytype == REG_SZ) {
       char *keyval = g_malloc(keylen);
-      if (RegQueryValueEx(key, subval, NULL, &keytype, keyval,
+      if (RegQueryValueEx(key, subval, NULL, &keytype, (LPBYTE)keyval,
                           &keylen) == ERROR_SUCCESS) {
         GString *str = g_string_sized_new(keylen + 40);
         g_string_assign(str, keyval);
@@ -2985,11 +2944,11 @@ void ResolveTipoff(Player *Play)
     RemoveListPlayer(&(Play->TipList), Play->OnBehalfOf);
     text = g_string_new("");
     if (Play->Health == 0) {
-      g_string_sprintf(text,
+      g_string_printf(text,
                        _("Following your tipoff, the cops ambushed %s, "
                          "who was shot dead!"), GetPlayerName(Play));
     } else {
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("Following your tipoff, the cops ambushed %s, "
                            "who escaped with %d %tde. "), GetPlayerName(Play),
                          Play->Bitches.Carried, Names.Bitches);
@@ -3096,13 +3055,13 @@ int RandomOffer(Player *To)
     }
     if (ind == -1) {
       ind = brandom(0, NumDrug);
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You meet a friend! He gives you %d %tde."),
                          amount, Drug[ind].Name);
       To->Drugs[ind].Carried += amount;
       To->CoatSize -= amount;
     } else {
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You meet a friend! You give him %d %tde."),
                          amount, Drug[ind].Name);
       To->Drugs[ind].TotalValue =
@@ -3115,13 +3074,13 @@ int RandomOffer(Player *To)
     SendPrintMessage(NULL, C_NONE, To, text->str);
   } else if (Sanitized) {
     /* Debugging message: we would normally have a random drug-related
-     * event here, but "Sanitized" mode is turned on */
+       event here, but "Sanitized" mode is turned on */
     dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
   } else if (r < 50) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind != -1) {
-      dpg_string_sprintf(text, _("Police dogs chase you for %d blocks! "
+      dpg_string_printf(text, _("Police dogs chase you for %d blocks! "
                                  "You dropped some %tde! That's a drag, man!"),
                          brandom(3, 7), Names.Drugs);
       To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue *
@@ -3137,7 +3096,7 @@ int RandomOffer(Player *To)
         g_string_free(text, TRUE);
         return 0;
       }
-      dpg_string_sprintf(text,
+      dpg_string_printf(text,
                          _("You find %d %tde on a dead dude in the subway!"),
                          amount, Drug[ind].Name);
       To->Drugs[ind].Carried += amount;
@@ -3152,7 +3111,7 @@ int RandomOffer(Player *To)
     amount = brandom(2, 6);
     if (amount > To->Drugs[ind].Carried)
       amount = To->Drugs[ind].Carried;
-    dpg_string_sprintf(text,
+    dpg_string_printf(text,
                        _("Your mama made brownies with some of your %tde! "
                          "They were great!"), Drug[ind].Name);
     To->Drugs[ind].TotalValue = To->Drugs[ind].TotalValue *
@@ -3170,7 +3129,7 @@ int RandomOffer(Player *To)
     g_string_free(text, TRUE);
     return 1;
   } else if (NumStoppedTo > 0) {
-    g_string_sprintf(text, _("You stopped to %s."),
+    g_string_printf(text, _("You stopped to %s."),
                      StoppedTo[brandom(0, NumStoppedTo)]);
     amount = brandom(1, 10);
     if (To->Cash >= amount)
@@ -3309,7 +3268,7 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
         if (Deal[i] == DT_CHEAP) {
           g_string_append(text, Drug[i].CheapStr);
         } else {
-          dpg_string_sprintfa(text, brandom(0, 100) < 50
+          dpg_string_append_printf(text, brandom(0, 100) < 50
                               ? Drugs.ExpensiveStr1 : Drugs.ExpensiveStr2,
                               Drug[i].Name);
         }
@@ -3323,7 +3282,7 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
     SendPrintMessage(NULL, C_NONE, To, text->str);
   g_string_truncate(text, 0);
   for (i = 0; i < NumDrug; i++) {
-    g_string_sprintfa(text, "%s^",
+    g_string_append_printf(text, "%s^",
                       (prstr = pricetostr(To->Drugs[i].Price)));
     g_free(prstr);
   }
@@ -3703,7 +3662,7 @@ void ClearFightTimeout(Player *Play)
  * unless "mintime" is already smaller (as long as it's not -1, which
  * means "uninitialized"). Returns 1 if the timeout has already expired.
  */
-int AddTimeout(time_t timeout, time_t timenow, int *mintime)
+long AddTimeout(time_t timeout, time_t timenow, long *mintime)
 {
   if (timeout == 0)
     return 0;
@@ -3721,14 +3680,17 @@ int AddTimeout(time_t timeout, time_t timenow, int *mintime)
  * an event has already expired, returns 0. If no events are pending,
  * returns -1. "First" should point to a list of valid players.
  */
-int GetMinimumTimeout(GSList *First)
+long GetMinimumTimeout(GSList *First)
 {
   Player *Play;
   GSList *list;
-  int mintime = -1;
+  long mintime = -1;
   time_t timenow;
 
   timenow = time(NULL);
+#ifdef NETWORKING
+  curl_multi_timeout(MetaConn.multi, &mintime);
+#endif
   if (AddTimeout(MetaMinTimeout, timenow, &mintime))
     return 0;
   if (AddTimeout(MetaUpdateTimeout, timenow, &mintime))

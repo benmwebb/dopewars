@@ -1,8 +1,8 @@
 /************************************************************************
  * newgamedia.c   New game dialog                                       *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -41,7 +41,7 @@ struct StartGameStruct {
             *metaserv, *notebook;
   Player *play;
 #ifdef NETWORKING
-  HttpConnection *MetaConn;
+  CurlConnection *MetaConn;
   GSList *NewMetaList;
   NBCallBack sockstat;
 #endif
@@ -50,12 +50,8 @@ struct StartGameStruct {
 static struct StartGameStruct stgam;
 
 #ifdef NETWORKING
-static void AuthDialog(HttpConnection *conn, gboolean proxyauth,
-                       gchar *realm, gpointer data);
-static void MetaSocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data);
-static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                             gboolean Write, gboolean CallNow);
+static void FillMetaServerList(gboolean UseNewList);
 
 /* List of servers on the metaserver */
 static GSList *MetaList = NULL;
@@ -86,16 +82,71 @@ static void SetStartGameStatus(gchar *msg)
 }
 
 #ifdef NETWORKING
-static void ConnectError(gboolean meta)
+
+
+static void ReportMetaConnectError(GError *err)
+{
+  char *str = g_strdup_printf(_("Status: ERROR: %s"), err->message);
+  SetStartGameStatus(str);
+  g_free(str);
+}
+
+/* Called by glib when we get action on a multi socket */
+static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
+                            gpointer data)
+{
+  CurlConnection *g = (CurlConnection*) data;
+  int still_running;
+  GError *err = NULL;
+  int fd = g_io_channel_unix_get_fd(ch);
+  int action =
+    ((condition & G_IO_IN) ? CURL_CSELECT_IN : 0) |
+    ((condition & G_IO_OUT) ? CURL_CSELECT_OUT : 0);
+
+  CurlConnectionSocketAction(g, fd, action, &still_running, &err);
+  if (!err && still_running) {
+    return TRUE;
+  } else {
+    if (g->timer_event) {
+      dp_g_source_remove(g->timer_event);
+      g->timer_event = 0;
+    }
+    if (!err)
+      HandleWaitingMetaServerData(stgam.MetaConn, &stgam.NewMetaList, &err);
+    if (err) {
+      ReportMetaConnectError(err);
+      g_error_free(err);
+    } else {
+      SetStartGameStatus(NULL);
+    }
+
+    CloseCurlConnection(stgam.MetaConn);
+    FillMetaServerList(TRUE);
+    return FALSE;
+  }
+}
+
+static gboolean glib_timeout(gpointer userp)
+{
+  CurlConnection *g = userp;
+  GError *err = NULL;
+  int still_running;
+  if (!CurlConnectionSocketAction(g, CURL_SOCKET_TIMEOUT, 0, &still_running,
+                                  &err)) {
+    ReportMetaConnectError(err);
+    g_error_free(err);
+  }
+  g->timer_event = 0;
+  return G_SOURCE_REMOVE;
+}
+
+static void ConnectError(void)
 {
   GString *neterr;
   gchar *text;
   LastError *error;
 
-  if (meta)
-    error = stgam.MetaConn->NetBuf.error;
-  else
-    error = stgam.play->NetBuf.error;
+  error = stgam.play->NetBuf.error;
 
   neterr = g_string_new("");
 
@@ -105,16 +156,8 @@ static void ConnectError(gboolean meta)
     g_string_assign(neterr, _("Connection closed by remote host"));
   }
 
-  if (meta) {
-    /* Error: GTK+ client could not connect to the metaserver */
-    text =
-        g_strdup_printf(_("Status: Could not connect to metaserver (%s)"),
-                        neterr->str);
-  } else {
-    /* Error: GTK+ client could not connect to the given dopewars server */
-    text =
-        g_strdup_printf(_("Status: Could not connect (%s)"), neterr->str);
-  }
+  /* Error: GTK+ client could not connect to the given dopewars server */
+  text = g_strdup_printf(_("Status: Could not connect (%s)"), neterr->str);
 
   SetStartGameStatus(text);
   g_free(text);
@@ -128,7 +171,7 @@ void FinishServerConnect(gboolean ConnectOK)
     gtk_widget_destroy(stgam.dialog);
     GuiStartGame();
   } else {
-    ConnectError(FALSE);
+    ConnectError();
   }
 }
 
@@ -149,19 +192,18 @@ static void DoConnect(void)
 
   /* Terminate any existing connection attempts */
   ShutdownNetworkBuffer(NetBuf);
-  if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
+  if (stgam.MetaConn->running) {
+    CloseCurlConnection(stgam.MetaConn);
   }
 
   oldstatus = NetBuf->status;
   oldsocks = NetBuf->sockstat;
   if (StartNetworkBufferConnect(NetBuf, NULL, ServerName, Port)) {
-    DisplayConnectStatus(FALSE, oldstatus, oldsocks);
+    DisplayConnectStatus(oldstatus, oldsocks);
     SetNetworkBufferUserPasswdFunc(NetBuf, SocksAuthDialog, NULL);
     SetNetworkBufferCallBack(NetBuf, stgam.sockstat, NULL);
   } else {
-    ConnectError(FALSE);
+    ConnectError();
   }
 }
 
@@ -181,20 +223,31 @@ static void ConnectToServer(GtkWidget *widget, gpointer data)
   }
 }
 
+/* Columns in metaserver list */
+enum {
+  META_COL_SERVER = 0,
+  META_COL_PORT,
+  META_COL_VERSION,
+  META_COL_PLAYERS,
+  META_COL_COMMENT,
+  META_NUM_COLS
+};
+
 static void FillMetaServerList(gboolean UseNewList)
 {
   GtkWidget *metaserv;
+  GtkListStore *store;
   ServerData *ThisServer;
-  gchar *titles[5];
+  GtkTreeIter iter;
   GSList *ListPt;
-  gint row, width;
 
   if (UseNewList && !stgam.NewMetaList)
     return;
 
   metaserv = stgam.metaserv;
-  gtk_clist_freeze(GTK_CLIST(metaserv));
-  gtk_clist_clear(GTK_CLIST(metaserv));
+  store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(metaserv)));
+
+  gtk_list_store_clear(store);
 
   if (UseNewList) {
     ClearServerList(&MetaList);
@@ -203,52 +256,37 @@ static void FillMetaServerList(gboolean UseNewList)
   }
 
   for (ListPt = MetaList; ListPt; ListPt = g_slist_next(ListPt)) {
+    char *players;
     ThisServer = (ServerData *)(ListPt->data);
-    titles[0] = ThisServer->Name;
-    titles[1] = g_strdup_printf("%d", ThisServer->Port);
-    titles[2] = ThisServer->Version;
     if (ThisServer->CurPlayers == -1) {
       /* Displayed if we don't know how many players are logged on to a
-       * server */
-      titles[3] = _("Unknown");
+         server */
+      players = _("Unknown");
     } else {
       /* e.g. "5 of 20" means 5 players are logged on to a server, out of
-       * a maximum of 20 */
-      titles[3] = g_strdup_printf(_("%d of %d"), ThisServer->CurPlayers,
+         a maximum of 20 */
+      players = g_strdup_printf(_("%d of %d"), ThisServer->CurPlayers,
                                   ThisServer->MaxPlayers);
     }
-    titles[4] = ThisServer->Comment;
-    row = gtk_clist_append(GTK_CLIST(metaserv), titles);
-    gtk_clist_set_row_data(GTK_CLIST(metaserv), row, (gpointer)ThisServer);
-    g_free(titles[1]);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, META_COL_SERVER, ThisServer->Name,
+		       META_COL_PORT, ThisServer->Port,
+		       META_COL_VERSION, ThisServer->Version,
+		       META_COL_PLAYERS, players,
+		       META_COL_COMMENT, ThisServer->Comment, -1);
     if (ThisServer->CurPlayers != -1)
-      g_free(titles[3]);
+      g_free(players);
   }
-  if (MetaList) {
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 4);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 4, width);
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 3);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 3, width);
-    width = gtk_clist_optimal_column_width(GTK_CLIST(metaserv), 0);
-    gtk_clist_set_column_width(GTK_CLIST(metaserv), 0, width);
-  }
-  gtk_clist_thaw(GTK_CLIST(metaserv));
 }
 
-void DisplayConnectStatus(gboolean meta,
-                          NBStatus oldstatus, NBSocksStatus oldsocks)
+void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks)
 {
   NBStatus status;
   NBSocksStatus sockstat;
   gchar *text;
 
-  if (meta) {
-    status = stgam.MetaConn->NetBuf.status;
-    sockstat = stgam.MetaConn->NetBuf.sockstat;
-  } else {
-    status = stgam.play->NetBuf.status;
-    sockstat = stgam.play->NetBuf.sockstat;
-  }
+  status = stgam.play->NetBuf.status;
+  sockstat = stgam.play->NetBuf.sockstat;
   if (oldstatus == status && sockstat == oldsocks)
     return;
 
@@ -259,7 +297,7 @@ void DisplayConnectStatus(gboolean meta,
     switch (sockstat) {
     case NBSS_METHODS:
       /* Tell the user that we've successfully connected to a SOCKS server,
-       * and are now ready to tell it to initiate the "real" connection */
+         and are now ready to tell it to initiate the "real" connection */
       text = g_strdup_printf(_("Status: Connected to SOCKS server %s..."),
                              Socks.name);
       SetStartGameStatus(text);
@@ -267,134 +305,67 @@ void DisplayConnectStatus(gboolean meta,
       break;
     case NBSS_USERPASSWD:
       /* Tell the user that the SOCKS server is asking us for a username
-       * and password */
+         and password */
       SetStartGameStatus(_("Status: Authenticating with SOCKS server"));
       break;
     case NBSS_CONNECT:
       text =
       /* Tell the user that all necessary SOCKS authentication has been
-       * completed, and now we're going to try to have it connect to
-       * the final destination */
+         completed, and now we're going to try to have it connect to
+         the final destination */
           g_strdup_printf(_("Status: Asking SOCKS for connect to %s..."),
-                          meta ? MetaServer.Name : ServerName);
+                          ServerName);
       SetStartGameStatus(text);
       g_free(text);
       break;
     }
     break;
   case NBS_CONNECTED:
-    if (meta) {
-      SetStartGameStatus(_("Status: Obtaining server information "
-                           "from metaserver..."));
-    }
     break;
   }
 }
 
-static void MetaDone(void)
-{
-  if (IsHttpError(stgam.MetaConn)) {
-    ConnectError(TRUE);
-  } else {
-    SetStartGameStatus(NULL);
-  }
-  CloseHttpConnection(stgam.MetaConn);
-  stgam.MetaConn = NULL;
-  FillMetaServerList(TRUE);
-}
-
-static void HandleMetaSock(gpointer data, gint socket,
-                           GdkInputCondition condition)
-{
-  gboolean DoneOK;
-  NBStatus oldstatus;
-  NBSocksStatus oldsocks;
-
-  if (!stgam.MetaConn)
-    return;
-
-  oldstatus = stgam.MetaConn->NetBuf.status;
-  oldsocks = stgam.MetaConn->NetBuf.sockstat;
-
-  if (NetBufHandleNetwork
-      (&stgam.MetaConn->NetBuf, condition & GDK_INPUT_READ,
-       condition & GDK_INPUT_WRITE, &DoneOK)) {
-    while (HandleWaitingMetaServerData
-           (stgam.MetaConn, &stgam.NewMetaList, &DoneOK)) {
-    }
-  }
-
-  if (!DoneOK && HandleHttpCompletion(stgam.MetaConn)) {
-    MetaDone();
-  } else {
-    DisplayConnectStatus(TRUE, oldstatus, oldsocks);
-  }
-}
-
-static void MetaSocketStatus(NetworkBuffer *NetBuf, gboolean Read,
-                             gboolean Write, gboolean CallNow)
-{
-  if (NetBuf->InputTag)
-    gdk_input_remove(NetBuf->InputTag);
-  NetBuf->InputTag = 0;
-  if (Read || Write) {
-    NetBuf->InputTag = gdk_input_add(NetBuf->fd,
-                                     (Read ? GDK_INPUT_READ : 0) |
-                                     (Write ? GDK_INPUT_WRITE : 0),
-                                     HandleMetaSock, NetBuf->CallBackData);
-  }
-  if (CallNow)
-    HandleMetaSock(NetBuf->CallBackData, NetBuf->fd, 0);
-}
-
 static void UpdateMetaServerList(GtkWidget *widget)
 {
-  GtkWidget *metaserv;
   gchar *text;
+  GError *tmp_error = NULL;
 
   /* Terminate any existing connection attempts */
   ShutdownNetworkBuffer(&stgam.play->NetBuf);
-  if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
+  if (stgam.MetaConn->running) {
+    CloseCurlConnection(stgam.MetaConn);
   }
 
   ClearServerList(&stgam.NewMetaList);
 
   /* Message displayed during the attempted connect to the metaserver */
   text = g_strdup_printf(_("Status: Attempting to contact %s..."),
-                         MetaServer.Name);
+                         MetaServer.URL);
   SetStartGameStatus(text);
   g_free(text);
 
-  if (OpenMetaHttpConnection(&stgam.MetaConn)) {
-    metaserv = stgam.metaserv;
-    SetHttpAuthFunc(stgam.MetaConn, AuthDialog, NULL);
-    SetNetworkBufferUserPasswdFunc(&stgam.MetaConn->NetBuf,
-                                   MetaSocksAuthDialog, NULL);
-    SetNetworkBufferCallBack(&stgam.MetaConn->NetBuf,
-                             MetaSocketStatus, NULL);
-  } else {
-    ConnectError(TRUE);
-    CloseHttpConnection(stgam.MetaConn);
-    stgam.MetaConn = NULL;
+  if (!OpenMetaHttpConnection(stgam.MetaConn, &tmp_error)) {
+    text = g_strdup_printf(_("Status: ERROR: %s"), tmp_error->message);
+    g_error_free(tmp_error);
+    SetStartGameStatus(text);
+    g_free(text);
   }
 }
 
 static void MetaServerConnect(GtkWidget *widget, gpointer data)
 {
-  GList *selection;
-  gint row;
-  GtkWidget *clist;
-  ServerData *ThisServer;
+  GtkTreeSelection *treesel;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
 
-  clist = stgam.metaserv;
-  selection = GTK_CLIST(clist)->selection;
-  if (selection) {
-    row = GPOINTER_TO_INT(selection->data);
-    ThisServer = (ServerData *)gtk_clist_get_row_data(GTK_CLIST(clist), row);
-    AssignName(&ServerName, ThisServer->Name);
-    Port = ThisServer->Port;
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(stgam.metaserv));
+
+  if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
+    gchar *name;
+    gtk_tree_model_get(model, &iter, META_COL_SERVER, &name,
+                       META_COL_PORT, &Port, -1);
+    AssignName(&ServerName, name);
+    g_free(name);
 
     if (GetStartGamePlayerName(&stgam.play->Name)) {
       DoConnect();
@@ -421,7 +392,7 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
     ShutdownNetworkBuffer(&stgam.play->NetBuf);
   }
   if (stgam.MetaConn) {
-    CloseHttpConnection(stgam.MetaConn);
+    CloseCurlConnection(stgam.MetaConn);
     stgam.MetaConn = NULL;
   }
   ClearServerList(&stgam.NewMetaList);
@@ -431,42 +402,99 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
-static void metalist_row_select(GtkWidget *clist, gint row, gint column,
-                                GdkEvent *event, GtkWidget *conn_button)
+#ifdef NETWORKING
+static void metalist_changed(GtkTreeSelection *sel, GtkWidget *conn_button)
 {
-  gtk_widget_set_sensitive(conn_button, TRUE);
+  gtk_widget_set_sensitive(conn_button,
+                           gtk_tree_selection_count_selected_rows(sel) > 0);
+}
+#endif
+
+#ifdef NETWORKING
+static GtkTreeModel *create_metaserver_model(void)
+{
+  GtkListStore *store;
+
+  store = gtk_list_store_new(META_NUM_COLS, G_TYPE_STRING, G_TYPE_UINT,
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  return GTK_TREE_MODEL(store);
 }
 
-static void metalist_row_unselect(GtkWidget *clist, gint row, gint column,
-                                  GdkEvent *event, GtkWidget *conn_button)
+static GtkWidget *create_metaserver_view(GtkWidget **pack_widg)
 {
-  gtk_widget_set_sensitive(conn_button, FALSE);
+  int i;
+  GtkWidget *view;
+  GtkTreeModel *model;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *col;
+  gchar *server_titles[META_NUM_COLS];
+  gboolean expand[META_NUM_COLS];
+
+  /* Column titles of metaserver information */
+  server_titles[0] = _("Server");  expand[0] = TRUE;
+  server_titles[1] = _("Port");    expand[1] = FALSE;
+  server_titles[2] = _("Version"); expand[2] = FALSE;
+  server_titles[3] = _("Players"); expand[3] = FALSE;
+  server_titles[4] = _("Comment"); expand[4] = TRUE;
+
+  view = gtk_scrolled_tree_view_new(pack_widg);
+  renderer = gtk_cell_renderer_text_new();
+  for (i = 0; i < META_NUM_COLS; ++i) {
+    col = gtk_tree_view_column_new_with_attributes(
+              server_titles[i], renderer, "text", i, NULL);
+    gtk_tree_view_column_set_resizable(col, TRUE);
+    gtk_tree_view_column_set_expand(col, expand[i]);
+    gtk_tree_view_insert_column(GTK_TREE_VIEW(view), col, -1);
+  }
+  model = create_metaserver_model();
+  gtk_tree_view_set_model(GTK_TREE_VIEW(view), model);
+  /* Tree view keeps a reference, so we can drop ours */
+  g_object_unref(model);
+  return view;
+}
+#endif
+
+static void set_initial_player_name(GtkEntry *entry, Player *play)
+{
+  char *name = GetPlayerName(play);
+  if (*name) {
+    gtk_entry_set_text(entry, name);
+  } else {
+    /* If name is blank, use the first word from the user's full login name */
+    char *firstspace;
+    name = g_strdup(g_get_real_name());
+    g_strstrip(name);
+    firstspace = strchr(name, ' ');
+    if (firstspace) {
+      *firstspace = '\0';
+    }
+    /* "Unknown" is returned from g_get_real_name() on error */
+    gtk_entry_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
+    g_free(name);
+  }
 }
 
 #ifdef NETWORKING
-void NewGameDialog(Player *play, NBCallBack sockstat)
+void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn)
 #else
 void NewGameDialog(Player *play)
 #endif
 {
   GtkWidget *vbox, *vbox2, *hbox, *label, *entry, *notebook;
-  GtkWidget *frame, *button, *dialog, *defbutton;
+  GtkWidget *button, *dialog;
   GtkAccelGroup *accel_group;
+#if GTK_MAJOR_VERSION == 2
   guint AccelKey;
+#endif
 
 #ifdef NETWORKING
-  GtkWidget *clist, *scrollwin, *table, *hbbox;
-  gchar *server_titles[5], *ServerEntry, *text;
+  GtkWidget *clist, *scrollwin, *table, *hbbox, *defbutton;
+  GtkTreeSelection *treesel;
+  gchar *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
+  SetCurlCallback(MetaConn, glib_timeout, glib_socket);
 
-  /* Column titles of metaserver information */
-  server_titles[0] = _("Server");
-  server_titles[1] = _("Port");
-  server_titles[2] = _("Version");
-  server_titles[3] = _("Players");
-  server_titles[4] = _("Comment");
-
-  stgam.MetaConn = NULL;
+  stgam.MetaConn = MetaConn;
   stgam.NewMetaList = NULL;
   stgam.sockstat = sockstat;
 
@@ -474,8 +502,8 @@ void NewGameDialog(Player *play)
 
   stgam.play = play;
   stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_signal_connect(GTK_OBJECT(dialog), "destroy",
-                     GTK_SIGNAL_FUNC(CloseNewGameDia), NULL);
+  g_signal_connect(G_OBJECT(dialog), "destroy",
+                   G_CALLBACK(CloseNewGameDia), NULL);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(MainWindow));
@@ -490,21 +518,29 @@ void NewGameDialog(Player *play)
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
-  vbox = gtk_vbox_new(FALSE, 7);
-  hbox = gtk_hbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
+  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
 
   label = gtk_label_new("");
 
+#if GTK_MAJOR_VERSION == 2
   AccelKey = gtk_label_parse_uline(GTK_LABEL(label),
+#else
+  gtk_label_set_text_with_mnemonic(GTK_LABEL(label),
+#endif
                                    /* Prompt for player's name in 'New
-                                    * Game' dialog */
+                                      Game' dialog */
                                    _("Hey dude, what's your _name?"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
   entry = stgam.name = gtk_entry_new();
+#if GTK_MAJOR_VERSION == 2
   gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey,
                              GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
-  gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(stgam.play));
+#else
+  gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
+#endif
+  set_initial_player_name(GTK_ENTRY(entry), stgam.play);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -512,10 +548,8 @@ void NewGameDialog(Player *play)
   notebook = stgam.notebook = gtk_notebook_new();
 
 #ifdef NETWORKING
-  frame = gtk_frame_new(_("Server"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-  vbox2 = gtk_vbox_new(FALSE, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
   table = gtk_table_new(2, 2, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 4);
   gtk_table_set_col_spacings(GTK_TABLE(table), 4);
@@ -554,22 +588,18 @@ void NewGameDialog(Player *play)
   button = gtk_button_new_with_label("");
   /* Button to connect to a named dopewars server */
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(ConnectToServer), NULL);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
-  GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button, TRUE);
   defbutton = button;
   
   label = gtk_label_new(_("Server"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 #endif /* NETWORKING */
 
-  /* Title of 'New Game' dialog notebook tab for single-player mode */
-  frame = gtk_frame_new(_("Single player"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
-  vbox2 = gtk_vbox_new(FALSE, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
   stgam.antique = gtk_check_button_new_with_label("");
 
   /* Checkbox to activate 'antique mode' in single-player games */
@@ -584,27 +614,21 @@ void NewGameDialog(Player *play)
   SetAccelerator(button, _("_Start single-player game"), button,
                  "clicked", accel_group, TRUE);
 
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(StartSinglePlayer), NULL);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(StartSinglePlayer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
+  /* Title of 'New Game' dialog notebook tab for single-player mode */
   label = gtk_label_new(_("Single player"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 
 #ifdef NETWORKING
-  /* Title of Metaserver frame in New Game dialog */
-  frame = gtk_frame_new(_("Metaserver"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 4);
+  vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
 
-  vbox2 = gtk_vbox_new(FALSE, 7);
-  gtk_container_set_border_width(GTK_CONTAINER(vbox2), 4);
-
-  clist = stgam.metaserv =
-      gtk_scrolled_clist_new_with_titles(5, server_titles, &scrollwin);
-  gtk_clist_column_titles_passive(GTK_CLIST(clist));
-  gtk_clist_set_selection_mode(GTK_CLIST(clist), GTK_SELECTION_SINGLE);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 0, 130);
-  gtk_clist_set_column_width(GTK_CLIST(clist), 1, 35);
+  clist = stgam.metaserv = create_metaserver_view(&scrollwin);
+  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(clist), FALSE);
+  gtk_tree_selection_set_mode(
+       gtk_tree_view_get_selection(GTK_TREE_VIEW(clist)), GTK_SELECTION_SINGLE);
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
@@ -612,26 +636,25 @@ void NewGameDialog(Player *play)
 
   /* Button to update metaserver information */
   button = NewStockButton(GTK_STOCK_REFRESH, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(UpdateMetaServerList), NULL);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(UpdateMetaServerList), NULL);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = gtk_button_new_with_label("");
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(MetaServerConnect), NULL);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(MetaServerConnect), NULL);
   gtk_widget_set_sensitive(button, FALSE);
-  gtk_signal_connect(GTK_OBJECT(clist), "select_row",
-                     GTK_SIGNAL_FUNC(metalist_row_select), button);
-  gtk_signal_connect(GTK_OBJECT(clist), "unselect_row",
-                     GTK_SIGNAL_FUNC(metalist_row_unselect), button);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  treesel = gtk_tree_view_get_selection(GTK_TREE_VIEW(clist));
+  g_signal_connect(G_OBJECT(treesel), "changed", G_CALLBACK(metalist_changed),
+                   button);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(frame), vbox2);
 
+  /* Title of Metaserver notebook tab in New Game dialog */
   label = gtk_label_new(_("Metaserver"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), frame, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
 #endif /* NETWORKING */
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
@@ -654,135 +677,16 @@ void NewGameDialog(Player *play)
 
   SetStartGameStatus(NULL);
   gtk_widget_show_all(dialog);
-  gtk_notebook_set_page(GTK_NOTEBOOK(notebook), NewGameType);
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), NewGameType);
 #ifdef NETWORKING
   gtk_widget_grab_default(defbutton);
 #endif
 }
 
 #ifdef NETWORKING
-static void OKAuthDialog(GtkWidget *widget, GtkWidget *window)
-{
-  gtk_object_set_data(GTK_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
-  gtk_widget_destroy(window);
-}
-
-static void DestroyAuthDialog(GtkWidget *window, gpointer data)
-{
-  GtkWidget *userentry, *passwdentry;
-  gchar *username = NULL, *password = NULL;
-  gpointer proxy, authok;
-  HttpConnection *conn;
-
-  authok = gtk_object_get_data(GTK_OBJECT(window), "authok");
-  proxy = gtk_object_get_data(GTK_OBJECT(window), "proxy");
-  userentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "username");
-  passwdentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "password");
-  conn =
-      (HttpConnection *)gtk_object_get_data(GTK_OBJECT(window),
-                                            "httpconn");
-  g_assert(userentry && passwdentry && conn);
-
-  if (authok) {
-    username = gtk_editable_get_chars(GTK_EDITABLE(userentry), 0, -1);
-    password = gtk_editable_get_chars(GTK_EDITABLE(passwdentry), 0, -1);
-  }
-
-  SetHttpAuthentication(conn, GPOINTER_TO_INT(proxy), username, password);
-
-  g_free(username);
-  g_free(password);
-}
-
-void AuthDialog(HttpConnection *conn, gboolean proxy, gchar *realm,
-                gpointer data)
-{
-  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
-  GtkAccelGroup *accel_group;
-
-  window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  accel_group = gtk_accel_group_new();
-  gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
-
-  gtk_signal_connect(GTK_OBJECT(window), "destroy",
-                     GTK_SIGNAL_FUNC(DestroyAuthDialog), NULL);
-  gtk_object_set_data(GTK_OBJECT(window), "proxy", GINT_TO_POINTER(proxy));
-  gtk_object_set_data(GTK_OBJECT(window), "httpconn", (gpointer)conn);
-
-  if (proxy) {
-    gtk_window_set_title(GTK_WINDOW(window),
-                         /* Title of dialog for authenticating with a
-                          * proxy server */
-                         _("Proxy Authentication Required"));
-  } else {
-    /* Title of dialog for authenticating with a web server */
-    gtk_window_set_title(GTK_WINDOW(window), _("Authentication Required"));
-  }
-  my_set_dialog_position(GTK_WINDOW(window));
-
-  gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-  gtk_window_set_transient_for(GTK_WINDOW(window),
-                               GTK_WINDOW(MainWindow));
-  gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-
-  vbox = gtk_vbox_new(FALSE, 7);
-
-  table = gtk_table_new(3, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
-
-  label = gtk_label_new("Realm:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
-
-  label = gtk_label_new(realm);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 0, 1);
-
-  label = gtk_label_new("User name:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
-
-  entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "username", (gpointer)entry);
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
-
-  label = gtk_label_new("Password:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 2, 3);
-
-  entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "password", (gpointer)entry);
-
-  gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
-
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 3);
-
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
-
-  hsep = gtk_hseparator_new();
-  gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
-
-  hbbox = my_hbbox_new();
-
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(OKAuthDialog), (gpointer)window);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
-
-  gtk_container_add(GTK_CONTAINER(window), vbox);
-  gtk_widget_show_all(window);
-}
-
 static void OKSocksAuth(GtkWidget *widget, GtkWidget *window)
 {
-  gtk_object_set_data(GTK_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
+  g_object_set_data(G_OBJECT(window), "authok", GINT_TO_POINTER(TRUE));
   gtk_widget_destroy(window);
 }
 
@@ -790,17 +694,16 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
 {
   GtkWidget *userentry, *passwdentry;
   gchar *username = NULL, *password = NULL;
-  gpointer authok, meta;
+  gpointer authok;
   NetworkBuffer *netbuf;
 
-  authok = gtk_object_get_data(GTK_OBJECT(window), "authok");
-  meta = gtk_object_get_data(GTK_OBJECT(window), "meta");
+  authok = g_object_get_data(G_OBJECT(window), "authok");
   userentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "username");
+      (GtkWidget *)g_object_get_data(G_OBJECT(window), "username");
   passwdentry =
-      (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "password");
+      (GtkWidget *)g_object_get_data(G_OBJECT(window), "password");
   netbuf =
-      (NetworkBuffer *)gtk_object_get_data(GTK_OBJECT(window), "netbuf");
+      (NetworkBuffer *)g_object_get_data(G_OBJECT(window), "netbuf");
 
   g_assert(userentry && passwdentry && netbuf);
 
@@ -814,8 +717,7 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
   g_free(password);
 }
 
-static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
-                                gpointer data)
+static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 {
   GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
   GtkAccelGroup *accel_group;
@@ -824,10 +726,9 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
-  gtk_signal_connect(GTK_OBJECT(window), "destroy",
-                     GTK_SIGNAL_FUNC(DestroySocksAuth), NULL);
-  gtk_object_set_data(GTK_OBJECT(window), "netbuf", (gpointer)netbuf);
-  gtk_object_set_data(GTK_OBJECT(window), "meta", GINT_TO_POINTER(meta));
+  g_signal_connect(G_OBJECT(window), "destroy",
+                   G_CALLBACK(DestroySocksAuth), NULL);
+  g_object_set_data(G_OBJECT(window), "netbuf", (gpointer)netbuf);
 
   /* Title of dialog for authenticating with a SOCKS server */
   gtk_window_set_title(GTK_WINDOW(window),
@@ -839,7 +740,7 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
                                GTK_WINDOW(MainWindow));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
 
-  vbox = gtk_vbox_new(FALSE, 7);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
   table = gtk_table_new(2, 2, FALSE);
   gtk_table_set_row_spacings(GTK_TABLE(table), 10);
@@ -849,14 +750,14 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "username", (gpointer)entry);
+  g_object_set_data(G_OBJECT(window), "username", (gpointer)entry);
   gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
 
   label = gtk_label_new("Password:");
   gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
 
   entry = gtk_entry_new();
-  gtk_object_set_data(GTK_OBJECT(window), "password", (gpointer)entry);
+  g_object_set_data(G_OBJECT(window), "password", (gpointer)entry);
 
 #ifdef HAVE_FIXED_GTK
   /* GTK+ versions earlier than 1.2.10 do bad things with this */
@@ -867,36 +768,26 @@ static void RealSocksAuthDialog(NetworkBuffer *netbuf, gboolean meta,
 
   gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
 
-  hsep = gtk_hseparator_new();
+  hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
 
   button = NewStockButton(GTK_STOCK_OK, accel_group);
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                     GTK_SIGNAL_FUNC(OKSocksAuth), (gpointer)window);
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect(G_OBJECT(button), "clicked",
+                   G_CALLBACK(OKSocksAuth), (gpointer)window);
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
-  gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-                            GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                            GTK_OBJECT(window));
-  gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  g_signal_connect_swapped(G_OBJECT(button), "clicked",
+                           G_CALLBACK(gtk_widget_destroy),
+                           G_OBJECT(window));
+  my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
   gtk_widget_show_all(window);
-}
-
-void MetaSocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
-{
-  RealSocksAuthDialog(netbuf, TRUE, data);
-}
-
-void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
-{
-  RealSocksAuthDialog(netbuf, FALSE, data);
 }
 
 #endif /* NETWORKING */

@@ -1,7 +1,5 @@
 ServerMOTD = "Welcome All, Play for as long as you like. !- MAKE SURE TO PAY OFF YOUR DEBT NOW -!"
 Port = 7902
-MetaServer.Port = 80
-MetaServer.ProxyPort = 0
 MetaServer.Comment = "Igneous\'s MOD"
 NumTurns = 0
 NumLocation = 87

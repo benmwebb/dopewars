@@ -1,8 +1,8 @@
 /************************************************************************
  * message.h      Header file for dopewars message-handling routines    *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -75,17 +75,28 @@ void SendServerMessage(Player *From, AICode AI, MsgCode Code,
 void SendPrintMessage(Player *From, AICode AI, Player *To, char *Data);
 void SendQuestion(Player *From, AICode AI, Player *To, char *Data);
 
-#if NETWORKING
+#ifdef NETWORKING
+#define DOPE_META_ERROR dope_meta_error_quark()
+
+typedef enum {
+  DOPE_META_ERROR_EMPTY,     /* No servers listed on metaserver */
+  DOPE_META_ERROR_INTERNAL,  /* Internal metaserver error */
+  DOPE_META_ERROR_BAD_REPLY  /* Bad reply from metaserver */
+} DopeMetaError;
+
+GQuark dope_meta_error_quark(void);
+
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK);
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK);
 gboolean ReadPlayerDataFromWire(Player *Play);
 void QueuePlayerMessageForSend(Player *Play, gchar *data);
 gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
-gboolean OpenMetaHttpConnection(HttpConnection **conn);
-gboolean HandleWaitingMetaServerData(HttpConnection *conn, GSList **listpt,
-                                     gboolean *doneOK);
+gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err);
+gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
+                                     GError **err);
 void ClearServerList(GSList **listpt);
 #endif /* NETWORKING */
 

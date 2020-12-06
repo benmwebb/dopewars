@@ -1,8 +1,8 @@
 /************************************************************************
  * network.h      Header file for low-level networking routines         *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -29,6 +29,7 @@
 
 /* Various includes necessary for select() calls */
 #ifdef CYGWIN
+#include <winsock2.h>
 #include <windows.h>
 #else
 #include <sys/types.h>
@@ -38,7 +39,7 @@
 #include <sys/time.h>
 #include <time.h>
 #else
-#if HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
 #include <time.h>
@@ -55,10 +56,36 @@
 #include "error.h"
 
 #ifdef NETWORKING
+#include <curl/curl.h>
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
 #endif
+
+#ifdef CYGWIN
+/* Need GUI main loop to handle timers/events */
+#include "gtkport/gtkport.h"
+#else
+#define dp_g_source_remove g_source_remove
+#define dp_g_io_add_watch g_io_add_watch
+#define dp_g_timeout_add g_timeout_add
+#endif
+
+typedef struct _CurlConnection {
+  CURLM *multi;
+  CURL *h;
+  gboolean running;
+  gchar *data;
+  size_t data_size;
+  char Terminator;              /* Character that separates messages */
+  char StripChar;               /* Char that should be removed
+                                 * from messages */
+  GPtrArray *headers;
+
+  guint timer_event;
+  GSourceFunc timer_cb;
+  GIOFunc socket_cb;
+} CurlConnection;
 
 typedef struct _ConnBuf {
   gchar *Data;                  /* bytes waiting to be read/written */
@@ -69,14 +96,15 @@ typedef struct _ConnBuf {
 typedef struct _NetworkBuffer NetworkBuffer;
 
 typedef void (*NBCallBack) (NetworkBuffer *NetBuf, gboolean Read,
-                            gboolean Write, gboolean CallNow);
+                            gboolean Write, gboolean Exception,
+                            gboolean CallNow);
 
 typedef void (*NBUserPasswd) (NetworkBuffer *NetBuf, gpointer data);
 
 /* Information about a SOCKS server */
 typedef struct _SocksServer {
   gchar *name;                  /* hostname */
-  unsigned port;                /* port number */
+  int port;                     /* port number */
   int version;                  /* desired protocol version (usually
                                  * 4 or 5) */
   gboolean numuid;              /* if TRUE, send numeric user IDs rather
@@ -105,7 +133,8 @@ typedef enum {
 /* Handles reading and writing messages from/to a network connection */
 struct _NetworkBuffer {
   int fd;                       /* File descriptor of the socket */
-  gint InputTag;                /* Identifier for gdk_input routines */
+  GIOChannel *ioch;             /* GLib representation of the descriptor */
+  gint InputTag;                /* Identifier for GLib event routines */
   NBCallBack CallBack;          /* Function called when the socket
                                  * status changes */
   gpointer CallBackData;        /* Data accessible to the callback
@@ -130,55 +159,6 @@ struct _NetworkBuffer {
   LastError *error;             /* Any error from the last operation */
 };
 
-/* Keeps track of the progress of an HTTP connection */
-typedef enum {
-  HS_CONNECTING,                /* Waiting for connect() to complete */
-  HS_READHEADERS,               /* Reading HTTP headers */
-  HS_READSEPARATOR,             /* Reading the header/body separator line */
-  HS_READBODY,                  /* Reading HTTP body */
-  HS_WAITCOMPLETE               /* Done reading, now waiting for
-                                 * authentication etc. before closing
-                                 * and/or retrying the connection */
-} HttpStatus;
-
-typedef struct _HttpConnection HttpConnection;
-
-typedef void (*HCAuthFunc) (HttpConnection *conn, gboolean proxyauth,
-                            gchar *realm, gpointer data);
-
-/* A structure used to keep track of an HTTP connection */
-struct _HttpConnection {
-  gchar *HostName;              /* The machine on which the desired page
-                                 * resides */
-  unsigned Port;                /* The port */
-  gchar *Proxy;                 /* If non-NULL, a web proxy to use */
-  unsigned ProxyPort;           /* The port to use for talking to
-                                 * the proxy */
-  char *bindaddr;               /* local IP address to bind to */
-  gchar *Method;                /* e.g. GET, POST */
-  gchar *Query;                 /* e.g. the path of the desired webpage */
-  gchar *Headers;               /* if non-NULL, e.g. Content-Type */
-  gchar *Body;                  /* if non-NULL, data to send */
-  gchar *RedirHost;             /* if non-NULL, a hostname to redirect to */
-  gchar *RedirQuery;            /* if non-NULL, the path to redirect to */
-  unsigned RedirPort;           /* The port on the host to redirect to */
-  HCAuthFunc authfunc;          /* Callback function for authentication */
-  gpointer authdata;            /* Data to be passed to authfunc */
-  gboolean waitinput;           /* TRUE if we're waiting for auth etc. to
-                                 * be supplied */
-  gchar *user;                  /* The supplied username for HTTP auth */
-  gchar *password;              /* The supplied password for HTTP auth */
-  gchar *proxyuser;             /* The supplied username for HTTP
-                                 * proxy auth */
-  gchar *proxypassword;         /* The supplied password for HTTP
-                                 * proxy auth */
-  NetworkBuffer NetBuf;         /* The actual network connection itself */
-  gint Tries;                   /* Number of requests actually sent so far */
-  gint StatusCode;              /* 0=no status yet, otherwise an HTTP
-                                 * status code */
-  HttpStatus Status;
-};
-
 void InitNetworkBuffer(NetworkBuffer *NetBuf, char Terminator,
                        char StripChar, SocksServer *socks);
 void SetNetworkBufferCallBack(NetworkBuffer *NetBuf, NBCallBack CallBack,
@@ -199,7 +179,8 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
                          fd_set *writefds, fd_set *errorfds,
                          gboolean *DoneOK);
 gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
-                             gboolean WriteReady, gboolean *DoneOK);
+                             gboolean WriteReady, gboolean ErrorReady,
+                             gboolean *DoneOK);
 gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
 gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data);
@@ -213,19 +194,25 @@ gchar *ExpandWriteBuffer(ConnBuf *conn, int numbytes, LastError **error);
 void CommitWriteBuffer(NetworkBuffer *NetBuf, ConnBuf *conn, gchar *addpt,
                        guint addlen);
 
-gboolean OpenHttpConnection(HttpConnection **conn, gchar *HostName,
-                            unsigned Port, gchar *Proxy,
-                            unsigned ProxyPort, const gchar *bindaddr,
-                            SocksServer *socks, gchar *Method,
-                            gchar *Query, gchar *Headers, gchar *Body);
-void CloseHttpConnection(HttpConnection *conn);
-gchar *ReadHttpResponse(HttpConnection *conn, gboolean *doneOK);
-void SetHttpAuthentication(HttpConnection *conn, gboolean proxy,
-                           gchar *user, gchar *password);
-void SetHttpAuthFunc(HttpConnection *conn, HCAuthFunc authfunc,
-                     gpointer data);
-gboolean HandleHttpCompletion(HttpConnection *conn);
-gboolean IsHttpError(HttpConnection *conn);
+#define DOPE_CURL_ERROR dope_curl_error_quark()
+GQuark dope_curl_error_quark(void);
+
+#define DOPE_CURLM_ERROR dope_curlm_error_quark()
+GQuark dope_curlm_error_quark(void);
+
+void CurlInit(CurlConnection *conn);
+void CurlCleanup(CurlConnection *conn);
+gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
+                            GError **err);
+void CloseCurlConnection(CurlConnection *conn);
+gboolean CurlConnectionPerform(CurlConnection *conn, int *still_running,
+                               GError **err);
+gboolean CurlConnectionSocketAction(CurlConnection *conn, curl_socket_t fd,
+                                    int action, int *still_running,
+                                    GError **err);
+char *CurlNextLine(CurlConnection *conn, char *ch);
+void SetCurlCallback(CurlConnection *conn, GSourceFunc timer_cb,
+                     GIOFunc socket_cb);
 
 int CreateTCPSocket(LastError **error);
 gboolean BindTCPSocket(int sock, const gchar *addr, unsigned port,

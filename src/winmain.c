@@ -1,8 +1,8 @@
 /************************************************************************
  * winmain.c      Startup code and support for the Win32 platform       *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -26,6 +26,8 @@
 
 #ifdef CYGWIN
 
+#include <direct.h>
+#include <winsock2.h>
 #include <windows.h>
 #include <commctrl.h>
 #include <glib.h>
@@ -103,9 +105,20 @@ static void WindowPrintEnd()
 
 static FILE *LogFile = NULL;
 
+gchar *appdata_path = NULL;
+
+static void GetAppDataPath()
+{
+  appdata_path = g_strdup_printf("%s/dopewars", g_get_user_config_dir());
+  mkdir(appdata_path);
+}
+
 static void LogFileStart()
 {
-  LogFile = fopen("dopewars-log.txt", "w");
+  char *logfile = g_strdup_printf("%s/dopewars-log.txt",
+                                  appdata_path ? appdata_path : ".");
+  LogFile = fopen(logfile, "w");
+  g_free(logfile);
 }
 
 static void LogFilePrintFunc(const gchar *string)
@@ -253,6 +266,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 #ifdef ENABLE_NLS
   gchar *winlocale;
+  const char *charset;
 #endif
 
   /* Are we running as an NT service? */
@@ -263,6 +277,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     SetCurrentDirectory(modpath);
     g_free(modpath);
   }
+
+  GetAppDataPath();
 
   LogFileStart();
   g_set_print_handler(LogFilePrintFunc);
@@ -282,11 +298,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  LocaleIsUTF8 = g_get_charset(&charset);
 #endif
 
   /* Informational comment placed at the start of the Windows log file
-   * (this is used for messages printed during processing of the config
-   * files - under Unix these are just printed to stdout) */
+     (this is used for messages printed during processing of the config
+     files - under Unix these are just printed to stdout) */
   g_print(_("# This is the dopewars startup log, containing any\n"
             "# informative messages resulting from configuration\n"
             "# file processing and the like.\n\n"));

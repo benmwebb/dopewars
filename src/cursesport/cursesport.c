@@ -1,9 +1,9 @@
 /************************************************************************
  * cursesport.c   Portability functions to enable curses applications   *
  *                     to be built on Win32 systems                     *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -26,6 +26,7 @@
 #endif
 
 #include "cursesport.h"
+#include <glib.h>
 
 #ifdef CYGWIN                   /* Code for native Win32 build under Cygwin */
 
@@ -34,7 +35,7 @@ int COLS, LINES;
 static int Width, Depth;
 static CHAR_INFO RealScreen[25][80], VirtualScreen[25][80];
 static HANDLE hOut, hIn;
-static WORD CurAttr = 0;
+static int CurAttr = 0;
 static int CurX, CurY;
 static WORD Attr[10];
 
@@ -57,8 +58,8 @@ void refresh(void)
       screenpos.Top = y;
       screenpos.Right = Width - 1;
       screenpos.Bottom = y;
-      WriteConsoleOutput(hOut, &VirtualScreen[y][0], size,
-                         offset, &screenpos);
+      WriteConsoleOutputW(hOut, &VirtualScreen[y][0], size,
+                          offset, &screenpos);
     }
   }
 }
@@ -77,14 +78,11 @@ static HANDLE WINAPI GetConHandle(TCHAR *pszName)
 
 SCREEN *newterm(void *a, void *b, void *c)
 {
-  COORD coord;
   int i;
 
-  coord.X = 80;
-  coord.Y = 25;
   Width = COLS = 80;
   Depth = LINES = 25;
-  CurAttr = 1 << 8;
+  CurAttr = 1 << 16;
   CurX = 0;
   CurY = 0;
   for (i = 0; i < 10; i++)
@@ -184,7 +182,7 @@ void move(int y, int x)
   SetConsoleCursorPosition(hOut, coord);
 }
 
-void attrset(WORD newAttr)
+void attrset(int newAttr)
 {
   CurAttr = newAttr;
 }
@@ -192,21 +190,45 @@ void attrset(WORD newAttr)
 void addstr(const char *str)
 {
   int i;
-
   for (i = 0; i < strlen(str); i++)
-    addch(str[i]);
+    addch((guchar)str[i]);
 }
 
-void addch(int ch)
+void addch(unsigned ch_and_attr)
 {
   int attr;
+  unsigned int ch;
+  gunichar gch;
+  /* Keep track of a UTF-8-encoded character */
+  static char utf8_str[4];
+  static int utf8_width = 0;
+  static int utf8_pos = 0;
 
-  VirtualScreen[CurY][CurX].Char.AsciiChar = ch % 256;
-  attr = ch >> 8;
+  ch = ch_and_attr & 0xFFFF;
+
+  if (ch > 0xFF || ch <= 0x7F) {
+    /* Already Unicode (e.g. box-drawing character), or ASCII */
+    VirtualScreen[CurY][CurX].Char.UnicodeChar = ch;
+  } else if (ch & 64) {
+    /* UTF-8 encoded; first byte (get the width) */
+    utf8_width = ch & 16 ? 4 : ch & 32 ? 3 : 2;
+    utf8_pos = 0;
+    utf8_str[utf8_pos++] = ch;
+    return;
+  } else {
+    /* UTF-8 encoded; intermediate or last byte */
+    utf8_str[utf8_pos++] = ch;
+    if (utf8_pos < utf8_width) return;
+    gch = g_utf8_get_char(utf8_str);
+    /* Windows console can only handle 2-byte Unicode */
+    VirtualScreen[CurY][CurX].Char.UnicodeChar = gch > 0xFFFF ? '?' : gch;
+  }
+
+  attr = ch_and_attr >> 16;
   if (attr > 0)
     VirtualScreen[CurY][CurX].Attributes = Attr[attr];
   else
-    VirtualScreen[CurY][CurX].Attributes = Attr[CurAttr >> 8];
+    VirtualScreen[CurY][CurX].Attributes = Attr[CurAttr >> 16];
   if (++CurX >= Width) {
     CurX = 0;
     if (++CurY >= Depth)

@@ -1,6 +1,7 @@
-30th December 2005
-     dopewars-1.5.12 released. This really fixes the potential exploit against
-the Windows server, which was not correctly fixed in 1.5.11.
+6th December 2020
+     dopewars-1.6.0 released. The metaserver, broken since SourceForge moved
+to HTTPS, should work again. This release also adds support for modern 64-bit
+operating systems, and newer software libraries such as GTK+3 and SDL 2.
 
 30th December 2005
      dopewars-1.5.11 released. This is largely a security bugfix release,

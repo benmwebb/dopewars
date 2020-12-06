@@ -1,8 +1,8 @@
 /************************************************************************
  * dopewars.c     dopewars - general purpose routines and init          *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -78,7 +78,7 @@ gboolean Network, Client, Server, WantAntique = FALSE, UseSounds = TRUE;
  * dopewars in single-player or antique mode:
  *           Network=Server=Client=FALSE
  */
-unsigned Port = 7902;
+int Port = 7902;
 gboolean Sanitized, ConfigVerbose, DrugValue, Antique = FALSE;
 gchar *HiScoreFile = NULL, *ServerName = NULL;
 gchar *ServerMOTD = NULL, *BindAddress = NULL, *PlayerName = NULL;
@@ -99,8 +99,9 @@ gboolean Daemonize = TRUE;
 #define SNDPATH DPDATADIR"/dopewars/"
 #endif
 
-gchar *WebBrowser = NULL;
+gchar *OurWebBrowser = NULL;
 gint ConfigErrors = 0;
+gboolean LocaleIsUTF8 = FALSE;
 
 int NumLocation = 0, NumGun = 0, NumCop = 0, NumDrug = 0, NumSubway = 0;
 int NumPlaying = 0, NumStoppedTo = 0;
@@ -171,10 +172,10 @@ struct SOUNDS Sounds = {
  * of translators ;) */
 struct NAMES DefaultNames = {
   /* Name of a single bitch - if you need to use different words for
-   * "bitch" depending on where in the sentence it occurs (e.g. subject or 
-   * object) then read doc/i18n.html about the %tde (etc.) notation. N.B.
-   * This notation can be used for most of the translatable strings in
-   * dopewars. */
+     "bitch" depending on where in the sentence it occurs (e.g. subject or
+     object) then read doc/i18n.html about the %tde (etc.) notation. N.B.
+     This notation can be used for most of the translatable strings in
+     dopewars. */
   N_("bitch"),
   /* Word used for two or more bitches */
   N_("bitches"),
@@ -187,11 +188,11 @@ struct NAMES DefaultNames = {
   /* Word used for two or more drugs */
   N_("drugs"),
   /* String for displaying the game date or turn number. This is passed
-   * to the strftime() function, with the exception that %T is used to
-   * mean the turn number rather than the calendar date. */
+     to the strftime() function, with the exception that %T is used to
+     mean the turn number rather than the calendar date. */
   N_("%m-%d-%Y"),
   /* Names of the loan shark, the bank, the gun shop, and the pub,
-   * respectively */
+     respectively */
   N_("the Loan Shark"), N_("the Bank"),
   N_("Dan\'s House of Guns"), N_("the pub")
 };
@@ -210,13 +211,12 @@ struct BITCH Bitch = {
 
 #ifdef NETWORKING
 struct METASERVER MetaServer = {
-  FALSE, NULL, 0, NULL, 0, NULL, NULL, NULL,
-  NULL, FALSE, NULL, NULL, NULL, NULL
+  FALSE, NULL, NULL, NULL, NULL
 };
 
 struct METASERVER DefaultMetaServer = {
-  TRUE, "dopewars.sourceforge.net", 80, "", 8080, "/metaserver.php",
-  "", "", "dopewars server", FALSE, "", "", "", ""
+  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "",
+  "", "dopewars server"
 };
 
 SocksServer Socks = { NULL, 0, 0, FALSE, NULL, NULL, NULL };
@@ -231,8 +231,8 @@ struct LOG Log;
 
 struct GLOBALS Globals[] = {
   /* The following strings are the helptexts for all the options that can
-   * be set in a dopewars configuration file, or in the server. See
-   * doc/configfile.html for more detailed explanations. */
+     be set in a dopewars configuration file, or in the server. See
+     doc/configfile.html for more detailed explanations. */
   {&Port, NULL, NULL, NULL, NULL, "Port", N_("Network port to connect to"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
   {NULL, NULL, NULL, &HiScoreFile, NULL, "HiScoreFile",
@@ -277,20 +277,8 @@ struct GLOBALS Globals[] = {
   {NULL, &MetaServer.Active, NULL, NULL, NULL, "MetaServer.Active",
    N_("TRUE if server should report to a metaserver"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.Name, NULL, "MetaServer.Name",
-   N_("Metaserver name to report/get server details to/from"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {&MetaServer.Port, NULL, NULL, NULL, NULL, "MetaServer.Port",
-   N_("Port for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
-  {NULL, NULL, NULL, &MetaServer.ProxyName, NULL, "MetaServer.ProxyName",
-   N_("Name of a proxy for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {&MetaServer.ProxyPort, NULL, NULL, NULL, NULL, "MetaServer.ProxyPort",
-   N_("Port for communicating with the proxy server"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 65535},
-  {NULL, NULL, NULL, &MetaServer.Path, NULL, "MetaServer.Path",
-   N_("Path of the script on the metaserver"),
+  {NULL, NULL, NULL, &MetaServer.URL, NULL, "MetaServer.URL",
+   N_("Metaserver URL to report/get server details to/from"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &MetaServer.LocalName, NULL, "MetaServer.LocalName",
    N_("Preferred hostname of your server machine"), NULL, NULL, 0, "",
@@ -301,23 +289,6 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &MetaServer.Comment, NULL, "MetaServer.Comment",
    N_("Server description, reported to the metaserver"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0, 0},
-  {NULL, &MetaServer.UseSocks, NULL, NULL, NULL, "MetaServer.UseSocks",
-   N_("If TRUE, use SOCKS for metaserver communication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.authuser, NULL, "MetaServer.Auth.User",
-   N_("Username for HTTP Basic authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.authpassword, NULL,
-   "MetaServer.Auth.Password",
-   N_("Password for HTTP Basic authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.proxyuser, NULL, "MetaServer.Proxy.User",
-   N_("Username for HTTP Basic proxy authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &MetaServer.proxypassword, NULL,
-   "MetaServer.Proxy.Password",
-   N_("Password for HTTP Basic proxy authentication"),
-   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
 #endif /* NETWORKING */
 #ifdef CYGWIN
   {NULL, &MinToSysTray, NULL, NULL, NULL, "MinToSysTray",
@@ -327,7 +298,7 @@ struct GLOBALS Globals[] = {
   {NULL, &Daemonize, NULL, NULL, NULL, "Daemonize",
    N_("If TRUE, the server runs in the background"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &WebBrowser, NULL, "WebBrowser",
+  {NULL, NULL, NULL, &OurWebBrowser, NULL, "WebBrowser",
    N_("The command used to start your web browser"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
 #endif
@@ -587,6 +558,7 @@ struct GLOBALS Globals[] = {
    N_("Format string used for expensive drugs 50% of time"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &Drugs.ExpensiveStr2, NULL, "Drugs.ExpensiveStr2",
+   /* xgettext:no-c-format */
    N_("Format string used for expensive drugs 50% of time"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {&(Drugs.CheapDivide), NULL, NULL, NULL, NULL, "Drugs.CheapDivide",
@@ -669,8 +641,8 @@ const int NUMGLOB = sizeof(Globals) / sizeof(Globals[0]);
 char **Playing = NULL;
 char *DefaultPlaying[] = {
   /* Default list of songs that you can hear playing (N.B. this can be
-   * overridden in the configuration file with the "Playing" variable) -
-   * look for "You hear someone playing %s" to see how these are used. */
+     overridden in the configuration file with the "Playing" variable) -
+     look for "You hear someone playing %s" to see how these are used. */
   N_("`Are you Experienced` by Jimi Hendrix"),
   N_("`Cheeba Cheeba` by Tone Loc"),
   N_("`Comin` in to Los Angeles` by Arlo Guthrie"),
@@ -694,9 +666,9 @@ char *DefaultPlaying[] = {
 char **StoppedTo = NULL;
 char *DefaultStoppedTo[] = {
   /* Default list of things which you can "stop to do" (random events that
-   * cost you a little money). These can be overridden with the "StoppedTo"
-   * variable in the configuration file. See the later string "You stopped
-   * to %s." to see how these strings are used. */
+     cost you a little money). These can be overridden with the "StoppedTo"
+     variable in the configuration file. See the later string "You stopped
+     to %s." to see how these strings are used. */
   N_("have a beer"),
   N_("smoke a joint"),
   N_("smoke a cigar"),
@@ -727,7 +699,7 @@ struct GUN DefaultGun[] = {
 
 struct DRUG DefaultDrug[] = {
   /* The names of the default drugs, and the messages displayed when they
-   * are specially cheap or expensive */
+     are specially cheap or expensive */
   {N_("Acid"), 1000, 4400, TRUE, FALSE,
    N_("The market is flooded with cheap home-made acid!")},
   {N_("Cocaine"), 15000, 29000, FALSE, TRUE, ""},
@@ -772,9 +744,9 @@ struct DRUGS DefaultDrugs = {
 char **SubwaySaying = NULL;
 char *DefaultSubwaySaying[] = {
   /* Default list of things which the "lady on the subway" can tell you
-   * (N.B. can be overridden with the "SubwaySaying" config. file
-   * variable). Look for "the lady next to you" to see how these strings
-   * are used. */
+     (N.B. can be overridden with the "SubwaySaying" config. file
+     variable). Look for "the lady next to you" to see how these strings
+     are used. */
   N_("Wouldn\'t it be funny if everyone suddenly quacked at once?"),
   N_("The Pope was once Jewish, you know"),
   N_("I\'ll bet you have some really interesting dreams"),
@@ -895,7 +867,7 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
   NewPlayer->Health = 100;
   NewPlayer->CoatSize = 100;
   NewPlayer->Flags = 0;
-#if NETWORKING
+#ifdef NETWORKING
   InitNetworkBuffer(&NewPlayer->NetBuf, '\n', '\r',
                     UseSocks ? &Socks : NULL);
   if (Server)
@@ -938,7 +910,7 @@ GSList *RemovePlayer(Player *Play, GSList *First)
   g_assert(First);
 
   First = g_slist_remove(First, (gpointer)Play);
-#if NETWORKING
+#ifdef NETWORKING
   if (!IsCop(Play))
     ShutdownNetworkBuffer(&Play->NetBuf);
 #endif
@@ -1462,7 +1434,7 @@ void AddListEntry(DopeList *List, DopeEntry *NewEntry)
   List->Number++;
   List->Data = (DopeEntry *)g_realloc(List->Data, List->Number *
                                       sizeof(DopeEntry));
-  g_memmove(&(List->Data[List->Number - 1]), NewEntry, sizeof(DopeEntry));
+  memmove(&(List->Data[List->Number - 1]), NewEntry, sizeof(DopeEntry));
 }
 
 /* 
@@ -1474,7 +1446,7 @@ void RemoveListEntry(DopeList *List, int Index)
     return;
 
   if (Index < List->Number - 1) {
-    g_memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
+    memmove(&(List->Data[Index]), &(List->Data[Index + 1]),
               (List->Number - 1 - Index) * sizeof(DopeEntry));
   }
   List->Number--;
@@ -1682,19 +1654,10 @@ void CopyNames(struct NAMES *dest, struct NAMES *src)
 void CopyMetaServer(struct METASERVER *dest, struct METASERVER *src)
 {
   dest->Active = src->Active;
-  dest->Port = src->Port;
-  dest->ProxyPort = src->ProxyPort;
-  dest->UseSocks = src->UseSocks;
-  AssignName(&dest->Name, src->Name);
-  AssignName(&dest->ProxyName, src->ProxyName);
-  AssignName(&dest->Path, src->Path);
+  AssignName(&dest->URL, src->URL);
   AssignName(&dest->LocalName, src->LocalName);
   AssignName(&dest->Password, src->Password);
   AssignName(&dest->Comment, src->Comment);
-  AssignName(&dest->authuser, src->authuser);
-  AssignName(&dest->authpassword, src->authpassword);
-  AssignName(&dest->proxyuser, src->proxyuser);
-  AssignName(&dest->proxypassword, src->proxypassword);
 }
 #endif
 
@@ -2002,13 +1965,13 @@ int GetGlobalIndex(gchar *ID1, gchar *ID2)
   if (!ID1)
     return -1;
   for (i = 0; i < NumGlob; i++) {
-    if (g_ascii_strncasecmp(ID1, Globals[i].Name, strlen(Globals[i].Name)) == 0
-        && !Globals[i].NameStruct[0]) {
+    if (!ID2 && !Globals[i].NameStruct[0]
+        && g_ascii_strcasecmp(ID1, Globals[i].Name) == 0) {
       /* Just a bog-standard ID1=value */
       return i;
     }
-    if (g_ascii_strncasecmp(ID1, Globals[i].NameStruct, strlen(Globals[i].NameStruct)) == 0 && ID2
-        && g_ascii_strncasecmp(ID2, Globals[i].Name, strlen(Globals[i].Name)) == 0
+    if (g_ascii_strcasecmp(ID1, Globals[i].NameStruct) == 0 && ID2
+        && g_ascii_strcasecmp(ID2, Globals[i].Name) == 0
         && Globals[i].StructStaticPt && Globals[i].StructListPt) {
       /* ID1[index].ID2=value */
       return i;
@@ -2119,24 +2082,24 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
             *GetGlobalInt(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].BoolVal) {
     /* Display of a boolean config. file variable - e.g. "DrugValue is
-     * TRUE" */
+       TRUE" */
     g_print(_("%s is %s\n"), GlobalName,
             *GetGlobalBoolean(GlobalIndex, StructIndex) ?
             "TRUE" : "FALSE");
   } else if (Globals[GlobalIndex].PriceVal) {
     /* Display of a price config. file variable - e.g. "Bitch.MinPrice is
-     * $200" */
+       $200" */
     dpg_print(_("%s is %P\n"), GlobalName,
               *GetGlobalPrice(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].StringVal) {
     /* Display of a string config. file variable - e.g. "LoanSharkName is
-     * \"the loan shark\"" */
+       \"the loan shark\"" */
     g_print(_("%s is \"%s\"\n"), GlobalName,
             *GetGlobalString(GlobalIndex, StructIndex));
   } else if (Globals[GlobalIndex].StringList) {
     if (IndexGiven) {
       /* Display of an indexed string list config. file variable - e.g.
-       * "StoppedTo[1] is have a beer" */
+         "StoppedTo[1] is have a beer" */
       g_print(_("%s[%d] is %s\n"), GlobalName, StructIndex,
               (*(Globals[GlobalIndex].StringList))[StructIndex - 1]);
     } else {
@@ -2144,14 +2107,14 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
 
       text = g_string_new("");
       /* Display of the first part of an entire string list config. file
-       * variable - e.g. "StoppedTo is { " (followed by "have a beer",
-       * "smoke a joint" etc.) */
-      g_string_sprintf(text, _("%s is { "), GlobalName);
+         variable - e.g. "StoppedTo is { " (followed by "have a beer",
+         "smoke a joint" etc.) */
+      g_string_printf(text, _("%s is { "), GlobalName);
       if (Globals[GlobalIndex].MaxIndex) {
         for (i = 0; i < *(Globals[GlobalIndex].MaxIndex); i++) {
           if (i > 0)
             g_string_append(text, ", ");
-          g_string_sprintfa(text, "\"%s\"",
+          g_string_append_printf(text, "\"%s\"",
                             (*(Globals[GlobalIndex].StringList))[i]);
         }
       }
@@ -2214,7 +2177,7 @@ static gboolean SetConfigValue(int GlobalIndex, int StructIndex,
       if (Globals[GlobalIndex].ResizeFunc) {
         (*(Globals[GlobalIndex].ResizeFunc)) (IntVal);
         /* Displayed, for example, when you set NumDrug=10 to allow
-         * Drug[10].Name etc. to be set */
+           Drug[10].Name etc. to be set */
         if (ConfigVerbose)
           g_print(_("Resized structure list to %d elements\n"), IntVal);
         for (list = FirstClient; list; list = g_slist_next(list)) {
@@ -2353,10 +2316,10 @@ gchar *GetDocRoot(void)
   gchar *bindir;
 
   bindir = GetBinaryDir();
-  path = g_strdup_printf("file://%s\\", bindir);
+  path = g_strdup_printf("file://%s/doc/", bindir);
   g_free(bindir);
 #else
-  path = g_strdup_printf("file://%s/doc/%s-%s/", DPDATADIR, PACKAGE, VERSION);
+  path = g_strdup_printf("file://%s/", DPDOCDIR);
 #endif
   return path;
 }
@@ -2373,6 +2336,10 @@ gchar *GetDocIndex(void)
   g_free(root);
   return file;
 }
+
+#ifdef CYGWIN
+extern gchar *appdata_path;
+#endif
 
 /*
  * Returns the pathname of the global (all users) configuration file,
@@ -2404,7 +2371,8 @@ gchar *GetGlobalConfigFile(void)
 gchar *GetLocalConfigFile(void)
 {
 #ifdef CYGWIN
-  return g_strdup("dopewars-config.txt");
+  return g_strdup_printf("%s/dopewars-config.txt",
+                         appdata_path ? appdata_path : ".");
 #else
   gchar *home, *conf = NULL;
 
@@ -2436,14 +2404,14 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   Currency.Symbol = g_strdup(_("$"));
   Currency.Prefix = (strcmp("Currency.Prefix=TRUE",
   /* Translate this to "Currency.Prefix=FALSE" if you want your currency
-   * symbol to follow all prices. */
+     symbol to follow all prices. */
                             _("Currency.Prefix=TRUE")) == 0);
 
   /* Set hard-coded default values */
   AssignName(&ServerName, "localhost");
   AssignName(&ServerMOTD, "");
   AssignName(&BindAddress, "");
-  AssignName(&WebBrowser, "/usr/bin/mozilla");
+  AssignName(&OurWebBrowser, "/usr/bin/firefox");
 
   AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
   AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");
@@ -2585,7 +2553,7 @@ void HandleHelpTexts(gboolean fullhelp)
   g_print(
 #ifdef HAVE_GETOPT_LONG
            /* Usage information, printed when the user runs "dopewars -h"
-            * (version with support for GNU long options) */
+              (version with support for GNU long options) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -b, --no-color,         \"black and white\" - i.e. do not use pretty colours\n\
@@ -2618,11 +2586,11 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2013, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2020, and released under the GNU GPL\n\
 Report bugs to the author at benwebb@users.sf.net\n"));
 #else
            /* Usage information, printed when the user runs "dopewars -h"
-            * (short options only version) */
+              (short options only version) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   -b       \"black and white\" - i.e. do not use pretty colours\n\
@@ -2654,7 +2622,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
 g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2013, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2020, and released under the GNU GPL\n\
 Report bugs to the author at benwebb@users.sf.net\n"));
 #endif
 }
@@ -2808,7 +2776,12 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
 {
   /* First, open the hard-coded high score file with possibly
    * elevated privileges */
+#ifdef CYGWIN
+  priv_hiscore = g_strdup_printf("%s/dopewars.sco",
+                                 appdata_path ? appdata_path : DPSCOREDIR);
+#else
   priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPSCOREDIR);
+#endif
   HiScoreFile = g_strdup(priv_hiscore);
   OpenHighScoreFile();
   DropPrivileges();
@@ -2892,7 +2865,7 @@ void StripTerminators(gchar *str)
 
 #ifndef CYGWIN
 
-#if NETWORKING && !GUI_SERVER
+#if defined(NETWORKING) && !defined(GUI_SERVER)
 static void ServerLogMessage(const gchar *log_domain,
                              GLogLevelFlags log_level,
                              const gchar *message, gpointer user_data)
@@ -2962,9 +2935,11 @@ int main(int argc, char *argv[])
 {
   struct CMDLINE *cmdline;
 #ifdef ENABLE_NLS
+  const char *charset;
   setlocale(LC_ALL, "");
   bindtextdomain(PACKAGE, LOCALEDIR);
   textdomain(PACKAGE);
+  LocaleIsUTF8 = g_get_charset(&charset);
 #endif
   WantUTF8Errors(FALSE);
   g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);

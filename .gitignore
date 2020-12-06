@@ -1,7 +1,15 @@
+po/*.gmo
+po/stamp-po
+po/remove-potcdate.sed
+win32/install.nsi
 *.o
 *.a
 *.la
 *.lo
+*~
+src/dopewars.exe
+src/dopewars.res
+src/plugins/.libs/
 src/dopewars
 config.cache
 configure

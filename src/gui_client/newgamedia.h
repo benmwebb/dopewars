@@ -1,8 +1,8 @@
 /************************************************************************
  * newgamedia.h   New game dialog                                       *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -32,9 +32,8 @@
 #include "network.h"
 
 #ifdef NETWORKING
-void NewGameDialog(Player *play, NBCallBack sockstat);
-void DisplayConnectStatus(gboolean meta, NBStatus oldstatus,
-                          NBSocksStatus oldsocks);
+void NewGameDialog(Player *play, NBCallBack sockstat, CurlConnection *MetaConn);
+void DisplayConnectStatus(NBStatus oldstatus, NBSocksStatus oldsocks);
 void FinishServerConnect(gboolean ConnectOK);
 #else
 void NewGameDialog(Player *play);

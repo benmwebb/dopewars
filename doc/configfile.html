@@ -31,7 +31,8 @@ location settings <i>Port</i> and <i>Server</i> are still useful).</p>
 <li>The global configuration file (if present) <b>/etc/dopewars</b></li>
 <li>The user-specific file (if present) <b>~/.dopewars</b></li>
 <li><i>(Windows only)</i> The file <b>dopewars-config.txt</b> in the current
-directory</li>
+user's application data directory (e.g.
+<tt>C:\Users\foo\AppData\Local\dopewars\</tt>)</li>
 <li>Options specified on the <a href="commandline.html">command line</a></li>
 </ol>
 
@@ -182,10 +183,11 @@ can cause problems with debugging, or with other programs that need to keep
 track of the process, setting Daemonize to FALSE will run the program in the
 foreground. Only supported on Unix systems.</dd>
 
-<dt><b>WebBrowser=<i>/usr/bin/mozilla</i></b></dt>
+<dt><b>WebBrowser=<i>/usr/bin/firefox</i></b></dt>
 <dd>Sets the program used to display website URLs. This is used only by the
 Unix version, as under Windows the standard mechanism for associating file
-types with applications is used.</dd>
+types with applications is used, and on MacOS the system-configured default
+web browser is used.</dd>
 
 <dt><b>ConfigVerbose=<i>FALSE</i></b></dt>
 <dd>Prints extra feedback information when processing the config. file if set
@@ -202,31 +204,13 @@ is replaced by <i>FALSE</i> the server will not report to the metaserver.
 This setting, if set to TRUE, can be overridden by the -S
 <a href="commandline.html#privateserver">command line option</a>.</dd>
 
-<dt><b>MetaServer.Name=<i>"dopewars.sourceforge.net"</i></b></dt>
-<dd>Tells dopewars that the metaserver is located at
-<i>dopewars.sourceforge.net</i>. See the
-<a href="metaserver.html">metaserver</a> page, and below, for information
-about connecting to the dopewars metaserver via a proxy web server.</dd>
-
-<dt><b>MetaServer.Port=<i>80</i></b></dt>
-<dd>Instructs dopewars that the metaserver can be found on TCP port
-<i>80</i>. This is the standard HTTP port for Web access. (You shouldn't need
-to change this, even if you connect via a proxy.)</dd>
-
-<dt><b>MetaServer.ProxyName=<i>"proxy.com"</i></b></dt>
-<dd>Sends all requests to the metaserver via the web proxy at <i>proxy.com</i>.
-If this is set to a blank string (the default) then the connection to the
-metaserver is made directly.</dd>
-
-<dt><b>MetaServer.ProxyPort=<i>8080</i></b></dt>
-<dd>Connects to the web proxy on port <i>8080</i>. (It then connects to the
-metaserver on the port specified by MetaServer.Port.) This variable is ignored
-if MetaServer.ProxyName is blank.</dd>
-
-<dt><b>MetaServer.Path=<i>"/metaserver.php"</i></b></dt>
-<dd>Tells dopewars that the PHP script on the metaserver, for server
-registration (server mode) or listing the available servers (client mode) is
-<i>/metaserver.php</i>.</dd>
+<dt><b>MetaServer.URL=<i>"https://dopewars.sourceforge.io/metaserver.php"</i></b></dt>
+<dd>Tells dopewars that the metaserver PHP script is located at
+<i>https://dopewars.sourceforge.io/metaserver.php</i>. This is used for server
+registration (server mode) or listing the available servers (client mode);
+see the <a href="metaserver.html">metaserver</a> page. If a proxy is needed to
+connect to the web server, set the
+<a href="https://curl.haxx.se/libcurl/c/libcurl-tutorial.html#Environment">https_proxy environment variable</a>.</dd>
 
 <dt><a id="MetaServerComment"><b>MetaServer.Comment=<i>"dopewars
 server"</i></b></a></dt>
@@ -247,28 +231,6 @@ See the <a href="metaserver.html">metaserver page</a> for more details.</dd>
 <dt><b>MetaServer.Password=<i>"auth"</i></b></dt>
 <dd>Uses the password <i>auth</i> to authenticate your dopewars server's
 hostname (see MetaServer.LocalName above) with the metaserver.</dd>
-
-<dt><b>MetaServer.UseSocks=<i>FALSE</i></b></dt>
-<dd>Even if "Socks.Active" is TRUE, do not use SOCKS for metaserver
-communication - connect directly to the metaserver or proxy.</dd>
-
-<dt><b>MetaServer.Auth.User=<i>""</i></b></dt>
-<dd>If the metaserver webpage is on a restricted access server (i.e. it
-requires HTTP Basic authentication), and you wish to connect with the server
-or AI player (which can both run unattended) then setting this variable to
-something other than "" will enable them to authenticate themselves,
-provided MetaServer.Auth.Password is also set. (The game clients prompt
-the user for a username and password on each connect instead.)</dd>
-
-<dt><b>MetaServer.Auth.Password=<i>""</i></b></dt>
-<dd>The corresponding password for MetaServer.Auth.User, above.</dd>
-
-<dt><b>MetaServer.Proxy.User=<i>""</i></b></dt>
-<dd>In a similar way to MetaServer.Auth.User, above, this enables a dopewars
-server or AI player to authenticate itself with a web proxy.</dd>
-
-<dt><b>MetaServer.Proxy.Password=<i>""</i></b></dt>
-<dd>The corresponding password for MetaServer.Proxy.User, above.</dd>
 
 </dl>
 

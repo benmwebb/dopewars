@@ -1,8 +1,8 @@
 /************************************************************************
  * tstring.c      "Translated string" wrappers for dopewars             *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -238,24 +238,24 @@ gchar *HandleTFmt(gchar *format, va_list va)
       g_error("Unmatched types!");
     switch (Type) {
     case 'd':
-      g_string_sprintfa(string, tmpfmt->str, fdat->data.IntVal);
+      g_string_append_printf(string, tmpfmt->str, fdat->data.IntVal);
       break;
     case 'c':
-      g_string_sprintfa(string, tmpfmt->str, fdat->data.CharVal);
+      g_string_append_printf(string, tmpfmt->str, fdat->data.CharVal);
       break;
     case 'P':
       fstr = FormatPrice(fdat->data.PriceVal);
-      g_string_sprintfa(string, tmpfmt->str, fstr);
+      g_string_append_printf(string, tmpfmt->str, fstr);
       g_free(fstr);
       break;
     case 't':
     case 'T':
       fstr = GetTranslatedString(fdat->data.StrVal, Code, Type == 'T');
-      g_string_sprintfa(string, tmpfmt->str, fstr);
+      g_string_append_printf(string, tmpfmt->str, fstr);
       g_free(fstr);
       break;
     case 's':
-      g_string_sprintfa(string, tmpfmt->str, fdat->data.StrVal);
+      g_string_append_printf(string, tmpfmt->str, fdat->data.StrVal);
       break;
     case '%':
       g_string_append_c(string, '%');
@@ -292,7 +292,7 @@ gchar *dpg_strdup_printf(gchar *format, ...)
   return retstr;
 }
 
-void dpg_string_sprintf(GString *string, gchar *format, ...)
+void dpg_string_printf(GString *string, gchar *format, ...)
 {
   va_list ap;
   gchar *newstr;
@@ -304,7 +304,7 @@ void dpg_string_sprintf(GString *string, gchar *format, ...)
   va_end(ap);
 }
 
-void dpg_string_sprintfa(GString *string, gchar *format, ...)
+void dpg_string_append_printf(GString *string, gchar *format, ...)
 {
   va_list ap;
   gchar *newstr;

@@ -2,7 +2,7 @@
  * unicodewrap.h  Unicode wrapper functions for Win32                   *
  * Copyright (C)  2002-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -28,6 +28,7 @@
 #endif
 
 #ifdef CYGWIN
+#include <winsock2.h>
 #include <windows.h>
 #include <commctrl.h>
 
@@ -55,8 +56,8 @@ HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                     DLGPROC lpDialogFunc);
 LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam);
-LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong);
-LONG myGetWindowLong(HWND hWnd, int nIndex);
+LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
+LONG_PTR myGetWindowLong(HWND hWnd, int nIndex);
 LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
                          WPARAM wParam, LPARAM lParam);
 LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);

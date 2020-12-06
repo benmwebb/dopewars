@@ -2,7 +2,7 @@
  * unicodewrap.c  Unicode wrapper functions for Win32                   *
  * Copyright (C)  2002-2004  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -25,6 +25,7 @@
 #endif
 
 #ifdef CYGWIN
+#include <winsock2.h>
 #include <windows.h>
 #include <glib.h>
 
@@ -370,21 +371,21 @@ void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam)
   }
 }
 
-LONG mySetWindowLong(HWND hWnd, int nIndex, LONG dwNewLong)
+LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 {
   if (unicode_support) {
-    return SetWindowLongW(hWnd, nIndex, dwNewLong);
+    return SetWindowLongPtrW(hWnd, nIndex, dwNewLong);
   } else {
-    return SetWindowLongA(hWnd, nIndex, dwNewLong);
+    return SetWindowLongPtrA(hWnd, nIndex, dwNewLong);
   }
 }
 
-LONG myGetWindowLong(HWND hWnd, int nIndex)
+LONG_PTR myGetWindowLong(HWND hWnd, int nIndex)
 {
   if (unicode_support) {
-    return GetWindowLongW(hWnd, nIndex);
+    return GetWindowLongPtrW(hWnd, nIndex);
   } else {
-    return GetWindowLongA(hWnd, nIndex);
+    return GetWindowLongPtrA(hWnd, nIndex);
   }
 }
 

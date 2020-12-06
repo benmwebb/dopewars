@@ -1,0 +1,9 @@
+New version checklist:
+
+- cd po; rm dopewars.pot; make dopewars.pot; make update-po; ./check-cformat.sh
+- Add version number, date to ChangeLog
+- Change stable version number in NEWS README.md doc/installation.html doc/index.html doc/windows.html
+- git checkout -b release/x.y.z
+- Change SVN to x.y.z in configure.ac and commit
+- Merge into master, git tag -s x.y.z, git push
+- make dist, upload tar.gz plus RPMs and .exes

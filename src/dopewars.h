@@ -1,8 +1,8 @@
 /************************************************************************
  * dopewars.h     Common structures and stuff for dopewars              *
- * Copyright (C)  1998-2013  Ben Webb                                   *
+ * Copyright (C)  1998-2020  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
- *                WWW: http://dopewars.sourceforge.net/                 *
+ *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
  * This program is free software; you can redistribute it and/or        *
  * modify it under the terms of the GNU General Public License          *
@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #include <time.h>
 #else
-#if HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
 #include <time.h>
@@ -100,13 +100,8 @@ struct SOUNDS {
 
 struct METASERVER {
   gboolean Active;
-  gchar *Name;
-  unsigned Port;
-  gchar *ProxyName;
-  unsigned ProxyPort;
-  gchar *Path, *LocalName, *Password, *Comment;
-  gboolean UseSocks;
-  gchar *authuser, *authpassword, *proxyuser, *proxypassword;
+  gchar *URL;
+  gchar *LocalName, *Password, *Comment;
 };
 #endif
 
@@ -176,7 +171,7 @@ extern gboolean WantAntique;
 extern struct DATE StartDate;
 extern int ClientSock, ListenSock;
 extern gboolean Network, Client, Server, UseSounds;
-extern unsigned Port;
+extern int Port;
 extern gboolean Sanitized, ConfigVerbose, DrugValue;
 extern int NumLocation, NumGun, NumCop, NumDrug, NumSubway, NumPlaying,
            NumStoppedTo;
@@ -188,7 +183,7 @@ extern gboolean MinToSysTray;
 #else
 extern gboolean Daemonize;
 #endif
-extern gchar *WebBrowser;
+extern gchar *OurWebBrowser;
 extern int LoanSharkLoc, BankLoc, GunShopLoc, RoughPubLoc;
 extern int DrugSortMethod, FightTimeout, IdleTimeout, ConnectTimeout;
 extern int MaxClients, AITurnPause;
@@ -376,6 +371,7 @@ extern GSList *ServerList;
 extern GScannerConfig ScannerConfig;
 extern struct LOG Log;
 extern gint ConfigErrors;
+extern gboolean LocaleIsUTF8;
 
 GSList *RemovePlayer(Player *Play, GSList *First);
 Player *GetPlayerByID(guint ID, GSList *First);

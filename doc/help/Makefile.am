@@ -1,4 +1,4 @@
-DOCPATH    = ${DESTDIR}${datadir}/doc/${PACKAGE}-${VERSION}/help
+DOCPATH    = ${DESTDIR}${docdir}/help
 DOCS       = cops.html general.html locations.html sounds.html \
              drugs.html guns.html server.html
 EXTRA_DIST = ${DOCS}

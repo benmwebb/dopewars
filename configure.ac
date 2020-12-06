@@ -1,6 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dopewars], [SVN])
+AC_INIT([dopewars], [1.6.0])
 AC_CONFIG_SRCDIR([src/dopewars.c])
+AC_CONFIG_AUX_DIR(auxbuild)
 
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -8,10 +9,11 @@ AC_CANONICAL_TARGET
 AC_USE_SYSTEM_EXTENSIONS
 
 dnl Initialise automake
-AM_INIT_AUTOMAKE
+dnl 'foreign' because we have README.md instead of README
+AM_INIT_AUTOMAKE([foreign])
 
 dnl Write configuration defines into config.h
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER([src/config.h])
 
 dnl We need this for the Darwin test, plus gettext uses it anyway
 AC_CANONICAL_HOST
@@ -50,6 +52,10 @@ AC_ARG_ENABLE(gui-server,
 [  --enable-gui-server     use a simple GTK+/Win32 GUI for the server],
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
 
+AC_ARG_ENABLE(gtk3,
+[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found],
+[ USE_GTK3="$enableval" ],[ USE_GTK3="yes" ])
+
 AC_ARG_WITH(esd,
 [  --without-esd           do not support ESD sound output],
 [ USE_ESD="$withval" ], [ USE_ESD="probe" ])
@@ -58,8 +64,23 @@ AC_ARG_WITH(sdl,
 [  --without-sdl           do not support SDL sound output],
 [ USE_SDL="$withval" ], [ USE_SDL="probe" ])
 
+if test "$host_vendor" = "apple" ; then
+  APPLE=yes
+  AC_DEFINE(APPLE, 1, [Are we building on an Apple Mac?])
+  default_cocoa="yes"
+else
+  APPLE=no
+  default_cocoa="no"
+fi
+AM_CONDITIONAL(APPLE, test "$APPLE" = "yes")
+
+AC_ARG_WITH(cocoa,
+[  --without-cocoa         do not support Cocoa (Mac) sound output],
+[ USE_COCOA="$withval" ], [ USE_COCOA="${default_cocoa}" ])
+
 ESD=no
 SDL=no
+COCOA=no
 
 dnl Test for Cygwin environment
 AC_CYGWIN
@@ -72,6 +93,12 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT([Configuring for native Win32 binary under Cygwin])
    AC_DEFINE(CYGWIN, 1, [Define if building under the Cygwin environment])
 
+   dnl Otherwise we get the error
+   dnl 'conditional "am__fastdepOBJC" was never defined'
+   am__fastdepOBJC_TRUE='#'
+   am__fastdepOBJC_FALSE=
+
+   AC_CHECK_TOOL([WINDRES], [windres], [windres])
    dnl This flag allows linking with MSVC-generated DLLs. -fnative-struct was
    dnl used by gcc 2, and -mms-bitfields by gcc 3, so it is tested for here.
    bkp_CFLAGS="$CFLAGS"
@@ -82,16 +109,28 @@ if test "$CYGWIN" = "yes" ; then
    AC_MSG_RESULT($mscompat)
    CFLAGS="$bkp_CFLAGS"
 
+   dnl If using older Cygwin -mno-cygwin is included in CPPFLAGS so the
+   dnl right headers are detected (in /usr/include/mingw/ rather than
+   dnl /usr/include) later on - e.g. sys/param.h isn't in mingw.
+   bkp_CFLAGS="$CFLAGS"
+   AC_MSG_CHECKING(for no-Cygwin flag)
+   CFLAGS="$CFLAGS -no-cygwin"
+   AC_COMPILE_IFELSE([ AC_LANG_PROGRAM() ], [ nocyg="-no-cygwin" ],
+                     [ nocyg="" ])
+   AC_MSG_RESULT($nocyg)
+   CFLAGS="$bkp_CFLAGS"
+
    dnl Libraries and flags
-   dnl N.B. -mno-cygwin is included in CPPFLAGS so the right headers
-   dnl are detected (in /usr/include/mingw/ rather than /usr/include)
-   dnl later on - e.g. sys/param.h isn't in mingw.
-   CFLAGS="$CFLAGS -mwindows $mscompat"
-   CPPFLAGS="$CPPFLAGS -mno-cygwin"
-   LIBS="$LIBS -lwsock32 -lcomctl32 -lmpr"
-   LDFLAGS="$LDFLAGS -mno-cygwin"
+   CFLAGS="$CFLAGS -mwindows $mscompat $nocyg"
+   CPPFLAGS="$CPPFLAGS $nocyg"
+   LIBS="$LIBS -lwsock32 -lcomctl32 -luxtheme -lmpr"
+   LDFLAGS="$LDFLAGS $nocyg"
 
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
+
+   dnl Find libcurl for metaserver support
+   dnl 7.17.0 or later is needed as prior versions did not copy input strings
+   LIBCURL_CHECK_CONFIG(7.17.0)
 
    dnl We need to compile and then link in the Windows resources
    WNDRES="dopewars.res"
@@ -134,20 +173,36 @@ else
 
    gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
-      AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
-      if test "$gtk2_found" = "no" ; then
-         if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-            AC_MSG_ERROR(Cannot find GTK+)
-         else
-            AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
-            GUI_CLIENT="no"
-            GUI_SERVER="no"
-         fi
+      PKG_PROG_PKG_CONFIG()
+      gtk3_found="no"
+      if test "$USE_GTK3" = "yes" ; then
+        PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+        if test "$gtk3_found" = "yes" ; then
+          # We use GtkTable a lot so don't clutter the compiler output with
+          # recommendations to use GtkGrid instead
+          CPPFLAGS="$CPPFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+        fi
+      fi
+      if test "$gtk3_found" = "no" ; then
+        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+        if test "$gtk2_found" = "no" ; then
+          if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+             AC_MSG_ERROR(Cannot find GTK+)
+          else
+             AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
+             GUI_CLIENT="no"
+             GUI_SERVER="no"
+          fi
+        fi
       fi
    fi
 
    dnl We NEED glib
    AM_PATH_GLIB_2_0(2.0.0, , [AC_MSG_ERROR(GLib is required)])
+
+   dnl Find libcurl for metaserver support
+   dnl 7.17.0 or later is needed as prior versions did not copy input strings
+   LIBCURL_CHECK_CONFIG(7.17.0)
 
    dnl Add esound support if available
    if test "$USE_ESD" != "no"; then
@@ -166,28 +221,63 @@ else
    dnl Add SDL_mixer sound support if available
    if test "$USE_SDL" != "no"; then
      SDL_ALL=no
-     AM_PATH_SDL(1.0.0, SDL=yes)
+     SDL2=yes
+     AM_PATH_SDL2(2.0.0, SDL=yes)
+     if test "$SDL" != "yes"; then
+       SDL2=no
+       AM_PATH_SDL(1.0.0, SDL=yes)
+     fi
      if test "$SDL" = "yes"; then
        headers=no
        libs=no
-       AC_CHECK_HEADER(SDL/SDL_mixer.h, headers=yes)
-       AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+       ORIG_CPPFLAGS="$CPPFLAGS"
+       ORIG_LDFLAGS="$LDFLAGS"
+       CPPFLAGS="$ORIG_CPPFLAGS $SDL_CFLAGS"
+       LDLAGS="$ORIG_LDFLAGS $SDL_LIBS"
+       AC_CHECK_HEADER(SDL_mixer.h, headers=yes)
+       if test "$SDL2" = "yes"; then
+         AC_CHECK_LIB(SDL2_mixer, Mix_OpenAudio, libs=yes)
+       else
+         AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio, libs=yes)
+       fi
+       CPPFLAGS="$ORIG_CPPFLAGS"
+       LDFLAGS="$ORIG_LDFLAGS"
        if test "$libs" = "yes"; then
          if test "$headers" = "yes"; then
            SOUND_CFLAGS="$SOUND_CFLAGS $SDL_CFLAGS"
-           SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+           if test "$SDL2" = "yes"; then
+             SDL_LIBS="$SDL_LIBS -lSDL2_mixer"
+           else
+             SDL_LIBS="$SDL_LIBS -lSDL_mixer"
+           fi
            SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
            PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
            AC_SUBST(SDL_LIBS)
            AC_DEFINE(HAVE_SDL_MIXER, 1,
                      [Do we have the SDL_mixer sound library?])
            SDL_ALL=yes
+           if test "$APPLE" = "yes"; then
+             SDL_LIBS="$SDL_LIBS -module"
+	   fi
          fi
        fi
      fi
      if test "$USE_SDL" = "yes" -a "$SDL_ALL" = "no"; then
        AC_MSG_ERROR(Cannot find SDL library)
      fi
+   fi
+
+   dnl Add Cocoa (Mac) sound support if on Mac and so requested
+   if test "$USE_COCOA" != "no"; then
+     AC_PROG_OBJC
+     COCOA="yes"
+     PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
+     AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
+   else
+     dnl Otherwise we get the error
+     dnl 'conditional "am__fastdepOBJC" was never defined'
+     am__fastdepOBJC_TRUE='#'
+     am__fastdepOBJC_FALSE=
    fi
 
    dnl Use console server by default
@@ -207,6 +297,7 @@ fi
 
 AM_CONDITIONAL(ESD, test "$ESD" = "yes")
 AM_CONDITIONAL(SDL, test "$SDL" = "yes")
+AM_CONDITIONAL(COCOA, test "$COCOA" = "yes")
 
 dnl If probing was unsuccessful, these will be set to "no"; therefore,
 dnl if still set to "probe" then everything worked, so set to "yes"
@@ -243,7 +334,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork)
+AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork issetugid)
 
 dnl Enable plugins only if we can find the dlopen function, and
 dnl the user does not disable them with --disable-plugins or --disable-shared
@@ -328,8 +419,12 @@ AC_SUBST(DPSCOREDIR)
 
 DP_EXPAND_DIR(DPDATADIR, '${datadir}')
 AC_DEFINE_UNQUOTED(DPDATADIR, "$DPDATADIR",
-                   [The directory containing the docs and sounds])
+                   [The directory containing the sounds])
 AC_SUBST(DPDATADIR)
+
+DP_EXPAND_DIR(DPDOCDIR, '${docdir}')
+AC_DEFINE_UNQUOTED(DPDOCDIR, "$DPDOCDIR",
+                   [The directory containing the docs])
 
 localedir=${datadir}/locale
 AC_SUBST(localedir)
@@ -378,8 +473,9 @@ sounds/Makefile
 sounds/19.5degs/Makefile
 doc/Makefile
 doc/help/Makefile
-dopewars.spec
+rpm/dopewars.spec
 doc/dopewars.6
+win32/install.nsi
 po/Makefile.in],
 [])
 
