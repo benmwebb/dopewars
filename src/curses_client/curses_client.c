@@ -236,6 +236,12 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
   clear_bottom();
 }
 
+/* Return length of string in characters (not bytes, like strlen) */
+static int strcharlen(const char *str)
+{
+  return LocaleIsUTF8 ? g_utf8_strlen(str, -1) : strlen(str);
+}
+
 /*
  * Displays a string, horizontally centred on the given row
  */
@@ -243,7 +249,7 @@ static void mvaddcentstr(const int row, const gchar *str)
 {
   guint col, len;
 
-  len = strlen(str);
+  len = strcharlen(str);
   col = (len > (guint)Width ? 0 : ((guint)Width - len) / 2);
   mvaddstr(row, col, str);
 }
@@ -256,7 +262,7 @@ static void mvaddcentstr(const int row, const gchar *str)
 static void mvaddfixwidstr(const int row, const int col, const int wid,
                            const gchar *str, const int attrs)
 {
-  int strwid = str ? strlen(str) : 0;
+  int strwid = str ? strcharlen(str) : 0;
   int strind;
 
   strwid = MIN(strwid, wid);
@@ -2247,12 +2253,7 @@ static char *pad_name(const char *name, guint pad_len)
 {
   /* 40 character blank string (must be longer than max value of pad_len) */
   static char *pad = "                                        ";
-  int slen;
-  if (LocaleIsUTF8) {
-    slen = g_utf8_strlen(name, -1);
-  } else {
-    slen = strlen(name);
-  }
+  int slen = strcharlen(name);
   if (slen > pad_len || slen > 40) {
     return "";
   } else {
