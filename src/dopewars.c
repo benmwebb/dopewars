@@ -225,7 +225,7 @@ gboolean UseSocks;
 
 int NumTurns = 31;
 
-int PlayerArmour = 100, BitchArmour = 50;
+int PlayerArmor = 100, BitchArmor = 50;
 
 struct LOG Log;
 
@@ -476,10 +476,16 @@ struct GLOBALS Globals[] = {
    N_("Maximum number of drugs at each location"),
    (void **)(&Location), &StaticLocation,
    sizeof(struct LOCATION), "Location", &NumLocation, NULL, FALSE, 1, -1},
-  {&PlayerArmour, NULL, NULL, NULL, NULL, "PlayerArmour",
+  {&PlayerArmor, NULL, NULL, NULL, NULL, "PlayerArmour",
    N_("% resistance to gunshots of each player"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 100},
-  {&BitchArmour, NULL, NULL, NULL, NULL, "BitchArmour",
+  {&PlayerArmor, NULL, NULL, NULL, NULL, "PlayerArmor",
+   N_("% resistance to gunshots of each player"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 100},
+  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmour",
+   N_("% resistance to gunshots of each bitch"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
+  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmor",
    N_("% resistance to gunshots of each bitch"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
   {NULL, NULL, NULL, &StaticCop.Name, NULL, "Name",
@@ -494,11 +500,19 @@ struct GLOBALS Globals[] = {
    N_("Name of each cop's deputies"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 0, 0},
-  {&StaticCop.Armour, NULL, NULL, NULL, NULL, "Armour",
+  {&StaticCop.Armor, NULL, NULL, NULL, NULL, "Armour",
    N_("% resistance to gunshots of each cop"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 1, 100},
-  {&StaticCop.DeputyArmour, NULL, NULL, NULL, NULL, "DeputyArmour",
+  {&StaticCop.Armor, NULL, NULL, NULL, NULL, "Armor",
+   N_("% resistance to gunshots of each cop"),
+   (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
+   NULL, FALSE, 1, 100},
+  {&StaticCop.DeputyArmor, NULL, NULL, NULL, NULL, "DeputyArmour",
+   N_("% resistance to gunshots of each deputy"),
+   (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
+   NULL, FALSE, 1, 100},
+  {&StaticCop.DeputyArmor, NULL, NULL, NULL, NULL, "DeputyArmor",
    N_("% resistance to gunshots of each deputy"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 1, 100},
@@ -1674,8 +1688,8 @@ void CopyCop(struct COP *dest, struct COP *src)
   AssignName(&dest->Name, _(src->Name));
   AssignName(&dest->DeputyName, _(src->DeputyName));
   AssignName(&dest->DeputiesName, _(src->DeputiesName));
-  dest->Armour = src->Armour;
-  dest->DeputyArmour = src->DeputyArmour;
+  dest->Armor = src->Armor;
+  dest->DeputyArmor = src->DeputyArmor;
   dest->AttackPenalty = src->AttackPenalty;
   dest->DefendPenalty = src->DefendPenalty;
   dest->MinDeputies = src->MinDeputies;

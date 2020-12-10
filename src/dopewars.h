@@ -201,7 +201,7 @@ extern gboolean UseSocks;
 #endif
 
 extern int NumTurns;
-extern int PlayerArmour, BitchArmour;
+extern int PlayerArmor, BitchArmor;
 
 #define MAXLOG        6
 
@@ -222,7 +222,7 @@ extern int PlayerArmour, BitchArmour;
 
 struct COP {
   gchar *Name, *DeputyName, *DeputiesName;
-  gint Armour, DeputyArmour;
+  gint Armor, DeputyArmor;
   gint AttackPenalty, DefendPenalty;
   gint MinDeputies, MaxDeputies;
   gint GunIndex;

@@ -2808,24 +2808,24 @@ static Player *GetFireTarget(Player *Play)
   return NULL;
 }
 
-static int GetArmour(Player *Play)
+static int GetArmor(Player *Play)
 {
-  int Armour;
+  int Armor;
 
   if (IsCop(Play)) {
     if (Play->Bitches.Carried == 0)
-      Armour = Cop[Play->CopIndex - 1].Armour;
+      Armor = Cop[Play->CopIndex - 1].Armor;
     else
-      Armour = Cop[Play->CopIndex - 1].DeputyArmour;
+      Armor = Cop[Play->CopIndex - 1].DeputyArmor;
   } else {
     if (Play->Bitches.Carried == 0)
-      Armour = PlayerArmour;
+      Armor = PlayerArmor;
     else
-      Armour = BitchArmour;
+      Armor = BitchArmor;
   }
-  if (Armour == 0)
-    Armour = 1;
-  return Armour;
+  if (Armor == 0)
+    Armor = 1;
+  return Armor;
 }
 
 /* 
@@ -2863,7 +2863,7 @@ void Fire(Player *Play)
           for (j = 0; j < Play->Guns[i].Carried; j++) {
             Damage += brandom(0, Gun[i].Damage);
           }
-        Damage = Damage * 100 / GetArmour(Defend);
+        Damage = Damage * 100 / GetArmor(Defend);
         if (Damage == 0)
           Damage = 1;
         HandleDamage(Defend, Play, Damage, &BitchesKilled, &Loot);
