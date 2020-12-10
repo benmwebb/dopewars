@@ -259,6 +259,25 @@ static void g_string_pad(GString *text, int len)
   memset(text->str + curlen, ' ', len);
 }
 
+/* Make the string the given number of characters, either by adding spaces
+   to the end, or by truncating it */
+static void g_string_pad_or_truncate_to_charlen(GString *text, int len)
+{
+  int curlen = strcharlen(text->str);
+  if (len < 0) {
+    return;
+  }
+  if (curlen < len) {
+    g_string_pad(text, len - curlen);
+  } else if (curlen > len) {
+    if (LocaleIsUTF8) {
+      /* Convert from number of characters to bytes */
+      len = g_utf8_offset_to_pointer(text->str, len) - text->str;
+    }
+    g_string_truncate(text, len);
+  }
+}
+
 /*
  * Displays a string, horizontally centred on the given row
  */
@@ -751,7 +770,7 @@ void display_select_list(GSList *names)
 
   for (listpt = names, numlist = 0; listpt;
        listpt = g_slist_next(listpt), numlist++) {
-    maxlen = MAX(maxlen, strlen(listpt->data));
+    maxlen = MAX(maxlen, strcharlen(listpt->data));
   }
 
   maxlen += 3;
@@ -2276,20 +2295,6 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   return ReturnString;
 }
 
-/* Return a blank string long enough to pad `name` out to `pad_len`.
-   This works with characters, not bytes, if in a UTF-8 locale */
-static char *pad_name(const char *name, guint pad_len)
-{
-  /* 40 character blank string (must be longer than max value of pad_len) */
-  static char *pad = "                                        ";
-  int slen = strcharlen(name);
-  if (slen > pad_len || slen > 40) {
-    return "";
-  } else {
-    return pad + 40 - pad_len + slen;
-  }
-}
-
 static void DisplayDrugsHere(Player *Play)
 {
   int NumDrugsHere, i, c;
@@ -2312,12 +2317,15 @@ static void DisplayDrugsHere(Player *Play)
   for (c = 0, i = GetNextDrugIndex(-1, Play);
        c < NumDrugsHere && i != -1;
        c++, i = GetNextDrugIndex(i, Play)) {
+    char *price = FormatPrice(Play->Drugs[i].Price);
+    GString *str = g_string_new(NULL);
     /* List of individual drug names for selection (%tde="Opium" etc.
        by default) */
-    text = dpg_strdup_printf( _("%c. %tde%s %8P"), 'A' + c,
-                             Drug[i].Name, pad_name(Drug[i].Name, 10),
-                             Play->Drugs[i].Price);
-    names = g_slist_append(names, text);
+    dpg_string_printf(str, _("%/Drug Select/%c. %tde"), 'A' + c, Drug[i].Name);
+    g_string_pad_or_truncate_to_charlen(str, 22 - strcharlen(price));
+    g_string_append(str, price);
+    g_free(price);
+    names = g_slist_append(names, g_string_free(str, FALSE));
   }
   display_select_list(names);
   attrset(PromptAttr);

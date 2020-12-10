@@ -1904,8 +1904,8 @@ msgstr "Hey Kleiner, die %tde Preise von hier:"
 #. List of individual drug names for selection (%tde="Opium" etc.
 #. by default)
 #: src/curses_client/curses_client.c:2287
-msgid "%c. %tde%s %8P"
-msgstr "%c. %tde%s %8P"
+msgid "%/Drug Select/%c. %tde"
+msgstr "%c. %tde"
 
 #: src/curses_client/curses_client.c:2332
 msgid "Cannot install SIGWINCH interrupt handler!"
