@@ -97,7 +97,7 @@ if I can fix 'em... of course, a
 [working patch](https://github.com/benmwebb/dopewars/pulls) would be even
 nicer! ;)
 
-## Licence
+## License
 
 dopewars is released under the GNU General Public License; see the text file
 LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2020.

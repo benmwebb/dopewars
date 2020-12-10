@@ -2438,7 +2438,7 @@ void display_intro(GtkWidget *widget, gpointer data)
                                  "Copyright (C) 1998-2020  "
                                  "Ben Webb benwebb@users.sf.net\n"
                                  "dopewars is released under the "
-                                 "GNU General Public Licence\n"), VERSION);
+                                 "GNU General Public License\n"), VERSION);
   label = gtk_label_new(VersionStr);
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   g_free(VersionStr);

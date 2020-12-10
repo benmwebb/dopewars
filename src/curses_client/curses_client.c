@@ -351,7 +351,7 @@ void display_intro(void)
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
-                          "General Public Licence"));
+                          "General Public License"));
   mvaddcentstr(11, text->str);
 
   g_string_assign(text, _(translation));

@@ -1363,7 +1363,7 @@ msgid "Version %-8s Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net"
 msgstr "Version·%-8s Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net"
 
 #: src/curses_client/curses_client.c:305
-msgid "dopewars is released under the GNU General Public Licence"
+msgid "dopewars is released under the GNU General Public License"
 msgstr "dopewars est distribué sous la license GNU GPL."
 
 #: src/curses_client/curses_client.c:313
@@ -2499,7 +2499,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net\n"
-"dopewars is released under the GNU General Public Licence\n"
+"dopewars is released under the GNU General Public License\n"
 msgstr ""
 "Version %s     Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net\n"
 "dopewars est distribué sous la licence GNU GPL\n"

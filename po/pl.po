@@ -1313,8 +1313,8 @@ msgid "Version %-8s Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net"
 msgstr "Wersja %-8s Copyright (C) 1998-2020 Ben Webb benwebb@users.sf.net"
 
 #: src/curses_client/curses_client.c:305
-msgid "dopewars is released under the GNU General Public Licence"
-msgstr "  dopewars są publikowane zgodnie z GNU General Public Licence"
+msgid "dopewars is released under the GNU General Public License"
+msgstr "  dopewars są publikowane zgodnie z GNU General Public License"
 
 #: src/curses_client/curses_client.c:313
 msgid "Icons and Graphics            Ocelot Mantis"
@@ -2445,10 +2445,10 @@ msgstr ""
 #, c-format
 msgid ""
 "Version %s     Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net\n"
-"dopewars is released under the GNU General Public Licence\n"
+"dopewars is released under the GNU General Public License\n"
 msgstr ""
 "Wersja %s    Copyright (C) 1998-2020  Ben Webb benwebb@users.sf.net\n"
-"dopewars są publikowane zgodnie z GNU General Public Licence\n"
+"dopewars są publikowane zgodnie z GNU General Public License\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2468
