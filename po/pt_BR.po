@@ -1849,12 +1849,6 @@ msgstr ""
 msgid "%-7tde  %3d"
 msgstr ""
 
-#. Title of the "guns" window (the only important bit in this string
-#. is the "%Tde" which is "Guns" by default)
-#: src/curses_client/curses_client.c:2032
-msgid "%/Stats: Guns/%Tde"
-msgstr "%/Estatísticas: Armas/%Tde"
-
 #. Display of carried guns (%tde="Baretta", etc. by default)
 #: src/curses_client/curses_client.c:2037
 #, c-format
@@ -2232,8 +2226,8 @@ msgstr "(Você)"
 #. Display of carried guns in GTK+ client status window (%Tde="Guns" by
 #. default)
 #: src/gui_client/gtk_client.c:1250
-msgid "%/GTK Stats: Guns/%Tde"
-msgstr "%/Estatísticas: Armas/%Tde"
+msgid "%/Stats: Guns/%Tde"
+msgstr "%Tde"
 
 #. Display of number of bitches in GTK+ client status window
 #. (%Tde="Bitches" by default)

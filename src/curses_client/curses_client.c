@@ -242,6 +242,23 @@ static int strcharlen(const char *str)
   return LocaleIsUTF8 ? g_utf8_strlen(str, -1) : strlen(str);
 }
 
+/* Displays a string right-aligned at the given position (the last character
+   in the string will be at the given row and column)
+ */
+static void mvaddrightstr(int row, int col, const gchar *str)
+{
+  int len = strcharlen(str);
+  mvaddstr(row, MAX(col - len + 1, 0), str);
+}
+
+/* Append len spaces to the end of text */
+static void g_string_pad(GString *text, int len)
+{
+  int curlen = text->len;
+  g_string_set_size(text, curlen + len);
+  memset(text->str + curlen, ' ', len);
+}
+
 /*
  * Displays a string, horizontally centred on the given row
  */
@@ -1905,6 +1922,7 @@ void print_location(char *text)
 void print_status(Player *Play, gboolean DispDrug)
 {
   int i, c;
+  char *p;
   GString *text;
 
   text = g_string_new(NULL);
@@ -1960,28 +1978,39 @@ void print_status(Player *Play, gboolean DispDrug)
 
   attrset(StatsAttr);
 
-  /* Display of the player's cash in the stats window (careful to keep the
-     formatting if you change the length of the "Cash" word) */
-  dpg_string_printf(text, _("Cash %17P"), Play->Cash);
-  mvaddstr(3, 9, text->str);
+  /* Display of the player's cash in the stats window */
+  mvaddstr(3, 9, _("Cash"));
+  p = FormatPrice(Play->Cash);
+  mvaddrightstr(3, 30, p);
+  g_free(p);
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
-  dpg_string_printf(text, _("%-19Tde%3d"), Names.Guns,
-                     TotalGunsCarried(Play));
+  dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
   mvaddstr(Network ? 4 : 5, 9, text->str);
+  dpg_string_printf(text, "%d", TotalGunsCarried(Play));
+  mvaddrightstr(Network ? 4 : 5, 30, text->str);
 
   /* Display of the player's health */
-  g_string_printf(text, _("Health             %3d"), Play->Health);
-  mvaddstr(Network ? 5 : 7, 9, text->str);
+  mvaddstr(Network ? 5 : 7, 9, _("Health"));
+  dpg_string_printf(text, "%d", Play->Health);
+  mvaddrightstr(Network ? 5 : 7, 30, text->str);
 
   /* Display of the player's bank balance */
-  dpg_string_printf(text, _("Bank %17P"), Play->Bank);
-  mvaddstr(Network ? 6 : 9, 9, text->str);
+  mvaddstr(Network ? 6 : 9, 9, _("Bank"));
+  p = FormatPrice(Play->Bank);
+  mvaddrightstr(Network ? 6 : 9, 30, p);
+  g_free(p);
 
   if (Play->Debt > 0)
     attrset(DebtAttr);
   /* Display of the player's debt */
-  dpg_string_printf(text, _("Debt %17P"), Play->Debt);
+  g_string_assign(text, _("Debt"));
+  p = FormatPrice(Play->Debt);
+  /* Put in one big string otherwise the DebtAttr won't be applied to the
+     space between "Debt" and the price */
+  g_string_pad(text, 22 - strcharlen(text->str) - strcharlen(p));
+  g_string_append(text, p);
+  g_free(p);
   mvaddstr(Network ? 7 : 11, 9, text->str);
   attrset(TitleAttr);
 
@@ -1994,7 +2023,7 @@ void print_status(Player *Play, gboolean DispDrug)
     dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
                        Play->Bitches.Carried, Play->CoatSize);
   }
-  mvaddstr(0, Width - 2 - strlen(text->str), text->str);
+  mvaddrightstr(0, Width - 3, text->str);
   dpg_string_printf(text, _("%/Current location/%tde"),
                      Location[Play->IsAt].Name);
   print_location(text->str);
