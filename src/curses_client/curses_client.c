@@ -279,7 +279,7 @@ static void mvaddcentstr(const int row, const gchar *str)
 static void mvaddfixwidstr(const int row, const int col, const int wid,
                            const gchar *str, const int attrs)
 {
-  int strwid = str ? strcharlen(str) : 0;
+  int strwid = str ? strlen(str) : 0;
   int strind;
 
   strwid = MIN(strwid, wid);
@@ -935,7 +935,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
                              CanAfford, CanCarry);
       mvaddstr(get_prompt_line() + 1, 2, text);
       input = nice_input(_("How many do you buy? "), get_prompt_line() + 1,
-                         2 + strlen(text), TRUE, NULL, '\0');
+                         2 + strcharlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -951,7 +951,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
                           Play->Drugs[DrugNum].Carried);
       mvaddstr(get_prompt_line() + 1, 2, text);
       input = nice_input(_("How many do you sell? "), get_prompt_line() + 1,
-                         2 + strlen(text), TRUE, NULL, '\0');
+                         2 + strcharlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -1276,7 +1276,7 @@ void PrepareHighScoreScreen(void)
   clear_screen();
   attrset(TitleAttr);
   text = _("H I G H   S C O R E S");
-  mvaddstr(0, (Width - strlen(text)) / 2, text);
+  mvaddstr(0, (Width - strcharlen(text)) / 2, text);
   attrset(TextAttr);
 }
 
@@ -2040,7 +2040,7 @@ void print_status(Player *Play, gboolean DispDrug)
          is ignored, so you don't need to translate it; see doc/i18n.html)
        */
       dpg_string_printf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
-      mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
+      mvaddstr(1, Width * 3 / 4 - strcharlen(text->str) / 2, text->str);
     }
     for (i = 0; i < NumDrug; i++) {
       if (Play->Drugs[i].Carried > 0) {
@@ -2065,7 +2065,7 @@ void print_status(Player *Play, gboolean DispDrug)
     /* Title of the "guns" window (the only important bit in this string
        is the "%Tde" which is "Guns" by default) */
     dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
-    mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
+    mvaddstr(1, Width * 3 / 4 - strcharlen(text->str) / 2, text->str);
     for (i = 0; i < NumGun; i++) {
       if (Play->Guns[i].Carried > 0) {
         /* Display of carried guns (%tde="Baretta", etc. by default) */
@@ -2218,7 +2218,7 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   if (prompt) {
     attrset(PromptAttr);
     addstr(prompt);
-    x += strlen(prompt);
+    x += strcharlen(prompt);
   }
   attrset(TextAttr);
   if (displaystr) {
