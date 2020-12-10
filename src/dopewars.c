@@ -2556,8 +2556,8 @@ void HandleHelpTexts(gboolean fullhelp)
               (version with support for GNU long options) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
-  -b, --no-color,         \"black and white\" - i.e. do not use pretty colours\n\
-      --no-colour           (by default colours are used where available)\n\
+  -b, --no-color,         \"black and white\" - i.e. do not use pretty colors\n\
+      --no-colour           (by default colors are used where available)\n\
   -n, --single-player     be boring and don't connect to any available dopewars\n\
                             servers (i.e. single player mode)\n\
   -a, --antique           \"antique\" dopewars - keep as closely to the original\n\
@@ -2593,8 +2593,8 @@ Report bugs to the author at benwebb@users.sf.net\n"));
               (short options only version) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
-  -b       \"black and white\" - i.e. do not use pretty colours\n\
-              (by default colours are used where the terminal supports them)\n\
+  -b       \"black and white\" - i.e. do not use pretty colors\n\
+              (by default colors are used where the terminal supports them)\n\
   -n       be boring and don't connect to any available dopewars servers\n\
               (i.e. single player mode)\n\
   -a       \"antique\" dopewars - keep as closely to the original version as\n\
@@ -2664,7 +2664,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
       = cmdline->logfile = cmdline->plugin = cmdline->convertfile
       = cmdline->playername = NULL;
   cmdline->configs = NULL;
-  cmdline->colour = cmdline->network = TRUE;
+  cmdline->color = cmdline->network = TRUE;
   cmdline->client = CLIENT_AUTO;
 
   do {
@@ -2678,7 +2678,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
       cmdline->network = FALSE;
       break;
     case 'b':
-      cmdline->colour = FALSE;
+      cmdline->color = FALSE;
       break;
     case 'c':
       cmdline->ai = TRUE;

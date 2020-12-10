@@ -106,7 +106,7 @@ static void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data);
 #endif
 
 static DispMode DisplayMode;
-static gboolean QuitRequest, WantColour = TRUE, WantNetwork = TRUE;
+static gboolean QuitRequest, WantColor = TRUE, WantNetwork = TRUE;
 
 /* 
  * Initialises the curses library for accessing the screen.
@@ -114,7 +114,7 @@ static gboolean QuitRequest, WantColour = TRUE, WantNetwork = TRUE;
 static void start_curses(void)
 {
   cur_screen = newterm(NULL, stdout, stdin);
-  if (WantColour) {
+  if (WantColor) {
     start_color();
     init_pair(1, COLOR_MAGENTA, COLOR_WHITE);
     init_pair(2, COLOR_BLACK, COLOR_WHITE);
@@ -2726,7 +2726,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   if (!CheckHighScoreFileConfig())
     return;
 
-  WantColour = cmdline->colour;
+  WantColor = cmdline->color;
   WantNetwork = cmdline->network;
 
   /* Save the configuration, so we can restore those elements that get

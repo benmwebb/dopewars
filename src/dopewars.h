@@ -350,7 +350,7 @@ struct GLOBALS {
 };
 
 struct CMDLINE { 
-  gboolean help, version, antique, colour, network;
+  gboolean help, version, antique, color, network;
   gboolean convert, admin, ai, server, notifymeta;
   gboolean setport;
   gchar *scorefile, *servername, *pidfile, *logfile, *plugin, *convertfile;
