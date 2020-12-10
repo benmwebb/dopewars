@@ -292,22 +292,28 @@ static void mvaddcentstr(const int row, const gchar *str)
 
 /*
  * Displays a string at the given coordinates and with the given
- * attributes. If the string is longer than "wid", it is truncated, and
- * if shorter, it is padded with spaces.
+ * attributes. If the string is longer than "wid" characters, it is truncated,
+ * and if shorter, it is padded with spaces.
  */
 static void mvaddfixwidstr(const int row, const int col, const int wid,
                            const gchar *str, const int attrs)
 {
-  int strwid = str ? strlen(str) : 0;
-  int strind;
+  int strwidch = str ? strcharlen(str) : 0;
+  int i, strwidbyte;
 
-  strwid = MIN(strwid, wid);
-
-  for (strind = 0; strind < strwid; ++strind) {
-    mvaddch(row, col + strind, (guchar)str[strind] | attrs);
+  strwidch = MIN(strwidch, wid);
+  if (LocaleIsUTF8) {
+    strwidbyte = g_utf8_offset_to_pointer(str, strwidch) - str;
+  } else {
+    strwidbyte = strwidch;
   }
-  for (strind = strwid; strind < wid; ++strind) {
-    mvaddch(row, col + strind, (guchar)' ' | attrs);
+
+  move(row, col);
+  for (i = 0; i < strwidbyte; ++i) {
+    addch((guchar)str[i] | attrs);
+  }
+  for (i = strwidch; i < wid; ++i) {
+    addch((guchar)' ' | attrs);
   }
 }
 
