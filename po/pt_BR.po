@@ -1274,7 +1274,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:325
 msgid "English Translation           Ben Webb"
-msgstr "Tradução de Portugal       Bruno Lopes"
+msgstr "Tradução de Portugal            Bruno Lopes"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:333
@@ -1322,11 +1322,11 @@ msgstr "dopewars está lançado sob a GNU General Public License"
 
 #: src/curses_client/curses_client.c:361
 msgid "Icons and Graphics            Ocelot Mantis"
-msgstr ""
+msgstr "Icons and Graphics              Ocelot Mantis"
 
 #: src/curses_client/curses_client.c:362
 msgid "Sounds                        Robin Kohli, 19.5degs.com"
-msgstr ""
+msgstr "Sounds                          Robin Kohli, 19.5degs.com"
 
 #: src/curses_client/curses_client.c:363
 msgid "Drug Dealing and Research     Dan Wolf"
@@ -1346,7 +1346,7 @@ msgstr "Crítica Construtiva             Andrea Elliot-Smith  Pete Winn"
 
 #: src/curses_client/curses_client.c:370
 msgid "Unconstructive Criticism      James Matthews"
-msgstr "Crítica não construtiva           James Matthews"
+msgstr "Crítica não construtiva         James Matthews"
 
 #: src/curses_client/curses_client.c:372
 msgid "For information on the command line options, type dopewars -h at your"

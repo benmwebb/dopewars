@@ -1336,7 +1336,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:325
 msgid "English Translation           Ben Webb"
-msgstr "Traducción al español          Quique"
+msgstr "Traducción al español         Quique"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:333
@@ -1389,7 +1389,7 @@ msgstr "Iconos y gráficos             Ocelot Mantis"
 
 #: src/curses_client/curses_client.c:362
 msgid "Sounds                        Robin Kohli, 19.5degs.com"
-msgstr "Sonidos                        Robin Kohli, 19.5degs.com"
+msgstr "Sonidos                       Robin Kohli, 19.5degs.com"
 
 #: src/curses_client/curses_client.c:363
 msgid "Drug Dealing and Research     Dan Wolf"

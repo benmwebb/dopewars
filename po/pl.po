@@ -1271,7 +1271,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:325
 msgid "English Translation           Ben Webb"
-msgstr "Tłumaczenie na polski  Slawomir Molenda"
+msgstr "Tłumaczenie na polski         Slawomir Molenda"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:333

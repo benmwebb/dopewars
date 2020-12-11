@@ -1311,7 +1311,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:325
 msgid "English Translation           Ben Webb"
-msgstr "Norsk omsetjing      Åsmund Skjæveland"
+msgstr "Norsk omsetjing               Åsmund Skjæveland"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:333
