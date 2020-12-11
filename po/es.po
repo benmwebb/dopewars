@@ -1336,7 +1336,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:325
 msgid "English Translation           Ben Webb"
-msgstr "Traducción al inglés           Ben Webb"
+msgstr "Traducción al español          Quique"
 
 #. Curses client introduction screen
 #: src/curses_client/curses_client.c:333
@@ -2435,11 +2435,11 @@ msgstr "dopewars"
 #. Credits labels in GTK+ 'about' dialog
 #: src/gui_client/gtk_client.c:2396
 msgid "English Translation"
-msgstr "Traducción al inglés"
+msgstr "Traducción al español"
 
 #: src/gui_client/gtk_client.c:2396
 msgid "Ben Webb"
-msgstr "Ben Webb"
+msgstr "Quique"
 
 #: src/gui_client/gtk_client.c:2397
 msgid "Icons and graphics"
