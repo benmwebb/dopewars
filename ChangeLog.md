@@ -1,3 +1,12 @@
+- Improved display in non-English text-mode clients; previously
+  columns were not aligned properly in some cases and occasionally
+  not all available drugs at a location were shown on screen (#54).
+- Minimal British English translation added (#57). Configuration file
+  entries can now use either British English or American English spelling
+  (i.e. Armor/Armour).
+- On Windows the "browse" button in the graphical client options dialog
+  now opens at the folder containing the selected sound file (#55).
+
 # 1.6.0 - 2020-12-06
 - Fixes to build with OpenWRT (thanks to Theodor-Iulian Ciobanu).
 - Write server pidfile after fork (thanks to Theodor-Iulian Ciobanu).
