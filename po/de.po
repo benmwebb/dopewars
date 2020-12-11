@@ -1142,7 +1142,7 @@ msgstr ""
 "Verwende: dopewars [OPTION]...\n"
 "Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
 "  -b       \"schwarz und weiß\" - benutze keine Farben\n"
-"  -n       verbinde zu keinem verf?gbaren dopewars server\n"
+"  -n       verbinde zu keinem verfügbaren dopewars server\n"
 "              (z.B. Einzelspieler-Modus)\n"
 "  -a       \"antik\" dopewars - emuliere original version \n"
 "  -f datei  spezifiziere Bestenlisten-Datei \n"
@@ -1166,7 +1166,7 @@ msgstr ""
 "dopewars steht unter dem Copyright (C) von Ben Webb 1998-2020 und ist "
 "veröffentlicht unter der GNU GPL\n"
 "Melde Programmierfehler dem Autor Ben Webb, benwebb@users.sf.net\n"
-"Melde ?bersetzungsfehler an Benjamin Karaca, mister-freeze@web.de\n"
+"Melde übersetzungsfehler an Benjamin Karaca, mister-freeze@web.de\n"
 
 #: src/dopewars.c:2601
 msgid ""
@@ -1214,8 +1214,8 @@ msgid ""
 msgstr ""
 "Verwende: dopewars [OPTION]...\n"
 "Drug dealing game based on \"Drug Wars\" by John E. Dell\n"
-"  -b       \"schwarz und wei?\" - benutzt keine Farben\n"
-"  -n       verbinde zu keinem verf?gbaren dopewars server\n"
+"  -b       \"schwarz und weiß\" - benutzt keine Farben\n"
+"  -n       verbinde zu keinem verfügbaren dopewars server\n"
 "              (z.B. Einzelspieler-Modus)\n"
 "  -a       \"antik\" dopewars - emuliere original version \n"
 "  -f datei  spezifiziere Bestenlisten-Datei \n"
@@ -1256,9 +1256,9 @@ msgid ""
 "--enable-curses-client option to configure, or use a windowed\n"
 "client (if available) instead!\n"
 msgstr ""
-"Es ist kein curses-Klient verf?gbar - Du musst das binary mit der \n"
+"Es ist kein curses-Klient verfügbar - Du musst das binary mit der \n"
 "Option \"--enable-curses-client\" mit dem Programm \"configure\"\n"
-"neu kompilieren oder Du benutzt den GTK+-Klient falls er verf?gbar ist.\n"
+"neu kompilieren oder Du benutzt den GTK+-Klient falls er verfügbar ist.\n"
 
 #: src/dopewars.c:2924
 msgid ""
@@ -1266,9 +1266,9 @@ msgid ""
 "passing the --enable-gui-client option to configure, or\n"
 "use the curses client (if available) instead!\n"
 msgstr ""
-"Es ist kein GTK+-Klient verf?gbar - Du musst das binary mit der \n"
+"Es ist kein GTK+-Klient verfügbar - Du musst das binary mit der \n"
 "Option \"--enable-gui-client\" mit dem Programm \"configure\"\n"
-"neu kompilieren oder Du benutzt den curses-Klient falls er verf?gbar ist.\n"
+"neu kompilieren oder Du benutzt den curses-Klient falls er verfügbar ist.\n"
 
 #: src/dopewars.c:2972
 #, fuzzy
@@ -1278,7 +1278,7 @@ msgid ""
 "in admin mode. Recompile passing --enable-networking to the configure "
 "script.\n"
 msgstr ""
-"Dieses Programm wurde ohne Netzwerkunterst?tzung kompiliert \n"
+"Dieses Programm wurde ohne Netzwerkunterstützung kompiliert \n"
 " und kann dadurch nicht als KI Spieler eingesetzt werden.\n"
 "Neu kompilieren und --enable-networking bei ./configure angeben"
 
@@ -2727,7 +2727,7 @@ msgstr "Kann ?u?erst billig sein"
 
 #: src/gui_client/optdialog.c:825
 msgid "Cheap string"
-msgstr "Nachricht für g?nstigen Preis"
+msgstr "Nachricht für günstigen Preis"
 
 #: src/gui_client/optdialog.c:826
 msgid "Can be specially expensive"
@@ -3110,7 +3110,7 @@ msgstr ""
 "                           Index x, den gegebenen Wert zu\n"
 "<list>[x].<var>            Zeigt den Wert der genannten Listen Variable an\n"
 "\n"
-"Verf?gbare Variablen werden hier aufgelistet :-\n"
+"Verfügbare Variablen werden hier aufgelistet :-\n"
 "\n"
 
 #: src/serverside.c:160
@@ -3159,7 +3159,7 @@ msgid ""
 "Sorry, but this server has a limit of 1 player, which has been reached."
 "^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier d?rfen max. %d %s spielen.^Bitte versuchs später nochmal."
+"Sorry, aber hier dürfen max. 1 spielen.^Bitte versuchs später nochmal."
 
 #. Message sent to a player if the
 #. server is full
@@ -3169,7 +3169,7 @@ msgid ""
 "Sorry, but this server has a limit of %d players, which has been reached."
 "^Please try connecting again later."
 msgstr ""
-"Sorry, aber hier d?rfen max. %d spielen.^Bitte versuchs später nochmal."
+"Sorry, aber hier dürfen max. %d spielen.^Bitte versuchs später nochmal."
 
 #. A player changed their name during the game (unusual, and not
 #. really properly supported anyway) - notify all players of the
@@ -4212,7 +4212,7 @@ msgid ""
 "act as an AI player.\n"
 "Recompile passing --enable-networking to the configure script."
 msgstr ""
-"Dieses Programm wurde ohne Netzwerkunterst?tzung kompiliert \n"
+"Dieses Programm wurde ohne Netzwerkunterstützung kompiliert \n"
 " und kann dadurch nicht als KI Spieler eingesetzt werden.\n"
 "Neu kompilieren und --enable-networking bei ./configure angeben"
 
