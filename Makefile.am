@@ -5,7 +5,7 @@ SCOREDIR       = ${DESTDIR}${localstatedir}
 SCORE          = ${SCOREDIR}/dopewars.sco
 EXTRA_DIST     = ABOUT-NLS LICENCE dopewars.desktop rpm/dopewars.spec.in \
                  runindent.sh win32/README.md win32/install.nsi.in README.md \
-		 win32/mingw/Dockerfile
+		 win32/mingw/Dockerfile ChangeLog.md
 CLEANFILES     = dopewars.sco dopewars-log.txt dopewars-config.txt
 DISTCLEANFILES = rpm/dopewars.spec
 ACLOCAL_AMFLAGS= -I m4

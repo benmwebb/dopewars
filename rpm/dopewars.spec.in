@@ -52,7 +52,7 @@ test "$RPM_BUILD_ROOT" != "/" && rm -rf ${RPM_BUILD_ROOT}
 
 %files -f %{name}.lang
 %defattr(-,root,root)
-%doc ChangeLog LICENCE README.md
+%doc ChangeLog.md LICENCE README.md
 %doc %{_docdir}/%{name}
 %attr(2755,root,games) %{_bindir}/dopewars
 %attr(0660,root,games) %config %{_localstatedir}/dopewars.sco
