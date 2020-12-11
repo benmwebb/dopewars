@@ -8,7 +8,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 AC_USE_SYSTEM_EXTENSIONS
 
-dnl Initialise automake
+dnl Initialize automake
 dnl 'foreign' because we have README.md instead of README
 AM_INIT_AUTOMAKE([foreign])
 

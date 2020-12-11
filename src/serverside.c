@@ -1160,7 +1160,7 @@ static gboolean glib_socket(GIOChannel *ch, GIOCondition condition,
 #endif
 
 /* 
- * Initialises server, processes network and interactive messages, and
+ * Initializes server, processes network and interactive messages, and
  * finally cleans up the server on exit.
  */
 void ServerLoop(struct CMDLINE *cmdline)

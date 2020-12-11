@@ -835,7 +835,7 @@ int CountPlayers(GSList *First)
 
 /* 
  * Adds the new Player structure "NewPlayer" to the linked list
- * pointed to by "First", and initialises all fields. Returns the new
+ * pointed to by "First", and initializes all fields. Returns the new
  * start of the list. If this function is called by the server, then
  * it should pass the file descriptor of the socket used to
  * communicate with the client player.
@@ -1417,7 +1417,7 @@ int GetNextDrugIndex(int OldIndex, Player *Play)
 /* 
  * A DopeList is akin to a Vector class; it is a list of DopeEntry
  * structures, which can be dynamically extended or compressed. This
- * function initialises the newly-created list pointed to by "List"
+ * function initializes the newly-created list pointed to by "List"
  * (A DopeEntry contains a Player pointer and a counter, and is used
  * by the server to keep track of tipoffs and spies.)
  */
@@ -2800,7 +2800,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   OpenHighScoreFile();
   DropPrivileges();
 
-  /* Initialise variables */
+  /* Initialize variables */
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");

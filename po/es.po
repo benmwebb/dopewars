@@ -3770,7 +3770,7 @@ msgstr "Código de error interno %d"
 #. These are the explanations of the various
 #. Windows Sockets error codes
 #: src/error.c:154
-msgid "WinSock has not been properly initialised"
+msgid "WinSock has not been properly initialized"
 msgstr "WinSock no ha sido inicializado correctamente."
 
 #: src/error.c:155
@@ -4023,7 +4023,7 @@ msgstr " ¡Le roba al cadaver!"
 
 #: src/network.c:90
 #, c-format
-msgid "Cannot initialise WinSock (%s)!"
+msgid "Cannot initialize WinSock (%s)!"
 msgstr "¡No se puede inicializar WinSock (%s)!"
 
 #. SOCKS version 5 error messages

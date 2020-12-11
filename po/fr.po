@@ -3659,7 +3659,7 @@ msgstr ""
 #. These are the explanations of the various
 #. Windows Sockets error codes
 #: src/error.c:154
-msgid "WinSock has not been properly initialised"
+msgid "WinSock has not been properly initialized"
 msgstr ""
 
 #: src/error.c:155
@@ -3912,7 +3912,7 @@ msgstr " Tu cherches le corps!"
 
 #: src/network.c:90
 #, c-format
-msgid "Cannot initialise WinSock (%s)!"
+msgid "Cannot initialize WinSock (%s)!"
 msgstr ""
 
 #. SOCKS version 5 error messages

@@ -3588,8 +3588,8 @@ msgstr ""
 #. These are the explanations of the various
 #. Windows Sockets error codes
 #: src/error.c:154
-msgid "WinSock has not been properly initialised"
-msgstr ""
+msgid "WinSock has not been properly initialized"
+msgstr "WinSock has not been properly initialised"
 
 #: src/error.c:155
 msgid "Network subsystem is not ready"
@@ -3841,8 +3841,8 @@ msgstr ""
 
 #: src/network.c:90
 #, c-format
-msgid "Cannot initialise WinSock (%s)!"
-msgstr ""
+msgid "Cannot initialize WinSock (%s)!"
+msgstr "Cannot initialise WinSock (%s)!"
 
 #. SOCKS version 5 error messages
 #: src/network.c:381

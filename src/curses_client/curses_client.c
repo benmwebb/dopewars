@@ -109,7 +109,7 @@ static DispMode DisplayMode;
 static gboolean QuitRequest, WantColor = TRUE, WantNetwork = TRUE;
 
 /* 
- * Initialises the curses library for accessing the screen.
+ * Initializes the curses library for accessing the screen.
  */
 static void start_curses(void)
 {
@@ -1734,7 +1734,7 @@ void nice_wait()
  * Handles the display of messages pertaining to player-player fights
  * in the lower part of screen (fighting sub-screen). Adds the new line
  * of text in "text" and scrolls up previous messages if necessary
- * If "text" is NULL, initialises the area
+ * If "text" is NULL, initializes the area
  * If "text" is a blank string, redisplays the message area
  * Messages are displayed from lines 16 to 20; line 22 is used for
  * the prompt for the user.
