@@ -389,7 +389,7 @@ static ErrTable SocksErrStr[] = {
   {SEC_NOMETHODS, N_("SOCKS server rejected all offered methods")},
   {SEC_ADDRTYPE, N_("Unknown SOCKS address type returned")},
   {SEC_AUTHFAILED, N_("SOCKS authentication failed")},
-  {SEC_USERCANCEL, N_("SOCKS authentication cancelled by user")},
+  {SEC_USERCANCEL, N_("SOCKS authentication canceled by user")},
 
   /* SOCKS version 4 error messages */
   {SEC_REJECT, N_("SOCKS: Request rejected or failed")},

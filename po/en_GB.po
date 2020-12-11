@@ -3890,8 +3890,8 @@ msgid "SOCKS authentication failed"
 msgstr ""
 
 #: src/network.c:392
-msgid "SOCKS authentication cancelled by user"
-msgstr ""
+msgid "SOCKS authentication canceled by user"
+msgstr "SOCKS authentication cancelled by user"
 
 #. SOCKS version 4 error messages
 #: src/network.c:395

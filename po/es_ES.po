@@ -4069,7 +4069,7 @@ msgid "SOCKS authentication failed"
 msgstr "Error de autenticación SOCKS"
 
 #: src/network.c:392
-msgid "SOCKS authentication cancelled by user"
+msgid "SOCKS authentication canceled by user"
 msgstr "Autenticación SOCKS cancelada por el usuario"
 
 #. SOCKS version 4 error messages

@@ -4001,7 +4001,7 @@ msgid "SOCKS authentication failed"
 msgstr "SOCKS-Bestätigung fehlgeschlagen"
 
 #: src/network.c:392
-msgid "SOCKS authentication cancelled by user"
+msgid "SOCKS authentication canceled by user"
 msgstr "SOCKS-Bestätigung vom Benutzer abgebrochen"
 
 #. SOCKS version 4 error messages

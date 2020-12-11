@@ -4022,7 +4022,7 @@ msgid "SOCKS authentication failed"
 msgstr "SOCKS-autentiserer feila"
 
 #: src/network.c:392
-msgid "SOCKS authentication cancelled by user"
+msgid "SOCKS authentication canceled by user"
 msgstr "SOCKS-autentisering avbroten av brukar"
 
 #. SOCKS version 4 error messages

@@ -814,7 +814,7 @@ void display_select_list(GSList *names)
  * passed in "Play".
  * N.B. May set the global variable DisplayMode.
  * Returns: TRUE if the user chose to jet to a new location,
- *          FALSE if the action was cancelled instead.
+ *          FALSE if the action was canceled instead.
  */
 static gboolean jet(Player *Play, gboolean AllowReturn)
 {
