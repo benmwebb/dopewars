@@ -1,4 +1,4 @@
-# 1.6.0   06-12-2020
+# 1.6.0 - 2020-12-06
 - Fixes to build with OpenWRT (thanks to Theodor-Iulian Ciobanu).
 - Write server pidfile after fork (thanks to Theodor-Iulian Ciobanu).
 - Updated German and French Canadian translations from Benjamin Karaca
@@ -25,11 +25,11 @@
 - Fix for a DOS against the server using the REQUESTJET message type
   (thanks to Doug Prostko for reporting the problem).
 
-# 1.5.12  30-12-2005
+# 1.5.12 - 2005-12-30
 - Really fix a potential exploit against the Win32 server when running as
   an NT service (user data was being used as a format string in some cases).
 
-# 1.5.11  30-12-2005
+# 1.5.11 - 2005-12-30
 - Add example configuration file to the documentation.
 - Fixed various typos in the German translation (thanks to Jens Seidel
   and Francois Marier).
@@ -37,7 +37,7 @@
 - High score file on Windows is now written into local application data
   directory if available, to work more efficiently on multi-user systems.
 
-# 1.5.10  24-10-2004
+# 1.5.10 - 2004-10-24
 - High score file is now installed in `${localstatedir}` rather than
   `${datadir}`, to allow proper Filesystem Hierarchy Standard compliance
 - Fix for a curses client crash if the D key is pressed during attacks
@@ -52,7 +52,7 @@
 - Windows installer no longer hardcodes `C:\Program Files` so should
   work with non-English versions of Windows
 
-# 1.5.9   07-06-2003
+# 1.5.9 - 2003-06-07
 - The messages window in the curses client can now be scrolled with the
   + and - keys
 - The curses client now makes better use of space with screen sizes
@@ -61,7 +61,7 @@
 - Addition of -P, --player command line option to set the player name
   to use (thanks to Michael Mitton)
 
-# 1.5.8   21-10-2002
+# 1.5.8 - 2002-10-21
 - Options dialog now allows sounds for all supported game events to be set
 - BindAddress config variable added, to allow the server to be bound to
   a non-default IP address
@@ -83,7 +83,7 @@
 - Under Windows XP, the "pretty" new common controls are now used
 - Sounds provided by Robin Kohli of www.19.5degs.com
 
-# 1.5.7   25-06-2002
+# 1.5.7 - 2002-06-25
 - Sound support; Windows multimedia, ESD and SDL outputs are supported;
   the individual modules can be statically linked in, or built as true
   "plugins"
@@ -105,7 +105,7 @@
 - A new server command "save" can be used to save the current configuration
   to a named config file
 
-# 1.5.6   29-04-2002
+# 1.5.6 - 2002-04-29
 - Bug fix: the server will only let you pay back loans or deal with the
   bank when you are at the correct location, and you can no longer
   "pay back" negative amounts of cash to the loan shark
@@ -119,7 +119,7 @@
   (due to a GTK+/Glib bug) - now fixed
 - Everything should now build with autoconf-2.53 (if desired)
 
-# 1.5.5   13-04-2002
+# 1.5.5 - 2002-04-13
 - On fight termination the player is now allowed to close the "Fight"
   dialog before any new dialogs pop up
 - Bug caused by a "fight" interrupting a "deal" fixed
@@ -131,7 +131,7 @@
   to Mike Robinson)
 - GTK+ client should now work with GTK+2.0
 
-# 1.5.4   03-03-2002
+# 1.5.4 - 2002-03-03
 - Basic configuration file editor added to GTK+ client
 - Annoying flashing on closure of modal windows in Win32 fixed
 - Win32 client now uses "proper" dialog boxes (i.e. without a window menu)
@@ -141,7 +141,7 @@
 - Crash bugs when running on PPC systems fixed (with thanks to Zeke
   and Brian Campbell)
 
-# 1.5.3   04-02-2002
+# 1.5.3 - 2002-02-04
 - Text-mode server is now non-interactive by default (server admin can
   connect later with the -A option)
 - Windows server can now be run as an NT Service
@@ -160,7 +160,7 @@
 - Win32 install for current user/all users
 - Code cleanups
 
-# 1.5.2   16-10-2001
+# 1.5.2 - 2001-10-16
 - Slightly easier-to-use "run from fight" Jet dialog (avoids the crazy
   "windows pop up faster than you can close them" syndrome)
 - Support for HTTP proxies and authentication
@@ -175,17 +175,17 @@
 - GNU long command line options now accepted on platforms with `getopt_long`
 - Simple installer now in place for Win32 systems
 
-# 1.5.1   19-06-2001
+# 1.5.1 - 2001-06-19
 - Improved logging in server via LogLevel and LogTimestamp variables
 - Metaserver (both client and server) moved to SourceForge
 - Icons (courtesy of Ocelot Mantis) and GNOME desktop entry added
 
-# 1.5.0   13-05-2001
+# 1.5.0 - 2001-05-13
 - Fixes for spurious tipoffs
 - High scores should now be written properly on Win32 systems
 - Various minor usability fixes on Win32 systems
 
-# 1.5.0beta2 29-04-2001
+# 1.5.0beta2 - 2001-04-29
 - Various fixes for installation on BSD systems and Mac OS X
 - Multiplayer menus (spy on player, etc.) are now greyed out in GTK+ client
   when in single-player mode
@@ -199,7 +199,7 @@
 - "make install" installs dopewars as group "wheel" if "games" is
   unavailable
 
-# 1.5.0beta1 08-04-2001
+# 1.5.0beta1 - 2001-04-08
 - Completely rewritten fighting code
 - Internationalization (i18n) support
 - Tense and case-sensitive translated strings handled via `dpg_` analogues
@@ -231,7 +231,7 @@
 - Timeouts bug fixed
 - MaxClients bug fixed
 
-# 1.4.8   09-07-2000
+# 1.4.8 - 2000-07-09
 - Several fixes to Win32 networking code
 - IdleTimeout and ConnectTimeout variables added, to allow the server to
   break connections that have been idle for too long, or take too long
@@ -256,7 +256,7 @@
 - When a player tries to run from a fight, running to the current location
   now takes them back to the fighting screen
 
-# 1.4.7   14-01-2000
+# 1.4.7 - 2000-01-14
 - Minor fixes to Win32 code
 - dopewars now uses autoconf to (hopefully) build properly on odd sytems
   such as HP-UX, and also to build "out of the box" under Cygwin (win32)
@@ -277,7 +277,7 @@
   maintainer, for an authentication password (MetaServer.Password) linked to
   your chosen domain name, to use this option successfully.
 
-# 1.4.6   12-11-1999
+# 1.4.6 - 1999-11-12
 - Bug fix for message window and "sew you up" prompt
 - Bug fix for server hanging in LoseBitch function
 - If player opts to play again, server selection method used last time
@@ -285,7 +285,7 @@
 - Terminal resizing now handled properly
 - Port to Win32 (Windows 95,98,NT) console mode
 
-# 1.4.5   21-10-1999
+# 1.4.5 - 1999-10-21
 - Limited support now for terminals at sizes other than 80x24; but response
   to a resize during the program run doesn't work properly yet...
 - Minor improvements to AI players
@@ -333,7 +333,7 @@
 - "ConfigVerbose" option added to display extra feedback during config
   file processing (with thanks to Matt Higgins)
 
-# 1.4.4   16-09-1999
+# 1.4.4 - 1999-09-16
 - Full compatibility with 1.4.3 servers and clients maintained
   (although a warning is displayed to upgrade as soon as possible)
 - dopewars client now properly redraws the screen when Ctrl-L is pressed
@@ -364,7 +364,7 @@
 - Minor formatting cleanups to accommodate longer drug names on the
   screen neatly (provided by: Mike Meyer)
 
-# 1.4.3   23-06-1999
+# 1.4.3 - 1999-06-23
 - Bug with random offer of weed/paraquat fixed
 - `L>ist` command now offers list of logged-on players or high scores
 - "Out of time" message to explain why the game stops suddenly after 31 days
@@ -416,7 +416,7 @@
   - Drugs can now be sorted by name or by price, in forwards or reverse
     order, with the DrugSortMethod option (can take values 1-4)
 
-# 1.4.2   16-05-1999
+# 1.4.2 - 1999-05-16
 - AI player improvements
 - Message structure changed to use less bandwidth and neater code
 - Now easier to break out of buy/sell drug prompts etc. (by pressing an 
@@ -435,23 +435,23 @@
 - Added "helpful" messages when guns cannot be bought or sold in gun shop
 - Minor cleanups of player-player fighting messages
 
-# 1.4.1b  28-04-1999
+# 1.4.1b - 1999-04-28
 - segfault bug in server fixed
 
-# 1.4.1a  28-04-1999
+# 1.4.1a - 1999-04-28
 - Interim release before 1.4.2; a few bug fixes in antique mode
 
-# 1.4.1   27-04-1999
+# 1.4.1 - 1999-04-27
 - Fix of bug where paying off your debt would actually _increase_ it!
   Dunno how that one slipped through... I blame my beta testers... ;)
 
-# 1.4.0   27-04-1999
+# 1.4.0 - 1999-04-27
 - Fixed bug with server; server now detects if standard input has
   been closed properly (previously if its input was redirected from
   /dev/null it would keep trying to read from it, using 100% CPU. Oops.)
 - First release under GPL
 
-# 1.3.8   26-04-1999
+# 1.3.8 - 1999-04-26
 - Message structure changed; separator changed from : to ^ and extra
   field added to identify messages to AI players
 - Shorthand routines added for "printmessage" and "question" messages;
@@ -468,17 +468,17 @@
 - Read in location of score files, server, port from ~/.dopewars
 - Fixed bugs in player-player fighting code
 
-# 1.3.7   28-03-1999
+# 1.3.7 - 1999-03-28
 - Proper support for tipoffs and spies
 - Discovered spies cannot now be shot if you don't have a gun...
 - Option added for computer players (non-functional however)
 
-# 1.3.6   14-03-1999
+# 1.3.6 - 1999-03-14
 - BreakoffCombat routine added to terminate fights cleanly when one
   player runs away from a fight (under 1.3.5 defending player would
   just hang when this was done...)
 
-# 1.3.5   27-02-1999
+# 1.3.5 - 1999-02-27
 - Basic support for meeting other players; `E_MEETOTHER` event added
 - Simple player-player fights allowed with the use of `E_WAITFIGHT`,
   `E_DEFEND` and `E_ATTACK` events 
@@ -486,12 +486,12 @@
 - "question" message extended; server now passes a list of allowed
   responses in the first "word" of message data
 
-# 1.3.4   25-02-1999
+# 1.3.4 - 1999-02-25
 - Client and virtual server now maintain completely separate lists of
   players
 - GunShop now works properly; user can actually see what's going on!
 
-# 1.3.3   23-02-1999
+# 1.3.3 - 1999-02-23
 - Complete implementation of fighting with Officer Hardass
 - `E_DOCTOR` event added to handle question "do you want a doctor to
   sew you up?" after killing Hardass
@@ -501,7 +501,7 @@
 - Client now wipes price list on each jet to stop old prices
   flashing up between messages from the server
 
-# 1.3.2   22-02-1999
+# 1.3.2 - 1999-02-22
 - "subwayflash" message added
 - OfferObject/RandomOffer split into separate event from OfficerHardass
 - "smoke paraquat" also given separate event (`E_WEED`) and implemented
@@ -509,7 +509,7 @@
 - Bugfix for drug price generation code
 - Partial implementation of fighting with Officer Hardass
 
-# 1.3.1   21-02-1999
+# 1.3.1 - 1999-02-21
 - Drugs can now be bought and sold
 - RandomOffer and OfferObject routines added to handle server-based
   random events ("a friend gives you..." etc.) and object offers ("do
@@ -518,7 +518,7 @@
 - GunShop / LoanShark / Bank / Pub all handled by the server now
 - Some networking bugfixes 
 
-# 1.3.0   20-02-1999
+# 1.3.0 - 1999-02-20
 - Development series (moving decision-making from client to server to
   improve multi-player games and cut down on cheating, in preparation
   for an OpenSource release)
@@ -531,39 +531,39 @@
   of turns (and drug prices) should be easy to implement in the future
 - Minimal functionality - networking backbone only...
 
-# 1.2.0   13-02-1999
+# 1.2.0 - 1999-02-13
 - Stable release; some bugs in fighting code cleaned up
 
-# 1.1.26  13-02-1999
+# 1.1.26 - 1999-02-13
 - "PolicePresence" member is now read - when a fight is started, there
   is a finite chance (varies from location to location) that the
   perpetrator will get attacked by the police
 - MinDrug and MaxDrug members added to Location struct - some locations
   may have a smaller range of drugs on offer than others
 
-# 1.1.25  11-02-1999
+# 1.1.25 - 1999-02-11
 - Added an "Inventory" struct to keep track of players' belongings
   and anything dropped during a fight; winner of a fight now gets
   whatever the other player dropped (guns and/or drugs)
 
-# 1.1.24  9-02-1999
+# 1.1.24 - 1999-02-09
 - Put in code to "finish" fights properly when one player escapes
 - Attacking player is now told whether they hit the other player or
   not when in a fight
 
-# 1.1.23  3-02-1999
+# 1.1.23 - 1999-02-03
 - "Jet" command replaced with "Run" when in a fight
 - "PolicePresence" member added to Location struct
 - GunShop bug fixed (guns were taking up no space) 
 
-# 1.1.22  30-01-1999
+# 1.1.22 - 1999-01-30
 - Implemented very simple "shoot at another dealers" code; players, on
   arriving at a location where another dealer already is, can choose
   to attack (if they have any guns). The attacked player can then
   choose to return fire or run for it...
 
-# 1.1.21  29-01-1999
+# 1.1.21 - 1999-01-29
 - Added support for the "spy on another dealer" bitch errand
 
-# 1.1.20  29-01-1999
+# 1.1.20 - 1999-01-29
 - Added support for the "tip off another dealer to the cops" bitch errand
