@@ -1,3 +1,4 @@
+# 1.6.1 - 2020-12-11
 - Improved display in non-English text-mode clients; previously
   columns were not aligned properly in some cases and occasionally
   not all available drugs at a location were shown on screen (#54).
