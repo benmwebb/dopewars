@@ -225,7 +225,7 @@ gboolean UseSocks;
 
 int NumTurns = 31;
 
-int PlayerArmour = 100, BitchArmour = 50;
+int PlayerArmor = 100, BitchArmor = 50;
 
 struct LOG Log;
 
@@ -476,10 +476,16 @@ struct GLOBALS Globals[] = {
    N_("Maximum number of drugs at each location"),
    (void **)(&Location), &StaticLocation,
    sizeof(struct LOCATION), "Location", &NumLocation, NULL, FALSE, 1, -1},
-  {&PlayerArmour, NULL, NULL, NULL, NULL, "PlayerArmour",
+  {&PlayerArmor, NULL, NULL, NULL, NULL, "PlayerArmour",
    N_("% resistance to gunshots of each player"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 100},
-  {&BitchArmour, NULL, NULL, NULL, NULL, "BitchArmour",
+  {&PlayerArmor, NULL, NULL, NULL, NULL, "PlayerArmor",
+   N_("% resistance to gunshots of each player"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 100},
+  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmour",
+   N_("% resistance to gunshots of each bitch"),
+   NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
+  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmor",
    N_("% resistance to gunshots of each bitch"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
   {NULL, NULL, NULL, &StaticCop.Name, NULL, "Name",
@@ -494,11 +500,19 @@ struct GLOBALS Globals[] = {
    N_("Name of each cop's deputies"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 0, 0},
-  {&StaticCop.Armour, NULL, NULL, NULL, NULL, "Armour",
+  {&StaticCop.Armor, NULL, NULL, NULL, NULL, "Armour",
    N_("% resistance to gunshots of each cop"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 1, 100},
-  {&StaticCop.DeputyArmour, NULL, NULL, NULL, NULL, "DeputyArmour",
+  {&StaticCop.Armor, NULL, NULL, NULL, NULL, "Armor",
+   N_("% resistance to gunshots of each cop"),
+   (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
+   NULL, FALSE, 1, 100},
+  {&StaticCop.DeputyArmor, NULL, NULL, NULL, NULL, "DeputyArmour",
+   N_("% resistance to gunshots of each deputy"),
+   (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
+   NULL, FALSE, 1, 100},
+  {&StaticCop.DeputyArmor, NULL, NULL, NULL, NULL, "DeputyArmor",
    N_("% resistance to gunshots of each deputy"),
    (void **)(&Cop), &StaticCop, sizeof(struct COP), "Cop", &NumCop,
    NULL, FALSE, 1, 100},
@@ -821,7 +835,7 @@ int CountPlayers(GSList *First)
 
 /* 
  * Adds the new Player structure "NewPlayer" to the linked list
- * pointed to by "First", and initialises all fields. Returns the new
+ * pointed to by "First", and initializes all fields. Returns the new
  * start of the list. If this function is called by the server, then
  * it should pass the file descriptor of the socket used to
  * communicate with the client player.
@@ -1403,7 +1417,7 @@ int GetNextDrugIndex(int OldIndex, Player *Play)
 /* 
  * A DopeList is akin to a Vector class; it is a list of DopeEntry
  * structures, which can be dynamically extended or compressed. This
- * function initialises the newly-created list pointed to by "List"
+ * function initializes the newly-created list pointed to by "List"
  * (A DopeEntry contains a Player pointer and a counter, and is used
  * by the server to keep track of tipoffs and spies.)
  */
@@ -1674,8 +1688,8 @@ void CopyCop(struct COP *dest, struct COP *src)
   AssignName(&dest->Name, _(src->Name));
   AssignName(&dest->DeputyName, _(src->DeputyName));
   AssignName(&dest->DeputiesName, _(src->DeputiesName));
-  dest->Armour = src->Armour;
-  dest->DeputyArmour = src->DeputyArmour;
+  dest->Armor = src->Armor;
+  dest->DeputyArmor = src->DeputyArmor;
   dest->AttackPenalty = src->AttackPenalty;
   dest->DefendPenalty = src->DefendPenalty;
   dest->MinDeputies = src->MinDeputies;
@@ -2556,8 +2570,8 @@ void HandleHelpTexts(gboolean fullhelp)
               (version with support for GNU long options) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
-  -b, --no-color,         \"black and white\" - i.e. do not use pretty colours\n\
-      --no-colour           (by default colours are used where available)\n\
+  -b, --no-color,         \"black and white\" - i.e. do not use pretty colors\n\
+      --no-colour           (by default colors are used where available)\n\
   -n, --single-player     be boring and don't connect to any available dopewars\n\
                             servers (i.e. single player mode)\n\
   -a, --antique           \"antique\" dopewars - keep as closely to the original\n\
@@ -2593,8 +2607,8 @@ Report bugs to the author at benwebb@users.sf.net\n"));
               (short options only version) */
            _("Usage: dopewars [OPTION]...\n\
 Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
-  -b       \"black and white\" - i.e. do not use pretty colours\n\
-              (by default colours are used where the terminal supports them)\n\
+  -b       \"black and white\" - i.e. do not use pretty colors\n\
+              (by default colors are used where the terminal supports them)\n\
   -n       be boring and don't connect to any available dopewars servers\n\
               (i.e. single player mode)\n\
   -a       \"antique\" dopewars - keep as closely to the original version as\n\
@@ -2664,7 +2678,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
       = cmdline->logfile = cmdline->plugin = cmdline->convertfile
       = cmdline->playername = NULL;
   cmdline->configs = NULL;
-  cmdline->colour = cmdline->network = TRUE;
+  cmdline->color = cmdline->network = TRUE;
   cmdline->client = CLIENT_AUTO;
 
   do {
@@ -2678,7 +2692,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
       cmdline->network = FALSE;
       break;
     case 'b':
-      cmdline->colour = FALSE;
+      cmdline->color = FALSE;
       break;
     case 'c':
       cmdline->ai = TRUE;
@@ -2786,7 +2800,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   OpenHighScoreFile();
   DropPrivileges();
 
-  /* Initialise variables */
+  /* Initialize variables */
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");

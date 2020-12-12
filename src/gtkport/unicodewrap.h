@@ -68,6 +68,8 @@ LONG myDispatchMessage(CONST MSG *lpmsg);
 BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg);
 size_t myw32strlen(const char *str);
 LRESULT myComboBox_AddString(HWND hWnd, LPCTSTR text);
+gchar *w32tostr(const gunichar2 *instr, int len);
+gunichar2 *strtow32(const char *instr, int len);
 
 #endif /* CYGWIN */
 

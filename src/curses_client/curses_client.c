@@ -106,15 +106,15 @@ static void SocksAuthFunc(NetworkBuffer *netbuf, gpointer data);
 #endif
 
 static DispMode DisplayMode;
-static gboolean QuitRequest, WantColour = TRUE, WantNetwork = TRUE;
+static gboolean QuitRequest, WantColor = TRUE, WantNetwork = TRUE;
 
 /* 
- * Initialises the curses library for accessing the screen.
+ * Initializes the curses library for accessing the screen.
  */
 static void start_curses(void)
 {
   cur_screen = newterm(NULL, stdout, stdin);
-  if (WantColour) {
+  if (WantColor) {
     start_color();
     init_pair(1, COLOR_MAGENTA, COLOR_WHITE);
     init_pair(2, COLOR_BLACK, COLOR_WHITE);
@@ -236,6 +236,48 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
   clear_bottom();
 }
 
+/* Return length of string in characters (not bytes, like strlen) */
+static int strcharlen(const char *str)
+{
+  return LocaleIsUTF8 ? g_utf8_strlen(str, -1) : strlen(str);
+}
+
+/* Displays a string right-aligned at the given position (the last character
+   in the string will be at the given row and column)
+ */
+static void mvaddrightstr(int row, int col, const gchar *str)
+{
+  int len = strcharlen(str);
+  mvaddstr(row, MAX(col - len + 1, 0), str);
+}
+
+/* Append len spaces to the end of text */
+static void g_string_pad(GString *text, int len)
+{
+  int curlen = text->len;
+  g_string_set_size(text, curlen + len);
+  memset(text->str + curlen, ' ', len);
+}
+
+/* Make the string the given number of characters, either by adding spaces
+   to the end, or by truncating it */
+static void g_string_pad_or_truncate_to_charlen(GString *text, int len)
+{
+  int curlen = strcharlen(text->str);
+  if (len < 0) {
+    return;
+  }
+  if (curlen < len) {
+    g_string_pad(text, len - curlen);
+  } else if (curlen > len) {
+    if (LocaleIsUTF8) {
+      /* Convert from number of characters to bytes */
+      len = g_utf8_offset_to_pointer(text->str, len) - text->str;
+    }
+    g_string_truncate(text, len);
+  }
+}
+
 /*
  * Displays a string, horizontally centred on the given row
  */
@@ -243,29 +285,35 @@ static void mvaddcentstr(const int row, const gchar *str)
 {
   guint col, len;
 
-  len = strlen(str);
+  len = strcharlen(str);
   col = (len > (guint)Width ? 0 : ((guint)Width - len) / 2);
   mvaddstr(row, col, str);
 }
 
 /*
  * Displays a string at the given coordinates and with the given
- * attributes. If the string is longer than "wid", it is truncated, and
- * if shorter, it is padded with spaces.
+ * attributes. If the string is longer than "wid" characters, it is truncated,
+ * and if shorter, it is padded with spaces.
  */
 static void mvaddfixwidstr(const int row, const int col, const int wid,
                            const gchar *str, const int attrs)
 {
-  int strwid = str ? strlen(str) : 0;
-  int strind;
+  int strwidch = str ? strcharlen(str) : 0;
+  int i, strwidbyte;
 
-  strwid = MIN(strwid, wid);
-
-  for (strind = 0; strind < strwid; ++strind) {
-    mvaddch(row, col + strind, (guchar)str[strind] | attrs);
+  strwidch = MIN(strwidch, wid);
+  if (LocaleIsUTF8) {
+    strwidbyte = g_utf8_offset_to_pointer(str, strwidch) - str;
+  } else {
+    strwidbyte = strwidch;
   }
-  for (strind = strwid; strind < wid; ++strind) {
-    mvaddch(row, col + strind, (guchar)' ' | attrs);
+
+  move(row, col);
+  for (i = 0; i < strwidbyte; ++i) {
+    addch((guchar)str[i] | attrs);
+  }
+  for (i = strwidch; i < wid; ++i) {
+    addch((guchar)' ' | attrs);
   }
 }
 
@@ -303,7 +351,7 @@ void display_intro(void)
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
-                          "General Public Licence"));
+                          "General Public License"));
   mvaddcentstr(11, text->str);
 
   g_string_assign(text, _(translation));
@@ -728,7 +776,7 @@ void display_select_list(GSList *names)
 
   for (listpt = names, numlist = 0; listpt;
        listpt = g_slist_next(listpt), numlist++) {
-    maxlen = MAX(maxlen, strlen(listpt->data));
+    maxlen = MAX(maxlen, strcharlen(listpt->data));
   }
 
   maxlen += 3;
@@ -766,7 +814,7 @@ void display_select_list(GSList *names)
  * passed in "Play".
  * N.B. May set the global variable DisplayMode.
  * Returns: TRUE if the user chose to jet to a new location,
- *          FALSE if the action was cancelled instead.
+ *          FALSE if the action was canceled instead.
  */
 static gboolean jet(Player *Play, gboolean AllowReturn)
 {
@@ -912,7 +960,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
                              CanAfford, CanCarry);
       mvaddstr(get_prompt_line() + 1, 2, text);
       input = nice_input(_("How many do you buy? "), get_prompt_line() + 1,
-                         2 + strlen(text), TRUE, NULL, '\0');
+                         2 + strcharlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -928,7 +976,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
                           Play->Drugs[DrugNum].Carried);
       mvaddstr(get_prompt_line() + 1, 2, text);
       input = nice_input(_("How many do you sell? "), get_prompt_line() + 1,
-                         2 + strlen(text), TRUE, NULL, '\0');
+                         2 + strcharlen(text), TRUE, NULL, '\0');
       c = atoi(input);
       g_free(input);
       g_free(text);
@@ -1253,7 +1301,7 @@ void PrepareHighScoreScreen(void)
   clear_screen();
   attrset(TitleAttr);
   text = _("H I G H   S C O R E S");
-  mvaddstr(0, (Width - strlen(text)) / 2, text);
+  mvaddstr(0, (Width - strcharlen(text)) / 2, text);
   attrset(TextAttr);
 }
 
@@ -1686,7 +1734,7 @@ void nice_wait()
  * Handles the display of messages pertaining to player-player fights
  * in the lower part of screen (fighting sub-screen). Adds the new line
  * of text in "text" and scrolls up previous messages if necessary
- * If "text" is NULL, initialises the area
+ * If "text" is NULL, initializes the area
  * If "text" is a blank string, redisplays the message area
  * Messages are displayed from lines 16 to 20; line 22 is used for
  * the prompt for the user.
@@ -1899,6 +1947,7 @@ void print_location(char *text)
 void print_status(Player *Play, gboolean DispDrug)
 {
   int i, c;
+  char *p;
   GString *text;
 
   text = g_string_new(NULL);
@@ -1954,28 +2003,39 @@ void print_status(Player *Play, gboolean DispDrug)
 
   attrset(StatsAttr);
 
-  /* Display of the player's cash in the stats window (careful to keep the
-     formatting if you change the length of the "Cash" word) */
-  dpg_string_printf(text, _("Cash %17P"), Play->Cash);
-  mvaddstr(3, 9, text->str);
+  /* Display of the player's cash in the stats window */
+  mvaddstr(3, 9, _("Cash"));
+  p = FormatPrice(Play->Cash);
+  mvaddrightstr(3, 30, p);
+  g_free(p);
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
-  dpg_string_printf(text, _("%-19Tde%3d"), Names.Guns,
-                     TotalGunsCarried(Play));
+  dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
   mvaddstr(Network ? 4 : 5, 9, text->str);
+  dpg_string_printf(text, "%d", TotalGunsCarried(Play));
+  mvaddrightstr(Network ? 4 : 5, 30, text->str);
 
   /* Display of the player's health */
-  g_string_printf(text, _("Health             %3d"), Play->Health);
-  mvaddstr(Network ? 5 : 7, 9, text->str);
+  mvaddstr(Network ? 5 : 7, 9, _("Health"));
+  dpg_string_printf(text, "%d", Play->Health);
+  mvaddrightstr(Network ? 5 : 7, 30, text->str);
 
   /* Display of the player's bank balance */
-  dpg_string_printf(text, _("Bank %17P"), Play->Bank);
-  mvaddstr(Network ? 6 : 9, 9, text->str);
+  mvaddstr(Network ? 6 : 9, 9, _("Bank"));
+  p = FormatPrice(Play->Bank);
+  mvaddrightstr(Network ? 6 : 9, 30, p);
+  g_free(p);
 
   if (Play->Debt > 0)
     attrset(DebtAttr);
   /* Display of the player's debt */
-  dpg_string_printf(text, _("Debt %17P"), Play->Debt);
+  g_string_assign(text, _("Debt"));
+  p = FormatPrice(Play->Debt);
+  /* Put in one big string otherwise the DebtAttr won't be applied to the
+     space between "Debt" and the price */
+  g_string_pad(text, 22 - strcharlen(text->str) - strcharlen(p));
+  g_string_append(text, p);
+  g_free(p);
   mvaddstr(Network ? 7 : 11, 9, text->str);
   attrset(TitleAttr);
 
@@ -1988,7 +2048,7 @@ void print_status(Player *Play, gboolean DispDrug)
     dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
                        Play->Bitches.Carried, Play->CoatSize);
   }
-  mvaddstr(0, Width - 2 - strlen(text->str), text->str);
+  mvaddrightstr(0, Width - 3, text->str);
   dpg_string_printf(text, _("%/Current location/%tde"),
                      Location[Play->IsAt].Name);
   print_location(text->str);
@@ -2005,7 +2065,7 @@ void print_status(Player *Play, gboolean DispDrug)
          is ignored, so you don't need to translate it; see doc/i18n.html)
        */
       dpg_string_printf(text, _("%/Stats: Drugs/%Tde"), Names.Drugs);
-      mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
+      mvaddstr(1, Width * 3 / 4 - strcharlen(text->str) / 2, text->str);
     }
     for (i = 0; i < NumDrug; i++) {
       if (Play->Drugs[i].Carried > 0) {
@@ -2030,7 +2090,7 @@ void print_status(Player *Play, gboolean DispDrug)
     /* Title of the "guns" window (the only important bit in this string
        is the "%Tde" which is "Guns" by default) */
     dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
-    mvaddstr(1, Width * 3 / 4 - strlen(text->str) / 2, text->str);
+    mvaddstr(1, Width * 3 / 4 - strcharlen(text->str) / 2, text->str);
     for (i = 0; i < NumGun; i++) {
       if (Play->Guns[i].Carried > 0) {
         /* Display of carried guns (%tde="Baretta", etc. by default) */
@@ -2183,7 +2243,7 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   if (prompt) {
     attrset(PromptAttr);
     addstr(prompt);
-    x += strlen(prompt);
+    x += strcharlen(prompt);
   }
   attrset(TextAttr);
   if (displaystr) {
@@ -2241,25 +2301,6 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   return ReturnString;
 }
 
-/* Return a blank string long enough to pad `name` out to `pad_len`.
-   This works with characters, not bytes, if in a UTF-8 locale */
-static char *pad_name(const char *name, guint pad_len)
-{
-  /* 40 character blank string (must be longer than max value of pad_len) */
-  static char *pad = "                                        ";
-  int slen;
-  if (LocaleIsUTF8) {
-    slen = g_utf8_strlen(name, -1);
-  } else {
-    slen = strlen(name);
-  }
-  if (slen > pad_len || slen > 40) {
-    return "";
-  } else {
-    return pad + 40 - pad_len + slen;
-  }
-}
-
 static void DisplayDrugsHere(Player *Play)
 {
   int NumDrugsHere, i, c;
@@ -2282,12 +2323,15 @@ static void DisplayDrugsHere(Player *Play)
   for (c = 0, i = GetNextDrugIndex(-1, Play);
        c < NumDrugsHere && i != -1;
        c++, i = GetNextDrugIndex(i, Play)) {
+    char *price = FormatPrice(Play->Drugs[i].Price);
+    GString *str = g_string_new(NULL);
     /* List of individual drug names for selection (%tde="Opium" etc.
        by default) */
-    text = dpg_strdup_printf( _("%c. %tde%s %8P"), 'A' + c,
-                             Drug[i].Name, pad_name(Drug[i].Name, 10),
-                             Play->Drugs[i].Price);
-    names = g_slist_append(names, text);
+    dpg_string_printf(str, _("%/Drug Select/%c. %tde"), 'A' + c, Drug[i].Name);
+    g_string_pad_or_truncate_to_charlen(str, 22 - strcharlen(price));
+    g_string_append(str, price);
+    g_free(price);
+    names = g_slist_append(names, g_string_free(str, FALSE));
   }
   display_select_list(names);
   attrset(PromptAttr);
@@ -2682,7 +2726,7 @@ void CursesLoop(struct CMDLINE *cmdline)
   if (!CheckHighScoreFileConfig())
     return;
 
-  WantColour = cmdline->colour;
+  WantColor = cmdline->color;
   WantNetwork = cmdline->network;
 
   /* Save the configuration, so we can restore those elements that get

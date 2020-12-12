@@ -60,7 +60,7 @@ gboolean HaveUnicodeSupport(void)
  * suitable for Windows Unicode-aware functions (i.e. UTF-16). This
  * returned string must be g_free'd when no longer needed.
  */
-static gunichar2 *strtow32(const char *instr, int len)
+gunichar2 *strtow32(const char *instr, int len)
 {
   gunichar2 *outstr;
   if (!instr) {
@@ -73,7 +73,7 @@ static gunichar2 *strtow32(const char *instr, int len)
   return outstr;
 }
 
-static gchar *w32tostr(const gunichar2 *instr, int len)
+gchar *w32tostr(const gunichar2 *instr, int len)
 {
   gchar *outstr;
   if (!instr) {

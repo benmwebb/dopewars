@@ -87,7 +87,7 @@ void StartNetworking()
     error = NewError(ET_WINSOCK, WSAGetLastError(), NULL);
     errstr = g_string_new("");
     g_string_assign_error(errstr, error);
-    g_log(NULL, G_LOG_LEVEL_CRITICAL, _("Cannot initialise WinSock (%s)!"),
+    g_log(NULL, G_LOG_LEVEL_CRITICAL, _("Cannot initialize WinSock (%s)!"),
           errstr->str);
     g_string_free(errstr, TRUE);
     FreeError(error);
@@ -181,7 +181,7 @@ static void FreeConnBuf(ConnBuf *buf)
 }
 
 /* 
- * Initialises the passed network buffer, ready for use. Messages sent
+ * Initializes the passed network buffer, ready for use. Messages sent
  * or received on the buffered connection will be terminated by the
  * given character, and if they end in "StripChar" it will be removed
  * before the messages are sent or received.
@@ -304,7 +304,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
 
 /* 
  * Frees the network buffer's data structures (leaving it in the
- * 'initialised' state) and closes the accompanying socket.
+ * 'initialized' state) and closes the accompanying socket.
  */
 void ShutdownNetworkBuffer(NetworkBuffer *NetBuf)
 {
@@ -389,7 +389,7 @@ static ErrTable SocksErrStr[] = {
   {SEC_NOMETHODS, N_("SOCKS server rejected all offered methods")},
   {SEC_ADDRTYPE, N_("Unknown SOCKS address type returned")},
   {SEC_AUTHFAILED, N_("SOCKS authentication failed")},
-  {SEC_USERCANCEL, N_("SOCKS authentication cancelled by user")},
+  {SEC_USERCANCEL, N_("SOCKS authentication canceled by user")},
 
   /* SOCKS version 4 error messages */
   {SEC_REJECT, N_("SOCKS: Request rejected or failed")},

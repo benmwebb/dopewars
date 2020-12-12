@@ -1,3 +1,8 @@
+11th December 2020
+     dopewars-1.6.1 released. This improves the appearance of the text-mode
+client, adds a British English translation, and fixes a bug selecting sounds
+from the options dialog of the Windows client.
+
 6th December 2020
      dopewars-1.6.0 released. The metaserver, broken since SourceForge moved
 to HTTPS, should work again. This release also adds support for modern 64-bit

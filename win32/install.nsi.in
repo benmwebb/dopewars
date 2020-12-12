@@ -118,6 +118,9 @@ Section ""
   SetOutPath "$INSTDIR\locale\es\LC_MESSAGES"
   File /oname=dopewars.mo "..\po\es.gmo"
 
+  SetOutPath "$INSTDIR\locale\en_GB\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\en_GB.gmo"
+
   SetOutPath "$INSTDIR\locale\es_ES\LC_MESSAGES"
   File /oname=dopewars.mo "..\po\es_ES.gmo"
 

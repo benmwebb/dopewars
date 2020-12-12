@@ -837,8 +837,8 @@ void OptDialog(GtkWidget *widget, gpointer data)
     { N_("Name of several deputies"), "DeputiesName" },
     { N_("Minimum no. of deputies"), "MinDeputies" },
     { N_("Maximum no. of deputies"), "MaxDeputies" },
-    { N_("Cop armour"), "Armour" },
-    { N_("Deputy armour"), "DeputyArmour" },
+    { N_("Cop armor"), "Armor" },
+    { N_("Deputy armor"), "DeputyArmor" },
     { NULL, NULL }
   };
 

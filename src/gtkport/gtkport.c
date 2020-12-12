@@ -5179,35 +5179,55 @@ void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position)
 {
 }
 
+#define GTK_GET_FILE_LEN 800
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title)
 {
-  OPENFILENAME ofn;
-  char file[800];
+  OPENFILENAMEW ofn;
+  gunichar2 *title2, file[GTK_GET_FILE_LEN];
 
+  file[0] = 0;
+  title2 = strtow32(title, -1);
+  /* Convert from our (UTF-8) representation to Windows Unicode */
   if (oldname) {
-    strncpy(file, oldname, sizeof(file));
-    file[sizeof(file) - 1] = '\0';
-  } else {
-    file[0] = '\0';
+    glong nwritten;
+    char *abspath = NULL;
+    gunichar2 *oldname2;
+    /* Make absolute if necessary; OpenFileName does not work with
+       relative paths */
+    if (!g_path_is_absolute(oldname)) {
+      abspath = g_canonicalize_filename(oldname, NULL);
+    }
+    oldname2 = g_utf8_to_utf16(abspath ? abspath : oldname, -1, NULL,
+                               &nwritten, NULL);
+    if (oldname2) {
+      memcpy(file, oldname2,
+             MIN(GTK_GET_FILE_LEN, nwritten) * sizeof(gunichar2));
+      /* Ensure null terminated */
+      file[GTK_GET_FILE_LEN - 1] = 0;
+      g_free(oldname2);
+    }
+    g_free(abspath);
   }
-  ofn.lStructSize = sizeof(OPENFILENAME);
+  ofn.lStructSize = sizeof(OPENFILENAMEW);
   ofn.hwndOwner = parent ? parent->hWnd : NULL;
   ofn.hInstance = NULL;
   ofn.lpstrFilter = NULL;
   ofn.lpstrCustomFilter = NULL;
   ofn.nFilterIndex = 1;
   ofn.lpstrFile = file;
-  ofn.nMaxFile = sizeof(file);
+  ofn.nMaxFile = GTK_GET_FILE_LEN;
   ofn.lpstrFileTitle = NULL;
   ofn.nMaxFileTitle = 0;
   ofn.lpstrInitialDir = NULL;
-  ofn.lpstrTitle = title;
+  ofn.lpstrTitle = title2;
   ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
   ofn.lpstrDefExt = NULL;
-  if (GetOpenFileName(&ofn)) {
-    return g_strdup(file);
+  if (GetOpenFileNameW(&ofn)) {
+    g_free(title2);
+    return w32tostr(file, -1);
   } else {
+    g_free(title2);
     return NULL;
   }
 }

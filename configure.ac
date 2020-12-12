@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dopewars], [1.6.0])
+AC_INIT([dopewars], [1.6.1])
 AC_CONFIG_SRCDIR([src/dopewars.c])
 AC_CONFIG_AUX_DIR(auxbuild)
 
@@ -8,7 +8,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_TARGET
 AC_USE_SYSTEM_EXTENSIONS
 
-dnl Initialise automake
+dnl Initialize automake
 dnl 'foreign' because we have README.md instead of README
 AM_INIT_AUTOMAKE([foreign])
 
@@ -309,7 +309,7 @@ if test "$CURSES_CLIENT" = "probe"; then
 fi
 
 dnl Do i18n stuff
-ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES"
+ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB"
 AM_GNU_GETTEXT([external])
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"

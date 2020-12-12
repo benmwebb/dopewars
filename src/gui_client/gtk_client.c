@@ -1245,9 +1245,8 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   gtk_label_set_text(GTK_LABEL(Status->DebtValue), prstr);
   g_free(prstr);
 
-  /* Display of carried guns in GTK+ client status window (%Tde="Guns" by
-     default) */
-  dpg_string_printf(text, _("%/GTK Stats: Guns/%Tde"), Names.Guns);
+  /* Display of the total number of guns carried (%Tde="Guns" by default) */
+  dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
   gtk_label_set_text(GTK_LABEL(Status->GunsName), text->str);
   g_string_printf(text, "%d", TotalGunsCarried(Play));
   gtk_label_set_text(GTK_LABEL(Status->GunsValue), text->str);
@@ -2439,7 +2438,7 @@ void display_intro(GtkWidget *widget, gpointer data)
                                  "Copyright (C) 1998-2020  "
                                  "Ben Webb benwebb@users.sf.net\n"
                                  "dopewars is released under the "
-                                 "GNU General Public Licence\n"), VERSION);
+                                 "GNU General Public License\n"), VERSION);
   label = gtk_label_new(VersionStr);
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   g_free(VersionStr);
