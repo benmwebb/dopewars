@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dopewars], [SVN])
+AC_INIT([dopewars], [1.6.1])
 AC_CONFIG_SRCDIR([src/dopewars.c])
 AC_CONFIG_AUX_DIR(auxbuild)
 
