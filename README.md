@@ -33,8 +33,8 @@ score file can be selected with the `-f` switch.
 
 ## Windows installation
 
-dopewars now compiles as a console or regular application under Win32
-(XP or later). Almost all functionality of the standard Unix binary is retained;
+dopewars now compiles as a console or regular application under Win32 (Windows 7
+or later). Almost all functionality of the standard Unix binary is retained;
 for example, all of the same command line switches are supported. However, for
 convenience, the configuration file is the more Windows-friendly
 "dopewars-config.txt".
