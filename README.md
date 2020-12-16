@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/benmwebb/dopewars.svg?branch=develop)](https://travis-ci.com/benmwebb/dopewars)
+[![Build Status](https://github.com/benmwebb/dopewars/workflows/build/badge.svg?branch=master)](https://github.com/benmwebb/dopewars/actions?query=workflow%3Abuild)
 [![Download dopewars drug dealing game](https://img.shields.io/sourceforge/dt/dopewars.svg)](https://dopewars.sourceforge.io/download.html)
 
 This is dopewars 1.6.1, a game simulating the life of a drug dealer in
