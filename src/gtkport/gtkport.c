@@ -72,7 +72,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 HICON mainIcon = NULL;
 static WNDPROC customWndProc = NULL;
 static gboolean HaveRichEdit = FALSE;
-static gchar *RichEditClass = NULL;
+static const gchar *RichEditClass = "RichEdit20W";
 static gboolean HaveXPControls = FALSE;
 
 static guint RecurseLevel = 0;
@@ -1181,7 +1181,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   WNDCLASS wc;
 
   hInst = hInstance;
-  InitUnicodeSupport();
   defFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
   urlFont = CreateFont(14, 0, 0, 0, FW_SEMIBOLD, FALSE, TRUE, FALSE,
                        ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -1198,14 +1197,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   InitCommonControls();
   LoadLibrary("RICHED20.DLL");
-
-  /* Rich Edit controls have two different class names, depending on whether
-   * we want ANSI or Unicode - argh! */
-  if (HaveUnicodeSupport()) {
-    RichEditClass = "RichEdit20W";
-  } else {
-    RichEditClass = "RichEdit20A";
-  }
   HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
 
   HaveXPControls = CheckForXPControls();
@@ -5512,11 +5503,6 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   }
   gtk_widget_destroy(dialog);
   return ret;
-}
-
-gboolean HaveUnicodeSupport(void)
-{
-  return TRUE;
 }
 
 #endif /* CYGWIN */

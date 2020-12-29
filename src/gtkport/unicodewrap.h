@@ -32,8 +32,6 @@
 #include <windows.h>
 #include <commctrl.h>
 
-void InitUnicodeSupport(void);
-
 BOOL mySetWindowText(HWND hWnd, LPCTSTR lpString);
 HWND myCreateWindow(LPCTSTR lpClassName, LPCTSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,

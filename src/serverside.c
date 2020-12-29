@@ -1445,7 +1445,7 @@ static void GuiDoCommand(GtkWidget *widget, gpointer data)
 
   text = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
   gtk_editable_delete_text(GTK_EDITABLE(widget), 0, -1);
-  HandleServerCommand(text, NULL, HaveUnicodeSupport());
+  HandleServerCommand(text, NULL, TRUE);
   g_free(text);
   if (IsServerShutdown())
     GuiQuitServer();
@@ -1649,15 +1649,13 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   GtkWidget *window, *text, *hbox, *vbox, *entry, *label;
   GIOChannel *listench;
 
-  if (HaveUnicodeSupport()) {
-    /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
-     * strings to be UTF-8, so we force gettext to return all translations
-     * in this encoding here. */
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
+  /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
+   * strings to be UTF-8, so we force gettext to return all translations
+   * in this encoding here. */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
 
-    Conv_SetInternalCodeset("UTF-8");
-    WantUTF8Errors(TRUE);
-  }
+  Conv_SetInternalCodeset("UTF-8");
+  WantUTF8Errors(TRUE);
 
   if (cmdline) {
     InitConfiguration(cmdline);

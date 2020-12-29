@@ -2222,15 +2222,14 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_init(argc, argv);
 #endif
 
-  if (HaveUnicodeSupport()) {
-    /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
-     * strings to be UTF-8, so we force gettext to return all translations
-     * in this encoding here. */
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
+  /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
+   * strings to be UTF-8, so we force gettext to return all translations
+   * in this encoding here. */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
 
-    Conv_SetInternalCodeset("UTF-8");
-    WantUTF8Errors(TRUE);
-  }
+  Conv_SetInternalCodeset("UTF-8");
+  WantUTF8Errors(TRUE);
+
   InitConfiguration(cmdline);
   ClientData.cmdline = cmdline;
 

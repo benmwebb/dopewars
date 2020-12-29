@@ -647,7 +647,6 @@ GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
-gboolean HaveUnicodeSupport(void);
 GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg);
 
 #endif /* __GTKPORT_H__ */
