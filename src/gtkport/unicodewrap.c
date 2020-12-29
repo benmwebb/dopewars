@@ -274,38 +274,12 @@ HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
   return retval;
 }
 
-LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-  return SendMessageW(hWnd, Msg, wParam, lParam);
-}
-
 void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam)
 {
   gunichar2 *text;
   text = strtow32(lParam, -1);
   SendMessageW(hWnd, EM_REPLACESEL, (WPARAM)fCanUndo, (LPARAM)text);
   g_free(text);
-}
-
-LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
-{
-  return SetWindowLongPtrW(hWnd, nIndex, dwNewLong);
-}
-
-LONG_PTR myGetWindowLong(HWND hWnd, int nIndex)
-{
-  return GetWindowLongPtrW(hWnd, nIndex);
-}
-
-LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
-                         WPARAM wParam, LPARAM lParam)
-{
-  return CallWindowProcW(lpPrevWndProc, hWnd, Msg, wParam, lParam);
-}
-
-LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
-{
-  return DefWindowProcW(hWnd, Msg, wParam, lParam);
 }
 
 int myMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
@@ -318,22 +292,6 @@ int myMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType)
   g_free(text);
   g_free(caption);
   return retval;
-}
-
-BOOL myGetMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin,
-                  UINT wMsgFilterMax)
-{
-  return GetMessageW(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
-}
-
-LONG myDispatchMessage(CONST MSG *lpmsg)
-{
-  return DispatchMessageW(lpmsg);
-}
-
-BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg)
-{
-  return IsDialogMessageW(hDlg, lpMsg);
 }
 
 size_t myw32strlen(const char *str)

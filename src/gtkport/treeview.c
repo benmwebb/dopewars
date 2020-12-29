@@ -95,7 +95,7 @@ static void SetTreeViewHeaderSize(GtkTreeView *clist)
   clist->scrollpos = GetScrollPos(hWnd, SB_HORZ);
 
   GetWindowRect(hWnd, &rc);
-  width = (int)mySendMessage(hWnd, LB_GETHORIZONTALEXTENT, 0, 0);
+  width = (int)SendMessageW(hWnd, LB_GETHORIZONTALEXTENT, 0, 0);
   width = MAX(width, rc.right - rc.left) + 100;
 
   SetWindowPos(clist->header, HWND_TOP, -clist->scrollpos, 0,
@@ -109,7 +109,7 @@ static LRESULT APIENTRY ListWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   widget = GTK_WIDGET(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-  retval = myCallWindowProc(wpOrigListProc, hwnd, msg, wParam, lParam);
+  retval = CallWindowProcW(wpOrigListProc, hwnd, msg, wParam, lParam);
 
   if (msg == WM_HSCROLL && widget) {
     GtkTreeView *clist = GTK_TREE_VIEW(widget);
@@ -187,7 +187,7 @@ static void gtk_tree_view_set_extent(GtkTreeView *tv)
       GtkTreeViewColumn *col = colpt->data;
       width += col->width;
     }
-    mySendMessage(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
+    SendMessageW(hWnd, LB_SETHORIZONTALEXTENT, (WPARAM)width, 0);
     SetTreeViewHeaderSize(tv);
   }
 }
@@ -269,7 +269,7 @@ void gtk_tree_view_realize(GtkWidget *widget)
   gtk_set_default_font(header);
   hdl.prc = &rcParent;
   hdl.pwpos = &wp;
-  mySendMessage(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
+  SendMessageW(header, HDM_LAYOUT, 0, (LPARAM)&hdl);
   tv->header_size = wp.cy;
   widget->hWnd = myCreateWindowEx(WS_EX_CLIENTEDGE, "LISTBOX", "",
                                   WS_CHILD | WS_TABSTOP | WS_VSCROLL
@@ -277,13 +277,13 @@ void gtk_tree_view_realize(GtkWidget *widget)
                                   | LBS_NOTIFY, 0, 0, 0, 0, Parent, NULL,
                                   hInst, NULL);
   /* Subclass the window */
-  wpOrigListProc = (WNDPROC)mySetWindowLong(widget->hWnd, GWLP_WNDPROC,
-                                            (LONG_PTR)ListWndProc);
+  wpOrigListProc = (WNDPROC)SetWindowLongPtrW(widget->hWnd, GWLP_WNDPROC,
+                                              (LONG_PTR)ListWndProc);
   gtk_set_default_font(widget->hWnd);
 
   if (tv->model) {
     for (i = 0; i < tv->model->rows->len; ++i) {
-      mySendMessage(widget->hWnd, LB_ADDSTRING, 0, 1);
+      SendMessageW(widget->hWnd, LB_ADDSTRING, 0, 1);
     }
   }
   gtk_tree_view_update_all_widths(tv);
@@ -332,7 +332,7 @@ void gtk_list_store_clear(GtkListStore *list_store)
     gtk_tree_view_update_all_widths(list_store->view);
     hWnd = GTK_WIDGET(list_store->view)->hWnd;
     if (hWnd) {
-      mySendMessage(hWnd, LB_RESETCONTENT, 0, 0);
+      SendMessageW(hWnd, LB_RESETCONTENT, 0, 0);
     }
   }
 }
@@ -398,7 +398,7 @@ void gtk_list_store_set(GtkListStore *list_store, GtkTreeIter *iter, ...)
     if (GTK_WIDGET_REALIZED(widget)) {
       HWND hWnd = widget->hWnd;
       if (new_row) {
-        mySendMessage(hWnd, LB_INSERTSTRING, (WPARAM)*iter, 1);
+        SendMessageW(hWnd, LB_INSERTSTRING, (WPARAM)*iter, 1);
       } else {
         InvalidateRect(hWnd, NULL, FALSE);
       }
@@ -734,7 +734,7 @@ gboolean gtk_list_store_remove(GtkListStore *list_store, GtkTreeIter *iter)
     if (list_store->view && GTK_WIDGET_REALIZED(GTK_WIDGET(list_store->view))) {
       HWND hWnd = GTK_WIDGET(list_store->view)->hWnd;
 
-      mySendMessage(hWnd, LB_DELETESTRING, (WPARAM)rowind, 0);
+      SendMessageW(hWnd, LB_DELETESTRING, (WPARAM)rowind, 0);
     }
     return TRUE;
   } else {
@@ -777,11 +777,11 @@ void gtk_tree_view_set_column_width_full(GtkTreeView *tv, gint column,
       if (column == ncols - 1)
         width = 9000;
       hdi.cxy = width;
-      if (mySendMessage(header, HDM_GETITEM, (WPARAM)column, (LPARAM)&hdi)
+      if (SendMessageW(header, HDM_GETITEM, (WPARAM)column, (LPARAM)&hdi)
           && hdi.cxy != width) {
         hdi.mask = HDI_WIDTH;
         hdi.cxy = width;
-        mySendMessage(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
+        SendMessageW(header, HDM_SETITEM, (WPARAM)column, (LPARAM)&hdi);
       }
     }
     gtk_tree_view_set_extent(tv);
@@ -806,9 +806,9 @@ void gtk_tree_selection_select_path(GtkTreeSelection *selection,
   hWnd = GTK_WIDGET(selection)->hWnd;
   if (hWnd) {
     if (selection->mode == GTK_SELECTION_SINGLE) {
-      mySendMessage(hWnd, LB_SETCURSEL, (WPARAM)row, 0);
+      SendMessageW(hWnd, LB_SETCURSEL, (WPARAM)row, 0);
     } else {
-      mySendMessage(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)row);
+      SendMessageW(hWnd, LB_SETSEL, (WPARAM)TRUE, (LPARAM)row);
     }
     gtk_tree_view_update_selection(GTK_WIDGET(selection));
   }
@@ -855,9 +855,9 @@ void gtk_tree_selection_unselect_path(GtkTreeSelection *selection,
   hWnd = GTK_WIDGET(selection)->hWnd;
   if (hWnd) {
     if (selection->mode == GTK_SELECTION_SINGLE) {
-      mySendMessage(hWnd, LB_SETCURSEL, (WPARAM)(-1), 0);
+      SendMessageW(hWnd, LB_SETCURSEL, (WPARAM)(-1), 0);
     } else {
-      mySendMessage(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)row);
+      SendMessageW(hWnd, LB_SETSEL, (WPARAM)FALSE, (LPARAM)row);
     }
     gtk_tree_view_update_selection(GTK_WIDGET(selection));
   }
@@ -908,7 +908,7 @@ void gtk_tree_view_update_selection(GtkWidget *widget)
   tv->selection = NULL;
   if (widget->hWnd) {
     if (tv->model) for (i = 0; i < tv->model->rows->len; i++) {
-      if (mySendMessage(widget->hWnd, LB_GETSEL, (WPARAM)i, 0) > 0) {
+      if (SendMessageW(widget->hWnd, LB_GETSEL, (WPARAM)i, 0) > 0) {
         tv->selection = g_list_append(tv->selection, GINT_TO_POINTER(i));
       }
     }
@@ -930,7 +930,7 @@ static LRESULT CALLBACK TreeViewHdrWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   }
 
   if (dodef) {
-    return myDefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
   } else {
     return retval;
   }
