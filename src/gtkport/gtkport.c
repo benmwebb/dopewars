@@ -45,18 +45,8 @@
 #include "mac_helpers.h"
 #endif
 
-#if CYGWIN
-#include "unicodewrap.h"
-const gchar *GTK_STOCK_OK = N_("_OK");
-const gchar *GTK_STOCK_CLOSE = N_("_Close");
-const gchar *GTK_STOCK_CANCEL = N_("_Cancel");
-const gchar *GTK_STOCK_REFRESH = N_("_Refresh");
-const gchar *GTK_STOCK_YES = N_("_Yes");
-const gchar *GTK_STOCK_NO = N_("_No");
-const gchar *GTK_STOCK_HELP = N_("_Help");
-#endif
-
 #ifdef CYGWIN
+#include "unicodewrap.h"
 
 #include <winsock2.h>
 #include <windows.h>
@@ -5121,9 +5111,9 @@ gboolean dp_g_source_remove(guint tag)
   return TRUE;
 }
 
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
+GtkWidget *gtk_button_new_with_mnemonic(const gchar *label)
 {
-  return gtk_button_new_with_label(_(label));
+  return gtk_button_new_with_label(label);
 }
 
 /* We don't really handle styles, so these are just placeholder functions */
@@ -5362,7 +5352,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   static gint retval;
   gboolean imm_return;
   const gchar *ButtonData[MB_MAX] = {
-    GTK_STOCK_OK, GTK_STOCK_CANCEL, GTK_STOCK_YES, GTK_STOCK_NO
+    N_("_OK"), N_("_Cancel"), N_("_Yes"), N_("_No")
   };
 
   imm_return = Options & MB_IMMRETURN;
@@ -5395,7 +5385,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
-      button = NewStockButton(ButtonData[i], accel_group);
+      button = gtk_button_new_with_mnemonic(_(ButtonData[i]));
       if (!imm_return) {
         g_object_set_data(G_OBJECT(button), "retval", &retval);
       }
@@ -5411,11 +5401,6 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   if (!imm_return)
     gtk_main();
   return retval;
-}
-
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
-{
-  return gtk_button_new_from_stock(label);
 }
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,

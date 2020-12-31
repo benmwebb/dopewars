@@ -635,7 +635,7 @@ void NewGameDialog(Player *play)
   hbbox = my_hbbox_new();
 
   /* Button to update metaserver information */
-  button = NewStockButton(GTK_STOCK_REFRESH, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Refresh"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(UpdateMetaServerList), NULL);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -773,12 +773,12 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 
   hbbox = my_hbbox_new();
 
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(OKSocksAuth), (gpointer)window);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Cancel"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));

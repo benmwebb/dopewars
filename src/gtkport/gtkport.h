@@ -367,6 +367,7 @@ void gtk_container_add(GtkContainer *container, GtkWidget *widget);
 void gtk_container_set_border_width(GtkContainer *container,
                                     guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);
+GtkWidget *gtk_button_new_with_mnemonic(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
 void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous);
@@ -612,10 +613,6 @@ struct _GtkUrl {
 #endif /* CYGWIN */
 
 #if CYGWIN
-extern const gchar *GTK_STOCK_OK, *GTK_STOCK_CLOSE, *GTK_STOCK_CANCEL, 
-                   *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO,
-                   *GTK_STOCK_HELP;
-
 typedef enum
 {
   GTK_MESSAGE_INFO,
@@ -643,7 +640,6 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
 void TextViewClear(GtkTextView *textview);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
