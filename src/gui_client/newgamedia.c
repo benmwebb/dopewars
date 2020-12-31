@@ -488,7 +488,7 @@ void NewGameDialog(Player *play)
 #endif
 
 #ifdef NETWORKING
-  GtkWidget *clist, *scrollwin, *table, *hbbox, *defbutton;
+  GtkWidget *clist, *scrollwin, *grid, *hbbox, *defbutton;
   GtkTreeSelection *treesel;
   gchar *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
@@ -550,15 +550,14 @@ void NewGameDialog(Player *play)
 #ifdef NETWORKING
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
-  table = gtk_table_new(2, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 4);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 4);
+  grid = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
 
   /* Prompt for hostname to connect to in GTK+ new game dialog */
   label = gtk_label_new(_("Host name"));
 
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
   entry = stgam.hostname = gtk_entry_new();
 
   ServerEntry = "localhost";
@@ -573,17 +572,18 @@ void NewGameDialog(Player *play)
     ServerEntry = ServerName;
 
   gtk_entry_set_text(GTK_ENTRY(entry), ServerEntry);
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
+  gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
+  gtk_widget_set_hexpand(entry, TRUE);
   label = gtk_label_new(_("Port"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
   entry = stgam.port = gtk_entry_new();
   text = g_strdup_printf("%d", Port);
   gtk_entry_set_text(GTK_ENTRY(entry), text);
   g_free(text);
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
+  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
+  gtk_widget_set_hexpand(entry, TRUE);
 
-  gtk_box_pack_start(GTK_BOX(vbox2), table, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox2), grid, FALSE, FALSE, 0);
 
   button = gtk_button_new_with_label("");
   /* Button to connect to a named dopewars server */
@@ -719,7 +719,7 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
 
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *table, *hbbox;
+  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *grid, *hbbox;
   GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -742,19 +742,20 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  table = gtk_table_new(2, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 10);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  grid = gtk_grid_new();
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   label = gtk_label_new("User name:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 0, 1);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
 
   entry = gtk_entry_new();
   g_object_set_data(G_OBJECT(window), "username", (gpointer)entry);
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
+  gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
+  gtk_widget_set_hexpand(entry, TRUE);
 
   label = gtk_label_new("Password:");
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
+  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
 
   entry = gtk_entry_new();
   g_object_set_data(G_OBJECT(window), "password", (gpointer)entry);
@@ -764,9 +765,10 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
 #endif
 
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
+  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
+  gtk_widget_set_hexpand(entry, TRUE);
 
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
