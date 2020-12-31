@@ -2309,7 +2309,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-  vpaned = gtk_vpaned_new();
+  vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 
   text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
   make_tags(GTK_TEXT_VIEW(text));

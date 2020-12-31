@@ -493,8 +493,7 @@ void gtk_widget_remove_accelerator(GtkWidget *widget,
                                    GtkAccelGroup *accel_group,
                                    guint accel_key, guint accel_mods);
 extern const GtkType GTK_TYPE_WINDOW, GTK_TYPE_MENU_BAR;
-GtkWidget *gtk_vpaned_new();
-GtkWidget *gtk_hpaned_new();
+GtkWidget *gtk_paned_new(GtkOrientation orientation);
 void gtk_paned_add1(GtkPaned *paned, GtkWidget *child);
 void gtk_paned_add2(GtkPaned *paned, GtkWidget *child);
 void gtk_paned_pack1(GtkPaned *paned, GtkWidget *child, gboolean resize,
@@ -585,6 +584,7 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 GtkWidget *gtk_button_box_new(GtkOrientation orientation);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
 GtkWidget *gtk_separator_new(GtkOrientation orientation);
+GtkWidget *gtk_paned_new(GtkOrientation orientation);
 #endif
 
 /* Defines for GtkMessageBox options */

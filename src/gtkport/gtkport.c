@@ -4367,24 +4367,18 @@ void gtk_widget_remove_accelerator(GtkWidget *widget,
 {
 }
 
-GtkWidget *gtk_vpaned_new()
+GtkWidget *gtk_paned_new(GtkOrientation orientation)
 {
-  GtkVPaned *vpaned;
+  GtkPaned *paned;
 
-  vpaned = GTK_VPANED(GtkNewObject(&GtkVPanedClass));
-  GTK_PANED(vpaned)->handle_size = 5;
-  GTK_PANED(vpaned)->handle_pos = PANED_STARTPOS;
-  return GTK_WIDGET(vpaned);
-}
-
-GtkWidget *gtk_hpaned_new()
-{
-  GtkHPaned *hpaned;
-
-  hpaned = GTK_HPANED(GtkNewObject(&GtkHPanedClass));
-  GTK_PANED(hpaned)->handle_size = 5;
-  GTK_PANED(hpaned)->handle_pos = PANED_STARTPOS;
-  return GTK_WIDGET(hpaned);
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    paned = GTK_PANED(GtkNewObject(&GtkHPanedClass));
+  } else {
+    paned = GTK_PANED(GtkNewObject(&GtkVPanedClass));
+  }
+  GTK_PANED(paned)->handle_size = 5;
+  GTK_PANED(paned)->handle_pos = PANED_STARTPOS;
+  return GTK_WIDGET(paned);
 }
 
 static void gtk_paned_pack(GtkPaned *paned, gint pos, GtkWidget *child,
@@ -5250,6 +5244,15 @@ GtkWidget *gtk_separator_new(GtkOrientation orientation)
     return gtk_hseparator_new();
   } else {
     return gtk_vseparator_new();
+  }
+}
+
+GtkWidget *gtk_paned_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hpaned_new();
+  } else {
+    return gtk_vpaned_new();
   }
 }
 
