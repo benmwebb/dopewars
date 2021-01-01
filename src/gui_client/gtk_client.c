@@ -658,7 +658,6 @@ void AddScoreToDialog(char *Data)
   gchar **spl1, **spl2;
   int index, slen;
   gboolean bold;
-  GtkStyle *style = NULL;
 
   if (!HiScoreDialog.dialog)
     return;
@@ -683,20 +682,9 @@ void AddScoreToDialog(char *Data)
     g_strfreev(spl1);
     return;
   }
-  label = gtk_label_new(spl1[0]);
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+  label = make_bold_label(spl1[0], bold);
+  set_label_alignment(label, 1.0, 0.5);
   dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 0, index, 1, 1, TRUE);
-  if (bold) {
-    GdkColor color;
-
-    color.red = 0;
-    color.green = 0;
-    color.blue = 0xDDDD;
-    color.pixel = 0;
-    style = gtk_style_new();
-    style->fg[GTK_STATE_NORMAL] = color;
-    gtk_widget_set_style(label, style);
-  }
   gtk_widget_show(label);
 
   /* Remove any leading whitespace from the remainder, since g_strsplit
@@ -710,12 +698,9 @@ void AddScoreToDialog(char *Data)
     g_strfreev(spl2);
     return;
   }
-  label = gtk_label_new(spl2[0]);
-  gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
+  label = make_bold_label(spl2[0], bold);
+  set_label_alignment(label, 0.5, 0.5);
   dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 1, index, 1, 1, TRUE);
-  if (bold) {
-    gtk_widget_set_style(label, style);
-  }
   gtk_widget_show(label);
 
   /* The remainder is the name, terminated with (R.I.P.) if the player
@@ -731,25 +716,19 @@ void AddScoreToDialog(char *Data)
 
   /* Check for (R.I.P.) suffix, and add it to the 4th column if found */
   if (slen > 8 && spl2[1][slen - 1] == ')' && spl2[1][slen - 8] == '(') {
-    label = gtk_label_new(&spl2[1][slen - 8]);
-    gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
+    label = make_bold_label(&spl2[1][slen - 8], bold);
+    set_label_alignment(label, 0.5, 0.5);
     dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 3, index, 1, 1,
                        TRUE);
-    if (bold) {
-      gtk_widget_set_style(label, style);
-    }
     gtk_widget_show(label);
     spl2[1][slen - 8] = '\0';   /* Remove suffix from the player name */
   }
 
   /* Finally, add in what's left of the player name */
   g_strchomp(spl2[1]);
-  label = gtk_label_new(spl2[1]);
-  gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
+  label = make_bold_label(spl2[1], bold);
+  set_label_alignment(label, 0, 0.5);
   dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 2, index, 1, 1, TRUE);
-  if (bold) {
-    gtk_widget_set_style(label, style);
-  }
   gtk_widget_show(label);
 
   g_strfreev(spl1);

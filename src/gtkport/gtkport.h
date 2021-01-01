@@ -668,4 +668,9 @@ void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
                         gint left, gint top,
                         gint width, gint height, gboolean expand);
 
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign);
+
+/* Make a new GtkLabel, with the text possibly bold */
+GtkWidget *make_bold_label(const char *text, gboolean bold);
+
 #endif /* __GTKPORT_H__ */

@@ -5494,6 +5494,28 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   return ret;
 }
 
+#endif /* CYGWIN */
+
+/* Make a new GtkLabel, with the text possibly bold */
+GtkWidget *make_bold_label(const char *text, gboolean bold)
+{
+#ifdef CYGWIN
+  /* We don't support bold text on Windows yet */
+  return gtk_label_new(text);
+#else
+  if (bold) {
+    GtkWidget *label = gtk_label_new(NULL);
+    gchar *markup = g_markup_printf_escaped(
+         "<span font_weight=\"bold\" fgcolor=\"#0000DD\">%s</span>", text);
+    gtk_label_set_markup(GTK_LABEL(label), markup);
+    g_free(markup);
+    return label;
+  } else {
+    return gtk_label_new(text);
+  }
+#endif
+}
+
 #if !CYGWIN && \
   (GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 4))
 /* GtkGrid does not take a size, unlike GtkTable */
@@ -5534,8 +5556,19 @@ void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
 }
 #endif
 
-
-#endif /* CYGWIN */
+#if !CYGWIN && \
+  (GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2))
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign)
+{
+  gtk_label_set_xalign(GTK_LABEL(widget), xalign);
+  gtk_label_set_yalign(GTK_LABEL(widget), yalign);
+}
+#else
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign)
+{
+  gtk_misc_set_alignment(GTK_MISC(widget), xalign, yalign);
+}
+#endif
 
 #if CYGWIN
 void TextViewAppend(GtkTextView *textview, const gchar *text,
