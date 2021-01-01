@@ -380,7 +380,7 @@ else
    dnl Check for socket and select even if networking gets manually
    dnl disabled below, since select is used if available for
    dnl millisecond sleeping
-   AC_SEARCH_LIBS(socket,socket)
+   AC_SEARCH_LIBS(socket,socket network)
    AC_SEARCH_LIBS(gethostbyname,nsl socket)
    AC_CHECK_FUNCS(socket gethostbyname select)
    if test "$ac_cv_func_select" = "yes" ; then
