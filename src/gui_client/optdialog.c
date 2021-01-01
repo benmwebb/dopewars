@@ -284,14 +284,13 @@ static void AddStructConfig(GtkWidget *grid, int row, gchar *structname,
     GtkWidget *check;
 
     check = gtk_check_button_new_with_label(_(member->label));
-    gtk_grid_attach(GTK_GRID(grid), check, 0, row, 2, 1);
-    gtk_widget_set_hexpand(check, TRUE);
+    dp_gtk_grid_attach(GTK_GRID(grid), check, 0, row, 2, 1, TRUE);
     AddConfigWidget(check, ind);
   } else {
     GtkWidget *label, *entry;
 
     label = gtk_label_new(_(member->label));
-    gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
     if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
       GtkAdjustment *spin_adj = (GtkAdjustment *)
           gtk_adjustment_new(gvar->MinVal, gvar->MinVal, gvar->MaxVal,
@@ -300,8 +299,7 @@ static void AddStructConfig(GtkWidget *grid, int row, gchar *structname,
     } else {
       entry = gtk_entry_new();
     }
-    gtk_grid_attach(GTK_GRID(grid), entry, 1, row, 1, 1);
-    gtk_widget_set_hexpand(entry, TRUE);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, row, 1, 1, TRUE);
     AddConfigWidget(entry, ind);
   }
 }
@@ -762,7 +760,7 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(nummembers + 1, 2, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
@@ -857,64 +855,55 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   notebook = gtk_notebook_new();
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(8, 3, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   check = NewConfigCheck("Sanitized", _("Remove drug references"));
-  gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 1, 1, FALSE);
 
   check = gtk_check_button_new_with_label(_("Unicode config file"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
-  gtk_grid_attach(GTK_GRID(grid), check, 1, 0, 2, 1);
-  gtk_widget_set_hexpand(check, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 1, 0, 2, 1, TRUE);
   g_object_set_data(G_OBJECT(dialog), "unicode_check", check);
 
   label = gtk_label_new(_("Game length (turns)"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("NumTurns");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 2, 1, TRUE);
 
   label = gtk_label_new(_("Starting cash"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, FALSE);
   entry = NewConfigEntry("StartCash");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 2, 1, TRUE);
 
   label = gtk_label_new(_("Starting debt"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1, FALSE);
   entry = NewConfigEntry("StartDebt");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 3, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 3, 2, 1, TRUE);
 
   label = gtk_label_new(_("Currency symbol"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1, FALSE);
   entry = NewConfigEntry("Currency.Symbol");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 1, 1, TRUE);
   check = NewConfigCheck("Currency.Prefix", _("Symbol prefixes prices"));
-  gtk_grid_attach(GTK_GRID(grid), check, 2, 4, 1, 1);
-  gtk_widget_set_hexpand(check, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 2, 4, 1, 1, TRUE);
 
   label = gtk_label_new(_("Name of one bitch"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1, FALSE);
   entry = NewConfigEntry("Names.Bitch");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 2, 1, TRUE);
 
   label = gtk_label_new(_("Name of several bitches"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1, FALSE);
   entry = NewConfigEntry("Names.Bitches");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 6, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 6, 2, 1, TRUE);
 
 #ifndef CYGWIN
   label = gtk_label_new(_("Web browser"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 7, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 7, 1, 1, FALSE);
   entry = NewConfigEntry("WebBrowser");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 7, 2, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 7, 2, 1, TRUE);
 #endif
 
   gtk_container_set_border_width(GTK_CONTAINER(grid), 7);
@@ -936,20 +925,18 @@ void OptDialog(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox2), hsep, FALSE, FALSE, 0);
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(2, 2, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
   label = gtk_label_new(_("Expensive string 1"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, FALSE);
   entry = NewConfigEntry("Drugs.ExpensiveStr1");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
 
   label = gtk_label_new(_("Expensive string 2"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("Drugs.ExpensiveStr2");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
   gtk_box_pack_start(GTK_BOX(vbox2), grid, FALSE, FALSE, 0);
 
   label = gtk_label_new(_("Drugs"));
@@ -966,38 +953,33 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
 #ifdef NETWORKING
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(6, 4, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   check = NewConfigCheck("MetaServer.Active",
                          _("Server reports to metaserver"));
-  gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 2, 1);
-  gtk_widget_set_hexpand(check, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 2, 1, TRUE);
 
 #ifdef CYGWIN
   check = NewConfigCheck("MinToSysTray", _("Minimize to System Tray"));
-  gtk_grid_attach(GTK_GRID(grid), check, 2, 0, 2, 1);
-  gtk_widget_set_hexpand(check, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 2, 0, 2, 1, TRUE);
 #endif
 
   label = gtk_label_new(_("Metaserver URL"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("MetaServer.URL");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 3, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 3, 1, TRUE);
 
   label = gtk_label_new(_("Comment"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1, FALSE);
   entry = NewConfigEntry("MetaServer.Comment");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 3, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 3, 1, TRUE);
 
   label = gtk_label_new(_("MOTD (welcome message)"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1, FALSE);
   entry = NewConfigEntry("ServerMOTD");
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 3, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 3, 1, TRUE);
 
   gtk_container_set_border_width(GTK_CONTAINER(grid), 7);
   label = gtk_label_new(_("Server"));

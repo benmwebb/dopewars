@@ -550,14 +550,14 @@ void NewGameDialog(Player *play)
 #ifdef NETWORKING
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
   gtk_container_set_border_width(GTK_CONTAINER(vbox2), 8);
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(2, 2, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
 
   /* Prompt for hostname to connect to in GTK+ new game dialog */
   label = gtk_label_new(_("Host name"));
 
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, FALSE);
   entry = stgam.hostname = gtk_entry_new();
 
   ServerEntry = "localhost";
@@ -572,16 +572,14 @@ void NewGameDialog(Player *play)
     ServerEntry = ServerName;
 
   gtk_entry_set_text(GTK_ENTRY(entry), ServerEntry);
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
   label = gtk_label_new(_("Port"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = stgam.port = gtk_entry_new();
   text = g_strdup_printf("%d", Port);
   gtk_entry_set_text(GTK_ENTRY(entry), text);
   g_free(text);
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
 
   gtk_box_pack_start(GTK_BOX(vbox2), grid, FALSE, FALSE, 0);
 
@@ -742,20 +740,19 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(2, 2, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 10);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   label = gtk_label_new("User name:");
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, FALSE);
 
   entry = gtk_entry_new();
   g_object_set_data(G_OBJECT(window), "username", (gpointer)entry);
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
 
   label = gtk_label_new("Password:");
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
 
   entry = gtk_entry_new();
   g_object_set_data(G_OBJECT(window), "password", (gpointer)entry);
@@ -765,8 +762,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
 #endif
 
-  gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1);
-  gtk_widget_set_hexpand(entry, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
 
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
 

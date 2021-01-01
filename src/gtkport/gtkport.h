@@ -381,8 +381,24 @@ void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj);
 GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
-GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
-void gtk_table_resize(GtkTable *table, guint rows, guint cols);
+
+/* GtkTable implementation */
+GtkWidget *dp_gtk_table_new(guint rows, guint cols, gboolean homogeneous);
+void dp_gtk_table_resize(GtkTable *table, guint rows, guint cols);
+void dp_gtk_table_attach(GtkTable *table, GtkWidget *widget,
+                         guint left_attach, guint right_attach,
+                         guint top_attach, guint bottom_attach,
+                         GtkAttachOptions xoptions, GtkAttachOptions yoptions,
+                         guint xpadding, guint ypadding);
+void dp_gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
+                                  guint left_attach, guint right_attach,
+                                  guint top_attach, guint bottom_attach);
+void dp_gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
+void dp_gtk_table_set_col_spacing(GtkTable *table, guint column,
+                                  guint spacing);
+void dp_gtk_table_set_row_spacings(GtkTable *table, guint spacing);
+void dp_gtk_table_set_col_spacings(GtkTable *table, guint spacing);
+
 GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
                               gint new_text_length, gint *position);
@@ -401,19 +417,6 @@ void gtk_text_freeze(GtkText *text);
 void gtk_text_thaw(GtkText *text);
 GtkTextBuffer *gtk_text_view_get_buffer(GtkText *text);
 void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...);
-void gtk_table_attach(GtkTable *table, GtkWidget *widget,
-                      guint left_attach, guint right_attach,
-                      guint top_attach, guint bottom_attach,
-                      GtkAttachOptions xoptions, GtkAttachOptions yoptions,
-                      guint xpadding, guint ypadding);
-void gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
-                               guint left_attach, guint right_attach,
-                               guint top_attach, guint bottom_attach);
-void gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
-void gtk_table_set_col_spacing(GtkTable *table, guint column,
-                               guint spacing);
-void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
-void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
                         gboolean Fill, gint Padding);
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button);
@@ -644,5 +647,25 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
 GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg);
+
+/* GtkTable is used in GTK2 (and early GTK3) but GtkGrid is used in later
+ * GTK3 and GTK4. Provide an interface similar to GtkGrid that internally
+ * uses either GtkTable or GtkGrid. Use a dp_ prefix to avoid clashes with
+ * the real GtkTable */
+#if CYGWIN || GTK_MAJOR_VERSION < 3 \
+    || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION < 4)
+#define GTK_GRID GTK_TABLE
+typedef GtkTable GtkGrid;
+#define gtk_grid_set_row_spacing(grid, spacing) gtk_table_set_row_spacings(grid, spacing)
+#define gtk_grid_set_column_spacing(grid, spacing) gtk_table_set_col_spacings(grid, spacing)
+#define dp_gtk_grid_resize(grid, rows, cols) gtk_table_resize(grid, rows, cols)
+#else
+#define dp_gtk_grid_resize(grid, rows, cols) {}
+#endif
+
+GtkWidget *dp_gtk_grid_new(guint rows, guint columns, gboolean homogeneous);
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+                        gint width, gint height, gboolean expand);
 
 #endif /* __GTKPORT_H__ */

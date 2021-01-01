@@ -5494,6 +5494,47 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   return ret;
 }
 
+#if !CYGWIN && \
+  (GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 4))
+/* GtkGrid does not take a size, unlike GtkTable */
+GtkWidget *dp_gtk_grid_new(guint rows, guint cols, gboolean homogeneous)
+{
+  GtkWidget *grid = gtk_grid_new();
+  if (homogeneous) {
+    gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  }
+  return grid;
+}
+
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+			gint width, gint height, gboolean expand)
+{
+  gtk_grid_attach(grid, child, left, top, width, height);
+  if (expand) {
+    gtk_widget_set_hexpand(child, TRUE);
+  }
+}
+#else
+/* Implementation for older GTK or Win32, using GtkTable */
+GtkWidget *dp_gtk_grid_new(guint rows, guint columns, gboolean homogeneous)
+{
+  GtkWidget *table = gtk_table_new(rows, columns, homogeneous);
+  return table;
+}
+
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+			gint width, gint height, gboolean expand)
+{
+  gtk_table_attach(grid, child, left, left + width, top, top + height,
+		   expand ? (GTK_EXPAND | GTK_FILL) : GTK_SHRINK,
+		   expand ? (GTK_EXPAND | GTK_FILL) : GTK_SHRINK, 0, 0);
+}
+#endif
+
+
 #endif /* CYGWIN */
 
 #if CYGWIN

@@ -635,7 +635,7 @@ void PrepareHighScoreDialog(void)
                                GTK_WINDOW(ClientData.window));
 
   HiScoreDialog.vbox = vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  HiScoreDialog.grid = grid = gtk_grid_new();
+  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE, 4, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 30);
 
@@ -685,8 +685,7 @@ void AddScoreToDialog(char *Data)
   }
   label = gtk_label_new(spl1[0]);
   gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 0, index, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 0, index, 1, 1, TRUE);
   if (bold) {
     GdkColor color;
 
@@ -713,8 +712,7 @@ void AddScoreToDialog(char *Data)
   }
   label = gtk_label_new(spl2[0]);
   gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
-  gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 1, index, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 1, index, 1, 1, TRUE);
   if (bold) {
     gtk_widget_set_style(label, style);
   }
@@ -735,8 +733,8 @@ void AddScoreToDialog(char *Data)
   if (slen > 8 && spl2[1][slen - 1] == ')' && spl2[1][slen - 8] == '(') {
     label = gtk_label_new(&spl2[1][slen - 8]);
     gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
-    gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 3, index, 1, 1);
-    gtk_widget_set_hexpand(label, TRUE);
+    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 3, index, 1, 1,
+                       TRUE);
     if (bold) {
       gtk_widget_set_style(label, style);
     }
@@ -748,8 +746,7 @@ void AddScoreToDialog(char *Data)
   g_strchomp(spl2[1]);
   label = gtk_label_new(spl2[1]);
   gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-  gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 2, index, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 2, index, 1, 1, TRUE);
   if (bold) {
     gtk_widget_set_style(label, style);
   }
@@ -923,13 +920,12 @@ static void CreateFightDialog(void)
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(2, 4, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 7);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-  gtk_grid_attach(GTK_GRID(grid), hsep, 0, 1, 3, 1);
-  gtk_widget_set_hexpand(hsep, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), hsep, 0, 1, 3, 1, TRUE);
   gtk_widget_show_all(grid);
   gtk_box_pack_start(GTK_BOX(vbox), grid, FALSE, FALSE, 0);
   g_object_set_data(G_OBJECT(dialog), "grid", grid);
@@ -1025,6 +1021,7 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
       g_array_set_size(combatants, i + 1);
       compt = &g_array_index(combatants, struct combatant, i);
 
+      dp_gtk_grid_resize(GTK_GRID(grid), i + 2, 4);
       RowIndex = i + 1;
     }
   } else {
@@ -1063,16 +1060,18 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     /* Display of the current player's name during combat */
     compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
 
-    gtk_grid_attach(GTK_GRID(grid), compt->name, 0, RowIndex, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->name, 0, RowIndex, 1, 1, FALSE);
     compt->bitches = gtk_label_new(DefendBitches >= 0 ? BitchText : "");
-    gtk_grid_attach(GTK_GRID(grid), compt->bitches, 1, RowIndex, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->bitches, 1, RowIndex, 1, 1,
+                       FALSE);
     compt->healthprog = gtk_progress_bar_new();
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
                                   ProgPercent);
-    gtk_grid_attach(GTK_GRID(grid), compt->healthprog, 2, RowIndex, 1, 1);
-    gtk_widget_set_hexpand(compt->healthprog, TRUE);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->healthprog, 2, RowIndex, 1, 1,
+                       TRUE);
     compt->healthlabel = gtk_label_new(HealthText);
-    gtk_grid_attach(GTK_GRID(grid), compt->healthlabel, 3, RowIndex, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->healthlabel, 3, RowIndex, 1, 1,
+                       FALSE);
     gtk_widget_show(compt->name);
     gtk_widget_show(compt->bitches);
     gtk_widget_show(compt->healthprog);
@@ -1495,9 +1494,7 @@ void Jet(GtkWidget *parent)
     row++;
   }
 
-  grid = gtk_grid_new();
-  gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
-  gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  grid = dp_gtk_grid_new(row, col, TRUE);
 
   for (i = 0; i < NumLocation; i++) {
     if (i < 9) {
@@ -1534,7 +1531,7 @@ void Jet(GtkWidget *parent)
     g_object_set_data(G_OBJECT(button), "dialog", dialog);
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(JetCallback), GINT_TO_POINTER(i));
-    gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1, TRUE);
   }
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
 
@@ -2089,77 +2086,61 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
 {
   GtkWidget *grid, *label;
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(3, 6, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 3);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
   gtk_container_set_border_width(GTK_CONTAINER(grid), 3);
 
   label = Status->Location = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1, TRUE);
 
   label = Status->Date = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 2, 0, 2, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 0, 2, 1, TRUE);
 
   /* Available space label in GTK+ client status display */
   label = Status->SpaceName = gtk_label_new(_("Space"));
 
-  gtk_grid_attach(GTK_GRID(grid), label, 4, 0, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 0, 1, 1, TRUE);
   label = Status->SpaceValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 5, 0, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 0, 1, 1, TRUE);
 
   /* Player's cash label in GTK+ client status display */
   label = Status->CashName = gtk_label_new(_("Cash"));
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, TRUE);
 
   label = Status->CashValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 1, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 1, 1, 1, TRUE);
 
   /* Player's debt label in GTK+ client status display */
   label = Status->DebtName = gtk_label_new(_("Debt"));
-  gtk_grid_attach(GTK_GRID(grid), label, 2, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 1, 1, 1, TRUE);
 
   label = Status->DebtValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 3, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 1, 1, 1, TRUE);
 
   /* Player's bank balance label in GTK+ client status display */
   label = Status->BankName = gtk_label_new(_("Bank"));
-  gtk_grid_attach(GTK_GRID(grid), label, 4, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 1, 1, 1, TRUE);
 
   label = Status->BankValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 5, 1, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 1, 1, 1, TRUE);
 
   label = Status->GunsName = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, TRUE);
   label = Status->GunsValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 1, TRUE);
 
   label = Status->BitchesName = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 1, TRUE);
   label = Status->BitchesValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 3, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 2, 1, 1, TRUE);
 
   /* Player's health label in GTK+ client status display */
   label = Status->HealthName = gtk_label_new(_("Health"));
-  gtk_grid_attach(GTK_GRID(grid), label, 4, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 2, 1, 1, TRUE);
 
   label = Status->HealthValue = gtk_label_new(NULL);
-  gtk_grid_attach(GTK_GRID(grid), label, 5, 2, 1, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 2, 1, 1, TRUE);
   return grid;
 }
 
@@ -2456,7 +2437,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   g_free(VersionStr);
 
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(rows, cols, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 3);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
   for (i = 0; i < rows; i++) {
@@ -2468,8 +2449,7 @@ void display_intro(GtkWidget *widget, gpointer data)
           } else {
             label = gtk_label_new(table_data[i][j]);
           }
-          gtk_grid_attach(GTK_GRID(grid), label, j, i, 1, 1);
-	  gtk_widget_set_hexpand(label, TRUE);
+          dp_gtk_grid_attach(GTK_GRID(grid), label, j, i, 1, 1, TRUE);
         }
       }
     }
@@ -2607,15 +2587,14 @@ void TransferDialog(gboolean Debt)
                                GTK_WINDOW(ClientData.window));
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  grid = gtk_grid_new();
+  grid = dp_gtk_grid_new(4, 3, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
 
   /* Display of player's cash in bank or loan shark dialog */
   dpg_string_printf(text, _("Cash: %P"), ClientData.Play->Cash);
   label = gtk_label_new(text->str);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 3, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 3, 1, TRUE);
 
   if (Debt) {
     /* Display of player's debt in loan shark dialog */
@@ -2625,24 +2604,23 @@ void TransferDialog(gboolean Debt)
     dpg_string_printf(text, _("Bank: %P"), ClientData.Play->Bank);
   }
   label = gtk_label_new(text->str);
-  gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1);
-  gtk_widget_set_hexpand(label, TRUE);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1, TRUE);
 
   g_object_set_data(G_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
   if (Debt) {
     /* Prompt for paying back a loan */
     label = gtk_label_new(_("Pay back:"));
-    gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
   } else {
     /* Radio button selected if you want to pay money into the bank */
     radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
     g_object_set_data(G_OBJECT(dialog), "deposit", radio);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
-    gtk_grid_attach(GTK_GRID(grid), radio, 0, 2, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 2, 1, 1, FALSE);
 
     /* Radio button selected if you want to withdraw money from the bank */
     radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
-    gtk_grid_attach(GTK_GRID(grid), radio, 0, 3, 1, 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 3, 1, 1, FALSE);
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
@@ -2650,14 +2628,13 @@ void TransferDialog(gboolean Debt)
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
-  gtk_widget_set_hexpand(entry, TRUE);
 
   if (Currency.Prefix) {
-    gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 2);
-    gtk_grid_attach(GTK_GRID(grid), entry, 2, 2, 1, 2);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 2, FALSE);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 2, 2, 1, 2, TRUE);
   } else {
-    gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 2);
-    gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 1, 2);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 2, FALSE);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 1, 2, TRUE);
   }
 
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
