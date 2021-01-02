@@ -383,21 +383,21 @@ GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
 
 /* GtkTable implementation */
-GtkWidget *dp_gtk_table_new(guint rows, guint cols, gboolean homogeneous);
-void dp_gtk_table_resize(GtkTable *table, guint rows, guint cols);
-void dp_gtk_table_attach(GtkTable *table, GtkWidget *widget,
-                         guint left_attach, guint right_attach,
-                         guint top_attach, guint bottom_attach,
-                         GtkAttachOptions xoptions, GtkAttachOptions yoptions,
-                         guint xpadding, guint ypadding);
-void dp_gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
-                                  guint left_attach, guint right_attach,
-                                  guint top_attach, guint bottom_attach);
-void dp_gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
-void dp_gtk_table_set_col_spacing(GtkTable *table, guint column,
-                                  guint spacing);
-void dp_gtk_table_set_row_spacings(GtkTable *table, guint spacing);
-void dp_gtk_table_set_col_spacings(GtkTable *table, guint spacing);
+GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
+void gtk_table_resize(GtkTable *table, guint rows, guint cols);
+void gtk_table_attach(GtkTable *table, GtkWidget *widget,
+                      guint left_attach, guint right_attach,
+                      guint top_attach, guint bottom_attach,
+                      GtkAttachOptions xoptions, GtkAttachOptions yoptions,
+                      guint xpadding, guint ypadding);
+void gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
+                               guint left_attach, guint right_attach,
+                               guint top_attach, guint bottom_attach);
+void gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
+void gtk_table_set_col_spacing(GtkTable *table, guint column,
+                               guint spacing);
+void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
+void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 
 GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
