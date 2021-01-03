@@ -1,6 +1,6 @@
 /************************************************************************
  * gtktypes.h     Custom types for gtkport code                         *
- * Copyright (C)  2002-2020  Ben Webb                                   *
+ * Copyright (C)  2002-2021  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
