@@ -32,6 +32,7 @@
 #endif
 #include <ctype.h>
 #include <signal.h>
+#include <assert.h>
 #include <errno.h>
 #include <glib.h>
 #include "configfile.h"
@@ -1589,6 +1590,22 @@ void Bank(Player *Play)
   } while (action != 'L' && money != 0);
 }
 
+/* Output a single Unicode character */
+static void addunich(gunichar ch, int attr)
+{
+  if (LocaleIsUTF8) {
+    char utf8buf[20];
+    gint utf8len = g_unichar_to_utf8(ch, utf8buf);
+    utf8buf[utf8len] = '\0';
+    attrset(attr);
+    addstr(utf8buf);
+  } else {
+    addch((guchar)ch | attr);
+  }
+}
+
+#define MAX_GET_KEY 30
+
 /* 
  * Waits for keyboard input; will only accept a key listed in the
  * translated form of the "orig_allowed" string.
@@ -1603,8 +1620,9 @@ void Bank(Player *Play)
 int GetKey(const char *orig_allowed, gboolean AllowOther,
            gboolean PrintAllowed, gboolean ExpandOut)
 {
-  int ch;
+  int ch, i, num_allowed;
   guint AllowInd, WordInd;
+  gunichar allowed[MAX_GET_KEY];
 
   /* Expansions of the single-letter keypresses for the benefit of the
      user. i.e. "Yes" is printed for the key "Y" etc. You should indicate
@@ -1619,17 +1637,33 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
   /* Translate allowed keys
    * Note that allowed is in the locale encoding, usually UTF-8, while
    * orig_allowed is plain ASCII */
-  char *allowed = _(orig_allowed);
+  char *allowed_str = _(orig_allowed);
+
+  num_allowed = strlen(orig_allowed);
+  assert(num_allowed <= MAX_GET_KEY);
+  assert(strcharlen(allowed_str) == num_allowed);
+
+  if (num_allowed == 0)
+    return 0;
+
+  /* Get Unicode allowed keys */
+  if (LocaleIsUTF8) {
+    const char *pt;
+    for (pt = allowed_str, i = 0; pt && *pt; pt = g_utf8_next_char(pt), ++i) {
+      allowed[i] = g_utf8_get_char(pt);
+    }
+  } else {
+    for (i = 0; i < num_allowed; ++i) {
+      allowed[i] = (guchar)allowed_str[i];
+    }
+  }
 
   curs_set(1);
   ch = '\0';
 
-  if (!allowed || strlen(allowed) == 0)
-    return 0;
-
   if (PrintAllowed) {
     addch('[' | TextAttr);
-    for (AllowInd = 0; AllowInd < strlen(allowed); AllowInd++) {
+    for (AllowInd = 0; AllowInd < num_allowed; AllowInd++) {
       if (AllowInd > 0)
         addch('/' | TextAttr);
       WordInd = 0;
@@ -1643,8 +1677,9 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
         if (*trWord) trWord++;
         attrset(TextAttr);
         addstr(trWord);
-      } else
-        addch((guchar)allowed[AllowInd] | TextAttr);
+      } else {
+        addunich(allowed[AllowInd], TextAttr);
+      }
     }
     addch(']' | TextAttr);
     addch(' ' | TextAttr);
@@ -1652,7 +1687,7 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
 
   do {
     ch = bgetch();
-    ch = toupper(ch);
+    ch = LocaleIsUTF8 ? g_unichar_toupper(ch) : toupper(ch);
     /* Handle scrolling of message window */
     if (ch == '-') {
       scroll_msg_area_up();
@@ -1661,9 +1696,9 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
       scroll_msg_area_down();
       continue;
     }
-    for (AllowInd = 0; AllowInd < strlen(allowed); AllowInd++) {
+    for (AllowInd = 0; AllowInd < num_allowed; AllowInd++) {
       if (allowed[AllowInd] == ch) {
-        addch((guint)ch | TextAttr);
+        addunich(allowed[AllowInd], TextAttr);
         curs_set(0);
         return orig_allowed[AllowInd];
       }
