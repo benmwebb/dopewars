@@ -1591,8 +1591,9 @@ void Bank(Player *Play)
 
 /* 
  * Waits for keyboard input; will only accept a key listed in the
- * "allowed" string. This string may have been translated; thus
- * the "orig_allowed" string contains the untranslated keys.
+ * "allowed" string (in the locale encoding, usually UTF-8). This string
+ * may have been translated; thus the "orig_allowed" string (in ASCII)
+ * contains the untranslated keys.
  * Returns the untranslated key corresponding to the key pressed
  * (e.g. if allowed[2] is pressed, orig_allowed[2] is returned)
  * Case insensitive. If "AllowOther" is TRUE, keys other than the
@@ -1605,7 +1606,7 @@ int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
            gboolean PrintAllowed, gboolean ExpandOut)
 {
   int ch;
-  guint AllowInd, WordInd, i;
+  guint AllowInd, WordInd;
 
   /* Expansions of the single-letter keypresses for the benefit of the
      user. i.e. "Yes" is printed for the key "Y" etc. You should indicate
@@ -1634,9 +1635,11 @@ int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
         WordInd++;
 
       if (ExpandOut && WordInd < numWords) {
-        trWord = _(Words[WordInd]);
-        for (i = 2; i < strlen(trWord); i++)
-          addch((guchar)trWord[i] | TextAttr);
+        trWord = strchr(_(Words[WordInd]), ':');
+        /* Print everything after the colon */
+        if (*trWord) trWord++;
+        attrset(TextAttr);
+        addstr(trWord);
       } else
         addch((guchar)allowed[AllowInd] | TextAttr);
     }
