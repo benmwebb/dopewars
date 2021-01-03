@@ -77,7 +77,7 @@ static FightPoint fp;
 static void display_intro(void);
 static void ResizeHandle(int sig);
 static void CheckForResize(Player *Play);
-static int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
+static int GetKey(const char *orig_allowed, gboolean AllowOther,
                   gboolean PrintAllowed, gboolean ExpandOut);
 static void clear_bottom(void), clear_screen(void);
 static void clear_line(int line), clear_exceptfor(int skip);
@@ -517,7 +517,7 @@ static gboolean SelectServerFromMetaServer(Player *Play, GString *errstr)
        if you translate them, keep the keys in the same order (N>ext,
        P>revious, S>elect) as they are here, otherwise they'll do the
        wrong things. */
-    c = GetKey(_("NPS"), "NPS", FALSE, FALSE, FALSE);
+    c = GetKey(N_("NPS"), FALSE, FALSE, FALSE);
     switch (c) {
     case 'S':
       AssignName(&ServerName, ThisServer->Name);
@@ -735,7 +735,7 @@ static gboolean ConnectToServer(Player *Play)
 
       /* Translate these 4 keys in line with the above options, keeping
          the order the same (C>onnect, L>ist, Q>uit, P>lay single-player) */
-      c = GetKey(_("CLQP"), "CLQP", FALSE, FALSE, FALSE);
+      c = GetKey(N_("CLQP"), FALSE, FALSE, FALSE);
       switch (c) {
       case 'Q':
         g_string_free(errstr, TRUE);
@@ -1033,7 +1033,7 @@ static void GiveErrand(Player *Play)
   /* Translate these 5 keys to match the above options, keeping the
      original order the same (S>py, T>ip off, G>et stuffed, C>ontact spy,
      N>o errand) */
-  c = GetKey(_("STGCN"), "STGCN", TRUE, FALSE, FALSE);
+  c = GetKey(N_("STGCN"), TRUE, FALSE, FALSE);
 
   if (Play->Bitches.Carried > 0 || c == 'C')
     switch (c) {
@@ -1056,7 +1056,7 @@ static void GiveErrand(Player *Play)
       /* The two keys that are valid for answering Yes/No - if you
          translate them, keep them in the same order - i.e. "Yes" before
          "No" */
-      c = GetKey(_("YN"), "YN", FALSE, TRUE, FALSE);
+      c = GetKey(N_("YN"), FALSE, TRUE, FALSE);
 
       if (c == 'Y')
         SendClientMessage(Play, C_NONE, C_SACKBITCH, NULL, NULL);
@@ -1079,7 +1079,7 @@ static int want_to_quit(void)
   attrset(PromptAttr);
   mvaddstr(get_prompt_line(), 1, _("Are you sure you want to quit? "));
   attrset(TextAttr);
-  return (GetKey(_("YN"), "YN", FALSE, TRUE, FALSE) != 'N');
+  return (GetKey(N_("YN"), FALSE, TRUE, FALSE) != 'N');
 }
 
 /* 
@@ -1241,7 +1241,7 @@ void HandleClientMessage(char *Message, Player *Play)
     wrd = GetNextWord(&pt, "");
     PrintMessage(pt);
     addch(' ');
-    i = GetKey(_(wrd), wrd, FALSE, TRUE, TRUE);
+    i = GetKey(wrd, FALSE, TRUE, TRUE);
     wrd = g_strdup_printf("%c", i);
     SendClientMessage(Play, C_NONE, C_ANSWER,
                       From == &Noone ? NULL : From, wrd);
@@ -1492,7 +1492,7 @@ void GunShop(Player *Play)
        the order (B>uy, S>ell, L>eave) the same - you can change the
        wording of the prompt, but if you change the order in this key
        list, the keys will do the wrong things! */
-    action = GetKey(_("BSL"), "BSL", FALSE, FALSE, FALSE);
+    action = GetKey(N_("BSL"), FALSE, FALSE, FALSE);
     if (action == 'S')
       SellGun(Play);
     else if (action == 'B')
@@ -1557,7 +1557,7 @@ void Bank(Player *Play)
 
     /* Make sure you keep the order the same if you translate these keys!
        (D>eposit, W>ithdraw, L>eave) */
-    action = GetKey(_("DWL"), "DWL", FALSE, FALSE, FALSE);
+    action = GetKey(N_("DWL"), FALSE, FALSE, FALSE);
 
     if (action == 'D' || action == 'W') {
       /* Prompt for putting money in or taking money out of the bank */
@@ -1591,18 +1591,16 @@ void Bank(Player *Play)
 
 /* 
  * Waits for keyboard input; will only accept a key listed in the
- * "allowed" string (in the locale encoding, usually UTF-8). This string
- * may have been translated; thus the "orig_allowed" string (in ASCII)
- * contains the untranslated keys.
+ * translated form of the "orig_allowed" string.
  * Returns the untranslated key corresponding to the key pressed
- * (e.g. if allowed[2] is pressed, orig_allowed[2] is returned)
+ * (e.g. if translated(orig_allowed[2]) is pressed, orig_allowed[2] is returned)
  * Case insensitive. If "AllowOther" is TRUE, keys other than the
  * given selection are allowed, and cause a zero return value.
  * If "PrintAllowed" is TRUE, the allowed keys are printed after
  * the prompt. If "ExpandOut" is also TRUE, the full words for
  * the commands, rather than just their first letters, are displayed.
  */
-int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
+int GetKey(const char *orig_allowed, gboolean AllowOther,
            gboolean PrintAllowed, gboolean ExpandOut)
 {
   int ch;
@@ -1617,6 +1615,11 @@ int GetKey(char *allowed, char *orig_allowed, gboolean AllowOther,
   };
   guint numWords = sizeof(Words) / sizeof(Words[0]);
   gchar *trWord;
+
+  /* Translate allowed keys
+   * Note that allowed is in the locale encoding, usually UTF-8, while
+   * orig_allowed is plain ASCII */
+  char *allowed = _(orig_allowed);
 
   curs_set(1);
   ch = '\0';
@@ -2566,13 +2569,13 @@ static void Curses_DoGame(Player *Play)
       /* N.B. You must keep the order of these keys the same as the
          original when you translate (B>uy, S>ell, D>rop, T>alk, P>age,
          L>ist, G>ive errand, F>ight, J>et, Q>uit) */
-      c = GetKey(_("BSDTPLGFJQ"), "BSDTPLGFJQ", TRUE, FALSE, FALSE);
+      c = GetKey(N_("BSDTPLGFJQ"), TRUE, FALSE, FALSE);
 
     } else if (DisplayMode == DM_FIGHT) {
       /* N.B. You must keep the order of these keys the same as the
          original when you translate (D>eal drugs, R>un, F>ight, S>tand,
          Q>uit) */
-      c = GetKey(_("DRFSQ"), "DRFSQ", TRUE, FALSE, FALSE);
+      c = GetKey(N_("DRFSQ"), TRUE, FALSE, FALSE);
 
     } else
       c = 0;
@@ -2606,7 +2609,7 @@ static void Curses_DoGame(Player *Play)
           mvaddstr(get_prompt_line() + 1, 20,
                    _("List what? P>layers or S>cores? "));
           /* P>layers, S>cores */
-          i = GetKey(_("PS"), "PS", TRUE, FALSE, FALSE);
+          i = GetKey(N_("PS"), TRUE, FALSE, FALSE);
           if (i == 'P') {
             ListPlayers(Play, FALSE, NULL);
           } else if (i == 'S') {
@@ -2766,7 +2769,7 @@ void CursesLoop(struct CMDLINE *cmdline)
     RestoreConfig();
     attrset(TextAttr);
     mvaddstr(get_prompt_line() + 1, 20, _("Play again? "));
-    c = GetKey(_("YN"), "YN", TRUE, TRUE, FALSE);
+    c = GetKey(N_("YN"), TRUE, TRUE, FALSE);
   } while (c == 'Y');
   FirstClient = RemovePlayer(Play, FirstClient);
   end_curses();
