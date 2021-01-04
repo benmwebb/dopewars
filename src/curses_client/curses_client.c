@@ -2272,7 +2272,8 @@ Player *ListPlayers(Player *Play, gboolean Select, char *Prompt)
 char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
                  char *displaystr, char passwdchar)
 {
-  int i, c, x;
+  int ibyte, ichar, x;
+  gunichar c;
   gboolean DecimalPoint, Suffix;
   GString *text;
   gchar *ReturnString;
@@ -2289,47 +2290,72 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   attrset(TextAttr);
   if (displaystr) {
     if (passwdchar) {
-      for (i = strlen(displaystr); i; i--)
+      int i;
+      for (i = strcharlen(displaystr); i; i--)
         addch((guint)passwdchar);
     } else {
       addstr(displaystr);
     }
-    i = strlen(displaystr);
+    ibyte = strlen(displaystr);
+    ichar = strcharlen(displaystr);
     text = g_string_new(displaystr);
   } else {
-    i = 0;
+    ibyte = ichar = 0;
     text = g_string_new("");
   }
 
   curs_set(1);
   do {
-    move(sy + (x + i) / Width, (x + i) % Width);
+    move(sy + (x + ichar) / Width, (x + ichar) % Width);
     c = bgetch();
-    if ((c == 8 || c == KEY_BACKSPACE || c == 127) && i > 0) {
-      move(sy + (x + i - 1) / Width, (x + i - 1) % Width);
+    if ((c == 8 || c == KEY_BACKSPACE || c == 127) && ichar > 0) {
+      move(sy + (x + ichar - 1) / Width, (x + ichar - 1) % Width);
       addch(' ');
-      i--;
-      if (DecimalPoint && text->str[i] == '.')
+      ichar--;
+      if (LocaleIsUTF8) {
+        char *p = g_utf8_find_prev_char(text->str, text->str+ibyte);
+        assert(p);
+        ibyte = p - text->str;
+      } else {
+        ibyte--;
+      }
+      if (DecimalPoint && text->str[ibyte] == '.')
         DecimalPoint = FALSE;
       if (Suffix)
         Suffix = FALSE;
-      g_string_truncate(text, i);
+      g_string_truncate(text, ibyte);
     } else if (!Suffix) {
       if ((digitsonly && c >= '0' && c <= '9') ||
-          (!digitsonly && c >= 32 && c != '^' && c < 127)) {
-        g_string_append_c(text, c);
-        i++;
-        addch((guint)passwdchar ? passwdchar : c);
+          (!digitsonly && c >= 32 && c != '^' && c != 127)) {
+	if (LocaleIsUTF8) {
+          char utf8buf[20];
+          gint utf8len = g_unichar_to_utf8(c, utf8buf);
+          utf8buf[utf8len] = '\0';
+          ibyte += utf8len;
+          g_string_append(text, utf8buf);
+          if (passwdchar) {
+            addch((guint)passwdchar);
+          } else {
+            addstr(utf8buf);
+          }
+        } else {
+          g_string_append_c(text, c);
+          ibyte++;
+          addch((guint)passwdchar ? passwdchar : c);
+        }
+        ichar++;
       } else if (digitsonly && (c == '.' || c == ',') && !DecimalPoint) {
         g_string_append_c(text, '.');
-        i++;
+        ibyte++;
+        ichar++;
         addch((guint)passwdchar ? passwdchar : c);
         DecimalPoint = TRUE;
       } else if (digitsonly
                  && (c == 'M' || c == 'm' || c == 'k' || c == 'K')
                  && !Suffix) {
         g_string_append_c(text, c);
-        i++;
+        ibyte++;
+        ichar++;
         addch((guint)passwdchar ? passwdchar : c);
         Suffix = TRUE;
       }

@@ -1,3 +1,8 @@
+# HEAD
+- The text-mode client should now support Unicode input when in UTF-8
+  locales, e.g. allowing player names containing accented characters
+  to be input (#60).
+
 # 1.6.1 - 2020-12-11
 - Improved display in non-English text-mode clients; previously
   columns were not aligned properly in some cases and occasionally
