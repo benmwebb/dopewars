@@ -2,6 +2,8 @@
 - The text-mode client should now support Unicode input when in UTF-8
   locales, e.g. allowing player names containing accented characters
   to be input (#60).
+- Add support for networking on the Haiku operating system (thanks
+  to Begasus) (#61).
 
 # 1.6.1 - 2020-12-11
 - Improved display in non-English text-mode clients; previously
