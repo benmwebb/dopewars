@@ -26,6 +26,7 @@
 #endif
 
 #include "cursesport.h"
+#include "dopewars.h"
 #include <glib.h>
 
 #ifdef CYGWIN                   /* Code for native Win32 build under Cygwin */
@@ -251,13 +252,13 @@ void mvaddch(int y, int x, int ch)
 /* 
  * Waits for the user to press a key.
  */
-int bgetch(void)
+gunichar bgetch(void)
 {
   DWORD NumRead;
-  char Buffer[10];
+  WCHAR Buffer[10];
 
   refresh();
-  ReadConsole(hIn, Buffer, 1, &NumRead, NULL);
+  ReadConsoleW(hIn, Buffer, 1, &NumRead, NULL);
   return (int)(Buffer[0]);
 }
 
@@ -276,7 +277,7 @@ void standend(void)
  * then automatically clears and redraws the screen, otherwise just
  * passes the key back to the calling routine.
  */
-int bgetch()
+gunichar bgetch()
 {
   int c;
 
@@ -284,6 +285,22 @@ int bgetch()
   while (c == '\f') {
     wrefresh(curscr);
     c = getch();
+  }
+  /* Ignore special keys (e.g arrow keys) so we don't confuse them with
+   * Unicode characters */
+  if (c > 255) {
+    return 0;
+  }
+  /* In UTF-8 locales we may need to read multiple bytes to assemble a
+     complete Unicode character */
+  if (LocaleIsUTF8 && (c & 192) == 192) {   /* First UTF-8 byte */
+    char utf8_str[10];
+    int i, utf8_width = c & 16 ? 4 : c & 32 ? 3 : 2;
+    utf8_str[0] = (guchar)c;
+    for (i = 1; i < utf8_width; ++i) {
+      utf8_str[i] = (guchar)getch();
+    }
+    return g_utf8_get_char(utf8_str);
   }
   return c;
 }

@@ -28,6 +28,8 @@
 #include <config.h>
 #endif
 
+#include <glib.h>
+
 #ifdef CYGWIN                   /* Definitions for native Win32 build */
 #include <winsock2.h>
 #include <windows.h>
@@ -107,6 +109,6 @@ void endwin(void);
 
 #endif /* CYGWIN */
 
-int bgetch(void);
+gunichar bgetch(void);
 
 #endif /* __CURSESPORT_H__ */
