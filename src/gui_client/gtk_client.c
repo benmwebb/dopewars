@@ -2210,14 +2210,14 @@ gboolean GtkLoop(int *argc, char **argv[],
   /* Set up message handlers */
   ClientMessageHandlerPt = HandleClientMessage;
 
+  if (!CheckHighScoreFileConfig()) {
+    return TRUE;
+  }
+
   /* Have the GLib log messages pop up in a nice dialog box */
   g_log_set_handler(NULL,
                     G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING |
                     G_LOG_LEVEL_CRITICAL, LogMessage, NULL);
-
-  if (!CheckHighScoreFileConfig()) {
-    return TRUE;
-  }
 
   SoundOpen(cmdline->plugin);
 
