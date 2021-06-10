@@ -2120,6 +2120,10 @@ void SendHighScores(Player *Play, gboolean EndGame, char *Message)
   struct HISCORE MultiScore[NUMHISCORE], AntiqueScore[NUMHISCORE], Score;
   struct HISCORE *HiScore;
   struct tm *timep;
+#ifdef HAVE_GMTIME_R
+  struct tm tmbuf;
+#endif
+
   time_t tim;
   GString *text;
   int i, j, InList = -1;
@@ -2142,7 +2146,11 @@ void SendHighScores(Player *Play, gboolean EndGame, char *Message)
     Score.Name = g_strdup(GetPlayerName(Play));
     Score.Dead = (Play->Health == 0);
     tim = time(NULL);
+#ifdef HAVE_GMTIME_R
+    timep = gmtime_r(&tim, &tmbuf);
+#else
     timep = gmtime(&tim);
+#endif
     Score.Time = g_new(char, 80);       /* Yuck! */
 
     strftime(Score.Time, 80, "%d-%m-%Y", timep);

@@ -339,7 +339,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork issetugid)
+AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork issetugid localtime_r gmtime_r)
 
 dnl Enable plugins only if we can find the dlopen function, and
 dnl the user does not disable them with --disable-plugins or --disable-shared
