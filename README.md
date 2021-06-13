@@ -49,21 +49,21 @@ dopewars has built-in client-server support for multi-player games. For a
 full list of options configurable on the command line, run dopewars with
 the `-h` switch.
 
-`dopewars -a`
+`dopewars -a`  
 This is "antique" dopewars; it tries to keep to the original dopewars, based
 on the "Drug Wars" game by John E. Dell, as closely as possible.
 
-`dopewars`
+`dopewars`  
 By default, dopewars supports multi-player games. On starting a game, the
 program will attempt to connect to a dopewars server so that players can send
 messages back and forth, and shoot each other if they really want to...
 
-`dopewars -s`
+`dopewars -s`  
 Starts a dopewars server. This sits in the background and handles multi-player
 games. You probably want to use the `-l` command line option too to direct its
 log output to somewhere sensible.
 
-`dopewars -c`
+`dopewars -c`  
 Create and run a computer dopewars player. This will attempt to connect
 to a dopewars server, and if this succeeds, it will then participate in
 multi-player dopewars games.
@@ -101,11 +101,11 @@ nicer! ;)
 ## License
 
 dopewars is released under the GNU General Public License; see the text file
-LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2021.
+LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2021.  
 The dopewars icons are copyright (C) Ocelot Mantis 2001.
 
 ## Support
 
-dopewars is written and maintained by Ben Webb <benwebb@users.sf.net>
+dopewars is written and maintained by Ben Webb <benwebb@users.sf.net>  
 Enquiries about dopewars may be sent to this address (keep them sensible 
 please ;) Bug fixes and reports, improvements and patches are also welcomed.
