@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"
 "Report-Msgid-Bugs-To: benwebb@users.sf.net\n"
 "POT-Creation-Date: 2020-12-10 21:39-0800\n"
-"PO-Revision-Date: 2001-04-08 15:55+0100\n"
+"PO-Revision-Date: 2022-06-10 17:11-0300\n"
 "Last-Translator: Bruno Lopes <brunoml@bol.com.br>\n"
 "Language-Team: Portuguese/Brazil <pt_BR@li.org>\n"
 "Language: pt_BR\n"
@@ -65,7 +65,7 @@ msgstr "o agiota"
 
 #: src/dopewars.c:196
 msgid "the Bank"
-msgstr ""
+msgstr "o Banco"
 
 #: src/dopewars.c:197
 msgid "Dan's House of Guns"
@@ -96,7 +96,7 @@ msgstr ""
 
 #: src/dopewars.c:248
 msgid "Network address for the server to listen on"
-msgstr ""
+msgstr "Endereço de rede para em que o servidor aguardará conexões"
 
 #: src/dopewars.c:252
 msgid "TRUE if a SOCKS server should be used for networking"
@@ -108,27 +108,27 @@ msgstr ""
 
 #: src/dopewars.c:260
 msgid "If not blank, the username to use for SOCKS4"
-msgstr ""
+msgstr "Se não em branco, será o nome de usuário a usar para SOCKS4"
 
 #: src/dopewars.c:263
 msgid "The hostname of a SOCKS server to use"
-msgstr ""
+msgstr "O hostname do servidor SOCKS a ser usado"
 
 #: src/dopewars.c:266
 msgid "The port number of a SOCKS server to use"
-msgstr ""
+msgstr "O número da porta do servidor SOCKS a ser usado"
 
 #: src/dopewars.c:269
 msgid "The version of the SOCKS protocol to use (4 or 5)"
-msgstr ""
+msgstr "A versão do protocolo SOCKS a usar (4 ou 5)"
 
 #: src/dopewars.c:272
 msgid "Username for SOCKS5 authentication"
-msgstr ""
+msgstr "Nome de usuário para autenticação SOCKS5"
 
 #: src/dopewars.c:275
 msgid "Password for SOCKS5 authentication"
-msgstr ""
+msgstr "Senha para autenticação SOCKS5"
 
 #: src/dopewars.c:278
 msgid "TRUE if server should report to a metaserver"
@@ -161,7 +161,7 @@ msgstr ""
 
 #: src/dopewars.c:302
 msgid "The command used to start your web browser"
-msgstr ""
+msgstr "O comando usado para iniciar seu navegador"
 
 #: src/dopewars.c:306
 msgid "No. of game turns (if 0, game never ends)"
@@ -963,12 +963,12 @@ msgstr "Drogas podem ser suas amigas!"
 #: src/dopewars.c:1857
 #, c-format
 msgid "Unable to process configuration file %s, line %d"
-msgstr ""
+msgstr "Não foi possível processar o arquivo de configuração %s, linha %d"
 
 #: src/dopewars.c:1893
 #, c-format
 msgid "Unable to open file %s"
-msgstr ""
+msgstr "Não foi possível abrir o arquivo %s"
 
 #: src/dopewars.c:1957
 msgid ""
@@ -1029,12 +1029,12 @@ msgstr "%s é { "
 #: src/dopewars.c:2181
 #, c-format
 msgid "%s can be no smaller than %d - ignoring!"
-msgstr ""
+msgstr "%s não pode ser menor que %d - ignorando!"
 
 #: src/dopewars.c:2187
 #, c-format
 msgid "%s can be no larger than %d - ignoring!"
-msgstr ""
+msgstr "%s não pode ser maior que %d - ignorando!"
 
 #: src/dopewars.c:2196
 #, c-format
@@ -1043,12 +1043,12 @@ msgstr "Estrutura de lista redimensionada para %d elementos\n"
 
 #: src/dopewars.c:2234
 msgid "expected a boolean value (one of 0, FALSE, 1, TRUE)"
-msgstr ""
+msgstr "Valor booleano esperado (om dentre 0, FALSE, 1, TRUE)"
 
 #. The currency symbol
 #: src/dopewars.c:2418
 msgid "$"
-msgstr ""
+msgstr "$"
 
 #. Translate this to "Currency.Prefix=FALSE" if you want your currency
 #. symbol to follow all prices.
@@ -1076,7 +1076,7 @@ msgstr ""
 #: src/dopewars.c:2562
 #, c-format
 msgid "dopewars version %s\n"
-msgstr ""
+msgstr "dopewars versão %s\n"
 
 #. Usage information, printed when the user runs "dopewars -h"
 #. (version with support for GNU long options)
@@ -1446,11 +1446,11 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:600
 msgid "User name: "
-msgstr ""
+msgstr "Nome de usuário: "
 
 #: src/curses_client/curses_client.c:602
 msgid "Password: "
-msgstr ""
+msgstr "Senha: "
 
 #: src/curses_client/curses_client.c:697
 msgid "Please wait... attempting to contact dopewars server..."
@@ -1459,7 +1459,7 @@ msgstr "Aguarde... tentando contactar o servidor dopewars..."
 #. Display of an error while contacting the metaserver
 #: src/curses_client/curses_client.c:708
 msgid "Cannot get metaserver details"
-msgstr ""
+msgstr "Não foi possível obter detalhes do metaservidor"
 
 #. Display of an error message while trying to contact a dopewars
 #. server (the error message itself is displayed on the next
@@ -1470,7 +1470,7 @@ msgstr "Não foi possível iniciar o dopewars em multiplayer"
 
 #: src/curses_client/curses_client.c:719
 msgid "connection to server failed"
-msgstr ""
+msgstr "a conexão com o servidor falhou"
 
 #: src/curses_client/curses_client.c:726
 msgid "Will you... C>onnect to a named dopewars server"
@@ -2173,7 +2173,7 @@ msgstr "Melhores Pontuações"
 #. Error - the high score from the server is invalid
 #: src/gui_client/gtk_client.c:682 src/gui_client/gtk_client.c:710
 msgid "Corrupt high score!"
-msgstr ""
+msgstr "Highscore corrompido!"
 
 #: src/gui_client/gtk_client.c:916
 msgid "Fight"
@@ -2375,11 +2375,11 @@ msgstr "Bruno Lopes"
 
 #: src/gui_client/gtk_client.c:2397
 msgid "Icons and graphics"
-msgstr ""
+msgstr "Ícones e gráficos"
 
 #: src/gui_client/gtk_client.c:2398 src/gui_client/optdialog.c:1058
 msgid "Sounds"
-msgstr ""
+msgstr "Sons"
 
 #: src/gui_client/gtk_client.c:2399
 msgid "Drug Dealing and Research"
@@ -2455,7 +2455,7 @@ msgstr ""
 
 #: src/gui_client/gtk_client.c:2474
 msgid "Local HTML documentation"
-msgstr ""
+msgstr "Documentação local em HTML"
 
 #. Title of loan shark dialog - (%Tde="The Loan Shark" by default)
 #: src/gui_client/gtk_client.c:2530 src/gui_client/gtk_client.c:2582
@@ -2469,7 +2469,7 @@ msgstr "%/Título da janela do NomeDoBanco/%Tde"
 
 #: src/gui_client/gtk_client.c:2546
 msgid "You must enter a positive amount of money!"
-msgstr ""
+msgstr "Você precisa entrar uma quantidade positiva de dinheiro!"
 
 #: src/gui_client/gtk_client.c:2549
 msgid "There isn't that much money available..."
@@ -2663,7 +2663,7 @@ msgstr "Novo %s"
 
 #: src/gui_client/optdialog.c:606
 msgid "Select sound file"
-msgstr ""
+msgstr "Selecione arquivo de som"
 
 #: src/gui_client/optdialog.c:731
 msgid "New"
@@ -2671,39 +2671,39 @@ msgstr "Novo"
 
 #: src/gui_client/optdialog.c:737
 msgid "Delete"
-msgstr ""
+msgstr "Remover"
 
 #: src/gui_client/optdialog.c:747
 msgid "Up"
-msgstr ""
+msgstr "Para cima"
 
 #: src/gui_client/optdialog.c:755
 msgid "Down"
-msgstr ""
+msgstr "Para baixo"
 
 #: src/gui_client/optdialog.c:816
 msgid "Police presence"
-msgstr ""
+msgstr "Presença da polícia"
 
 #: src/gui_client/optdialog.c:817
 msgid "Minimum no. of drugs"
-msgstr ""
+msgstr "Quantidade mínima de drogas"
 
 #: src/gui_client/optdialog.c:818
 msgid "Maximum no. of drugs"
-msgstr ""
+msgstr "Quantidade máxima de drogas"
 
 #: src/gui_client/optdialog.c:822
 msgid "Minimum normal price"
-msgstr ""
+msgstr "Preço normal mínimo"
 
 #: src/gui_client/optdialog.c:823
 msgid "Maximum normal price"
-msgstr ""
+msgstr "Preço normal máximo"
 
 #: src/gui_client/optdialog.c:824
 msgid "Can be specially cheap"
-msgstr ""
+msgstr "Pode ser especialmente barato"
 
 #: src/gui_client/optdialog.c:825
 msgid "Cheap string"
@@ -2719,7 +2719,7 @@ msgstr ""
 
 #: src/gui_client/optdialog.c:832
 msgid "Damage"
-msgstr ""
+msgstr "Dano"
 
 #: src/gui_client/optdialog.c:836
 msgid "Name of one deputy"
@@ -2747,7 +2747,7 @@ msgstr ""
 
 #: src/gui_client/optdialog.c:849
 msgid "Options"
-msgstr ""
+msgstr "Opções"
 
 #: src/gui_client/optdialog.c:865
 msgid "Remove drug references"
@@ -2763,11 +2763,11 @@ msgstr ""
 
 #: src/gui_client/optdialog.c:879
 msgid "Starting cash"
-msgstr ""
+msgstr "Grana inicial"
 
 #: src/gui_client/optdialog.c:885
 msgid "Starting debt"
-msgstr ""
+msgstr "Dívida inicial"
 
 #: src/gui_client/optdialog.c:891
 msgid "Currency symbol"
@@ -2787,7 +2787,7 @@ msgstr ""
 
 #: src/gui_client/optdialog.c:912
 msgid "Web browser"
-msgstr ""
+msgstr "Navegador"
 
 #: src/gui_client/optdialog.c:920
 msgid "General"
@@ -2826,9 +2826,8 @@ msgid "Minimize to System Tray"
 msgstr ""
 
 #: src/gui_client/optdialog.c:983
-#, fuzzy
 msgid "Metaserver URL"
-msgstr "Servidor Meta"
+msgstr "URL do metaservidor"
 
 #: src/gui_client/optdialog.c:990 src/gui_client/newgamedia.c:438
 msgid "Comment"
@@ -2850,11 +2849,11 @@ msgstr ""
 
 #: src/gui_client/optdialog.c:1013
 msgid "Description"
-msgstr ""
+msgstr "Descrição"
 
 #: src/gui_client/optdialog.c:1039
 msgid "Sound file"
-msgstr ""
+msgstr "Arquivo de som"
 
 #: src/gui_client/optdialog.c:1046
 msgid "Browse..."
@@ -3023,12 +3022,12 @@ msgstr ""
 #. Title of dopewars server window (if used)
 #: src/winmain.c:348 src/serverside.c:1672
 msgid "dopewars server"
-msgstr ""
+msgstr "servidor dopewars"
 
 #. Title of the Windows window used for AI player output
 #: src/winmain.c:369
 msgid "dopewars AI"
-msgstr ""
+msgstr "IA dopewars"
 
 #. Things that can "happen" to your spies - look for strings containing
 #. "The spy %s!" to see how these strings are used.
@@ -3094,12 +3093,12 @@ msgstr ""
 #: src/serverside.c:160
 #, c-format
 msgid "Failed to connect to metaserver at %s (%s)"
-msgstr ""
+msgstr "Falha ao conectar com metaservidor em %s (%s)"
 
 #: src/serverside.c:168 src/serverside.c:1102
-#, fuzzy, c-format
+#, c-format
 msgid "MetaServer: %s"
-msgstr "Servidor Meta: %s"
+msgstr "Meta servidor: %s"
 
 #: src/serverside.c:198
 msgid ""
@@ -3201,7 +3200,7 @@ msgstr "%s atração para %s: RECUSADO"
 #: src/serverside.c:572
 #, c-format
 msgid "Unknown message: %s:%c:%s:%s"
-msgstr ""
+msgstr "Mensagem desconhecida: %s:%c:%s:%s"
 
 #: src/serverside.c:734
 #, c-format
@@ -3296,7 +3295,7 @@ msgstr "conexão de %s"
 
 #: src/serverside.c:1011
 msgid "dopewars server terminating."
-msgstr ""
+msgstr "servidor dopewars encerrando."
 
 #: src/serverside.c:1020
 #, c-format
@@ -3305,7 +3304,7 @@ msgstr "%s saiu do servidor!"
 
 #: src/serverside.c:1105
 msgid "MetaServer: (closed)"
-msgstr ""
+msgstr "MetaServidor: (fechado)"
 
 #: src/serverside.c:1204
 msgid ""
@@ -3317,20 +3316,20 @@ msgstr ""
 #, c-format
 msgid ""
 "dopewars server version %s ready for admin commands; try \"help\" for help"
-msgstr ""
+msgstr "servidor dopewars versão %s pronto para comandos de administração; tente \\\"help\\\" para ajuda"
 
 #: src/serverside.c:1287
 msgid "New admin connection"
-msgstr ""
+msgstr "Nova conexão de administrador"
 
 #: src/serverside.c:1298
 #, c-format
 msgid "Admin command: %s"
-msgstr ""
+msgstr "Comando de administração: %s"
 
 #: src/serverside.c:1304
 msgid "Admin connection closed"
-msgstr ""
+msgstr "Conexão de administrador encerrada"
 
 #: src/serverside.c:1553 src/serverside.c:1572 src/serverside.c:1579
 #: src/serverside.c:1719
@@ -3351,7 +3350,7 @@ msgstr ""
 
 #: src/serverside.c:1683
 msgid "Command:"
-msgstr ""
+msgstr "Comando:"
 
 #: src/serverside.c:1902
 #, c-format
