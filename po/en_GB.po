@@ -1,5 +1,5 @@
 # British English translation of dopewars
-# Copyright (C) 2020-2021 Ben Webb
+# Copyright (C) 2020-2022 Ben Webb
 # This file is distributed under the same license as the dopewars package.
 #
 msgid ""
@@ -1161,7 +1161,7 @@ msgid ""
 "  -h, --help              display this help information\n"
 "  -v, --version           output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2021, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2022, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
@@ -1235,7 +1235,7 @@ msgid ""
 "  -h       display this help information\n"
 "  -v       output version information and exit\n"
 "\n"
-"dopewars is Copyright (C) Ben Webb 1998-2021, and released under the GNU "
+"dopewars is Copyright (C) Ben Webb 1998-2022, and released under the GNU "
 "GPL\n"
 "Report bugs to the author at benwebb@users.sf.net\n"
 msgstr ""
@@ -1307,7 +1307,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:351
 #, c-format
-msgid "Version %-8s Copyright (C) 1998-2021  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2022  Ben Webb benwebb@users.sf.net"
 msgstr ""
 
 #: src/curses_client/curses_client.c:354
@@ -2436,10 +2436,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2410
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2021  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2022  Ben Webb benwebb@users.sf.net\n"
 "dopewars is released under the GNU General Public License\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2021  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2022  Ben Webb benwebb@users.sf.net\n"
 "dopewars is released under the GNU General Public Licence\n"
 
 #. Label at the bottom of GTK+ 'about' dialog

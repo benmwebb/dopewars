@@ -1,6 +1,6 @@
 /************************************************************************
  * mac_helpers.h  Helper functions for Mac builds                       *
- * Copyright (C)  1998-2021  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *

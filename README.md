@@ -101,7 +101,7 @@ nicer! ;)
 ## License
 
 dopewars is released under the GNU General Public License; see the text file
-LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2021.  
+LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2022.
 The dopewars icons are copyright (C) Ocelot Mantis 2001.
 
 ## Support
