@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dopewars-1.5.3\n"
 "Report-Msgid-Bugs-To: benwebb@users.sf.net\n"
-"POT-Creation-Date: 2022-06-10 23:08-0300\n"
+"POT-Creation-Date: 2022-06-25 23:32-0700\n"
 "PO-Revision-Date: 2022-06-10 23:06-0300\n"
 "Last-Translator: Bruno Lopes <brunoml@bol.com.br>\n"
 "Language-Team: Portuguese/Brazil <pt_BR@li.org>\n"
@@ -1140,8 +1140,8 @@ msgstr ""
 "  -o addr    especifica o nome do host do server dopewars para jogar em "
 "modo\n"
 "                multiplayer (legível - ex. nenhumlugar.com - formato)\n"
-"  -s         roda em modo servidor (nota: para um servidor \"não "
-"interativo\", \n"
+"  -s         roda em modo servidor (nota: para um servidor \"não interativo"
+"\", \n"
 "                rode dopewars -s < /dev/null >> logfile & )\n"
 "  -S         roda um servidor \"privado\" (não modifica o servidor meta)\n"
 "  -p         especifica uma porta de rede para usar (padrão: 7902)\n"
@@ -1218,8 +1218,8 @@ msgstr ""
 "  -o addr    especifica o nome do host do server dopewars para jogar em "
 "modo\n"
 "                multiplayer (legível - ex. nenhumlugar.com - formato)\n"
-"  -s         roda em modo servidor (nota: para um servidor \"não "
-"interativo\", \n"
+"  -s         roda em modo servidor (nota: para um servidor \"não interativo"
+"\", \n"
 "                rode dopewars -s < /dev/null >> logfile & )\n"
 "  -S         roda um servidor \"privado\" (não modifica o servidor meta)\n"
 "  -p         especifica uma porta de rede para usar (padrão: 7902)\n"
@@ -1542,13 +1542,11 @@ msgid "How many do you drop? "
 msgstr "Que quantidade você quer largar? "
 
 #. Buy and sell prompts for dealing drugs or guns
-#: src/curses_client/curses_client.c:940
-#: src/curses_client/curses_client.c:1424
+#: src/curses_client/curses_client.c:940 src/curses_client/curses_client.c:1424
 msgid "What do you wish to buy? "
 msgstr "O que você quer comprar? "
 
-#: src/curses_client/curses_client.c:942
-#: src/curses_client/curses_client.c:1376
+#: src/curses_client/curses_client.c:942 src/curses_client/curses_client.c:1376
 msgid "What do you wish to sell? "
 msgstr "O que você quer vender? "
 
@@ -1665,8 +1663,7 @@ msgid "S U B W A Y"
 msgstr "M E T R Ô"
 
 #: src/curses_client/curses_client.c:1235
-#: src/curses_client/curses_client.c:2093
-#: src/gui_client/gtk_client.c:1201
+#: src/curses_client/curses_client.c:2093 src/gui_client/gtk_client.c:1201
 msgid "%/Current location/%tde"
 msgstr "%/Local atual/%tde"
 
@@ -1682,15 +1679,13 @@ msgstr "M E L H O R E S   P O N T U A Ç Õ E S"
 
 #. Error - player tried to sell guns that he/she doesn't have
 #. (%tde="guns" by default)
-#: src/curses_client/curses_client.c:1368
-#: src/gui_client/gtk_client.c:1824
+#: src/curses_client/curses_client.c:1368 src/gui_client/gtk_client.c:1824
 #, c-format
 msgid "You don't have any %tde to sell!"
 msgstr "Você não tem nenhum %tde para vender!"
 
 #. Error - player tried to sell some guns that he/she doesn't have
-#: src/curses_client/curses_client.c:1387
-#: src/gui_client/gtk_client.c:1845
+#: src/curses_client/curses_client.c:1387 src/gui_client/gtk_client.c:1845
 msgid "You don't have any to sell!"
 msgstr "Você não tem nenhum para vender!"
 
@@ -1698,24 +1693,21 @@ msgstr "Você não tem nenhum para vender!"
 #. than his/her bitches can carry (1st
 #. %tde="bitches", 2nd %tde="guns" by
 #. default)
-#: src/curses_client/curses_client.c:1415
-#: src/gui_client/gtk_client.c:1830
+#: src/curses_client/curses_client.c:1415 src/gui_client/gtk_client.c:1830
 #, c-format
 msgid "You'll need more %tde to carry any more %tde!"
 msgstr "Você irá precisar de mais %tde para carregar ainda mais %tde!"
 
 #. Error - player tried to buy a gun that he/she doesn't have
 #. space for (%tde="gun" by default)
-#: src/curses_client/curses_client.c:1436
-#: src/gui_client/gtk_client.c:1836
+#: src/curses_client/curses_client.c:1436 src/gui_client/gtk_client.c:1836
 #, c-format
 msgid "You don't have enough space to carry that %tde!"
 msgstr "Você não tem espaço suficiente para carregar aquele %tde!"
 
 #. Error - player tried to buy a gun that he/she can't afford
 #. (%tde="gun" by default)
-#: src/curses_client/curses_client.c:1446
-#: src/gui_client/gtk_client.c:1841
+#: src/curses_client/curses_client.c:1446 src/gui_client/gtk_client.c:1841
 #, c-format
 msgid "You don't have enough cash to buy that %tde!"
 msgstr "Você não tem dinheiro suficiente para comprar aquele %tde!"
@@ -1741,8 +1733,7 @@ msgstr "Quanto dinheiro você quer pagar de volta? "
 #. Error - player has tried to put more money into the bank than
 #. he/she has
 #: src/curses_client/curses_client.c:1530
-#: src/curses_client/curses_client.c:1576
-#: src/gui_client/gtk_client.c:2524
+#: src/curses_client/curses_client.c:1576 src/gui_client/gtk_client.c:2524
 msgid "You don't have that much money!"
 msgstr "Você não tem todo esse dinheiro!"
 
@@ -1806,15 +1797,13 @@ msgid "Messages (-/+ scrolls up/down)"
 msgstr ""
 
 #. Title of the "Stats" window in the curses client
-#: src/curses_client/curses_client.c:2043
-#: src/gui_client/gtk_client.c:2263
+#: src/curses_client/curses_client.c:2043 src/gui_client/gtk_client.c:2263
 msgid "Stats"
 msgstr "Estatísticas"
 
 #. Display of the player's cash in the stats window
 #. Player's cash label in GTK+ client status display
-#: src/curses_client/curses_client.c:2048
-#: src/gui_client/gtk_client.c:2087
+#: src/curses_client/curses_client.c:2048 src/gui_client/gtk_client.c:2087
 msgid "Cash"
 msgstr "Dinheiro"
 
@@ -1823,29 +1812,25 @@ msgstr "Dinheiro"
 #. is the "%Tde" which is "Guns" by default)
 #. Display of the total number of guns carried (%Tde="Guns" by default)
 #: src/curses_client/curses_client.c:2054
-#: src/curses_client/curses_client.c:2133
-#: src/gui_client/gtk_client.c:1224
+#: src/curses_client/curses_client.c:2133 src/gui_client/gtk_client.c:1224
 msgid "%/Stats: Guns/%Tde"
 msgstr "%Tde"
 
 #. Display of the player's health
 #. Player's health label in GTK+ client status display
-#: src/curses_client/curses_client.c:2060
-#: src/gui_client/gtk_client.c:2118
+#: src/curses_client/curses_client.c:2060 src/gui_client/gtk_client.c:2118
 msgid "Health"
 msgstr "Pontos de vida"
 
 #. Display of the player's bank balance
 #. Player's bank balance label in GTK+ client status display
-#: src/curses_client/curses_client.c:2065
-#: src/gui_client/gtk_client.c:2101
+#: src/curses_client/curses_client.c:2065 src/gui_client/gtk_client.c:2101
 msgid "Bank"
 msgstr "Banco"
 
 #. Display of the player's debt
 #. Player's debt label in GTK+ client status display
-#: src/curses_client/curses_client.c:2073
-#: src/gui_client/gtk_client.c:2094
+#: src/curses_client/curses_client.c:2073 src/gui_client/gtk_client.c:2094
 msgid "Debt"
 msgstr "Débito"
 
@@ -2412,8 +2397,7 @@ msgid "_Jet!"
 msgstr "_Ir!"
 
 #. Title of main window in GTK+ client
-#: src/gui_client/gtk_client.c:2234 src/winmain.c:381
-#: src/winmain.c:390
+#: src/gui_client/gtk_client.c:2234 src/winmain.c:381 src/winmain.c:390
 msgid "dopewars"
 msgstr "dopewars"
 
