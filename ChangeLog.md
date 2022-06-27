@@ -1,4 +1,4 @@
-# HEAD
+# 1.6.2 - 2022-06-26
 - The text-mode client should now support Unicode input when in UTF-8
   locales, e.g. allowing player names containing accented characters
   to be input (#60).
