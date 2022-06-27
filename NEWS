@@ -1,3 +1,7 @@
+26th June 2022
+     dopewars-1.6.2 released. This improves Unicode support in the text-mode
+client, and adds support for networking on the Haiku operating system.
+
 11th December 2020
      dopewars-1.6.1 released. This improves the appearance of the text-mode
 client, adds a British English translation, and fixes a bug selecting sounds

@@ -3,10 +3,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 
 <head>
 <title>dopewars and Microsoft Windows</title>
+<meta charset="utf-8"/>
 </head>
 
 <body>
@@ -40,7 +41,7 @@ the same name in the AppData directory.</p>
 the <tt>-N</tt> flag. One way to set this up is to use the
 <a href="https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/sc-create">sc create</a> utility from a command prompt, e.g.</p>
 
-<p><tt>sc create dopewars binpath= "C:\Program Files\dopewars-1.6.1\dopewars.exe -N"</tt></p>
+<p><tt>sc create dopewars binpath= "C:\Program Files\dopewars-1.6.2\dopewars.exe -N"</tt></p>
 
 <p>Note that this will run dopewars as the Local System user, so will look for
 high score/config files (and create a log file) in the corresponding AppData

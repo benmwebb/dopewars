@@ -1,0 +1,41 @@
+name: build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        flags: ["--enable-networking --disable-gtk3",
+                "--enable-networking --enable-gtk3",
+                "--disable-networking"]
+        include:
+        - os: macos-latest
+          flags: "--enable-networking"
+        - os: ubuntu-latest
+          container: benmwebb/mingw
+          flags: "--host=x86_64-w64-mingw32 --enable-nativewin32"
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies (Linux)
+      if: matrix.os == 'ubuntu-latest' && matrix.container == null
+      run: |
+        sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev
+    - name: Install dependencies (Mac)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install automake
+    - name: Build
+      run: |
+        ./autogen.sh ${{ matrix.flags }} && make -j2
+    - name: Test
+      if: matrix.container == null
+      run: |
+        src/dopewars -v
+        src/dopewars -h

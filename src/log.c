@@ -1,6 +1,6 @@
 /************************************************************************
  * log.c          dopewars - logging functions                          *
- * Copyright (C)  1998-2020  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -80,11 +80,18 @@ GString *GetLogString(GLogLevelFlags log_level, const gchar *message)
   gint i;
   time_t tim;
   struct tm *timep;
+#ifdef HAVE_LOCALTIME_R
+  struct tm tmbuf;
+#endif
 
   text = g_string_new("");
   if (Log.Timestamp) {
     tim = time(NULL);
+#ifdef HAVE_LOCALTIME_R
+    timep = localtime_r(&tim, &tmbuf);
+#else
     timep = localtime(&tim);
+#endif
     strftime(TimeBuf, 80, Log.Timestamp, timep);
     TimeBuf[79] = '\0';
     g_string_append(text, TimeBuf);

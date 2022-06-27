@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dopewars], [1.6.1])
+AC_INIT([dopewars], [1.6.2])
 AC_CONFIG_SRCDIR([src/dopewars.c])
 AC_CONFIG_AUX_DIR(auxbuild)
 
@@ -51,6 +51,10 @@ AC_ARG_ENABLE(curses-client,
 AC_ARG_ENABLE(gui-server,
 [  --enable-gui-server     use a simple GTK+/Win32 GUI for the server],
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
+
+AC_ARG_ENABLE(gtk4,
+[  --enable-gtk4           use GTK 4 if available (experimental)],
+[ USE_GTK4="$enableval" ],[ USE_GTK4="no" ])
 
 AC_ARG_ENABLE(gtk3,
 [  --disable-gtk3          use GTK+ 2.x, even if 3.x is found],
@@ -174,24 +178,25 @@ else
    gtk2_found="probe"
    if test "$GUI_CLIENT" != "no" -o "$GUI_SERVER" != "no"; then
       PKG_PROG_PKG_CONFIG()
-      gtk3_found="no"
-      if test "$USE_GTK3" = "yes" ; then
-        PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
-        if test "$gtk3_found" = "yes" ; then
-          # We use GtkTable a lot so don't clutter the compiler output with
-          # recommendations to use GtkGrid instead
-          CPPFLAGS="$CPPFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
-        fi
+      gtk4_found="no"
+      if test "$USE_GTK4" = "yes" ; then
+        PKG_CHECK_MODULES([GTK], [gtk4], gtk4_found="yes", gtk4_found="no")
       fi
-      if test "$gtk3_found" = "no" ; then
-        AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
-        if test "$gtk2_found" = "no" ; then
-          if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-             AC_MSG_ERROR(Cannot find GTK+)
-          else
-             AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
-             GUI_CLIENT="no"
-             GUI_SERVER="no"
+      if test "$gtk4_found" = "no" ; then
+        gtk3_found="no"
+        if test "$USE_GTK3" = "yes" ; then
+          PKG_CHECK_MODULES([GTK], [gtk+-3.0], gtk3_found="yes", gtk3_found="no")
+        fi
+        if test "$gtk3_found" = "no" ; then
+          AM_PATH_GTK_2_0(2.0.0,gtk2_found="yes",gtk2_found="no")
+          if test "$gtk2_found" = "no" ; then
+            if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
+               AC_MSG_ERROR(Cannot find GTK+)
+            else
+               AC_MSG_WARN(Cannot find GTK+; not building GUI client or server)
+               GUI_CLIENT="no"
+               GUI_SERVER="no"
+            fi
           fi
         fi
       fi
@@ -334,7 +339,7 @@ dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork issetugid)
+AC_CHECK_FUNCS(strdup strstr getopt getopt_long fork issetugid localtime_r gmtime_r)
 
 dnl Enable plugins only if we can find the dlopen function, and
 dnl the user does not disable them with --disable-plugins or --disable-shared
@@ -375,7 +380,7 @@ else
    dnl Check for socket and select even if networking gets manually
    dnl disabled below, since select is used if available for
    dnl millisecond sleeping
-   AC_SEARCH_LIBS(socket,socket)
+   AC_SEARCH_LIBS(socket,socket network)
    AC_SEARCH_LIBS(gethostbyname,nsl socket)
    AC_CHECK_FUNCS(socket gethostbyname select)
    if test "$ac_cv_func_select" = "yes" ; then

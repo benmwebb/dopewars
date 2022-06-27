@@ -3,10 +3,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
  "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 
 <head>
 <title>Obtaining and installing dopewars</title>
+<meta charset="utf-8"/>
 </head>
 
 <body>
@@ -56,7 +57,7 @@ crash with mysterious segmentation faults due to library conflicts.</p>
 
 <ol>
 <li>Download the 
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.1-1.el7.x86_64.rpm">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.2-1.el7.x86_64.rpm">
 x86_64 (64-bit Intel for RedHat Enterprise 7)</a> RPM with your web browser.</li>
 
 <li>Become root on your Unix box (if you cannot become root, then you will
@@ -65,7 +66,7 @@ up).</li>
 
 <li>Change to the directory containing the dopewars rpm, and install it with
 the command<br />
-<tt><b>rpm -Uvh dopewars-1.6.1-1.el7.x86_64.rpm</b></tt><br /> This will replace any
+<tt><b>rpm -Uvh dopewars-1.6.2-1.el7.x86_64.rpm</b></tt><br /> This will replace any
 already-installed earlier version.</li>
 </ol>
 
@@ -77,13 +78,13 @@ building the binaries from it on your system.</p>
 
 <ol>
 <li>Download the
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.1-1.el7.src.rpm">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.2-1.el7.src.rpm">
 source code RPM</a>.</li>
 
 <li>Become root and change to the directory containing the new rpm.</li>
 
 <li>Build a binary rpm with the command<br />
-<tt><b>rpmbuild --rebuild dopewars-1.6.1-1.el7.src.rpm</b></tt></li>
+<tt><b>rpmbuild --rebuild dopewars-1.6.2-1.el7.src.rpm</b></tt></li>
 
 <li>Change to the directory which the binary rpm has been written to (check
 the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
@@ -91,7 +92,7 @@ the output of the above - usually /usr/src/redhat/RPMS/<i>xxx</i>, where
 "alpha" on Alphas, "x86_64" on AMD64 or EM64T machines)</li>
 
 <li>Install the binary rpm with the command<br />
-<tt><b>rpm -Uvh dopewars-1.6.1-1.el7.<i>xxx</i>.rpm</b></tt></li>
+<tt><b>rpm -Uvh dopewars-1.6.2-1.el7.<i>xxx</i>.rpm</b></tt></li>
 </ol>
 
 <h2><a id="tarball">Tarball installation</a></h2>
@@ -109,15 +110,15 @@ build page</a> for more information.
 
 <ol>
 <li>Download the
-<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.1.tar.gz">
+<a href="http://prdownloads.sourceforge.net/dopewars/dopewars-1.6.2.tar.gz">
 source code tarball</a>.</li>
 
 <li>Change to the directory containing the tarball and extract the contents
 with the command <br />
-<tt><b>tar -xvzf dopewars-1.6.1.tar.gz</b></tt><br />
+<tt><b>tar -xvzf dopewars-1.6.2.tar.gz</b></tt><br />
 (or similar).</li>
 
-<li>Change into the dopewars-1.6.1 directory, and read all the important
+<li>Change into the dopewars-1.6.2 directory, and read all the important
 documentation in there ;) Most notably, the INSTALL file gives more details
 on setup and installation.</li>
 
@@ -130,7 +131,7 @@ on setup and installation.</li>
 <p>The configure script will test your system and set up dopewars so that it
 should compile cleanly.  The configure script supports a number of
 configurable options; for more details, read the INSTALL file in the
-dopewars-1.6.1 directory.</p>
+dopewars-1.6.2 directory.</p>
 
 <p>If you cannot become root, run the configure script specifying directories
 for which you have write access for the dopewars files, with a command

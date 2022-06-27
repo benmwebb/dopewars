@@ -1,6 +1,6 @@
 /************************************************************************
  * gtk_client.c   dopewars client using the GTK+ toolkit                *
- * Copyright (C)  1998-2020  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -350,7 +350,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));
@@ -605,7 +605,7 @@ void HandleClientMessage(char *pt, Player *Play)
 }
 
 struct HiScoreDiaStruct {
-  GtkWidget *dialog, *table, *vbox;
+  GtkWidget *dialog, *grid, *vbox;
   GtkAccelGroup *accel_group;
 };
 static struct HiScoreDiaStruct HiScoreDialog = { NULL, NULL, NULL, NULL };
@@ -615,7 +615,7 @@ static struct HiScoreDiaStruct HiScoreDialog = { NULL, NULL, NULL, NULL };
  */
 void PrepareHighScoreDialog(void)
 {
-  GtkWidget *dialog, *vbox, *hsep, *table;
+  GtkWidget *dialog, *vbox, *hsep, *grid;
 
   /* Make sure the server doesn't fool us into creating multiple dialogs */
   if (HiScoreDialog.dialog)
@@ -635,11 +635,11 @@ void PrepareHighScoreDialog(void)
                                GTK_WINDOW(ClientData.window));
 
   HiScoreDialog.vbox = vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  HiScoreDialog.table = table = gtk_table_new(NUMHISCORE, 4, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 30);
+  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE, 4, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 30);
 
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
@@ -658,7 +658,6 @@ void AddScoreToDialog(char *Data)
   gchar **spl1, **spl2;
   int index, slen;
   gboolean bold;
-  GtkStyle *style = NULL;
 
   if (!HiScoreDialog.dialog)
     return;
@@ -683,21 +682,9 @@ void AddScoreToDialog(char *Data)
     g_strfreev(spl1);
     return;
   }
-  label = gtk_label_new(spl1[0]);
-  gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-  gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
-                            0, 1, index, index + 1);
-  if (bold) {
-    GdkColor color;
-
-    color.red = 0;
-    color.green = 0;
-    color.blue = 0xDDDD;
-    color.pixel = 0;
-    style = gtk_style_new();
-    style->fg[GTK_STATE_NORMAL] = color;
-    gtk_widget_set_style(label, style);
-  }
+  label = make_bold_label(spl1[0], bold);
+  set_label_alignment(label, 1.0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 0, index, 1, 1, TRUE);
   gtk_widget_show(label);
 
   /* Remove any leading whitespace from the remainder, since g_strsplit
@@ -711,13 +698,9 @@ void AddScoreToDialog(char *Data)
     g_strfreev(spl2);
     return;
   }
-  label = gtk_label_new(spl2[0]);
-  gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
-  gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
-                            1, 2, index, index + 1);
-  if (bold) {
-    gtk_widget_set_style(label, style);
-  }
+  label = make_bold_label(spl2[0], bold);
+  set_label_alignment(label, 0.5, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 1, index, 1, 1, TRUE);
   gtk_widget_show(label);
 
   /* The remainder is the name, terminated with (R.I.P.) if the player
@@ -733,26 +716,19 @@ void AddScoreToDialog(char *Data)
 
   /* Check for (R.I.P.) suffix, and add it to the 4th column if found */
   if (slen > 8 && spl2[1][slen - 1] == ')' && spl2[1][slen - 8] == '(') {
-    label = gtk_label_new(&spl2[1][slen - 8]);
-    gtk_misc_set_alignment(GTK_MISC(label), 0.5, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
-                              3, 4, index, index + 1);
-    if (bold) {
-      gtk_widget_set_style(label, style);
-    }
+    label = make_bold_label(&spl2[1][slen - 8], bold);
+    set_label_alignment(label, 0.5, 0.5);
+    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 3, index, 1, 1,
+                       TRUE);
     gtk_widget_show(label);
     spl2[1][slen - 8] = '\0';   /* Remove suffix from the player name */
   }
 
   /* Finally, add in what's left of the player name */
   g_strchomp(spl2[1]);
-  label = gtk_label_new(spl2[1]);
-  gtk_misc_set_alignment(GTK_MISC(label), 0, 0.5);
-  gtk_table_attach_defaults(GTK_TABLE(HiScoreDialog.table), label,
-                            2, 3, index, index + 1);
-  if (bold) {
-    gtk_widget_set_style(label, style);
-  }
+  label = make_bold_label(spl2[1], bold);
+  set_label_alignment(label, 0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 2, index, 1, 1, TRUE);
   gtk_widget_show(label);
 
   g_strfreev(spl1);
@@ -785,7 +761,7 @@ void CompleteHighScoreDialog(gboolean AtEnd)
   }
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_CLOSE, HiScoreDialog.accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -902,7 +878,7 @@ struct combatant {
  */
 static void CreateFightDialog(void)
 {
-  GtkWidget *dialog, *vbox, *button, *hbox, *hbbox, *hsep, *text, *table;
+  GtkWidget *dialog, *vbox, *button, *hbox, *hbbox, *hsep, *text, *grid;
   GtkAccelGroup *accel_group;
   GArray *combatants;
   gchar *buf;
@@ -923,15 +899,15 @@ static void CreateFightDialog(void)
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 
-  table = gtk_table_new(2, 4, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 7);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 10);
+  grid = dp_gtk_grid_new(2, 4, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 7);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 10);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
-  gtk_table_attach_defaults(GTK_TABLE(table), hsep, 0, 4, 1, 2);
-  gtk_widget_show_all(table);
-  gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
-  g_object_set_data(G_OBJECT(dialog), "table", table);
+  dp_gtk_grid_attach(GTK_GRID(grid), hsep, 0, 1, 3, 1, TRUE);
+  gtk_widget_show_all(grid);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, FALSE, FALSE, 0);
+  g_object_set_data(G_OBJECT(dialog), "grid", grid);
 
   combatants = g_array_new(FALSE, TRUE, sizeof(struct combatant));
   g_array_set_size(combatants, 1);
@@ -993,13 +969,13 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
   const gchar *name;
   struct combatant *compt;
   GArray *combatants;
-  GtkWidget *table;
+  GtkWidget *grid;
   gchar *BitchText, *HealthText;
   gfloat ProgPercent;
 
   combatants = (GArray *)g_object_get_data(G_OBJECT(FightDialog),
                                            "combatants");
-  table = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "table"));
+  grid = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "grid"));
   if (!combatants) {
     return;
   }
@@ -1024,7 +1000,7 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
       g_array_set_size(combatants, i + 1);
       compt = &g_array_index(combatants, struct combatant, i);
 
-      gtk_table_resize(GTK_TABLE(table), i + 2, 4);
+      dp_gtk_grid_resize(GTK_GRID(grid), i + 2, 4);
       RowIndex = i + 1;
     }
   } else {
@@ -1063,19 +1039,18 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     /* Display of the current player's name during combat */
     compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
 
-    gtk_table_attach(GTK_TABLE(table), compt->name, 0, 1,
-                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->name, 0, RowIndex, 1, 1, FALSE);
     compt->bitches = gtk_label_new(DefendBitches >= 0 ? BitchText : "");
-    gtk_table_attach(GTK_TABLE(table), compt->bitches, 1, 2,
-                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->bitches, 1, RowIndex, 1, 1,
+                       FALSE);
     compt->healthprog = gtk_progress_bar_new();
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
                                   ProgPercent);
-    gtk_table_attach_defaults(GTK_TABLE(table), compt->healthprog, 2, 3,
-                              RowIndex, RowIndex + 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->healthprog, 2, RowIndex, 1, 1,
+                       TRUE);
     compt->healthlabel = gtk_label_new(HealthText);
-    gtk_table_attach(GTK_TABLE(table), compt->healthlabel, 3, 4,
-                     RowIndex, RowIndex + 1, GTK_SHRINK, GTK_SHRINK, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->healthlabel, 3, RowIndex, 1, 1,
+                       FALSE);
     gtk_widget_show(compt->name);
     gtk_widget_show(compt->bitches);
     gtk_widget_show(compt->healthprog);
@@ -1460,7 +1435,7 @@ void JetButtonPressed(GtkWidget *widget, gpointer data)
 
 void Jet(GtkWidget *parent)
 {
-  GtkWidget *dialog, *table, *button, *label, *vbox;
+  GtkWidget *dialog, *grid, *button, *label, *vbox;
   GtkAccelGroup *accel_group;
   gint boxsize, i, row, col;
   gchar *name, AccelChar;
@@ -1498,7 +1473,7 @@ void Jet(GtkWidget *parent)
     row++;
   }
 
-  table = gtk_table_new(row, col, TRUE);
+  grid = dp_gtk_grid_new(row, col, TRUE);
 
   for (i = 0; i < NumLocation; i++) {
     if (i < 9) {
@@ -1535,10 +1510,9 @@ void Jet(GtkWidget *parent)
     g_object_set_data(G_OBJECT(button), "dialog", dialog);
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(JetCallback), GINT_TO_POINTER(i));
-    gtk_table_attach_defaults(GTK_TABLE(table), button, col, col + 1, row,
-                              row + 1);
+    dp_gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1, TRUE);
   }
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
@@ -1787,14 +1761,14 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(DealOKCallback), data);
   gtk_widget_set_can_default(button, TRUE);
   defbutton = button;
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Cancel"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -1952,10 +1926,10 @@ void QuestionDialog(char *Data, Player *From)
   for (i = 0; i < strlen(Responses); i++) {
     switch (Responses[i]) {
     case 'Y':
-      button = NewStockButton(GTK_STOCK_YES, accel_group);
+      button = gtk_button_new_with_mnemonic(_("_Yes"));
       break;
     case 'N':
-      button = NewStockButton(GTK_STOCK_NO, accel_group);
+      button = gtk_button_new_with_mnemonic(_("_No"));
       break;
     default:
       for (j = 0, trword = NULL; j < numWords && !trword; j++) {
@@ -2089,64 +2063,64 @@ void UpdateMenus(void)
 
 GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
 {
-  GtkWidget *table, *label;
+  GtkWidget *grid, *label;
 
-  table = gtk_table_new(3, 6, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 3);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 3);
-  gtk_container_set_border_width(GTK_CONTAINER(table), 3);
+  grid = dp_gtk_grid_new(3, 6, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 3);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
+  gtk_container_set_border_width(GTK_CONTAINER(grid), 3);
 
   label = Status->Location = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 2, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 2, 1, TRUE);
 
   label = Status->Date = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 2, 4, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 0, 2, 1, TRUE);
 
   /* Available space label in GTK+ client status display */
   label = Status->SpaceName = gtk_label_new(_("Space"));
 
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 4, 5, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 0, 1, 1, TRUE);
   label = Status->SpaceValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 5, 6, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 0, 1, 1, TRUE);
 
   /* Player's cash label in GTK+ client status display */
   label = Status->CashName = gtk_label_new(_("Cash"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, TRUE);
 
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 1, 2);
   label = Status->CashValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 1, 2);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 1, 1, 1, TRUE);
 
   /* Player's debt label in GTK+ client status display */
   label = Status->DebtName = gtk_label_new(_("Debt"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 1, 1, 1, TRUE);
 
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 2, 3, 1, 2);
   label = Status->DebtValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 3, 4, 1, 2);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 1, 1, 1, TRUE);
 
   /* Player's bank balance label in GTK+ client status display */
   label = Status->BankName = gtk_label_new(_("Bank"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 1, 1, 1, TRUE);
 
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 4, 5, 1, 2);
   label = Status->BankValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 5, 6, 1, 2);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 1, 1, 1, TRUE);
 
   label = Status->GunsName = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 2, 3);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, TRUE);
   label = Status->GunsValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 2, 3);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 1, TRUE);
 
   label = Status->BitchesName = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 2, 3, 2, 3);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 1, TRUE);
   label = Status->BitchesValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 3, 4, 2, 3);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 2, 1, 1, TRUE);
 
   /* Player's health label in GTK+ client status display */
   label = Status->HealthName = gtk_label_new(_("Health"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 2, 1, 1, TRUE);
 
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 4, 5, 2, 3);
   label = Status->HealthValue = gtk_label_new(NULL);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 5, 6, 2, 3);
-  return table;
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 2, 1, 1, TRUE);
+  return grid;
 }
 
 void SetJetButtonTitle(GtkAccelGroup *accel_group)
@@ -2205,7 +2179,7 @@ gboolean GtkLoop(int *argc, char **argv[],
                  struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #endif
 {
-  GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *table, *menubar, *text,
+  GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *menubar, *text,
       *vpaned, *button, *tv, *widget;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
@@ -2222,29 +2196,28 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_init(argc, argv);
 #endif
 
-  if (HaveUnicodeSupport()) {
-    /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
-     * strings to be UTF-8, so we force gettext to return all translations
-     * in this encoding here. */
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
+  /* GTK+2 (and the GTK emulation code on WinNT systems) expects all
+   * strings to be UTF-8, so we force gettext to return all translations
+   * in this encoding here. */
+  bind_textdomain_codeset(PACKAGE, "UTF-8");
 
-    Conv_SetInternalCodeset("UTF-8");
-    WantUTF8Errors(TRUE);
-  }
+  Conv_SetInternalCodeset("UTF-8");
+  WantUTF8Errors(TRUE);
+
   InitConfiguration(cmdline);
   ClientData.cmdline = cmdline;
 
   /* Set up message handlers */
   ClientMessageHandlerPt = HandleClientMessage;
 
+  if (!CheckHighScoreFileConfig()) {
+    return TRUE;
+  }
+
   /* Have the GLib log messages pop up in a nice dialog box */
   g_log_set_handler(NULL,
                     G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_WARNING |
                     G_LOG_LEVEL_CRITICAL, LogMessage, NULL);
-
-  if (!CheckHighScoreFileConfig()) {
-    return TRUE;
-  }
 
   SoundOpen(cmdline->plugin);
 
@@ -2290,13 +2263,13 @@ gboolean GtkLoop(int *argc, char **argv[],
   frame = gtk_frame_new(_("Stats"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
 
-  table = CreateStatusWidgets(&ClientData.Status);
+  grid = CreateStatusWidgets(&ClientData.Status);
 
-  gtk_container_add(GTK_CONTAINER(frame), table);
+  gtk_container_add(GTK_CONTAINER(frame), grid);
 
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-  vpaned = gtk_vpaned_new();
+  vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 
   text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
   make_tags(GTK_TEXT_VIEW(text));
@@ -2386,7 +2359,7 @@ static void PackCentredURL(GtkWidget *vbox, gchar *title, gchar *target,
 
 void display_intro(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *label, *table, *OKButton, *vbox, *hsep, *hbbox;
+  GtkWidget *dialog, *label, *grid, *OKButton, *vbox, *hsep, *hbbox;
   gchar *VersionStr, *docindex;
   const int rows = 8, cols = 3;
   int i, j;
@@ -2435,7 +2408,7 @@ void display_intro(GtkWidget *widget, gpointer data)
 
   /* Version and copyright notice in GTK+ 'about' dialog */
   VersionStr = g_strdup_printf(_("Version %s     "
-                                 "Copyright (C) 1998-2020  "
+                                 "Copyright (C) 1998-2022  "
                                  "Ben Webb benwebb@users.sf.net\n"
                                  "dopewars is released under the "
                                  "GNU General Public License\n"), VERSION);
@@ -2443,9 +2416,9 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   g_free(VersionStr);
 
-  table = gtk_table_new(rows, cols, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 3);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 3);
+  grid = dp_gtk_grid_new(rows, cols, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 3);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
   for (i = 0; i < rows; i++) {
     if (i > 0 || strcmp(_(table_data[i][1]), "Ben Webb") != 0) {
       for (j = 0; j < cols; j++) {
@@ -2455,13 +2428,12 @@ void display_intro(GtkWidget *widget, gpointer data)
           } else {
             label = gtk_label_new(table_data[i][j]);
           }
-          gtk_table_attach_defaults(GTK_TABLE(table), label, j, j + 1, i,
-                                    i + 1);
+          dp_gtk_grid_attach(GTK_GRID(grid), label, j, i, 1, 1, TRUE);
         }
       }
     }
   }
-  gtk_box_pack_start(GTK_BOX(vbox), table, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, FALSE, FALSE, 0);
 
   /* Label at the bottom of GTK+ 'about' dialog */
   label = gtk_label_new(_("\nFor information on the command line "
@@ -2481,7 +2453,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  OKButton = NewStockButton(GTK_STOCK_OK, accel_group);
+  OKButton = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect_swapped(G_OBJECT(OKButton), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -2563,7 +2535,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 
 void TransferDialog(gboolean Debt)
 {
-  GtkWidget *dialog, *button, *label, *radio, *table, *vbox;
+  GtkWidget *dialog, *button, *label, *radio, *grid, *vbox;
   GtkWidget *hbbox, *hsep, *entry;
   GtkAccelGroup *accel_group;
   GSList *group;
@@ -2594,14 +2566,14 @@ void TransferDialog(gboolean Debt)
                                GTK_WINDOW(ClientData.window));
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  table = gtk_table_new(4, 3, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 4);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 4);
+  grid = dp_gtk_grid_new(4, 3, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 4);
 
   /* Display of player's cash in bank or loan shark dialog */
   dpg_string_printf(text, _("Cash: %P"), ClientData.Play->Cash);
   label = gtk_label_new(text->str);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 3, 1, TRUE);
 
   if (Debt) {
     /* Display of player's debt in loan shark dialog */
@@ -2611,23 +2583,23 @@ void TransferDialog(gboolean Debt)
     dpg_string_printf(text, _("Bank: %P"), ClientData.Play->Bank);
   }
   label = gtk_label_new(text->str);
-  gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 1, 2);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1, TRUE);
 
   g_object_set_data(G_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
   if (Debt) {
     /* Prompt for paying back a loan */
     label = gtk_label_new(_("Pay back:"));
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 1, 2, 4);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
   } else {
     /* Radio button selected if you want to pay money into the bank */
     radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
     g_object_set_data(G_OBJECT(dialog), "deposit", radio);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
-    gtk_table_attach_defaults(GTK_TABLE(table), radio, 0, 1, 2, 3);
+    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 2, 1, 1, FALSE);
 
     /* Radio button selected if you want to withdraw money from the bank */
     radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
-    gtk_table_attach_defaults(GTK_TABLE(table), radio, 0, 1, 3, 4);
+    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 3, 1, 1, FALSE);
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
@@ -2637,20 +2609,20 @@ void TransferDialog(gboolean Debt)
                    G_CALLBACK(TransferOK), dialog);
 
   if (Currency.Prefix) {
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 1, 2, 2, 4);
-    gtk_table_attach_defaults(GTK_TABLE(table), entry, 2, 3, 2, 4);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 2, FALSE);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 2, 2, 1, 2, TRUE);
   } else {
-    gtk_table_attach_defaults(GTK_TABLE(table), label, 2, 3, 2, 4);
-    gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 2, 4);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 2, FALSE);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 1, 2, TRUE);
   }
 
-  gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(TransferOK), dialog);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
@@ -2662,7 +2634,7 @@ void TransferDialog(gboolean Debt)
                      G_CALLBACK(TransferPayAll), dialog);
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Cancel"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -2709,7 +2681,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -2849,7 +2821,7 @@ void TalkDialog(gboolean TalkToAll)
                    G_CALLBACK(TalkSend), (gpointer)&TalkData);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -3009,14 +2981,14 @@ void ErrandDialog(gint ErrandType)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_object_set_data(G_OBJECT(button), "dialog", dialog);
   g_object_set_data(G_OBJECT(button), "errandtype",
                     GINT_TO_POINTER(ErrandType));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(ErrandOK), (gpointer)clist);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Cancel"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
@@ -3238,7 +3210,7 @@ void NewNameDialog(void)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(NewNameOK), window);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
@@ -3292,7 +3264,7 @@ void GunShopDialog(void)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
   hbbox = my_hbbox_new();
-  button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));
@@ -3352,7 +3324,7 @@ static void CreateSpyReports(void)
 
   gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
 
-  button = NewStockButton(GTK_STOCK_CLOSE, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));
@@ -3365,7 +3337,7 @@ static void CreateSpyReports(void)
 
 void DisplaySpyReports(Player *Play)
 {
-  GtkWidget *dialog, *notebook, *vbox, *hbox, *frame, *label, *table;
+  GtkWidget *dialog, *notebook, *vbox, *hbox, *frame, *label, *grid;
   GtkAccelGroup *accel_group;
   struct StatusWidgets Status;
   struct InventoryWidgets SpyDrugs, SpyGuns;
@@ -3379,8 +3351,8 @@ void DisplaySpyReports(Player *Play)
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   frame = gtk_frame_new("Stats");
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
-  table = CreateStatusWidgets(&Status);
-  gtk_container_add(GTK_CONTAINER(frame), table);
+  grid = CreateStatusWidgets(&Status);
+  gtk_container_add(GTK_CONTAINER(frame), grid);
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
   hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);

@@ -1,7 +1,7 @@
 /************************************************************************
  * cursesport.h   Portability functions to enable curses applications   *
  *                     to be built on Win32 systems                     *
- * Copyright (C)  1998-2020  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -27,6 +27,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <glib.h>
 
 #ifdef CYGWIN                   /* Definitions for native Win32 build */
 #include <winsock2.h>
@@ -107,6 +109,6 @@ void endwin(void);
 
 #endif /* CYGWIN */
 
-int bgetch(void);
+gunichar bgetch(void);
 
 #endif /* __CURSESPORT_H__ */

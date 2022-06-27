@@ -270,7 +270,7 @@ static GtkWidget *NewConfigEntry(gchar *name)
   return entry;
 }
 
-static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
+static void AddStructConfig(GtkWidget *grid, int row, gchar *structname,
                             struct ConfigMembers *member)
 {
   int ind;
@@ -284,15 +284,13 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     GtkWidget *check;
 
     check = gtk_check_button_new_with_label(_(member->label));
-    gtk_table_attach(GTK_TABLE(table), check, 0, 2, row, row + 1,
-                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), check, 0, row, 2, 1, TRUE);
     AddConfigWidget(check, ind);
   } else {
     GtkWidget *label, *entry;
 
     label = gtk_label_new(_(member->label));
-    gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1,
-                     GTK_SHRINK, GTK_SHRINK, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
     if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
       GtkAdjustment *spin_adj = (GtkAdjustment *)
           gtk_adjustment_new(gvar->MinVal, gvar->MinVal, gvar->MaxVal,
@@ -301,8 +299,7 @@ static void AddStructConfig(GtkWidget *table, int row, gchar *structname,
     } else {
       entry = gtk_entry_new();
     }
-    gtk_table_attach(GTK_TABLE(table), entry, 1, 2, row, row + 1,
-                     GTK_EXPAND | GTK_FILL, 0, 0, 0);
+    dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, row, 1, 1, TRUE);
     AddConfigWidget(entry, ind);
   }
 }
@@ -668,7 +665,7 @@ static void FinishOptDialog(GtkWidget *widget, gpointer data)
 
 static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
 {
-  GtkWidget *hbox, *vbox, *hbbox, *tv, *scrollwin, *button, *table;
+  GtkWidget *hbox, *vbox, *hbbox, *tv, *scrollwin, *button, *grid;
   GtkTreeSelection *treesel;
   GtkListStore *store;
   GtkCellRenderer *renderer;
@@ -763,16 +760,16 @@ static GtkWidget *CreateList(gchar *structname, struct ConfigMembers *members)
   gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
 
-  table = gtk_table_new(nummembers + 1, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  grid = dp_gtk_grid_new(nummembers + 1, 2, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
-  AddStructConfig(table, 0, structname, &namemember);
+  AddStructConfig(grid, 0, structname, &namemember);
   for (i = 0; i < nummembers; i++) {
-    AddStructConfig(table, i + 1, structname, &members[i]);
+    AddStructConfig(grid, i + 1, structname, &members[i]);
   }
 
-  gtk_box_pack_start(GTK_BOX(hbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(hbox), grid, TRUE, TRUE, 0);
 
   return hbox;
 }
@@ -803,7 +800,7 @@ static void FillSoundsList(GtkTreeView *tv)
 
 void OptDialog(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *notebook, *table, *label, *check, *entry;
+  GtkWidget *dialog, *notebook, *label, *check, *entry, *grid;
   GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *tv;
   GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
@@ -858,67 +855,60 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   notebook = gtk_notebook_new();
 
-  table = gtk_table_new(8, 3, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  grid = dp_gtk_grid_new(8, 3, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   check = NewConfigCheck("Sanitized", _("Remove drug references"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 0, 1, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 1, 1, FALSE);
 
   check = gtk_check_button_new_with_label(_("Unicode config file"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 1, 3, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 1, 0, 2, 1, TRUE);
   g_object_set_data(G_OBJECT(dialog), "unicode_check", check);
 
   label = gtk_label_new(_("Game length (turns)"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("NumTurns");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 1, 2);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 2, 1, TRUE);
 
   label = gtk_label_new(_("Starting cash"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 2, 3,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, FALSE);
   entry = NewConfigEntry("StartCash");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 2, 3);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 2, 1, TRUE);
 
   label = gtk_label_new(_("Starting debt"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 3, 4,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 3, 1, 1, FALSE);
   entry = NewConfigEntry("StartDebt");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 3, 4);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 3, 2, 1, TRUE);
 
   label = gtk_label_new(_("Currency symbol"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1, FALSE);
   entry = NewConfigEntry("Currency.Symbol");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 4, 5);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 1, 1, TRUE);
   check = NewConfigCheck("Currency.Prefix", _("Symbol prefixes prices"));
-  gtk_table_attach_defaults(GTK_TABLE(table), check, 2, 3, 4, 5);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 2, 4, 1, 1, TRUE);
 
   label = gtk_label_new(_("Name of one bitch"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1, FALSE);
   entry = NewConfigEntry("Names.Bitch");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 5, 6);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 2, 1, TRUE);
 
   label = gtk_label_new(_("Name of several bitches"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 6, 7,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1, FALSE);
   entry = NewConfigEntry("Names.Bitches");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 6, 7);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 6, 2, 1, TRUE);
 
 #ifndef CYGWIN
   label = gtk_label_new(_("Web browser"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 7, 8,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 7, 1, 1, FALSE);
   entry = NewConfigEntry("WebBrowser");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 3, 7, 8);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 7, 2, 1, TRUE);
 #endif
 
-  gtk_container_set_border_width(GTK_CONTAINER(table), 7);
+  gtk_container_set_border_width(GTK_CONTAINER(grid), 7);
   label = gtk_label_new(_("General"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), grid, label);
 
   hbox = CreateList("Location", locmembers);
   gtk_container_set_border_width(GTK_CONTAINER(hbox), 7);
@@ -935,21 +925,19 @@ void OptDialog(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox2), hsep, FALSE, FALSE, 0);
 
-  table = gtk_table_new(2, 2, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  grid = dp_gtk_grid_new(2, 2, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
   label = gtk_label_new(_("Expensive string 1"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 0, 1,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, FALSE);
   entry = NewConfigEntry("Drugs.ExpensiveStr1");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 0, 1);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
 
   label = gtk_label_new(_("Expensive string 2"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("Drugs.ExpensiveStr2");
-  gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, 1, 2);
-  gtk_box_pack_start(GTK_BOX(vbox2), table, FALSE, FALSE, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
+  gtk_box_pack_start(GTK_BOX(vbox2), grid, FALSE, FALSE, 0);
 
   label = gtk_label_new(_("Drugs"));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox2, label);
@@ -965,45 +953,37 @@ void OptDialog(GtkWidget *widget, gpointer data)
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), hbox, label);
 
 #ifdef NETWORKING
-  table = gtk_table_new(6, 4, FALSE);
-  gtk_table_set_row_spacings(GTK_TABLE(table), 5);
-  gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+  grid = dp_gtk_grid_new(6, 4, FALSE);
+  gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 5);
 
   check = NewConfigCheck("MetaServer.Active",
                          _("Server reports to metaserver"));
-  gtk_table_attach(GTK_TABLE(table), check, 0, 2, 0, 1,
-                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 2, 1, TRUE);
 
 #ifdef CYGWIN
   check = NewConfigCheck("MinToSysTray", _("Minimize to System Tray"));
-  gtk_table_attach(GTK_TABLE(table), check, 2, 4, 0, 1,
-                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), check, 2, 0, 2, 1, TRUE);
 #endif
 
   label = gtk_label_new(_("Metaserver URL"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 1, 2,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = NewConfigEntry("MetaServer.URL");
-  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 1, 2,
-                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 3, 1, TRUE);
 
   label = gtk_label_new(_("Comment"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 4, 5,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 4, 1, 1, FALSE);
   entry = NewConfigEntry("MetaServer.Comment");
-  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 4, 5,
-                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 4, 3, 1, TRUE);
 
   label = gtk_label_new(_("MOTD (welcome message)"));
-  gtk_table_attach(GTK_TABLE(table), label, 0, 1, 5, 6,
-                   GTK_SHRINK, GTK_SHRINK, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1, FALSE);
   entry = NewConfigEntry("ServerMOTD");
-  gtk_table_attach(GTK_TABLE(table), entry, 1, 4, 5, 6,
-                   GTK_EXPAND | GTK_FILL, 0, 0, 0);
+  dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 3, 1, TRUE);
 
-  gtk_container_set_border_width(GTK_CONTAINER(table), 7);
+  gtk_container_set_border_width(GTK_CONTAINER(grid), 7);
   label = gtk_label_new(_("Server"));
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), table, label);
+  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), grid, label);
 #endif
 
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
@@ -1067,17 +1047,17 @@ void OptDialog(GtkWidget *widget, gpointer data)
 
   hbbox = my_hbbox_new();
 
-  button = NewStockButton(GTK_STOCK_OK, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(OKCallback), (gpointer)dialog);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = NewStockButton(GTK_STOCK_HELP, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Help"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(HelpCallback), (gpointer)notebook);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  button = NewStockButton(GTK_STOCK_CANCEL, accel_group);
+  button = gtk_button_new_with_mnemonic(_("_Cancel"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));

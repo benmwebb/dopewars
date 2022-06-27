@@ -32,8 +32,6 @@
 #include <windows.h>
 #include <commctrl.h>
 
-void InitUnicodeSupport(void);
-
 BOOL mySetWindowText(HWND hWnd, LPCTSTR lpString);
 HWND myCreateWindow(LPCTSTR lpClassName, LPCTSTR lpWindowName, DWORD dwStyle,
                     int x, int y, int nWidth, int nHeight, HWND hwndParent,
@@ -54,18 +52,8 @@ int myTabCtrl_InsertItem(HWND hWnd, int index, const TC_ITEM *pitem);
 ATOM myRegisterClass(CONST WNDCLASS *lpWndClass);
 HWND myCreateDialog(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                     DLGPROC lpDialogFunc);
-LRESULT mySendMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 void myEditReplaceSel(HWND hWnd, BOOL fCanUndo, LPCSTR lParam);
-LONG_PTR mySetWindowLong(HWND hWnd, int nIndex, LONG_PTR dwNewLong);
-LONG_PTR myGetWindowLong(HWND hWnd, int nIndex);
-LRESULT myCallWindowProc(WNDPROC lpPrevWndProc, HWND hWnd, UINT Msg,
-                         WPARAM wParam, LPARAM lParam);
-LRESULT myDefWindowProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam);
 int myMessageBox(HWND hWnd, LPCTSTR lpText, LPCTSTR lpCaption, UINT uType);
-BOOL myGetMessage(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin,
-                  UINT wMsgFilterMax);
-LONG myDispatchMessage(CONST MSG *lpmsg);
-BOOL myIsDialogMessage(HWND hDlg, LPMSG lpMsg);
 size_t myw32strlen(const char *str);
 LRESULT myComboBox_AddString(HWND hWnd, LPCTSTR text);
 gchar *w32tostr(const gunichar2 *instr, int len);

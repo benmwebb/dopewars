@@ -1,15 +1,16 @@
-[![Build Status](https://travis-ci.com/benmwebb/dopewars.svg?branch=develop)](https://travis-ci.com/benmwebb/dopewars)
+[![Build Status](https://github.com/benmwebb/dopewars/workflows/build/badge.svg?branch=develop)](https://github.com/benmwebb/dopewars/actions?query=workflow%3Abuild)
+[![Download dopewars drug dealing game](https://img.shields.io/sourceforge/dt/dopewars.svg)](https://dopewars.sourceforge.io/download.html)
 
-This is dopewars 1.6.1, a game simulating the life of a drug dealer in
+This is dopewars 1.6.2, a game simulating the life of a drug dealer in
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.6.1 servers should handle clients as old as version 1.4.3 with
+dopewars 1.6.2 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.6.1!
+recommended that both clients and servers are upgraded to 1.6.2!
 
 ## Installation
 
@@ -19,10 +20,10 @@ Either...
    
 Or...
 
-1. Get the tarball `dopewars-1.6.1.tar.gz` from the same URL
-2. Extract it via `tar -xvzf dopewars-1.6.1.tar.gz`
+1. Get the tarball `dopewars-1.6.2.tar.gz` from the same URL
+2. Extract it via `tar -xvzf dopewars-1.6.2.tar.gz`
 3. Follow the instructions in the `INSTALL` file in the newly-created
-   `dopewars-1.6.1` directory
+   `dopewars-1.6.2` directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
@@ -33,8 +34,8 @@ score file can be selected with the `-f` switch.
 
 ## Windows installation
 
-dopewars now compiles as a console or regular application under Win32
-(XP or later). Almost all functionality of the standard Unix binary is retained;
+dopewars now compiles as a console or regular application under Win32 (Windows 7
+or later). Almost all functionality of the standard Unix binary is retained;
 for example, all of the same command line switches are supported. However, for
 convenience, the configuration file is the more Windows-friendly
 "dopewars-config.txt".
@@ -48,21 +49,21 @@ dopewars has built-in client-server support for multi-player games. For a
 full list of options configurable on the command line, run dopewars with
 the `-h` switch.
 
-`dopewars -a`
+`dopewars -a`  
 This is "antique" dopewars; it tries to keep to the original dopewars, based
 on the "Drug Wars" game by John E. Dell, as closely as possible.
 
-`dopewars`
+`dopewars`  
 By default, dopewars supports multi-player games. On starting a game, the
 program will attempt to connect to a dopewars server so that players can send
 messages back and forth, and shoot each other if they really want to...
 
-`dopewars -s`
+`dopewars -s`  
 Starts a dopewars server. This sits in the background and handles multi-player
 games. You probably want to use the `-l` command line option too to direct its
 log output to somewhere sensible.
 
-`dopewars -c`
+`dopewars -c`  
 Create and run a computer dopewars player. This will attempt to connect
 to a dopewars server, and if this succeeds, it will then participate in
 multi-player dopewars games.
@@ -100,11 +101,11 @@ nicer! ;)
 ## License
 
 dopewars is released under the GNU General Public License; see the text file
-LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2020.
+LICENCE for further information. dopewars is copyright (C) Ben Webb 1998-2022.
 The dopewars icons are copyright (C) Ocelot Mantis 2001.
 
 ## Support
 
-dopewars is written and maintained by Ben Webb <benwebb@users.sf.net>
+dopewars is written and maintained by Ben Webb <benwebb@users.sf.net>  
 Enquiries about dopewars may be sent to this address (keep them sensible 
 please ;) Bug fixes and reports, improvements and patches are also welcomed.

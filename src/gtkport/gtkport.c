@@ -1,6 +1,6 @@
 /************************************************************************
  * gtkport.c      Portable "almost-GTK+" for Unix/Win32                 *
- * Copyright (C)  1998-2020  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -45,18 +45,8 @@
 #include "mac_helpers.h"
 #endif
 
-#if CYGWIN
-#include "unicodewrap.h"
-const gchar *GTK_STOCK_OK = N_("_OK");
-const gchar *GTK_STOCK_CLOSE = N_("_Close");
-const gchar *GTK_STOCK_CANCEL = N_("_Cancel");
-const gchar *GTK_STOCK_REFRESH = N_("_Refresh");
-const gchar *GTK_STOCK_YES = N_("_Yes");
-const gchar *GTK_STOCK_NO = N_("_No");
-const gchar *GTK_STOCK_HELP = N_("_Help");
-#endif
-
 #ifdef CYGWIN
+#include "unicodewrap.h"
 
 #include <winsock2.h>
 #include <windows.h>
@@ -72,7 +62,7 @@ const gchar *GTK_STOCK_HELP = N_("_Help");
 HICON mainIcon = NULL;
 static WNDPROC customWndProc = NULL;
 static gboolean HaveRichEdit = FALSE;
-static gchar *RichEditClass = NULL;
+static const gchar *RichEditClass = "RichEdit20W";
 static gboolean HaveXPControls = FALSE;
 
 static guint RecurseLevel = 0;
@@ -634,7 +624,7 @@ static WNDPROC wpOrigEntryProc, wpOrigTextProc;
 
 void gtk_set_default_font(HWND hWnd)
 {
-  mySendMessage(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
+  SendMessageW(hWnd, WM_SETFONT, (WPARAM)defFont, MAKELPARAM(FALSE, 0));
 }
 
 GObject *GtkNewObject(GtkClass *klass)
@@ -779,7 +769,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, WPARAM wParam,
   gint newpos;
   GtkPaned *paned;
 
-  paned = GTK_PANED(myGetWindowLong(hwnd, GWLP_USERDATA));
+  paned = GTK_PANED(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
   switch (msg) {
   case WM_PAINT:
     if (GetUpdateRect(hwnd, NULL, TRUE)) {
@@ -847,7 +837,7 @@ LRESULT CALLBACK GtkPanedProc(HWND hwnd, UINT msg, WPARAM wParam,
     gtk_paned_set_position(paned, newpos);
     return TRUE;
   default:
-    return myDefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
   }
   return FALSE;
 }
@@ -868,7 +858,7 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     HDC hDC;
     HFONT oldFont;
 
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     text = GTK_LABEL(widget)->text;
     if (text && BeginPaint(hwnd, &ps)) {
       hDC = ps.hdc;
@@ -883,12 +873,12 @@ LRESULT CALLBACK GtkUrlProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return TRUE;
   } else if (msg == WM_LBUTTONUP) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 
     DisplayHTML(widget, NULL, GTK_URL(widget)->target);
     return FALSE;
   } else
-    return myDefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -933,7 +923,7 @@ LRESULT CALLBACK GtkSepProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return TRUE;
   } else
-    return myDefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
 gboolean gtk_window_wndproc(GtkWidget *widget, UINT msg, WPARAM wParam,
@@ -1012,10 +1002,10 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   *dodef = TRUE;
 
   if (customWndProc
-      && myCallWindowProc(customWndProc, hwnd, msg, wParam, lParam))
+      && CallWindowProcW(customWndProc, hwnd, msg, wParam, lParam))
     return TRUE;
 
-  widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+  widget = GTK_WIDGET(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
   if (widget && (klass = G_OBJECT(widget)->klass)
       && klass->wndproc) {
     retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1024,7 +1014,8 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
   switch (msg) {
   case WM_DRAWITEM:
     if ((lpdis = (LPDRAWITEMSTRUCT)lParam)
-        && (widget = GTK_WIDGET(myGetWindowLong(lpdis->hwndItem, GWLP_USERDATA)))
+        && (widget = GTK_WIDGET(GetWindowLongPtrW(lpdis->hwndItem,
+                                                  GWLP_USERDATA)))
         && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1042,7 +1033,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     }
     break;
   case WM_COMMAND:
-    widget = GTK_WIDGET(myGetWindowLong((HWND)lParam, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW((HWND)lParam, GWLP_USERDATA));
     klass = NULL;
     if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
@@ -1062,7 +1053,7 @@ static BOOL HandleWinMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     if (!nmhdr)
       break;
 
-    widget = GTK_WIDGET(myGetWindowLong(nmhdr->hwndFrom, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(nmhdr->hwndFrom, GWLP_USERDATA));
     if (widget && (klass = G_OBJECT(widget)->klass)
         && klass->wndproc) {
       retval = klass->wndproc(widget, msg, wParam, lParam, dodef);
@@ -1097,7 +1088,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
   retval = HandleWinMessage(hwnd, msg, wParam, lParam, &dodef);
   if (dodef) {
-    return myDefWindowProc(hwnd, msg, wParam, lParam);
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
   } else {
     return retval;
   }
@@ -1120,12 +1111,12 @@ LRESULT APIENTRY EntryWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_KEYUP && wParam == VK_RETURN) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     if (widget)
       gtk_signal_emit(G_OBJECT(widget), "activate");
     return FALSE;
   }
-  return myCallWindowProc(wpOrigEntryProc, hwnd, msg, wParam, lParam);
+  return CallWindowProcW(wpOrigEntryProc, hwnd, msg, wParam, lParam);
 }
 
 LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
@@ -1134,12 +1125,12 @@ LRESULT APIENTRY TextWndProc(HWND hwnd, UINT msg, WPARAM wParam,
   GtkWidget *widget;
 
   if (msg == WM_GETDLGCODE) {
-    widget = GTK_WIDGET(myGetWindowLong(hwnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     if (!GTK_EDITABLE(widget)->is_editable) {
       return DLGC_HASSETSEL | DLGC_WANTARROWS;
     }
   }
-  return myCallWindowProc(wpOrigTextProc, hwnd, msg, wParam, lParam);
+  return CallWindowProcW(wpOrigTextProc, hwnd, msg, wParam, lParam);
 }
 
 void SetCustomWndProc(WNDPROC wndproc)
@@ -1181,7 +1172,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   WNDCLASS wc;
 
   hInst = hInstance;
-  InitUnicodeSupport();
   defFont = (HFONT) GetStockObject(DEFAULT_GUI_FONT);
   urlFont = CreateFont(14, 0, 0, 0, FW_SEMIBOLD, FALSE, TRUE, FALSE,
                        ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -1198,14 +1188,6 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
   InitCommonControls();
   LoadLibrary("RICHED20.DLL");
-
-  /* Rich Edit controls have two different class names, depending on whether
-   * we want ANSI or Unicode - argh! */
-  if (HaveUnicodeSupport()) {
-    RichEditClass = "RichEdit20W";
-  } else {
-    RichEditClass = "RichEdit20A";
-  }
   HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
 
   HaveXPControls = CheckForXPControls();
@@ -1425,7 +1407,7 @@ static BOOL CALLBACK SetFocusEnum(HWND hWnd, LPARAM data)
   GtkWidget *widget;
   GtkWindow *window = GTK_WINDOW(data);
 
-  widget = GTK_WIDGET(myGetWindowLong(hWnd, GWLP_USERDATA));
+  widget = GTK_WIDGET(GetWindowLongPtrW(hWnd, GWLP_USERDATA));
   if (!widget || !GTK_WIDGET_CAN_FOCUS(widget) ||
       !GTK_WIDGET_SENSITIVE(widget) || !gtk_widget_get_visible(widget) ||
       window->focus == widget) {
@@ -1468,7 +1450,7 @@ void gtk_window_update_focus(GtkWindow *window)
   FocusWnd = GetFocus();
   window->focus = NULL;
   if (FocusWnd) {
-    widget = GTK_WIDGET(myGetWindowLong(FocusWnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(FocusWnd, GWLP_USERDATA));
     if (widget && GTK_WIDGET(window)->hWnd &&
         IsChild(GTK_WIDGET(window)->hWnd, FocusWnd)) {
       window->focus = widget;
@@ -1484,7 +1466,7 @@ void gtk_widget_realize(GtkWidget *widget)
     return;
   gtk_signal_emit(G_OBJECT(widget), "realize", &req);
   if (widget->hWnd)
-    mySetWindowLong(widget->hWnd, GWLP_USERDATA, (LONG_PTR)widget);
+    SetWindowLongPtrW(widget->hWnd, GWLP_USERDATA, (LONG_PTR)widget);
   GTK_WIDGET_SET_FLAGS(widget, GTK_REALIZED);
   gtk_widget_set_sensitive(widget, GTK_WIDGET_SENSITIVE(widget));
 
@@ -2020,7 +2002,7 @@ void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
 
   hWnd = widget->hWnd;
   if (hWnd) {
-    mySendMessage(hWnd, EM_SETSEL, (WPARAM)*position, (LPARAM)*position);
+    SendMessageW(hWnd, EM_SETSEL, (WPARAM)*position, (LPARAM)*position);
     myEditReplaceSel(hWnd, FALSE, newstr->str);
     *position += newstr->len;
     gtk_editable_set_position(editable, *position);
@@ -2044,12 +2026,12 @@ static void gtk_text_view_set_format(GtkTextView *textview,
   /* RichEdit controls do something odd behind the scenes with line ends,
    * so we use our guess for the last character position, and then read
    * back the resultant selection to get the true "length" of the control */
-  mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)endpos, (LPARAM)endpos);
-  mySendMessage(widget->hWnd, EM_GETSEL, (WPARAM)&st, (LPARAM)&end);
+  SendMessageW(widget->hWnd, EM_SETSEL, (WPARAM)endpos, (LPARAM)endpos);
+  SendMessageW(widget->hWnd, EM_GETSEL, (WPARAM)&st, (LPARAM)&end);
   endpos = (gint)end;
 
-  mySendMessage(widget->hWnd, EM_SETSEL, (WPARAM)(endpos - len),
-                (LPARAM)endpos);
+  SendMessageW(widget->hWnd, EM_SETSEL, (WPARAM)(endpos - len),
+               (LPARAM)endpos);
 
   if (!tagname || !(buffer = gtk_text_view_get_buffer(textview))
       || !(cf = g_datalist_get_data(&buffer->tags, tagname))) {
@@ -2058,7 +2040,7 @@ static void gtk_text_view_set_format(GtkTextView *textview,
     cfdef.dwEffects = CFE_AUTOCOLOR;
     cf = &cfdef;
   }
-  mySendMessage(widget->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)cf);
+  SendMessageW(widget->hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)cf);
 }
 
 void gtk_editable_delete_text(GtkEditable *editable,
@@ -2103,7 +2085,7 @@ void gtk_editable_set_editable(GtkEditable *editable, gboolean is_editable)
   editable->is_editable = is_editable;
   hWnd = widget->hWnd;
   if (hWnd)
-    mySendMessage(hWnd, EM_SETREADONLY, (WPARAM)(!is_editable), (LPARAM)0);
+    SendMessageW(hWnd, EM_SETREADONLY, (WPARAM)(!is_editable), (LPARAM)0);
 }
 
 void gtk_editable_set_position(GtkEditable *editable, gint position)
@@ -2117,10 +2099,10 @@ void gtk_editable_set_position(GtkEditable *editable, gint position)
 
   /* RichEdit 2.0 doesn't appear to show the caret unless we show the
    * selection */
-  mySendMessage(hWnd, EM_HIDESELECTION, 0, 0);
-  mySendMessage(hWnd, EM_SETSEL, (WPARAM)position, (LPARAM)position);
-  mySendMessage(hWnd, EM_SCROLLCARET, 0, 0);
-  mySendMessage(hWnd, EM_HIDESELECTION, 1, 0);
+  SendMessageW(hWnd, EM_HIDESELECTION, 0, 0);
+  SendMessageW(hWnd, EM_SETSEL, (WPARAM)position, (LPARAM)position);
+  SendMessageW(hWnd, EM_SCROLLCARET, 0, 0);
+  SendMessageW(hWnd, EM_HIDESELECTION, 1, 0);
 }
 
 gint gtk_editable_get_position(GtkEditable *editable)
@@ -2132,7 +2114,7 @@ gint gtk_editable_get_position(GtkEditable *editable)
   if (!GTK_WIDGET_REALIZED(widget))
     return 0;
   hWnd = widget->hWnd;
-  mySendMessage(hWnd, EM_GETSEL, (WPARAM)NULL, (LPARAM)&EndPos);
+  SendMessageW(hWnd, EM_GETSEL, (WPARAM)NULL, (LPARAM)&EndPos);
   return (gint)EndPos;
 }
 
@@ -2551,9 +2533,9 @@ void gtk_entry_realize(GtkWidget *widget)
                                   hInst, NULL);
   /* Subclass the window (we assume that all edit boxes have the same
    * window procedure) */
-  wpOrigEntryProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                             GWLP_WNDPROC,
-                                             (LONG_PTR)EntryWndProc);
+  wpOrigEntryProc = (WNDPROC)SetWindowLongPtrW(widget->hWnd,
+                                               GWLP_WNDPROC,
+                                               (LONG_PTR)EntryWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -2579,9 +2561,9 @@ void gtk_text_realize(GtkWidget *widget)
                                   0, Parent, NULL, hInst, NULL);
   /* Subclass the window (we assume that all multiline edit boxes have the 
    * same window procedure) */
-  wpOrigTextProc = (WNDPROC)mySetWindowLong(widget->hWnd,
-                                            GWLP_WNDPROC,
-                                            (LONG_PTR)TextWndProc);
+  wpOrigTextProc = (WNDPROC)SetWindowLongPtrW(widget->hWnd,
+                                              GWLP_WNDPROC,
+                                              (LONG_PTR)TextWndProc);
   gtk_set_default_font(widget->hWnd);
   gtk_editable_set_editable(GTK_EDITABLE(widget),
                             GTK_EDITABLE(widget)->is_editable);
@@ -3275,8 +3257,8 @@ void gtk_check_button_toggled(GtkCheckButton *check_button, gpointer data)
 
   hWnd = GTK_WIDGET(check_button)->hWnd;
   if (hWnd) {
-    mySendMessage(hWnd, BM_SETCHECK,
-                  is_active ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessageW(hWnd, BM_SETCHECK,
+                 is_active ? BST_CHECKED : BST_UNCHECKED, 0);
   }
 }
 
@@ -3299,8 +3281,8 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button, gpointer data)
 
   hWnd = GTK_WIDGET(radio_button)->hWnd;
   if (hWnd) {
-    mySendMessage(hWnd, BM_SETCHECK,
-                  is_active ? BST_CHECKED : BST_UNCHECKED, 0);
+    SendMessageW(hWnd, BM_SETCHECK,
+                 is_active ? BST_CHECKED : BST_UNCHECKED, 0);
   }
   if (is_active) {
     for (group = radio_button->group; group; group = g_slist_next(group)) {
@@ -3309,7 +3291,7 @@ void gtk_radio_button_toggled(GtkRadioButton *radio_button, gpointer data)
         GTK_TOGGLE_BUTTON(radio)->toggled = FALSE;
         hWnd = GTK_WIDGET(radio)->hWnd;
         if (hWnd)
-          mySendMessage(hWnd, BM_SETCHECK, BST_UNCHECKED, 0);
+          SendMessageW(hWnd, BM_SETCHECK, BST_UNCHECKED, 0);
       }
     }
   }
@@ -3344,9 +3326,9 @@ void gtk_main()
 
   RecurseLevel++;
 
-  while (myGetMessage(&msg, NULL, 0, 0)) {
+  while (GetMessageW(&msg, NULL, 0, 0)) {
     MsgDone = FALSE;
-    widget = GTK_WIDGET(myGetWindowLong(msg.hwnd, GWLP_USERDATA));
+    widget = GTK_WIDGET(GetWindowLongPtrW(msg.hwnd, GWLP_USERDATA));
     window = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
     if (window) {
       hAccel = GTK_WINDOW(window)->hAccel;
@@ -3358,12 +3340,12 @@ void gtk_main()
       for (list = WindowList; list && !MsgDone; list = g_slist_next(list)) {
         widget = GTK_WIDGET(list->data);
         if (widget && widget->hWnd
-            && (MsgDone = myIsDialogMessage(widget->hWnd, &msg)) == TRUE)
+            && (MsgDone = IsDialogMessageW(widget->hWnd, &msg)) == TRUE)
           break;
       }
     if (!MsgDone) {
       TranslateMessage(&msg);
-      myDispatchMessage(&msg);
+      DispatchMessageW(&msg);
     }
   }
   RecurseLevel--;
@@ -4176,7 +4158,7 @@ gint gtk_spin_button_get_value_as_int(GtkSpinButton *spin_button)
 
   hWnd = spin_button->updown;
   if (hWnd) {
-    lres = mySendMessage(hWnd, UDM_GETPOS, 0, 0);
+    lres = SendMessageW(hWnd, UDM_GETPOS, 0, 0);
     if (HIWORD(lres) != 0)
       return 0;
     else
@@ -4192,7 +4174,7 @@ void gtk_spin_button_set_value(GtkSpinButton *spin_button, gfloat value)
   spin_button->adj->value = value;
   hWnd = spin_button->updown;
   if (hWnd)
-    mySendMessage(hWnd, UDM_SETPOS, 0, (LPARAM)MAKELONG((short)value, 0));
+    SendMessageW(hWnd, UDM_SETPOS, 0, (LPARAM)MAKELONG((short)value, 0));
 }
 
 void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
@@ -4203,11 +4185,11 @@ void gtk_spin_button_set_adjustment(GtkSpinButton *spin_button,
   spin_button->adj = adjustment;
   hWnd = spin_button->updown;
   if (hWnd) {
-    mySendMessage(hWnd, UDM_SETRANGE, 0,
-                  (LPARAM)MAKELONG((short)adjustment->upper,
-                                   (short)adjustment->lower));
-    mySendMessage(hWnd, UDM_SETPOS, 0,
-                  (LPARAM)MAKELONG((short)adjustment->value, 0));
+    SendMessageW(hWnd, UDM_SETRANGE, 0,
+                 (LPARAM)MAKELONG((short)adjustment->upper,
+                                  (short)adjustment->lower));
+    SendMessageW(hWnd, UDM_SETPOS, 0,
+                 (LPARAM)MAKELONG((short)adjustment->value, 0));
   }
 }
 
@@ -4360,7 +4342,7 @@ void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible)
   entry->is_visible = visible;
   hWnd = GTK_WIDGET(entry)->hWnd;
   if (hWnd)
-    mySendMessage(hWnd, EM_SETPASSWORDCHAR, visible ? 0 : (WPARAM)'*', 0);
+    SendMessageW(hWnd, EM_SETPASSWORDCHAR, visible ? 0 : (WPARAM)'*', 0);
 }
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
@@ -4385,24 +4367,18 @@ void gtk_widget_remove_accelerator(GtkWidget *widget,
 {
 }
 
-GtkWidget *gtk_vpaned_new()
+GtkWidget *gtk_paned_new(GtkOrientation orientation)
 {
-  GtkVPaned *vpaned;
+  GtkPaned *paned;
 
-  vpaned = GTK_VPANED(GtkNewObject(&GtkVPanedClass));
-  GTK_PANED(vpaned)->handle_size = 5;
-  GTK_PANED(vpaned)->handle_pos = PANED_STARTPOS;
-  return GTK_WIDGET(vpaned);
-}
-
-GtkWidget *gtk_hpaned_new()
-{
-  GtkHPaned *hpaned;
-
-  hpaned = GTK_HPANED(GtkNewObject(&GtkHPanedClass));
-  GTK_PANED(hpaned)->handle_size = 5;
-  GTK_PANED(hpaned)->handle_pos = PANED_STARTPOS;
-  return GTK_WIDGET(hpaned);
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    paned = GTK_PANED(GtkNewObject(&GtkHPanedClass));
+  } else {
+    paned = GTK_PANED(GtkNewObject(&GtkVPanedClass));
+  }
+  GTK_PANED(paned)->handle_size = 5;
+  GTK_PANED(paned)->handle_pos = PANED_STARTPOS;
+  return GTK_WIDGET(paned);
 }
 
 static void gtk_paned_pack(GtkPaned *paned, gint pos, GtkWidget *child,
@@ -4732,7 +4708,7 @@ void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model)
 
   /* For now we work only with a single column of string type */
   if (hWnd) {
-    mySendMessage(hWnd, CB_RESETCONTENT, 0, 0);
+    SendMessageW(hWnd, CB_RESETCONTENT, 0, 0);
   }
   if (hWnd && combo_box->model_column >= 0) {
     int nrow;
@@ -4743,7 +4719,7 @@ void gtk_combo_box_set_model(GtkComboBox *combo_box, GtkTreeModel *model)
                                             GtkListStoreRow, nrow);
       myComboBox_AddString(hWnd, row->data[col]);
     }
-    mySendMessage(hWnd, CB_SETCURSEL, (WPARAM)combo_box->active, 0);
+    SendMessageW(hWnd, CB_SETCURSEL, (WPARAM)combo_box->active, 0);
   }
 }
 
@@ -4889,7 +4865,7 @@ void gtk_combo_box_update_selection(GtkWidget *widget)
 
   if (widget->hWnd == NULL)
     return;
-  lres = mySendMessage(widget->hWnd, CB_GETCURSEL, 0, 0);
+  lres = SendMessageW(widget->hWnd, CB_GETCURSEL, 0, 0);
   if (lres == CB_ERR)
     return;
 
@@ -4994,8 +4970,8 @@ void gtk_progress_bar_set_fraction(GtkProgressBar *pbar, gfloat percentage)
   widget = GTK_WIDGET(pbar);
   pbar->position = percentage;
   if (GTK_WIDGET_REALIZED(widget)) {
-    mySendMessage(widget->hWnd, PBM_SETPOS,
-                  (WPARAM)(10000.0 * pbar->position), 0);
+    SendMessageW(widget->hWnd, PBM_SETPOS,
+                 (WPARAM)(10000.0 * pbar->position), 0);
   }
 }
 
@@ -5024,9 +5000,9 @@ void gtk_progress_bar_realize(GtkWidget *widget)
                                   widget->allocation.height, Parent, NULL,
                                   hInst, NULL);
   gtk_set_default_font(widget->hWnd);
-  mySendMessage(widget->hWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 10000));
-  mySendMessage(widget->hWnd, PBM_SETPOS, (WPARAM)(10000.0 * prog->position),
-                0);
+  SendMessageW(widget->hWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 10000));
+  SendMessageW(widget->hWnd, PBM_SETPOS, (WPARAM)(10000.0 * prog->position),
+               0);
 }
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
@@ -5129,9 +5105,9 @@ gboolean dp_g_source_remove(guint tag)
   return TRUE;
 }
 
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
+GtkWidget *gtk_button_new_with_mnemonic(const gchar *label)
 {
-  return gtk_button_new_with_label(_(label));
+  return gtk_button_new_with_label(label);
 }
 
 /* We don't really handle styles, so these are just placeholder functions */
@@ -5271,6 +5247,15 @@ GtkWidget *gtk_separator_new(GtkOrientation orientation)
   }
 }
 
+GtkWidget *gtk_paned_new(GtkOrientation orientation)
+{
+  if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+    return gtk_hpaned_new();
+  } else {
+    return gtk_vpaned_new();
+  }
+}
+
 #endif
 
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
@@ -5370,7 +5355,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   static gint retval;
   gboolean imm_return;
   const gchar *ButtonData[MB_MAX] = {
-    GTK_STOCK_OK, GTK_STOCK_CANCEL, GTK_STOCK_YES, GTK_STOCK_NO
+    N_("_OK"), N_("_Cancel"), N_("_Yes"), N_("_No")
   };
 
   imm_return = Options & MB_IMMRETURN;
@@ -5403,7 +5388,7 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
-      button = NewStockButton(ButtonData[i], accel_group);
+      button = gtk_button_new_with_mnemonic(_(ButtonData[i]));
       if (!imm_return) {
         g_object_set_data(G_OBJECT(button), "retval", &retval);
       }
@@ -5419,11 +5404,6 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   if (!imm_return)
     gtk_main();
   return retval;
-}
-
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group)
-{
-  return gtk_button_new_from_stock(label);
 }
 
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
@@ -5514,12 +5494,81 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
   return ret;
 }
 
-gboolean HaveUnicodeSupport(void)
+#endif /* CYGWIN */
+
+/* Make a new GtkLabel, with the text possibly bold */
+GtkWidget *make_bold_label(const char *text, gboolean bold)
 {
-  return TRUE;
+#ifdef CYGWIN
+  /* We don't support bold text on Windows yet */
+  return gtk_label_new(text);
+#else
+  if (bold) {
+    GtkWidget *label = gtk_label_new(NULL);
+    gchar *markup = g_markup_printf_escaped(
+         "<span font_weight=\"bold\" fgcolor=\"#0000DD\">%s</span>", text);
+    gtk_label_set_markup(GTK_LABEL(label), markup);
+    g_free(markup);
+    return label;
+  } else {
+    return gtk_label_new(text);
+  }
+#endif
 }
 
-#endif /* CYGWIN */
+#if !CYGWIN && \
+  (GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 4))
+/* GtkGrid does not take a size, unlike GtkTable */
+GtkWidget *dp_gtk_grid_new(guint rows, guint cols, gboolean homogeneous)
+{
+  GtkWidget *grid = gtk_grid_new();
+  if (homogeneous) {
+    gtk_grid_set_row_homogeneous(GTK_GRID(grid), TRUE);
+    gtk_grid_set_column_homogeneous(GTK_GRID(grid), TRUE);
+  }
+  return grid;
+}
+
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+			gint width, gint height, gboolean expand)
+{
+  gtk_grid_attach(grid, child, left, top, width, height);
+  if (expand) {
+    gtk_widget_set_hexpand(child, TRUE);
+  }
+}
+#else
+/* Implementation for older GTK or Win32, using GtkTable */
+GtkWidget *dp_gtk_grid_new(guint rows, guint columns, gboolean homogeneous)
+{
+  GtkWidget *table = gtk_table_new(rows, columns, homogeneous);
+  return table;
+}
+
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+			gint width, gint height, gboolean expand)
+{
+  gtk_table_attach(grid, child, left, left + width, top, top + height,
+		   expand ? (GTK_EXPAND | GTK_FILL) : GTK_SHRINK,
+		   expand ? (GTK_EXPAND | GTK_FILL) : GTK_SHRINK, 0, 0);
+}
+#endif
+
+#if !CYGWIN && \
+  (GTK_MAJOR_VERSION > 3 || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION >= 2))
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign)
+{
+  gtk_label_set_xalign(GTK_LABEL(widget), xalign);
+  gtk_label_set_yalign(GTK_LABEL(widget), yalign);
+}
+#else
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign)
+{
+  gtk_misc_set_alignment(GTK_MISC(widget), xalign, yalign);
+}
+#endif
 
 #if CYGWIN
 void TextViewAppend(GtkTextView *textview, const gchar *text,

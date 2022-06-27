@@ -1,6 +1,6 @@
 /************************************************************************
  * gtkport.h      Portable "almost-GTK+" for Unix/Win32                 *
- * Copyright (C)  1998-2020  Ben Webb                                   *
+ * Copyright (C)  1998-2022  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -367,6 +367,7 @@ void gtk_container_add(GtkContainer *container, GtkWidget *widget);
 void gtk_container_set_border_width(GtkContainer *container,
                                     guint border_width);
 GtkWidget *gtk_button_new_with_label(const gchar *label);
+GtkWidget *gtk_button_new_with_mnemonic(const gchar *label);
 GtkWidget *gtk_label_new(const gchar *text);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
 void gtk_box_set_homogeneous(GtkBox *box, gboolean homogeneous);
@@ -380,8 +381,24 @@ void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type);
 GtkWidget *gtk_text_new(GtkAdjustment *hadj, GtkAdjustment *vadj);
 GtkWidget *gtk_entry_new();
 void gtk_entry_set_visibility(GtkEntry *entry, gboolean visible);
+
+/* GtkTable implementation */
 GtkWidget *gtk_table_new(guint rows, guint cols, gboolean homogeneous);
 void gtk_table_resize(GtkTable *table, guint rows, guint cols);
+void gtk_table_attach(GtkTable *table, GtkWidget *widget,
+                      guint left_attach, guint right_attach,
+                      guint top_attach, guint bottom_attach,
+                      GtkAttachOptions xoptions, GtkAttachOptions yoptions,
+                      guint xpadding, guint ypadding);
+void gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
+                               guint left_attach, guint right_attach,
+                               guint top_attach, guint bottom_attach);
+void gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
+void gtk_table_set_col_spacing(GtkTable *table, guint column,
+                               guint spacing);
+void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
+void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
+
 GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
 void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
                               gint new_text_length, gint *position);
@@ -400,19 +417,6 @@ void gtk_text_freeze(GtkText *text);
 void gtk_text_thaw(GtkText *text);
 GtkTextBuffer *gtk_text_view_get_buffer(GtkText *text);
 void gtk_text_buffer_create_tag(GtkTextBuffer *buffer, const gchar *name, ...);
-void gtk_table_attach(GtkTable *table, GtkWidget *widget,
-                      guint left_attach, guint right_attach,
-                      guint top_attach, guint bottom_attach,
-                      GtkAttachOptions xoptions, GtkAttachOptions yoptions,
-                      guint xpadding, guint ypadding);
-void gtk_table_attach_defaults(GtkTable *table, GtkWidget *widget,
-                               guint left_attach, guint right_attach,
-                               guint top_attach, guint bottom_attach);
-void gtk_table_set_row_spacing(GtkTable *table, guint row, guint spacing);
-void gtk_table_set_col_spacing(GtkTable *table, guint column,
-                               guint spacing);
-void gtk_table_set_row_spacings(GtkTable *table, guint spacing);
-void gtk_table_set_col_spacings(GtkTable *table, guint spacing);
 void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
                         gboolean Fill, gint Padding);
 void gtk_toggle_button_toggled(GtkToggleButton *toggle_button);
@@ -492,8 +496,7 @@ void gtk_widget_remove_accelerator(GtkWidget *widget,
                                    GtkAccelGroup *accel_group,
                                    guint accel_key, guint accel_mods);
 extern const GtkType GTK_TYPE_WINDOW, GTK_TYPE_MENU_BAR;
-GtkWidget *gtk_vpaned_new();
-GtkWidget *gtk_hpaned_new();
+GtkWidget *gtk_paned_new(GtkOrientation orientation);
 void gtk_paned_add1(GtkPaned *paned, GtkWidget *child);
 void gtk_paned_add2(GtkPaned *paned, GtkWidget *child);
 void gtk_paned_pack1(GtkPaned *paned, GtkWidget *child, gboolean resize,
@@ -584,6 +587,7 @@ void MapWidgetOrigin(GtkWidget *widget, POINT *pt);
 GtkWidget *gtk_button_box_new(GtkOrientation orientation);
 GtkWidget *gtk_box_new(GtkOrientation orientation, gint spacing);
 GtkWidget *gtk_separator_new(GtkOrientation orientation);
+GtkWidget *gtk_paned_new(GtkOrientation orientation);
 #endif
 
 /* Defines for GtkMessageBox options */
@@ -612,10 +616,6 @@ struct _GtkUrl {
 #endif /* CYGWIN */
 
 #if CYGWIN
-extern const gchar *GTK_STOCK_OK, *GTK_STOCK_CLOSE, *GTK_STOCK_CANCEL, 
-                   *GTK_STOCK_REFRESH, *GTK_STOCK_YES, *GTK_STOCK_NO,
-                   *GTK_STOCK_HELP;
-
 typedef enum
 {
   GTK_MESSAGE_INFO,
@@ -643,11 +643,34 @@ void TextViewAppend(GtkTextView *textview, const gchar *text,
 void TextViewClear(GtkTextView *textview);
 GtkWidget *gtk_url_new(const gchar *text, const gchar *target,
                        const gchar *bin);
-GtkWidget *NewStockButton(const gchar *label, GtkAccelGroup *accel_group);
 gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                   const gchar *title);
 void DisplayHTML(GtkWidget *parent, const gchar *bin, const gchar *target);
-gboolean HaveUnicodeSupport(void);
 GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg);
+
+/* GtkTable is used in GTK2 (and early GTK3) but GtkGrid is used in later
+ * GTK3 and GTK4. Provide an interface similar to GtkGrid that internally
+ * uses either GtkTable or GtkGrid. Use a dp_ prefix to avoid clashes with
+ * the real GtkTable */
+#if CYGWIN || GTK_MAJOR_VERSION < 3 \
+    || (GTK_MAJOR_VERSION == 3 && GTK_MINOR_VERSION < 4)
+#define GTK_GRID GTK_TABLE
+typedef GtkTable GtkGrid;
+#define gtk_grid_set_row_spacing(grid, spacing) gtk_table_set_row_spacings(grid, spacing)
+#define gtk_grid_set_column_spacing(grid, spacing) gtk_table_set_col_spacings(grid, spacing)
+#define dp_gtk_grid_resize(grid, rows, cols) gtk_table_resize(grid, rows, cols)
+#else
+#define dp_gtk_grid_resize(grid, rows, cols) {}
+#endif
+
+GtkWidget *dp_gtk_grid_new(guint rows, guint columns, gboolean homogeneous);
+void dp_gtk_grid_attach(GtkGrid *grid, GtkWidget *child,
+                        gint left, gint top,
+                        gint width, gint height, gboolean expand);
+
+void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign);
+
+/* Make a new GtkLabel, with the text possibly bold */
+GtkWidget *make_bold_label(const char *text, gboolean bold);
 
 #endif /* __GTKPORT_H__ */
