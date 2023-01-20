@@ -886,7 +886,7 @@ static void DropDrugs(Player *Play)
     if (Play->Drugs[i].Carried > 0 && Play->Drugs[i].Price == 0) {
       g_string_printf(text, "%c. %-10s %-8d", NumDrugs + 'A',
                        Drug[i].Name, Play->Drugs[i].Carried);
-      mvaddstr(top + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
+      mvaddstr(top + 1 + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
       NumDrugs++;
     }
   }
