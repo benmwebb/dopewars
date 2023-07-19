@@ -95,7 +95,7 @@ void endwin(void);
 #include <errno.h>
 
 /* Include a suitable curses-type library */
-#if HAVE_LIBNCURSES || defined(CURSES_HAVE_NCURSES_H)
+#if HAVE_LIBNCURSESW || HAVE_LIBNCURSES || defined(CURSES_HAVE_NCURSES_H)
 #include <ncurses.h>
 #elif HAVE_LIBCURSES || defined(CURSES_HAVE_CURSES_H)
 #include <curses.h>

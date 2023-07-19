@@ -158,20 +158,27 @@ else
 
    dnl On true Unix systems, test for valid curses-like libraries
    if test "$CURSES_CLIENT" != "no" ; then
-      AC_CHECK_LIB(ncurses,newterm)
-      if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
-         AC_CHECK_LIB(curses,newterm)
-         if test "$ac_cv_lib_curses_newterm" = "no" ; then
-            AC_CHECK_LIB(cur_colr,newterm)
-            if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
-               if test "$CURSES_CLIENT" = "yes" ; then
-                 AC_MSG_ERROR(Cannot find any curses-type library)
-               else
-                 AC_MSG_WARN(Cannot find any curses-type library)
-                 CURSES_CLIENT="no"
+      AC_CHECK_LIB(ncursesw,newterm)
+      if test "$ac_cv_lib_ncursesw_newterm" = "no" ; then
+         AC_CHECK_LIB(ncurses,newterm)
+         if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
+            AC_CHECK_LIB(curses,newterm)
+            if test "$ac_cv_lib_curses_newterm" = "no" ; then
+               AC_CHECK_LIB(cur_colr,newterm)
+               if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
+                  if test "$CURSES_CLIENT" = "yes" ; then
+                     AC_MSG_ERROR(Cannot find any curses-type library)
+                  else
+                     AC_MSG_WARN(Cannot find any curses-type library)
+                     CURSES_CLIENT="no"
+                  fi
                fi
             fi
+         else
+            AC_CHECK_LIB(tinfo,cbreak)
          fi
+      else
+         AC_CHECK_LIB(tinfow,cbreak)
       fi
    fi
 
