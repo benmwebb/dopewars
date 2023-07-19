@@ -157,20 +157,13 @@ else
    AC_MSG_RESULT([Configuring for Unix binary])
 
    dnl On true Unix systems, test for valid curses-like libraries
-   if test "$CURSES_CLIENT" != "no" ; then
-      AC_CHECK_LIB(ncurses,newterm)
-      if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
-         AC_CHECK_LIB(curses,newterm)
-         if test "$ac_cv_lib_curses_newterm" = "no" ; then
-            AC_CHECK_LIB(cur_colr,newterm)
-            if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
-               if test "$CURSES_CLIENT" = "yes" ; then
-                 AC_MSG_ERROR(Cannot find any curses-type library)
-               else
-                 AC_MSG_WARN(Cannot find any curses-type library)
-                 CURSES_CLIENT="no"
-               fi
-            fi
+   if test "$CURSES_CLIENT" != "no"; then
+      AX_WITH_CURSES
+      if test "$ax_cv_curses" != "yes"; then
+         AC_CHECK_LIB(cur_colr,newterm)
+         if test "$ac_cv_lib_cur_colr_newterm" != "yes"; then
+            AC_MSG_WARN(Cannot find any curses-type library)
+            CURSES_CLIENT="no"
          fi
       fi
    fi
@@ -311,6 +304,8 @@ if test "$GUI_CLIENT" = "probe"; then
 fi
 if test "$CURSES_CLIENT" = "probe"; then
   CURSES_CLIENT="yes"
+  LIBS="$LIBS $CURSES_LIBS"
+  CFLAGS="$CFLAGS $CURSES_CFLAGS"
 fi
 
 dnl Do i18n stuff
