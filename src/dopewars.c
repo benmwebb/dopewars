@@ -2658,7 +2658,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
     {"public-server", no_argument, NULL, 's'},
     {"private-server", no_argument, NULL, 'S'},
     {"port", required_argument, NULL, 'p'},
-    {"configfile", required_argument, NULL, 'g'},
+    {"config-file", required_argument, NULL, 'g'},
     {"pidfile", required_argument, NULL, 'r'},
     {"ai-player", no_argument, NULL, 'c'},
     {"windowed-client", no_argument, NULL, 'w'},
