@@ -2392,12 +2392,13 @@ gchar *GetLocalConfigFile(void)
 
   /* Local config changes are in the user's state directory */
   home = getenv("XDG_STATE_HOME");
-  if (!home) {
-  /* Local config is in the user's home directory */
-    home = getenv("HOME");
-  }
   if (home) {
-    conf = g_strdup_printf("%s/.dopewars", home);
+    conf = g_strdup_printf("%s/dopewars", home);
+  } else {
+    home = getenv("HOME");
+    if (home) {
+      conf = g_strdup_printf("%s/.local/state/dopewars", home);
+    }
   }
   return conf;
 #endif
