@@ -779,7 +779,7 @@ msgstr "Marihuana"
 
 #: src/dopewars.c:732
 msgid ""
-"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+"Colombian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr "Świeża dostawa marihuany z Holandii! Ceny trawy lecą w dół"
 
 #. The names of the default locations

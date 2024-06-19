@@ -729,7 +729,7 @@ struct DRUG DefaultDrug[] = {
   {N_("Shrooms"), 630, 1300, FALSE, FALSE, ""},
   {N_("Speed"), 90, 250, FALSE, TRUE, ""},
   {N_("Weed"), 315, 890, TRUE, FALSE,
-   N_("Columbian freighter dusted the Coast Guard! "
+   N_("Colombian freighter dusted the Coast Guard! "
       "Weed prices have bottomed out!")}
 };
 

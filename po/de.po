@@ -791,7 +791,7 @@ msgstr "Weed"
 
 #: src/dopewars.c:732
 msgid ""
-"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+"Colombian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr ""
 "Ein kolumbianischer Frachter hat die Küstenwache umschippert. Der Preis für "
 "Weed ist ins bodenlose gefallen!"

@@ -778,7 +778,7 @@ msgstr ""
 
 #: src/dopewars.c:732
 msgid ""
-"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+"Colombian freighter dusted the Coast Guard! Weed prices have bottomed out!"
 msgstr ""
 
 #. The names of the default locations

@@ -794,8 +794,8 @@ msgstr "Jazztobakk"
 
 #: src/dopewars.c:732
 msgid ""
-"Columbian freighter dusted the Coast Guard! Weed prices have bottomed out!"
-msgstr "Columbiansk lasteskip lurte kystvakta! Jazztobakkprisen stuper!"
+"Colombian freighter dusted the Coast Guard! Weed prices have bottomed out!"
+msgstr "Colombiansk lasteskip lurte kystvakta! Jazztobakkprisen stuper!"
 
 #. The names of the default locations
 #: src/dopewars.c:740
