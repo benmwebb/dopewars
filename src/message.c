@@ -482,13 +482,13 @@ void ClearServerList(GSList **listpt)
 
   while (*listpt) {
     ThisServer = (ServerData *)((*listpt)->data);
+    *listpt = g_slist_remove(*listpt, ThisServer);
     g_free(ThisServer->Name);
     g_free(ThisServer->Comment);
     g_free(ThisServer->Version);
     g_free(ThisServer->Update);
     g_free(ThisServer->UpSince);
     g_free(ThisServer);
-    *listpt = g_slist_remove(*listpt, ThisServer);
   }
 }
 #endif /* NETWORKING */
