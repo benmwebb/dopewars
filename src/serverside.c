@@ -1189,6 +1189,10 @@ void ServerLoop(struct CMDLINE *cmdline)
     return;
 
 #ifdef HAVE_FORK
+  if (ScoreFP) {
+    /* Put FILE* in a consistent state before fork */
+    fflush(ScoreFP);
+  }
   /* Daemonize; continue if the fork was successful and we are the child,
    * or if the fork failed */
   if (Daemonize && fork() > 0)
