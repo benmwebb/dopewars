@@ -40,6 +40,7 @@
 # define gettext(String) (String)
 # define dgettext(Domain,Message) (Message)
 # define dcgettext(Domain,Message,Type) (Message)
+# define bind_textdomain_codeset(Domain,Codeset)
 # define _(String) (String)
 # define N_(String) (String)
 #endif
