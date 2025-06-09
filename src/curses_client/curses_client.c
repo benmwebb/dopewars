@@ -1637,7 +1637,7 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
   /* Translate allowed keys
    * Note that allowed is in the locale encoding, usually UTF-8, while
    * orig_allowed is plain ASCII */
-  char *allowed_str = _(orig_allowed);
+  const char *allowed_str = _(orig_allowed);
 
   num_allowed = strlen(orig_allowed);
   assert(num_allowed <= MAX_GET_KEY);
