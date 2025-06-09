@@ -1783,7 +1783,6 @@ void nice_wait()
 void DisplayFightMessage(Player *Play, char *text)
 {
   static GList *msgs = NULL;
-  static int num_msgs = 0;
   gchar *textpt;
   gchar *AttackName, *DefendName, *BitchName;
   gint y, DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
@@ -1797,7 +1796,6 @@ void DisplayFightMessage(Player *Play, char *text)
     }
     g_list_free(msgs);
     msgs = NULL;
-    num_msgs = 0;
   } else {
     GList *pt;
     if (text[0]) {
@@ -1816,7 +1814,6 @@ void DisplayFightMessage(Player *Play, char *text)
         RunHere = FALSE;
       }
       msgs = g_list_append(msgs, g_strdup(textpt));
-      num_msgs++;
     }
     attrset(TextAttr);
     clear_bottom();
