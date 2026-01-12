@@ -2295,7 +2295,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   ClientData.JetAccel = 0;
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(JetButtonPressed), NULL);
-  gtk_box_pack_start(GTK_BOX(ClientData.Drug.vbbox), button, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(ClientData.Drug.vbbox), button, TRUE, FALSE, 0);
   SetJetButtonTitle(accel_group);
 
 #ifdef CYGWIN
@@ -3113,9 +3113,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
   }
 
   if (CreateButtons) {
-    widgets->vbbox = vbbox = gtk_button_box_new(GTK_ORIENTATION_VERTICAL);
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(vbbox), GTK_BUTTONBOX_SPREAD);
-
+    widgets->vbbox = vbbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 
     for (i = 0; i < 3; i++) {
       button[i] = gtk_button_new_with_label("");
@@ -3125,7 +3123,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
         g_signal_connect(G_OBJECT(button[i]), "clicked",
                          G_CALLBACK(CallBack), button_type[i]);
       }
-      gtk_box_pack_start(GTK_BOX(vbbox), button[i], TRUE, TRUE, 0);
+      gtk_box_pack_start(GTK_BOX(vbbox), button[i], TRUE, FALSE, 0);
     }
     widgets->BuyButton = button[0];
     widgets->SellButton = button[1];
