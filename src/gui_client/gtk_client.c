@@ -209,13 +209,19 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
  */
 GtkWidget *my_hbbox_new(GtkWidget **outer)
 {
+  GtkWidget *spacer;
   GtkWidget *hbbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
   gtk_box_set_homogeneous(GTK_BOX(hbbox), TRUE);
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
 
   *outer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
   gtk_box_set_homogeneous(GTK_BOX(*outer), FALSE);
-  gtk_box_pack_end(GTK_BOX(*outer), hbbox, FALSE, FALSE, 0);
+  /* Add a spacer so that all hboxes are right-aligned;
+     we cannot use gtk_box_pack_end here as that is not currently
+     supported by gtkport */
+  spacer = gtk_label_new("");
+  gtk_box_pack_start(GTK_BOX(*outer), spacer, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(*outer), hbbox, FALSE, FALSE, 0);
   return hbbox;
 }
 
