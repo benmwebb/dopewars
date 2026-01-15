@@ -202,12 +202,20 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
 
 /*
  * Creates an hbutton_box widget, and sets a sensible spacing and layout.
+ * GtkButtonBox has been removed in GTK4, so we get a similar effect
+ * (buttons all of the same size, packed to the right of the box) using
+ * two GtkBoxes. Buttons are packed in the returned box, and the outer
+ * box is then added to the window.
  */
-GtkWidget *my_hbbox_new(void)
+GtkWidget *my_hbbox_new(GtkWidget **outer)
 {
-  GtkWidget *hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
-  gtk_button_box_set_layout(GTK_BUTTON_BOX(hbbox), GTK_BUTTONBOX_END);
+  GtkWidget *hbbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+  gtk_box_set_homogeneous(GTK_BOX(hbbox), TRUE);
   gtk_box_set_spacing(GTK_BOX(hbbox), 8);
+
+  *outer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_box_set_homogeneous(GTK_BOX(*outer), FALSE);
+  gtk_box_pack_end(GTK_BOX(*outer), hbbox, FALSE, FALSE, 0);
   return hbbox;
 }
 
@@ -316,7 +324,7 @@ void ListScores(GtkWidget *widget, gpointer data)
 
 void ListInventory(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *hbox, *hbbox;
+  GtkWidget *window, *button, *hsep, *vbox, *hbox, *hbbox, *outer;
   GtkAccelGroup *accel_group;
 
   if (IsShowingInventory)
@@ -349,13 +357,13 @@ void ListInventory(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -752,7 +760,7 @@ static void EndHighScore(GtkWidget *widget)
  */
 void CompleteHighScoreDialog(gboolean AtEnd)
 {
-  GtkWidget *button, *dialog, *hbbox;
+  GtkWidget *button, *dialog, *hbbox, *outer;
 
   dialog = HiScoreDialog.dialog;
 
@@ -760,7 +768,7 @@ void CompleteHighScoreDialog(gboolean AtEnd)
     return;
   }
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
@@ -771,11 +779,11 @@ void CompleteHighScoreDialog(gboolean AtEnd)
                      G_CALLBACK(EndHighScore), NULL);
   }
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(HiScoreDialog.vbox), outer, FALSE, FALSE, 0);
 
   gtk_widget_set_can_default(button, TRUE);
   gtk_widget_grab_default(button);
-  gtk_widget_show_all(hbbox);
+  gtk_widget_show_all(outer);
 
   /* OK, we're done - allow the creation of new high score dialogs */
   HiScoreDialog.dialog = NULL;
@@ -879,6 +887,7 @@ struct combatant {
 static void CreateFightDialog(void)
 {
   GtkWidget *dialog, *vbox, *button, *hbox, *hbbox, *hsep, *text, *grid;
+  GtkWidget *outer;
   GtkAccelGroup *accel_group;
   GArray *combatants;
   gchar *buf;
@@ -926,7 +935,7 @@ static void CreateFightDialog(void)
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
   gtk_widget_show(hsep);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   /* Button for closing the "Fight" dialog and going back to dealing drugs
      (%Tde = "Drugs" by default) */
@@ -949,8 +958,9 @@ static void CreateFightDialog(void)
   g_object_set_data(G_OBJECT(dialog), "run", button);
 
   gtk_widget_show(hsep);
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_widget_show(hbbox);
+  gtk_widget_show(outer);
   gtk_widget_show(vbox);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show(dialog);
@@ -1614,7 +1624,7 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
 void DealDrugs(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *label, *hbox, *hbbox, *button, *spinner, *combo_box,
-      *vbox, *hsep, *defbutton;
+      *vbox, *hsep, *defbutton, *outer;
   GtkListStore *store;
   GtkTreeIter iter;
   GtkCellRenderer *renderer;
@@ -1760,7 +1770,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(DealOKCallback), data);
@@ -1774,7 +1784,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
   g_signal_connect(G_OBJECT(combo_box), "changed",
@@ -1873,7 +1883,7 @@ static void QuestionCallback(GtkWidget *widget, gpointer data)
 
 void QuestionDialog(char *Data, Player *From)
 {
-  GtkWidget *dialog, *label, *vbox, *hsep, *hbbox, *button;
+  GtkWidget *dialog, *label, *vbox, *hsep, *hbbox, *button, *outer;
   GtkAccelGroup *accel_group;
   gchar *Responses, **split, *LabelText, *trword, *underline;
 
@@ -1921,7 +1931,7 @@ void QuestionDialog(char *Data, Player *From)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   for (i = 0; i < strlen(Responses); i++) {
     switch (Responses[i]) {
@@ -1954,7 +1964,7 @@ void QuestionDialog(char *Data, Player *From)
                      GINT_TO_POINTER((gint)Responses[i]));
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, TRUE, TRUE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
 
@@ -2359,7 +2369,7 @@ static void PackCentredURL(GtkWidget *vbox, gchar *title, gchar *target,
 
 void display_intro(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *label, *grid, *OKButton, *vbox, *hsep, *hbbox;
+  GtkWidget *dialog, *label, *grid, *OKButton, *vbox, *hsep, *hbbox, *outer;
   gchar *VersionStr, *docindex;
   const int rows = 8, cols = 3;
   int i, j;
@@ -2452,14 +2462,14 @@ void display_intro(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   OKButton = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect_swapped(G_OBJECT(OKButton), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), OKButton);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
   gtk_widget_set_can_default(OKButton, TRUE);
@@ -2536,7 +2546,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 void TransferDialog(gboolean Debt)
 {
   GtkWidget *dialog, *button, *label, *radio, *grid, *vbox;
-  GtkWidget *hbbox, *hsep, *entry;
+  GtkWidget *hbbox, *hsep, *entry, *outer;
   GtkAccelGroup *accel_group;
   GSList *group;
   GString *text;
@@ -2621,7 +2631,7 @@ void TransferDialog(gboolean Debt)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(TransferOK), dialog);
@@ -2639,7 +2649,7 @@ void TransferDialog(gboolean Debt)
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
@@ -2650,7 +2660,7 @@ void TransferDialog(gboolean Debt)
 
 void ListPlayers(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *clist, *button, *vbox, *hsep, *hbbox;
+  GtkWidget *dialog, *clist, *button, *vbox, *hsep, *hbbox, *outer;
   GtkAccelGroup *accel_group;
 
   if (IsShowingPlayerList)
@@ -2680,14 +2690,14 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
 }
@@ -2761,7 +2771,7 @@ void TalkToPlayers(GtkWidget *widget, gpointer data)
 void TalkDialog(gboolean TalkToAll)
 {
   GtkWidget *dialog, *clist, *button, *entry, *label, *vbox, *hsep,
-      *checkbutton, *hbbox;
+      *checkbutton, *hbbox, *outer;
   GtkAccelGroup *accel_group;
   static struct TalkStruct TalkData;
 
@@ -2812,7 +2822,7 @@ void TalkDialog(gboolean TalkToAll)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   /* Button to send a message to other players */
   button = gtk_button_new_with_label(_("Send"));
@@ -2827,7 +2837,7 @@ void TalkDialog(gboolean TalkToAll)
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
@@ -2916,7 +2926,7 @@ void TipOff(GtkWidget *widget, gpointer data)
 
 void ErrandDialog(gint ErrandType)
 {
-  GtkWidget *dialog, *clist, *button, *vbox, *hbbox, *hsep, *label;
+  GtkWidget *dialog, *clist, *button, *vbox, *hbbox, *hsep, *label, *outer;
   GtkAccelGroup *accel_group;
   gchar *text;
 
@@ -2980,7 +2990,7 @@ void ErrandDialog(gint ErrandType)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_object_set_data(G_OBJECT(button), "dialog", dialog);
   g_object_set_data(G_OBJECT(button), "errandtype",
@@ -2994,7 +3004,7 @@ void ErrandDialog(gint ErrandType)
                            G_OBJECT(dialog));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
   gtk_widget_show_all(dialog);
 }
@@ -3226,7 +3236,7 @@ gint DisallowDelete(GtkWidget *widget, GdkEvent *event, gpointer data)
 
 void GunShopDialog(void)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *hbox, *hbbox;
+  GtkWidget *window, *button, *hsep, *vbox, *hbox, *hbbox, *outer;
   GtkAccelGroup *accel_group;
   gchar *text;
 
@@ -3261,14 +3271,14 @@ void GunShopDialog(void)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
   button = gtk_button_new_with_mnemonic(_("_Close"));
   g_signal_connect_swapped(G_OBJECT(button), "clicked",
                            G_CALLBACK(gtk_widget_destroy),
                            G_OBJECT(window));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
   UpdateInventory(&ClientData.Gun, ClientData.Play->Guns, NumGun, FALSE);

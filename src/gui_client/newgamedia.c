@@ -488,7 +488,7 @@ void NewGameDialog(Player *play)
 #endif
 
 #ifdef NETWORKING
-  GtkWidget *clist, *scrollwin, *grid, *hbbox, *defbutton;
+  GtkWidget *clist, *scrollwin, *grid, *hbbox, *outer, *defbutton;
   GtkTreeSelection *treesel;
   gchar *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
@@ -630,7 +630,7 @@ void NewGameDialog(Player *play)
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   /* Button to update metaserver information */
   button = gtk_button_new_with_mnemonic(_("_Refresh"));
@@ -648,7 +648,7 @@ void NewGameDialog(Player *play)
                    button);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox2), outer, FALSE, FALSE, 0);
 
   /* Title of Metaserver notebook tab in New Game dialog */
   label = gtk_label_new(_("Metaserver"));
@@ -717,7 +717,8 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
 
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *grid, *hbbox;
+  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *grid, *hbbox,
+            *outer;
   GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -769,7 +770,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
@@ -782,7 +783,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
                            G_OBJECT(window));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, TRUE, TRUE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
   gtk_widget_show_all(window);

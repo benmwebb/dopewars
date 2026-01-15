@@ -801,7 +801,7 @@ static void FillSoundsList(GtkTreeView *tv)
 void OptDialog(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog, *notebook, *label, *check, *entry, *grid;
-  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *tv;
+  GtkWidget *hbox, *vbox, *vbox2, *hsep, *button, *hbbox, *outer, *tv;
   GtkWidget *scrollwin;
   GtkAccelGroup *accel_group;
   gchar *sound_titles[2];
@@ -1045,7 +1045,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
@@ -1065,7 +1065,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
                    G_CALLBACK(FinishOptDialog), NULL);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(dialog), vbox);
 
