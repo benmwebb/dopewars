@@ -61,7 +61,7 @@ struct StatusWidgets {
   GtkWidget *Location, *Date, *SpaceName, *SpaceValue, *CashName;
   GtkWidget *CashValue, *DebtName, *DebtValue, *BankName, *BankValue;
   GtkWidget *GunsName, *GunsValue, *BitchesName, *BitchesValue;
-  GtkWidget *HealthName, *HealthValue;
+  GtkWidget *HealthName, *HealthValue, *DaysRemName, *DaysRemValue;
 };
 
 struct ClientDataStruct {
@@ -1321,6 +1321,9 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   g_string_printf(text, "%d", Play->CoatSize);
   gtk_label_set_text(GTK_LABEL(Status->SpaceValue), text->str);
 
+  g_string_printf(text, "%d", NumTurns - Play->Turn);
+  gtk_label_set_text(GTK_LABEL(Status->DaysRemValue), text->str);
+
   prstr = FormatPrice(Play->Cash);
   gtk_label_set_text(GTK_LABEL(Status->CashValue), prstr);
   g_free(prstr);
@@ -2194,7 +2197,7 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
 {
   GtkWidget *grid, *label;
 
-  grid = dp_gtk_grid_new(3, 6, FALSE);
+  grid = dp_gtk_grid_new(3, 8, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 3);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
   gtk_container_set_border_width(GTK_CONTAINER(grid), 3);
@@ -2207,10 +2210,15 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
 
   /* Available space label in GTK+ client status display */
   label = Status->SpaceName = gtk_label_new(_("Space"));
-
   dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 0, 1, 1, TRUE);
   label = Status->SpaceValue = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 0, 1, 1, TRUE);
+
+  /* Days remaining label in GTK+ client status display */
+  label = Status->DaysRemName = gtk_label_new(_("Days Left"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 6, 0, 1, 1, TRUE);
+  label = Status->DaysRemValue = gtk_label_new(NULL);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 7, 0, 1, 1, TRUE);
 
   /* Player's cash label in GTK+ client status display */
   label = Status->CashName = gtk_label_new(_("Cash"));
