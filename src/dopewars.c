@@ -2378,6 +2378,32 @@ gchar *GetGlobalConfigFile(void)
 }
 
 /*
+ * Returns the pathname of the user's configuration directory,
+ * as a dynamically-allocated string that must be later freed. On
+ * error, NULL is returned.
+ */
+gchar *GetConfigDir(void)
+{
+#ifdef CYGWIN
+  return g_strdup(appdata_path ? appdata_path : ".");
+#else
+  gchar *home, *conf = NULL;
+
+  /* Use XDG_CONFIG_HOME or default to ~/.config/dopewars */
+  home = getenv("XDG_CONFIG_HOME");
+  if (home) {
+    conf = g_strdup_printf("%s/dopewars", home);
+  } else {
+    home = getenv("HOME");
+    if (home) {
+      conf = g_strdup_printf("%s/.config/dopewars", home);
+    }
+  }
+  return conf;
+#endif
+}
+
+/*
  * Returns the pathname of the local (per-user) configuration file,
  * as a dynamically-allocated string that must be later freed. On
  * error, NULL is returned.
@@ -2388,17 +2414,12 @@ gchar *GetLocalConfigFile(void)
   return g_strdup_printf("%s/dopewars-config.txt",
                          appdata_path ? appdata_path : ".");
 #else
-  gchar *home, *conf = NULL;
+  gchar *dir, *conf = NULL;
 
-  /* Local config changes are in the user's state directory */
-  home = getenv("XDG_STATE_HOME");
-  if (home) {
-    conf = g_strdup_printf("%s/dopewars", home);
-  } else {
-    home = getenv("HOME");
-    if (home) {
-      conf = g_strdup_printf("%s/.local/state/dopewars", home);
-    }
+  dir = GetConfigDir();
+  if (dir) {
+    conf = g_strdup_printf("%s/config", dir);
+    g_free(dir);
   }
   return conf;
 #endif
@@ -2793,14 +2814,22 @@ static gchar *priv_hiscore = NULL;
  */
 struct CMDLINE *GeneralStartup(int argc, char *argv[])
 {
-  /* First, open the hard-coded high score file with possibly
-   * elevated privileges */
+  /* Open the high score file from the user's config directory */
+  {
+    gchar *configdir = GetConfigDir();
+    if (configdir) {
+      priv_hiscore = g_strdup_printf("%s/highscore", configdir);
+      g_free(configdir);
+    } else {
+      /* Fallback to old location if config dir unavailable */
 #ifdef CYGWIN
-  priv_hiscore = g_strdup_printf("%s/dopewars.sco",
-                                 appdata_path ? appdata_path : DPSCOREDIR);
+      priv_hiscore = g_strdup_printf("%s/dopewars.sco",
+                                     appdata_path ? appdata_path : DPSCOREDIR);
 #else
-  priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPSCOREDIR);
+      priv_hiscore = g_strdup_printf("%s/dopewars.sco", DPSCOREDIR);
 #endif
+    }
+  }
   HiScoreFile = g_strdup(priv_hiscore);
   OpenHighScoreFile();
   DropPrivileges();

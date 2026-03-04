@@ -1995,6 +1995,12 @@ void OpenHighScoreFile(void)
   /* Win32 gets upset if we use "a+" so we use this nasty hack instead */
   ScoreFP = fopen(HiScoreFile, "r+");
   if (!ScoreFP) {
+    /* Try to create the config directory if it doesn't exist */
+    gchar *configdir = GetConfigDir();
+    if (configdir) {
+      g_mkdir_with_parents(configdir, 0755);
+      g_free(configdir);
+    }
     ScoreFP = fopen(HiScoreFile, "w+");
     if (!ScoreFP) {
       OpenError = errno;

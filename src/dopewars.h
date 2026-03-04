@@ -450,6 +450,7 @@ void BackupConfig(void);
 gchar *GetDocRoot(void);
 gchar *GetDocIndex(void);
 gchar *GetGlobalConfigFile(void);
+gchar *GetConfigDir(void);
 gchar *GetLocalConfigFile(void);
 
 #ifndef CURSES_CLIENT
