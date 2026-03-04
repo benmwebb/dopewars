@@ -114,6 +114,95 @@ void SocketStatus(NetworkBuffer *NetBuf, gboolean Read, gboolean Write,
 CurlConnection MetaConn;
 #endif /* NETWORKING */
 
+/* Window geometry storage */
+static GKeyFile *WindowSizes = NULL;
+
+static void EnsureWindowSizesLoaded(void)
+{
+  gchar *configdir, *filepath;
+
+  if (WindowSizes) return;
+
+  WindowSizes = g_key_file_new();
+  configdir = GetConfigDir();
+  if (configdir) {
+    filepath = g_strdup_printf("%s/windowsizes", configdir);
+    g_key_file_load_from_file(WindowSizes, filepath, G_KEY_FILE_NONE, NULL);
+    g_free(filepath);
+    g_free(configdir);
+  }
+}
+
+static void SaveWindowSizes(void)
+{
+  gchar *configdir, *filepath, *data;
+  gsize length;
+
+  if (!WindowSizes) return;
+
+  configdir = GetConfigDir();
+  if (!configdir) return;
+
+  g_mkdir_with_parents(configdir, 0755);
+  filepath = g_strdup_printf("%s/windowsizes", configdir);
+  data = g_key_file_to_data(WindowSizes, &length, NULL);
+  if (data) {
+    g_file_set_contents(filepath, data, length, NULL);
+    g_free(data);
+  }
+  g_free(filepath);
+  g_free(configdir);
+}
+
+static gboolean OnConfigureEvent(GtkWidget *widget, GdkEventConfigure *event, gpointer data)
+{
+  const gchar *title;
+  gint x, y;
+
+  EnsureWindowSizesLoaded();
+  title = gtk_window_get_title(GTK_WINDOW(widget));
+  if (!title || !title[0]) return FALSE;
+
+  gtk_window_get_position(GTK_WINDOW(widget), &x, &y);
+
+  g_key_file_set_integer(WindowSizes, title, "width", event->width);
+  g_key_file_set_integer(WindowSizes, title, "height", event->height);
+  g_key_file_set_integer(WindowSizes, title, "x", x);
+  g_key_file_set_integer(WindowSizes, title, "y", y);
+
+  /* Save immediately */
+  SaveWindowSizes();
+
+  return FALSE;
+}
+
+static gboolean RestoreWindowGeometry(GtkWindow *window)
+{
+  const gchar *title;
+  gint w, h, x, y;
+
+  EnsureWindowSizesLoaded();
+  title = gtk_window_get_title(window);
+  if (!title || !g_key_file_has_group(WindowSizes, title)) return FALSE;
+
+  w = g_key_file_get_integer(WindowSizes, title, "width", NULL);
+  h = g_key_file_get_integer(WindowSizes, title, "height", NULL);
+  x = g_key_file_get_integer(WindowSizes, title, "x", NULL);
+  y = g_key_file_get_integer(WindowSizes, title, "y", NULL);
+
+  if (w > 0 && h > 0) {
+    gtk_window_set_default_size(window, w, h);
+    gtk_window_move(window, x, y);
+  }
+  return (w > 0 && h > 0);
+}
+
+static void SetupWindowGeometryTracking(GtkWindow *window)
+{
+  g_signal_connect(G_OBJECT(window), "configure-event",
+                   G_CALLBACK(OnConfigureEvent), NULL);
+}
+
 static void HandleClientMessage(char *buf, Player *Play);
 static void PrepareHighScoreDialog(void);
 static void AddScoreToDialog(char *Data);
@@ -241,11 +330,19 @@ void my_gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
 
 /*
  * Sets the initial size and window manager hints of a dialog.
+ * Restores saved geometry if available, otherwise centers on parent.
  */
 void my_set_dialog_position(GtkWindow *dialog)
 {
   gtk_window_set_type_hint(dialog, GDK_WINDOW_TYPE_HINT_DIALOG);
-  gtk_window_set_position(dialog, GTK_WIN_POS_CENTER_ON_PARENT);
+
+  /* Try to restore saved geometry, fall back to centering on parent */
+  if (!RestoreWindowGeometry(dialog)) {
+    gtk_window_set_position(dialog, GTK_WIN_POS_CENTER_ON_PARENT);
+  }
+
+  /* Track geometry changes */
+  SetupWindowGeometryTracking(dialog);
 }
 
 void QuitGame(GtkWidget *widget, gpointer data)
@@ -2248,7 +2345,13 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   /* Title of main window in GTK+ client */
   gtk_window_set_title(GTK_WINDOW(window), _("dopewars"));
-  gtk_window_set_default_size(GTK_WINDOW(window), 450, 390);
+
+  /* Restore saved geometry or use default size */
+  if (!RestoreWindowGeometry(GTK_WINDOW(window))) {
+    gtk_window_set_default_size(GTK_WINDOW(window), 450, 390);
+  }
+  SetupWindowGeometryTracking(GTK_WINDOW(window));
+
   g_signal_connect(G_OBJECT(window), "delete_event",
                    G_CALLBACK(MainDelete), NULL);
   g_signal_connect(G_OBJECT(window), "destroy",
