@@ -2527,6 +2527,9 @@ gboolean GtkLoop(int *argc, char **argv[],
   CurlInit(&MetaConn);
 #endif
 
+  /* Automatically show New Game dialog on startup */
+  NewGame(NULL, NULL);
+
   gtk_main();
 
 #ifdef NETWORKING
@@ -2754,6 +2757,28 @@ static void PubButtonPressed(GtkWidget *widget, gpointer data)
   SackBitch(widget, data);
 }
 
+static void BankRadioToggled(GtkWidget *widget, gpointer data)
+{
+  GtkWidget *dialog = GTK_WIDGET(data);
+  GtkWidget *entry, *deposit_radio;
+  gchar *amountstr;
+  price_t amount;
+
+  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "entry"));
+  deposit_radio = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "deposit"));
+
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit_radio))) {
+    /* Deposit selected - show cash amount */
+    amount = ClientData.Play->Cash;
+  } else {
+    /* Withdraw selected - show bank balance */
+    amount = ClientData.Play->Bank;
+  }
+  amountstr = pricetostr(amount);
+  gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
+  g_free(amountstr);
+}
+
 void TransferDialog(gboolean Debt)
 {
   GtkWidget *dialog, *button, *label, *grid, *vbox;
@@ -2807,33 +2832,17 @@ void TransferDialog(gboolean Debt)
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 3, 1, TRUE);
 
   g_object_set_data(G_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
+
+  /* Create entry first so it can be referenced by radio button callbacks */
+  label = gtk_label_new(Currency.Symbol);
+  entry = gtk_entry_new();
+  g_object_set_data(G_OBJECT(dialog), "entry", entry);
+
   if (Debt) {
     /* Prompt for paying back a loan */
     label = gtk_label_new(_("Pay back:"));
     dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
-  } else {
-    GtkWidget *deposit_radio, *withdraw_radio;
 
-    /* Radio button selected if you want to pay money into the bank */
-    deposit_radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
-    g_object_set_data(G_OBJECT(dialog), "deposit", deposit_radio);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(deposit_radio));
-    dp_gtk_grid_attach(GTK_GRID(grid), deposit_radio, 0, 2, 1, 1, FALSE);
-
-    /* Radio button selected if you want to withdraw money from the bank */
-    withdraw_radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
-    dp_gtk_grid_attach(GTK_GRID(grid), withdraw_radio, 0, 3, 1, 1, FALSE);
-
-    /* Select withdraw if player has no cash, otherwise deposit */
-    if (ClientData.Play->Cash == 0) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(withdraw_radio), TRUE);
-    } else {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(deposit_radio), TRUE);
-    }
-  }
-  label = gtk_label_new(Currency.Symbol);
-  entry = gtk_entry_new();
-  if (Debt) {
     /* Pre-fill with debt amount or max cash available */
     price_t amount;
     gchar *amountstr;
@@ -2846,19 +2855,36 @@ void TransferDialog(gboolean Debt)
     gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
     g_free(amountstr);
   } else {
-    /* Pre-fill with bank balance (withdraw) or cash (deposit) */
+    GtkWidget *deposit_radio, *withdraw_radio;
     price_t amount;
     gchar *amountstr;
+
+    /* Radio button selected if you want to pay money into the bank */
+    deposit_radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
+    g_object_set_data(G_OBJECT(dialog), "deposit", deposit_radio);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(deposit_radio));
+    dp_gtk_grid_attach(GTK_GRID(grid), deposit_radio, 0, 2, 1, 1, FALSE);
+
+    /* Radio button selected if you want to withdraw money from the bank */
+    withdraw_radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
+    dp_gtk_grid_attach(GTK_GRID(grid), withdraw_radio, 0, 3, 1, 1, FALSE);
+
+    /* Connect toggle signal to update entry when selection changes */
+    g_signal_connect(G_OBJECT(deposit_radio), "toggled",
+                     G_CALLBACK(BankRadioToggled), dialog);
+
+    /* Select withdraw if player has no cash, otherwise deposit */
     if (ClientData.Play->Cash == 0) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(withdraw_radio), TRUE);
       amount = ClientData.Play->Bank;
     } else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(deposit_radio), TRUE);
       amount = ClientData.Play->Cash;
     }
     amountstr = pricetostr(amount);
     gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
     g_free(amountstr);
   }
-  g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
 
