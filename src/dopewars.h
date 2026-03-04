@@ -213,10 +213,10 @@ extern int PlayerArmor, BitchArmor;
 
 #define NUMHISCORE    18
 
-#define DEFLOANSHARK  1
-#define DEFBANK       1
-#define DEFGUNSHOP    2
-#define DEFROUGHPUB   2
+#define DEFLOANSHARK  0
+#define DEFBANK       0
+#define DEFGUNSHOP    0
+#define DEFROUGHPUB   0
 
 #define METAVERSION   2
 
