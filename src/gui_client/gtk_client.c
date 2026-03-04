@@ -2726,6 +2726,26 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
   g_free(title);
 }
 
+static void BankButtonPressed(GtkWidget *widget, gpointer data)
+{
+  TransferDialog(FALSE);
+}
+
+static void LoanSharkButtonPressed(GtkWidget *widget, gpointer data)
+{
+  TransferDialog(TRUE);
+}
+
+static void GunsButtonPressed(GtkWidget *widget, gpointer data)
+{
+  GunShopDialog();
+}
+
+static void PubButtonPressed(GtkWidget *widget, gpointer data)
+{
+  SackBitch(widget, data);
+}
+
 void TransferDialog(gboolean Debt)
 {
   GtkWidget *dialog, *button, *label, *grid, *vbox;
@@ -3349,11 +3369,59 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
         g_signal_connect(G_OBJECT(button[i]), "clicked",
                          G_CALLBACK(CallBack), button_type[i]);
       }
-      gtk_box_pack_start(GTK_BOX(vbbox), button[i], TRUE, FALSE, 0);
+      gtk_box_pack_start(GTK_BOX(vbbox), button[i], FALSE, FALSE, 0);
     }
     widgets->BuyButton = button[0];
     widgets->SellButton = button[1];
     widgets->DropButton = button[2];
+    gtk_widget_set_margin_top(button[0], 100);
+    gtk_widget_set_margin_top(button[1], 10);
+    gtk_widget_set_margin_top(button[2], 10);
+
+    /* Add Bank button */
+    {
+      GtkWidget *bank_button = gtk_button_new_with_label("");
+      SetAccelerator(bank_button, _("_Bank"), bank_button,
+                     "clicked", accel_group, FALSE);
+      g_signal_connect(G_OBJECT(bank_button), "clicked",
+                       G_CALLBACK(BankButtonPressed), NULL);
+      gtk_widget_set_margin_top(bank_button, 20);
+      gtk_box_pack_start(GTK_BOX(vbbox), bank_button, FALSE, FALSE, 0);
+    }
+
+    /* Add Guns button */
+    {
+      GtkWidget *guns_button = gtk_button_new_with_label("");
+      SetAccelerator(guns_button, _("_Guns"), guns_button,
+                     "clicked", accel_group, FALSE);
+      g_signal_connect(G_OBJECT(guns_button), "clicked",
+                       G_CALLBACK(GunsButtonPressed), NULL);
+      gtk_widget_set_margin_top(guns_button, 20);
+      gtk_box_pack_start(GTK_BOX(vbbox), guns_button, FALSE, FALSE, 0);
+    }
+
+    /* Add Pub button */
+    {
+      GtkWidget *pub_button = gtk_button_new_with_label("");
+      SetAccelerator(pub_button, _("_Pub"), pub_button,
+                     "clicked", accel_group, FALSE);
+      g_signal_connect(G_OBJECT(pub_button), "clicked",
+                       G_CALLBACK(PubButtonPressed), NULL);
+      gtk_widget_set_margin_top(pub_button, 20);
+      gtk_box_pack_start(GTK_BOX(vbbox), pub_button, FALSE, FALSE, 0);
+    }
+
+    /* Add Loan Shark button */
+    {
+      GtkWidget *loan_button = gtk_button_new_with_label("");
+      SetAccelerator(loan_button, _("_Loan Shark"), loan_button,
+                     "clicked", accel_group, FALSE);
+      g_signal_connect(G_OBJECT(loan_button), "clicked",
+                       G_CALLBACK(LoanSharkButtonPressed), NULL);
+      gtk_widget_set_margin_top(loan_button, 20);
+      gtk_box_pack_start(GTK_BOX(vbbox), loan_button, FALSE, FALSE, 0);
+    }
+
     gtk_box_pack_start(GTK_BOX(hbox), vbbox, FALSE, FALSE, 0);
   } else {
     widgets->vbbox = NULL;

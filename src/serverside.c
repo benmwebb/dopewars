@@ -3157,45 +3157,15 @@ int RandomOffer(Player *To)
   return 0;
 }
 
-/* 
+/*
  * Offers player "To" bitches/trenchcoats or guns. If ForceBitch is
  * TRUE, then a bitch is definitely offered. Returns 0 if the client
  * can advance immediately to the next state, 1 otherwise.
+ *
+ * DISABLED - all random offers disabled
  */
 int OfferObject(Player *To, gboolean ForceBitch)
 {
-  int ObjNum;
-  gchar *text = NULL;
-
-  if (brandom(0, 100) < 50 || ForceBitch) {
-    if (WantAntique) {
-      To->Bitches.Price = prandom(MINTRENCHPRICE, MAXTRENCHPRICE);
-      text = dpg_strdup_printf(_("YN^Would you like to buy a bigger "
-                                 "trenchcoat for %P?"), To->Bitches.Price);
-    } else {
-      To->Bitches.Price =
-          prandom(Bitch.MinPrice, Bitch.MaxPrice) / (price_t)10;
-      text =
-          dpg_strdup_printf(_
-                            ("YN^Hey dude! I'll help carry your %tde for a "
-                             "mere %P. Yes or no?"), Names.Drugs,
-                            To->Bitches.Price);
-    }
-    SendQuestion(NULL, C_ASKBITCH, To, text);
-    g_free(text);
-    return 1;
-  } else if (!Sanitized && NumGun > 0
-             && (TotalGunsCarried(To) < To->Bitches.Carried + 2)) {
-    ObjNum = brandom(0, NumGun);
-    To->Guns[ObjNum].Price = Gun[ObjNum].Price / 10;
-    if (Gun[ObjNum].Space > To->CoatSize)
-      return 0;
-    text = dpg_strdup_printf(_("YN^Would you like to buy a %tde for %P?"),
-                             Gun[ObjNum].Name, To->Guns[ObjNum].Price);
-    SendQuestion(NULL, C_ASKGUN, To, text);
-    g_free(text);
-    return 1;
-  }
   return 0;
 }
 
