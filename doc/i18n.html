@@ -116,7 +116,7 @@ left unchanged.<p /></li>
 is exactly equivalent to the standard C "<tt>%s</tt>" notation for a string,
 and does essentially the same thing, except that the two-letter code which
 follows the <tt>%t</tt> is used to select an "alternative form" of the word
-- for example, your language may have different words for "bitch" depending
+- for example, your language may have different words for "mule" depending
 on whether the word is the subject or the object of the sentence. You are
 free to translate <tt>%txx</tt> to use the most appropriate form of the word.
 If you wish to capitalise the first letter of the word (as used in English for
@@ -127,13 +127,13 @@ specify them yourself. Essentially, when setting a string in a dopewars
 configuration file (or the defaults, which are set in dopewars.c) alternative
 forms can be added by alternating two-letter codes and alternative forms after
 the original word, separating them by _ (underline) symbols. For example,<br />
-<tt>Names.Bitch = "bitch_no_bitcho_ac_bitche"</tt><br />
-specifies two alternative forms for "bitch", identified by the "<tt>no</tt>"
-and "<tt>ac</tt>" codes. You can then use "bitcho" anywhere that "bitch" is
+<tt>Names.Mule = "mule_no_muleo_ac_mulee"</tt><br />
+specifies two alternative forms for "mule", identified by the "<tt>no</tt>"
+and "<tt>ac</tt>" codes. You can then use "muleo" anywhere that "mule" is
 normally used by translating the relevant string as "<tt>%tno</tt>" (and to
-get "bitche" use "<tt>%tac</tt>"). If you specify a two letter code
+get "mulee" use "<tt>%tac</tt>"). If you specify a two letter code
 in the translation that you haven't given an alternative form for, the
-default word ("bitch") will be used. In the original English, "<tt>%tde</tt>"
+default word ("mule") will be used. In the original English, "<tt>%tde</tt>"
 is used for this purpose, but there is nothing special about the "<tt>de</tt>"
 code - you can use it yourself if you like, and you can use as many
 different two-letter codes as you want to.</p>

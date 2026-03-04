@@ -993,7 +993,7 @@ static void DealDrugs(Player *Play, gboolean Buy)
 
 /* 
  * Prompts the user (player "Play") to give an errand to one of his/her
- * bitches. The decision is relayed to the server for implementation.
+ * mules. The decision is relayed to the server for implementation.
  */
 static void GiveErrand(Player *Play)
 {
@@ -1006,14 +1006,14 @@ static void GiveErrand(Player *Play)
   clear_bottom();
   y = get_ui_area_top() + 1;
 
-  /* Prompt for sending your bitches out to spy etc. (%tde = "bitches" by
+  /* Prompt for sending your mules out to spy etc. (%tde = "mules" by
    * default) */
   dpg_string_printf(text,
                      _("Choose an errand to give one of your %tde..."),
-                     Names.Bitches);
+                     Names.Mules);
   mvaddstr(y++, 1, text->str);
   attrset(PromptAttr);
-  if (Play->Bitches.Carried > 0) {
+  if (Play->Mules.Carried > 0) {
     dpg_string_printf(text,
                        _("   S>py on another dealer                  "
                          "(cost: %P)"), Prices.Spy);
@@ -1036,7 +1036,7 @@ static void GiveErrand(Player *Play)
      N>o errand) */
   c = GetKey(N_("STGCN"), TRUE, FALSE, FALSE);
 
-  if (Play->Bitches.Carried > 0 || c == 'C')
+  if (Play->Mules.Carried > 0 || c == 'C')
     switch (c) {
     case 'S':
       To = ListPlayers(Play, TRUE, _("Whom do you want to spy on? "));
@@ -1051,7 +1051,7 @@ static void GiveErrand(Player *Play)
       break;
     case 'G':
       attrset(PromptAttr);
-      /* Prompt for confirmation of sacking a bitch */
+      /* Prompt for confirmation of sacking a mule */
       addstr(_(" Are you sure? "));
 
       /* The two keys that are valid for answering Yes/No - if you
@@ -1060,7 +1060,7 @@ static void GiveErrand(Player *Play)
       c = GetKey(N_("YN"), FALSE, TRUE, FALSE);
 
       if (c == 'Y')
-        SendClientMessage(Play, C_NONE, C_SACKBITCH, NULL, NULL);
+        SendClientMessage(Play, C_NONE, C_SACKMULE, NULL, NULL);
       break;
     case 'C':
       if (Play->Flags & SPYINGON) {
@@ -1406,15 +1406,15 @@ static void BuyGun(Player *Play)
   gint gunind;
 
   clear_line(get_prompt_line());
-  if (TotalGunsCarried(Play) >= Play->Bitches.Carried + 2) {
+  if (TotalGunsCarried(Play) >= Play->Mules.Carried + 2) {
     text = dpg_strdup_printf(
                               /* Error - player tried to buy more guns
-                                 than his/her bitches can carry (1st
-                                 %tde="bitches", 2nd %tde="guns" by
+                                 than his/her mules can carry (1st
+                                 %tde="mules", 2nd %tde="guns" by
                                  default) */
                               _("You'll need more %tde to carry "
                                 "any more %tde!"),
-                              Names.Bitches, Names.Guns);
+                              Names.Mules, Names.Guns);
     mvaddcentstr(get_prompt_line(), text);
     g_free(text);
     nice_wait();
@@ -1784,8 +1784,8 @@ void DisplayFightMessage(Player *Play, char *text)
 {
   static GList *msgs = NULL;
   gchar *textpt;
-  gchar *AttackName, *DefendName, *BitchName;
-  gint y, DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
+  gchar *AttackName, *DefendName, *MuleName;
+  gint y, DefendHealth, DefendMules, MulesKilled, ArmPercent;
   gboolean Loot;
   int top = get_ui_area_top(), bottom = get_ui_area_bottom() - 4;
 
@@ -1801,7 +1801,7 @@ void DisplayFightMessage(Player *Play, char *text)
     if (text[0]) {
       if (HaveAbility(Play, A_NEWFIGHT)) {
         ReceiveFightMessage(text, &AttackName, &DefendName, &DefendHealth,
-                            &DefendBitches, &BitchName, &BitchesKilled,
+                            &DefendMules, &MuleName, &MulesKilled,
                             &ArmPercent, &fp, &RunHere, &Loot, &CanFire,
                             &textpt);
       } else {
@@ -1978,7 +1978,7 @@ void print_location(char *text)
 
 /* 
  * Displays the status of player "Play" - i.e. the current turn, the
- * location, bitches, available space, cash, guns, health and bank
+ * location, mules, available space, cash, guns, health and bank
  * details. If "DispDrugs" is TRUE, displays the carried drugs on the
  * right hand side of the screen; if FALSE, displays the carried guns.
  */
@@ -2081,10 +2081,10 @@ void print_status(Player *Play, gboolean DispDrug)
   if (WantAntique)
     g_string_printf(text, _("Space %6d"), Play->CoatSize);
   else {
-    /* Display of the player's number of bitches, and available space
-       (%Tde="Bitches" by default) */
-    dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Bitches,
-                       Play->Bitches.Carried, Play->CoatSize);
+    /* Display of the player's number of mules, and available space
+       (%Tde="Mules" by default) */
+    dpg_string_printf(text, _("%Tde %3d  Space %6d"), Names.Mules,
+                       Play->Mules.Carried, Play->CoatSize);
   }
   mvaddrightstr(0, Width - 3, text->str);
   dpg_string_printf(text, _("%/Current location/%tde"),
@@ -2506,7 +2506,7 @@ static void Curses_DoGame(Player *Play)
       if (Network)
         g_string_append(text, _(", T>alk, P>age"));
       g_string_append(text, _(", L>ist"));
-      if (!WantAntique && (Play->Bitches.Carried > 0 ||
+      if (!WantAntique && (Play->Mules.Carried > 0 ||
                            Play->Flags & SPYINGON)) {
         g_string_append(text, _(", G>ive"));
       }
@@ -2653,7 +2653,7 @@ static void Curses_DoGame(Player *Play)
         DealDrugs(Play, FALSE);
       } else if (c == 'D' && HaveWorthless && !WantAntique) {
         DropDrugs(Play);
-      } else if (c == 'G' && !WantAntique && Play->Bitches.Carried > 0) {
+      } else if (c == 'G' && !WantAntique && Play->Mules.Carried > 0) {
         GiveErrand(Play);
       } else if (c == 'Q') {
         if (want_to_quit() == 1) {

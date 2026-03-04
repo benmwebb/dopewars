@@ -39,7 +39,7 @@ typedef enum {
   C_BANK, C_QUESTION, C_UNUSED, C_HISCORE, C_STARTHISCORE, C_ENDHISCORE,
   C_BUYOBJECT, C_DONE, C_REQUESTJET, C_PAYLOAN, C_ANSWER, C_DEPOSIT, C_PUSH,
   C_QUIT = 'a',
-  C_RENAME, C_NAME, C_SACKBITCH, C_TIPOFF, C_SPYON, C_WANTQUIT,
+  C_RENAME, C_NAME, C_SACKMULE, C_TIPOFF, C_SPYON, C_WANTQUIT,
   C_CONTACTSPY, C_KILL, C_REQUESTSCORE, C_INIT, C_DATA,
   C_FIGHTPRINT, C_FIGHTACT, C_TRADE, C_CHANGEDISP,
   C_NETMESSAGE, C_ABILITIES
@@ -47,7 +47,7 @@ typedef enum {
 
 typedef enum {
   C_NONE = 'A',
-  C_ASKLOAN, C_COPSMESG, C_ASKBITCH, C_ASKGUN, C_ASKGUNSHOP,
+  C_ASKLOAN, C_COPSMESG, C_ASKMULE, C_ASKGUN, C_ASKGUNSHOP,
   C_ASKPUB, C_ASKBANK, C_ASKRUN, C_ASKRUNFIGHT, C_ASKSEW,
   C_MEETPLAYER, C_FIGHT, C_FIGHTDONE, C_MOTD, C_VERSIONCHECK,
   C_MISSFIGHT
@@ -143,16 +143,16 @@ void SendOldFightPrint(Player *To, GString *text, gboolean FightOver);
 void SendFightLeave(Player *Play, gboolean FightOver);
 void ReceiveFightMessage(gchar *Data, gchar **AttackName,
                          gchar **DefendName, int *DefendHealth,
-                         int *DefendBitches, gchar **BitchName,
-                         int *BitchesKilled, int *ArmPercent,
+                         int *DefendMules, gchar **MuleName,
+                         int *MulesKilled, int *ArmPercent,
                          FightPoint *fp, gboolean *CanRunHere,
                          gboolean *Loot, gboolean *CanFire,
                          gchar **Message);
 void SendFightMessage(Player *Attacker, Player *Defender,
-                      int BitchesKilled, FightPoint fp, price_t Loot,
+                      int MulesKilled, FightPoint fp, price_t Loot,
                       gboolean Broadcast, gchar *Msg);
 void FormatFightMessage(Player *To, GString *text, Player *Attacker,
-                        Player *Defender, int BitchesKilled,
+                        Player *Defender, int MulesKilled,
                         int ArmPercent, FightPoint fp, price_t Loot);
 
 #endif /* __DP_MESSAGE_H__ */

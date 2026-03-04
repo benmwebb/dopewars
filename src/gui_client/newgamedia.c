@@ -32,6 +32,7 @@
 #include "network.h"
 #include "message.h"
 #include "nls.h"
+#include "configfile.h"
 #include "gtkport/gtkport.h"
 #include "gtk_client.h"
 #include "newgamedia.h"
@@ -61,13 +62,30 @@ static GSList *MetaList = NULL;
 /* Which notebook page to display in the New Game dialog */
 static gint NewGameType = 0;
 
-static gboolean GetStartGamePlayerName(gchar **PlayerName)
+static gboolean GetStartGamePlayerName(gchar **pName)
 {
-  g_free(*PlayerName);
-  *PlayerName = gtk_editable_get_chars(GTK_EDITABLE(stgam.name), 0, -1);
-  if (*PlayerName && (*PlayerName)[0])
+  gchar *newName;
+  int i;
+
+  g_free(*pName);
+  newName = gtk_editable_get_chars(GTK_EDITABLE(stgam.name), 0, -1);
+  *pName = newName;
+
+  if (newName && newName[0]) {
+    /* Save the player name to config if it changed */
+    if (!PlayerName || strcmp(PlayerName, newName) != 0) {
+      AssignName(&PlayerName, newName);
+      /* Mark PlayerName as modified in Globals array */
+      for (i = 0; i < NUMGLOB; i++) {
+        if (Globals[i].StringVal == &PlayerName) {
+          Globals[i].Modified = TRUE;
+          break;
+        }
+      }
+      UpdateConfigFile(NULL, FALSE);
+    }
     return TRUE;
-  else {
+  } else {
     GtkMessageBox(stgam.dialog,
                   _("You can't start the game without giving a name first!"),
                   _("New Game"), GTK_MESSAGE_WARNING, MB_OK);
@@ -459,6 +477,9 @@ static void set_initial_player_name(GtkEntry *entry, Player *play)
   char *name = GetPlayerName(play);
   if (*name) {
     gtk_entry_set_text(entry, name);
+  } else if (PlayerName && PlayerName[0]) {
+    /* Use saved player name from config */
+    gtk_entry_set_text(entry, PlayerName);
   } else {
     /* If name is blank, use the first word from the user's full login name */
     char *firstspace;

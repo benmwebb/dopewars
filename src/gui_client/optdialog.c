@@ -889,14 +889,14 @@ void OptDialog(GtkWidget *widget, gpointer data)
   check = NewConfigCheck("Currency.Prefix", _("Symbol prefixes prices"));
   dp_gtk_grid_attach(GTK_GRID(grid), check, 2, 4, 1, 1, TRUE);
 
-  label = gtk_label_new(_("Name of one bitch"));
+  label = gtk_label_new(_("Name of one mule"));
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 5, 1, 1, FALSE);
-  entry = NewConfigEntry("Names.Bitch");
+  entry = NewConfigEntry("Names.Mule");
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 5, 2, 1, TRUE);
 
-  label = gtk_label_new(_("Name of several bitches"));
+  label = gtk_label_new(_("Name of several mules"));
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 6, 1, 1, FALSE);
-  entry = NewConfigEntry("Names.Bitches");
+  entry = NewConfigEntry("Names.Mules");
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 6, 2, 1, TRUE);
 
 #ifndef CYGWIN
