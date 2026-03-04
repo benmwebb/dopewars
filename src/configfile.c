@@ -242,6 +242,12 @@ gboolean UpdateConfigFile(const gchar *cfgfile, gboolean ForceUTF8)
 
   fp = fopen(cfgfile, "r+");
   if (!fp) {
+    /* Try to create the config directory if it doesn't exist */
+    gchar *configdir = GetConfigDir();
+    if (configdir) {
+      g_mkdir_with_parents(configdir, 0755);
+      g_free(configdir);
+    }
     fp = fopen(cfgfile, "w+");
   }
 
