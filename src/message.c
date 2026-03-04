@@ -639,7 +639,7 @@ void SendSpyReport(Player *To, Player *SpiedOn)
                          pricetostr(SpiedOn->Drugs[i].TotalValue)));
       g_free(cashstr);
     }
-  g_string_append_printf(text, "%d", SpiedOn->Bitches.Carried);
+  g_string_append_printf(text, "%d", SpiedOn->Mules.Carried);
   if (To != SpiedOn)
     SendServerMessage(SpiedOn, C_NONE, C_UPDATE, To, text->str);
   else
@@ -651,7 +651,7 @@ void SendSpyReport(Player *To, Player *SpiedOn)
 
 void SendInitialData(Player *To)
 {
-  gchar *LocalNames[NUMNAMES] = { Names.Bitch, Names.Bitches, Names.Gun,
+  gchar *LocalNames[NUMNAMES] = { Names.Mule, Names.Mules, Names.Gun,
     Names.Guns, Names.Drug, Names.Drugs,
     Names.Date, Names.LoanSharkName,
     Names.BankName, Names.GunShopName,
@@ -714,8 +714,8 @@ void ReceiveInitialData(Player *Play, char *Data)
   for (list = FirstClient; list; list = g_slist_next(list)) {
     UpdatePlayer((Player *)list->data);
   }
-  AssignName(&Names.Bitch, GetNextWord(&pt, ""));
-  AssignName(&Names.Bitches, GetNextWord(&pt, ""));
+  AssignName(&Names.Mule, GetNextWord(&pt, ""));
+  AssignName(&Names.Mules, GetNextWord(&pt, ""));
   AssignName(&Names.Gun, GetNextWord(&pt, ""));
   AssignName(&Names.Guns, GetNextWord(&pt, ""));
   AssignName(&Names.Drug, GetNextWord(&pt, ""));
@@ -886,7 +886,7 @@ void ReceivePlayerData(Player *Play, char *text, Player *From)
       From->Drugs[i].TotalValue = GetNextPrice(&cp, (price_t)0);
     }
   }
-  From->Bitches.Carried = GetNextInt(&cp, 0);
+  From->Mules.Carried = GetNextInt(&cp, 0);
 }
 
 gchar *GetNextWord(gchar **Data, gchar *Default)
@@ -1170,8 +1170,8 @@ void SendFightLeave(Player *Play, gboolean FightOver)
 
 void ReceiveFightMessage(gchar *Data, gchar **AttackName,
                          gchar **DefendName, int *DefendHealth,
-                         int *DefendBitches, gchar **BitchName,
-                         int *BitchesKilled, int *ArmPercent,
+                         int *DefendMules, gchar **MuleName,
+                         int *MulesKilled, int *ArmPercent,
                          FightPoint *fp, gboolean *CanRunHere,
                          gboolean *Loot, gboolean *CanFire,
                          gchar **Message)
@@ -1182,9 +1182,9 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
   *AttackName = GetNextWord(&pt, "");
   *DefendName = GetNextWord(&pt, "");
   *DefendHealth = GetNextInt(&pt, 0);
-  *DefendBitches = GetNextInt(&pt, 0);
-  *BitchName = GetNextWord(&pt, "");
-  *BitchesKilled = GetNextInt(&pt, 0);
+  *DefendMules = GetNextInt(&pt, 0);
+  *MuleName = GetNextWord(&pt, "");
+  *MulesKilled = GetNextInt(&pt, 0);
   *ArmPercent = GetNextInt(&pt, 0);
 
   Flags = GetNextWord(&pt, NULL);
@@ -1202,8 +1202,8 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
   switch (*fp) {
   case F_HIT:
     SoundPlay(Sounds.FightHit);
-    if (*BitchesKilled > 0) {
-      SoundPlay(*DefendName[0] ? Sounds.EnemyBitchKilled : Sounds.BitchKilled);
+    if (*MulesKilled > 0) {
+      SoundPlay(*DefendName[0] ? Sounds.EnemyMuleKilled : Sounds.MuleKilled);
     }
     if (*DefendHealth <= 0) {
       SoundPlay(*DefendName[0] ? Sounds.EnemyKilled : Sounds.Killed);
@@ -1228,14 +1228,14 @@ void ReceiveFightMessage(gchar *Data, gchar **AttackName,
 }
 
 void SendFightMessage(Player *Attacker, Player *Defender,
-                      int BitchesKilled, FightPoint fp,
+                      int MulesKilled, FightPoint fp,
                       price_t Loot, gboolean Broadcast, gchar *Msg)
 {
   guint ArrayInd;
   int ArmPercent, Damage, MaxDamage, i;
   Player *To;
   GString *text;
-  gchar *BitchName;
+  gchar *MuleName;
 
   if (!Attacker->FightArray)
     return;
@@ -1246,7 +1246,7 @@ void SendFightMessage(Player *Attacker, Player *Defender,
       MaxDamage = Gun[i].Damage;
     Damage += Gun[i].Damage * Attacker->Guns[i].Carried;
   }
-  MaxDamage *= (Attacker->Bitches.Carried + 2);
+  MaxDamage *= (Attacker->Mules.Carried + 2);
   ArmPercent = Damage * 100 / MaxDamage;
 
   text = g_string_new("");
@@ -1259,28 +1259,28 @@ void SendFightMessage(Player *Attacker, Player *Defender,
     if (HaveAbility(To, A_NEWFIGHT)) {
       if (Defender) {
         if (IsCop(Defender)) {
-          if (Defender->Bitches.Carried == 1) {
-            BitchName = Cop[Defender->CopIndex - 1].DeputyName;
+          if (Defender->Mules.Carried == 1) {
+            MuleName = Cop[Defender->CopIndex - 1].DeputyName;
           } else {
-            BitchName = Cop[Defender->CopIndex - 1].DeputiesName;
+            MuleName = Cop[Defender->CopIndex - 1].DeputiesName;
           }
         } else {
-          if (Defender->Bitches.Carried == 1) {
-            BitchName = Names.Bitch;
+          if (Defender->Mules.Carried == 1) {
+            MuleName = Names.Mule;
           } else {
-            BitchName = Names.Bitches;
+            MuleName = Names.Mules;
           }
         }
       } else
-        BitchName = "";
+        MuleName = "";
       g_string_printf(text, "%s^%s^%d^%d^%s^%d^%d^%c%c%c%c^",
                        Attacker == To ? "" : GetPlayerName(Attacker),
                        (Defender == To || Defender == NULL)
                        ? "" : GetPlayerName(Defender),
                        Defender ? Defender->Health : 0,
-                       Defender ? Defender->Bitches.Carried : 0,
-                       BitchName,
-                       BitchesKilled, ArmPercent,
+                       Defender ? Defender->Mules.Carried : 0,
+                       MuleName,
+                       MulesKilled, ArmPercent,
                        fp, CanRunHere(To) ? '1' : '0',
                        Loot ? '1' : '0',
                        fp != F_ARRIVED && fp != F_LASTLEAVE &&
@@ -1289,7 +1289,7 @@ void SendFightMessage(Player *Attacker, Player *Defender,
     if (Msg) {
       g_string_append(text, Msg);
     } else {
-      FormatFightMessage(To, text, Attacker, Defender, BitchesKilled,
+      FormatFightMessage(To, text, Attacker, Defender, MulesKilled,
                          ArmPercent, fp, Loot);
     }
     if (HaveAbility(To, A_NEWFIGHT)) {
@@ -1310,19 +1310,19 @@ void SendFightMessage(Player *Attacker, Player *Defender,
 }
 
 void FormatFightMessage(Player *To, GString *text, Player *Attacker,
-                        Player *Defender, int BitchesKilled,
+                        Player *Defender, int MulesKilled,
                         int ArmPercent, FightPoint fp, price_t Loot)
 {
   gchar *Armament, *DefendName, *AttackName;
-  int Health, Bitches;
-  gchar *BitchName, *BitchesName;
+  int Health, Mules;
+  gchar *MuleName, *MulesName;
 
   if (Defender && IsCop(Defender)) {
-    BitchName = Cop[Defender->CopIndex - 1].DeputyName;
-    BitchesName = Cop[Defender->CopIndex - 1].DeputiesName;
+    MuleName = Cop[Defender->CopIndex - 1].DeputyName;
+    MulesName = Cop[Defender->CopIndex - 1].DeputiesName;
   } else {
-    BitchName = Names.Bitch;
-    BitchesName = Names.Bitches;
+    MuleName = Names.Mule;
+    MulesName = Names.Mules;
   }
 
   AttackName = (!Attacker
@@ -1330,7 +1330,7 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
   DefendName = (!Defender
                 || Defender == To ? "" : GetPlayerName(Defender));
   Health = Defender ? Defender->Health : 0;
-  Bitches = Defender ? Defender->Bitches.Carried : 0;
+  Mules = Defender ? Defender->Mules.Carried : 0;
 
   switch (fp) {
   case F_ARRIVED:
@@ -1340,17 +1340,17 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
         ArmPercent < 80 ? _("heavily armed") : _("armed to the teeth");
     if (DefendName[0]) {
       if (IsCop(Defender) && !AttackName[0]) {
-        if (Bitches == 0) {
+        if (Mules == 0) {
           dpg_string_append_printf(text, _("%s - %s - is chasing you, man!"),
                               DefendName, Armament);
         } else {
           dpg_string_append_printf(text,
                               _("%s and %d %tde - %s - are chasing you, man!"),
-                              DefendName, Bitches, BitchesName, Armament);
+                              DefendName, Mules, MulesName, Armament);
         }
       } else {
         dpg_string_append_printf(text, _("%s arrives with %d %tde, %s!"),
-                            DefendName, Bitches, BitchesName, Armament);
+                            DefendName, Mules, MulesName, Armament);
       }
     }
     break;
@@ -1403,33 +1403,33 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
     break;
   case F_HIT:
     if (AttackName[0] && DefendName[0]) {
-      if (Health == 0 && Bitches == 0) {
+      if (Health == 0 && Mules == 0) {
         g_string_append_printf(text, _("%s shoots %s dead."),
                           AttackName, DefendName);
-      } else if (BitchesKilled) {
+      } else if (MulesKilled) {
         dpg_string_append_printf(text, _("%s shoots at %s and kills a %tde!"),
-                            AttackName, DefendName, BitchName);
+                            AttackName, DefendName, MuleName);
       } else {
         g_string_append_printf(text, _("%s shoots at %s."),
                           AttackName, DefendName);
       }
     } else if (AttackName[0]) {
-      if (Health == 0 && Bitches == 0) {
+      if (Health == 0 && Mules == 0) {
         g_string_append_printf(text, _("%s wasted you, man! What a drag!"),
                           AttackName);
-      } else if (BitchesKilled) {
+      } else if (MulesKilled) {
         dpg_string_append_printf(text,
                             _("%s shoots at you... and kills a %tde!"),
-                            AttackName, BitchName);
+                            AttackName, MuleName);
       } else {
         g_string_append_printf(text, _("%s hits you, man!"), AttackName);
       }
     } else if (DefendName[0]) {
-      if (Health == 0 && Bitches == 0) {
+      if (Health == 0 && Mules == 0) {
         g_string_append_printf(text, _("You killed %s!"), DefendName);
-      } else if (BitchesKilled) {
+      } else if (MulesKilled) {
         dpg_string_append_printf(text, _("You hit %s, and killed a %tde!"),
-                            DefendName, BitchName);
+                            DefendName, MuleName);
       } else {
         g_string_append_printf(text, _("You hit %s!"), DefendName);
       }

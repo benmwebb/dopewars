@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 pkgdata_DATA = \
-  colt.wav gun.wav losebitch.wav \
+  colt.wav gun.wav losemule.wav \
   murmur.wav run.wav train.wav bye.wav \
   die.wav jet.wav message.wav punch.wav shotdown.wav
 

@@ -18,18 +18,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Name of a single bitch - if you need to use different words for
-#. "bitch" depending on where in the sentence it occurs (e.g. subject or
+#. Name of a single mule - if you need to use different words for
+#. "mule" depending on where in the sentence it occurs (e.g. subject or
 #. object) then read doc/i18n.html about the %tde (etc.) notation. N.B.
 #. This notation can be used for most of the translatable strings in
 #. dopewars.
 #: src/dopewars.c:179
-msgid "bitch"
+msgid "mule"
 msgstr "Hure"
 
-#. Word used for two or more bitches
+#. Word used for two or more mules
 #: src/dopewars.c:181
-msgid "bitches"
+msgid "mules"
 msgstr "Huren"
 
 #. Word used for a single gun
@@ -288,11 +288,11 @@ msgid "Sound file played when guns are reloaded"
 msgstr "Sound-Datei für das Nachladen einer Waffe"
 
 #: src/dopewars.c:395
-msgid "Sound file played when an enemy bitch/deputy is killed"
+msgid "Sound file played when an enemy mule/deputy is killed"
 msgstr "Sound-Datei für das Ableben einer/s feindlichen Hure/Hilfssheriffs"
 
 #: src/dopewars.c:398
-msgid "Sound file played when one of your bitches is killed"
+msgid "Sound file played when one of your mules is killed"
 msgstr "Sound-Datei für das Ableben einer eigenen Hure"
 
 #: src/dopewars.c:401
@@ -400,7 +400,7 @@ msgid "% resistance to gunshots of each player"
 msgstr "% Trefferresistenz jedes Spielers"
 
 #: src/dopewars.c:486 src/dopewars.c:489
-msgid "% resistance to gunshots of each bitch"
+msgid "% resistance to gunshots of each mule"
 msgstr "% Trefferresistenz jeder Huren"
 
 #: src/dopewars.c:492
@@ -508,11 +508,11 @@ msgid "Damage done by each gun"
 msgstr "Schaden jeder Waffe"
 
 #: src/dopewars.c:602
-msgid "Word used to denote a single \"bitch\""
+msgid "Word used to denote a single \"mule\""
 msgstr "Wie soll eine einzelne Hure bezeichnet werden?"
 
 #: src/dopewars.c:605
-msgid "Word used to denote two or more \"bitches\""
+msgid "Word used to denote two or more \"mules\""
 msgstr "Wie sollen zwei oder mehrere Huren bezeichnet werden?"
 
 #: src/dopewars.c:608
@@ -536,20 +536,20 @@ msgid "strftime() format string for displaying the game turn"
 msgstr "strftime() Format-String für das Anzeigen der Spielrunden"
 
 #: src/dopewars.c:623
-msgid "Cost for a bitch to spy on the enemy"
+msgid "Cost for a mule to spy on the enemy"
 msgstr "Kosten für das Ausspionieren eines Feindes mit einer Hure"
 
 #: src/dopewars.c:626
-msgid "Cost for a bitch to tipoff the cops to an enemy"
+msgid "Cost for a mule to tipoff the cops to an enemy"
 msgstr ""
 "Kosten um einen Spieler mit Hilfe einer Hure an die Polizei zu verraten"
 
 #: src/dopewars.c:629
-msgid "Minimum price to hire a bitch"
+msgid "Minimum price to hire a mule"
 msgstr "Minimaler Geldbetrag für das Anheuern einer Hure"
 
 #: src/dopewars.c:632
-msgid "Maximum price to hire a bitch"
+msgid "Maximum price to hire a mule"
 msgstr "Minimaler Geldbetrag fuer das Anheuern einer Hure"
 
 #: src/dopewars.c:635
@@ -1013,7 +1013,7 @@ msgstr "%s ist %d\n"
 msgid "%s is %s\n"
 msgstr "%s ist %s\n"
 
-#. Display of a price config. file variable - e.g. "Bitch.MinPrice is
+#. Display of a price config. file variable - e.g. "Mule.MinPrice is
 #. $200"
 #: src/dopewars.c:2106
 msgid "%s is %P\n"
@@ -1611,7 +1611,7 @@ msgstr "Wen willst du bespitzeln? "
 msgid "Whom do you want to tip the cops off to? "
 msgstr "Wen möchtest du verpfeifen? "
 
-#. Prompt for confirmation of sacking a bitch
+#. Prompt for confirmation of sacking a mule
 #: src/curses_client/curses_client.c:1055
 msgid " Are you sure? "
 msgstr " Bist Du sicher? "
@@ -1692,8 +1692,8 @@ msgid "You don't have any to sell!"
 msgstr "Du hast keine %tde die du verkaufen könntest!"
 
 #. Error - player tried to buy more guns
-#. than his/her bitches can carry (1st
-#. %tde="bitches", 2nd %tde="guns" by
+#. than his/her mules can carry (1st
+#. %tde="mules", 2nd %tde="guns" by
 #. default)
 #: src/curses_client/curses_client.c:1415 src/gui_client/gtk_client.c:1830
 #, c-format
@@ -1841,8 +1841,8 @@ msgstr "Schulden"
 msgid "Space %6d"
 msgstr "Platz %6d"
 
-#. Display of the player's number of bitches, and available space
-#. (%Tde="Bitches" by default)
+#. Display of the player's number of mules, and available space
+#. (%Tde="Mules" by default)
 #: src/curses_client/curses_client.c:2089
 msgid "%Tde %3d  Space %6d"
 msgstr "%Tde %3d  Platz %6d"
@@ -2177,9 +2177,9 @@ msgstr ""
 msgid "Jetting to %tde"
 msgstr "Reise zu %tde"
 
-#. Text for the Errands/Sack Bitch menu item
+#. Text for the Errands/Sack Mule menu item
 #: src/gui_client/gtk_client.c:556
-msgid "%/Sack Bitch menu item/S_ack %Tde..."
+msgid "%/Sack Mule menu item/S_ack %Tde..."
 msgstr ""
 
 #. Text to update the Errands/Spy menu item with the price for spying
@@ -2231,10 +2231,10 @@ msgstr "_Stehen bleiben"
 msgid "_Run"
 msgstr "_Rennen"
 
-#. Display of number of bitches or deputies during combat
-#. (%tde="bitches" or "deputies" (etc.) by default)
+#. Display of number of mules or deputies during combat
+#. (%tde="mules" or "deputies" (etc.) by default)
 #: src/gui_client/gtk_client.c:1014
-msgid "%/Combat: Bitches/%d %tde"
+msgid "%/Combat: Mules/%d %tde"
 msgstr "%/Kampf: Huren/%d %tde"
 
 #: src/gui_client/gtk_client.c:1019
@@ -2255,10 +2255,10 @@ msgstr "Gesundheit: %d"
 msgid "You"
 msgstr "Du"
 
-#. Display of number of bitches in GTK+ client status window
-#. (%Tde="Bitches" by default)
+#. Display of number of mules in GTK+ client status window
+#. (%Tde="Mules" by default)
 #: src/gui_client/gtk_client.c:1232
-msgid "%/GTK Stats: Bitches/%Tde"
+msgid "%/GTK Stats: Mules/%Tde"
 msgstr "%/GTK Stats: Huren/%Tde"
 
 #: src/gui_client/gtk_client.c:1344
@@ -2584,8 +2584,8 @@ msgstr "Senden"
 msgid "Spy On Player"
 msgstr "Spioniere anderen Spieler aus"
 
-#. Informative text for "spy on player" dialog. (%tde = "bitch",
-#. "bitch", "guns", "drugs", respectively, by default)
+#. Informative text for "spy on player" dialog. (%tde = "mule",
+#. "mule", "guns", "drugs", respectively, by default)
 #: src/gui_client/gtk_client.c:2941
 #, c-format
 msgid ""
@@ -2606,8 +2606,8 @@ msgstr ""
 msgid "Tip Off The Cops"
 msgstr "Gib der Polizei einen Tipp"
 
-#. Informative text for "tip off cops" dialog. (%tde = "bitch",
-#. "bitch", "guns", "drugs", respectively, by default)
+#. Informative text for "tip off cops" dialog. (%tde = "mule",
+#. "mule", "guns", "drugs", respectively, by default)
 #: src/gui_client/gtk_client.c:2960
 #, fuzzy, c-format
 msgid ""
@@ -2620,13 +2620,13 @@ msgstr ""
 "Deine %tde wird der Polizei helfen Deinen Kontrahenten zu finden,\n"
 "aber keine Angst sie wird nach getaner Arbeit zurückkehren."
 
-#. Title of dialog to sack a bitch (%Tde = "Bitch" by default)
+#. Title of dialog to sack a mule (%Tde = "Mule" by default)
 #: src/gui_client/gtk_client.c:3011
-msgid "%/Sack Bitch dialog title/Sack %Tde"
+msgid "%/Sack Mule dialog title/Sack %Tde"
 msgstr ""
 
-#. Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
-#. "bitch", respectively, by default)
+#. Confirmation message for sacking a mule. (%tde = "guns", "drugs",
+#. "mule", respectively, by default)
 #: src/gui_client/gtk_client.c:3016
 #, c-format
 msgid ""
@@ -2820,11 +2820,11 @@ msgid "Symbol prefixes prices"
 msgstr "Währungssymbol dem Preis voranstellen"
 
 #: src/gui_client/optdialog.c:892
-msgid "Name of one bitch"
+msgid "Name of one mule"
 msgstr "Name für eine Hure"
 
 #: src/gui_client/optdialog.c:897
-msgid "Name of several bitches"
+msgid "Name of several mules"
 msgstr "Name für mehrere Huren"
 
 #: src/gui_client/optdialog.c:903

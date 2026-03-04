@@ -171,14 +171,14 @@ struct SOUNDS Sounds = {
 /* N.B. The slightly over-enthusiastic comments here are for the benefit
  * of translators ;) */
 struct NAMES DefaultNames = {
-  /* Name of a single bitch - if you need to use different words for
-     "bitch" depending on where in the sentence it occurs (e.g. subject or
+  /* Name of a single mule - if you need to use different words for
+     "mule" depending on where in the sentence it occurs (e.g. subject or
      object) then read doc/i18n.html about the %tde (etc.) notation. N.B.
      This notation can be used for most of the translatable strings in
      dopewars. */
-  N_("bitch"),
-  /* Word used for two or more bitches */
-  N_("bitches"),
+  N_("mule"),
+  /* Word used for two or more mules */
+  N_("mules"),
   /* Word used for a single gun */
   N_("gun"),
   /* Word used for two or more guns */
@@ -205,7 +205,7 @@ struct PRICES Prices = {
   20000, 10000
 };
 
-struct BITCH Bitch = {
+struct MULE Mule = {
   50000, 150000
 };
 
@@ -225,7 +225,7 @@ gboolean UseSocks;
 
 int NumTurns = 31;
 
-int PlayerArmor = 100, BitchArmor = 50;
+int PlayerArmor = 100, MuleArmor = 50;
 
 struct LOG Log;
 
@@ -240,6 +240,9 @@ struct GLOBALS Globals[] = {
    0, 0},
   {NULL, NULL, NULL, &ServerName, NULL, "Server",
    N_("Name of the server to connect to"), NULL, NULL, 0, "", NULL,
+   NULL, FALSE, 0, 0},
+  {NULL, NULL, NULL, &PlayerName, NULL, "PlayerName",
+   N_("Default player name"), NULL, NULL, 0, "", NULL,
    NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &ServerMOTD, NULL, "ServerMOTD",
    N_("Server's welcome message of the day"), NULL, NULL, 0, "", NULL,
@@ -391,11 +394,11 @@ struct GLOBALS Globals[] = {
   {NULL, NULL, NULL, &Sounds.FightReload, NULL, "Sounds.FightReload",
    N_("Sound file played when guns are reloaded"), NULL, NULL, 0, "",
    NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &Sounds.EnemyBitchKilled, NULL, "Sounds.EnemyBitchKilled",
-   N_("Sound file played when an enemy bitch/deputy is killed"),
+  {NULL, NULL, NULL, &Sounds.EnemyMuleKilled, NULL, "Sounds.EnemyMuleKilled",
+   N_("Sound file played when an enemy mule/deputy is killed"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &Sounds.BitchKilled, NULL, "Sounds.BitchKilled",
-   N_("Sound file played when one of your bitches is killed"),
+  {NULL, NULL, NULL, &Sounds.MuleKilled, NULL, "Sounds.MuleKilled",
+   N_("Sound file played when one of your mules is killed"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &Sounds.EnemyKilled, NULL, "Sounds.EnemyKilled",
    N_("Sound file played when another player or cop is killed"),
@@ -482,11 +485,11 @@ struct GLOBALS Globals[] = {
   {&PlayerArmor, NULL, NULL, NULL, NULL, "PlayerArmor",
    N_("% resistance to gunshots of each player"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 100},
-  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmour",
-   N_("% resistance to gunshots of each bitch"),
+  {&MuleArmor, NULL, NULL, NULL, NULL, "MuleArmour",
+   N_("% resistance to gunshots of each mule"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
-  {&BitchArmor, NULL, NULL, NULL, NULL, "BitchArmor",
-   N_("% resistance to gunshots of each bitch"),
+  {&MuleArmor, NULL, NULL, NULL, NULL, "MuleArmor",
+   N_("% resistance to gunshots of each mule"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 1, 100},
   {NULL, NULL, NULL, &StaticCop.Name, NULL, "Name",
    N_("Name of each cop"),
@@ -598,11 +601,11 @@ struct GLOBALS Globals[] = {
    N_("Damage done by each gun"),
    (void **)(&Gun), &StaticGun,
    sizeof(struct GUN), "Gun", &NumGun, NULL, FALSE, 0, -1},
-  {NULL, NULL, NULL, &Names.Bitch, NULL, "Names.Bitch",
-   N_("Word used to denote a single \"bitch\""), NULL, NULL, 0, "", NULL,
+  {NULL, NULL, NULL, &Names.Mule, NULL, "Names.Mule",
+   N_("Word used to denote a single \"mule\""), NULL, NULL, 0, "", NULL,
    NULL, FALSE, 0, 0},
-  {NULL, NULL, NULL, &Names.Bitches, NULL, "Names.Bitches",
-   N_("Word used to denote two or more \"bitches\""),
+  {NULL, NULL, NULL, &Names.Mules, NULL, "Names.Mules",
+   N_("Word used to denote two or more \"mules\""),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, NULL, &Names.Gun, NULL, "Names.Gun",
    N_("Word used to denote a single gun or equivalent"), NULL, NULL, 0, "",
@@ -620,16 +623,16 @@ struct GLOBALS Globals[] = {
    N_("strftime() format string for displaying the game turn"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, 0},
   {NULL, NULL, &Prices.Spy, NULL, NULL, "Prices.Spy",
-   N_("Cost for a bitch to spy on the enemy"),
+   N_("Cost for a mule to spy on the enemy"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, -1},
   {NULL, NULL, &Prices.Tipoff, NULL, NULL, "Prices.Tipoff",
-   N_("Cost for a bitch to tipoff the cops to an enemy"),
+   N_("Cost for a mule to tipoff the cops to an enemy"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, -1},
-  {NULL, NULL, &Bitch.MinPrice, NULL, NULL, "Bitch.MinPrice",
-   N_("Minimum price to hire a bitch"),
+  {NULL, NULL, &Mule.MinPrice, NULL, NULL, "Mule.MinPrice",
+   N_("Minimum price to hire a mule"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, -1},
-  {NULL, NULL, &Bitch.MaxPrice, NULL, NULL, "Bitch.MaxPrice",
-   N_("Maximum price to hire a bitch"),
+  {NULL, NULL, &Mule.MaxPrice, NULL, NULL, "Mule.MaxPrice",
+   N_("Maximum price to hire a mule"),
    NULL, NULL, 0, "", NULL, NULL, FALSE, 0, -1},
   {NULL, NULL, NULL, NULL, &SubwaySaying, "SubwaySaying",
    N_("List of things which you overhear on the subway"),
@@ -876,7 +879,7 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
   NewPlayer->Cash = StartCash;
   NewPlayer->Debt = StartDebt;
   NewPlayer->Bank = 0;
-  NewPlayer->Bitches.Carried = 8;
+  NewPlayer->Mules.Carried = 8;
   NewPlayer->CopIndex = 0;
   NewPlayer->Health = 100;
   NewPlayer->CoatSize = 100;
@@ -957,7 +960,7 @@ void CopyPlayer(Player *Dest, Player *Src)
   Dest->IsAt = Src->IsAt;
   g_free(Dest->Name);
   Dest->Name = g_strdup(Src->Name);
-  Dest->Bitches.Carried = Src->Bitches.Carried;
+  Dest->Mules.Carried = Src->Mules.Carried;
   Dest->Flags = Src->Flags;
 }
 
@@ -1296,14 +1299,14 @@ void TruncateInventoryFor(Inventory *Guns, Inventory *Drugs, Player *Play)
     for (i = 0; i < NumGun; i++)
       Total += Guns[i].Carried;
   Total += TotalGunsCarried(Play);
-  while (Guns && Total > Play->Bitches.Carried + 2) {
+  while (Guns && Total > Play->Mules.Carried + 2) {
     CheapIndex = -1;
     for (i = 0; i < NumGun; i++)
       if (Guns[i].Carried && (CheapIndex == -1
                               || Gun[i].Price <= Gun[CheapIndex].Price)) {
         CheapIndex = i;
       }
-    i = Total - Play->Bitches.Carried - 2;
+    i = Total - Play->Mules.Carried - 2;
     if (Guns[CheapIndex].Carried > i) {
       Guns[CheapIndex].Carried -= i;
       Total -= i;
@@ -1651,8 +1654,8 @@ void AssignName(gchar **dest, gchar *src)
 
 void CopyNames(struct NAMES *dest, struct NAMES *src)
 {
-  AssignName(&dest->Bitch, _(src->Bitch));
-  AssignName(&dest->Bitches, _(src->Bitches));
+  AssignName(&dest->Mule, _(src->Mule));
+  AssignName(&dest->Mules, _(src->Mules));
   AssignName(&dest->Gun, _(src->Gun));
   AssignName(&dest->Guns, _(src->Guns));
   AssignName(&dest->Drug, _(src->Drug));
@@ -2101,7 +2104,7 @@ void PrintConfigValue(int GlobalIndex, int StructIndex,
             *GetGlobalBoolean(GlobalIndex, StructIndex) ?
             "TRUE" : "FALSE");
   } else if (Globals[GlobalIndex].PriceVal) {
-    /* Display of a price config. file variable - e.g. "Bitch.MinPrice is
+    /* Display of a price config. file variable - e.g. "Mule.MinPrice is
        $200" */
     dpg_print(_("%s is %P\n"), GlobalName,
               *GetGlobalPrice(GlobalIndex, StructIndex));
@@ -2454,8 +2457,8 @@ static void SetupParameters(GSList *extraconfigs, gboolean antique)
   AssignName(&OurWebBrowser, "/usr/bin/firefox");
 
   AssignName(&Sounds.FightHit, SNDPATH"colt.wav");
-  AssignName(&Sounds.EnemyBitchKilled, SNDPATH"shotdown.wav");
-  AssignName(&Sounds.BitchKilled, SNDPATH"losebitch.wav");
+  AssignName(&Sounds.EnemyMuleKilled, SNDPATH"shotdown.wav");
+  AssignName(&Sounds.MuleKilled, SNDPATH"losemule.wav");
   AssignName(&Sounds.EnemyKilled, SNDPATH"shotdown.wav");
   AssignName(&Sounds.Killed, SNDPATH"die.wav");
   AssignName(&Sounds.EnemyFlee, SNDPATH"run.wav");

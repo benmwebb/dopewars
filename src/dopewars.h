@@ -84,7 +84,7 @@ typedef struct ABILITIES {
 } Abilities;
 
 struct NAMES {
-  gchar *Bitch, *Bitches, *Gun, *Guns, *Drug, *Drugs;
+  gchar *Mule, *Mules, *Gun, *Guns, *Drug, *Drugs;
   gchar *Date, *LoanSharkName, *BankName;
   gchar *GunShopName, *RoughPubName;
 };
@@ -92,7 +92,7 @@ struct NAMES {
 struct SOUNDS {
   gchar *FightHit, *FightMiss, *FightReload, *Jet, *TalkToAll, *TalkPrivate;
   gchar *JoinGame, *LeaveGame, *StartGame, *EndGame;
-  gchar *EnemyBitchKilled, *BitchKilled, *EnemyKilled, *Killed;
+  gchar *EnemyMuleKilled, *MuleKilled, *EnemyKilled, *Killed;
   gchar *EnemyFailFlee, *FailFlee, *EnemyFlee, *Flee;
 };
 
@@ -114,7 +114,7 @@ struct PRICES {
   price_t Spy, Tipoff;
 };
 
-struct BITCH {
+struct MULE {
   price_t MinPrice, MaxPrice;
 };
 
@@ -129,7 +129,7 @@ typedef enum {
 typedef enum {
   E_NONE = 0,
   E_SUBWAY, E_OFFOBJECT, E_WEED, E_SAYING, E_LOANSHARK,
-  E_BANK, E_GUNSHOP, E_ROUGHPUB, E_HIREBITCH, E_ARRIVE,
+  E_BANK, E_GUNSHOP, E_ROUGHPUB, E_HIREMULE, E_ARRIVE,
   E_MAX,
 
   E_FINISH = 100,
@@ -189,7 +189,7 @@ extern int DrugSortMethod, FightTimeout, IdleTimeout, ConnectTimeout;
 extern int MaxClients, AITurnPause;
 extern struct CURRENCY Currency;
 extern struct PRICES Prices;
-extern struct BITCH Bitch;
+extern struct MULE Mule;
 extern price_t StartCash, StartDebt;
 extern struct NAMES Names;
 extern struct SOUNDS Sounds;
@@ -201,7 +201,7 @@ extern gboolean UseSocks;
 #endif
 
 extern int NumTurns;
-extern int PlayerArmor, BitchArmor;
+extern int PlayerArmor, MuleArmor;
 
 #define MAXLOG        6
 
@@ -243,6 +243,7 @@ struct HISCORE {
   price_t Money;
   gboolean Dead;
   gchar *Name;
+  int Days;
 };
 
 struct LOCATION {
@@ -297,7 +298,7 @@ struct PLAYER_T {
   int IsAt;
   PlayerFlags Flags;
   gchar *Name;
-  Inventory *Guns, *Drugs, Bitches;
+  Inventory *Guns, *Drugs, Mules;
   EventCode EventNum, ResyncNum;
   time_t FightTimeout, IdleTimeout, ConnectTimeout;
   guint tiebreak;

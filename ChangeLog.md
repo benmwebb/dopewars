@@ -230,7 +230,7 @@
 - Drug values now stored by server (e.g. "you have 5 Weed @ $600); sent
   only if DrugValue config. variable is set, and only to new clients
   (based on a patch by Pierre F)
-- Spying fixed (cannot now spy on a player until they accept your bitch)
+- Spying fixed (cannot now spy on a player until they accept your mule)
 - Longer `T>alk` and `P>age` messages allowed in curses client
 - Minor bug fixes to configure options
 - configure script tweaked to fix networking under Solaris (and friends)
@@ -296,7 +296,7 @@
 
 # 1.4.6 - 1999-11-12
 - Bug fix for message window and "sew you up" prompt
-- Bug fix for server hanging in LoseBitch function
+- Bug fix for server hanging in LoseMule function
 - If player opts to play again, server selection method used last time
   is used again
 - Terminal resizing now handled properly
@@ -341,8 +341,8 @@
   take actual location numbers now - not (location-1). WARNING: this
   breaks old configuration files!
 - Full HTML documentation now provided
-- Prices of bitches for hire can now be configured - Bitch.MinPrice and
-  Bitch.MaxPrice
+- Prices of mules for hire can now be configured - Mule.MinPrice and
+  Mule.MaxPrice
 - Removed description of non-existent "die" command in server
 - Minor fixes in antique mode
 - Fix of NumDrug and NumGun processing (now allows more than the default
@@ -371,8 +371,8 @@
   Hardass and Bob) can now be configured with the variables
   "Names.Officer" and "Names.ReserveOfficer" respectively
   (provided by: Mike Meyer)
-- Several uses of the  string constant "bitches" rather than
-  the variable "Names.Bitches" have been spotted, and corrected
+- Several uses of the  string constant "mules" rather than
+  the variable "Names.Mules" have been spotted, and corrected
   (provided by: Mike Meyer)
 - "Sanitized" variable - if nonzero, removes drug references
   (random events, the cops, etc.) - obviously drug names need to also
@@ -404,10 +404,10 @@
   - Number of keystrokes required to shoot and acknowledge all the
     relevant messages now greatly reduced
   - Some indication is now given of the other player's status (number of
-    bitches and guns)
+    mules and guns)
   - Server now imposes timeouts on fights, so if an opponent does not
     return fire within a set time, a repeat attack is allowed
-  - A bounty is paid out for killing an enemy bitch, and any guns/drugs
+  - A bounty is paid out for killing an enemy mule, and any guns/drugs
     they're carrying are passed on to the victor (if he/she is able to
     carry them)
   - A dead player's cash is appropriated by the victor of a fight
@@ -428,7 +428,7 @@
   - Probabilities and toughness of Officer Hardass and his deputies can
     be "tweaked"
   - Numbers and names of locations, drugs and guns can be altered
-  - The words used to denote "bitches", "guns" and "drugs" can be 
+  - The words used to denote "mules", "guns" and "drugs" can be 
     customised
   - Drugs can now be sorted by name or by price, in forwards or reverse
     order, with the DrugSortMethod option (can take values 1-4)
@@ -580,7 +580,7 @@
   choose to return fire or run for it...
 
 # 1.1.21 - 1999-01-29
-- Added support for the "spy on another dealer" bitch errand
+- Added support for the "spy on another dealer" mule errand
 
 # 1.1.20 - 1999-01-29
-- Added support for the "tip off another dealer to the cops" bitch errand
+- Added support for the "tip off another dealer to the cops" mule errand

@@ -15,7 +15,7 @@
   Options dialog
 - Startscreen
 - Track down server memory corruption bug!
-- Implement server option to buy more than one bitch at a time in the Pub.
+- Implement server option to buy more than one mule at a time in the Pub.
 - Allow customisation of GtkTextView tag colours
 - Admin of running NT Service servers
 - GSS_API SOCKS support?
@@ -26,8 +26,8 @@
 - Introduce minimum/maximum players options - AI players automatically
   spawned/killed to "fill the gaps" when humans leave/enter
 - "Deal" option when meeting players?
-- Bribe/steal bitches when meeting players (difficulty inv. prop. to number of
-  bitches?)
+- Bribe/steal mules when meeting players (difficulty inv. prop. to number of
+  mules?)
 - Problems reported with display of large prices and health - "seems" to be
   OK now... (i.e. I can't see anything wrong with it!)
 - Fix GTK+ modal dialog behaviour (mouse grabbing during fighting) - _seems_
@@ -36,5 +36,5 @@
 - Metaserver keeps list of game types of each server
 Cannot reproduce... can you? (- Investigate deadlock during fighting if both
                                 players move to "deal")
-Cannot reproduce... can you? (- Investigate prompt for bitch on every turn
+Cannot reproduce... can you? (- Investigate prompt for mule on every turn
                                 after a spy is dispatched)

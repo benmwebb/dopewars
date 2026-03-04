@@ -602,5 +602,5 @@ Gun[14].Damage = 50
 Gun[15].Damage = 50
 Gun[16].Damage = 100
 Gun[17].Damage = 4000
-Names.Bitch = "Biznatch"
-Names.Bitches = "Biznatches"
+Names.Mule = "Biznatch"
+Names.Mules = "Biznatches"

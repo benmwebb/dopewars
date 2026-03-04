@@ -254,7 +254,7 @@ gboolean ShouldRun(Player *AIPlay)
   if (TotalGunsCarried(AIPlay) == 0)
     return TRUE;
 
-  TotalHealth = AIPlay->Health + AIPlay->Bitches.Carried * 100;
+  TotalHealth = AIPlay->Health + AIPlay->Mules.Carried * 100;
   return (TotalHealth < MINSAFEHEALTH);
 }
 
@@ -265,14 +265,14 @@ gboolean ShouldRun(Player *AIPlay)
 static void HandleCombat(Player *AIPlay, gchar *Msg)
 {
   gchar *text;
-  gchar *AttackName, *DefendName, *BitchName;
+  gchar *AttackName, *DefendName, *MuleName;
   FightPoint fp;
-  int DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
+  int DefendHealth, DefendMules, MulesKilled, ArmPercent;
   gboolean CanRunHere, Loot, CanFire;
 
   if (HaveAbility(AIPlay, A_NEWFIGHT)) {
     ReceiveFightMessage(Msg, &AttackName, &DefendName, &DefendHealth,
-                        &DefendBitches, &BitchName, &BitchesKilled,
+                        &DefendMules, &MuleName, &MulesKilled,
                         &ArmPercent, &fp, &CanRunHere, &Loot,
                         &CanFire, &text);
   } else {
@@ -518,7 +518,7 @@ void AIGunShop(Player *AIPlay)
   do {
     Bought = 0;
     for (i = 0; i < NumGun; i++) {
-      if (TotalGunsCarried(AIPlay) < AIPlay->Bitches.Carried + 2 &&
+      if (TotalGunsCarried(AIPlay) < AIPlay->Mules.Carried + 2 &&
           Gun[i].Space <= AIPlay->CoatSize &&
           Gun[i].Price <= AIPlay->Cash - MINSAFECASH) {
         AIPlay->Cash -= Gun[i].Price;
@@ -554,7 +554,7 @@ void AIJet(Player *AIPlay)
              && AIPlay->Cash > MINSAFECASH * 10) {
     NewLocation = RealPub;
   } else if (RealGunShop >= 0 && brandom(0, 100) < 70 &&
-             TotalGunsCarried(AIPlay) < AIPlay->Bitches.Carried + 2 &&
+             TotalGunsCarried(AIPlay) < AIPlay->Mules.Carried + 2 &&
              AIPlay->Cash > MINSAFECASH * 5) {
     NewLocation = RealGunShop;
   }
@@ -629,7 +629,7 @@ void AIHandleQuestion(char *Data, AICode AI, Player *AIPlay, Player *From)
     RealPub = AIPlay->IsAt;
     AISendAnswer(AIPlay, From, "Y");
     break;
-  case C_ASKBITCH:
+  case C_ASKMULE:
   case C_ASKRUN:
   case C_ASKGUN:
     AISendAnswer(AIPlay, From, "Y");

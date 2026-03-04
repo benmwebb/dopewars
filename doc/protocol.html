@@ -190,7 +190,7 @@ e.g. "^AI"<br />
 <dt><b>C_UPDATE</b> ('<tt>J</tt>')</dt>
 <dd>Used by the server to update client state. This is also used to tell the
 player about the state of another player (a report from a spy)<br />
-<tt>data</tt> = <tt>&lt;cash&gt;^&lt;debt&gt;^&lt;bank&gt;^&lt;health&gt;^&lt;coatsize&gt;^&lt;locn&gt;^&lt;turn&gt;^&lt;flags&gt;^&lt;GUNS&gt;^&lt;DRUGS&gt;^&lt;DRUGVALUE&gt;^&lt;bitches&gt;</tt><br />
+<tt>data</tt> = <tt>&lt;cash&gt;^&lt;debt&gt;^&lt;bank&gt;^&lt;health&gt;^&lt;coatsize&gt;^&lt;locn&gt;^&lt;turn&gt;^&lt;flags&gt;^&lt;GUNS&gt;^&lt;DRUGS&gt;^&lt;DRUGVALUE&gt;^&lt;mules&gt;</tt><br />
 <tt>cash</tt>, <tt>debt</tt>, <tt>bank</tt> = money available, owed to the
 loan shark, in the bank<br />
 <tt>coatsize</tt> = amount of space available for drugs/guns<br />
@@ -205,7 +205,7 @@ is set if the player is currently spying on one or more other players<br />
 <tt>DRUGVALUE</tt> = similar, but contains the total cash value of each drug;
 N.B. this field is only sent if the ability
 <a href="#drugvalue">A_DRUGVALUE</a> is present<br />
-<tt>bitches</tt> = number of accompanying bitches<br />
+<tt>mules</tt> = number of accompanying mules<br />
 <tt>ID</tt> = blank for a status update, otherwise the ID of the player that
 you're spying on<br />
 <b>Answer required:</b> no<p /></dd>
@@ -292,12 +292,12 @@ e.g. "1^AbFred"<br />
 
 <dt><b>C_INIT</b> ('<tt>k</tt>')</dt>
 <dd>Tells the client about various global game settings<br />
-<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"bitch"^"bitches"^"gun"^"guns"^"drug"^"drugs"^"date"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"^(prefix)"currency"</tt><br />
+<tt>data</tt> = <tt>"version"^&lt;numloc&gt;^&lt;numgun&gt;^&lt;numdrug&gt;^"mule"^"mules"^"gun"^"guns"^"drug"^"drugs"^"date"^&lt;ID&gt;^"loanshark"^"bank"^"gunshop"^"pub"^(prefix)"currency"</tt><br />
 <tt>version</tt> = dopewars version of the server - e.g. "1.5.2"<br />
 <tt>numloc</tt> = the number of locations in the game<br />
 <tt>numgun</tt> = the number of guns in the game<br />
 <tt>numdrug</tt> = the number of drugs in the game<br />
-<tt>bitch</tt>, <tt>bitches</tt>, <tt>gun</tt>, <tt>guns</tt>, <tt>drug</tt>,
+<tt>mule</tt>, <tt>mules</tt>, <tt>gun</tt>, <tt>guns</tt>, <tt>drug</tt>,
 <tt>drugs</tt>, <tt>date</tt>, <tt>loanshark</tt>,
 <tt>bank</tt>, <tt>gunshop</tt>, <tt>pub</tt> = various names used in the
 game<br />
@@ -305,7 +305,7 @@ game<br />
 <tt>prefix</tt> = '1' if the currency symbol (e.g. $) should be printed before
 prices in the game, '0' otherwise<br />
 <tt>currency</tt> = the currency symbol to use<br />
-e.g. "^Ak1.5.2^8^4^12^bitch^bitches^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"^1$<br />
+e.g. "^Ak1.5.2^8^4^12^mule^mules^gun^guns^drug^drugs^12-^-1984^0^the Loan Shark^the Bank^Dan's House of Guns^the pub"^1$<br />
 <b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_DATA</b> ('<tt>l</tt>')</dt>
@@ -345,16 +345,16 @@ e.g. "^Al0^D20000^10000"</dd>
 <b>Answer required:</b> no<p /></dd>
 
 <dt><b>C_FIGHTPRINT</b> ('<tt>m</tt>')</dt>
-<dd><tt>data</tt> = <tt>"attack"^"defend"^&lt;health&gt;^&lt;bitches&gt;^"bitchname"^&lt;killed&gt;^&lt;armpct&gt;^(fightpoint)(runhere)(loot)(canfire)^"text"</tt><br />
+<dd><tt>data</tt> = <tt>"attack"^"defend"^&lt;health&gt;^&lt;mules&gt;^"mulename"^&lt;killed&gt;^&lt;armpct&gt;^(fightpoint)(runhere)(loot)(canfire)^"text"</tt><br />
 <tt>attack</tt> = name of the attacker player/cop if applicable (if blank,
 it's you)<br />
 <tt>defend</tt> = name of the defending player/cop if applicable (if blank,
 it's you)<br />
 <tt>health</tt> = defender's health, if applicable<br />
-<tt>bitches</tt> = number of bitches/deputies accompanying the defending
+<tt>mules</tt> = number of mules/deputies accompanying the defending
 player<br />
-<tt>bitchname</tt> = usually "bitch", "bitches", "deputy" or "deputies"<br />
-<tt>killed</tt> = number of bitches killed in this attack<br />
+<tt>mulename</tt> = usually "mule", "mules", "deputy" or "deputies"<br />
+<tt>killed</tt> = number of mules killed in this attack<br />
 <tt>armpct</tt> = a number between 0 and 100 showing how heavily armed the
 attacker is<br />
 <tt>fightpoint</tt> =<br />
@@ -478,11 +478,11 @@ e.g. "1^AFHello player"<p /></dd>
 <dt><b>C_BUYOBJECT</b> ('<tt>T</tt>')</dt>
 <dd>Requests the server to buy or sell an object<br />
 <tt>data</tt> = <tt>"type"^&lt;index&gt;^&lt;amount&gt;</tt><br />
-<tt>type</tt> = "bitch", "gun" or "drug"<br />
+<tt>type</tt> = "mule", "gun" or "drug"<br />
 <tt>index</tt> = the zero-based index of the gun/drug that you want to
-buy/sell, or zero if type="bitch"<br />
+buy/sell, or zero if type="mule"<br />
 <tt>amount</tt> = the number of objects to buy (or, if negative, to sell)<br />
-e.g. "^ATbitch^0^1"<p /></dd>
+e.g. "^ATmule^0^1"<p /></dd>
 
 <dt><b>C_DONE</b> ('<tt>U</tt>')</dt>
 <dd>Sent by the client when it's finished with the loan shark, bank, or gun
@@ -516,8 +516,8 @@ e.g. "^AY10000"<p /></dd>
 N.B. this is always sent at the start of the game, in which case the old
 format should be used, e.g. "^^AcFred"<p /></dd>
 
-<dt><b>C_SACKBITCH</b> ('<tt>d</tt>')</dt>
-<dd>Requests that a bitch should be sacked<br />
+<dt><b>C_SACKMULE</b> ('<tt>d</tt>')</dt>
+<dd>Requests that a mule should be sacked<br />
 e.g. "^Ad"<p /></dd>
 
 <dt><b>C_TIPOFF</b> ('<tt>e</tt>')</dt>

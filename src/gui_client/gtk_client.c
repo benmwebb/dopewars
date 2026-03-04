@@ -60,7 +60,7 @@ struct InventoryWidgets {
 struct StatusWidgets {
   GtkWidget *Location, *Date, *SpaceName, *SpaceValue, *CashName;
   GtkWidget *CashValue, *DebtName, *DebtValue, *BankName, *BankValue;
-  GtkWidget *GunsName, *GunsValue, *BitchesName, *BitchesValue;
+  GtkWidget *GunsName, *GunsValue, *MulesName, *MulesValue;
   GtkWidget *HealthName, *HealthValue, *DaysRemName, *DaysRemValue;
 };
 
@@ -91,6 +91,13 @@ static GtkWidget *FightDialog = NULL, *SpyReportsDialog;
 static gboolean IsShowingPlayerList = FALSE, IsShowingTalkList = FALSE;
 static gboolean IsShowingInventory = FALSE, IsShowingGunShop = FALSE;
 static gboolean IsShowingDealDrugs = FALSE;
+
+/* Price memory: stores last known prices at each location */
+static price_t **PriceMemory = NULL;  /* [NumLocation][NumDrug] */
+
+static void InitPriceMemory(void);
+static void StorePricesForLocation(int location);
+static void UpdateLocationTooltips(void);
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -233,7 +240,7 @@ static void UpdatePlayerList(GtkWidget *clist, gboolean IncludeSelf);
 static void TipOff(GtkWidget *widget, gpointer data);
 static void SpyOnPlayer(GtkWidget *widget, gpointer data);
 static void ErrandDialog(gint ErrandType);
-static void SackBitch(GtkWidget *widget, gpointer data);
+static void SackMule(GtkWidget *widget, gpointer data);
 static void DestroyShowing(GtkWidget *widget, gpointer data);
 static void SetShowing(GtkWidget *window, gboolean *showing);
 static gint DisallowDelete(GtkWidget *widget, GdkEvent * event,
@@ -267,9 +274,9 @@ static DPGtkItemFactoryEntry menu_items[] = {
   {N_("/_Errands"), NULL, NULL, 0, "<Branch>"},
   {N_("/Errands/_Spy..."), NULL, SpyOnPlayer, 0, NULL},
   {N_("/Errands/_Tipoff..."), NULL, TipOff, 0, NULL},
-  /* N.B. "Sack Bitch" has to be recreated (and thus translated) at the
+  /* N.B. "Sack Mule" has to be recreated (and thus translated) at the
    * start of each game, below, so is not marked for gettext here */
-  {"/Errands/S_ack Bitch...", NULL, SackBitch, 0, NULL},
+  {"/Errands/S_ack Mule...", NULL, SackMule, 0, NULL},
   {N_("/Errands/_Get spy reports..."), NULL, GetSpyReports, 0, NULL},
   {N_("/_Help"), NULL, NULL, 0, "<Branch>"},
   {N_("/Help/_About..."), "F1", display_intro, 0, NULL}
@@ -664,11 +671,11 @@ void HandleClientMessage(char *pt, Player *Play)
     break;
   case C_ENDLIST:
     MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Sack Bitch...");
+                                              "<main>/Errands/Sack Mule...");
 
-    /* Text for the Errands/Sack Bitch menu item */
-    text = dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde..."),
-                             Names.Bitch);
+    /* Text for the Errands/Sack Mule menu item */
+    text = dpg_strdup_printf(_("%/Sack Mule menu item/S_ack %Tde..."),
+                             Names.Mule);
     SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
     g_free(text);
 
@@ -702,6 +709,7 @@ void HandleClientMessage(char *pt, Player *Play)
     break;
   case C_DRUGHERE:
     UpdateInventory(&ClientData.Drug, Play->Drugs, NumDrug, TRUE);
+    StorePricesForLocation(Play->IsAt);
     if (IsShowingInventory) {
       UpdateInventory(&ClientData.InvenDrug, Play->Drugs, NumDrug, TRUE);
     }
@@ -729,7 +737,7 @@ static struct HiScoreDiaStruct HiScoreDialog = { NULL, NULL, NULL, NULL };
  */
 void PrepareHighScoreDialog(void)
 {
-  GtkWidget *dialog, *vbox, *hsep, *grid;
+  GtkWidget *dialog, *vbox, *hsep, *grid, *label;
 
   /* Make sure the server doesn't fool us into creating multiple dialogs */
   if (HiScoreDialog.dialog)
@@ -749,9 +757,35 @@ void PrepareHighScoreDialog(void)
                                GTK_WINDOW(ClientData.window));
 
   HiScoreDialog.vbox = vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE, 4, FALSE);
+  /* Grid: +1 row for header, 6 columns: Score, Date, Days, Avg/Day, Name, Status */
+  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE + 1, 6, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
-  gtk_grid_set_column_spacing(GTK_GRID(grid), 30);
+  gtk_grid_set_column_spacing(GTK_GRID(grid), 15);
+
+  /* Add column headers: Date, Days, Score, Avg/Day, Name, Status */
+  label = make_bold_label(_("Date"), TRUE);
+  set_label_alignment(label, 0.5, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, TRUE);
+
+  label = make_bold_label(_("Days"), TRUE);
+  set_label_alignment(label, 1.0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 0, 1, 1, TRUE);
+
+  label = make_bold_label(_("Score"), TRUE);
+  set_label_alignment(label, 1.0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 0, 1, 1, TRUE);
+
+  label = make_bold_label(_("Avg/Day"), TRUE);
+  set_label_alignment(label, 1.0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 0, 1, 1, TRUE);
+
+  label = make_bold_label(_("Name"), TRUE);
+  set_label_alignment(label, 0, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 4, 0, 1, 1, TRUE);
+
+  label = make_bold_label(_("Status"), TRUE);
+  set_label_alignment(label, 0.5, 0.5);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 0, 1, 1, TRUE);
 
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -760,17 +794,18 @@ void PrepareHighScoreDialog(void)
   gtk_widget_show_all(dialog);
 }
 
-/* 
+/*
  * Adds a single high score (coded in "Data", which is the information
  * received in the relevant network message) to the dialog created by
  * PrepareHighScoreDialog(), above.
+ * Format: index^BoldFlag Score Date Days Avg/Day Name [R.I.P.]<
  */
 void AddScoreToDialog(char *Data)
 {
   GtkWidget *label;
   char *cp;
-  gchar **spl1, **spl2;
-  int index, slen;
+  gchar **parts;
+  int index, slen, row, i, partCount;
   gboolean bold;
 
   if (!HiScoreDialog.dialog)
@@ -781,72 +816,99 @@ void AddScoreToDialog(char *Data)
   if (!cp || strlen(cp) < 3)
     return;
 
-  bold = (*cp == 'B');          /* Is this score "our" score? (Currently
-                                 * ignored) */
+  bold = (*cp == 'B');          /* Is this score "our" score? */
 
   /* Step past the 'bold' character, and the initial '>' (if present) */
   cp += 2;
   g_strchug(cp);
 
-  /* Get the first word - the score */
-  spl1 = g_strsplit(cp, " ", 2);
-  if (!spl1 || !spl1[0] || !spl1[1]) {
-    /* Error - the high score from the server is invalid */
-    g_warning(_("Corrupt high score!"));
-    g_strfreev(spl1);
-    return;
-  }
-  label = make_bold_label(spl1[0], bold);
-  set_label_alignment(label, 1.0, 0.5);
-  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 0, index, 1, 1, TRUE);
-  gtk_widget_show(label);
-
-  /* Remove any leading whitespace from the remainder, since g_strsplit
-   * will split at every space character, not at a run of them */
-  g_strchug(spl1[1]);
-
-  /* Get the second word - the date */
-  spl2 = g_strsplit(spl1[1], " ", 2);
-  if (!spl2 || !spl2[0] || !spl2[1]) {
-    g_warning(_("Corrupt high score!"));
-    g_strfreev(spl2);
-    return;
-  }
-  label = make_bold_label(spl2[0], bold);
-  set_label_alignment(label, 0.5, 0.5);
-  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 1, index, 1, 1, TRUE);
-  gtk_widget_show(label);
-
-  /* The remainder is the name, terminated with (R.I.P.) if the player
-   * died, and '<' for the 'current' score */
-  g_strchug(spl2[1]);
-
   /* Remove '<' suffix if present */
-  slen = strlen(spl2[1]);
-  if (slen >= 1 && spl2[1][slen - 1] == '<') {
-    spl2[1][slen - 1] = '\0';
+  slen = strlen(cp);
+  if (slen >= 1 && cp[slen - 1] == '<') {
+    cp[slen - 1] = '\0';
+    slen--;
   }
-  slen--;
+  g_strchomp(cp);
 
-  /* Check for (R.I.P.) suffix, and add it to the 4th column if found */
-  if (slen > 8 && spl2[1][slen - 1] == ')' && spl2[1][slen - 8] == '(') {
-    label = make_bold_label(&spl2[1][slen - 8], bold);
-    set_label_alignment(label, 0.5, 0.5);
-    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 3, index, 1, 1,
-                       TRUE);
+  /* Split by whitespace runs - we expect: Score, Date, Days, Avg/Day, Name..., [R.I.P.] */
+  parts = g_strsplit_set(cp, " \t", -1);
+
+  /* Count non-empty parts */
+  partCount = 0;
+  for (i = 0; parts && parts[i]; i++) {
+    if (parts[i][0] != '\0') partCount++;
+  }
+
+  if (partCount < 5) {
+    g_warning(_("Corrupt high score!"));
+    g_strfreev(parts);
+    return;
+  }
+
+  /* Row in grid (+1 because row 0 is headers) */
+  row = index + 1;
+
+  /* Find non-empty parts and add to grid */
+  int col = 0;
+  int partIdx = 0;
+  gchar *nameParts[20];
+  int namePartCount = 0;
+  gboolean hasRIP = FALSE;
+
+  for (i = 0; parts[i] && col < 4; i++) {
+    if (parts[i][0] == '\0') continue;
+
+    label = make_bold_label(parts[i], bold);
+    if (col == 0) {
+      /* Center align: Date */
+      set_label_alignment(label, 0.5, 0.5);
+    } else {
+      /* Right align: Days, Score, Avg/Day */
+      set_label_alignment(label, 1.0, 0.5);
+    }
+    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, col, row, 1, 1, TRUE);
     gtk_widget_show(label);
-    spl2[1][slen - 8] = '\0';   /* Remove suffix from the player name */
+    col++;
+    partIdx = i + 1;
   }
 
-  /* Finally, add in what's left of the player name */
-  g_strchomp(spl2[1]);
-  label = make_bold_label(spl2[1], bold);
-  set_label_alignment(label, 0, 0.5);
-  dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 2, index, 1, 1, TRUE);
-  gtk_widget_show(label);
+  /* Remaining parts are the name and possibly (R.I.P.) */
+  for (i = partIdx; parts[i]; i++) {
+    if (parts[i][0] == '\0') continue;
 
-  g_strfreev(spl1);
-  g_strfreev(spl2);
+    /* Check if this is the R.I.P. marker */
+    if (strcmp(parts[i], "(R.I.P.)") == 0) {
+      hasRIP = TRUE;
+    } else {
+      if (namePartCount < 20) {
+        nameParts[namePartCount++] = parts[i];
+      }
+    }
+  }
+
+  /* Combine name parts */
+  if (namePartCount > 0) {
+    GString *nameStr = g_string_new(nameParts[0]);
+    for (i = 1; i < namePartCount; i++) {
+      g_string_append_c(nameStr, ' ');
+      g_string_append(nameStr, nameParts[i]);
+    }
+    label = make_bold_label(nameStr->str, bold);
+    set_label_alignment(label, 0, 0.5);
+    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 4, row, 1, 1, TRUE);
+    gtk_widget_show(label);
+    g_string_free(nameStr, TRUE);
+  }
+
+  /* Add R.I.P. status if present */
+  if (hasRIP) {
+    label = make_bold_label(_("(R.I.P.)"), bold);
+    set_label_alignment(label, 0.5, 0.5);
+    dp_gtk_grid_attach(GTK_GRID(HiScoreDialog.grid), label, 5, row, 1, 1, TRUE);
+    gtk_widget_show(label);
+  }
+
+  g_strfreev(parts);
 }
 
 /* 
@@ -981,7 +1043,7 @@ static GtkWidget *AddFightButton(gchar *Text, GtkAccelGroup *accel_group,
 /* Data used to keep track of the widgets giving the information about a
  * player/cop involved in a fight */
 struct combatant {
-  GtkWidget *name, *bitches, *healthprog, *healthlabel;
+  GtkWidget *name, *mules, *healthprog, *healthlabel;
 };
 
 /* 
@@ -1075,18 +1137,18 @@ static void CreateFightDialog(void)
 /* 
  * Updates the display of information for a player/cop in the Fight dialog.
  * If the player's name (DefendName) already exists, updates the display of
- * total health and number of bitches - otherwise, adds a new entry. If
- * DefendBitches is -1, then the player has left.
+ * total health and number of mules - otherwise, adds a new entry. If
+ * DefendMules is -1, then the player has left.
  */
-static void UpdateCombatant(gchar *DefendName, int DefendBitches,
-                            gchar *BitchName, int DefendHealth)
+static void UpdateCombatant(gchar *DefendName, int DefendMules,
+                            gchar *MuleName, int DefendHealth)
 {
   guint i, RowIndex;
   const gchar *name;
   struct combatant *compt;
   GArray *combatants;
   GtkWidget *grid;
-  gchar *BitchText, *HealthText;
+  gchar *MuleText, *HealthText;
   gfloat ProgPercent;
 
   combatants = (GArray *)g_object_get_data(G_OBJECT(FightDialog),
@@ -1125,15 +1187,15 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     RowIndex = 0;
   }
 
-  /* Display of number of bitches or deputies during combat
-     (%tde="bitches" or "deputies" (etc.) by default) */
-  BitchText = dpg_strdup_printf(_("%/Combat: Bitches/%d %tde"),
-                                DefendBitches, BitchName);
+  /* Display of number of mules or deputies during combat
+     (%tde="mules" or "deputies" (etc.) by default) */
+  MuleText = dpg_strdup_printf(_("%/Combat: Mules/%d %tde"),
+                                DefendMules, MuleName);
 
   /* Display of health during combat */
-  if (DefendBitches == -1) {
+  if (DefendMules == -1) {
     HealthText = g_strdup(_("(Left)"));
-  } else if (DefendHealth == 0 && DefendBitches == 0) {
+  } else if (DefendHealth == 0 && DefendMules == 0) {
     HealthText = g_strdup(_("(Dead)"));
   } else {
     HealthText = g_strdup_printf(_("Health: %d"), DefendHealth);
@@ -1145,8 +1207,8 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     if (DefendName[0]) {
       gtk_label_set_text(GTK_LABEL(compt->name), DefendName);
     }
-    if (DefendBitches >= 0) {
-      gtk_label_set_text(GTK_LABEL(compt->bitches), BitchText);
+    if (DefendMules >= 0) {
+      gtk_label_set_text(GTK_LABEL(compt->mules), MuleText);
     }
     gtk_label_set_text(GTK_LABEL(compt->healthlabel), HealthText);
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
@@ -1156,8 +1218,8 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     compt->name = gtk_label_new(DefendName[0] ? DefendName : _("You"));
 
     dp_gtk_grid_attach(GTK_GRID(grid), compt->name, 0, RowIndex, 1, 1, FALSE);
-    compt->bitches = gtk_label_new(DefendBitches >= 0 ? BitchText : "");
-    dp_gtk_grid_attach(GTK_GRID(grid), compt->bitches, 1, RowIndex, 1, 1,
+    compt->mules = gtk_label_new(DefendMules >= 0 ? MuleText : "");
+    dp_gtk_grid_attach(GTK_GRID(grid), compt->mules, 1, RowIndex, 1, 1,
                        FALSE);
     compt->healthprog = gtk_progress_bar_new();
     gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(compt->healthprog),
@@ -1168,12 +1230,12 @@ static void UpdateCombatant(gchar *DefendName, int DefendBitches,
     dp_gtk_grid_attach(GTK_GRID(grid), compt->healthlabel, 3, RowIndex, 1, 1,
                        FALSE);
     gtk_widget_show(compt->name);
-    gtk_widget_show(compt->bitches);
+    gtk_widget_show(compt->mules);
     gtk_widget_show(compt->healthprog);
     gtk_widget_show(compt->healthlabel);
   }
 
-  g_free(BitchText);
+  g_free(MuleText);
   g_free(HealthText);
 }
 
@@ -1214,9 +1276,9 @@ void DisplayFightMessage(char *Data)
   Player *Play;
   GtkWidget *Deal, *Fight, *Stand, *Run;
   GtkTextView *textview;
-  gchar *AttackName, *DefendName, *BitchName, *Message;
+  gchar *AttackName, *DefendName, *MuleName, *Message;
   FightPoint fp;
-  int DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
+  int DefendHealth, DefendMules, MulesKilled, ArmPercent;
   gboolean CanRunHere, Loot, CanFire;
 
   if (!Data) {
@@ -1251,7 +1313,7 @@ void DisplayFightMessage(char *Data)
 
   if (HaveAbility(Play, A_NEWFIGHT)) {
     ReceiveFightMessage(Data, &AttackName, &DefendName, &DefendHealth,
-                        &DefendBitches, &BitchName, &BitchesKilled,
+                        &DefendMules, &MuleName, &MulesKilled,
                         &ArmPercent, &fp, &CanRunHere, &Loot, &CanFire,
                         &Message);
     Play->Flags |= FIGHTING;
@@ -1259,11 +1321,11 @@ void DisplayFightMessage(char *Data)
     case F_HIT:
     case F_ARRIVED:
     case F_MISS:
-      UpdateCombatant(DefendName, DefendBitches, BitchName, DefendHealth);
+      UpdateCombatant(DefendName, DefendMules, MuleName, DefendHealth);
       break;
     case F_LEAVE:
       if (AttackName[0]) {
-        UpdateCombatant(AttackName, -1, BitchName, 0);
+        UpdateCombatant(AttackName, -1, MuleName, 0);
       }
       break;
     case F_LASTLEAVE:
@@ -1333,7 +1395,18 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   g_free(prstr);
 
   prstr = FormatPrice(Play->Debt);
-  gtk_label_set_text(GTK_LABEL(Status->DebtValue), prstr);
+  if (Play->Debt > 0) {
+    gchar *markup;
+    /* Color both label and value red when in debt */
+    gtk_label_set_markup(GTK_LABEL(Status->DebtName),
+                         "<span foreground=\"red\" weight=\"bold\">Debt</span>");
+    markup = g_markup_printf_escaped("<span foreground=\"red\" weight=\"bold\">%s</span>", prstr);
+    gtk_label_set_markup(GTK_LABEL(Status->DebtValue), markup);
+    g_free(markup);
+  } else {
+    gtk_label_set_text(GTK_LABEL(Status->DebtName), _("Debt"));
+    gtk_label_set_text(GTK_LABEL(Status->DebtValue), prstr);
+  }
   g_free(prstr);
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
@@ -1343,16 +1416,16 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   gtk_label_set_text(GTK_LABEL(Status->GunsValue), text->str);
 
   if (!WantAntique) {
-    /* Display of number of bitches in GTK+ client status window
-       (%Tde="Bitches" by default) */
-    dpg_string_printf(text, _("%/GTK Stats: Bitches/%Tde"),
-                       Names.Bitches);
-    gtk_label_set_text(GTK_LABEL(Status->BitchesName), text->str);
-    g_string_printf(text, "%d", Play->Bitches.Carried);
-    gtk_label_set_text(GTK_LABEL(Status->BitchesValue), text->str);
+    /* Display of number of mules in GTK+ client status window
+       (%Tde="Mules" by default) */
+    dpg_string_printf(text, _("%/GTK Stats: Mules/%Tde"),
+                       Names.Mules);
+    gtk_label_set_text(GTK_LABEL(Status->MulesName), text->str);
+    g_string_printf(text, "%d", Play->Mules.Carried);
+    gtk_label_set_text(GTK_LABEL(Status->MulesValue), text->str);
   } else {
-    gtk_label_set_text(GTK_LABEL(Status->BitchesName), NULL);
-    gtk_label_set_text(GTK_LABEL(Status->BitchesValue), NULL);
+    gtk_label_set_text(GTK_LABEL(Status->MulesName), NULL);
+    gtk_label_set_text(GTK_LABEL(Status->MulesValue), NULL);
   }
 
   g_string_printf(text, "%d", Play->Health);
@@ -1482,9 +1555,24 @@ void UpdateInventory(struct InventoryWidgets *Inven,
         CanDrop = TRUE;
       }
       if (HaveAbility(ClientData.Play, A_DRUGVALUE) && AreDrugs) {
-        titles[1] = dpg_strdup_printf("%d @ %P", Objects[i].Carried,
-                                      Objects[i].TotalValue /
-                                      Objects[i].Carried);
+        price_t avgPrice = Objects[i].TotalValue / Objects[i].Carried;
+        if (price > 0 && avgPrice > 0) {
+          /* Show profit/loss percentage vs current price */
+          int profitPct = (int)(((price - avgPrice) * 100) / avgPrice);
+          if (profitPct >= 0) {
+            titles[1] = dpg_strdup_printf("%d @ %P (+%d%%)",
+                                          Objects[i].Carried, avgPrice, profitPct);
+          } else {
+            titles[1] = dpg_strdup_printf("%d @ %P (%d%%)",
+                                          Objects[i].Carried, avgPrice, profitPct);
+          }
+        } else if (avgPrice > 0) {
+          /* Drug not for sale here */
+          titles[1] = dpg_strdup_printf("%d @ %P", Objects[i].Carried, avgPrice);
+        } else {
+          /* No average price available (e.g., free drugs) */
+          titles[1] = g_strdup_printf("%d", Objects[i].Carried);
+        }
       } else {
         titles[1] = g_strdup_printf("%d", Objects[i].Carried);
       }
@@ -1957,10 +2045,10 @@ void DealGuns(GtkWidget *widget, gpointer data)
                        Names.Guns);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY && TotalGunsCarried(ClientData.Play) >=
-             ClientData.Play->Bitches.Carried + 2) {
+             ClientData.Play->Mules.Carried + 2) {
     dpg_string_printf(text,
                        _("You'll need more %tde to carry any more %tde!"),
-                       Names.Bitches, Names.Guns);
+                       Names.Mules, Names.Guns);
     GtkMessageBox(dialog, text->str, Title, GTK_MESSAGE_WARNING, MB_OK);
   } else if (data == BT_BUY
              && Gun[GunInd].Space > ClientData.Play->CoatSize) {
@@ -2106,6 +2194,7 @@ void GuiStartGame(void)
   SendAbilities(Play);
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, GetPlayerName(Play));
   InGame = TRUE;
+  InitPriceMemory();
   UpdateMenus();
   gtk_widget_show_all(ClientData.vbox);
   UpdatePlayerLists();
@@ -2156,10 +2245,10 @@ static gint DrugSortByPrice(GtkTreeModel *model, GtkTreeIter *a,
 void UpdateMenus(void)
 {
   gboolean MultiPlayer;
-  gint Bitches;
+  gint Mules;
 
   MultiPlayer = (FirstClient && FirstClient->next != NULL);
-  Bitches = InGame && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
+  Mules = InGame && ClientData.Play ? ClientData.Play->Mules.Carried : 0;
 
   gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget(ClientData.Menu,
                                                           "<main>/Talk"),
@@ -2186,7 +2275,7 @@ void UpdateMenus(void)
                            InGame && MultiPlayer);
   gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
                            (ClientData.Menu,
-                            "<main>/Errands/Sack Bitch..."), Bitches > 0);
+                            "<main>/Errands/Sack Mule..."), Mules > 0);
   gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
                            (ClientData.Menu,
                             "<main>/Errands/Get spy reports..."), InGame
@@ -2246,9 +2335,9 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
   label = Status->GunsValue = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 1, TRUE);
 
-  label = Status->BitchesName = gtk_label_new(NULL);
+  label = Status->MulesName = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 1, TRUE);
-  label = Status->BitchesValue = gtk_label_new(NULL);
+  label = Status->MulesValue = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 3, 2, 1, 1, TRUE);
 
   /* Player's health label in GTK+ client status display */
@@ -2274,6 +2363,88 @@ void UpdateJetButtons(void)
                 !(ClientData.Play->Flags & FIGHTING) && InGame;
     gtk_widget_set_sensitive(ClientData.JetButtons[i], sensitive);
   }
+}
+
+/* Initialize price memory array */
+void InitPriceMemory(void)
+{
+  int i, j;
+
+  if (PriceMemory) {
+    /* Free existing memory */
+    for (i = 0; i < NumLocation; i++) {
+      g_free(PriceMemory[i]);
+    }
+    g_free(PriceMemory);
+  }
+
+  PriceMemory = g_new(price_t *, NumLocation);
+  for (i = 0; i < NumLocation; i++) {
+    PriceMemory[i] = g_new(price_t, NumDrug);
+    for (j = 0; j < NumDrug; j++) {
+      PriceMemory[i][j] = 0;  /* 0 = unknown */
+    }
+  }
+}
+
+/* Store current drug prices for a location */
+void StorePricesForLocation(int location)
+{
+  int i;
+
+  if (!PriceMemory || !ClientData.Play) return;
+  if (location < 0 || location >= NumLocation) return;
+
+  for (i = 0; i < NumDrug; i++) {
+    PriceMemory[location][i] = ClientData.Play->Drugs[i].Price;
+  }
+
+  UpdateLocationTooltips();
+}
+
+/* Update tooltips on location buttons to show last known prices */
+void UpdateLocationTooltips(void)
+{
+  int i, j;
+  GString *tip;
+  gchar *locName, *drugName;
+
+  if (!ClientData.JetButtons || !PriceMemory) return;
+
+  tip = g_string_new(NULL);
+
+  for (i = 0; i < NumLocation; i++) {
+    gboolean hasPrices = FALSE;
+
+    g_string_truncate(tip, 0);
+    locName = dpg_strdup_printf("%tde", Location[i].Name);
+    g_string_append_printf(tip, "%s:\n", locName);
+    g_free(locName);
+
+    for (j = 0; j < NumDrug; j++) {
+      if (PriceMemory[i][j] > 0) {
+        gchar *priceStr = FormatPrice(PriceMemory[i][j]);
+        drugName = dpg_strdup_printf("%tde", Drug[j].Name);
+        g_string_append_printf(tip, "  %s: %s\n", drugName, priceStr);
+        g_free(drugName);
+        g_free(priceStr);
+        hasPrices = TRUE;
+      }
+    }
+
+    if (hasPrices) {
+      /* Remove trailing newline */
+      if (tip->len > 0 && tip->str[tip->len - 1] == '\n') {
+        g_string_truncate(tip, tip->len - 1);
+      }
+      gtk_widget_set_tooltip_text(ClientData.JetButtons[i], tip->str);
+    } else {
+      gtk_widget_set_tooltip_text(ClientData.JetButtons[i],
+                                  _("No price data yet"));
+    }
+  }
+
+  g_string_free(tip, TRUE);
 }
 
 static void SetIcon(GtkWidget *window, char **xpmdata)
@@ -2687,6 +2858,29 @@ static void TransferPayAll(GtkWidget *widget, GtkWidget *dialog)
   gtk_widget_destroy(dialog);
 }
 
+static void TransferDepositAll(GtkWidget *widget, GtkWidget *dialog)
+{
+  gchar *text;
+
+  if (ClientData.Play->Cash <= 0) return;
+  text = pricetostr(ClientData.Play->Cash);
+  SendClientMessage(ClientData.Play, C_NONE, C_DEPOSIT, NULL, text);
+  g_free(text);
+  gtk_widget_destroy(dialog);
+}
+
+static void TransferWithdrawAll(GtkWidget *widget, GtkWidget *dialog)
+{
+  gchar *text;
+
+  if (ClientData.Play->Bank <= 0) return;
+  /* Negative value = withdrawal */
+  text = pricetostr(-ClientData.Play->Bank);
+  SendClientMessage(ClientData.Play, C_NONE, C_DEPOSIT, NULL, text);
+  g_free(text);
+  gtk_widget_destroy(dialog);
+}
+
 static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 {
   gpointer Debt;
@@ -2752,9 +2946,49 @@ static void GunsButtonPressed(GtkWidget *widget, gpointer data)
   GunShopDialog();
 }
 
+static void HireMule(void)
+{
+  GString *text;
+  gchar *title, *pricestr;
+  price_t avgPrice;
+
+  /* Calculate average mule price for display */
+  avgPrice = (Mule.MinPrice + Mule.MaxPrice) / 2;
+
+  /* Check if player has enough money */
+  if (ClientData.Play->Cash < Mule.MinPrice) {
+    text = g_string_new("");
+    dpg_string_printf(text, _("You don't have enough cash to hire a %tde!"),
+                      Names.Mule);
+    GtkMessageBox(ClientData.window, text->str,
+                  /* Title of dialog */
+                  _("Hire"), GTK_MESSAGE_WARNING, MB_OK);
+    g_string_free(text, TRUE);
+    return;
+  }
+
+  /* Title of dialog to hire a mule (%Tde = "Mule" by default) */
+  title = dpg_strdup_printf(_("%/Hire Mule dialog title/Hire %Tde"),
+                            Names.Mule);
+
+  pricestr = FormatPrice(avgPrice);
+  /* Confirmation message for hiring a mule */
+  text = g_string_new("");
+  dpg_string_printf(text, _("Hire a %tde for approximately %s?"),
+                    Names.Mule, pricestr);
+  g_free(pricestr);
+
+  if (GtkMessageBox(ClientData.window, text->str, title, GTK_MESSAGE_QUESTION,
+                    MB_YESNO) == IDYES) {
+    SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL, "mule^0^1");
+  }
+  g_string_free(text, TRUE);
+  g_free(title);
+}
+
 static void PubButtonPressed(GtkWidget *widget, gpointer data)
 {
-  SackBitch(widget, data);
+  HireMule();
 }
 
 static void BankRadioToggled(GtkWidget *widget, gpointer data)
@@ -2907,11 +3141,27 @@ void TransferDialog(gboolean Debt)
                    G_CALLBACK(TransferOK), dialog);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  if (Debt && ClientData.Play->Cash >= ClientData.Play->Debt) {
+  if (Debt) {
     /* Button to pay back the entire loan/debt */
-    button = gtk_button_new_with_label(_("Pay all"));
+    button = gtk_button_new_with_label(_("Pay All"));
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(TransferPayAll), dialog);
+    /* Disable if can't afford to pay all */
+    gtk_widget_set_sensitive(button,
+                             ClientData.Play->Cash >= ClientData.Play->Debt);
+    my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+  } else {
+    /* Bank dialog - add Deposit All and Withdraw All buttons */
+    button = gtk_button_new_with_label(_("Deposit All"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(TransferDepositAll), dialog);
+    gtk_widget_set_sensitive(button, ClientData.Play->Cash > 0);
+    my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+
+    button = gtk_button_new_with_label(_("Withdraw All"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(TransferWithdrawAll), dialog);
+    gtk_widget_set_sensitive(button, ClientData.Play->Bank > 0);
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   }
   button = gtk_button_new_with_mnemonic(_("_Cancel"));
@@ -3216,8 +3466,8 @@ void ErrandDialog(gint ErrandType)
     /* Title of dialog to select a player to spy on */
     gtk_window_set_title(GTK_WINDOW(dialog), _("Spy On Player"));
 
-    /* Informative text for "spy on player" dialog. (%tde = "bitch",
-       "bitch", "guns", "drugs", respectively, by default) */
+    /* Informative text for "spy on player" dialog. (%tde = "mule",
+       "mule", "guns", "drugs", respectively, by default) */
     text = dpg_strdup_printf(_("Please choose the player to spy on. "
                                "Your %tde will\nthen offer his "
                                "services to the player, and if "
@@ -3226,8 +3476,8 @@ void ErrandDialog(gint ErrandType)
                                "\"Get spy reports\" menu. Remember "
                                "that the %tde will leave\nyou, so "
                                "any %tde or %tde that he's "
-                               "carrying may be lost!"), Names.Bitch,
-                             Names.Bitch, Names.Guns, Names.Drugs);
+                               "carrying may be lost!"), Names.Mule,
+                             Names.Mule, Names.Guns, Names.Drugs);
     label = gtk_label_new(text);
     g_free(text);
   } else {
@@ -3235,8 +3485,8 @@ void ErrandDialog(gint ErrandType)
     /* Title of dialog to select a player to tip the cops off to */
     gtk_window_set_title(GTK_WINDOW(dialog), _("Tip Off The Cops"));
 
-    /* Informative text for "tip off cops" dialog. (%tde = "bitch",
-       "bitch", "guns", "drugs", respectively, by default) */
+    /* Informative text for "tip off cops" dialog. (%tde = "mule",
+       "mule", "guns", "drugs", respectively, by default) */
     text = dpg_strdup_printf(_("Please choose the player to tip off "
                                "the cops to. Your %tde will\nhelp "
                                "the cops to attack that player, "
@@ -3244,8 +3494,8 @@ void ErrandDialog(gint ErrandType)
                                "the encounter. Remember that the "
                                "%tde will leave you temporarily,\n"
                                "so any %tde or %tde that he's "
-                               "carrying may be lost!"), Names.Bitch,
-                             Names.Bitch, Names.Guns, Names.Drugs);
+                               "carrying may be lost!"), Names.Mule,
+                             Names.Mule, Names.Guns, Names.Drugs);
     label = gtk_label_new(text);
     g_free(text);
   }
@@ -3279,29 +3529,29 @@ void ErrandDialog(gint ErrandType)
   gtk_widget_show_all(dialog);
 }
 
-void SackBitch(GtkWidget *widget, gpointer data)
+void SackMule(GtkWidget *widget, gpointer data)
 {
   char *title, *text;
 
-  /* Cannot sack bitches if you don't have any! */
-  if (ClientData.Play->Bitches.Carried <= 0)
+  /* Cannot sack mules if you don't have any! */
+  if (ClientData.Play->Mules.Carried <= 0)
     return;
 
-  /* Title of dialog to sack a bitch (%Tde = "Bitch" by default) */
-  title = dpg_strdup_printf(_("%/Sack Bitch dialog title/Sack %Tde"),
-                            Names.Bitch);
+  /* Title of dialog to sack a mule (%Tde = "Mule" by default) */
+  title = dpg_strdup_printf(_("%/Sack Mule dialog title/Sack %Tde"),
+                            Names.Mule);
 
-  /* Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
-     "bitch", respectively, by default) */
+  /* Confirmation message for sacking a mule. (%tde = "guns", "drugs",
+     "mule", respectively, by default) */
   text = dpg_strdup_printf(_("Are you sure? (Any %tde or %tde carried\n"
                              "by this %tde may be lost!)"), Names.Guns,
-                           Names.Drugs, Names.Bitch);
+                           Names.Drugs, Names.Mule);
 
   if (GtkMessageBox(ClientData.window, text, title, GTK_MESSAGE_QUESTION,
                     MB_YESNO) == IDYES) {
-    ClientData.Play->Bitches.Carried--;
+    ClientData.Play->Mules.Carried--;
     UpdateMenus();
-    SendClientMessage(ClientData.Play, C_NONE, C_SACKBITCH, NULL, NULL);
+    SendClientMessage(ClientData.Play, C_NONE, C_SACKMULE, NULL, NULL);
   }
   g_free(text);
   g_free(title);
@@ -3412,44 +3662,52 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     gtk_widget_set_margin_top(button[1], 10);
     gtk_widget_set_margin_top(button[2], 10);
 
-    /* Add Bank button */
+    /* Add Bank button (F1) */
     {
       GtkWidget *bank_button = gtk_button_new_with_label("");
-      SetAccelerator(bank_button, _("_Bank"), bank_button,
+      SetAccelerator(bank_button, _("_Bank (F1)"), bank_button,
                      "clicked", accel_group, FALSE);
+      gtk_widget_add_accelerator(bank_button, "clicked", accel_group,
+                                 GDK_KEY_F1, 0, GTK_ACCEL_VISIBLE);
       g_signal_connect(G_OBJECT(bank_button), "clicked",
                        G_CALLBACK(BankButtonPressed), NULL);
       gtk_widget_set_margin_top(bank_button, 20);
       gtk_box_pack_start(GTK_BOX(vbbox), bank_button, FALSE, FALSE, 0);
     }
 
-    /* Add Guns button */
+    /* Add Guns button (F2) */
     {
       GtkWidget *guns_button = gtk_button_new_with_label("");
-      SetAccelerator(guns_button, _("_Guns"), guns_button,
+      SetAccelerator(guns_button, _("_Guns (F2)"), guns_button,
                      "clicked", accel_group, FALSE);
+      gtk_widget_add_accelerator(guns_button, "clicked", accel_group,
+                                 GDK_KEY_F2, 0, GTK_ACCEL_VISIBLE);
       g_signal_connect(G_OBJECT(guns_button), "clicked",
                        G_CALLBACK(GunsButtonPressed), NULL);
       gtk_widget_set_margin_top(guns_button, 20);
       gtk_box_pack_start(GTK_BOX(vbbox), guns_button, FALSE, FALSE, 0);
     }
 
-    /* Add Pub button */
+    /* Add Pub button (F3) */
     {
       GtkWidget *pub_button = gtk_button_new_with_label("");
-      SetAccelerator(pub_button, _("_Pub"), pub_button,
+      SetAccelerator(pub_button, _("_Pub (F3)"), pub_button,
                      "clicked", accel_group, FALSE);
+      gtk_widget_add_accelerator(pub_button, "clicked", accel_group,
+                                 GDK_KEY_F3, 0, GTK_ACCEL_VISIBLE);
       g_signal_connect(G_OBJECT(pub_button), "clicked",
                        G_CALLBACK(PubButtonPressed), NULL);
       gtk_widget_set_margin_top(pub_button, 20);
       gtk_box_pack_start(GTK_BOX(vbbox), pub_button, FALSE, FALSE, 0);
     }
 
-    /* Add Loan Shark button */
+    /* Add Loan Shark button (F4) */
     {
       GtkWidget *loan_button = gtk_button_new_with_label("");
-      SetAccelerator(loan_button, _("_Loan Shark"), loan_button,
+      SetAccelerator(loan_button, _("_Loan (F4)"), loan_button,
                      "clicked", accel_group, FALSE);
+      gtk_widget_add_accelerator(loan_button, "clicked", accel_group,
+                                 GDK_KEY_F4, 0, GTK_ACCEL_VISIBLE);
       g_signal_connect(G_OBJECT(loan_button), "clicked",
                        G_CALLBACK(LoanSharkButtonPressed), NULL);
       gtk_widget_set_margin_top(loan_button, 20);

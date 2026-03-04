@@ -144,13 +144,13 @@ static char HelpText[] = {
 };
 
 typedef enum _OfferForce {
-  NOFORCE, FORCECOPS, FORCEBITCH
+  NOFORCE, FORCECOPS, FORCEMULE
 } OfferForce;
 
 int SendSingleHighScore(Player *Play, struct HISCORE *Score,
                         int ind, gboolean Bold);
 static int SendCopOffer(Player *To, OfferForce Force);
-static int OfferObject(Player *To, gboolean ForceBitch);
+static int OfferObject(Player *To, gboolean ForceMule);
 static gboolean HighScoreWrite(FILE *fp, struct HISCORE *MultiScore,
                                struct HISCORE *AntiqueScore);
 
@@ -532,7 +532,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
       dopelog(3, LF_SERVER, _("%s now spying on %s"), GetPlayerName(Play),
               GetPlayerName(To));
       Play->Cash -= Prices.Spy;
-      LoseBitch(Play, NULL, NULL);
+      LoseMule(Play, NULL, NULL);
       NewEntry.Play = Play;
       NewEntry.Turns = -1;
       AddListEntry(&(To->SpyList), &NewEntry);
@@ -547,7 +547,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
       dopelog(3, LF_SERVER, _("%s tipped off the cops to %s"),
               GetPlayerName(Play), GetPlayerName(To));
       Play->Cash -= Prices.Tipoff;
-      LoseBitch(Play, NULL, NULL);
+      LoseMule(Play, NULL, NULL);
       NewEntry.Play = Play;
       NewEntry.Turns = 0;
       AddListEntry(&(To->TipList), &NewEntry);
@@ -557,9 +557,9 @@ void HandleServerMessage(gchar *buf, Player *Play)
                 GetPlayerName(To));
     }
     break;
-  case C_SACKBITCH:
-    if (Play->Bitches.Carried > 0) {
-      LoseBitch(Play, NULL, NULL);
+  case C_SACKMULE:
+    if (Play->Mules.Carried > 0) {
+      LoseMule(Play, NULL, NULL);
       SendPlayerData(Play);
     }
     break;
@@ -1765,6 +1765,13 @@ void HighScoreTypeRead(struct HISCORE *HiScore, FILE *fp)
     HiScore[i].Money = strtoprice(buf);
     g_free(buf);
     HiScore[i].Dead = (fgetc(fp) > 0);
+    /* Read Days if available, default to 0 for old scores */
+    if (read_string(fp, &buf) != EOF && buf && buf[0]) {
+      HiScore[i].Days = atoi(buf);
+      g_free(buf);
+    } else {
+      HiScore[i].Days = 0;
+    }
   }
 }
 
@@ -1789,6 +1796,10 @@ void HighScoreTypeWrite(struct HISCORE *HiScore, FILE *fp)
     fwrite(text, strlen(text) + 1, 1, fp);
     g_free(text);
     fputc(HiScore[i].Dead ? 1 : 0, fp);
+    /* Write Days */
+    text = g_strdup_printf("%d", HiScore[i].Days);
+    fwrite(text, strlen(text) + 1, 1, fp);
+    g_free(text);
   }
 }
 
@@ -2155,6 +2166,7 @@ void SendHighScores(Player *Play, gboolean EndGame, char *Message)
     Score.Money = Play->Cash + Play->Bank - Play->Debt;
     Score.Name = g_strdup(GetPlayerName(Play));
     Score.Dead = (Play->Health == 0);
+    Score.Days = Play->Turn;
     tim = time(NULL);
 #ifdef HAVE_GMTIME_R
     timep = gmtime_r(&tim, &tmbuf);
@@ -2225,16 +2237,34 @@ int SendSingleHighScore(Player *Play, struct HISCORE *Score,
 {
   gchar *Data, *prstr;
 
+  gchar *avgstr;
+  price_t avgEarnings;
+
   if (!Score->Time || Score->Time[0] == 0)
     return 0;
-  Data = g_strdup_printf("%d^%c%c%18s  %-14s %-34s %8s%c", ind,
+
+  /* Calculate average earnings per day */
+  if (Score->Days > 0) {
+    avgEarnings = Score->Money / Score->Days;
+  } else {
+    avgEarnings = Score->Money;
+  }
+
+  prstr = FormatPrice(Score->Money);
+  avgstr = FormatPrice(avgEarnings);
+  /* Format: Date, Days, Score, Avg/Day, Name, Status */
+  Data = g_strdup_printf("%d^%c%c%-14s %3d  %18s  %14s  %-24s %8s%c", ind,
                          Bold ? 'B' : 'N', Bold ? '>' : ' ',
-                         prstr = FormatPrice(Score->Money),
-                         Score->Time, Score->Name,
+                         Score->Time,
+                         Score->Days,
+                         prstr,
+                         avgstr,
+                         Score->Name,
                          Score->Dead ? _("(R.I.P.)") : "",
                          Bold ? '<' : ' ');
   SendServerMessage(NULL, C_NONE, C_HISCORE, Play, Data);
   g_free(prstr);
+  g_free(avgstr);
   g_free(Data);
   return 1;
 }
@@ -2285,7 +2315,7 @@ void SendEvent(Player *To)
           dopelog(3, LF_SERVER, _("%s: Spy offered by %s"), GetPlayerName(To),
                   GetPlayerName(To->SpyList.Data[i].Play));
           To->OnBehalfOf = To->SpyList.Data[i].Play;
-          SendCopOffer(To, FORCEBITCH);
+          SendCopOffer(To, FORCEMULE);
           return;
         }
         To->SpyList.Data[i].Turns++;
@@ -2297,11 +2327,11 @@ void SendEvent(Player *To)
             j = brandom(0, NUMDISCOVER - 1);
           text =
               dpg_strdup_printf(_("One of your %tde was spying for %s."
-                                  "^The spy %s!"), Names.Bitches,
+                                  "^The spy %s!"), Names.Mules,
                                 GetPlayerName(To->SpyList.Data[i].Play),
                                 _(Discover[j]));
           if (j != DEFECT)
-            LoseBitch(To, NULL, NULL);
+            LoseMule(To, NULL, NULL);
           SendPlayerData(To);
           SendPrintMessage(NULL, C_NONE, To, text);
           g_free(text);
@@ -2309,7 +2339,7 @@ void SendEvent(Player *To)
                                    "been discovered!^The spy %s!"),
                                  GetPlayerName(To), _(Discover[j]));
           if (j == ESCAPE)
-            GainBitch(To->SpyList.Data[i].Play);
+            GainMule(To->SpyList.Data[i].Play);
           To->SpyList.Data[i].Play->Flags &= ~SPYINGON;
           SendPlayerData(To->SpyList.Data[i].Play);
           SendPrintMessage(NULL, C_NONE, To->SpyList.Data[i].Play, text);
@@ -2389,14 +2419,14 @@ void SendEvent(Player *To)
         return;
       }
       break;
-    case E_HIREBITCH:
+    case E_HIREMULE:
       if (To->IsAt + 1 == RoughPubLoc) {
-        To->Bitches.Price = prandom(Bitch.MinPrice, Bitch.MaxPrice);
+        To->Mules.Price = prandom(Mule.MinPrice, Mule.MaxPrice);
         text =
             dpg_strdup_printf(_
                               ("YN^^Would you like to hire a %tde for %P?"),
-                              Names.Bitch, To->Bitches.Price);
-        SendQuestion(NULL, C_ASKBITCH, To, text);
+                              Names.Mule, To->Mules.Price);
+        SendQuestion(NULL, C_ASKMULE, To, text);
         g_free(text);
         return;
       }
@@ -2438,7 +2468,7 @@ void SendEvent(Player *To)
  * advanced to the next state, 1 otherwise (i.e. if there are
  * questions pending which the client must answer first)
  * If Force==FORCECOPS, engage in combat with the cops for certain
- * If Force==FORCEBITCH, offer the client a bitch for certain
+ * If Force==FORCEMULE, offer the client a mule for certain
  */
 int SendCopOffer(Player *To, OfferForce Force)
 {
@@ -2450,12 +2480,12 @@ int SendCopOffer(Player *To, OfferForce Force)
 
   if (Force == FORCECOPS)
     i = 100;
-  else if (Force == FORCEBITCH)
+  else if (Force == FORCEMULE)
     i = 0;
   else
     To->OnBehalfOf = NULL;
   if (i < 33) {
-    return (OfferObject(To, Force == FORCEBITCH));
+    return (OfferObject(To, Force == FORCEMULE));
   } else if (i < 50) {
     return (RandomOffer(To));
   } else if (Sanitized || NumCop == 0 || NumGun == 0) {
@@ -2497,7 +2527,7 @@ void CopsAttackPlayer(Player *Play)
 
   NumDeputy = brandom(Cop[CopIndex - 1].MinDeputies,
                       Cop[CopIndex - 1].MaxDeputies);
-  Cops->Bitches.Carried = NumDeputy;
+  Cops->Mules.Carried = NumDeputy;
   GunIndex = Cop[CopIndex - 1].GunIndex;
   if (GunIndex >= NumGun)
     GunIndex = NumGun - 1;
@@ -2569,7 +2599,7 @@ gboolean IsOpponent(Player *Play, Player *Other)
 }
 
 void HandleDamage(Player *Defend, Player *Attack, int Damage,
-                  int *BitchesKilled, price_t *Loot)
+                  int *MulesKilled, price_t *Loot)
 {
   Inventory *Guns, *Drugs;
   price_t Bounty;
@@ -2579,18 +2609,18 @@ void HandleDamage(Player *Defend, Player *Attack, int Damage,
   ClearInventory(Guns, Drugs);
 
   Bounty = 0;
-  if (Defend->Health <= Damage && Defend->Bitches.Carried == 0) {
+  if (Defend->Health <= Damage && Defend->Mules.Carried == 0) {
     Bounty = Defend->Cash + Defend->Bank - Defend->Debt;
     AddInventory(Guns, Defend->Guns, NumGun);
     AddInventory(Drugs, Defend->Drugs, NumDrug);
     Defend->Health = 0;
-  } else if (Defend->Bitches.Carried > 0 && Defend->Health <= Damage) {
+  } else if (Defend->Mules.Carried > 0 && Defend->Health <= Damage) {
     if (IsCop(Defend))
-      LoseBitch(Defend, NULL, NULL);
+      LoseMule(Defend, NULL, NULL);
     else
-      LoseBitch(Defend, Guns, Drugs);
+      LoseMule(Defend, Guns, Drugs);
     Defend->Health = 100;
-    *BitchesKilled = 1;
+    *MulesKilled = 1;
   } else {
     Defend->Health -= Damage;
   }
@@ -2634,7 +2664,7 @@ void GetFightRatings(Player *Attack, Player *Defend,
   if (IsCop(Attack))
     *AttackRating -= Cop[Attack->CopIndex - 1].AttackPenalty;
 
-  *DefendRating -= 5 * Defend->Bitches.Carried;
+  *DefendRating -= 5 * Defend->Mules.Carried;
   if (IsCop(Defend))
     *DefendRating -= Cop[Defend->CopIndex - 1].DefendPenalty;
 
@@ -2829,15 +2859,15 @@ static int GetArmor(Player *Play)
   int Armor;
 
   if (IsCop(Play)) {
-    if (Play->Bitches.Carried == 0)
+    if (Play->Mules.Carried == 0)
       Armor = Cop[Play->CopIndex - 1].Armor;
     else
       Armor = Cop[Play->CopIndex - 1].DeputyArmor;
   } else {
-    if (Play->Bitches.Carried == 0)
+    if (Play->Mules.Carried == 0)
       Armor = PlayerArmor;
     else
-      Armor = BitchArmor;
+      Armor = MuleArmor;
   }
   if (Armor == 0)
     Armor = 1;
@@ -2852,7 +2882,7 @@ void Fire(Player *Play)
 {
   int Damage, i, j;
   int AttackRating, DefendRating;
-  int BitchesKilled;
+  int MulesKilled;
   price_t Loot;
   FightPoint fp;
   Player *Defend;
@@ -2869,7 +2899,7 @@ void Fire(Player *Play)
   Defend = GetFireTarget(Play);
   if (Defend) {
     Damage = 0;
-    BitchesKilled = 0;
+    MulesKilled = 0;
     Loot = 0;
     if (TotalGunsCarried(Play) > 0) {
       GetFightRatings(Play, Defend, &AttackRating, &DefendRating);
@@ -2882,12 +2912,12 @@ void Fire(Player *Play)
         Damage = Damage * 100 / GetArmor(Defend);
         if (Damage == 0)
           Damage = 1;
-        HandleDamage(Defend, Play, Damage, &BitchesKilled, &Loot);
+        HandleDamage(Defend, Play, Damage, &MulesKilled, &Loot);
       } else
         fp = F_MISS;
     } else
       fp = F_STAND;
-    SendFightMessage(Play, Defend, BitchesKilled, fp, Loot, TRUE, NULL);
+    SendFightMessage(Play, Defend, MulesKilled, fp, Loot, TRUE, NULL);
   }
   CheckForKilledPlayers(Play);
 
@@ -2967,9 +2997,9 @@ void ResolveTipoff(Player *Play)
       dpg_string_printf(text,
                          _("Following your tipoff, the cops ambushed %s, "
                            "who escaped with %d %tde. "), GetPlayerName(Play),
-                         Play->Bitches.Carried, Names.Bitches);
+                         Play->Mules.Carried, Names.Mules);
     }
-    GainBitch(Play->OnBehalfOf);
+    GainMule(Play->OnBehalfOf);
     SendPlayerData(Play->OnBehalfOf);
     SendPrintMessage(NULL, C_NONE, Play->OnBehalfOf, text->str);
     g_string_free(text, TRUE);
@@ -3027,7 +3057,7 @@ void WithdrawFromCombat(Player *Play)
       } else if (CanRunHere(Defend)
                  && brandom(0, 100) > Location[Defend->IsAt].PolicePresence) {
         Defend->EventNum = E_DOCTOR;
-        Defend->DocPrice = prandom(Bitch.MinPrice, Bitch.MaxPrice) *
+        Defend->DocPrice = prandom(Mule.MinPrice, Mule.MaxPrice) *
             Defend->Health / 500;
         text =
             dpg_strdup_printf(_
@@ -3158,13 +3188,13 @@ int RandomOffer(Player *To)
 }
 
 /*
- * Offers player "To" bitches/trenchcoats or guns. If ForceBitch is
- * TRUE, then a bitch is definitely offered. Returns 0 if the client
+ * Offers player "To" mules/trenchcoats or guns. If ForceMule is
+ * TRUE, then a mule is definitely offered. Returns 0 if the client
  * can advance immediately to the next state, 1 otherwise.
  *
  * DISABLED - all random offers disabled
  */
-int OfferObject(Player *To, gboolean ForceBitch)
+int OfferObject(Player *To, gboolean ForceMule)
 {
   return 0;
 }
@@ -3289,7 +3319,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
   if (!From || From->EventNum == E_NONE)
     return;
   if (answer[0] == 'Y' && From->EventNum == E_OFFOBJECT
-      && From->Bitches.Price && From->Bitches.Price > From->Cash)
+      && From->Mules.Price && From->Mules.Price > From->Cash)
     answer[0] = 'N';
   if ((From->EventNum == E_FIGHT || From->EventNum == E_FIGHTASK)
       && CanRunHere(From)) {
@@ -3305,10 +3335,10 @@ void HandleAnswer(Player *From, Player *To, char *answer)
       if (g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
         dopelog(3, LF_SERVER, _("%s: offer was on behalf of %s"),
                 GetPlayerName(From), GetPlayerName(From->OnBehalfOf));
-        if (From->Bitches.Price) {
+        if (From->Mules.Price) {
           text = dpg_strdup_printf(_("%s has accepted your %tde!"
                                      "^Use the G key to contact your spy."),
-                                   GetPlayerName(From), Names.Bitch);
+                                   GetPlayerName(From), Names.Mule);
           From->OnBehalfOf->Flags |= SPYINGON;
           SendPlayerData(From->OnBehalfOf);
           SendPrintMessage(NULL, C_NONE, From->OnBehalfOf, text);
@@ -3318,8 +3348,8 @@ void HandleAnswer(Player *From, Player *To, char *answer)
             From->SpyList.Data[i].Turns = 0;
         }
       }
-      if (From->Bitches.Price) {
-        text = g_strdup_printf("bitch^0^1");
+      if (From->Mules.Price) {
+        text = g_strdup_printf("mule^0^1");
         BuyObject(From, text);
         g_free(text);
       } else {
@@ -3346,8 +3376,8 @@ void HandleAnswer(Player *From, Player *To, char *answer)
         From->Guns[i].Price = Gun[i].Price;
       SendServerMessage(NULL, C_NONE, C_GUNSHOP, From, NULL);
       break;
-    case E_HIREBITCH:
-      text = g_strdup_printf("bitch^0^1");
+    case E_HIREMULE:
+      text = g_strdup_printf("mule^0^1");
       BuyObject(From, text);
       g_free(text);
       From->EventNum++;
@@ -3406,7 +3436,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
     case E_DOCTOR:
       WaitForFightDone(From);
       break;
-    case E_HIREBITCH:
+    case E_HIREMULE:
     case E_GUNSHOP:
     case E_BANK:
     case E_LOANSHARK:
@@ -3415,10 +3445,10 @@ void HandleAnswer(Player *From, Player *To, char *answer)
       if (g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
         dopelog(3, LF_SERVER, _("%s: offer was on behalf of %s"),
                 GetPlayerName(From), GetPlayerName(From->OnBehalfOf));
-        if (From->Bitches.Price && From->EventNum == E_OFFOBJECT) {
+        if (From->Mules.Price && From->EventNum == E_OFFOBJECT) {
           text = dpg_strdup_printf(_("%s has rejected your %tde!"),
-                                   GetPlayerName(From), Names.Bitch);
-          GainBitch(From->OnBehalfOf);
+                                   GetPlayerName(From), Names.Mule);
+          GainMule(From->OnBehalfOf);
           SendPlayerData(From->OnBehalfOf);
           SendPrintMessage(NULL, C_NONE, From->OnBehalfOf, text);
           g_free(text);
@@ -3435,7 +3465,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
 
 /* 
  * Processes a request stored in "data" from player "From" to buy an
- * object (bitch, gun, or drug).
+ * object (mule, gun, or drug).
  * Objects can be sold if the amount given in "data" is negative, and
  * given away if their current price is zero.
  */
@@ -3481,7 +3511,7 @@ void BuyObject(Player *From, char *data)
   } else if (strcmp(type, "gun") == 0) {
     if (index >= 0 && index < NumGun
         && TotalGunsCarried(From) + amount >= 0
-        && TotalGunsCarried(From) + amount <= From->Bitches.Carried + 2
+        && TotalGunsCarried(From) + amount <= From->Mules.Carried + 2
         && From->Guns[index].Price != 0
         && From->CoatSize - amount * Gun[index].Space >= 0
         && From->Cash >= amount * From->Guns[index].Price) {
@@ -3490,46 +3520,50 @@ void BuyObject(Player *From, char *data)
       From->Cash -= amount * From->Guns[index].Price;
       SendPlayerData(From);
     }
-  } else if (strcmp(type, "bitch") == 0) {
-    if (From->Bitches.Carried + amount >= 0
-        && From->Bitches.Price != 0
-        && amount * From->Bitches.Price <= From->Cash) {
+  } else if (strcmp(type, "mule") == 0) {
+    /* Generate a random mule price if not already set */
+    if (From->Mules.Price == 0 && amount > 0) {
+      From->Mules.Price = prandom(Mule.MinPrice, Mule.MaxPrice);
+    }
+    if (From->Mules.Carried + amount >= 0
+        && From->Mules.Price != 0
+        && amount * From->Mules.Price <= From->Cash) {
       for (i = 0; i < amount; i++)
-        GainBitch(From);
+        GainMule(From);
       if (amount > 0)
-        From->Cash -= amount * From->Bitches.Price;
+        From->Cash -= amount * From->Mules.Price;
       SendPlayerData(From);
     }
   }
 }
 
 /* 
- * Clears the bitch and gun prices stored for player "Play".
+ * Clears the mule and gun prices stored for player "Play".
  */
 void ClearPrices(Player *Play)
 {
   int i;
 
-  Play->Bitches.Price = 0;
+  Play->Mules.Price = 0;
   for (i = 0; i < NumGun; i++)
     Play->Guns[i].Price = 0;
 }
 
 /* 
- * Gives player "Play" a new bitch (or larger trenchcoat).
+ * Gives player "Play" a new mule (or larger trenchcoat).
  */
-void GainBitch(Player *Play)
+void GainMule(Player *Play)
 {
   Play->CoatSize += 10;
-  Play->Bitches.Carried++;
+  Play->Mules.Carried++;
 }
 
 /* 
- * Loses one bitch belonging to player "Play". If drugs or guns are
- * lost with the bitch, 1 is returned (0 otherwise) and the lost
+ * Loses one mule belonging to player "Play". If drugs or guns are
+ * lost with the mule, 1 is returned (0 otherwise) and the lost
  * items are added to "Guns" and "Drugs" if non-NULL.
  */
-int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
+int LoseMule(Player *Play, Inventory *Guns, Inventory *Drugs)
 {
   int losedrug = 0, i, num, drugslost;
   int *GunIndex, tmp;
@@ -3539,7 +3573,7 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
   Play->CoatSize -= 10;
   if (TotalGunsCarried(Play) > 0) {
     if (brandom(0, 100) <
-        TotalGunsCarried(Play) * 100 / (Play->Bitches.Carried + 2)) {
+        TotalGunsCarried(Play) * 100 / (Play->Mules.Carried + 2)) {
       for (i = 0; i < NumGun; i++)
         GunIndex[i] = i;
       for (i = 0; i < NumGun * 5; i++) {
@@ -3564,7 +3598,7 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
     if (Play->Drugs[i].Carried > 0) {
       num =
           (int)((float)Play->Drugs[i].Carried /
-                (Play->Bitches.Carried + 2.0) + 0.5);
+                (Play->Mules.Carried + 2.0) + 0.5);
       if (num > 0) {
         Play->Drugs[i].TotalValue = Play->Drugs[i].TotalValue *
             (Play->Drugs[i].Carried - num) / Play->Drugs[i].Carried;
@@ -3600,7 +3634,7 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
         }
       }
   }
-  Play->Bitches.Carried--;
+  Play->Mules.Carried--;
   g_free(GunIndex);
   return losedrug;
 }
