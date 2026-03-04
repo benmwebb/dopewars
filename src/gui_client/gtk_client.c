@@ -70,8 +70,8 @@ struct ClientDataStruct {
   DPGtkItemFactory *Menu;
   struct StatusWidgets Status;
   struct InventoryWidgets Drug, Gun, InvenDrug, InvenGun;
-  GtkWidget *JetButton, *vbox, *PlayerList, *TalkList;
-  guint JetAccel;
+  GtkWidget *vbox, *PlayerList, *TalkList;
+  GtkWidget **JetButtons;  /* Array of location buttons */
   struct CMDLINE *cmdline;
 };
 
@@ -212,13 +212,16 @@ static void DisplayFightMessage(char *Data);
 static GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status);
 static void DisplayStats(Player *Play, struct StatusWidgets *Status);
 static void UpdateStatus(Player *Play);
-static void SetJetButtonTitle(GtkAccelGroup *accel_group);
+static void UpdateJetButtons(void);
 static void UpdateInventory(struct InventoryWidgets *Inven,
                             Inventory *Objects, int NumObjects,
                             gboolean AreDrugs);
-static void JetButtonPressed(GtkWidget *widget, gpointer data);
 static void DealDrugs(GtkWidget *widget, gpointer data);
 static void DealGuns(GtkWidget *widget, gpointer data);
+static void OnDrugHereRowActivated(GtkTreeView *tree_view, GtkTreePath *path,
+                                   GtkTreeViewColumn *column, gpointer data);
+static void OnDrugCarriedRowActivated(GtkTreeView *tree_view, GtkTreePath *path,
+                                      GtkTreeViewColumn *column, gpointer data);
 static void QuestionDialog(char *Data, Player *From);
 static void TransferDialog(gboolean Debt);
 static void ListPlayers(GtkWidget *widget, gpointer data);
@@ -1209,7 +1212,6 @@ static void EnableFightButton(GtkWidget *button, gboolean enable)
 void DisplayFightMessage(char *Data)
 {
   Player *Play;
-  GtkAccelGroup *accel_group;
   GtkWidget *Deal, *Fight, *Stand, *Run;
   GtkTextView *textview;
   gchar *AttackName, *DefendName, *BitchName, *Message;
@@ -1270,9 +1272,7 @@ void DisplayFightMessage(char *Data)
     default:
       break;
     }
-    accel_group = (GtkAccelGroup *)
-        g_object_get_data(G_OBJECT(ClientData.window), "accel_group");
-    SetJetButtonTitle(accel_group);
+    UpdateJetButtons();
   } else {
     Message = Data;
     if (Play->Flags & FIGHTING) {
@@ -1365,13 +1365,9 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
  */
 void UpdateStatus(Player *Play)
 {
-  GtkAccelGroup *accel_group;
-
   DisplayStats(Play, &ClientData.Status);
   UpdateInventory(&ClientData.Drug, ClientData.Play->Drugs, NumDrug, TRUE);
-  accel_group = (GtkAccelGroup *)
-      g_object_get_data(G_OBJECT(ClientData.window), "accel_group");
-  SetJetButtonTitle(accel_group);
+  UpdateJetButtons();
   if (IsShowingGunShop) {
     UpdateInventory(&ClientData.Gun, ClientData.Play->Guns, NumGun, FALSE);
   }
@@ -1521,7 +1517,8 @@ void UpdateInventory(struct InventoryWidgets *Inven,
   }
 }
 
-static void JetCallback(GtkWidget *widget, gpointer data)
+/* Callback for location buttons in the Jet dialog (fight screen) */
+static void JetDialogCallback(GtkWidget *widget, gpointer data)
 {
   int NewLocation;
   gchar *text;
@@ -1535,15 +1532,22 @@ static void JetCallback(GtkWidget *widget, gpointer data)
   g_free(text);
 }
 
-void JetButtonPressed(GtkWidget *widget, gpointer data)
+/* Direct callback for location buttons in main window */
+static void DirectJetCallback(GtkWidget *widget, gpointer data)
 {
-  if (InGame) {
-    if (ClientData.Play->Flags & FIGHTING) {
-      DisplayFightMessage("");
-    } else {
-      Jet(NULL);
-    }
+  int NewLocation;
+  gchar *text;
+
+  if (!InGame) return;
+  if (ClientData.Play->Flags & FIGHTING) {
+    DisplayFightMessage("");
+    return;
   }
+
+  NewLocation = GPOINTER_TO_INT(data);
+  text = g_strdup_printf("%d", NewLocation);
+  SendClientMessage(ClientData.Play, C_NONE, C_REQUESTJET, NULL, text);
+  g_free(text);
 }
 
 void Jet(GtkWidget *parent)
@@ -1622,7 +1626,7 @@ void Jet(GtkWidget *parent)
     gtk_widget_set_sensitive(button, i != ClientData.Play->IsAt);
     g_object_set_data(G_OBJECT(button), "dialog", dialog);
     g_signal_connect(G_OBJECT(button), "clicked",
-                     G_CALLBACK(JetCallback), GINT_TO_POINTER(i));
+                     G_CALLBACK(JetDialogCallback), GINT_TO_POINTER(i));
     dp_gtk_grid_attach(GTK_GRID(grid), button, col, row, 1, 1, TRUE);
   }
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);
@@ -1722,6 +1726,18 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
 
   SendClientMessage(ClientData.Play, C_NONE, C_BUYOBJECT, NULL, text);
   g_free(text);
+}
+
+static void OnDrugHereRowActivated(GtkTreeView *tree_view, GtkTreePath *path,
+                                   GtkTreeViewColumn *column, gpointer data)
+{
+  DealDrugs(NULL, BT_BUY);
+}
+
+static void OnDrugCarriedRowActivated(GtkTreeView *tree_view, GtkTreePath *path,
+                                      GtkTreeViewColumn *column, gpointer data)
+{
+  DealDrugs(NULL, BT_SELL);
 }
 
 void DealDrugs(GtkWidget *widget, gpointer data)
@@ -2236,27 +2252,20 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
   return grid;
 }
 
-void SetJetButtonTitle(GtkAccelGroup *accel_group)
+/* Update the sensitivity of location buttons in main window */
+void UpdateJetButtons(void)
 {
-  GtkWidget *button;
-  guint accel_key;
-  gchar *caption;
+  gint i;
+  gboolean sensitive;
 
-  button = ClientData.JetButton;
-  accel_key = ClientData.JetAccel;
+  if (!ClientData.JetButtons || !ClientData.Play) return;
 
-  if (accel_key) {
-    gtk_widget_remove_accelerator(button, accel_group, accel_key, 0);
+  for (i = 0; i < NumLocation; i++) {
+    /* Disable button for current location, also disable all when fighting */
+    sensitive = (i != ClientData.Play->IsAt) &&
+                !(ClientData.Play->Flags & FIGHTING) && InGame;
+    gtk_widget_set_sensitive(ClientData.JetButtons[i], sensitive);
   }
-
-  if (ClientData.Play && ClientData.Play->Flags & FIGHTING) {
-    caption = _("_Fight");
-  } else {
-    /* Caption of 'Jet' button in main window */
-    caption = _("_Jet!");
-  }
-  ClientData.JetAccel = SetAccelerator(button, caption, button,
-                                       "clicked", accel_group, FALSE);
 }
 
 static void SetIcon(GtkWidget *window, char **xpmdata)
@@ -2410,12 +2419,11 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_tree_view_column_set_sort_column_id(col, i);
   }
 
-  button = ClientData.JetButton = gtk_button_new_with_label("");
-  ClientData.JetAccel = 0;
-  g_signal_connect(G_OBJECT(button), "clicked",
-                   G_CALLBACK(JetButtonPressed), NULL);
-  gtk_box_pack_start(GTK_BOX(ClientData.Drug.vbbox), button, TRUE, FALSE, 0);
-  SetJetButtonTitle(accel_group);
+  /* Connect row-activated signals for double-click to buy/sell */
+  g_signal_connect(G_OBJECT(ClientData.Drug.HereList), "row-activated",
+                   G_CALLBACK(OnDrugHereRowActivated), NULL);
+  g_signal_connect(G_OBJECT(ClientData.Drug.CarriedList), "row-activated",
+                   G_CALLBACK(OnDrugCarriedRowActivated), NULL);
 
 #ifdef CYGWIN
   /* GtkFrames don't look quite right in Win32 yet */
@@ -2428,6 +2436,72 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
 
   gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
+
+  /* Create location buttons grid at the bottom of the main window */
+  {
+    GtkWidget *jet_grid, *jet_frame;
+    gint boxsize, row, col;
+    gchar *name, AccelChar;
+
+    /* Allocate array to store button references */
+    ClientData.JetButtons = g_new(GtkWidget *, NumLocation);
+
+    /* Calculate grid size to make a square-ish layout */
+    boxsize = 1;
+    while (boxsize * boxsize < NumLocation) {
+      boxsize++;
+    }
+    col = boxsize;
+    row = 1;
+    while (row * col < NumLocation) {
+      row++;
+    }
+
+    jet_grid = dp_gtk_grid_new(row, col, TRUE);
+    gtk_grid_set_row_spacing(GTK_GRID(jet_grid), 2);
+    gtk_grid_set_column_spacing(GTK_GRID(jet_grid), 2);
+
+    for (i = 0; i < NumLocation; i++) {
+      if (i < 9) {
+        AccelChar = '1' + i;
+      } else if (i < 35) {
+        AccelChar = 'A' + i - 9;
+      } else {
+        AccelChar = '\0';
+      }
+
+      row = i / boxsize;
+      col = i % boxsize;
+      if (AccelChar == '\0') {
+        name = dpg_strdup_printf(_("%/Location to jet to/%tde"),
+                                 Location[i].Name);
+        button = gtk_button_new_with_label(name);
+        g_free(name);
+      } else {
+        button = gtk_button_new_with_label("");
+        name = dpg_strdup_printf(_("_%c. %tde"), AccelChar, Location[i].Name);
+        SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
+        /* Add keypad shortcuts as well */
+        if (i < 9) {
+          gtk_widget_add_accelerator(button, "clicked", accel_group,
+                                     GDK_KEY_KP_1 + i, 0,
+                                     GTK_ACCEL_VISIBLE);
+        }
+        g_free(name);
+      }
+      gtk_widget_set_sensitive(button, FALSE);  /* Disabled until game starts */
+      g_signal_connect(G_OBJECT(button), "clicked",
+                       G_CALLBACK(DirectJetCallback), GINT_TO_POINTER(i));
+      dp_gtk_grid_attach(GTK_GRID(jet_grid), button, col, row, 1, 1, TRUE);
+      ClientData.JetButtons[i] = button;
+    }
+
+    /* Wrap in a frame with a label */
+    jet_frame = gtk_frame_new(_("Jet to location"));
+    gtk_container_set_border_width(GTK_CONTAINER(jet_frame), 3);
+    gtk_container_add(GTK_CONTAINER(jet_frame), jet_grid);
+    gtk_box_pack_start(GTK_BOX(vbox), jet_frame, FALSE, FALSE, 0);
+  }
 
   gtk_box_pack_start(GTK_BOX(vbox2), vbox, TRUE, TRUE, 0);
   gtk_container_add(GTK_CONTAINER(window), vbox2);
@@ -2654,7 +2728,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 
 void TransferDialog(gboolean Debt)
 {
-  GtkWidget *dialog, *button, *label, *radio, *grid, *vbox;
+  GtkWidget *dialog, *button, *label, *grid, *vbox;
   GtkWidget *hbbox, *hsep, *entry, *outer;
   GtkAccelGroup *accel_group;
   GSList *group;
@@ -2710,19 +2784,52 @@ void TransferDialog(gboolean Debt)
     label = gtk_label_new(_("Pay back:"));
     dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
   } else {
+    GtkWidget *deposit_radio, *withdraw_radio;
+
     /* Radio button selected if you want to pay money into the bank */
-    radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
-    g_object_set_data(G_OBJECT(dialog), "deposit", radio);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
-    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 2, 1, 1, FALSE);
+    deposit_radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
+    g_object_set_data(G_OBJECT(dialog), "deposit", deposit_radio);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(deposit_radio));
+    dp_gtk_grid_attach(GTK_GRID(grid), deposit_radio, 0, 2, 1, 1, FALSE);
 
     /* Radio button selected if you want to withdraw money from the bank */
-    radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
-    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 3, 1, 1, FALSE);
+    withdraw_radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
+    dp_gtk_grid_attach(GTK_GRID(grid), withdraw_radio, 0, 3, 1, 1, FALSE);
+
+    /* Select withdraw if player has no cash, otherwise deposit */
+    if (ClientData.Play->Cash == 0) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(withdraw_radio), TRUE);
+    } else {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(deposit_radio), TRUE);
+    }
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), "0");
+  if (Debt) {
+    /* Pre-fill with debt amount or max cash available */
+    price_t amount;
+    gchar *amountstr;
+    if (ClientData.Play->Cash >= ClientData.Play->Debt) {
+      amount = ClientData.Play->Debt;
+    } else {
+      amount = ClientData.Play->Cash;
+    }
+    amountstr = pricetostr(amount);
+    gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
+    g_free(amountstr);
+  } else {
+    /* Pre-fill with bank balance (withdraw) or cash (deposit) */
+    price_t amount;
+    gchar *amountstr;
+    if (ClientData.Play->Cash == 0) {
+      amount = ClientData.Play->Bank;
+    } else {
+      amount = ClientData.Play->Cash;
+    }
+    amountstr = pricetostr(amount);
+    gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
+    g_free(amountstr);
+  }
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
