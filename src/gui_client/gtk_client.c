@@ -62,6 +62,7 @@ struct StatusWidgets {
   GtkWidget *CashValue, *DebtName, *DebtValue, *BankName, *BankValue;
   GtkWidget *GunsName, *GunsValue, *MulesName, *MulesValue;
   GtkWidget *HealthName, *HealthValue, *DaysRemName, *DaysRemValue;
+  GtkWidget *NetWorthName, *NetWorthValue;
 };
 
 struct ClientDataStruct {
@@ -72,6 +73,7 @@ struct ClientDataStruct {
   struct InventoryWidgets Drug, Gun, InvenDrug, InvenGun;
   GtkWidget *vbox, *PlayerList, *TalkList;
   GtkWidget **JetButtons;  /* Array of location buttons */
+  GtkWidget *PubButton;    /* Pub button for hire mule */
   struct CMDLINE *cmdline;
 };
 
@@ -1383,8 +1385,22 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   g_string_printf(text, "%d", Play->CoatSize);
   gtk_label_set_text(GTK_LABEL(Status->SpaceValue), text->str);
 
-  g_string_printf(text, "%d", NumTurns - Play->Turn);
-  gtk_label_set_text(GTK_LABEL(Status->DaysRemValue), text->str);
+  {
+    int daysLeft = NumTurns - Play->Turn;
+    g_string_printf(text, "%d", daysLeft);
+    if (daysLeft <= 5) {
+      gchar *markup;
+      /* Flash/highlight Days Left when <= 5 days remain */
+      gtk_label_set_markup(GTK_LABEL(Status->DaysRemName),
+                           "<span foreground=\"orange\" weight=\"bold\">Days Left</span>");
+      markup = g_markup_printf_escaped("<span foreground=\"orange\" weight=\"bold\">%s</span>", text->str);
+      gtk_label_set_markup(GTK_LABEL(Status->DaysRemValue), markup);
+      g_free(markup);
+    } else {
+      gtk_label_set_text(GTK_LABEL(Status->DaysRemName), _("Days Left"));
+      gtk_label_set_text(GTK_LABEL(Status->DaysRemValue), text->str);
+    }
+  }
 
   prstr = FormatPrice(Play->Cash);
   gtk_label_set_text(GTK_LABEL(Status->CashValue), prstr);
@@ -1408,6 +1424,28 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
     gtk_label_set_text(GTK_LABEL(Status->DebtValue), prstr);
   }
   g_free(prstr);
+
+  /* Display Net Worth (Cash + Bank - Debt) */
+  {
+    price_t netWorth = Play->Cash + Play->Bank - Play->Debt;
+    prstr = FormatPrice(netWorth);
+    if (netWorth < 0) {
+      gchar *markup;
+      gtk_label_set_markup(GTK_LABEL(Status->NetWorthName),
+                           "<span foreground=\"red\" weight=\"bold\">Net Worth</span>");
+      markup = g_markup_printf_escaped("<span foreground=\"red\" weight=\"bold\">%s</span>", prstr);
+      gtk_label_set_markup(GTK_LABEL(Status->NetWorthValue), markup);
+      g_free(markup);
+    } else {
+      gchar *markup;
+      gtk_label_set_markup(GTK_LABEL(Status->NetWorthName),
+                           "<span foreground=\"green\" weight=\"bold\">Net Worth</span>");
+      markup = g_markup_printf_escaped("<span foreground=\"green\" weight=\"bold\">%s</span>", prstr);
+      gtk_label_set_markup(GTK_LABEL(Status->NetWorthValue), markup);
+      g_free(markup);
+    }
+    g_free(prstr);
+  }
 
   /* Display of the total number of guns carried (%Tde="Guns" by default) */
   dpg_string_printf(text, _("%/Stats: Guns/%Tde"), Names.Guns);
@@ -2330,6 +2368,13 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
   label = Status->BankValue = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 1, 1, 1, TRUE);
 
+  /* Player's net worth label in GTK+ client status display */
+  label = Status->NetWorthName = gtk_label_new(_("Net Worth"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 6, 1, 1, 1, TRUE);
+
+  label = Status->NetWorthValue = gtk_label_new(NULL);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 7, 1, 1, 1, TRUE);
+
   label = Status->GunsName = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, TRUE);
   label = Status->GunsValue = gtk_label_new(NULL);
@@ -2922,11 +2967,38 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     GtkMessageBox(dialog, _("You don't have that much money!"),
                   title, GTK_MESSAGE_WARNING, MB_OK);
   } else {
-    text = pricetostr(withdraw ? -money : money);
-    SendClientMessage(ClientData.Play, C_NONE,
-                      Debt ? C_PAYLOAN : C_DEPOSIT, NULL, text);
-    g_free(text);
-    gtk_widget_destroy(dialog);
+    gboolean proceed = TRUE;
+    /* Confirm large transactions (more than 50% of available funds) */
+    if (!Debt) {
+      price_t threshold;
+      gchar *amountStr, *confirmMsg;
+
+      if (withdraw) {
+        threshold = ClientData.Play->Bank / 2;
+      } else {
+        threshold = ClientData.Play->Cash / 2;
+      }
+
+      if (money > threshold && threshold > 0) {
+        amountStr = FormatPrice(money);
+        confirmMsg = g_strdup_printf(
+            _("Are you sure you want to %s %s?"),
+            withdraw ? _("withdraw") : _("deposit"),
+            amountStr);
+        proceed = (GtkMessageBox(dialog, confirmMsg, title,
+                                 GTK_MESSAGE_QUESTION, MB_YESNO) == IDYES);
+        g_free(confirmMsg);
+        g_free(amountStr);
+      }
+    }
+
+    if (proceed) {
+      text = pricetostr(withdraw ? -money : money);
+      SendClientMessage(ClientData.Play, C_NONE,
+                        Debt ? C_PAYLOAN : C_DEPOSIT, NULL, text);
+      g_free(text);
+      gtk_widget_destroy(dialog);
+    }
   }
   g_free(title);
 }
@@ -3699,6 +3771,7 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
                        G_CALLBACK(PubButtonPressed), NULL);
       gtk_widget_set_margin_top(pub_button, 20);
       gtk_box_pack_start(GTK_BOX(vbbox), pub_button, FALSE, FALSE, 0);
+      ClientData.PubButton = pub_button;
     }
 
     /* Add Loan Shark button (F4) */
