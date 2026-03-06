@@ -4055,6 +4055,21 @@ void SackMule(GtkWidget *widget, gpointer data)
   g_free(title);
 }
 
+/* Helper function to create a navigation button with F-key accelerator */
+static GtkWidget *CreateNavButton(gchar *label, guint fkey,
+                                  GCallback callback, GtkAccelGroup *accel_group,
+                                  GtkWidget *container)
+{
+  GtkWidget *button = gtk_button_new_with_label("");
+  SetAccelerator(button, label, button, "clicked", accel_group, FALSE);
+  gtk_widget_add_accelerator(button, "clicked", accel_group,
+                             fkey, 0, GTK_ACCEL_VISIBLE);
+  g_signal_connect(G_OBJECT(button), "clicked", callback, NULL);
+  gtk_widget_set_margin_top(button, 20);
+  gtk_box_pack_start(GTK_BOX(container), button, FALSE, FALSE, 0);
+  return button;
+}
+
 void CreateInventory(GtkWidget *hbox, gchar *Objects,
                      GtkAccelGroup *accel_group, gboolean CreateButtons,
                      gboolean CreateHere, gboolean CreateNavButtons,
@@ -4160,73 +4175,18 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     gtk_widget_set_margin_top(button[1], 10);
     gtk_widget_set_margin_top(button[2], 10);
 
-    /* Add navigation buttons (Bank/Guns/Pub/Loan) only if requested */
+    /* Add navigation buttons (Bank/Guns/Pub/Shark/Retire) only if requested */
     if (CreateNavButtons) {
-      /* Add Bank button (F1) */
-      {
-        GtkWidget *bank_button = gtk_button_new_with_label("");
-        SetAccelerator(bank_button, _("_Bank (F1)"), bank_button,
-                       "clicked", accel_group, FALSE);
-        gtk_widget_add_accelerator(bank_button, "clicked", accel_group,
-                                   GDK_KEY_F1, 0, GTK_ACCEL_VISIBLE);
-        g_signal_connect(G_OBJECT(bank_button), "clicked",
-                         G_CALLBACK(BankButtonPressed), NULL);
-        gtk_widget_set_margin_top(bank_button, 20);
-        gtk_box_pack_start(GTK_BOX(vbbox), bank_button, FALSE, FALSE, 0);
-      }
-
-      /* Add Guns button (F2) */
-      {
-        GtkWidget *guns_button = gtk_button_new_with_label("");
-        SetAccelerator(guns_button, _("_Guns (F2)"), guns_button,
-                       "clicked", accel_group, FALSE);
-        gtk_widget_add_accelerator(guns_button, "clicked", accel_group,
-                                   GDK_KEY_F2, 0, GTK_ACCEL_VISIBLE);
-        g_signal_connect(G_OBJECT(guns_button), "clicked",
-                         G_CALLBACK(GunsButtonPressed), NULL);
-        gtk_widget_set_margin_top(guns_button, 20);
-        gtk_box_pack_start(GTK_BOX(vbbox), guns_button, FALSE, FALSE, 0);
-      }
-
-      /* Add Pub button (F3) */
-      {
-        GtkWidget *pub_button = gtk_button_new_with_label("");
-        SetAccelerator(pub_button, _("_Pub (F3)"), pub_button,
-                       "clicked", accel_group, FALSE);
-        gtk_widget_add_accelerator(pub_button, "clicked", accel_group,
-                                   GDK_KEY_F3, 0, GTK_ACCEL_VISIBLE);
-        g_signal_connect(G_OBJECT(pub_button), "clicked",
-                         G_CALLBACK(PubButtonPressed), NULL);
-        gtk_widget_set_margin_top(pub_button, 20);
-        gtk_box_pack_start(GTK_BOX(vbbox), pub_button, FALSE, FALSE, 0);
-        ClientData.PubButton = pub_button;
-      }
-
-      /* Add Loan Shark button (F4) */
-      {
-        GtkWidget *loan_button = gtk_button_new_with_label("");
-        SetAccelerator(loan_button, _("_Shark (F4)"), loan_button,
-                       "clicked", accel_group, FALSE);
-        gtk_widget_add_accelerator(loan_button, "clicked", accel_group,
-                                   GDK_KEY_F4, 0, GTK_ACCEL_VISIBLE);
-        g_signal_connect(G_OBJECT(loan_button), "clicked",
-                         G_CALLBACK(LoanSharkButtonPressed), NULL);
-        gtk_widget_set_margin_top(loan_button, 20);
-        gtk_box_pack_start(GTK_BOX(vbbox), loan_button, FALSE, FALSE, 0);
-      }
-
-      /* Add Retire button (F5) */
-      {
-        GtkWidget *retire_button = gtk_button_new_with_label("");
-        SetAccelerator(retire_button, _("_Retire (F5)"), retire_button,
-                       "clicked", accel_group, FALSE);
-        gtk_widget_add_accelerator(retire_button, "clicked", accel_group,
-                                   GDK_KEY_F5, 0, GTK_ACCEL_VISIBLE);
-        g_signal_connect(G_OBJECT(retire_button), "clicked",
-                         G_CALLBACK(RetireButtonPressed), NULL);
-        gtk_widget_set_margin_top(retire_button, 20);
-        gtk_box_pack_start(GTK_BOX(vbbox), retire_button, FALSE, FALSE, 0);
-      }
+      CreateNavButton(_("_Bank (F1)"), GDK_KEY_F1,
+                      G_CALLBACK(BankButtonPressed), accel_group, vbbox);
+      CreateNavButton(_("_Guns (F2)"), GDK_KEY_F2,
+                      G_CALLBACK(GunsButtonPressed), accel_group, vbbox);
+      ClientData.PubButton = CreateNavButton(_("_Pub (F3)"), GDK_KEY_F3,
+                      G_CALLBACK(PubButtonPressed), accel_group, vbbox);
+      CreateNavButton(_("_Shark (F4)"), GDK_KEY_F4,
+                      G_CALLBACK(LoanSharkButtonPressed), accel_group, vbbox);
+      CreateNavButton(_("_Retire (F5)"), GDK_KEY_F5,
+                      G_CALLBACK(RetireButtonPressed), accel_group, vbbox);
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), vbbox, FALSE, FALSE, 0);
