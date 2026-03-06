@@ -2169,13 +2169,14 @@ void SendHighScores(Player *Play, gboolean EndGame, char *Message)
     Score.Days = Play->Turn;
     tim = time(NULL);
 #ifdef HAVE_GMTIME_R
-    timep = gmtime_r(&tim, &tmbuf);
+    timep = localtime_r(&tim, &tmbuf);
 #else
-    timep = gmtime(&tim);
+    timep = localtime(&tim);
 #endif
     Score.Time = g_new(char, 80);       /* Yuck! */
 
-    strftime(Score.Time, 80, "%d-%m-%Y", timep);
+    /* Format: YYYY-MM-DD HH:MM */
+    strftime(Score.Time, 80, "%Y-%m-%d %H:%M", timep);
     Score.Time[79] = '\0';
     for (i = 0; i < NUMHISCORE; i++) {
       if (InList == -1 && (Score.Money > HiScore[i].Money ||
@@ -2252,16 +2253,15 @@ int SendSingleHighScore(Player *Play, struct HISCORE *Score,
 
   prstr = FormatPrice(Score->Money);
   avgstr = FormatPrice(avgEarnings);
-  /* Format: Date, Days, Score, Avg/Day, Name, Status */
-  Data = g_strdup_printf("%d^%c%c%-14s %3d  %18s  %14s  %-24s %8s%c", ind,
-                         Bold ? 'B' : 'N', Bold ? '>' : ' ',
+  /* Format: Date/Time|Days|Score|Avg/Day|Name|Status (pipe-delimited) */
+  Data = g_strdup_printf("%d^%c|%s|%d|%s|%s|%s|%s", ind,
+                         Bold ? 'B' : 'N',
                          Score->Time,
                          Score->Days,
                          prstr,
                          avgstr,
                          Score->Name,
-                         Score->Dead ? _("(R.I.P.)") : "",
-                         Bold ? '<' : ' ');
+                         Score->Dead ? _("R.I.P.") : _("RETIRED"));
   SendServerMessage(NULL, C_NONE, C_HISCORE, Play, Data);
   g_free(prstr);
   g_free(avgstr);
@@ -3509,6 +3509,13 @@ void BuyObject(Player *From, char *data)
       }
     }
   } else if (strcmp(type, "gun") == 0) {
+    /* Set gun prices if not already set (allows buying from custom UI) */
+    if (From->Guns[index].Price == 0 && amount > 0) {
+      int j;
+      for (j = 0; j < NumGun; j++) {
+        From->Guns[j].Price = Gun[j].Price;
+      }
+    }
     if (index >= 0 && index < NumGun
         && TotalGunsCarried(From) + amount >= 0
         && TotalGunsCarried(From) + amount <= From->Mules.Carried + 2
