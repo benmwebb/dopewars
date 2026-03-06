@@ -3119,7 +3119,7 @@ gboolean GtkLoop(int *argc, char **argv[],
     GtkWidget *log_frame, *scroll_hbox;
     text = ClientData.messages = gtk_scrolled_text_view_new(&scroll_hbox);
     make_tags(GTK_TEXT_VIEW(text));
-    gtk_widget_set_size_request(text, 100, 120);  /* ~5 lines tall */
+    gtk_widget_set_size_request(text, 100, 150);  /* 5 lines tall */
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
     log_frame = gtk_frame_new(_("Messages"));
