@@ -5506,7 +5506,7 @@ GtkWidget *make_bold_label(const char *text, gboolean bold)
   if (bold) {
     GtkWidget *label = gtk_label_new(NULL);
     gchar *markup = g_markup_printf_escaped(
-         "<span font_weight=\"bold\" fgcolor=\"#0000DD\">%s</span>", text);
+         "<span font_weight=\"bold\" fgcolor=\"#32CD32\">%s</span>", text);
     gtk_label_set_markup(GTK_LABEL(label), markup);
     g_free(markup);
     return label;
