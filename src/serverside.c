@@ -150,7 +150,7 @@ typedef enum _OfferForce {
 int SendSingleHighScore(Player *Play, struct HISCORE *Score,
                         int ind, gboolean Bold);
 static int SendCopOffer(Player *To, OfferForce Force);
-static int OfferObject(Player *To, gboolean ForceMule);
+static int OfferObject(Player *To);
 static gboolean HighScoreWrite(FILE *fp, struct HISCORE *MultiScore,
                                struct HISCORE *AntiqueScore);
 
@@ -2485,7 +2485,7 @@ int SendCopOffer(Player *To, OfferForce Force)
   else
     To->OnBehalfOf = NULL;
   if (i < 33) {
-    return (OfferObject(To, Force == FORCEMULE));
+    return (OfferObject(To));
   } else if (i < 50) {
     return (RandomOffer(To));
   } else if (Sanitized || NumCop == 0 || NumGun == 0) {
@@ -3194,7 +3194,7 @@ int RandomOffer(Player *To)
  *
  * DISABLED - all random offers disabled
  */
-int OfferObject(Player *To, gboolean ForceMule)
+int OfferObject(Player *To)
 {
   return 0;
 }
