@@ -82,6 +82,9 @@ static char *attackquestiontr = N_("AE");
  * we still exist, so we don't get wiped from the list of active servers */
 #define METAUPDATETIME  (10800)
 
+/* Forward declarations for static functions */
+static void WaitForFightDone(Player *Play);
+
 /* Don't report players logging in/out to the metaserver more frequently
  * than once every minute (so as not to overload the metaserver, or slow
  * down our own server). */
@@ -512,7 +515,23 @@ void HandleServerMessage(gchar *buf, Player *Play)
   case C_FIGHTACT:
     if (Data[0] == 'R')
       RunFromCombat(Play, -1);
-    else
+    else if (Data[0] == 'P') {
+      /* Pay off the cops with 75% of carried cash */
+      price_t bribe = Play->Cash * 75 / 100;
+      if (bribe > 0 && Play->Cash >= bribe) {
+        gchar *text;
+        Play->Cash -= bribe;
+        text = dpg_strdup_printf(_("You pay %P to get the cops off your back."),
+                                 bribe);
+        SendPrintMessage(NULL, C_FIGHTPRINT, Play, text);
+        g_free(text);
+        dopelog(3, LF_SERVER, _("%s paid off cops with %P"),
+                GetPlayerName(Play), bribe);
+        WithdrawFromCombat(Play);
+        SendPlayerData(Play);
+        WaitForFightDone(Play);
+      }
+    } else
       Fire(Play);
     break;
   case C_ANSWER:
@@ -2587,7 +2606,10 @@ void AttackPlayer(Player *Play, Player *Attacked)
 
   SendFightMessage(Attacked, Play, 0, F_ARRIVED, (price_t)0, TRUE, NULL);
 
-  Fire(Play);
+  /* Cops wait for player to respond (pay off, run, or fight) before shooting */
+  if (!IsCop(Play)) {
+    Fire(Play);
+  }
 }
 
 /* 
