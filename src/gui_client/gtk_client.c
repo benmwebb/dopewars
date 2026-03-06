@@ -103,9 +103,7 @@ static price_t **PriceHistory = NULL;  /* [NumDrug][MAX_PRICE_HISTORY] */
 static int PriceHistoryCount = 0;      /* Number of recorded data points */
 
 /* Price graph window */
-static GtkWidget *PriceGraphWindow = NULL;
-static GtkWidget *PriceGraphDrawArea = NULL;
-static GtkWidget *PriceGraphCombo = NULL;
+static GtkWidget *EmbeddedGraphDrawArea = NULL;
 static int PriceGraphSelectedDrug = -1;  /* -1 = show all drugs */
 
 /* Drug colors for graph (12 distinct colors) */
@@ -124,15 +122,32 @@ static const char *DrugColors[] = {
   "#32CD32"   /* Green - Weed */
 };
 
+/* Transaction history log */
+#define MAX_TRANSACTIONS 100
+typedef struct {
+  gchar *drugName;
+  gint amount;        /* positive = buy, negative = sell */
+  price_t price;
+  price_t total;
+  gchar *location;
+  gint turn;
+} Transaction;
+
+static Transaction *TransactionLog = NULL;
+static int TransactionCount = 0;
+static GtkWidget *TransactionWindow = NULL;
+static GtkWidget *TransactionList = NULL;
+
 static void InitPriceMemory(void);
 static void StorePricesForLocation(int location);
 static void UpdateLocationTooltips(void);
 static void InitPriceHistory(void);
 static void RecordPriceHistory(void);
-static void ShowPriceGraph(void);
-static void CreatePriceGraphWindow(void);
-static void TogglePriceGraph(GtkWidget *widget, gpointer data);
 static gboolean DrawPriceGraph(GtkWidget *widget, cairo_t *cr, gpointer data);
+static void InitTransactionLog(void);
+static void RecordTransaction(int drugIndex, int amount, price_t price);
+static void ShowTransactionLog(GtkWidget *widget, gpointer data);
+static void CreateTransactionWindow(void);
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -307,7 +322,7 @@ static DPGtkItemFactoryEntry menu_items[] = {
   {N_("/List/_Players..."), NULL, ListPlayers, 0, NULL},
   {N_("/List/_Scores..."), NULL, ListScores, 0, NULL},
   {N_("/List/_Inventory..."), NULL, ListInventory, 0, NULL},
-  {N_("/List/Price _Graph..."), "<control>G", TogglePriceGraph, 0, NULL},
+  {N_("/List/_Transactions..."), "<control>T", ShowTransactionLog, 0, NULL},
   {N_("/_Errands"), NULL, NULL, 0, "<Branch>"},
   {N_("/Errands/_Spy..."), NULL, SpyOnPlayer, 0, NULL},
   {N_("/Errands/_Tipoff..."), NULL, TipOff, 0, NULL},
@@ -625,7 +640,17 @@ void HandleClientMessage(char *pt, Player *Play)
     CompleteHighScoreDialog((strcmp(Data, "end") == 0));
     break;
   case C_PRINTMESSAGE:
-    PrintMessage(Data, NULL);
+    /* Drug events - green for cheap (prices down), red for expensive (prices up) */
+    {
+      gchar *lower = g_ascii_strdown(Data, -1);
+      /* Cheap drug events typically contain "cheap" in the message */
+      if (strstr(lower, "cheap") != NULL) {
+        PrintMessage(Data, "drug-alert-down");
+      } else {
+        PrintMessage(Data, "drug-alert-up");
+      }
+      g_free(lower);
+    }
     break;
   case C_FIGHTPRINT:
     DisplayFightMessage(Data);
@@ -1013,6 +1038,7 @@ static void FightCallback(GtkWidget *widget, gpointer data)
     break;
   case 'F':
   case 'S':
+  case 'P':
     text[0] = Answer;
     text[1] = '\0';
     SendClientMessage(Play, C_NONE, C_FIGHTACT, NULL, text);
@@ -1120,6 +1146,10 @@ static void CreateFightDialog(void)
   /* Button to run from combat in the "Fight" dialog */
   button = AddFightButton(_("_Run"), accel_group, GTK_BOX(hbbox), 'R');
   g_object_set_data(G_OBJECT(dialog), "run", button);
+
+  /* Button to pay off cops in the "Fight" dialog (15% of cash) */
+  button = AddFightButton(_("_Pay Off"), accel_group, GTK_BOX(hbbox), 'P');
+  g_object_set_data(G_OBJECT(dialog), "payoff", button);
 
   gtk_widget_show(hsep);
   gtk_box_pack_start(GTK_BOX(vbox), outer, FALSE, FALSE, 0);
@@ -1270,7 +1300,7 @@ static void EnableFightButton(GtkWidget *button, gboolean enable)
 void DisplayFightMessage(char *Data)
 {
   Player *Play;
-  GtkWidget *Deal, *Fight, *Stand, *Run;
+  GtkWidget *Deal, *Fight, *Stand, *Run, *PayOff;
   GtkTextView *textview;
   gchar *AttackName, *DefendName, *MuleName, *Message;
   FightPoint fp;
@@ -1303,6 +1333,7 @@ void DisplayFightMessage(char *Data)
   Fight = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "fight"));
   Stand = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "stand"));
   Run = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "run"));
+  PayOff = GTK_WIDGET(g_object_get_data(G_OBJECT(FightDialog), "payoff"));
   textview = GTK_TEXT_VIEW(g_object_get_data(G_OBJECT(FightDialog), "text"));
 
   Play = ClientData.Play;
@@ -1354,6 +1385,11 @@ void DisplayFightMessage(char *Data)
   EnableFightButton(Fight, CanFire && TotalGunsCarried(Play) > 0);
   EnableFightButton(Stand, CanFire && TotalGunsCarried(Play) == 0);
   EnableFightButton(Run, fp != F_LASTLEAVE);
+  /* Pay Off: always visible during fight, enabled if player has cash */
+  if (PayOff) {
+    gtk_widget_show(PayOff);
+    gtk_widget_set_sensitive(PayOff, fp != F_LASTLEAVE && Play->Cash > 0);
+  }
 }
 
 /* 
@@ -1589,18 +1625,28 @@ void UpdateInventory(struct InventoryWidgets *Inven,
       if (HaveAbility(ClientData.Play, A_DRUGVALUE) && AreDrugs) {
         price_t avgPrice = Objects[i].TotalValue / Objects[i].Carried;
         if (price > 0 && avgPrice > 0) {
-          /* Show profit/loss percentage vs current price */
+          /* Show profit/loss percentage with colored arrow */
           int profitPct = (int)(((price - avgPrice) * 100) / avgPrice);
-          if (profitPct >= 0) {
-            titles[1] = dpg_strdup_printf("%d @ %P (+%d%%)",
-                                          Objects[i].Carried, avgPrice, profitPct);
+          if (profitPct > 0) {
+            /* Profit - green up arrow */
+            titles[1] = dpg_strdup_printf(
+                "<span foreground=\"#00FF00\">↑</span> %d @ %P (+%d%%)",
+                Objects[i].Carried, avgPrice, profitPct);
+          } else if (profitPct < 0) {
+            /* Loss - red down arrow */
+            titles[1] = dpg_strdup_printf(
+                "<span foreground=\"#FF0000\">↓</span> %d @ %P (%d%%)",
+                Objects[i].Carried, avgPrice, profitPct);
           } else {
-            titles[1] = dpg_strdup_printf("%d @ %P (%d%%)",
-                                          Objects[i].Carried, avgPrice, profitPct);
+            /* Break even - no arrow */
+            titles[1] = dpg_strdup_printf("%d @ %P (0%%)",
+                                          Objects[i].Carried, avgPrice);
           }
         } else if (avgPrice > 0) {
-          /* Drug not for sale here */
-          titles[1] = dpg_strdup_printf("%d @ %P", Objects[i].Carried, avgPrice);
+          /* Drug not for sale here - yellow dash */
+          titles[1] = dpg_strdup_printf(
+              "<span foreground=\"#FFFF00\">–</span> %d @ %P",
+              Objects[i].Carried, avgPrice);
         } else {
           /* No average price available (e.g., free drugs) */
           titles[1] = g_strdup_printf("%d", Objects[i].Carried);
@@ -1836,11 +1882,21 @@ static void DealOKCallback(GtkWidget *widget, gpointer data)
   GtkWidget *spinner;
   gint amount;
   gchar *text;
+  price_t price;
 
   spinner = DealDialog.amount;
 
   gtk_spin_button_update(GTK_SPIN_BUTTON(spinner));
   amount = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinner));
+
+  /* Get the current price for this drug */
+  price = ClientData.Play->Drugs[DealDialog.DrugInd].Price;
+
+  /* Record the transaction (positive amount = buy, negative = sell) */
+  if (amount > 0) {
+    RecordTransaction(DealDialog.DrugInd,
+                      data == BT_BUY ? amount : -amount, price);
+  }
 
   text = g_strdup_printf("drug^%d^%d", DealDialog.DrugInd,
                          data == BT_BUY ? amount : -amount);
@@ -2238,11 +2294,11 @@ void GuiStartGame(void)
   InGame = TRUE;
   InitPriceMemory();
   InitPriceHistory();
+  InitTransactionLog();
   UpdateMenus();
   gtk_widget_show_all(ClientData.vbox);
   UpdatePlayerLists();
   SoundPlay(Sounds.StartGame);
-  ShowPriceGraph();
 }
 
 void EndGame(void)
@@ -2262,13 +2318,22 @@ void EndGame(void)
 static gint DrugSortByName(GtkTreeModel *model, GtkTreeIter *a,
                            GtkTreeIter *b, gpointer data)
 {
-  int indexa, indexb;
-  gtk_tree_model_get(model, a, INVEN_COL_INDEX, &indexa, -1);
-  gtk_tree_model_get(model, b, INVEN_COL_INDEX, &indexb, -1);
-  if (indexa < 0 || indexa >= NumDrug || indexb < 0 || indexb >= NumDrug) {
-    return 0;
+  gchar *namea, *nameb;
+  gint result;
+
+  /* Get the actual displayed names from the model */
+  gtk_tree_model_get(model, a, INVEN_COL_NAME, &namea, -1);
+  gtk_tree_model_get(model, b, INVEN_COL_NAME, &nameb, -1);
+
+  if (!namea || !nameb) {
+    result = 0;
+  } else {
+    result = g_ascii_strcasecmp(namea, nameb);
   }
-  return g_ascii_strcasecmp(Drug[indexa].Name, Drug[indexb].Name);
+
+  g_free(namea);
+  g_free(nameb);
+  return result;
 }
 
 static gint DrugSortByPrice(GtkTreeModel *model, GtkTreeIter *a,
@@ -2453,25 +2518,58 @@ void StorePricesForLocation(int location)
   UpdateLocationTooltips();
 }
 
-/* Update tooltips on location buttons to show last known prices */
+/* Update tooltips on location buttons to show last known prices and profit opportunities */
 void UpdateLocationTooltips(void)
 {
   int i, j;
   GString *tip;
   gchar *locName, *drugName;
+  Player *Play = ClientData.Play;
 
-  if (!ClientData.JetButtons || !PriceMemory) return;
+  if (!ClientData.JetButtons || !PriceMemory || !Play) return;
 
   tip = g_string_new(NULL);
 
   for (i = 0; i < NumLocation; i++) {
     gboolean hasPrices = FALSE;
+    gboolean hasProfitable = FALSE;
 
     g_string_truncate(tip, 0);
     locName = dpg_strdup_printf("%tde", Location[i].Name);
     g_string_append_printf(tip, "%s:\n", locName);
     g_free(locName);
 
+    /* First, show profitable drugs the player is carrying */
+    if (HaveAbility(Play, A_DRUGVALUE)) {
+      for (j = 0; j < NumDrug; j++) {
+        if (Play->Drugs[j].Carried > 0 && PriceMemory[i][j] > 0) {
+          price_t avgPrice = Play->Drugs[j].TotalValue / Play->Drugs[j].Carried;
+          if (avgPrice > 0) {
+            price_t locPrice = PriceMemory[i][j];
+            int profitPct = (int)(((locPrice - avgPrice) * 100) / avgPrice);
+            if (profitPct > 0) {
+              gchar *profitStr = FormatPrice((locPrice - avgPrice) * Play->Drugs[j].Carried);
+              drugName = dpg_strdup_printf("%tde", Drug[j].Name);
+              if (!hasProfitable) {
+                g_string_append(tip, _("  [SELL HERE]\n"));
+                hasProfitable = TRUE;
+              }
+              g_string_append_printf(tip, "  ↑ %s: +%d%% (+%s)\n",
+                                     drugName, profitPct, profitStr);
+              g_free(drugName);
+              g_free(profitStr);
+              hasPrices = TRUE;
+            }
+          }
+        }
+      }
+      if (hasProfitable) {
+        g_string_append(tip, "\n");
+      }
+    }
+
+    /* Then show all known prices at this location */
+    g_string_append(tip, _("  [PRICES]\n"));
     for (j = 0; j < NumDrug; j++) {
       if (PriceMemory[i][j] > 0) {
         gchar *priceStr = FormatPrice(PriceMemory[i][j]);
@@ -2533,19 +2631,9 @@ void RecordPriceHistory(void)
   }
   PriceHistoryCount++;
 
-  /* Redraw graph if visible */
-  if (PriceGraphWindow && PriceGraphDrawArea &&
-      gtk_widget_get_visible(PriceGraphWindow)) {
-    gtk_widget_queue_draw(PriceGraphDrawArea);
-  }
-}
-
-/* Combo box changed callback */
-static void PriceGraphComboChanged(GtkComboBox *combo, gpointer data)
-{
-  PriceGraphSelectedDrug = gtk_combo_box_get_active(combo) - 1;  /* -1 = "All" */
-  if (PriceGraphDrawArea) {
-    gtk_widget_queue_draw(PriceGraphDrawArea);
+  /* Redraw embedded graph */
+  if (EmbeddedGraphDrawArea) {
+    gtk_widget_queue_draw(EmbeddedGraphDrawArea);
   }
 }
 
@@ -2562,20 +2650,9 @@ static void OnDrugSelectionChanged(GtkTreeSelection *treesel, gpointer data)
     /* Update the graph to show this drug */
     PriceGraphSelectedDrug = drugIndex;
 
-    /* Update the combo box if the graph window exists */
-    if (PriceGraphCombo) {
-      /* Block the signal to avoid recursive updates */
-      g_signal_handlers_block_by_func(PriceGraphCombo,
-                                      G_CALLBACK(PriceGraphComboChanged), NULL);
-      gtk_combo_box_set_active(GTK_COMBO_BOX(PriceGraphCombo), drugIndex + 1);
-      g_signal_handlers_unblock_by_func(PriceGraphCombo,
-                                        G_CALLBACK(PriceGraphComboChanged), NULL);
-    }
-
-    /* Redraw the graph */
-    if (PriceGraphWindow && PriceGraphDrawArea &&
-        gtk_widget_get_visible(PriceGraphWindow)) {
-      gtk_widget_queue_draw(PriceGraphDrawArea);
+    /* Redraw embedded graph */
+    if (EmbeddedGraphDrawArea) {
+      gtk_widget_queue_draw(EmbeddedGraphDrawArea);
     }
   }
 }
@@ -2732,74 +2809,175 @@ gboolean DrawPriceGraph(GtkWidget *widget, cairo_t *cr, gpointer data)
 }
 
 /* Create the price graph window */
-void CreatePriceGraphWindow(void)
+/* Initialize transaction log */
+void InitTransactionLog(void)
 {
-  GtkWidget *vbox, *hbox, *label;
   int i;
 
-  if (PriceGraphWindow) {
-    gtk_window_present(GTK_WINDOW(PriceGraphWindow));
+  if (TransactionLog) {
+    for (i = 0; i < TransactionCount; i++) {
+      g_free(TransactionLog[i].drugName);
+      g_free(TransactionLog[i].location);
+    }
+    g_free(TransactionLog);
+  }
+
+  TransactionLog = g_new0(Transaction, MAX_TRANSACTIONS);
+  TransactionCount = 0;
+}
+
+/* Record a drug transaction */
+void RecordTransaction(int drugIndex, int amount, price_t price)
+{
+  Transaction *trans;
+  Player *Play = ClientData.Play;
+
+  if (!TransactionLog || !Play) return;
+  if (TransactionCount >= MAX_TRANSACTIONS) {
+    /* Shift entries down to make room */
+    g_free(TransactionLog[0].drugName);
+    g_free(TransactionLog[0].location);
+    memmove(&TransactionLog[0], &TransactionLog[1],
+            sizeof(Transaction) * (MAX_TRANSACTIONS - 1));
+    TransactionCount = MAX_TRANSACTIONS - 1;
+  }
+
+  trans = &TransactionLog[TransactionCount];
+  trans->drugName = dpg_strdup_printf("%tde", Drug[drugIndex].Name);
+  trans->amount = amount;
+  trans->price = price;
+  trans->total = price * (amount > 0 ? amount : -amount);
+  trans->location = dpg_strdup_printf("%tde", Location[Play->IsAt].Name);
+  trans->turn = Play->Turn;
+  TransactionCount++;
+
+  /* Update transaction window if visible */
+  if (TransactionWindow && TransactionList) {
+    GtkListStore *store = GTK_LIST_STORE(
+        gtk_tree_view_get_model(GTK_TREE_VIEW(TransactionList)));
+    GtkTreeIter iter;
+    gchar *amountStr, *priceStr, *totalStr, *typeStr;
+
+    if (amount > 0) {
+      typeStr = g_strdup("BUY");
+      amountStr = g_strdup_printf("+%d", amount);
+    } else {
+      typeStr = g_strdup("SELL");
+      amountStr = g_strdup_printf("%d", amount);
+    }
+    priceStr = FormatPrice(price);
+    totalStr = FormatPrice(trans->total);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter,
+                       0, trans->turn,
+                       1, typeStr,
+                       2, trans->drugName,
+                       3, amountStr,
+                       4, priceStr,
+                       5, totalStr,
+                       6, trans->location,
+                       -1);
+    g_free(typeStr);
+    g_free(amountStr);
+    g_free(priceStr);
+    g_free(totalStr);
+  }
+}
+
+/* Create transaction history window */
+void CreateTransactionWindow(void)
+{
+  GtkWidget *vbox, *scrollwin, *tv;
+  GtkListStore *store;
+  GtkCellRenderer *renderer;
+  GtkTreeViewColumn *col;
+  const gchar *colTitles[] = {"Day", "Type", "Drug", "Qty", "Price", "Total", "Location"};
+  int i;
+
+  if (TransactionWindow) {
+    gtk_window_present(GTK_WINDOW(TransactionWindow));
     return;
   }
 
-  PriceGraphWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_window_set_title(GTK_WINDOW(PriceGraphWindow), _("Drug Price History"));
-  gtk_window_set_default_size(GTK_WINDOW(PriceGraphWindow), 700, 450);
-  my_set_dialog_position(GTK_WINDOW(PriceGraphWindow));
-  gtk_container_set_border_width(GTK_CONTAINER(PriceGraphWindow), 5);
+  TransactionWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title(GTK_WINDOW(TransactionWindow), _("Transaction History"));
+  gtk_window_set_default_size(GTK_WINDOW(TransactionWindow), 600, 400);
+  my_set_dialog_position(GTK_WINDOW(TransactionWindow));
+  gtk_container_set_border_width(GTK_CONTAINER(TransactionWindow), 5);
 
-  g_signal_connect(G_OBJECT(PriceGraphWindow), "destroy",
-                   G_CALLBACK(gtk_widget_destroyed), &PriceGraphWindow);
-  g_signal_connect(G_OBJECT(PriceGraphWindow), "destroy",
-                   G_CALLBACK(gtk_widget_destroyed), &PriceGraphDrawArea);
-  g_signal_connect(G_OBJECT(PriceGraphWindow), "destroy",
-                   G_CALLBACK(gtk_widget_destroyed), &PriceGraphCombo);
+  g_signal_connect(G_OBJECT(TransactionWindow), "destroy",
+                   G_CALLBACK(gtk_widget_destroyed), &TransactionWindow);
+  g_signal_connect(G_OBJECT(TransactionWindow), "destroy",
+                   G_CALLBACK(gtk_widget_destroyed), &TransactionList);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-  /* Filter combo box */
-  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-  label = gtk_label_new(_("Show:"));
-  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+  /* Create list store: Day, Type, Drug, Qty, Price, Total, Location */
+  store = gtk_list_store_new(7, G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING,
+                             G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
+                             G_TYPE_STRING);
 
-  PriceGraphCombo = gtk_combo_box_text_new();
-  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(PriceGraphCombo), _("All Drugs"));
-  for (i = 0; i < NumDrug; i++) {
-    gchar *drugName = dpg_strdup_printf("%tde", Drug[i].Name);
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(PriceGraphCombo), drugName);
-    g_free(drugName);
+  tv = TransactionList = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+  g_object_unref(store);
+
+  renderer = gtk_cell_renderer_text_new();
+  for (i = 0; i < 7; i++) {
+    col = gtk_tree_view_column_new_with_attributes(
+              _(colTitles[i]), renderer, "text", i, NULL);
+    gtk_tree_view_column_set_resizable(col, TRUE);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(tv), col);
   }
-  gtk_combo_box_set_active(GTK_COMBO_BOX(PriceGraphCombo), 0);
-  g_signal_connect(G_OBJECT(PriceGraphCombo), "changed",
-                   G_CALLBACK(PriceGraphComboChanged), NULL);
-  gtk_box_pack_start(GTK_BOX(hbox), PriceGraphCombo, FALSE, FALSE, 5);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+  /* Populate with existing transactions */
+  for (i = 0; i < TransactionCount; i++) {
+    Transaction *trans = &TransactionLog[i];
+    GtkTreeIter iter;
+    gchar *amountStr, *priceStr, *totalStr, *typeStr;
 
-  /* Drawing area for graph */
-  PriceGraphDrawArea = gtk_drawing_area_new();
-  gtk_widget_set_size_request(PriceGraphDrawArea, 600, 400);
-  g_signal_connect(G_OBJECT(PriceGraphDrawArea), "draw",
-                   G_CALLBACK(DrawPriceGraph), NULL);
-  gtk_box_pack_start(GTK_BOX(vbox), PriceGraphDrawArea, TRUE, TRUE, 0);
+    if (trans->amount > 0) {
+      typeStr = g_strdup("BUY");
+      amountStr = g_strdup_printf("+%d", trans->amount);
+    } else {
+      typeStr = g_strdup("SELL");
+      amountStr = g_strdup_printf("%d", trans->amount);
+    }
+    priceStr = FormatPrice(trans->price);
+    totalStr = FormatPrice(trans->total);
 
-  gtk_container_add(GTK_CONTAINER(PriceGraphWindow), vbox);
-  gtk_widget_show_all(PriceGraphWindow);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter,
+                       0, trans->turn,
+                       1, typeStr,
+                       2, trans->drugName,
+                       3, amountStr,
+                       4, priceStr,
+                       5, totalStr,
+                       6, trans->location,
+                       -1);
+    g_free(typeStr);
+    g_free(amountStr);
+    g_free(priceStr);
+    g_free(totalStr);
+  }
+
+  scrollwin = gtk_scrolled_window_new(NULL, NULL);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
+                                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_container_add(GTK_CONTAINER(scrollwin), tv);
+  gtk_box_pack_start(GTK_BOX(vbox), scrollwin, TRUE, TRUE, 0);
+
+  gtk_container_add(GTK_CONTAINER(TransactionWindow), vbox);
+  gtk_widget_show_all(TransactionWindow);
 }
 
-/* Show/create the price graph window */
-void ShowPriceGraph(void)
+/* Show/toggle transaction log window from menu */
+static void ShowTransactionLog(GtkWidget *widget, gpointer data)
 {
-  CreatePriceGraphWindow();
-}
-
-/* Toggle the price graph window from the menu */
-static void TogglePriceGraph(GtkWidget *widget, gpointer data)
-{
-  if (PriceGraphWindow && gtk_widget_get_visible(PriceGraphWindow)) {
-    gtk_widget_destroy(PriceGraphWindow);
+  if (TransactionWindow && gtk_widget_get_visible(TransactionWindow)) {
+    gtk_widget_destroy(TransactionWindow);
   } else {
-    CreatePriceGraphWindow();
+    CreateTransactionWindow();
   }
 }
 
@@ -2826,6 +3004,11 @@ static void make_tags(GtkTextView *textview)
                              "#000000008B8B", NULL);
   gtk_text_buffer_create_tag(buffer, "leave", "foreground",
                              "#8B8B00000000", NULL);
+  /* Drug alert tags - red for prices going up, green for prices going down */
+  gtk_text_buffer_create_tag(buffer, "drug-alert-up", "foreground",
+                             "#FFFF00000000", "weight", PANGO_WEIGHT_BOLD, NULL);
+  gtk_text_buffer_create_tag(buffer, "drug-alert-down", "foreground",
+                             "#0000FFFF0000", "weight", PANGO_WEIGHT_BOLD, NULL);
 }
 
 #ifdef CYGWIN
@@ -2836,8 +3019,8 @@ gboolean GtkLoop(int *argc, char **argv[],
                  struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #endif
 {
-  GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *menubar, *text,
-      *vpaned, *button, *tv, *widget;
+  GtkWidget *window, *vbox, *vbox2, *frame, *grid, *menubar, *text,
+      *button, *tv, *widget;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
   int i;
@@ -2892,7 +3075,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   /* Restore saved geometry or use default size */
   if (!RestoreWindowGeometry(GTK_WINDOW(window))) {
-    gtk_window_set_default_size(GTK_WINDOW(window), 450, 390);
+    gtk_window_set_default_size(GTK_WINDOW(window), 900, 700);
   }
   SetupWindowGeometryTracking(GTK_WINDOW(window));
 
@@ -2923,73 +3106,37 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), UseSounds);
 
   vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+
+  /* === STATS SECTION === */
   frame = gtk_frame_new(_("Stats"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
-
   grid = CreateStatusWidgets(&ClientData.Status);
-
   gtk_container_add(GTK_CONTAINER(frame), grid);
-
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-  vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-
-  text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
-  make_tags(GTK_TEXT_VIEW(text));
-  gtk_widget_set_size_request(text, 100, 80);
-  gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
-  gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
-  gtk_paned_pack1(GTK_PANED(vpaned), hbox, TRUE, TRUE);
-
-  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
-  CreateInventory(hbox, Names.Drugs, accel_group, TRUE, TRUE, TRUE,
-                  &ClientData.Drug, G_CALLBACK(DealDrugs));
-  tv = ClientData.Drug.HereList;
-  gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), TRUE);
-  sortable = GTK_TREE_SORTABLE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
-  gtk_tree_sortable_set_sort_func(sortable, 0, DrugSortByName, NULL, NULL);
-  gtk_tree_sortable_set_sort_func(sortable, 1, DrugSortByPrice, NULL, NULL);
-  for (i = 0; i < 2; ++i) {
-    GtkTreeViewColumn *col = gtk_tree_view_get_column(GTK_TREE_VIEW(tv), i);
-    gtk_tree_view_column_set_sort_column_id(col, i);
+  /* === LOG/MESSAGES SECTION === */
+  {
+    GtkWidget *log_frame, *scroll_hbox;
+    text = ClientData.messages = gtk_scrolled_text_view_new(&scroll_hbox);
+    make_tags(GTK_TEXT_VIEW(text));
+    gtk_widget_set_size_request(text, 100, 120);  /* ~5 lines tall */
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
+    log_frame = gtk_frame_new(_("Messages"));
+    gtk_container_set_border_width(GTK_CONTAINER(log_frame), 3);
+    gtk_container_add(GTK_CONTAINER(log_frame), scroll_hbox);
+    gtk_box_pack_start(GTK_BOX(vbox), log_frame, FALSE, FALSE, 0);
   }
 
-  /* Connect row-activated signals for double-click to buy/sell */
-  g_signal_connect(G_OBJECT(ClientData.Drug.HereList), "row-activated",
-                   G_CALLBACK(OnDrugHereRowActivated), NULL);
-  g_signal_connect(G_OBJECT(ClientData.Drug.CarriedList), "row-activated",
-                   G_CALLBACK(OnDrugCarriedRowActivated), NULL);
-
-  /* Connect selection-changed signals to update graph when drug is clicked */
-  g_signal_connect(G_OBJECT(gtk_tree_view_get_selection(
-                       GTK_TREE_VIEW(ClientData.Drug.HereList))),
-                   "changed", G_CALLBACK(OnDrugSelectionChanged), NULL);
-  g_signal_connect(G_OBJECT(gtk_tree_view_get_selection(
-                       GTK_TREE_VIEW(ClientData.Drug.CarriedList))),
-                   "changed", G_CALLBACK(OnDrugSelectionChanged), NULL);
-
-#ifdef CYGWIN
-  /* GtkFrames don't look quite right in Win32 yet */
-  gtk_paned_pack2(GTK_PANED(vpaned), hbox, TRUE, TRUE);
-#else
-  frame = gtk_frame_new(NULL);
-  gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-  gtk_container_add(GTK_CONTAINER(frame), hbox);
-  gtk_paned_pack2(GTK_PANED(vpaned), frame, TRUE, TRUE);
-#endif
-
-  gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
-
-  /* Create location buttons grid at the bottom of the main window */
+  /* === JET TO LOCATION SECTION === */
   {
     GtkWidget *jet_grid, *jet_frame;
     gint boxsize, row, col;
     gchar *name, AccelChar;
 
-    /* Allocate array to store button references */
     ClientData.JetButtons = g_new(GtkWidget *, NumLocation);
 
-    /* Calculate grid size to make a square-ish layout */
+    /* Calculate grid size for square-ish layout */
     boxsize = 1;
     while (boxsize * boxsize < NumLocation) {
       boxsize++;
@@ -3024,7 +3171,6 @@ gboolean GtkLoop(int *argc, char **argv[],
         button = gtk_button_new_with_label("");
         name = dpg_strdup_printf(_("_%c. %tde"), AccelChar, Location[i].Name);
         SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
-        /* Add keypad shortcuts as well */
         if (i < 9) {
           gtk_widget_add_accelerator(button, "clicked", accel_group,
                                      GDK_KEY_KP_1 + i, 0,
@@ -3032,18 +3178,72 @@ gboolean GtkLoop(int *argc, char **argv[],
         }
         g_free(name);
       }
-      gtk_widget_set_sensitive(button, FALSE);  /* Disabled until game starts */
+      gtk_widget_set_sensitive(button, FALSE);
       g_signal_connect(G_OBJECT(button), "clicked",
                        G_CALLBACK(DirectJetCallback), GINT_TO_POINTER(i));
       dp_gtk_grid_attach(GTK_GRID(jet_grid), button, col, row, 1, 1, TRUE);
       ClientData.JetButtons[i] = button;
     }
 
-    /* Wrap in a frame with a label */
     jet_frame = gtk_frame_new(_("Jet to location"));
     gtk_container_set_border_width(GTK_CONTAINER(jet_frame), 3);
     gtk_container_add(GTK_CONTAINER(jet_frame), jet_grid);
     gtk_box_pack_start(GTK_BOX(vbox), jet_frame, FALSE, FALSE, 0);
+  }
+
+  /* === DRUGS SECTION: Here | Buttons | Carried | Graph === */
+  {
+    GtkWidget *drug_hbox, *graph_frame, *graph_vbox;
+
+    drug_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
+    CreateInventory(drug_hbox, Names.Drugs, accel_group, TRUE, TRUE, TRUE,
+                    &ClientData.Drug, G_CALLBACK(DealDrugs));
+
+    tv = ClientData.Drug.HereList;
+    gtk_tree_view_set_headers_clickable(GTK_TREE_VIEW(tv), TRUE);
+    sortable = GTK_TREE_SORTABLE(gtk_tree_view_get_model(GTK_TREE_VIEW(tv)));
+    gtk_tree_sortable_set_sort_func(sortable, 0, DrugSortByName, NULL, NULL);
+    gtk_tree_sortable_set_sort_func(sortable, 1, DrugSortByPrice, NULL, NULL);
+    for (i = 0; i < 2; ++i) {
+      GtkTreeViewColumn *col = gtk_tree_view_get_column(GTK_TREE_VIEW(tv), i);
+      gtk_tree_view_column_set_sort_column_id(col, i);
+    }
+
+    /* Connect row-activated signals for double-click to buy/sell */
+    g_signal_connect(G_OBJECT(ClientData.Drug.HereList), "row-activated",
+                     G_CALLBACK(OnDrugHereRowActivated), NULL);
+    g_signal_connect(G_OBJECT(ClientData.Drug.CarriedList), "row-activated",
+                     G_CALLBACK(OnDrugCarriedRowActivated), NULL);
+
+    /* Connect selection-changed signals to update graph when drug is clicked */
+    g_signal_connect(G_OBJECT(gtk_tree_view_get_selection(
+                         GTK_TREE_VIEW(ClientData.Drug.HereList))),
+                     "changed", G_CALLBACK(OnDrugSelectionChanged), NULL);
+    g_signal_connect(G_OBJECT(gtk_tree_view_get_selection(
+                         GTK_TREE_VIEW(ClientData.Drug.CarriedList))),
+                     "changed", G_CALLBACK(OnDrugSelectionChanged), NULL);
+
+    /* Embedded price graph */
+    graph_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    EmbeddedGraphDrawArea = gtk_drawing_area_new();
+    gtk_widget_set_size_request(EmbeddedGraphDrawArea, 200, 150);
+    g_signal_connect(G_OBJECT(EmbeddedGraphDrawArea), "draw",
+                     G_CALLBACK(DrawPriceGraph), NULL);
+    gtk_box_pack_start(GTK_BOX(graph_vbox), EmbeddedGraphDrawArea, TRUE, TRUE, 0);
+
+    graph_frame = gtk_frame_new(_("Price Graph"));
+    gtk_container_set_border_width(GTK_CONTAINER(graph_frame), 3);
+    gtk_container_add(GTK_CONTAINER(graph_frame), graph_vbox);
+    gtk_box_pack_start(GTK_BOX(drug_hbox), graph_frame, TRUE, TRUE, 0);
+
+#ifdef CYGWIN
+    gtk_box_pack_start(GTK_BOX(vbox), drug_hbox, TRUE, TRUE, 0);
+#else
+    frame = gtk_frame_new(NULL);
+    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(frame), drug_hbox);
+    gtk_box_pack_start(GTK_BOX(vbox), frame, TRUE, TRUE, 0);
+#endif
   }
 
   gtk_box_pack_start(GTK_BOX(vbox2), vbox, TRUE, TRUE, 0);
@@ -3228,6 +3428,20 @@ static void TransferDepositAll(GtkWidget *widget, GtkWidget *dialog)
 
   if (ClientData.Play->Cash <= 0) return;
   text = pricetostr(ClientData.Play->Cash);
+  SendClientMessage(ClientData.Play, C_NONE, C_DEPOSIT, NULL, text);
+  g_free(text);
+  gtk_widget_destroy(dialog);
+}
+
+static void TransferDeposit75(GtkWidget *widget, GtkWidget *dialog)
+{
+  gchar *text;
+  price_t amount;
+
+  if (ClientData.Play->Cash <= 0) return;
+  amount = ClientData.Play->Cash * 75 / 100;
+  if (amount <= 0) return;
+  text = pricetostr(amount);
   SendClientMessage(ClientData.Play, C_NONE, C_DEPOSIT, NULL, text);
   g_free(text);
   gtk_widget_destroy(dialog);
@@ -3649,7 +3863,13 @@ void TransferDialog(gboolean Debt)
                              ClientData.Play->Cash >= ClientData.Play->Debt);
     my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
   } else {
-    /* Bank dialog - add Deposit All and Withdraw All buttons */
+    /* Bank dialog - add Deposit 75%, Deposit All and Withdraw All buttons */
+    button = gtk_button_new_with_label(_("Deposit 75%"));
+    g_signal_connect(G_OBJECT(button), "clicked",
+                     G_CALLBACK(TransferDeposit75), dialog);
+    gtk_widget_set_sensitive(button, ClientData.Play->Cash > 0);
+    my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
+
     button = gtk_button_new_with_label(_("Deposit All"));
     g_signal_connect(G_OBJECT(button), "clicked",
                      G_CALLBACK(TransferDepositAll), dialog);
@@ -4127,12 +4347,17 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     for (icol = 0; icol < 2; ++icol) {
       GtkTreeViewColumn *col;
       if (i == 0 && icol == 1) {
-        /* Right align prices */
+        /* Right align prices in "here" list */
         GtkCellRenderer *rren = gtk_cell_renderer_text_new();
         g_object_set(G_OBJECT(rren), "xalign", 1.0, NULL);
         col = gtk_tree_view_column_new_with_attributes(
                        titles[i][icol], rren, "text", icol, NULL);
         gtk_tree_view_column_set_alignment(col, 1.0);
+      } else if (i == 1 && icol == 1) {
+        /* Use markup for carried list's Number column (for colored arrows) */
+        GtkCellRenderer *mren = gtk_cell_renderer_text_new();
+        col = gtk_tree_view_column_new_with_attributes(
+                       titles[i][icol], mren, "markup", icol, NULL);
       } else {
         col = gtk_tree_view_column_new_with_attributes(
                        titles[i][icol], renderer, "text", icol, NULL);
