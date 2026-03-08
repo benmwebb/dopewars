@@ -63,6 +63,7 @@ struct StatusWidgets {
   GtkWidget *GunsName, *GunsValue, *MulesName, *MulesValue;
   GtkWidget *HealthName, *HealthValue, *DaysRemName, *DaysRemValue;
   GtkWidget *NetWorthName, *NetWorthValue;
+  GtkWidget *SpaceProgressBar;  /* Progress bar for coat space visualization */
 };
 
 struct ClientDataStruct {
@@ -79,6 +80,7 @@ struct ClientDataStruct {
 
 struct DealDiaStruct {
   GtkWidget *dialog, *cost, *carrying, *space, *afford, *amount;
+  GtkWidget *value_label;  /* Shows quantity and total cost/revenue */
   gint DrugInd;
   gpointer Type;
 };
@@ -122,6 +124,16 @@ static const char *DrugColors[] = {
   "#32CD32"   /* Green - Weed */
 };
 
+/* Best price memory: tracks best buy/sell prices seen for each drug */
+typedef struct {
+  price_t lowestPrice;      /* Best price to buy (lowest seen) */
+  price_t highestPrice;     /* Best price to sell (highest seen) */
+  int lowestLocation;       /* Location index where lowest was seen */
+  int highestLocation;      /* Location index where highest was seen */
+} DrugBestPrices;
+
+static DrugBestPrices *BestPrices = NULL;  /* [NumDrug] */
+
 /* Transaction history log */
 #define MAX_TRANSACTIONS 100
 typedef struct {
@@ -139,6 +151,7 @@ static GtkWidget *TransactionWindow = NULL;
 static GtkWidget *TransactionList = NULL;
 
 static void InitPriceMemory(void);
+static void InitBestPrices(void);
 static void StorePricesForLocation(int location);
 static void UpdateLocationTooltips(void);
 static void InitPriceHistory(void);
@@ -258,6 +271,37 @@ static void SetupWindowGeometryTracking(GtkWindow *window)
 {
   g_signal_connect(G_OBJECT(window), "configure-event",
                    G_CALLBACK(OnConfigureEvent), NULL);
+}
+
+/* Save pane position to windowsizes config */
+static void SavePanePosition(const gchar *pane_id, gint position)
+{
+  EnsureWindowSizesLoaded();
+  g_key_file_set_integer(WindowSizes, "Panes", pane_id, position);
+  SaveWindowSizes();
+}
+
+/* Restore pane position from windowsizes config */
+static gint RestorePanePosition(const gchar *pane_id, gint default_pos)
+{
+  gint pos;
+  GError *error = NULL;
+
+  EnsureWindowSizesLoaded();
+  pos = g_key_file_get_integer(WindowSizes, "Panes", pane_id, &error);
+  if (error) {
+    g_error_free(error);
+    return default_pos;
+  }
+  return (pos > 0) ? pos : default_pos;
+}
+
+/* Callback when pane position changes */
+static void OnPanePositionChanged(GObject *paned, GParamSpec *pspec, gpointer data)
+{
+  const gchar *pane_id = (const gchar *)data;
+  gint position = gtk_paned_get_position(GTK_PANED(paned));
+  SavePanePosition(pane_id, position);
 }
 
 static void HandleClientMessage(char *buf, Player *Play);
@@ -1415,6 +1459,48 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   g_string_printf(text, "%d", Play->CoatSize);
   gtk_label_set_text(GTK_LABEL(Status->SpaceValue), text->str);
 
+  /* Update coat space progress bar */
+  if (Status->SpaceProgressBar) {
+    int totalCapacity = Play->CoatSize;
+    int usedSpace = 0;
+    int i;
+    gdouble fraction;
+    gchar *tooltip;
+
+    /* Calculate used space from carried drugs */
+    for (i = 0; i < NumDrug; i++) {
+      usedSpace += Play->Drugs[i].Carried;
+    }
+
+    /* Total capacity is used + available space */
+    totalCapacity = usedSpace + Play->CoatSize;
+
+    if (totalCapacity > 0) {
+      fraction = (gdouble)usedSpace / (gdouble)totalCapacity;
+    } else {
+      fraction = 0.0;
+    }
+
+    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(Status->SpaceProgressBar),
+                                  fraction);
+
+    /* Color the Space label based on usage */
+    if (fraction >= 0.9) {
+      gtk_label_set_markup(GTK_LABEL(Status->SpaceName),
+          "<span foreground=\"red\" weight=\"bold\">Space</span>");
+    } else if (fraction >= 0.7) {
+      gtk_label_set_markup(GTK_LABEL(Status->SpaceName),
+          "<span foreground=\"orange\">Space</span>");
+    } else {
+      gtk_label_set_text(GTK_LABEL(Status->SpaceName), _("Space"));
+    }
+
+    /* Tooltip with exact values */
+    tooltip = g_strdup_printf(_("Used: %d / %d"), usedSpace, totalCapacity);
+    gtk_widget_set_tooltip_text(Status->SpaceProgressBar, tooltip);
+    g_free(tooltip);
+  }
+
   {
     int daysLeft = NumTurns - Play->Turn;
     g_string_printf(text, "%d", daysLeft);
@@ -1804,10 +1890,37 @@ void Jet(GtkWidget *parent)
   gtk_widget_show_all(dialog);
 }
 
+/* Callback when deal slider value changes - update the value label */
+static void OnDealSliderChanged(GtkRange *range, gpointer data)
+{
+  gint amount;
+  price_t price, total;
+  gchar *totalstr;
+  GString *text;
+
+  if (!DealDialog.value_label) return;
+
+  amount = (gint)gtk_range_get_value(range);
+  price = ClientData.Play->Drugs[DealDialog.DrugInd].Price;
+  total = (price_t)amount * price;
+
+  text = g_string_new(NULL);
+  totalstr = FormatPrice(total);
+
+  if (DealDialog.Type == BT_BUY) {
+    g_string_printf(text, _("%d (Cost: %s)"), amount, totalstr);
+  } else {
+    g_string_printf(text, _("%d (Revenue: %s)"), amount, totalstr);
+  }
+
+  gtk_label_set_text(GTK_LABEL(DealDialog.value_label), text->str);
+  g_free(totalstr);
+  g_string_free(text, TRUE);
+}
+
 static void UpdateDealDialog(void)
 {
   GString *text;
-  GtkAdjustment *spin_adj;
   gint DrugInd, CanDrop, CanCarry, CanAfford, MaxDrug;
   Player *Play;
 
@@ -1851,11 +1964,12 @@ static void UpdateDealDialog(void)
     MaxDrug = CanDrop;
   }
 
-  spin_adj = (GtkAdjustment *)gtk_adjustment_new(MaxDrug, 0.0, MaxDrug,
-                                                 1.0, 10.0, 0.0);
-  gtk_spin_button_set_adjustment(GTK_SPIN_BUTTON(DealDialog.amount),
-                                 spin_adj);
-  gtk_spin_button_set_value(GTK_SPIN_BUTTON(DealDialog.amount), MaxDrug);
+  /* Update slider range and set to maximum */
+  gtk_range_set_range(GTK_RANGE(DealDialog.amount), 0, (gdouble)(MaxDrug > 0 ? MaxDrug : 1));
+  gtk_range_set_value(GTK_RANGE(DealDialog.amount), (gdouble)MaxDrug);
+
+  /* Trigger value label update */
+  OnDealSliderChanged(GTK_RANGE(DealDialog.amount), NULL);
 
   g_string_free(text, TRUE);
 }
@@ -1879,15 +1993,12 @@ static void DealSelectCallback(GtkWidget *widget, gpointer data)
 
 static void DealOKCallback(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *spinner;
   gint amount;
   gchar *text;
   price_t price;
 
-  spinner = DealDialog.amount;
-
-  gtk_spin_button_update(GTK_SPIN_BUTTON(spinner));
-  amount = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinner));
+  /* Get amount from slider */
+  amount = (gint)gtk_range_get_value(GTK_RANGE(DealDialog.amount));
 
   /* Get the current price for this drug */
   price = ClientData.Play->Drugs[DealDialog.DrugInd].Price;
@@ -1921,12 +2032,11 @@ static void OnDrugCarriedRowActivated(GtkTreeView *tree_view, GtkTreePath *path,
 
 void DealDrugs(GtkWidget *widget, gpointer data)
 {
-  GtkWidget *dialog, *label, *hbox, *hbbox, *button, *spinner, *combo_box,
-      *vbox, *hsep, *defbutton, *outer;
+  GtkWidget *dialog, *label, *hbox, *hbbox, *button, *scale, *combo_box,
+      *vbox, *hsep, *defbutton, *outer, *value_label, *slider_box;
   GtkListStore *store;
   GtkTreeIter iter;
   GtkCellRenderer *renderer;
-  GtkAdjustment *spin_adj;
   GtkAccelGroup *accel_group;
   GtkWidget *tv;
   gchar *Action;
@@ -2057,12 +2167,27 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   }
   label = gtk_label_new(text->str);
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
-  spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 2.0,
-                                                 1.0, 10.0, 0.0);
-  spinner = DealDialog.amount = gtk_spin_button_new(spin_adj, 1.0, 0);
-  g_signal_connect(G_OBJECT(spinner), "activate",
-                   G_CALLBACK(DealOKCallback), data);
-  gtk_box_pack_start(GTK_BOX(hbox), spinner, FALSE, FALSE, 0);
+
+  /* Create slider box with scale and value label */
+  slider_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+
+  /* Create horizontal slider - initial range will be set by UpdateDealDialog */
+  scale = DealDialog.amount = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,
+                                                        0, 1, 1);
+  gtk_scale_set_draw_value(GTK_SCALE(scale), FALSE);  /* We use a label instead */
+  gtk_widget_set_size_request(scale, 180, -1);
+  g_signal_connect(G_OBJECT(scale), "value-changed",
+                   G_CALLBACK(OnDealSliderChanged), NULL);
+
+  /* Value label showing quantity and total cost/revenue */
+  value_label = DealDialog.value_label = gtk_label_new("0");
+  gtk_widget_set_size_request(value_label, 120, -1);
+  gtk_label_set_xalign(GTK_LABEL(value_label), 0.0);
+
+  gtk_box_pack_start(GTK_BOX(slider_box), scale, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(slider_box), value_label, FALSE, FALSE, 0);
+
+  gtk_box_pack_start(GTK_BOX(hbox), slider_box, TRUE, TRUE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -2293,6 +2418,7 @@ void GuiStartGame(void)
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, GetPlayerName(Play));
   InGame = TRUE;
   InitPriceMemory();
+  InitBestPrices();
   InitPriceHistory();
   InitTransactionLog();
   UpdateMenus();
@@ -2462,6 +2588,12 @@ GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
 
   label = Status->HealthValue = gtk_label_new(NULL);
   dp_gtk_grid_attach(GTK_GRID(grid), label, 5, 2, 1, 1, TRUE);
+
+  /* Progress bar for coat space visualization */
+  Status->SpaceProgressBar = gtk_progress_bar_new();
+  gtk_widget_set_size_request(Status->SpaceProgressBar, 100, -1);
+  dp_gtk_grid_attach(GTK_GRID(grid), Status->SpaceProgressBar, 6, 2, 2, 1, TRUE);
+
   return grid;
 }
 
@@ -2503,16 +2635,50 @@ void InitPriceMemory(void)
   }
 }
 
+/* Initialize best prices tracking array */
+void InitBestPrices(void)
+{
+  int i;
+
+  if (BestPrices) {
+    g_free(BestPrices);
+  }
+
+  BestPrices = g_new(DrugBestPrices, NumDrug);
+  for (i = 0; i < NumDrug; i++) {
+    BestPrices[i].lowestPrice = 0;     /* 0 = unknown */
+    BestPrices[i].highestPrice = 0;    /* 0 = unknown */
+    BestPrices[i].lowestLocation = -1;  /* -1 = unknown */
+    BestPrices[i].highestLocation = -1; /* -1 = unknown */
+  }
+}
+
 /* Store current drug prices for a location */
 void StorePricesForLocation(int location)
 {
   int i;
+  price_t price;
 
   if (!PriceMemory || !ClientData.Play) return;
   if (location < 0 || location >= NumLocation) return;
 
   for (i = 0; i < NumDrug; i++) {
-    PriceMemory[location][i] = ClientData.Play->Drugs[i].Price;
+    price = ClientData.Play->Drugs[i].Price;
+    PriceMemory[location][i] = price;
+
+    /* Update best prices tracking */
+    if (BestPrices && price > 0) {
+      /* Check if this is a new lowest price (best buy) */
+      if (BestPrices[i].lowestPrice == 0 || price < BestPrices[i].lowestPrice) {
+        BestPrices[i].lowestPrice = price;
+        BestPrices[i].lowestLocation = location;
+      }
+      /* Check if this is a new highest price (best sell) */
+      if (price > BestPrices[i].highestPrice) {
+        BestPrices[i].highestPrice = price;
+        BestPrices[i].highestLocation = location;
+      }
+    }
   }
 
   UpdateLocationTooltips();
@@ -2573,8 +2739,19 @@ void UpdateLocationTooltips(void)
     for (j = 0; j < NumDrug; j++) {
       if (PriceMemory[i][j] > 0) {
         gchar *priceStr = FormatPrice(PriceMemory[i][j]);
+        const gchar *indicator = "";
+
+        /* Check if this is the best price for buying or selling */
+        if (BestPrices) {
+          if (BestPrices[j].lowestLocation == i && BestPrices[j].lowestPrice > 0) {
+            indicator = " ★BUY";
+          } else if (BestPrices[j].highestLocation == i && BestPrices[j].highestPrice > 0) {
+            indicator = " ★SELL";
+          }
+        }
+
         drugName = dpg_strdup_printf("%tde", Drug[j].Name);
-        g_string_append_printf(tip, "  %s: %s\n", drugName, priceStr);
+        g_string_append_printf(tip, "  %s: %s%s\n", drugName, priceStr, indicator);
         g_free(drugName);
         g_free(priceStr);
         hasPrices = TRUE;
@@ -3107,28 +3284,14 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-  /* === STATS SECTION === */
+  /* === STATS SECTION (Fixed Height) === */
   frame = gtk_frame_new(_("Stats"));
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
   grid = CreateStatusWidgets(&ClientData.Status);
   gtk_container_add(GTK_CONTAINER(frame), grid);
   gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
 
-  /* === LOG/MESSAGES SECTION === */
-  {
-    GtkWidget *log_frame, *scroll_hbox;
-    text = ClientData.messages = gtk_scrolled_text_view_new(&scroll_hbox);
-    make_tags(GTK_TEXT_VIEW(text));
-    gtk_widget_set_size_request(text, 100, 150);  /* 5 lines tall */
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
-    log_frame = gtk_frame_new(_("Messages"));
-    gtk_container_set_border_width(GTK_CONTAINER(log_frame), 3);
-    gtk_container_add(GTK_CONTAINER(log_frame), scroll_hbox);
-    gtk_box_pack_start(GTK_BOX(vbox), log_frame, FALSE, FALSE, 0);
-  }
-
-  /* === JET TO LOCATION SECTION === */
+  /* === JET TO LOCATION SECTION (Fixed Height) === */
   {
     GtkWidget *jet_grid, *jet_frame;
     gint boxsize, row, col;
@@ -3191,10 +3354,28 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_box_pack_start(GTK_BOX(vbox), jet_frame, FALSE, FALSE, 0);
   }
 
-  /* === DRUGS SECTION: Here | Buttons | Carried | Graph === */
+  /* === ADJUSTABLE PANED SECTION: Messages | Drugs/Graph === */
   {
-    GtkWidget *drug_hbox, *graph_frame, *graph_vbox;
+    GtkWidget *main_paned;
+    GtkWidget *log_frame, *scroll_hbox;
+    GtkWidget *drug_hbox, *graph_frame, *graph_vbox, *drug_frame;
+    gint pane_pos;
 
+    /* Create vertical paned widget for adjustable sections */
+    main_paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
+
+    /* === TOP PANE: Messages Section (Adjustable) === */
+    text = ClientData.messages = gtk_scrolled_text_view_new(&scroll_hbox);
+    make_tags(GTK_TEXT_VIEW(text));
+    gtk_widget_set_size_request(text, 100, 80);  /* Minimum height */
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
+    log_frame = gtk_frame_new(_("Messages"));
+    gtk_container_set_border_width(GTK_CONTAINER(log_frame), 3);
+    gtk_container_add(GTK_CONTAINER(log_frame), scroll_hbox);
+    gtk_paned_pack1(GTK_PANED(main_paned), log_frame, FALSE, FALSE);
+
+    /* === BOTTOM PANE: Drugs Section (Adjustable) === */
     drug_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
     CreateInventory(drug_hbox, Names.Drugs, accel_group, TRUE, TRUE, TRUE,
                     &ClientData.Drug, G_CALLBACK(DealDrugs));
@@ -3226,7 +3407,7 @@ gboolean GtkLoop(int *argc, char **argv[],
     /* Embedded price graph */
     graph_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     EmbeddedGraphDrawArea = gtk_drawing_area_new();
-    gtk_widget_set_size_request(EmbeddedGraphDrawArea, 200, 150);
+    gtk_widget_set_size_request(EmbeddedGraphDrawArea, 200, 120);
     g_signal_connect(G_OBJECT(EmbeddedGraphDrawArea), "draw",
                      G_CALLBACK(DrawPriceGraph), NULL);
     gtk_box_pack_start(GTK_BOX(graph_vbox), EmbeddedGraphDrawArea, TRUE, TRUE, 0);
@@ -3237,13 +3418,24 @@ gboolean GtkLoop(int *argc, char **argv[],
     gtk_box_pack_start(GTK_BOX(drug_hbox), graph_frame, TRUE, TRUE, 0);
 
 #ifdef CYGWIN
-    gtk_box_pack_start(GTK_BOX(vbox), drug_hbox, TRUE, TRUE, 0);
+    gtk_paned_pack2(GTK_PANED(main_paned), drug_hbox, TRUE, FALSE);
 #else
-    frame = gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(frame), drug_hbox);
-    gtk_box_pack_start(GTK_BOX(vbox), frame, TRUE, TRUE, 0);
+    drug_frame = gtk_frame_new(NULL);
+    gtk_frame_set_shadow_type(GTK_FRAME(drug_frame), GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(drug_frame), drug_hbox);
+    gtk_paned_pack2(GTK_PANED(main_paned), drug_frame, TRUE, FALSE);
 #endif
+
+    /* Restore pane position from config, default to 120 pixels for messages */
+    pane_pos = RestorePanePosition("main_pane", 120);
+    gtk_paned_set_position(GTK_PANED(main_paned), pane_pos);
+
+    /* Save pane position when user adjusts it */
+    g_signal_connect(G_OBJECT(main_paned), "notify::position",
+                     G_CALLBACK(OnPanePositionChanged), (gpointer)"main_pane");
+
+    /* Add the paned widget to the main vbox (expands to fill space) */
+    gtk_box_pack_start(GTK_BOX(vbox), main_paned, TRUE, TRUE, 0);
   }
 
   gtk_box_pack_start(GTK_BOX(vbox2), vbox, TRUE, TRUE, 0);
@@ -3462,16 +3654,14 @@ static void TransferWithdrawAll(GtkWidget *widget, GtkWidget *dialog)
 static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 {
   gpointer Debt;
-  GtkWidget *deposit, *entry;
+  GtkWidget *deposit, *scale;
   gchar *text, *title;
   price_t money;
   gboolean withdraw = FALSE;
 
   Debt = g_object_get_data(G_OBJECT(dialog), "debt");
-  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "entry"));
-  text = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
-  money = strtoprice(text);
-  g_free(text);
+  scale = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "scale"));
+  money = (price_t)gtk_range_get_value(GTK_RANGE(scale));
 
   if (Debt) {
     /* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
@@ -3500,38 +3690,12 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     GtkMessageBox(dialog, _("You don't have that much money!"),
                   title, GTK_MESSAGE_WARNING, MB_OK);
   } else {
-    gboolean proceed = TRUE;
-    /* Confirm large transactions (more than 50% of available funds) */
-    if (!Debt) {
-      price_t threshold;
-      gchar *amountStr, *confirmMsg;
-
-      if (withdraw) {
-        threshold = ClientData.Play->Bank / 2;
-      } else {
-        threshold = ClientData.Play->Cash / 2;
-      }
-
-      if (money > threshold && threshold > 0) {
-        amountStr = FormatPrice(money);
-        confirmMsg = g_strdup_printf(
-            _("Are you sure you want to %s %s?"),
-            withdraw ? _("withdraw") : _("deposit"),
-            amountStr);
-        proceed = (GtkMessageBox(dialog, confirmMsg, title,
-                                 GTK_MESSAGE_QUESTION, MB_YESNO) == IDYES);
-        g_free(confirmMsg);
-        g_free(amountStr);
-      }
-    }
-
-    if (proceed) {
-      text = pricetostr(withdraw ? -money : money);
-      SendClientMessage(ClientData.Play, C_NONE,
-                        Debt ? C_PAYLOAN : C_DEPOSIT, NULL, text);
-      g_free(text);
-      gtk_widget_destroy(dialog);
-    }
+    /* Proceed with transaction - no confirmation needed with slider UI */
+    text = pricetostr(withdraw ? -money : money);
+    SendClientMessage(ClientData.Play, C_NONE,
+                      Debt ? C_PAYLOAN : C_DEPOSIT, NULL, text);
+    g_free(text);
+    gtk_widget_destroy(dialog);
   }
   g_free(title);
 }
@@ -3703,32 +3867,49 @@ static void PubButtonPressed(GtkWidget *widget, gpointer data)
   PubDialog();
 }
 
+/* Callback when slider value changes - update the value label */
+static void OnTransferSliderChanged(GtkRange *range, gpointer data)
+{
+  GtkWidget *dialog = GTK_WIDGET(data);
+  GtkWidget *value_label;
+  gdouble value;
+  gchar *pricestr;
+
+  value_label = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "value_label"));
+  if (!value_label) return;
+
+  value = gtk_range_get_value(range);
+  pricestr = FormatPrice((price_t)value);
+  gtk_label_set_text(GTK_LABEL(value_label), pricestr);
+  g_free(pricestr);
+}
+
 static void BankRadioToggled(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog = GTK_WIDGET(data);
-  GtkWidget *entry, *deposit_radio;
-  gchar *amountstr;
+  GtkWidget *scale, *deposit_radio;
   price_t amount;
 
-  entry = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "entry"));
+  scale = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "scale"));
   deposit_radio = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "deposit"));
 
   if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit_radio))) {
-    /* Deposit selected - show cash amount */
+    /* Deposit selected - range is 0 to Cash */
     amount = ClientData.Play->Cash;
   } else {
-    /* Withdraw selected - show bank balance */
+    /* Withdraw selected - range is 0 to Bank */
     amount = ClientData.Play->Bank;
   }
-  amountstr = pricetostr(amount);
-  gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
-  g_free(amountstr);
+
+  /* Update slider range and set to maximum */
+  gtk_range_set_range(GTK_RANGE(scale), 0, (gdouble)amount);
+  gtk_range_set_value(GTK_RANGE(scale), (gdouble)amount);
 }
 
 void TransferDialog(gboolean Debt)
 {
   GtkWidget *dialog, *button, *label, *grid, *vbox;
-  GtkWidget *hbbox, *hsep, *entry, *outer;
+  GtkWidget *hbbox, *hsep, *scale, *value_label, *outer;
   GtkAccelGroup *accel_group;
   GSList *group;
   GString *text;
@@ -3779,67 +3960,81 @@ void TransferDialog(gboolean Debt)
 
   g_object_set_data(G_OBJECT(dialog), "debt", GINT_TO_POINTER(Debt));
 
-  /* Create entry first so it can be referenced by radio button callbacks */
-  label = gtk_label_new(Currency.Symbol);
-  entry = gtk_entry_new();
-  g_object_set_data(G_OBJECT(dialog), "entry", entry);
+  /* Create slider and value display label */
+  {
+    GtkWidget *slider_box;
+    price_t max_amount, initial_amount;
+    gchar *pricestr;
 
-  if (Debt) {
-    /* Prompt for paying back a loan */
-    label = gtk_label_new(_("Pay back:"));
-    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
+    if (Debt) {
+      /* Prompt for paying back a loan */
+      label = gtk_label_new(_("Pay back:"));
+      dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, FALSE);
 
-    /* Pre-fill with debt amount or max cash available */
-    price_t amount;
-    gchar *amountstr;
-    if (ClientData.Play->Cash >= ClientData.Play->Debt) {
-      amount = ClientData.Play->Debt;
+      /* Max is the lesser of debt or cash */
+      if (ClientData.Play->Cash >= ClientData.Play->Debt) {
+        max_amount = ClientData.Play->Debt;
+      } else {
+        max_amount = ClientData.Play->Cash;
+      }
+      initial_amount = max_amount;
     } else {
-      amount = ClientData.Play->Cash;
+      GtkWidget *deposit_radio, *withdraw_radio;
+
+      /* Radio button selected if you want to pay money into the bank */
+      deposit_radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
+      g_object_set_data(G_OBJECT(dialog), "deposit", deposit_radio);
+      group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(deposit_radio));
+      dp_gtk_grid_attach(GTK_GRID(grid), deposit_radio, 0, 2, 1, 1, FALSE);
+
+      /* Radio button selected if you want to withdraw money from the bank */
+      withdraw_radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
+      dp_gtk_grid_attach(GTK_GRID(grid), withdraw_radio, 0, 3, 1, 1, FALSE);
+
+      /* Select withdraw if player has no cash, otherwise deposit */
+      if (ClientData.Play->Cash == 0) {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(withdraw_radio), TRUE);
+        max_amount = ClientData.Play->Bank;
+      } else {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(deposit_radio), TRUE);
+        max_amount = ClientData.Play->Cash;
+      }
+      initial_amount = max_amount;
+
+      /* Connect toggle signal to update slider when selection changes */
+      g_signal_connect(G_OBJECT(deposit_radio), "toggled",
+                       G_CALLBACK(BankRadioToggled), dialog);
     }
-    amountstr = pricetostr(amount);
-    gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
-    g_free(amountstr);
-  } else {
-    GtkWidget *deposit_radio, *withdraw_radio;
-    price_t amount;
-    gchar *amountstr;
 
-    /* Radio button selected if you want to pay money into the bank */
-    deposit_radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
-    g_object_set_data(G_OBJECT(dialog), "deposit", deposit_radio);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(deposit_radio));
-    dp_gtk_grid_attach(GTK_GRID(grid), deposit_radio, 0, 2, 1, 1, FALSE);
+    /* Create horizontal box for slider and value label */
+    slider_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
-    /* Radio button selected if you want to withdraw money from the bank */
-    withdraw_radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
-    dp_gtk_grid_attach(GTK_GRID(grid), withdraw_radio, 0, 3, 1, 1, FALSE);
+    /* Create the slider - range from 0 to max, default to max */
+    scale = gtk_scale_new_with_range(GTK_ORIENTATION_HORIZONTAL,
+                                     0, (gdouble)(max_amount > 0 ? max_amount : 1),
+                                     1);
+    gtk_scale_set_draw_value(GTK_SCALE(scale), FALSE);  /* We'll use a label instead */
+    gtk_widget_set_size_request(scale, 200, -1);
+    gtk_range_set_value(GTK_RANGE(scale), (gdouble)initial_amount);
+    g_object_set_data(G_OBJECT(dialog), "scale", scale);
 
-    /* Connect toggle signal to update entry when selection changes */
-    g_signal_connect(G_OBJECT(deposit_radio), "toggled",
-                     G_CALLBACK(BankRadioToggled), dialog);
+    /* Create value label showing formatted price */
+    pricestr = FormatPrice(initial_amount);
+    value_label = gtk_label_new(pricestr);
+    gtk_widget_set_size_request(value_label, 100, -1);
+    gtk_label_set_xalign(GTK_LABEL(value_label), 1.0);  /* Right-align */
+    g_object_set_data(G_OBJECT(dialog), "value_label", value_label);
+    g_free(pricestr);
 
-    /* Select withdraw if player has no cash, otherwise deposit */
-    if (ClientData.Play->Cash == 0) {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(withdraw_radio), TRUE);
-      amount = ClientData.Play->Bank;
-    } else {
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(deposit_radio), TRUE);
-      amount = ClientData.Play->Cash;
-    }
-    amountstr = pricetostr(amount);
-    gtk_entry_set_text(GTK_ENTRY(entry), amountstr);
-    g_free(amountstr);
-  }
-  g_signal_connect(G_OBJECT(entry), "activate",
-                   G_CALLBACK(TransferOK), dialog);
+    /* Connect slider value-changed signal */
+    g_signal_connect(G_OBJECT(scale), "value-changed",
+                     G_CALLBACK(OnTransferSliderChanged), dialog);
 
-  if (Currency.Prefix) {
-    dp_gtk_grid_attach(GTK_GRID(grid), label, 1, 2, 1, 2, FALSE);
-    dp_gtk_grid_attach(GTK_GRID(grid), entry, 2, 2, 1, 2, TRUE);
-  } else {
-    dp_gtk_grid_attach(GTK_GRID(grid), label, 2, 2, 1, 2, FALSE);
-    dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 2, 1, 2, TRUE);
+    gtk_box_pack_start(GTK_BOX(slider_box), scale, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(slider_box), value_label, FALSE, FALSE, 0);
+
+    /* Attach slider box to grid */
+    dp_gtk_grid_attach(GTK_GRID(grid), slider_box, 1, 2, 2, Debt ? 1 : 2, TRUE);
   }
 
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);

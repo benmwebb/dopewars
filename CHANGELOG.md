@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7.1 - 2026-03-08
+
+### UI Improvements
+
+1. Best Price Memory - Track highest/lowest prices seen for each drug with ★BUY/★SELL indicators in location tooltips
+2. Coat Space Visualization - Progress bar showing inventory usage with color-coded labels (green/orange/red)
+3. Adjustable GUI Sections - Resizable pane between Messages and Drug/Graph areas, saved to config
+4. Slider Controls - Bank deposit/withdraw and drug buy/sell now use sliders instead of text input
+5. Removed unnecessary confirmation dialogs from bank transactions
+
 ## 1.7 - 2026-03-06
 
 ### PR #12 - Features Update
