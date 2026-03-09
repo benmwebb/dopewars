@@ -845,6 +845,7 @@ static struct HiScoreDiaStruct HiScoreDialog = { NULL, NULL, NULL, NULL };
 void PrepareHighScoreDialog(void)
 {
   GtkWidget *dialog, *vbox, *hsep, *grid, *label;
+  GtkCssProvider *css_provider;
 
   /* Make sure the server doesn't fool us into creating multiple dialogs */
   if (HiScoreDialog.dialog)
@@ -868,6 +869,15 @@ void PrepareHighScoreDialog(void)
   HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE + 1, 6, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 15);
+
+  /* Apply monospace font to the high scores dialog */
+  gtk_widget_set_name(dialog, "highscore-dialog");
+  css_provider = gtk_css_provider_new();
+  gtk_css_provider_load_from_data(css_provider,
+      "#highscore-dialog, #highscore-dialog * { font-family: \"Courier New\", \"Courier\", monospace; }", -1, NULL);
+  gtk_style_context_add_provider_for_screen(gdk_screen_get_default(),
+      GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  g_object_unref(css_provider);
 
   /* Add column headers: Date/Time, Days, Score, Avg/Day, Name, Status */
   label = make_bold_label(_("Date/Time"), TRUE);
@@ -3713,15 +3723,42 @@ static void LoanSharkButtonPressed(GtkWidget *widget, gpointer data)
 static void RetireButtonPressed(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog;
+  Player *Play = ClientData.Play;
 
   dialog = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
 
-  if (GtkMessageBox(dialog,
-                    _("Are you sure you want to retire early?\n"
-                      "Your current score will be recorded."),
-                    _("Retire"), GTK_MESSAGE_QUESTION,
-                    MB_YESNO) == IDYES) {
-    SendClientMessage(ClientData.Play, C_NONE, C_WANTQUIT, NULL, NULL);
+  /* Check if player still owes the loan shark */
+  if (Play->Debt > 0) {
+    if (GtkMessageBox(dialog,
+                      _("You still owe the Loan Shark money!\n\n"
+                        "If you try to skip town, he WILL find you...\n"
+                        "and he WILL kill you.\n\n"
+                        "Are you sure you want to retire?"),
+                      _("Loan Shark Warning"), GTK_MESSAGE_WARNING,
+                      MB_YESNO) == IDYES) {
+      /* Loan shark kills the player - takes everything */
+      Play->Cash = 0;
+      Play->Bank = 0;
+      Play->Health = 0;  /* Dead - shows R.I.P. in high scores */
+      /* Debt remains - score will be very negative */
+
+      GtkMessageBox(dialog,
+                    _("The Loan Shark's goons caught up with you.\n"
+                      "They took everything... including your life."),
+                    _("WASTED"), GTK_MESSAGE_ERROR, MB_OK);
+
+      /* Send "killed" flag to server so high score shows R.I.P. */
+      SendClientMessage(Play, C_NONE, C_WANTQUIT, NULL, "killed");
+    }
+  } else {
+    /* No debt - normal retirement */
+    if (GtkMessageBox(dialog,
+                      _("Are you sure you want to retire early?\n"
+                        "Your current score will be recorded."),
+                      _("Retire"), GTK_MESSAGE_QUESTION,
+                      MB_YESNO) == IDYES) {
+      SendClientMessage(Play, C_NONE, C_WANTQUIT, NULL, NULL);
+    }
   }
 }
 

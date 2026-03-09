@@ -430,6 +430,10 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_WANTQUIT:
     if (Play->EventNum != E_FINISH) {
+      /* Check if player was killed (e.g., by loan shark) */
+      if (Data && strcmp(Data, "killed") == 0) {
+        Play->Health = 0;  /* Mark as dead for R.I.P. in high scores */
+      }
       FinishGame(Play, NULL);
     }
     break;
@@ -3410,6 +3414,7 @@ void HandleAnswer(Player *From, Player *To, char *answer)
       SendEvent(From);
       break;
     case E_WEED:
+      From->Health = 0;  /* Mark as dead so high score shows R.I.P. */
       FinishGame(From, _("You hallucinated for three days on the wildest "
                          "trip you ever imagined!^Then you died because "
                          "your brain disintegrated!"));
