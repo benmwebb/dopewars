@@ -10,11 +10,13 @@
 4. Slider Controls - Bank deposit/withdraw and drug buy/sell now use sliders instead of text input
 5. Removed unnecessary confirmation dialogs from bank transactions
 6. High Scores Dialog - Now uses monospace font (Courier New) for better column alignment
+7. Statistics Summary at Game End - Shows total drugs traded, most profitable drug, favorite location, biggest sale/purchase
 
 ### Gameplay Changes
 
 1. Loan Shark Revenge - Attempting to retire with outstanding debt results in the loan shark killing you (takes all money, shows R.I.P. in high scores instead of RETIRED)
 2. Paraquat Death - Smoking paraquat-laced weed now correctly shows R.I.P. in high scores instead of RETIRED
+3. Loan Shark Borrowing - Can now borrow money from the loan shark (up to 10x your current cash) in addition to paying back debt
 
 ## 1.7 - 2026-03-06
 
