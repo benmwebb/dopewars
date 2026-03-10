@@ -150,6 +150,23 @@ static int TransactionCount = 0;
 static GtkWidget *TransactionWindow = NULL;
 static GtkWidget *TransactionList = NULL;
 
+/* Game statistics tracking */
+typedef struct {
+  gint totalDrugsBought;      /* Total quantity of all drugs bought */
+  gint totalDrugsSold;        /* Total quantity of all drugs sold */
+  price_t totalSpentOnDrugs;  /* Total money spent buying drugs */
+  price_t totalEarnedFromDrugs; /* Total money earned selling drugs */
+  price_t *drugProfit;        /* Profit per drug [NumDrug] */
+  gint *drugTraded;           /* Quantity traded per drug [NumDrug] */
+  gint *locationVisits;       /* Visit count per location [NumLocation] */
+  price_t biggestSingleSale;  /* Largest single sale amount */
+  gchar *biggestSaleDrug;     /* Drug name for biggest sale */
+  price_t biggestSingleBuy;   /* Largest single purchase amount */
+  gchar *biggestBuyDrug;      /* Drug name for biggest purchase */
+} GameStats;
+
+static GameStats Stats = {0};
+
 static void InitPriceMemory(void);
 static void InitBestPrices(void);
 static void StorePricesForLocation(int location);
@@ -161,6 +178,10 @@ static void InitTransactionLog(void);
 static void RecordTransaction(int drugIndex, int amount, price_t price);
 static void ShowTransactionLog(GtkWidget *widget, gpointer data);
 static void CreateTransactionWindow(void);
+static void InitGameStats(void);
+static void UpdateGameStats(int drugIndex, int amount, price_t price);
+static void RecordLocationVisit(int location);
+static void ShowGameSummary(void);
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -774,6 +795,7 @@ void HandleClientMessage(char *pt, Player *Play)
     PrintMessage(text, "jet");
     g_free(text);
     SoundPlay(Sounds.Jet);
+    RecordLocationVisit(Play->IsAt);
     break;
   case C_ENDLIST:
     MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
@@ -2431,6 +2453,7 @@ void GuiStartGame(void)
   InitBestPrices();
   InitPriceHistory();
   InitTransactionLog();
+  InitGameStats();
   UpdateMenus();
   gtk_widget_show_all(ClientData.vbox);
   UpdatePlayerLists();
@@ -2440,6 +2463,7 @@ void GuiStartGame(void)
 void EndGame(void)
 {
   DisplayFightMessage(NULL);
+  ShowGameSummary();
   gtk_widget_hide(ClientData.vbox);
   TextViewClear(GTK_TEXT_VIEW(ClientData.messages));
   ShutdownNetwork(ClientData.Play);
@@ -3038,6 +3062,9 @@ void RecordTransaction(int drugIndex, int amount, price_t price)
   trans->turn = Play->Turn;
   TransactionCount++;
 
+  /* Update game statistics */
+  UpdateGameStats(drugIndex, amount, price);
+
   /* Update transaction window if visible */
   if (TransactionWindow && TransactionList) {
     GtkListStore *store = GTK_LIST_STORE(
@@ -3166,6 +3193,258 @@ static void ShowTransactionLog(GtkWidget *widget, gpointer data)
   } else {
     CreateTransactionWindow();
   }
+}
+
+/* Initialize game statistics */
+static void InitGameStats(void)
+{
+  g_free(Stats.drugProfit);
+  g_free(Stats.drugTraded);
+  g_free(Stats.locationVisits);
+  g_free(Stats.biggestSaleDrug);
+  g_free(Stats.biggestBuyDrug);
+
+  memset(&Stats, 0, sizeof(GameStats));
+  Stats.drugProfit = g_new0(price_t, NumDrug);
+  Stats.drugTraded = g_new0(gint, NumDrug);
+  Stats.locationVisits = g_new0(gint, NumLocation);
+  Stats.biggestSaleDrug = NULL;
+  Stats.biggestBuyDrug = NULL;
+}
+
+/* Update game statistics when a drug transaction occurs */
+static void UpdateGameStats(int drugIndex, int amount, price_t price)
+{
+  price_t total;
+
+  if (!Stats.drugProfit || !Stats.drugTraded) return;
+  if (drugIndex < 0 || drugIndex >= NumDrug) return;
+
+  total = price * (price_t)ABS(amount);
+
+  if (amount > 0) {
+    /* Buying drugs */
+    Stats.totalDrugsBought += amount;
+    Stats.totalSpentOnDrugs += total;
+    Stats.drugTraded[drugIndex] += amount;
+    Stats.drugProfit[drugIndex] -= total;  /* Cost reduces profit */
+
+    if (total > Stats.biggestSingleBuy) {
+      Stats.biggestSingleBuy = total;
+      g_free(Stats.biggestBuyDrug);
+      Stats.biggestBuyDrug = g_strdup(Drug[drugIndex].Name);
+    }
+  } else if (amount < 0) {
+    /* Selling drugs */
+    int soldAmount = ABS(amount);
+    Stats.totalDrugsSold += soldAmount;
+    Stats.totalEarnedFromDrugs += total;
+    Stats.drugTraded[drugIndex] += soldAmount;
+    Stats.drugProfit[drugIndex] += total;  /* Revenue increases profit */
+
+    if (total > Stats.biggestSingleSale) {
+      Stats.biggestSingleSale = total;
+      g_free(Stats.biggestSaleDrug);
+      Stats.biggestSaleDrug = g_strdup(Drug[drugIndex].Name);
+    }
+  }
+}
+
+/* Record a location visit */
+static void RecordLocationVisit(int location)
+{
+  if (!Stats.locationVisits) return;
+  if (location < 0 || location >= NumLocation) return;
+  Stats.locationVisits[location]++;
+}
+
+/* Show game summary dialog at end of game */
+static void ShowGameSummary(void)
+{
+  GtkWidget *dialog, *content, *grid, *label;
+  gchar *text;
+  gint row = 0;
+  gint mostTradedDrug = -1, maxTraded = 0;
+  gint favoriteLocation = -1, maxVisits = 0;
+  gint mostProfitableDrug = -1;
+  price_t maxProfit = 0;
+  price_t totalProfit;
+  gint i;
+
+  /* Calculate derived statistics */
+  totalProfit = Stats.totalEarnedFromDrugs - Stats.totalSpentOnDrugs;
+
+  if (Stats.drugTraded && Stats.drugProfit) {
+    for (i = 0; i < NumDrug; i++) {
+      if (Stats.drugTraded[i] > maxTraded) {
+        maxTraded = Stats.drugTraded[i];
+        mostTradedDrug = i;
+      }
+      if (Stats.drugProfit[i] > maxProfit) {
+        maxProfit = Stats.drugProfit[i];
+        mostProfitableDrug = i;
+      }
+    }
+  }
+
+  if (Stats.locationVisits) {
+    for (i = 0; i < NumLocation; i++) {
+      if (Stats.locationVisits[i] > maxVisits) {
+        maxVisits = Stats.locationVisits[i];
+        favoriteLocation = i;
+      }
+    }
+  }
+
+  /* Create dialog */
+  dialog = gtk_dialog_new_with_buttons(_("Game Summary"),
+                                       GTK_WINDOW(ClientData.window),
+                                       GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                       _("_OK"), GTK_RESPONSE_OK,
+                                       NULL);
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 400, -1);
+
+  content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  gtk_container_set_border_width(GTK_CONTAINER(content), 10);
+
+  grid = dp_gtk_grid_new(10, 5, FALSE);
+  gtk_container_add(GTK_CONTAINER(content), grid);
+
+  /* Title */
+  label = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(label), _("<b><big>Game Statistics</big></b>"));
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row++, 2, 1, FALSE);
+
+  /* Separator */
+  dp_gtk_grid_attach(GTK_GRID(grid), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL),
+                     0, row++, 2, 1, FALSE);
+
+  /* Trading Statistics */
+  label = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(label), _("<b>Trading Statistics</b>"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row++, 2, 1, FALSE);
+
+  /* Total drugs bought */
+  label = gtk_label_new(_("Total drugs bought:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  text = g_strdup_printf("%d", Stats.totalDrugsBought);
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Total drugs sold */
+  label = gtk_label_new(_("Total drugs sold:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  text = g_strdup_printf("%d", Stats.totalDrugsSold);
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Total profit from trading */
+  label = gtk_label_new(_("Net trading profit:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  text = dpg_strdup_printf("%P", totalProfit);
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  if (totalProfit >= 0) {
+    gtk_widget_set_name(label, "profit-positive");
+  } else {
+    gtk_widget_set_name(label, "profit-negative");
+  }
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Separator */
+  dp_gtk_grid_attach(GTK_GRID(grid), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL),
+                     0, row++, 2, 1, FALSE);
+
+  /* Highlights */
+  label = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(label), _("<b>Highlights</b>"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row++, 2, 1, FALSE);
+
+  /* Most traded drug */
+  label = gtk_label_new(_("Most traded drug:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  if (mostTradedDrug >= 0) {
+    text = g_strdup_printf("%s (%d units)", Drug[mostTradedDrug].Name, maxTraded);
+  } else {
+    text = g_strdup(_("None"));
+  }
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Most profitable drug */
+  label = gtk_label_new(_("Most profitable drug:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  if (mostProfitableDrug >= 0 && maxProfit > 0) {
+    gchar *profitStr = dpg_strdup_printf("%P", maxProfit);
+    text = g_strdup_printf("%s (%s)", Drug[mostProfitableDrug].Name, profitStr);
+    g_free(profitStr);
+  } else {
+    text = g_strdup(_("None"));
+  }
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Favorite location */
+  label = gtk_label_new(_("Favorite location:"));
+  gtk_widget_set_halign(label, GTK_ALIGN_START);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+  if (favoriteLocation >= 0) {
+    text = g_strdup_printf("%s (%d visits)", Location[favoriteLocation].Name, maxVisits);
+  } else {
+    text = g_strdup(_("None"));
+  }
+  label = gtk_label_new(text);
+  gtk_widget_set_halign(label, GTK_ALIGN_END);
+  dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+  g_free(text);
+
+  /* Biggest single sale */
+  if (Stats.biggestSingleSale > 0 && Stats.biggestSaleDrug) {
+    label = gtk_label_new(_("Biggest sale:"));
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+    gchar *saleStr = dpg_strdup_printf("%P", Stats.biggestSingleSale);
+    text = g_strdup_printf("%s (%s)", Stats.biggestSaleDrug, saleStr);
+    g_free(saleStr);
+    label = gtk_label_new(text);
+    gtk_widget_set_halign(label, GTK_ALIGN_END);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+    g_free(text);
+  }
+
+  /* Biggest single purchase */
+  if (Stats.biggestSingleBuy > 0 && Stats.biggestBuyDrug) {
+    label = gtk_label_new(_("Biggest purchase:"));
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 0, row, 1, 1, FALSE);
+    gchar *buyStr = dpg_strdup_printf("%P", Stats.biggestSingleBuy);
+    text = g_strdup_printf("%s (%s)", Stats.biggestBuyDrug, buyStr);
+    g_free(buyStr);
+    label = gtk_label_new(text);
+    gtk_widget_set_halign(label, GTK_ALIGN_END);
+    dp_gtk_grid_attach(GTK_GRID(grid), label, 1, row++, 1, 1, FALSE);
+    g_free(text);
+  }
+
+  gtk_widget_show_all(dialog);
+  gtk_dialog_run(GTK_DIALOG(dialog));
+  gtk_widget_destroy(dialog);
 }
 
 static void SetIcon(GtkWidget *window, char **xpmdata)
@@ -3664,10 +3943,11 @@ static void TransferWithdrawAll(GtkWidget *widget, GtkWidget *dialog)
 static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 {
   gpointer Debt;
-  GtkWidget *deposit, *scale;
+  GtkWidget *deposit, *payback, *scale;
   gchar *text, *title;
   price_t money;
   gboolean withdraw = FALSE;
+  gboolean borrow = FALSE;
 
   Debt = g_object_get_data(G_OBJECT(dialog), "debt");
   scale = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "scale"));
@@ -3677,7 +3957,11 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     /* Title of loan shark dialog - (%Tde="The Loan Shark" by default) */
     title = dpg_strdup_printf(_("%/LoanShark window title/%Tde"),
                               Names.LoanSharkName);
-    if (money > ClientData.Play->Debt) {
+    payback = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "payback"));
+    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(payback))) {
+      borrow = TRUE;
+    }
+    if (!borrow && money > ClientData.Play->Debt) {
       money = ClientData.Play->Debt;
     }
   } else {
@@ -3696,12 +3980,24 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
   } else if (!Debt && withdraw && money > ClientData.Play->Bank) {
     GtkMessageBox(dialog, _("There isn't that much money available..."),
                   title, GTK_MESSAGE_WARNING, MB_OK);
-  } else if (!withdraw && money > ClientData.Play->Cash) {
+  } else if (!Debt && !withdraw && money > ClientData.Play->Cash) {
     GtkMessageBox(dialog, _("You don't have that much money!"),
+                  title, GTK_MESSAGE_WARNING, MB_OK);
+  } else if (Debt && !borrow && money > ClientData.Play->Cash) {
+    GtkMessageBox(dialog, _("You don't have that much money!"),
+                  title, GTK_MESSAGE_WARNING, MB_OK);
+  } else if (Debt && borrow && money > ClientData.Play->Cash * 10) {
+    GtkMessageBox(dialog, _("You can only borrow up to 10x your current cash!"),
                   title, GTK_MESSAGE_WARNING, MB_OK);
   } else {
     /* Proceed with transaction - no confirmation needed with slider UI */
-    text = pricetostr(withdraw ? -money : money);
+    if (Debt) {
+      /* For loan shark: positive = pay back, negative = borrow */
+      text = pricetostr(borrow ? -money : money);
+    } else {
+      /* For bank: positive = deposit, negative = withdraw */
+      text = pricetostr(withdraw ? -money : money);
+    }
     SendClientMessage(ClientData.Play, C_NONE,
                       Debt ? C_PAYLOAN : C_DEPOSIT, NULL, text);
     g_free(text);
@@ -3921,6 +4217,32 @@ static void OnTransferSliderChanged(GtkRange *range, gpointer data)
   g_free(pricestr);
 }
 
+static void LoanRadioToggled(GtkWidget *widget, gpointer data)
+{
+  GtkWidget *dialog = GTK_WIDGET(data);
+  GtkWidget *scale, *payback_radio;
+  price_t amount;
+
+  scale = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "scale"));
+  payback_radio = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "payback"));
+
+  if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(payback_radio))) {
+    /* Pay back selected - range is 0 to min(Debt, Cash) */
+    if (ClientData.Play->Cash >= ClientData.Play->Debt) {
+      amount = ClientData.Play->Debt;
+    } else {
+      amount = ClientData.Play->Cash;
+    }
+  } else {
+    /* Borrow selected - range is 0 to 10x Cash */
+    amount = ClientData.Play->Cash * 10;
+  }
+
+  /* Update slider range and set to maximum */
+  gtk_range_set_range(GTK_RANGE(scale), 0, (gdouble)(amount > 0 ? amount : 1));
+  gtk_range_set_value(GTK_RANGE(scale), (gdouble)amount);
+}
+
 static void BankRadioToggled(GtkWidget *widget, gpointer data)
 {
   GtkWidget *dialog = GTK_WIDGET(data);
@@ -4004,17 +4326,37 @@ void TransferDialog(gboolean Debt)
     gchar *pricestr;
 
     if (Debt) {
-      /* Prompt for paying back a loan */
-      label = gtk_label_new(_("Pay back:"));
-      dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 1, FALSE);
+      GtkWidget *payback_radio, *borrow_radio;
 
-      /* Max is the lesser of debt or cash */
-      if (ClientData.Play->Cash >= ClientData.Play->Debt) {
-        max_amount = ClientData.Play->Debt;
+      /* Radio button for paying back the loan */
+      payback_radio = gtk_radio_button_new_with_label(NULL, _("Pay back"));
+      g_object_set_data(G_OBJECT(dialog), "payback", payback_radio);
+      group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(payback_radio));
+      dp_gtk_grid_attach(GTK_GRID(grid), payback_radio, 0, 2, 1, 1, FALSE);
+
+      /* Radio button for borrowing more money */
+      borrow_radio = gtk_radio_button_new_with_label(group, _("Borrow (10x cash max)"));
+      dp_gtk_grid_attach(GTK_GRID(grid), borrow_radio, 0, 3, 1, 1, FALSE);
+
+      /* Default to pay back if player has debt, otherwise borrow */
+      if (ClientData.Play->Debt > 0 && ClientData.Play->Cash > 0) {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(payback_radio), TRUE);
+        /* Max is the lesser of debt or cash */
+        if (ClientData.Play->Cash >= ClientData.Play->Debt) {
+          max_amount = ClientData.Play->Debt;
+        } else {
+          max_amount = ClientData.Play->Cash;
+        }
       } else {
-        max_amount = ClientData.Play->Cash;
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(borrow_radio), TRUE);
+        /* Max borrow is 10x current cash */
+        max_amount = ClientData.Play->Cash * 10;
       }
       initial_amount = max_amount;
+
+      /* Connect toggle signal to update slider when selection changes */
+      g_signal_connect(G_OBJECT(payback_radio), "toggled",
+                       G_CALLBACK(LoanRadioToggled), dialog);
     } else {
       GtkWidget *deposit_radio, *withdraw_radio;
 
@@ -4070,8 +4412,8 @@ void TransferDialog(gboolean Debt)
     gtk_box_pack_start(GTK_BOX(slider_box), scale, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(slider_box), value_label, FALSE, FALSE, 0);
 
-    /* Attach slider box to grid */
-    dp_gtk_grid_attach(GTK_GRID(grid), slider_box, 1, 2, 2, Debt ? 1 : 2, TRUE);
+    /* Attach slider box to grid - spans 2 rows for both bank and loan shark */
+    dp_gtk_grid_attach(GTK_GRID(grid), slider_box, 1, 2, 2, 2, TRUE);
   }
 
   gtk_box_pack_start(GTK_BOX(vbox), grid, TRUE, TRUE, 0);

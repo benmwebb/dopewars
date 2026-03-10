@@ -508,9 +508,19 @@ void HandleServerMessage(gchar *buf, Player *Play)
     money = strtoprice(Data);
     /* Allow loan payments anytime (EventNum check removed) */
     if (money > 0 && Play->Debt - money >= 0 && Play->Cash - money >= 0) {
+      /* Paying back loan */
       Play->Debt -= money;
       Play->Cash -= money;
       SendPlayerData(Play);
+    } else if (money < 0) {
+      /* Borrowing money (negative amount = borrow) */
+      price_t borrow = -money;
+      price_t maxBorrow = Play->Cash * 10;  /* Can borrow up to 10x current cash */
+      if (borrow <= maxBorrow) {
+        Play->Debt += borrow;
+        Play->Cash += borrow;
+        SendPlayerData(Play);
+      }
     }
     break;
   case C_BUYOBJECT:
