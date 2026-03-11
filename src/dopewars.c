@@ -739,15 +739,16 @@ struct DRUG DefaultDrug[] = {
 #define NUMDRUG (sizeof(DefaultDrug)/sizeof(DefaultDrug[0]))
 
 struct LOCATION DefaultLocation[] = {
-  /* The names of the default locations */
+  /* The names of the default locations (limited to 9 for keyboard shortcuts 1-9) */
   {N_("Bronx"), 10, NUMDRUG / 2 + 1, NUMDRUG},
-  {N_("Ghetto"), 5, NUMDRUG / 2 + 2, NUMDRUG},
+  {N_("Hell's Kitchen"), 5, NUMDRUG / 2 + 2, NUMDRUG},
   {N_("Central Park"), 15, NUMDRUG / 2, NUMDRUG},
   {N_("Manhattan"), 90, NUMDRUG / 2 - 2, NUMDRUG - 2},
   {N_("Coney Island"), 20, NUMDRUG / 2, NUMDRUG},
   {N_("Brooklyn"), 70, NUMDRUG / 2 - 2, NUMDRUG - 1},
   {N_("Queens"), 50, NUMDRUG / 2, NUMDRUG},
-  {N_("Staten Island"), 20, NUMDRUG / 2, NUMDRUG}
+  {N_("Staten Island"), 20, NUMDRUG / 2, NUMDRUG},
+  {N_("Harlem"), 15, NUMDRUG / 2 + 1, NUMDRUG}
 };
 
 struct DRUGS Drugs = { NULL, NULL, 0, 0 };

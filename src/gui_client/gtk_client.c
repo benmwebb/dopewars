@@ -1561,12 +1561,16 @@ void DisplayStats(Player *Play, struct StatusWidgets *Status)
   prstr = FormatPrice(Play->Debt);
   if (Play->Debt > 0) {
     gchar *markup;
+    gchar *debtWithRate;
+    /* Show debt with interest rate: $value @ rate% */
+    debtWithRate = g_strdup_printf("%s @ %d%%", prstr, DebtInterest);
     /* Color both label and value red when in debt */
     gtk_label_set_markup(GTK_LABEL(Status->DebtName),
                          "<span foreground=\"red\" weight=\"bold\">Debt</span>");
-    markup = g_markup_printf_escaped("<span foreground=\"red\" weight=\"bold\">%s</span>", prstr);
+    markup = g_markup_printf_escaped("<span foreground=\"red\" weight=\"bold\">%s</span>", debtWithRate);
     gtk_label_set_markup(GTK_LABEL(Status->DebtValue), markup);
     g_free(markup);
+    g_free(debtWithRate);
   } else {
     gtk_label_set_text(GTK_LABEL(Status->DebtName), _("Debt"));
     gtk_label_set_text(GTK_LABEL(Status->DebtValue), prstr);
@@ -1671,6 +1675,103 @@ static void scroll_to_selection(GtkTreeModel *model, GtkTreePath *path,
   gtk_tree_view_scroll_to_cell(tv, path, NULL, FALSE, 0., 0.);
 }
 
+/* Drug price event type for colorization */
+typedef enum {
+  DRUG_PRICE_NORMAL,
+  DRUG_PRICE_CHEAP,
+  DRUG_PRICE_EXPENSIVE
+} DrugPriceEvent;
+
+/* Determine the price event type for a drug */
+static DrugPriceEvent GetDrugPriceEvent(int drugIndex, price_t price)
+{
+  if (drugIndex < 0 || drugIndex >= NumDrug || price <= 0) {
+    return DRUG_PRICE_NORMAL;
+  }
+  /* Cheap event: price is below normal minimum */
+  if (price < Drug[drugIndex].MinPrice) {
+    return DRUG_PRICE_CHEAP;
+  }
+  /* Expensive event: price is above normal maximum */
+  if (price > Drug[drugIndex].MaxPrice) {
+    return DRUG_PRICE_EXPENSIVE;
+  }
+  return DRUG_PRICE_NORMAL;
+}
+
+/* Get Pango markup for a drug name based on its current price
+ * Normal: color interpolated between blue (min) and gold (max)
+ *   - Minimum: RGB(12, 123, 220) - blue
+ *   - Maximum: RGB(255, 194, 10) - gold
+ * Cheap event: italic, RGB(26, 255, 26) - bright green
+ * Expensive event: bold, RGB(220, 50, 32) - red
+ */
+static gchar *GetDrugNameMarkup(int drugIndex, const gchar *drugName, price_t price)
+{
+  DrugPriceEvent event;
+  gchar *escaped_name;
+  gchar *markup;
+
+  escaped_name = g_markup_escape_text(drugName, -1);
+
+  if (drugIndex < 0 || drugIndex >= NumDrug || price <= 0) {
+    /* No price info, return plain name */
+    markup = g_strdup(escaped_name);
+    g_free(escaped_name);
+    return markup;
+  }
+
+  event = GetDrugPriceEvent(drugIndex, price);
+
+  if (event == DRUG_PRICE_CHEAP) {
+    /* Cheap event: italic, bright green */
+    markup = g_strdup_printf("<span foreground=\"#1AFF1A\" style=\"italic\">%s</span>",
+                             escaped_name);
+  } else if (event == DRUG_PRICE_EXPENSIVE) {
+    /* Expensive event: bold, red */
+    markup = g_strdup_printf("<span foreground=\"#DC3220\" weight=\"bold\">%s</span>",
+                             escaped_name);
+  } else {
+    /* Normal price: interpolate color green -> yellow -> red */
+    price_t minPrice = Drug[drugIndex].MinPrice;
+    price_t maxPrice = Drug[drugIndex].MaxPrice;
+    gdouble fraction;
+    int r, g, b;
+
+    if (maxPrice > minPrice) {
+      fraction = (gdouble)(price - minPrice) / (gdouble)(maxPrice - minPrice);
+      fraction = CLAMP(fraction, 0.0, 1.0);
+    } else {
+      fraction = 0.5;
+    }
+
+    /* Two-segment gradient:
+     * Minimum (0.0): Green (0, 255, 0)
+     * Middle  (0.5): Yellow (255, 255, 0)
+     * Maximum (1.0): Red (255, 0, 0)
+     */
+    if (fraction <= 0.5) {
+      /* Green to Yellow: R increases 0->255, G stays 255, B stays 0 */
+      gdouble t = fraction * 2.0;  /* Scale 0-0.5 to 0-1 */
+      r = (int)(t * 255);
+      g = 255;
+      b = 0;
+    } else {
+      /* Yellow to Red: R stays 255, G decreases 255->0, B stays 0 */
+      gdouble t = (fraction - 0.5) * 2.0;  /* Scale 0.5-1 to 0-1 */
+      r = 255;
+      g = (int)(255 * (1.0 - t));
+      b = 0;
+    }
+
+    markup = g_strdup_printf("<span foreground=\"#%02X%02X%02X\">%s</span>",
+                             r, g, b, escaped_name);
+  }
+
+  g_free(escaped_name);
+  return markup;
+}
+
 void UpdateInventory(struct InventoryWidgets *Inven,
                      Inventory *Objects, int NumObjects, gboolean AreDrugs)
 {
@@ -1711,10 +1812,14 @@ void UpdateInventory(struct InventoryWidgets *Inven,
   }
 
   for (i = 0; i < NumObjects; i++) {
+    gchar *baseName;
     if (AreDrugs) {
-      titles[0] = dpg_strdup_printf(_("%/Inventory drug name/%tde"),
-                                    Drug[i].Name);
+      baseName = dpg_strdup_printf(_("%/Inventory drug name/%tde"),
+                                   Drug[i].Name);
       price = Objects[i].Price;
+      /* Colorize drug name based on price */
+      titles[0] = GetDrugNameMarkup(i, baseName, price);
+      g_free(baseName);
     } else {
       titles[0] = dpg_strdup_printf(_("%/Inventory gun name/%tde"),
                                     Gun[i].Name);
@@ -3485,7 +3590,7 @@ gboolean GtkLoop(int *argc, char **argv[],
                  struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #endif
 {
-  GtkWidget *window, *vbox, *vbox2, *frame, *grid, *menubar, *text,
+  GtkWidget *window, *vbox, *vbox2, *grid, *menubar, *text,
       *button, *tv, *widget;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
@@ -3573,63 +3678,51 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
 
-  /* === STATS SECTION (Fixed Height) === */
-  frame = gtk_frame_new(_("Stats"));
-  gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
-  grid = CreateStatusWidgets(&ClientData.Status);
-  gtk_container_add(GTK_CONTAINER(frame), grid);
-  gtk_box_pack_start(GTK_BOX(vbox), frame, FALSE, FALSE, 0);
-
-  /* === JET TO LOCATION SECTION (Fixed Height) === */
+  /* === TOP ROW: STATS (Full Width, Fixed Height) === */
   {
+    GtkWidget *stats_frame;
+
+    stats_frame = gtk_frame_new(_("Stats"));
+    gtk_container_set_border_width(GTK_CONTAINER(stats_frame), 3);
+    grid = CreateStatusWidgets(&ClientData.Status);
+    gtk_container_add(GTK_CONTAINER(stats_frame), grid);
+    gtk_box_pack_start(GTK_BOX(vbox), stats_frame, FALSE, FALSE, 0);
+  }
+
+  /* === MIDDLE ROW: JET LOCATIONS | MESSAGES (Horizontal Paned) === */
+  {
+    GtkWidget *middle_paned;
     GtkWidget *jet_grid, *jet_frame;
-    gint boxsize, row, col;
-    gchar *name, AccelChar;
+    GtkWidget *log_frame, *scroll_hbox;
+    gint row, col;
+    gchar *name;
+    gint pane_pos;
+    gint numLoc;
 
-    ClientData.JetButtons = g_new(GtkWidget *, NumLocation);
+    /* Create horizontal paned widget for Jet Locations | Messages */
+    middle_paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
 
-    /* Calculate grid size for square-ish layout */
-    boxsize = 1;
-    while (boxsize * boxsize < NumLocation) {
-      boxsize++;
-    }
-    col = boxsize;
-    row = 1;
-    while (row * col < NumLocation) {
-      row++;
-    }
+    /* Jet to location section (left side) - limited to 9 for keyboard shortcuts 1-9 */
+    numLoc = (NumLocation > 9) ? 9 : NumLocation;
+    ClientData.JetButtons = g_new(GtkWidget *, numLoc);
 
-    jet_grid = dp_gtk_grid_new(row, col, TRUE);
+    /* Fixed 3x3 grid for 9 locations */
+    jet_grid = dp_gtk_grid_new(3, 3, TRUE);
     gtk_grid_set_row_spacing(GTK_GRID(jet_grid), 2);
     gtk_grid_set_column_spacing(GTK_GRID(jet_grid), 2);
 
-    for (i = 0; i < NumLocation; i++) {
-      if (i < 9) {
-        AccelChar = '1' + i;
-      } else if (i < 35) {
-        AccelChar = 'A' + i - 9;
-      } else {
-        AccelChar = '\0';
-      }
+    for (i = 0; i < numLoc; i++) {
+      row = i / 3;
+      col = i % 3;
 
-      row = i / boxsize;
-      col = i % boxsize;
-      if (AccelChar == '\0') {
-        name = dpg_strdup_printf(_("%/Location to jet to/%tde"),
-                                 Location[i].Name);
-        button = gtk_button_new_with_label(name);
-        g_free(name);
-      } else {
-        button = gtk_button_new_with_label("");
-        name = dpg_strdup_printf(_("_%c. %tde"), AccelChar, Location[i].Name);
-        SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
-        if (i < 9) {
-          gtk_widget_add_accelerator(button, "clicked", accel_group,
-                                     GDK_KEY_KP_1 + i, 0,
-                                     GTK_ACCEL_VISIBLE);
-        }
-        g_free(name);
-      }
+      button = gtk_button_new_with_label("");
+      name = dpg_strdup_printf(_("_%c. %tde"), '1' + i, Location[i].Name);
+      SetAccelerator(button, name, button, "clicked", accel_group, FALSE);
+      gtk_widget_add_accelerator(button, "clicked", accel_group,
+                                 GDK_KEY_KP_1 + i, 0,
+                                 GTK_ACCEL_VISIBLE);
+      g_free(name);
+
       gtk_widget_set_sensitive(button, FALSE);
       g_signal_connect(G_OBJECT(button), "clicked",
                        G_CALLBACK(DirectJetCallback), GINT_TO_POINTER(i));
@@ -3640,31 +3733,40 @@ gboolean GtkLoop(int *argc, char **argv[],
     jet_frame = gtk_frame_new(_("Jet to location"));
     gtk_container_set_border_width(GTK_CONTAINER(jet_frame), 3);
     gtk_container_add(GTK_CONTAINER(jet_frame), jet_grid);
-    gtk_box_pack_start(GTK_BOX(vbox), jet_frame, FALSE, FALSE, 0);
-  }
+    gtk_paned_pack1(GTK_PANED(middle_paned), jet_frame, FALSE, FALSE);
 
-  /* === ADJUSTABLE PANED SECTION: Messages | Drugs/Graph === */
-  {
-    GtkWidget *main_paned;
-    GtkWidget *log_frame, *scroll_hbox;
-    GtkWidget *drug_hbox, *graph_frame, *graph_vbox, *drug_frame;
-    gint pane_pos;
-
-    /* Create vertical paned widget for adjustable sections */
-    main_paned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
-
-    /* === TOP PANE: Messages Section (Adjustable) === */
+    /* Messages section (right side) */
     text = ClientData.messages = gtk_scrolled_text_view_new(&scroll_hbox);
     make_tags(GTK_TEXT_VIEW(text));
-    gtk_widget_set_size_request(text, 100, 80);  /* Minimum height */
+    gtk_widget_set_size_request(text, 100, 80);  /* Minimum size */
     gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text), GTK_WRAP_WORD);
     log_frame = gtk_frame_new(_("Messages"));
     gtk_container_set_border_width(GTK_CONTAINER(log_frame), 3);
     gtk_container_add(GTK_CONTAINER(log_frame), scroll_hbox);
-    gtk_paned_pack1(GTK_PANED(main_paned), log_frame, FALSE, FALSE);
+    gtk_paned_pack2(GTK_PANED(middle_paned), log_frame, TRUE, FALSE);
 
-    /* === BOTTOM PANE: Drugs Section (Adjustable) === */
+    /* Restore pane position from config, default to 350 pixels for jet locations */
+    pane_pos = RestorePanePosition("middle_pane", 350);
+    gtk_paned_set_position(GTK_PANED(middle_paned), pane_pos);
+
+    /* Save pane position when user adjusts it */
+    g_signal_connect(G_OBJECT(middle_paned), "notify::position",
+                     G_CALLBACK(OnPanePositionChanged), (gpointer)"middle_pane");
+
+    gtk_box_pack_start(GTK_BOX(vbox), middle_paned, FALSE, FALSE, 0);
+  }
+
+  /* === BOTTOM ROW: DRUGS | PRICE GRAPH (Expandable) === */
+  {
+    GtkWidget *drug_hbox, *graph_frame, *graph_vbox, *drug_frame;
+    GtkWidget *bottom_paned;
+    gint pane_pos;
+
+    /* Create horizontal paned for Drugs | Graph */
+    bottom_paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+
+    /* Drug inventory lists (left side) */
     drug_hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
     CreateInventory(drug_hbox, Names.Drugs, accel_group, TRUE, TRUE, TRUE,
                     &ClientData.Drug, G_CALLBACK(DealDrugs));
@@ -3693,7 +3795,16 @@ gboolean GtkLoop(int *argc, char **argv[],
                          GTK_TREE_VIEW(ClientData.Drug.CarriedList))),
                      "changed", G_CALLBACK(OnDrugSelectionChanged), NULL);
 
-    /* Embedded price graph */
+#ifdef CYGWIN
+    gtk_paned_pack1(GTK_PANED(bottom_paned), drug_hbox, TRUE, FALSE);
+#else
+    drug_frame = gtk_frame_new(NULL);
+    gtk_frame_set_shadow_type(GTK_FRAME(drug_frame), GTK_SHADOW_IN);
+    gtk_container_add(GTK_CONTAINER(drug_frame), drug_hbox);
+    gtk_paned_pack1(GTK_PANED(bottom_paned), drug_frame, TRUE, FALSE);
+#endif
+
+    /* Embedded price graph (right side) */
     graph_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
     EmbeddedGraphDrawArea = gtk_drawing_area_new();
     gtk_widget_set_size_request(EmbeddedGraphDrawArea, 200, 120);
@@ -3704,27 +3815,18 @@ gboolean GtkLoop(int *argc, char **argv[],
     graph_frame = gtk_frame_new(_("Price Graph"));
     gtk_container_set_border_width(GTK_CONTAINER(graph_frame), 3);
     gtk_container_add(GTK_CONTAINER(graph_frame), graph_vbox);
-    gtk_box_pack_start(GTK_BOX(drug_hbox), graph_frame, TRUE, TRUE, 0);
+    gtk_paned_pack2(GTK_PANED(bottom_paned), graph_frame, FALSE, FALSE);
 
-#ifdef CYGWIN
-    gtk_paned_pack2(GTK_PANED(main_paned), drug_hbox, TRUE, FALSE);
-#else
-    drug_frame = gtk_frame_new(NULL);
-    gtk_frame_set_shadow_type(GTK_FRAME(drug_frame), GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(drug_frame), drug_hbox);
-    gtk_paned_pack2(GTK_PANED(main_paned), drug_frame, TRUE, FALSE);
-#endif
-
-    /* Restore pane position from config, default to 120 pixels for messages */
-    pane_pos = RestorePanePosition("main_pane", 120);
-    gtk_paned_set_position(GTK_PANED(main_paned), pane_pos);
+    /* Restore pane position from config, default to 500 pixels for drugs */
+    pane_pos = RestorePanePosition("bottom_pane", 500);
+    gtk_paned_set_position(GTK_PANED(bottom_paned), pane_pos);
 
     /* Save pane position when user adjusts it */
-    g_signal_connect(G_OBJECT(main_paned), "notify::position",
-                     G_CALLBACK(OnPanePositionChanged), (gpointer)"main_pane");
+    g_signal_connect(G_OBJECT(bottom_paned), "notify::position",
+                     G_CALLBACK(OnPanePositionChanged), (gpointer)"bottom_pane");
 
-    /* Add the paned widget to the main vbox (expands to fill space) */
-    gtk_box_pack_start(GTK_BOX(vbox), main_paned, TRUE, TRUE, 0);
+    /* Add the bottom paned widget (expands to fill remaining space) */
+    gtk_box_pack_start(GTK_BOX(vbox), bottom_paned, TRUE, TRUE, 0);
   }
 
   gtk_box_pack_start(GTK_BOX(vbox2), vbox, TRUE, TRUE, 0);
@@ -4932,6 +5034,11 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
         GtkCellRenderer *mren = gtk_cell_renderer_text_new();
         col = gtk_tree_view_column_new_with_attributes(
                        titles[i][icol], mren, "markup", icol, NULL);
+      } else if (icol == 0) {
+        /* Use markup for name column (for drug price colorization) */
+        GtkCellRenderer *nren = gtk_cell_renderer_text_new();
+        col = gtk_tree_view_column_new_with_attributes(
+                       titles[i][icol], nren, "markup", icol, NULL);
       } else {
         col = gtk_tree_view_column_new_with_attributes(
                        titles[i][icol], renderer, "text", icol, NULL);

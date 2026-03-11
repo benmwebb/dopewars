@@ -1,22 +1,31 @@
 # Changelog
 
-## 1.7.1 - 2026-03-08
+## 1.7.2 - 2026-03-10
 
 ### UI Improvements
 
-1. Best Price Memory - Track highest/lowest prices seen for each drug with ★BUY/★SELL indicators in location tooltips
-2. Coat Space Visualization - Progress bar showing inventory usage with color-coded labels (green/orange/red)
-3. Adjustable GUI Sections - Resizable pane between Messages and Drug/Graph areas, saved to config
-4. Slider Controls - Bank deposit/withdraw and drug buy/sell now use sliders instead of text input
-5. Removed unnecessary confirmation dialogs from bank transactions
-6. High Scores Dialog - Now uses monospace font (Courier New) for better column alignment
-7. Statistics Summary at Game End - Shows total drugs traded, most profitable drug, favorite location, biggest sale/purchase
+1. Drug Price Colorization - Drug names are colored based on price: green (min) → yellow (mid) → red (max) gradient for normal prices, italic bright green for cheap events, bold red for expensive events
+2. New Window Layout - Reorganized main window: Stats (top), Jet Locations|Messages (middle row with adjustable pane), Drugs|Price Graph (bottom row with adjustable pane)
+3. Debt Interest Rate Display - Debt value now shows interest rate (e.g., "$5,500 @ 10%") when you have outstanding debt
+4. Statistics Summary at Game End - Shows total drugs traded, most profitable drug, favorite location, biggest sale/purchase
 
 ### Gameplay Changes
 
 1. Loan Shark Revenge - Attempting to retire with outstanding debt results in the loan shark killing you (takes all money, shows R.I.P. in high scores instead of RETIRED)
 2. Paraquat Death - Smoking paraquat-laced weed now correctly shows R.I.P. in high scores instead of RETIRED
 3. Loan Shark Borrowing - Can now borrow money from the loan shark (up to 10x your current cash) in addition to paying back debt
+4. 9 Locations - Added Harlem as 9th location; renamed "Ghetto" to "Hell's Kitchen"; game now limited to 9 locations for clean keyboard shortcuts (1-9) in a 3x3 grid
+
+## 1.7.1 - 2026-03-08
+
+### UI Improvements
+
+1. Best Price Memory - Track highest/lowest prices seen for each drug with ★BUY/★SELL indicators in location tooltips
+2. Coat Space Visualization - Progress bar showing inventory usage with color-coded labels (green/orange/red)
+3. Adjustable GUI Sections - Resizable panes between sections, saved to config
+4. Slider Controls - Bank deposit/withdraw and drug buy/sell now use sliders instead of text input
+5. Removed unnecessary confirmation dialogs from bank transactions
+6. High Scores Dialog - Now uses monospace font (Courier New) for better column alignment
 
 ## 1.7 - 2026-03-06
 
