@@ -24,32 +24,32 @@ msgstr ""
 #. dopewars.
 #: src/dopewars.c:179
 msgid "bitch"
-msgstr ""
+msgstr "hantlangare"
 
 #. Word used for two or more bitches
 #: src/dopewars.c:181
 msgid "bitches"
-msgstr ""
+msgstr "hantlangare"
 
 #. Word used for a single gun
 #: src/dopewars.c:183
 msgid "gun"
-msgstr ""
+msgstr "vapen"
 
 #. Word used for two or more guns
 #: src/dopewars.c:185
 msgid "guns"
-msgstr ""
+msgstr "vapen"
 
 #. Word used for a single drug
 #: src/dopewars.c:187
 msgid "drug"
-msgstr ""
+msgstr "drog"
 
 #. Word used for two or more drugs
 #: src/dopewars.c:189
 msgid "drugs"
-msgstr ""
+msgstr "droger"
 
 #. String for displaying the game date or turn number. This is passed
 #. to the strftime() function, with the exception that %T is used to
@@ -1996,6 +1996,9 @@ msgstr "/Ärenden/_Spionera..."
 msgid "/Errands/_Tipoff..."
 msgstr "/Ärenden/_Tipsa..."
 
+msgid "/Errands/S_ack Bitch..."
+msgstr "/Ärenden/Sparka _hantlangare..."
+
 #: src/gui_client/gtk_client.c:181
 msgid "/Errands/_Get spy reports..."
 msgstr "/Ärenden/_Hämta spionrapporter..."
@@ -2082,7 +2085,7 @@ msgstr ""
 #. Text for the Errands/Sack Bitch menu item
 #: src/gui_client/gtk_client.c:556
 msgid "%/Sack Bitch menu item/S_ack %Tde..."
-msgstr ""
+msgstr "Spar_ka %Tde..."
 
 #. Text to update the Errands/Spy menu item with the price for spying
 #: src/gui_client/gtk_client.c:565
@@ -2222,7 +2225,7 @@ msgstr "Sälj"
 
 #: src/gui_client/gtk_client.c:1638
 msgid "Drop"
-msgstr ""
+msgstr "Släng"
 
 #: src/gui_client/gtk_client.c:1707
 msgid "%/DealDrugs drug name/%tde"
@@ -2500,7 +2503,7 @@ msgstr ""
 #. Title of dialog to sack a bitch (%Tde = "Bitch" by default)
 #: src/gui_client/gtk_client.c:3011
 msgid "%/Sack Bitch dialog title/Sack %Tde"
-msgstr ""
+msgstr "Sparka %Tde"
 
 #. Confirmation message for sacking a bitch. (%tde = "guns", "drugs",
 #. "bitch", respectively, by default)
@@ -2523,7 +2526,7 @@ msgstr "Pris"
 
 #: src/gui_client/gtk_client.c:3049
 msgid "Number"
-msgstr ""
+msgstr "Antal"
 
 #. Button titles for buying/selling/dropping guns or drugs
 #: src/gui_client/gtk_client.c:3052
@@ -2536,19 +2539,19 @@ msgstr "<- _Sälj"
 
 #: src/gui_client/gtk_client.c:3054
 msgid "_Drop <-"
-msgstr ""
+msgstr "_Släng <-"
 
 #. Title of the display of available drugs/guns (%Tde = "Guns" or
 #. "Drugs" by default)
 #: src/gui_client/gtk_client.c:3061
 msgid "%Tde here"
-msgstr ""
+msgstr "%Tde här"
 
 #. Title of the display of carried drugs/guns (%Tde = "Guns" or "Drugs"
 #. by default)
 #: src/gui_client/gtk_client.c:3067
 msgid "%Tde carried"
-msgstr ""
+msgstr "%Tde medförda"
 
 #. Title of dialog for changing a player's name
 #: src/gui_client/gtk_client.c:3186
