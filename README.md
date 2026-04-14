@@ -43,6 +43,24 @@ convenience, the configuration file is the more Windows-friendly
 The easiest way to install the Win32 version is to download the precompiled
 binary. To build from source, see the `win32` directory.
 
+## Building from source
+
+On Unix-like systems, dopewars can be built with Autotools in the usual way:
+
+1. Run `autoreconf -fi`
+2. Run `./configure`
+3. Run `make`
+
+The graphical client/server still support the legacy GTK build paths, and an
+experimental GTK4 path is also available. To configure an explicit GTK4 build,
+use:
+
+`./configure --enable-gtk4`
+
+The GTK4 path currently ports the compatibility layer used by the graphical
+client, including updated menu/container shims and recent UI work such as theme
+mode handling and improved keyboard accessibility.
+
 ## Usage
 
 dopewars has built-in client-server support for multi-player games. For a
