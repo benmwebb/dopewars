@@ -326,7 +326,7 @@ if test "$CURSES_CLIENT" = "probe"; then
 fi
 
 dnl Do i18n stuff
-ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB"
+ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB sv"
 AM_GNU_GETTEXT([external])
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"
