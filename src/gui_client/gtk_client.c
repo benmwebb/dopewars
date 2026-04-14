@@ -183,7 +183,7 @@ static DPGtkItemFactoryEntry menu_items[] = {
   {N_("/Help/_About..."), "F1", display_intro, 0, NULL}
 };
 
-static gchar *MenuTranslate(const gchar *path, gpointer func_data)
+static const gchar *MenuTranslate(const gchar *path, gpointer func_data)
 {
   /* Translate menu items, using gettext */
   return _(path);

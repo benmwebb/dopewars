@@ -1549,7 +1549,7 @@ msgstr "%/Liste over stader/%tde"
 #: src/curses_client/curses_client.c:881
 #, c-format
 msgid "You can't get any cash for the following carried %tde :"
-msgstr "Du kan ikkje få nokon pengar for desse %tbf:"
+msgstr "Du kan ikkje få nokon pengar for desse %tde:"
 
 #: src/curses_client/curses_client.c:894
 msgid "What do you want to drop? "
@@ -1591,7 +1591,7 @@ msgstr "Kor mange vil du selja? "
 #: src/curses_client/curses_client.c:1012
 #, c-format
 msgid "Choose an errand to give one of your %tde..."
-msgstr "Vel eit ærend å gje ei av %tbf dine ..."
+msgstr "Vel eit ærend å gje ei av %tde dine ..."
 
 #: src/curses_client/curses_client.c:1018
 msgid "   S>py on another dealer                  (cost: %P)"
@@ -1919,7 +1919,7 @@ msgstr "Spelarar som er logga på:-"
 #: src/curses_client/curses_client.c:2386
 #, c-format
 msgid "Hey dude, the prices of %tde here are:"
-msgstr "Hei du. Her kostar %tbe:"
+msgstr "Hei du. Her kostar %tde:"
 
 #. List of individual drug names for selection (%tde="Opium" etc.
 #. by default)
@@ -1993,7 +1993,7 @@ msgstr "R>ømma, "
 #: src/curses_client/curses_client.c:2542
 #, c-format
 msgid "D>eal %tde, "
-msgstr "S>elja %tuf, "
+msgstr "S>elja %tde, "
 
 #: src/curses_client/curses_client.c:2543
 msgid "or Q>uit? "
@@ -2371,17 +2371,17 @@ msgstr "_Avbryt"
 #: src/gui_client/gtk_client.c:1814
 #, c-format
 msgid "Buy %tde"
-msgstr "Kjøpa %tuf"
+msgstr "Kjøpa %tde"
 
 #: src/gui_client/gtk_client.c:1816
 #, c-format
 msgid "Sell %tde"
-msgstr "Selja %tuf"
+msgstr "Selja %tde"
 
 #: src/gui_client/gtk_client.c:1818
 #, c-format
 msgid "Drop %tde"
-msgstr "Hiva %tuf"
+msgstr "Hiva %tde"
 
 #. Button titles that correspond to the single-keypress options provided
 #. by the curses client (e.g. _Yes corresponds to 'Y' etc.)
@@ -2606,11 +2606,11 @@ msgid ""
 "\"Get spy reports\" menu. Remember that the %tde will leave\n"
 "you, so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
-"Vel ein spelar du vil spionera på. %Tbe di vil så\n"
+"Vel ein spelar du vil spionera på. %tde di vil så\n"
 "tilby tenestane sine til spelarane, og viss ho lukkast,\n"
 "vil du kunna sjå den spelaren sin status med\n"
-"«Hent spionrapportar»-menyen. Hugs at %tbe vil forlata\n"
-"deg, så %tuf eller %tuf som ho har på seg kan gå tapt!"
+"«Hent spionrapportar»-menyen. Hugs at %tde vil forlata\n"
+"deg, så %tde eller %tde som ho har på seg kan gå tapt!"
 
 #. Title of dialog to select a player to tip the cops off to
 #: src/gui_client/gtk_client.c:2956
@@ -2627,9 +2627,9 @@ msgid ""
 "on the encounter. Remember that the %tde will leave you temporarily,\n"
 "so any %tde or %tde that he's carrying may be lost!"
 msgstr ""
-"Vel spelaren du vil tipsa politiet om. %Tbe di vil hjelpa politiet\n"
+"Vel spelaren du vil tipsa politiet om. %tde di vil hjelpa politiet\n"
 "med å angripa den spelaren, og så rapportera tilbake til deg.\n"
-"Hugs at %tbe bil forlata deg ei kort stund, så %tuf eller %tuf\n"
+"Hugs at %tde vil forlata deg ei kort stund, så %tde eller %tde\n"
 "ho har på seg kan gå tapt!"
 
 #. Title of dialog to sack a bitch (%Tde = "Bitch" by default)
@@ -2645,8 +2645,8 @@ msgid ""
 "Are you sure? (Any %tde or %tde carried\n"
 "by this %tde may be lost!)"
 msgstr ""
-"Er du sikker? (%Tuf eller %tuf denne\n"
-"%tbe har på seg kan gå tapt!)"
+"Er du sikker? (%tde eller %tde denne\n"
+"%tde har på seg kan gå tapt!)"
 
 #. Column titles for display of drugs/guns carried or available for
 #. purchase
@@ -3523,7 +3523,7 @@ msgstr "%s: Fekk tilbod om spion frå %s"
 #: src/serverside.c:2289
 #, c-format
 msgid "One of your %tde was spying for %s.^The spy %s!"
-msgstr "Ei av %tbf dine spionerte for %s. ^Spionen %s!"
+msgstr "Ei av %tde dine spionerte for %s. ^Spionen %s!"
 
 #: src/serverside.c:2298
 #, c-format
@@ -3639,7 +3639,7 @@ msgstr "Du finn %d %tde på ein daud kar på t-banen!"
 #: src/serverside.c:3121
 #, c-format
 msgid "Your mama made brownies with some of your %tde! They were great!"
-msgstr "Mora di laga sjokoladekjeks med litt av %tbe. Dei var kjempegode!"
+msgstr "Mora di laga sjokoladekjeks med litt av %tde. Dei var kjempegode!"
 
 #: src/serverside.c:3131
 msgid ""
@@ -3674,7 +3674,7 @@ msgstr "%s: Tilbodet var på vegne av %s"
 #: src/serverside.c:3329
 #, c-format
 msgid "%s has accepted your %tde!^Use the G key to contact your spy."
-msgstr "%s har godteke %tbe di! Bruk G-knappen for å kontakta spionen din."
+msgstr "%s har godteke %tde di! Bruk G-knappen for å kontakta spionen din."
 
 #: src/serverside.c:3381
 msgid ""
@@ -3871,12 +3871,12 @@ msgstr "%s - %s - spring etter deg!"
 #: src/message.c:1348
 #, c-format
 msgid "%s and %d %tde - %s - are chasing you, man!"
-msgstr "%s og %d %tuf - %s - spring etter deg!"
+msgstr "%s og %d %tde - %s - spring etter deg!"
 
 #: src/message.c:1352
 #, c-format
 msgid "%s arrives with %d %tde, %s!"
-msgstr "%s kjem hit med %d %tuf, %s!"
+msgstr "%s kjem hit med %d %tde, %s!"
 
 #: src/message.c:1359
 #, c-format
@@ -3937,7 +3937,7 @@ msgstr "%s drep %s."
 #: src/message.c:1410
 #, c-format
 msgid "%s shoots at %s and kills a %tde!"
-msgstr "%s skyt på %s og drep ei %tue!"
+msgstr "%s skyt på %s og drep ei %tde!"
 
 #: src/message.c:1413
 #, c-format
@@ -3952,7 +3952,7 @@ msgstr "%s kverka deg, mann! Søren også!"
 #: src/message.c:1422
 #, c-format
 msgid "%s shoots at you... and kills a %tde!"
-msgstr "%s skyt på deg... og drep ei %tue!"
+msgstr "%s skyt på deg... og drep ei %tde!"
 
 #: src/message.c:1425
 #, c-format
@@ -3967,7 +3967,7 @@ msgstr "Du drap %s!"
 #: src/message.c:1431
 #, c-format
 msgid "You hit %s, and killed a %tde!"
-msgstr "Du traff %s, og drap ei %tue!"
+msgstr "Du traff %s, og drap ei %tde!"
 
 #: src/message.c:1434
 #, c-format

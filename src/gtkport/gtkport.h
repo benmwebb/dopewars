@@ -29,6 +29,89 @@
 
 #include "itemfactory.h"
 
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+typedef struct _DPGtkAccelGroup GtkAccelGroup;
+typedef guint GtkAccelFlags;
+typedef GtkWidget GtkContainer;
+typedef int GtkWindowType;
+typedef int GtkWindowPosition;
+typedef int GdkWindowTypeHint;
+#ifndef GTK_ACCEL_VISIBLE
+#define GTK_ACCEL_VISIBLE 0
+#endif
+#ifndef GTK_WINDOW_TOPLEVEL
+#define GTK_WINDOW_TOPLEVEL 0
+#endif
+#ifndef GTK_WIN_POS_CENTER_ON_PARENT
+#define GTK_WIN_POS_CENTER_ON_PARENT 0
+#endif
+#ifndef GDK_WINDOW_TYPE_HINT_DIALOG
+#define GDK_WINDOW_TYPE_HINT_DIALOG 0
+#endif
+#ifndef GTK_CONTAINER
+#define GTK_CONTAINER(obj) GTK_WIDGET(obj)
+#endif
+#ifndef GTK_CHECK_MENU_ITEM
+#define GTK_CHECK_MENU_ITEM(obj) GTK_CHECK_BUTTON(obj)
+#endif
+#define gtk_check_menu_item_get_active gtk_check_button_get_active
+#define gtk_check_menu_item_set_active gtk_check_button_set_active
+#define gtk_widget_set_can_default(widget, flag) ((void)0)
+#define gtk_widget_grab_default(widget) ((void)0)
+#define gtk_widget_remove_accelerator(widget, accel_group, accel_key, accel_mods) ((void)0)
+#define gtk_window_set_icon(window, icon) ((void)0)
+#define gtk_init(argc, argv) gtk_init()
+#define gtk_init_check(argc, argv) gtk_init_check()
+#define gtk_paned_pack1(paned, child, resize, shrink) gtk_paned_set_start_child((paned), (child))
+#define gtk_paned_pack2(paned, child, resize, shrink) gtk_paned_set_end_child((paned), (child))
+typedef int GtkShadowType;
+typedef GtkCheckButton GtkRadioButton;
+#ifndef GTK_RADIO_BUTTON
+#define GTK_RADIO_BUTTON(obj) GTK_CHECK_BUTTON(obj)
+#endif
+#ifndef GTK_SHADOW_IN
+#define GTK_SHADOW_IN 0
+#endif
+#ifndef VERSION
+#define VERSION "SVN"
+#endif
+#define gtk_entry_set_text(entry, text) gtk_editable_set_text(GTK_EDITABLE(entry), (text))
+
+GtkWidget *dp_gtk_window_new(GtkWindowType type);
+#define gtk_window_new(type) dp_gtk_window_new(type)
+void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint);
+void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position);
+void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type);
+GtkWidget *gtk_radio_button_new_with_label(GSList *group,
+                                           const gchar *label);
+GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
+                                                       const gchar *label);
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button);
+void gtk_main(void);
+void gtk_main_quit(void);
+gint gtk_main_level(void);
+void gtk_widget_destroy(GtkWidget *widget);
+void gtk_widget_show_all(GtkWidget *widget);
+void gtk_widget_add_accelerator(GtkWidget *widget,
+                                const gchar *accel_signal,
+                                GtkAccelGroup *accel_group,
+                                guint accel_key, guint accel_mods,
+                                GtkAccelFlags accel_flags);
+void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
+                        gboolean Fill, gint Padding);
+void gtk_container_add(GtkContainer *container, GtkWidget *widget);
+void gtk_container_set_border_width(GtkContainer *container,
+                                    guint border_width);
+GtkAccelGroup *gtk_accel_group_new(void);
+void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
+void gtk_window_add_accel_group(GtkWindow *window,
+                                GtkAccelGroup *accel_group);
+gint gtk_dialog_run(GtkDialog *dialog);
+void gtk_file_chooser_set_filename(GtkFileChooser *chooser,
+                                   const gchar *filename);
+gchar *gtk_file_chooser_get_filename(GtkFileChooser *chooser);
+#endif
+
 #ifdef CYGWIN
 
 /* GTK+ emulation prototypes etc. for Win32 platform */

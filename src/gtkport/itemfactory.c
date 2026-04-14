@@ -65,7 +65,11 @@ DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
   new_fac = g_new0(DPGtkItemFactory, 1);
   new_fac->path = g_strdup(path);
   new_fac->accel_group = accel_group;
+#if GTK_MAJOR_VERSION >= 4
+  new_fac->top_widget = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+#else
   new_fac->top_widget = gtk_menu_bar_new();
+#endif
   new_fac->translate_func = NULL;
   return new_fac;
 }
@@ -209,26 +213,54 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
                                    menu_title, &accel);
 
   if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
+#if GTK_MAJOR_VERSION >= 4
+    menu_item = gtk_check_button_new_with_mnemonic(menu_title->str);
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(menu_item), TRUE);
+#else
     menu_item = gtk_check_menu_item_new_with_mnemonic(menu_title->str);
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menu_item), TRUE);
+#endif
   } else {
+#if GTK_MAJOR_VERSION >= 4
+    menu_item = gtk_button_new_with_mnemonic(menu_title->str);
+#else
     menu_item = gtk_menu_item_new_with_mnemonic(menu_title->str);
+#endif
   }
   new_child->widget = menu_item;
   if (entry->callback) {
+#if GTK_MAJOR_VERSION >= 4
+    g_signal_connect(G_OBJECT(menu_item), "clicked",
+                     G_CALLBACK(entry->callback), callback_data);
+#else
     g_signal_connect(G_OBJECT(menu_item), "activate",
-                     entry->callback, callback_data);
+                     G_CALLBACK(entry->callback), callback_data);
+#endif
   }
 
   if (parent) {
+#if GTK_MAJOR_VERSION >= 4
+    menu = GTK_WIDGET(g_object_get_data(G_OBJECT(parent->widget), "dp-submenu"));
+    if (!menu) {
+      menu = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+      g_object_set_data(G_OBJECT(parent->widget), "dp-submenu", menu);
+      gtk_box_append(GTK_BOX(ifactory->top_widget), menu);
+    }
+    gtk_box_append(GTK_BOX(menu), menu_item);
+#else
     menu = GTK_WIDGET(gtk_menu_item_get_submenu(GTK_MENU_ITEM(parent->widget)));
     if (!menu) {
       menu = gtk_menu_new();
       gtk_menu_item_set_submenu(GTK_MENU_ITEM(parent->widget), menu);
     }
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), menu_item);
+#endif
   } else {
+#if GTK_MAJOR_VERSION >= 4
+    gtk_box_append(GTK_BOX(ifactory->top_widget), menu_item);
+#else
     gtk_menu_shell_append(GTK_MENU_SHELL(ifactory->top_widget), menu_item);
+#endif
   }
 
   if (haveaccel && ifactory->accel_group) {
@@ -236,8 +268,10 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
     GTK_MENU_ITEM(menu_item)->accelind =
         gtk_accel_group_add(ifactory->accel_group, &accel);
 #else
+#if GTK_MAJOR_VERSION < 4
     gtk_widget_add_accelerator(menu_item, "activate", ifactory->accel_group,
 		               accel.key, accel.mods, accel.flags);
+#endif
 #endif
   }
 
