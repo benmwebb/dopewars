@@ -39,6 +39,13 @@
 #include "gtktypes.h"
 #else
 #include <gtk/gtk.h>
+#if GTK_MAJOR_VERSION >= 4
+typedef struct _DPGtkAccelGroup GtkAccelGroup;
+typedef guint GtkAccelFlags;
+#ifndef GTK_ACCEL_VISIBLE
+#define GTK_ACCEL_VISIBLE 0
+#endif
+#endif
 #endif
 
 /* Use GTK+2's own implementation of these functions */
@@ -57,9 +64,10 @@ GtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
 #define dp_gtk_item_factory_set_translate_func gtk_item_factory_set_translate_func
 #else
 
-typedef gchar *(*DPGtkTranslateFunc) (const gchar *path, gpointer func_data);
+typedef const gchar *(*DPGtkTranslateFunc) (const gchar *path, gpointer func_data);
 
-typedef void (*DPGtkItemFactoryCallback) ();
+typedef void (*DPGtkItemFactoryCallback) (GtkWidget *widget,
+                                           gpointer data);
 
 typedef struct _DPGtkItemFactoryEntry DPGtkItemFactoryEntry;
 typedef struct _DPGtkItemFactory DPGtkItemFactory;

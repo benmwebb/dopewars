@@ -175,15 +175,15 @@ static DPGtkItemFactoryEntry menu_items[] = {
   {N_("/_Errands"), NULL, NULL, 0, "<Branch>"},
   {N_("/Errands/_Spy..."), NULL, SpyOnPlayer, 0, NULL},
   {N_("/Errands/_Tipoff..."), NULL, TipOff, 0, NULL},
-  /* N.B. "Sack Bitch" has to be recreated (and thus translated) at the
-   * start of each game, below, so is not marked for gettext here */
-  {"/Errands/S_ack Bitch...", NULL, SackBitch, 0, NULL},
+  /* Recreated at the start of each game so the carried role name can be
+   * substituted, but still extract the base label for translation. */
+  {N_("/Errands/S_ack Bitch..."), NULL, SackBitch, 0, NULL},
   {N_("/Errands/_Get spy reports..."), NULL, GetSpyReports, 0, NULL},
   {N_("/_Help"), NULL, NULL, 0, "<Branch>"},
   {N_("/Help/_About..."), "F1", display_intro, 0, NULL}
 };
 
-static gchar *MenuTranslate(const gchar *path, gpointer func_data)
+static const gchar *MenuTranslate(const gchar *path, gpointer func_data)
 {
   /* Translate menu items, using gettext */
   return _(path);

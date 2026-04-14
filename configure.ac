@@ -174,6 +174,23 @@ else
       gtk4_found="no"
       if test "$USE_GTK4" = "yes" ; then
         PKG_CHECK_MODULES([GTK], [gtk4], gtk4_found="yes", gtk4_found="no")
+        if test "$gtk4_found" = "yes" ; then
+          AC_MSG_CHECKING([whether a minimal GTK4 program links])
+          saved_CPPFLAGS="$CPPFLAGS"
+          saved_LIBS="$LIBS"
+          CPPFLAGS="$CPPFLAGS $GTK_CFLAGS"
+          LIBS="$LIBS $GTK_LIBS"
+          AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([[#include <gtk/gtk.h>]], [[gtk_init();]])],
+            [gtk4_linkable="yes"],
+            [gtk4_linkable="no"])
+          CPPFLAGS="$saved_CPPFLAGS"
+          LIBS="$saved_LIBS"
+          AC_MSG_RESULT([$gtk4_linkable])
+          if test "$gtk4_linkable" = "yes" ; then
+            gtk4_found="yes"
+          fi
+        fi
       fi
       if test "$gtk4_found" = "no" ; then
         gtk3_found="no"
@@ -309,7 +326,7 @@ if test "$CURSES_CLIENT" = "probe"; then
 fi
 
 dnl Do i18n stuff
-ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB"
+ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB sv"
 AM_GNU_GETTEXT([external])
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"

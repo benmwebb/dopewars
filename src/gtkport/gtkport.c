@@ -5258,6 +5258,228 @@ GtkWidget *gtk_paned_new(GtkOrientation orientation)
 
 #endif
 
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+static GMainLoop *dp_gtk4_main_loop;
+static gint dp_gtk4_main_level;
+
+typedef struct _DPGtkAccelGroup {
+  int unused;
+} DPGtkAccelGroup;
+
+static GtkWidget *dp_gtk4_widget_get_child(GtkWidget *widget)
+{
+  if (!widget)
+    return NULL;
+  if (GTK_IS_FRAME(widget))
+    return gtk_frame_get_child(GTK_FRAME(widget));
+  if (GTK_IS_SCROLLED_WINDOW(widget))
+    return gtk_scrolled_window_get_child(GTK_SCROLLED_WINDOW(widget));
+  if (GTK_IS_BUTTON(widget))
+    return gtk_button_get_child(GTK_BUTTON(widget));
+  if (GTK_IS_WINDOW(widget))
+    return gtk_window_get_child(GTK_WINDOW(widget));
+  return NULL;
+}
+
+GtkWidget *dp_gtk_window_new(GtkWindowType type)
+{
+  return (gtk_window_new)();
+}
+
+void gtk_window_set_type_hint(GtkWindow *window, GdkWindowTypeHint hint)
+{
+}
+
+void gtk_window_set_position(GtkWindow *window, GtkWindowPosition position)
+{
+}
+
+void gtk_frame_set_shadow_type(GtkFrame *frame, GtkShadowType type)
+{
+}
+
+GtkWidget *gtk_radio_button_new_with_label(GSList *group,
+                                           const gchar *label)
+{
+  GtkWidget *button;
+
+  button = gtk_check_button_new_with_label(label);
+  if (group && group->data) {
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(button),
+                               GTK_CHECK_BUTTON(group->data));
+  }
+  return button;
+}
+
+GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
+                                                       const gchar *label)
+{
+  GtkWidget *button;
+
+  button = gtk_check_button_new_with_label(label);
+  if (group) {
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(button),
+                               GTK_CHECK_BUTTON(group));
+  }
+  return button;
+}
+
+GSList *gtk_radio_button_get_group(GtkRadioButton *radio_button)
+{
+  return g_slist_append(NULL, radio_button);
+}
+
+void gtk_main(void)
+{
+  dp_gtk4_main_loop = g_main_loop_new(NULL, FALSE);
+  dp_gtk4_main_level++;
+  g_main_loop_run(dp_gtk4_main_loop);
+  dp_gtk4_main_level--;
+  g_main_loop_unref(dp_gtk4_main_loop);
+  dp_gtk4_main_loop = NULL;
+}
+
+void gtk_main_quit(void)
+{
+  if (dp_gtk4_main_loop)
+    g_main_loop_quit(dp_gtk4_main_loop);
+}
+
+gint gtk_main_level(void)
+{
+  return dp_gtk4_main_level;
+}
+
+void gtk_widget_destroy(GtkWidget *widget)
+{
+  if (!widget)
+    return;
+  if (GTK_IS_WINDOW(widget)) {
+    gtk_window_destroy(GTK_WINDOW(widget));
+  } else if (gtk_widget_get_parent(widget)) {
+    gtk_widget_unparent(widget);
+  } else {
+    g_object_unref(widget);
+  }
+}
+
+GtkAccelGroup *gtk_accel_group_new(void)
+{
+  return g_new0(GtkAccelGroup, 1);
+}
+
+void gtk_accel_group_destroy(GtkAccelGroup *accel_group)
+{
+  g_free(accel_group);
+}
+
+void gtk_window_add_accel_group(GtkWindow *window, GtkAccelGroup *accel_group)
+{
+}
+
+void gtk_container_add(GtkContainer *container, GtkWidget *widget)
+{
+  if (GTK_IS_WINDOW(container)) {
+    gtk_window_set_child(GTK_WINDOW(container), widget);
+  } else if (GTK_IS_SCROLLED_WINDOW(container)) {
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(container), widget);
+  } else if (GTK_IS_FRAME(container)) {
+    gtk_frame_set_child(GTK_FRAME(container), widget);
+  } else if (GTK_IS_BOX(container)) {
+    gtk_box_append(GTK_BOX(container), widget);
+  }
+}
+
+void gtk_container_set_border_width(GtkContainer *container,
+                                    guint border_width)
+{
+  GtkWidget *widget = GTK_WIDGET(container);
+
+  gtk_widget_set_margin_start(widget, border_width);
+  gtk_widget_set_margin_end(widget, border_width);
+  gtk_widget_set_margin_top(widget, border_width);
+  gtk_widget_set_margin_bottom(widget, border_width);
+}
+
+GtkWidget *gtk_button_box_new(GtkOrientation orientation)
+{
+  return gtk_box_new(orientation, 7);
+}
+
+void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean Expand,
+                        gboolean Fill, gint Padding)
+{
+  gtk_box_append(box, child);
+}
+
+void gtk_widget_show_all(GtkWidget *widget)
+{
+  gtk_widget_show(widget);
+}
+
+void gtk_widget_add_accelerator(GtkWidget *widget,
+                                const gchar *accel_signal,
+                                GtkAccelGroup *accel_group,
+                                guint accel_key, guint accel_mods,
+                                GtkAccelFlags accel_flags)
+{
+}
+
+typedef struct _DPGtkDialogRunState {
+  GMainLoop *loop;
+  gint response;
+} DPGtkDialogRunState;
+
+static void dp_gtk4_dialog_response(GtkDialog *dialog, gint response,
+                                    gpointer data)
+{
+  DPGtkDialogRunState *state = data;
+
+  state->response = response;
+  if (state->loop)
+    g_main_loop_quit(state->loop);
+}
+
+gint gtk_dialog_run(GtkDialog *dialog)
+{
+  DPGtkDialogRunState state;
+
+  state.loop = g_main_loop_new(NULL, FALSE);
+  state.response = GTK_RESPONSE_CANCEL;
+  g_signal_connect(dialog, "response", G_CALLBACK(dp_gtk4_dialog_response),
+                   &state);
+  gtk_widget_show(GTK_WIDGET(dialog));
+  g_main_loop_run(state.loop);
+  g_main_loop_unref(state.loop);
+  return state.response;
+}
+
+void gtk_file_chooser_set_filename(GtkFileChooser *chooser,
+                                   const gchar *filename)
+{
+  GFile *file;
+
+  if (!filename)
+    return;
+  file = g_file_new_for_path(filename);
+  gtk_file_chooser_set_file(chooser, file, NULL);
+  g_object_unref(file);
+}
+
+gchar *gtk_file_chooser_get_filename(GtkFileChooser *chooser)
+{
+  GFile *file;
+  gchar *path;
+
+  file = gtk_file_chooser_get_file(chooser);
+  if (!file)
+    return NULL;
+  path = g_file_get_path(file);
+  g_object_unref(file);
+  return path;
+}
+#endif
+
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
@@ -5274,12 +5496,25 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
   }
   return AccelKey;
 #else
+#if GTK_MAJOR_VERSION >= 4
+  GtkWidget *label = dp_gtk4_widget_get_child(labelparent);
+
+  if (GTK_IS_LABEL(label)) {
+    gtk_label_set_text_with_mnemonic(GTK_LABEL(label), Text);
+    if (sendto)
+      gtk_label_set_mnemonic_widget(GTK_LABEL(label), sendto);
+  } else if (GTK_IS_BUTTON(labelparent)) {
+    gtk_button_set_use_underline(GTK_BUTTON(labelparent), TRUE);
+    gtk_button_set_label(GTK_BUTTON(labelparent), Text);
+  }
+#else
   gtk_label_set_text_with_mnemonic(
                    GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), Text);
   if (sendto) {
     gtk_label_set_mnemonic_widget(
                    GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), sendto);
   }
+#endif
   return 0;
 #endif
 }
@@ -5291,9 +5526,12 @@ GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
   textview = gtk_text_view_new();
 
   frame = gtk_frame_new(NULL);
+#if GTK_MAJOR_VERSION < 4
   gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
-
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
+#else
+  scrollwin = gtk_scrolled_window_new();
+#endif
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(scrollwin), textview);
@@ -5359,7 +5597,11 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
   };
 
   imm_return = Options & MB_IMMRETURN;
+#if GTK_MAJOR_VERSION >= 4
+  dialog = dp_gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#else
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+#endif
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);

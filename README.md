@@ -8,6 +8,10 @@ and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
+![GTK4 client screenshot with Swedish UI](src/dopewars-shot-gtk4-sv.png)
+
+Shown here is the GTK4 client path with Swedish translations enabled.
+
 dopewars 1.6.2 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
 recommended that both clients and servers are upgraded to 1.6.2!
@@ -42,6 +46,24 @@ convenience, the configuration file is the more Windows-friendly
 
 The easiest way to install the Win32 version is to download the precompiled
 binary. To build from source, see the `win32` directory.
+
+## Building from source
+
+On Unix-like systems, dopewars can be built with Autotools in the usual way:
+
+1. Run `autoreconf -fi`
+2. Run `./configure`
+3. Run `make`
+
+The graphical client/server still support the legacy GTK build paths, and an
+experimental GTK4 path is also available. To configure an explicit GTK4 build,
+use:
+
+`./configure --enable-gtk4`
+
+The GTK4 path currently ports the compatibility layer used by the graphical
+client, including updated menu/container shims and recent UI work such as theme
+mode handling and improved keyboard accessibility.
 
 ## Usage
 

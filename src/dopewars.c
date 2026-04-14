@@ -55,6 +55,19 @@
 #include "util.h"
 #include "winmain.h"
 
+#ifndef VERSION
+#define VERSION "SVN"
+#endif
+#ifndef DPDATADIR
+#define DPDATADIR "."
+#endif
+#ifndef DPDOCDIR
+#define DPDOCDIR "."
+#endif
+#ifndef DPSCOREDIR
+#define DPSCOREDIR "."
+#endif
+
 #ifdef CURSES_CLIENT
 #include "curses_client/curses_client.h"
 #endif
