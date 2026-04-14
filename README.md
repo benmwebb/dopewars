@@ -8,6 +8,10 @@ and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
+![GTK4 client screenshot with Swedish UI](src/dopewars-shot-gtk4-sv.png)
+
+Shown here is the GTK4 client path with Swedish translations enabled.
+
 dopewars 1.6.2 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
 recommended that both clients and servers are upgraded to 1.6.2!
