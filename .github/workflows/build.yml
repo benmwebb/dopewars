@@ -22,7 +22,7 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
     - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest' && matrix.container == null
       run: |
