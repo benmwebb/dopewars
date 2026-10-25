@@ -59,7 +59,7 @@ GtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
 
 typedef gchar *(*DPGtkTranslateFunc) (const gchar *path, gpointer func_data);
 
-typedef void (*DPGtkItemFactoryCallback) (GtkWidget *widget, gpointer data);
+typedef void (*DPGtkItemFactoryCallback) (void);
 
 typedef struct _DPGtkItemFactoryEntry DPGtkItemFactoryEntry;
 typedef struct _DPGtkItemFactory DPGtkItemFactory;

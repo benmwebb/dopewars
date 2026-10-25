@@ -160,27 +160,28 @@ static void DisplaySpyReports(Player *Play);
 static DPGtkItemFactoryEntry menu_items[] = {
   /* The names of the menus and their items in the GTK+ client */
   {N_("/_Game"), NULL, NULL, 0, "<Branch>"},
-  {N_("/Game/_New..."), "<control>N", NewGame, 0, NULL},
-  {N_("/Game/_Abandon..."), "<control>A", AbandonGame, 0, NULL},
-  {N_("/Game/_Options..."), "<control>O", OptDialog, 0, NULL},
-  {N_("/Game/Enable _sound"), NULL, ToggleSound, 0, "<CheckItem>"},
-  {N_("/Game/_Quit..."), "<control>Q", QuitGame, 0, NULL},
+  {N_("/Game/_New..."), "<control>N", G_CALLBACK(NewGame), 0, NULL},
+  {N_("/Game/_Abandon..."), "<control>A", G_CALLBACK(AbandonGame), 0, NULL},
+  {N_("/Game/_Options..."), "<control>O", G_CALLBACK(OptDialog), 0, NULL},
+  {N_("/Game/Enable _sound"), NULL, G_CALLBACK(ToggleSound), 0, "<CheckItem>"},
+  {N_("/Game/_Quit..."), "<control>Q", G_CALLBACK(QuitGame), 0, NULL},
   {N_("/_Talk"), NULL, NULL, 0, "<Branch>"},
-  {N_("/Talk/To _All..."), NULL, TalkToAll, 0, NULL},
-  {N_("/Talk/To _Player..."), NULL, TalkToPlayers, 0, NULL},
+  {N_("/Talk/To _All..."), NULL, G_CALLBACK(TalkToAll), 0, NULL},
+  {N_("/Talk/To _Player..."), NULL, G_CALLBACK(TalkToPlayers), 0, NULL},
   {N_("/_List"), NULL, NULL, 0, "<Branch>"},
-  {N_("/List/_Players..."), NULL, ListPlayers, 0, NULL},
-  {N_("/List/_Scores..."), NULL, ListScores, 0, NULL},
-  {N_("/List/_Inventory..."), NULL, ListInventory, 0, NULL},
+  {N_("/List/_Players..."), NULL, G_CALLBACK(ListPlayers), 0, NULL},
+  {N_("/List/_Scores..."), NULL, G_CALLBACK(ListScores), 0, NULL},
+  {N_("/List/_Inventory..."), NULL, G_CALLBACK(ListInventory), 0, NULL},
   {N_("/_Errands"), NULL, NULL, 0, "<Branch>"},
-  {N_("/Errands/_Spy..."), NULL, SpyOnPlayer, 0, NULL},
-  {N_("/Errands/_Tipoff..."), NULL, TipOff, 0, NULL},
+  {N_("/Errands/_Spy..."), NULL, G_CALLBACK(SpyOnPlayer), 0, NULL},
+  {N_("/Errands/_Tipoff..."), NULL, G_CALLBACK(TipOff), 0, NULL},
   /* N.B. "Sack Bitch" has to be recreated (and thus translated) at the
    * start of each game, below, so is not marked for gettext here */
-  {"/Errands/S_ack Bitch...", NULL, SackBitch, 0, NULL},
-  {N_("/Errands/_Get spy reports..."), NULL, GetSpyReports, 0, NULL},
+  {"/Errands/S_ack Bitch...", NULL, G_CALLBACK(SackBitch), 0, NULL},
+  {N_("/Errands/_Get spy reports..."), NULL, G_CALLBACK(GetSpyReports),
+   0, NULL},
   {N_("/_Help"), NULL, NULL, 0, "<Branch>"},
-  {N_("/Help/_About..."), "F1", display_intro, 0, NULL}
+  {N_("/Help/_About..."), "F1", G_CALLBACK(display_intro), 0, NULL}
 };
 
 static gchar *MenuTranslate(const gchar *path, gpointer func_data)

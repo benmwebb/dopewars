@@ -217,7 +217,7 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
   new_child->widget = menu_item;
   if (entry->callback) {
     g_signal_connect(G_OBJECT(menu_item), "activate",
-                     G_CALLBACK(entry->callback), callback_data);
+                     entry->callback, callback_data);
   }
 
   if (parent) {
