@@ -3228,10 +3228,12 @@ void NewNameDialog(void)
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(NewNameOK), window);
   gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-  gtk_widget_set_can_default(button, TRUE);
-  gtk_widget_grab_default(button);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
+
+  /* The button must be in the window before it can be the default */
+  gtk_widget_set_can_default(button, TRUE);
+  gtk_widget_grab_default(button);
   gtk_widget_show_all(window);
 }
 
