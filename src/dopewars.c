@@ -2987,7 +2987,9 @@ int main(int argc, char *argv[])
 #ifdef NETWORKING
 #ifdef GUI_SERVER
       Server = TRUE;
+#if GTK_MAJOR_VERSION == 2
       gtk_set_locale();
+#endif
       gtk_init(&argc, &argv);
       GuiServerLoop(cmdline, FALSE);
 #else
