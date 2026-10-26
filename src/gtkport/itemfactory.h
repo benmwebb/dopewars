@@ -99,4 +99,16 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             GDestroyNotify notify);
 #endif /* GTK+2 */
 
+/* Manipulate the menu item with the given path. GTK4 menu items are not
+   widgets, so use these rather than dp_gtk_item_factory_get_widget() */
+void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
+                                       const gchar *path,
+                                       gboolean sensitive);
+gboolean dp_gtk_item_factory_get_active(DPGtkItemFactory *ifactory,
+                                        const gchar *path);
+void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
+                                    const gchar *path, gboolean active);
+void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
+                                   const gchar *path, gchar *label);
+
 #endif /* __ITEM_FACTORY_H__ */

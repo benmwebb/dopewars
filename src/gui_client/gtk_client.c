@@ -310,14 +310,8 @@ void AbandonGame(GtkWidget *widget, gpointer data)
 
 void ToggleSound(GtkWidget *widget, gpointer data)
 {
-  gboolean enable;
-
-  widget = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                          "<main>/Game/Enable sound");
-  if (widget) {
-    enable = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
-    SoundEnable(enable);
-  }
+  SoundEnable(dp_gtk_item_factory_get_active(ClientData.Menu,
+                                             "<main>/Game/Enable sound"));
 }
 
 void ListScores(GtkWidget *widget, gpointer data)
@@ -461,7 +455,6 @@ void HandleClientMessage(char *pt, Player *Play)
   Player *From, *tmp;
   gchar *text;
   gboolean Handled;
-  GtkWidget *MenuItem;
   GSList *list;
 
   if (ProcessMessage(pt, Play, &From, &AI, &Code,
@@ -564,29 +557,24 @@ void HandleClientMessage(char *pt, Player *Play)
     SoundPlay(Sounds.Jet);
     break;
   case C_ENDLIST:
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Sack Bitch...");
-
     /* Text for the Errands/Sack Bitch menu item */
     text = dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde..."),
                              Names.Bitch);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Sack Bitch...", text);
     g_free(text);
-
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Spy...");
 
     /* Text to update the Errands/Spy menu item with the price for spying */
     text = dpg_strdup_printf(_("_Spy (%P)"), Prices.Spy);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Spy...", text);
     g_free(text);
 
     /* Text to update the Errands/Tipoff menu item with the price for a
        tipoff */
     text = dpg_strdup_printf(_("_Tipoff (%P)"), Prices.Tipoff);
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Tipoff...");
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Tipoff...", text);
     g_free(text);
     if (FirstClient->next)
       ListPlayers(NULL, NULL);
@@ -2046,36 +2034,31 @@ void UpdateMenus(void)
   MultiPlayer = (FirstClient && FirstClient->next != NULL);
   Bitches = InGame && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
 
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                                          "<main>/Talk"),
-                           InGame && Network);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Game/Options..."),
-                           !InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Game/Abandon..."),
-                           InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/List/Inventory..."),
-			   InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/List/Players..."),
-                           InGame && Network);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands"), InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands/Spy..."),
-                           InGame && MultiPlayer);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands/Tipoff..."),
-                           InGame && MultiPlayer);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu,
-                            "<main>/Errands/Sack Bitch..."), Bitches > 0);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu,
-                            "<main>/Errands/Get spy reports..."), InGame
-                           && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu, "<main>/Talk",
+                                    InGame && Network);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Game/Options...", !InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Game/Abandon...", InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/List/Inventory...", InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/List/Players...",
+                                    InGame && Network);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu, "<main>/Errands",
+                                    InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Spy...",
+                                    InGame && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Tipoff...",
+                                    InGame && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Sack Bitch...",
+                                    Bitches > 0);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Get spy reports...",
+                                    InGame && MultiPlayer);
 }
 
 GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
@@ -2197,7 +2180,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
 {
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *menubar, *text,
-      *vpaned, *button, *tv, *widget;
+      *vpaned, *button, *tv;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
   int i;
@@ -2272,9 +2255,8 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_widget_show_all(menubar);
   UpdateMenus();
   SoundEnable(UseSounds);
-  widget = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                          "<main>/Game/Enable sound");
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), UseSounds);
+  dp_gtk_item_factory_set_active(ClientData.Menu, "<main>/Game/Enable sound",
+                                 UseSounds);
 
   vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   frame = gtk_frame_new(_("Stats"));

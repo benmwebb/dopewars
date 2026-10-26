@@ -258,28 +258,40 @@ void dp_gtk_item_factory_create_items(DPGtkItemFactory *ifactory,
   }
 }
 
-GtkWidget *dp_gtk_item_factory_get_widget(DPGtkItemFactory *ifactory,
-                                          const gchar *path)
+/* Get the item with the given path (which includes the factory's root
+   path), or NULL if there is no such item */
+static DPGtkItemFactoryChild *FindChild(DPGtkItemFactory *ifactory,
+                                        const gchar *path)
 {
   gint root_len;
   GSList *list;
   DPGtkItemFactoryChild *child;
 
   root_len = strlen(ifactory->path);
-  if (!path || strlen(path) < root_len)
+  if (!path || strlen(path) <= root_len)
     return NULL;
 
   if (strncmp(ifactory->path, path, root_len) != 0)
     return NULL;
-  if (strlen(path) == root_len)
-    return ifactory->top_widget;
 
   for (list = ifactory->children; list; list = g_slist_next(list)) {
     child = (DPGtkItemFactoryChild *)list->data;
     if (PathCmp(child->path, &path[root_len]) == 1)
-      return child->widget;
+      return child;
   }
   return NULL;
+}
+
+GtkWidget *dp_gtk_item_factory_get_widget(DPGtkItemFactory *ifactory,
+                                          const gchar *path)
+{
+  DPGtkItemFactoryChild *child;
+
+  if (path && strcmp(path, ifactory->path) == 0)
+    return ifactory->top_widget;
+
+  child = FindChild(ifactory, path);
+  return child ? child->widget : NULL;
 }
 
 void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
@@ -292,3 +304,43 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
 }
 
 #endif   /* defined(CYGWIN) || GTK_MAJOR_VERSION > 2 */
+
+void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
+                                       const gchar *path,
+                                       gboolean sensitive)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+  if (widget) {
+    gtk_widget_set_sensitive(widget, sensitive);
+  }
+}
+
+gboolean dp_gtk_item_factory_get_active(DPGtkItemFactory *ifactory,
+                                        const gchar *path)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+  return widget
+         && gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
+}
+
+void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
+                                    const gchar *path, gboolean active)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+  if (widget) {
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), active);
+  }
+}
+
+void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
+                                   const gchar *path, gchar *label)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+  if (widget) {
+    SetAccelerator(widget, label, NULL, NULL, NULL, FALSE);
+  }
+}
