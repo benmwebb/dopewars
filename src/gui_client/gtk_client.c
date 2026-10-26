@@ -2508,7 +2508,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     title = dpg_strdup_printf(_("%/BankName window title/%Tde"),
                               Names.BankName);
     deposit = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "deposit"));
-    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit))) {
+    if (!gtk_check_button_get_active(GTK_CHECK_BUTTON(deposit))) {
       withdraw = TRUE;
     }
   }
@@ -2602,7 +2602,7 @@ void TransferDialog(gboolean Debt)
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), "0");
+  gtk_editable_set_text(GTK_EDITABLE(entry), "0");
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
@@ -2725,8 +2725,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
   GString *msg;
 
   AllPlayers =
-      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON
-                                   (TalkData->checkbutton));
+      gtk_check_button_get_active(GTK_CHECK_BUTTON(TalkData->checkbutton));
   text = gtk_editable_get_chars(GTK_EDITABLE(TalkData->entry), 0, -1);
   gtk_editable_delete_text(GTK_EDITABLE(TalkData->entry), 0, -1);
   if (!text)
@@ -2795,7 +2794,7 @@ void TalkDialog(gboolean TalkToAll)
       /* Checkbutton set if you want to talk to all players */
       gtk_check_button_new_with_label(_("Talk to all players"));
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), TalkToAll);
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(checkbutton), TalkToAll);
   gtk_box_pack_start(GTK_BOX(vbox), checkbutton, FALSE, FALSE, 0);
 
   /* Prompt for you to enter the message to be sent to other players */
@@ -3201,7 +3200,7 @@ void NewNameDialog(void)
   g_object_set_data(G_OBJECT(window), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(NewNameOK), window);
-  gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(ClientData.Play));
+  gtk_editable_set_text(GTK_EDITABLE(entry), GetPlayerName(ClientData.Play));
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);

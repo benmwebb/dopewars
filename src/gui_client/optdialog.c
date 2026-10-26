@@ -86,7 +86,7 @@ static void SaveConfigWidget(struct GLOBALS *gvar, struct ConfigWidget *cwid,
     if (cwid->maxindex) {
       newset = (cwid->data[structind - 1] != NULL);
     } else {
-      newset = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(cwid->widget));
+      newset = gtk_check_button_get_active(GTK_CHECK_BUTTON(cwid->widget));
     }
     changed = (*boolpt != newset);
     *boolpt = newset;
@@ -222,7 +222,7 @@ static GtkWidget *NewConfigCheck(gchar *name, gchar *label)
   g_assert(gvar->BoolVal);
 
   check = gtk_check_button_new_with_label(label);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), *gvar->BoolVal);
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(check), *gvar->BoolVal);
 
   AddConfigWidget(check, ind);
 
@@ -243,7 +243,7 @@ static GtkWidget *NewConfigEntry(gchar *name)
   gvar = &Globals[ind];
 
   if (gvar->StringVal) {
-    gtk_entry_set_text(GTK_ENTRY(entry), *gvar->StringVal);
+    gtk_editable_set_text(GTK_EDITABLE(entry), *gvar->StringVal);
   } else if (gvar->IntVal) {
     if (gvar->MaxVal > gvar->MinVal) {
       GtkAdjustment *spin_adj;
@@ -256,12 +256,12 @@ static GtkWidget *NewConfigEntry(gchar *name)
       entry = gtk_spin_button_new(spin_adj, 1.0, 0);
     } else {
       tmpstr = g_strdup_printf("%d", *gvar->IntVal);
-      gtk_entry_set_text(GTK_ENTRY(entry), tmpstr);
+      gtk_editable_set_text(GTK_EDITABLE(entry), tmpstr);
       g_free(tmpstr);
     }
   } else if (gvar->PriceVal) {
     tmpstr = pricetostr(*gvar->PriceVal);
-    gtk_entry_set_text(GTK_ENTRY(entry), tmpstr);
+    gtk_editable_set_text(GTK_EDITABLE(entry), tmpstr);
     g_free(tmpstr);
   }
 
@@ -513,13 +513,13 @@ static void list_sel_changed(GtkTreeSelection *treesel, gpointer data)
         conf->data[oldsel] = NULL;
 
         if (gvar->BoolVal) {
-          if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(conf->widget))) {
+          if (gtk_check_button_get_active(GTK_CHECK_BUTTON(conf->widget))) {
             conf->data[oldsel] = g_strdup("1");
           }
         } else {
           conf->data[oldsel] = gtk_editable_get_chars(
                                          GTK_EDITABLE(conf->widget), 0, -1);
-          gtk_entry_set_text(GTK_ENTRY(conf->widget), "");
+          gtk_editable_set_text(GTK_EDITABLE(conf->widget), "");
         }
         if (strcmp(gvar->Name, "Name") == 0) {
           GtkTreeIter ositer;
@@ -542,10 +542,10 @@ static void list_sel_changed(GtkTreeSelection *treesel, gpointer data)
 
       if (gvar->NameStruct && strcmp(structname, gvar->NameStruct) == 0) {
         if (gvar->BoolVal) {
-          gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(conf->widget),
-                                       conf->data[row] != NULL);
+          gtk_check_button_set_active(GTK_CHECK_BUTTON(conf->widget),
+                                      conf->data[row] != NULL);
         } else {
-          gtk_entry_set_text(GTK_ENTRY(conf->widget), conf->data[row]);
+          gtk_editable_set_text(GTK_EDITABLE(conf->widget), conf->data[row]);
 	}
       }
     }
@@ -577,7 +577,7 @@ static void sound_sel_changed(GtkTreeSelection *treesel, gpointer data)
       AssignName(GetGlobalString(globind, 0), text);
       Globals[globind].Modified = TRUE;
     }
-    gtk_entry_set_text(GTK_ENTRY(entry), "");
+    gtk_editable_set_text(GTK_EDITABLE(entry), "");
     g_free(text);
   }
 
@@ -589,7 +589,7 @@ static void sound_sel_changed(GtkTreeSelection *treesel, gpointer data)
     gtk_tree_model_get(model, &iter, 2, &globind, -1);
     g_assert(globind >=0 && globind < NUMGLOB);
     text = GetGlobalString(globind, 0);
-    gtk_entry_set_text(GTK_ENTRY(entry), *text);
+    gtk_editable_set_text(GTK_EDITABLE(entry), *text);
   }
 }
 
@@ -603,7 +603,7 @@ static void BrowseSound(GtkWidget *entry)
   newtext = GtkGetFile(dialog, oldtext, _("Select sound file"));
   g_free(oldtext);
   if (newtext) {
-    gtk_entry_set_text(GTK_ENTRY(entry), newtext);
+    gtk_editable_set_text(GTK_EDITABLE(entry), newtext);
     g_free(newtext);
   }
 }
@@ -623,12 +623,12 @@ static void TestPlaySound(GtkWidget *entry)
 
 static void OKCallback(GtkWidget *widget, GtkWidget *dialog)
 {
-  GtkToggleButton *unicode_check;
+  GtkCheckButton *unicode_check;
 
   SaveConfigWidgets();
-  unicode_check = GTK_TOGGLE_BUTTON(g_object_get_data(G_OBJECT(dialog),
-                                                      "unicode_check"));
-  UpdateConfigFile(NULL, gtk_toggle_button_get_active(unicode_check));
+  unicode_check = GTK_CHECK_BUTTON(g_object_get_data(G_OBJECT(dialog),
+                                                     "unicode_check"));
+  UpdateConfigFile(NULL, gtk_check_button_get_active(unicode_check));
   gtk_widget_destroy(dialog);
 }
 
@@ -863,7 +863,7 @@ void OptDialog(GtkWidget *widget, gpointer data)
   dp_gtk_grid_attach(GTK_GRID(grid), check, 0, 0, 1, 1, FALSE);
 
   check = gtk_check_button_new_with_label(_("Unicode config file"));
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), IsConfigFileUTF8());
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(check), IsConfigFileUTF8());
   dp_gtk_grid_attach(GTK_GRID(grid), check, 1, 0, 2, 1, TRUE);
   g_object_set_data(G_OBJECT(dialog), "unicode_check", check);
 

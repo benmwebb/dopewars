@@ -377,7 +377,7 @@ static void MetaServerConnect(GtkWidget *widget, gpointer data)
 static void StartSinglePlayer(GtkWidget *widget, gpointer data)
 {
   WantAntique =
-      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stgam.antique));
+      gtk_check_button_get_active(GTK_CHECK_BUTTON(stgam.antique));
   if (!GetStartGamePlayerName(&stgam.play->Name))
     return;
   GuiStartGame();
@@ -454,11 +454,11 @@ static GtkWidget *create_metaserver_view(GtkWidget **pack_widg)
 }
 #endif
 
-static void set_initial_player_name(GtkEntry *entry, Player *play)
+static void set_initial_player_name(GtkEditable *entry, Player *play)
 {
   char *name = GetPlayerName(play);
   if (*name) {
-    gtk_entry_set_text(entry, name);
+    gtk_editable_set_text(entry, name);
   } else {
     /* If name is blank, use the first word from the user's full login name */
     char *firstspace;
@@ -469,7 +469,7 @@ static void set_initial_player_name(GtkEntry *entry, Player *play)
       *firstspace = '\0';
     }
     /* "Unknown" is returned from g_get_real_name() on error */
-    gtk_entry_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
+    gtk_editable_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
     g_free(name);
   }
 }
@@ -540,7 +540,7 @@ void NewGameDialog(Player *play)
 #else
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
 #endif
-  set_initial_player_name(GTK_ENTRY(entry), stgam.play);
+  set_initial_player_name(GTK_EDITABLE(entry), stgam.play);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -571,13 +571,13 @@ void NewGameDialog(Player *play)
   else
     ServerEntry = ServerName;
 
-  gtk_entry_set_text(GTK_ENTRY(entry), ServerEntry);
+  gtk_editable_set_text(GTK_EDITABLE(entry), ServerEntry);
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
   label = gtk_label_new(_("Port"));
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = stgam.port = gtk_entry_new();
   text = g_strdup_printf("%d", Port);
-  gtk_entry_set_text(GTK_ENTRY(entry), text);
+  gtk_editable_set_text(GTK_EDITABLE(entry), text);
   g_free(text);
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
 
@@ -603,8 +603,7 @@ void NewGameDialog(Player *play)
   /* Checkbox to activate 'antique mode' in single-player games */
   SetAccelerator(stgam.antique, _("_Antique mode"), stgam.antique,
                  "clicked", accel_group, TRUE);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stgam.antique),
-                               WantAntique);
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(stgam.antique), WantAntique);
   gtk_box_pack_start(GTK_BOX(vbox2), stgam.antique, FALSE, FALSE, 0);
   button = gtk_button_new_with_label("");
 

@@ -631,6 +631,17 @@ typedef enum
 #define GtkTextView GtkText
 #endif
 
+/* Provide GTK4 syntax for functions where older GTK+ (and our Win32
+   emulation) use different names or types */
+#if CYGWIN || GTK_MAJOR_VERSION < 4
+#define gtk_check_button_get_active(check) \
+    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(check))
+#define gtk_check_button_set_active(check, active) \
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), active)
+#define gtk_editable_set_text(editable, text) \
+    gtk_entry_set_text(GTK_ENTRY(editable), text)
+#endif
+
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, GtkMessageType type, gint Options);
