@@ -53,11 +53,12 @@ AC_ARG_ENABLE(gui-server,
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
 
 AC_ARG_ENABLE(gtk4,
-[  --enable-gtk4           use GTK 4 if available (experimental)],
-[ USE_GTK4="$enableval" ],[ USE_GTK4="no" ])
+[  --disable-gtk4          use GTK+ 3.x (or 2.x), even if GTK 4 is found],
+[ USE_GTK4="$enableval" ],[ USE_GTK4="yes" ])
 
 AC_ARG_ENABLE(gtk3,
-[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found],
+[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found (requires
+                          --disable-gtk4 if GTK 4 is installed)],
 [ USE_GTK3="$enableval" ],[ USE_GTK3="yes" ])
 
 AC_ARG_WITH(esd,
@@ -174,6 +175,11 @@ else
       gtk4_found="no"
       if test "$USE_GTK4" = "yes" ; then
         PKG_CHECK_MODULES([GTK], [gtk4], gtk4_found="yes", gtk4_found="no")
+        if test "$gtk4_found" = "yes" ; then
+          dnl GtkTreeView, GtkComboBox and GtkDialog, which we use, are
+          dnl deprecated in GTK 4.10 but are still supported in GTK 4
+          GTK_CFLAGS="$GTK_CFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+        fi
       fi
       if test "$gtk4_found" = "no" ; then
         gtk3_found="no"
