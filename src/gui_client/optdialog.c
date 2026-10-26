@@ -239,26 +239,27 @@ static GtkWidget *NewConfigEntry(gchar *name)
   ind = GetGlobalIndex(name, NULL);
   g_assert(ind >= 0);
 
-  entry = gtk_entry_new();
   gvar = &Globals[ind];
 
+  if (gvar->IntVal && gvar->MaxVal > gvar->MinVal) {
+    GtkAdjustment *spin_adj;
+
+    spin_adj = (GtkAdjustment *)gtk_adjustment_new(*gvar->IntVal,
+                                                   gvar->MinVal,
+                                                   gvar->MaxVal,
+                                                   1.0, 10.0, 0.0);
+    entry = gtk_spin_button_new(spin_adj, 1.0, 0);
+    AddConfigWidget(entry, ind);
+    return entry;
+  }
+
+  entry = gtk_entry_new();
   if (gvar->StringVal) {
     gtk_editable_set_text(GTK_EDITABLE(entry), *gvar->StringVal);
   } else if (gvar->IntVal) {
-    if (gvar->MaxVal > gvar->MinVal) {
-      GtkAdjustment *spin_adj;
-
-      gtk_widget_destroy(entry);
-      spin_adj = (GtkAdjustment *)gtk_adjustment_new(*gvar->IntVal,
-                                                     gvar->MinVal,
-                                                     gvar->MaxVal,
-                                                     1.0, 10.0, 0.0);
-      entry = gtk_spin_button_new(spin_adj, 1.0, 0);
-    } else {
-      tmpstr = g_strdup_printf("%d", *gvar->IntVal);
-      gtk_editable_set_text(GTK_EDITABLE(entry), tmpstr);
-      g_free(tmpstr);
-    }
+    tmpstr = g_strdup_printf("%d", *gvar->IntVal);
+    gtk_editable_set_text(GTK_EDITABLE(entry), tmpstr);
+    g_free(tmpstr);
   } else if (gvar->PriceVal) {
     tmpstr = pricetostr(*gvar->PriceVal);
     gtk_editable_set_text(GTK_EDITABLE(entry), tmpstr);

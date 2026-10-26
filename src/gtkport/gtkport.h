@@ -697,6 +697,13 @@ typedef enum
     gtk_entry_set_text(GTK_ENTRY(editable), text)
 #endif
 
+/* Signal emitted when the user tries to close a window */
+#if !CYGWIN && GTK_MAJOR_VERSION >= 4
+#define DP_DELETE_EVENT "close-request"
+#else
+#define DP_DELETE_EVENT "delete_event"
+#endif
+
 /* Global functions */
 gint GtkMessageBox(GtkWidget *parent, const gchar *Text,
                    const gchar *Title, GtkMessageType type, gint Options);
