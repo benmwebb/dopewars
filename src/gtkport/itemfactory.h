@@ -79,6 +79,11 @@ struct _DPGtkItemFactory {
   GtkWidget *top_widget;
   DPGtkTranslateFunc translate_func;
   gpointer translate_data;
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+  /* GTK4 menus are built from a model, with actions for each item */
+  GMenu *top_menu;
+  GSimpleActionGroup *action_group;
+#endif
 };
 
 DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,

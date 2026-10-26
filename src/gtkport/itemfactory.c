@@ -55,6 +55,18 @@ typedef struct _DPGtkItemFactoryChild DPGtkItemFactoryChild;
 struct _DPGtkItemFactoryChild {
   gchar *path;
   GtkWidget *widget;
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+  DPGtkItemFactory *ifactory;
+  DPGtkItemFactoryChild *parent;
+  GMenu *submenu;         /* Only for branches */
+  GMenu *parent_menu;     /* Menu that contains this item... */
+  gint position;          /* ...and the item's index in that menu */
+  GSimpleAction *action;  /* Only for non-branches */
+  gchar *detailed_action, *accel;
+  gboolean sensitive;
+  DPGtkItemFactoryCallback callback;
+  gpointer callback_data;
+#endif
 };
 
 DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
@@ -65,7 +77,16 @@ DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
   new_fac = g_new0(DPGtkItemFactory, 1);
   new_fac->path = g_strdup(path);
   new_fac->accel_group = accel_group;
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+  new_fac->top_menu = g_menu_new();
+  new_fac->action_group = g_simple_action_group_new();
+  new_fac->top_widget = gtk_popover_menu_bar_new_from_model(
+                                   G_MENU_MODEL(new_fac->top_menu));
+  gtk_widget_insert_action_group(new_fac->top_widget, "menu",
+                                 G_ACTION_GROUP(new_fac->action_group));
+#else
   new_fac->top_widget = gtk_menu_bar_new();
+#endif
   new_fac->translate_func = NULL;
   return new_fac;
 }
@@ -185,6 +206,134 @@ static gboolean gtk_item_factory_parse_accel(DPGtkItemFactory *ifactory,
   return (accel->key != 0);
 }
 
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+static GMenuItem *new_menu_item(DPGtkItemFactoryChild *child,
+                                const gchar *label)
+{
+  GMenuItem *item = g_menu_item_new(label, child->detailed_action);
+
+  if (child->accel) {
+    g_menu_item_set_attribute(item, "accel", "s", child->accel);
+  }
+  return item;
+}
+
+static void MenuItemActivate(GSimpleAction *action, GVariant *parameter,
+                             gpointer data)
+{
+  DPGtkItemFactoryChild *child = data;
+  GVariant *state = g_action_get_state(G_ACTION(action));
+
+  /* Toggle check items */
+  if (state) {
+    g_simple_action_set_state(action,
+                    g_variant_new_boolean(!g_variant_get_boolean(state)));
+    g_variant_unref(state);
+  }
+  if (child->callback) {
+    /* Callbacks are generic G_CALLBACKs, so cast to the real signature */
+    ((void (*)(GtkWidget *, gpointer))child->callback)(
+                     child->ifactory->top_widget, child->callback_data);
+  }
+}
+
+static gboolean MenuAccelActivate(GtkWidget *widget, GVariant *args,
+                                  gpointer data)
+{
+  GAction *action = G_ACTION(data);
+
+  if (g_action_get_enabled(action)) {
+    g_action_activate(action, NULL);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
+                                     DPGtkItemFactoryEntry *entry,
+                                     gpointer callback_data,
+                                     guint callback_type)
+{
+  DPGtkItemFactoryChild *new_child, *parent = NULL;
+  GString *menu_title;
+  GMenuItem *item;
+  OurAccel accel;
+  gboolean haveaccel;
+
+  new_child = g_new0(DPGtkItemFactoryChild, 1);
+  new_child->path = g_strdup(entry->path);
+  new_child->ifactory = ifactory;
+  new_child->sensitive = TRUE;
+
+  menu_title = g_string_new("");
+
+  gtk_item_factory_parse_path(ifactory, new_child->path, &parent,
+                              menu_title);
+  haveaccel =
+      gtk_item_factory_parse_accel(ifactory, entry->accelerator,
+                                   menu_title, &accel);
+
+  new_child->parent = parent;
+  new_child->parent_menu = parent ? parent->submenu : ifactory->top_menu;
+  if (!new_child->parent_menu) {
+    g_warning("Menu item %s has no parent branch", entry->path);
+    g_free(new_child->path);
+    g_free(new_child);
+    g_string_free(menu_title, TRUE);
+    return;
+  }
+
+  if (entry->item_type && strcmp(entry->item_type, "<Branch>") == 0) {
+    new_child->submenu = g_menu_new();
+    item = g_menu_item_new_submenu(menu_title->str,
+                                   G_MENU_MODEL(new_child->submenu));
+  } else {
+    gchar *name = g_strdup_printf("item%u",
+                                  g_slist_length(ifactory->children));
+
+    if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
+      new_child->action = g_simple_action_new_stateful(
+                              name, NULL, g_variant_new_boolean(TRUE));
+    } else {
+      new_child->action = g_simple_action_new(name, NULL);
+    }
+    new_child->detailed_action = g_strdup_printf("menu.%s", name);
+    g_free(name);
+
+    new_child->callback = entry->callback;
+    new_child->callback_data = callback_data;
+    g_signal_connect(G_OBJECT(new_child->action), "activate",
+                     G_CALLBACK(MenuItemActivate), new_child);
+    g_action_map_add_action(G_ACTION_MAP(ifactory->action_group),
+                            G_ACTION(new_child->action));
+
+    if (haveaccel) {
+      accel.key = gdk_keyval_to_lower(accel.key);
+      new_child->accel = gtk_accelerator_name(accel.key, accel.mods);
+      if (ifactory->accel_group) {
+        GtkShortcut *shortcut = gtk_shortcut_new(
+                gtk_keyval_trigger_new(accel.key, accel.mods),
+                gtk_callback_action_new(MenuAccelActivate,
+                                        g_object_ref(new_child->action),
+                                        g_object_unref));
+        gtk_shortcut_controller_add_shortcut(ifactory->accel_group,
+                                             shortcut);
+      }
+    }
+    item = new_menu_item(new_child, menu_title->str);
+  }
+
+  new_child->position =
+      g_menu_model_get_n_items(G_MENU_MODEL(new_child->parent_menu));
+  g_menu_append_item(new_child->parent_menu, item);
+  g_object_unref(item);
+
+  g_string_free(menu_title, TRUE);
+
+  ifactory->children = g_slist_append(ifactory->children, new_child);
+}
+
+#else
 void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
                                      DPGtkItemFactoryEntry *entry,
                                      gpointer callback_data,
@@ -245,6 +394,7 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
 
   ifactory->children = g_slist_append(ifactory->children, new_child);
 }
+#endif /* GTK4 */
 
 void dp_gtk_item_factory_create_items(DPGtkItemFactory *ifactory,
                                       guint n_entries,
@@ -305,6 +455,82 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
 
 #endif   /* defined(CYGWIN) || GTK_MAJOR_VERSION > 2 */
 
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+/* Enable each action only if it and all of its parent branches are
+   sensitive, since GTK4 submenus cannot be made insensitive themselves */
+static void UpdateEnabled(DPGtkItemFactory *ifactory)
+{
+  GSList *list;
+
+  for (list = ifactory->children; list; list = g_slist_next(list)) {
+    DPGtkItemFactoryChild *child = (DPGtkItemFactoryChild *)list->data;
+    DPGtkItemFactoryChild *pt;
+    gboolean enabled = TRUE;
+
+    if (!child->action)
+      continue;
+    for (pt = child; pt; pt = pt->parent) {
+      enabled = enabled && pt->sensitive;
+    }
+    g_simple_action_set_enabled(child->action, enabled);
+  }
+}
+
+void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
+                                       const gchar *path,
+                                       gboolean sensitive)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+
+  if (child) {
+    child->sensitive = sensitive;
+    UpdateEnabled(ifactory);
+  }
+}
+
+gboolean dp_gtk_item_factory_get_active(DPGtkItemFactory *ifactory,
+                                        const gchar *path)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+  GVariant *state;
+  gboolean active = FALSE;
+
+  if (child && child->action) {
+    state = g_action_get_state(G_ACTION(child->action));
+    if (state) {
+      active = g_variant_get_boolean(state);
+      g_variant_unref(state);
+    }
+  }
+  return active;
+}
+
+void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
+                                    const gchar *path, gboolean active)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+
+  if (child && child->action) {
+    g_simple_action_set_state(child->action, g_variant_new_boolean(active));
+  }
+}
+
+void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
+                                   const gchar *path, gchar *label)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+  GMenuItem *item;
+
+  /* GMenu items cannot be changed, so replace the item with a new one */
+  if (child && child->action) {
+    item = new_menu_item(child, label);
+    g_menu_remove(child->parent_menu, child->position);
+    g_menu_insert_item(child->parent_menu, child->position, item);
+    g_object_unref(item);
+  }
+}
+
+#else
 void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
                                        const gchar *path,
                                        gboolean sensitive)
@@ -344,3 +570,4 @@ void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
     SetAccelerator(widget, label, NULL, NULL, NULL, FALSE);
   }
 }
+#endif /* GTK4 */
