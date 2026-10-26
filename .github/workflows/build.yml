@@ -9,8 +9,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        flags: ["--enable-networking --disable-gtk3",
-                "--enable-networking --enable-gtk3",
+        flags: ["--enable-networking --disable-gtk3 --disable-gtk4",
+                "--enable-networking --enable-gtk3 --disable-gtk4",
+                "--enable-networking --enable-gtk4",
                 "--disable-networking"]
         include:
         - os: macos-latest
@@ -26,7 +27,7 @@ jobs:
     - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest' && matrix.container == null
       run: |
-        sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev
+        sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev libgtk-4-dev
     - name: Install dependencies (Mac)
       if: matrix.os == 'macos-latest'
       run: |
