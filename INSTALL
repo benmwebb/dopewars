@@ -10,6 +10,8 @@ Unix/Linux:
      http://www.gtk.org/ (GTK+2 and GTK+3 are supported). To actually
      compile dopewars, you'll probably need your distribution's
      "gtk-devel" package.
+   - For networking support, the curl library is required ("libcurl-devel"
+     or similar for compiling dopewars).
    - For the curses client, curses, ncurses or libcurses_color libraries
      and headers are required.
 
