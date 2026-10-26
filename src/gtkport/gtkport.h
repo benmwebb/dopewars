@@ -27,8 +27,6 @@
 #include <config.h>
 #endif
 
-#include "itemfactory.h"
-
 #ifdef CYGWIN
 
 /* GTK+ emulation prototypes etc. for Win32 platform */
@@ -590,6 +588,63 @@ GtkWidget *gtk_separator_new(GtkOrientation orientation);
 GtkWidget *gtk_paned_new(GtkOrientation orientation);
 #endif
 
+/* GTK4 removed a number of functions and types that we use. Provide
+   compatible replacements so we can continue to use GTK+3 syntax */
+#if GTK_MAJOR_VERSION >= 4
+/* Containers are just widgets in GTK4 */
+typedef GtkWidget GtkContainer;
+#define GTK_CONTAINER(obj) GTK_WIDGET(obj)
+
+/* Radio buttons are grouped check buttons in GTK4 */
+typedef GtkCheckButton GtkRadioButton;
+#define GTK_RADIO_BUTTON(obj) GTK_CHECK_BUTTON(obj)
+
+/* Accelerator groups are replaced with shortcut controllers in GTK4 */
+typedef GtkShortcutController GtkAccelGroup;
+typedef guint GtkAccelFlags;
+#define GTK_ACCEL_VISIBLE 1
+
+/* All windows are toplevel in GTK4 */
+#define GTK_WINDOW_TOPLEVEL 0
+#define gtk_window_new(type) gtk_window_new()
+
+/* No equivalent in GTK4, so these are no-ops */
+#define gtk_widget_set_can_default(widget, can_default) ((void)0)
+#define gtk_frame_set_shadow_type(frame, type) ((void)0)
+
+void gtk_main(void);
+void gtk_main_quit(void);
+guint gtk_main_level(void);
+void gtk_widget_destroy(GtkWidget *widget);
+void gtk_widget_show_all(GtkWidget *widget);
+void gtk_widget_grab_default(GtkWidget *widget);
+void gtk_container_add(GtkContainer *container, GtkWidget *widget);
+void gtk_container_set_border_width(GtkContainer *container,
+                                    guint border_width);
+void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean expand,
+                        gboolean fill, guint padding);
+void gtk_paned_pack1(GtkPaned *paned, GtkWidget *child, gboolean resize,
+                     gboolean shrink);
+void gtk_paned_pack2(GtkPaned *paned, GtkWidget *child, gboolean resize,
+                     gboolean shrink);
+GtkWidget *gtk_radio_button_new_with_label(GSList *group,
+                                           const gchar *label);
+GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
+                                                       const gchar *label);
+GtkAccelGroup *gtk_accel_group_new(void);
+void gtk_window_add_accel_group(GtkWindow *window,
+                                GtkAccelGroup *accel_group);
+void gtk_widget_add_accelerator(GtkWidget *widget,
+                                const gchar *accel_signal,
+                                GtkAccelGroup *accel_group,
+                                guint accel_key, GdkModifierType accel_mods,
+                                GtkAccelFlags accel_flags);
+void gtk_widget_remove_accelerator(GtkWidget *widget,
+                                   GtkAccelGroup *accel_group,
+                                   guint accel_key,
+                                   GdkModifierType accel_mods);
+#endif
+
 /* Defines for GtkMessageBox options */
 #define MB_OK     1
 #define MB_CANCEL 2
@@ -683,5 +738,8 @@ void set_label_alignment(GtkWidget *widget, gfloat xalign, gfloat yalign);
 
 /* Make a new GtkLabel, with the text possibly bold */
 GtkWidget *make_bold_label(const char *text, gboolean bold);
+
+/* Included last, since it needs the GTK4 compatibility types above */
+#include "itemfactory.h"
 
 #endif /* __GTKPORT_H__ */
