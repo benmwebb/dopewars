@@ -1223,7 +1223,11 @@ GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg)
   GtkWidget *scrollwin, *clist;
 
   clist = gtk_tree_view_new();
+#if GTK_MAJOR_VERSION >= 4
+  scrollwin = gtk_scrolled_window_new();
+#else
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
+#endif
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
                                  GTK_POLICY_AUTOMATIC,
                                  GTK_POLICY_AUTOMATIC);

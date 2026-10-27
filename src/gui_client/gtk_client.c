@@ -144,8 +144,12 @@ static void ErrandDialog(gint ErrandType);
 static void SackBitch(GtkWidget *widget, gpointer data);
 static void DestroyShowing(GtkWidget *widget, gpointer data);
 static void SetShowing(GtkWidget *window, gboolean *showing);
+#if GTK_MAJOR_VERSION >= 4
+static gboolean DisallowDelete(GtkWidget *widget, gpointer data);
+#else
 static gint DisallowDelete(GtkWidget *widget, GdkEvent * event,
                            gpointer data);
+#endif
 static void GunShopDialog(void);
 static void NewNameDialog(void);
 static void UpdatePlayerLists(void);
@@ -245,8 +249,11 @@ void my_gtk_box_pack_start_defaults(GtkBox *box, GtkWidget *child)
  */
 void my_set_dialog_position(GtkWindow *dialog)
 {
+  /* GTK4 leaves dialog placement entirely to the window manager */
+#if GTK_MAJOR_VERSION < 4
   gtk_window_set_type_hint(dialog, GDK_WINDOW_TYPE_HINT_DIALOG);
   gtk_window_set_position(dialog, GTK_WIN_POS_CENTER_ON_PARENT);
+#endif
 }
 
 void QuitGame(GtkWidget *widget, gpointer data)
@@ -266,7 +273,11 @@ void DestroyGtk(GtkWidget *widget, gpointer data)
   gtk_main_quit();
 }
 
+#if GTK_MAJOR_VERSION >= 4
+gboolean MainDelete(GtkWidget *widget, gpointer data)
+#else
 gint MainDelete(GtkWidget *widget, GdkEvent * event, gpointer data)
+#endif
 {
   return (InGame
           && GtkMessageBox(ClientData.window, _("Abandon current game?"),
@@ -310,14 +321,8 @@ void AbandonGame(GtkWidget *widget, gpointer data)
 
 void ToggleSound(GtkWidget *widget, gpointer data)
 {
-  gboolean enable;
-
-  widget = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                          "<main>/Game/Enable sound");
-  if (widget) {
-    enable = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
-    SoundEnable(enable);
-  }
+  SoundEnable(dp_gtk_item_factory_get_active(ClientData.Menu,
+                                             "<main>/Game/Enable sound"));
 }
 
 void ListScores(GtkWidget *widget, gpointer data)
@@ -461,7 +466,6 @@ void HandleClientMessage(char *pt, Player *Play)
   Player *From, *tmp;
   gchar *text;
   gboolean Handled;
-  GtkWidget *MenuItem;
   GSList *list;
 
   if (ProcessMessage(pt, Play, &From, &AI, &Code,
@@ -564,29 +568,24 @@ void HandleClientMessage(char *pt, Player *Play)
     SoundPlay(Sounds.Jet);
     break;
   case C_ENDLIST:
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Sack Bitch...");
-
     /* Text for the Errands/Sack Bitch menu item */
     text = dpg_strdup_printf(_("%/Sack Bitch menu item/S_ack %Tde..."),
                              Names.Bitch);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Sack Bitch...", text);
     g_free(text);
-
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Spy...");
 
     /* Text to update the Errands/Spy menu item with the price for spying */
     text = dpg_strdup_printf(_("_Spy (%P)"), Prices.Spy);
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Spy...", text);
     g_free(text);
 
     /* Text to update the Errands/Tipoff menu item with the price for a
        tipoff */
     text = dpg_strdup_printf(_("_Tipoff (%P)"), Prices.Tipoff);
-    MenuItem = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                              "<main>/Errands/Tipoff...");
-    SetAccelerator(MenuItem, text, NULL, NULL, NULL, FALSE);
+    dp_gtk_item_factory_set_label(ClientData.Menu,
+                                  "<main>/Errands/Tipoff...", text);
     g_free(text);
     if (FirstClient->next)
       ListPlayers(NULL, NULL);
@@ -876,6 +875,11 @@ static GtkWidget *AddFightButton(gchar *Text, GtkAccelGroup *accel_group,
                    G_CALLBACK(FightCallback),
                    GINT_TO_POINTER(Answer));
   gtk_box_pack_start(box, button, TRUE, TRUE, 0);
+#if GTK_MAJOR_VERSION >= 4
+  /* Widgets are visible by default in GTK4; the buttons are shown as
+     needed by DisplayFightMessage() */
+  gtk_widget_hide(button);
+#endif
   return button;
 }
 
@@ -901,7 +905,7 @@ static void CreateFightDialog(void)
 
   FightDialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(dialog), 350, 250);
-  g_signal_connect(G_OBJECT(dialog), "delete_event",
+  g_signal_connect(G_OBJECT(dialog), DP_DELETE_EVENT,
                    G_CALLBACK(DisallowDelete), NULL);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
@@ -1769,8 +1773,14 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 2.0,
                                                  1.0, 10.0, 0.0);
   spinner = DealDialog.amount = gtk_spin_button_new(spin_adj, 1.0, 0);
+#if GTK_MAJOR_VERSION >= 4
+  /* GTK4 spin buttons wrap a GtkText, which emits "activate" */
+  g_signal_connect(G_OBJECT(gtk_editable_get_delegate(GTK_EDITABLE(spinner))),
+                   "activate", G_CALLBACK(DealOKCallback), data);
+#else
   g_signal_connect(G_OBJECT(spinner), "activate",
                    G_CALLBACK(DealOKCallback), data);
+#endif
   gtk_box_pack_start(GTK_BOX(hbox), spinner, FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
@@ -1915,7 +1925,7 @@ void QuestionDialog(char *Data, Player *From)
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
-  g_signal_connect(G_OBJECT(dialog), "delete_event",
+  g_signal_connect(G_OBJECT(dialog), DP_DELETE_EVENT,
                    G_CALLBACK(DisallowDelete), NULL);
   g_object_set_data(G_OBJECT(dialog), "From", (gpointer)From);
 
@@ -2046,36 +2056,31 @@ void UpdateMenus(void)
   MultiPlayer = (FirstClient && FirstClient->next != NULL);
   Bitches = InGame && ClientData.Play ? ClientData.Play->Bitches.Carried : 0;
 
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                                          "<main>/Talk"),
-                           InGame && Network);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Game/Options..."),
-                           !InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Game/Abandon..."),
-                           InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/List/Inventory..."),
-			   InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/List/Players..."),
-                           InGame && Network);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands"), InGame);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands/Spy..."),
-                           InGame && MultiPlayer);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu, "<main>/Errands/Tipoff..."),
-                           InGame && MultiPlayer);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu,
-                            "<main>/Errands/Sack Bitch..."), Bitches > 0);
-  gtk_widget_set_sensitive(dp_gtk_item_factory_get_widget
-                           (ClientData.Menu,
-                            "<main>/Errands/Get spy reports..."), InGame
-                           && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu, "<main>/Talk",
+                                    InGame && Network);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Game/Options...", !InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Game/Abandon...", InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/List/Inventory...", InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/List/Players...",
+                                    InGame && Network);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu, "<main>/Errands",
+                                    InGame);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Spy...",
+                                    InGame && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Tipoff...",
+                                    InGame && MultiPlayer);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Sack Bitch...",
+                                    Bitches > 0);
+  dp_gtk_item_factory_set_sensitive(ClientData.Menu,
+                                    "<main>/Errands/Get spy reports...",
+                                    InGame && MultiPlayer);
 }
 
 GtkWidget *CreateStatusWidgets(struct StatusWidgets *Status)
@@ -2165,7 +2170,8 @@ void SetJetButtonTitle(GtkAccelGroup *accel_group)
 
 static void SetIcon(GtkWidget *window, char **xpmdata)
 {
-#ifndef CYGWIN
+  /* GTK4 can only set window icons by name, from the icon theme */
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION < 4
   GdkPixbuf *icon;
   icon = gdk_pixbuf_new_from_xpm_data((const char**)xpmdata);
   gtk_window_set_icon(GTK_WINDOW(window), icon);
@@ -2197,7 +2203,7 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
 {
   GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *menubar, *text,
-      *vpaned, *button, *tv, *widget;
+      *vpaned, *button, *tv;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
   int i;
@@ -2206,6 +2212,11 @@ gboolean GtkLoop(int *argc, char **argv[],
 
 #ifdef CYGWIN
   win32_init(hInstance, hPrevInstance, "mainicon");
+#elif GTK_MAJOR_VERSION >= 4
+  if (ReturnOnFail && !gtk_init_check())
+    return FALSE;
+  else if (!ReturnOnFail)
+    gtk_init();
 #else
   if (ReturnOnFail && !gtk_init_check(argc, argv))
     return FALSE;
@@ -2250,7 +2261,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   /* Title of main window in GTK+ client */
   gtk_window_set_title(GTK_WINDOW(window), _("dopewars"));
   gtk_window_set_default_size(GTK_WINDOW(window), 450, 390);
-  g_signal_connect(G_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), DP_DELETE_EVENT,
                    G_CALLBACK(MainDelete), NULL);
   g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(DestroyGtk), NULL);
@@ -2272,9 +2283,8 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_widget_show_all(menubar);
   UpdateMenus();
   SoundEnable(UseSounds);
-  widget = dp_gtk_item_factory_get_widget(ClientData.Menu,
-                                          "<main>/Game/Enable sound");
-  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), UseSounds);
+  dp_gtk_item_factory_set_active(ClientData.Menu, "<main>/Game/Enable sound",
+                                 UseSounds);
 
   vbox = ClientData.vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
   frame = gtk_frame_new(_("Stats"));
@@ -2332,6 +2342,9 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   /* Just show the window, not the vbox - we'll do that when the game
    * starts */
+#if GTK_MAJOR_VERSION >= 4
+  gtk_widget_hide(vbox);
+#endif
   gtk_widget_show(vbox2);
   gtk_widget_show(window);
 
@@ -2526,7 +2539,7 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
     title = dpg_strdup_printf(_("%/BankName window title/%Tde"),
                               Names.BankName);
     deposit = GTK_WIDGET(g_object_get_data(G_OBJECT(dialog), "deposit"));
-    if (!gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(deposit))) {
+    if (!gtk_check_button_get_active(GTK_CHECK_BUTTON(deposit))) {
       withdraw = TRUE;
     }
   }
@@ -2552,10 +2565,9 @@ static void TransferOK(GtkWidget *widget, GtkWidget *dialog)
 
 void TransferDialog(gboolean Debt)
 {
-  GtkWidget *dialog, *button, *label, *radio, *grid, *vbox;
+  GtkWidget *dialog, *button, *label, *radio, *deposit, *grid, *vbox;
   GtkWidget *hbbox, *hsep, *entry, *outer;
   GtkAccelGroup *accel_group;
-  GSList *group;
   GString *text;
 
   text = g_string_new("");
@@ -2609,18 +2621,18 @@ void TransferDialog(gboolean Debt)
     dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 2, 1, 2, FALSE);
   } else {
     /* Radio button selected if you want to pay money into the bank */
-    radio = gtk_radio_button_new_with_label(NULL, _("Deposit"));
-    g_object_set_data(G_OBJECT(dialog), "deposit", radio);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(radio));
-    dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 2, 1, 1, FALSE);
+    deposit = gtk_radio_button_new_with_label(NULL, _("Deposit"));
+    g_object_set_data(G_OBJECT(dialog), "deposit", deposit);
+    dp_gtk_grid_attach(GTK_GRID(grid), deposit, 0, 2, 1, 1, FALSE);
 
     /* Radio button selected if you want to withdraw money from the bank */
-    radio = gtk_radio_button_new_with_label(group, _("Withdraw"));
+    radio = gtk_radio_button_new_with_label_from_widget(
+                                 GTK_RADIO_BUTTON(deposit), _("Withdraw"));
     dp_gtk_grid_attach(GTK_GRID(grid), radio, 0, 3, 1, 1, FALSE);
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
-  gtk_entry_set_text(GTK_ENTRY(entry), "0");
+  gtk_editable_set_text(GTK_EDITABLE(entry), "0");
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TransferOK), dialog);
@@ -2743,8 +2755,7 @@ static void TalkSend(GtkWidget *widget, struct TalkStruct *TalkData)
   GString *msg;
 
   AllPlayers =
-      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON
-                                   (TalkData->checkbutton));
+      gtk_check_button_get_active(GTK_CHECK_BUTTON(TalkData->checkbutton));
   text = gtk_editable_get_chars(GTK_EDITABLE(TalkData->entry), 0, -1);
   gtk_editable_delete_text(GTK_EDITABLE(TalkData->entry), 0, -1);
   if (!text)
@@ -2813,7 +2824,7 @@ void TalkDialog(gboolean TalkToAll)
       /* Checkbutton set if you want to talk to all players */
       gtk_check_button_new_with_label(_("Talk to all players"));
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbutton), TalkToAll);
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(checkbutton), TalkToAll);
   gtk_box_pack_start(GTK_BOX(vbox), checkbutton, FALSE, FALSE, 0);
 
   /* Prompt for you to enter the message to be sent to other players */
@@ -3205,7 +3216,7 @@ void NewNameDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-  g_signal_connect(G_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), DP_DELETE_EVENT,
                    G_CALLBACK(DisallowDelete), NULL);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
@@ -3219,7 +3230,7 @@ void NewNameDialog(void)
   g_object_set_data(G_OBJECT(window), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(NewNameOK), window);
-  gtk_entry_set_text(GTK_ENTRY(entry), GetPlayerName(ClientData.Play));
+  gtk_editable_set_text(GTK_EDITABLE(entry), GetPlayerName(ClientData.Play));
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
@@ -3238,7 +3249,11 @@ void NewNameDialog(void)
   gtk_widget_show_all(window);
 }
 
+#if GTK_MAJOR_VERSION >= 4
+gboolean DisallowDelete(GtkWidget *widget, gpointer data)
+#else
 gint DisallowDelete(GtkWidget *widget, GdkEvent *event, gpointer data)
+#endif
 {
   return TRUE;
 }

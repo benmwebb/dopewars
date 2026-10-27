@@ -2967,10 +2967,14 @@ int main(int argc, char *argv[])
 #ifdef NETWORKING
 #ifdef GUI_SERVER
       Server = TRUE;
+#if GTK_MAJOR_VERSION >= 4
+      gtk_init();
+#else
 #if GTK_MAJOR_VERSION == 2
       gtk_set_locale();
 #endif
       gtk_init(&argc, &argv);
+#endif
       GuiServerLoop(cmdline, FALSE);
 #else
       g_log_set_handler(NULL, LogMask(), ServerLogMessage, NULL);

@@ -1488,8 +1488,12 @@ static gboolean GuiNewConnect(GIOChannel *source, GIOCondition condition,
 
 static gboolean TriedPoliteShutdown = FALSE;
 
+#if !CYGWIN && GTK_MAJOR_VERSION >= 4
+static gboolean GuiRequestDelete(GtkWidget *widget, gpointer data)
+#else
 static gint GuiRequestDelete(GtkWidget *widget, GdkEvent * event,
                              gpointer data)
+#endif
 {
   if (TriedPoliteShutdown) {
     GuiQuitServer();
@@ -1642,7 +1646,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), DP_DELETE_EVENT,
                    G_CALLBACK(GuiRequestDelete), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 500, 250);
 

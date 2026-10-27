@@ -79,6 +79,11 @@ struct _DPGtkItemFactory {
   GtkWidget *top_widget;
   DPGtkTranslateFunc translate_func;
   gpointer translate_data;
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+  /* GTK4 menus are built from a model, with actions for each item */
+  GMenu *top_menu;
+  GSimpleActionGroup *action_group;
+#endif
 };
 
 DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
@@ -98,5 +103,17 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             gpointer data,
                                             GDestroyNotify notify);
 #endif /* GTK+2 */
+
+/* Manipulate the menu item with the given path. GTK4 menu items are not
+   widgets, so use these rather than dp_gtk_item_factory_get_widget() */
+void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
+                                       const gchar *path,
+                                       gboolean sensitive);
+gboolean dp_gtk_item_factory_get_active(DPGtkItemFactory *ifactory,
+                                        const gchar *path);
+void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
+                                    const gchar *path, gboolean active);
+void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
+                                   const gchar *path, gchar *label);
 
 #endif /* __ITEM_FACTORY_H__ */

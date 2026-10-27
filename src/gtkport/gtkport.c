@@ -5258,6 +5258,318 @@ GtkWidget *gtk_paned_new(GtkOrientation orientation)
 
 #endif
 
+#if GTK_MAJOR_VERSION >= 4
+/* Stack of nested main loops, innermost first */
+static GSList *main_loops = NULL;
+
+void gtk_main(void)
+{
+  GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+
+  main_loops = g_slist_prepend(main_loops, loop);
+  g_main_loop_run(loop);
+  main_loops = g_slist_remove(main_loops, loop);
+  g_main_loop_unref(loop);
+}
+
+void gtk_main_quit(void)
+{
+  if (main_loops) {
+    g_main_loop_quit((GMainLoop *)main_loops->data);
+  }
+}
+
+guint gtk_main_level(void)
+{
+  return g_slist_length(main_loops);
+}
+
+void gtk_widget_destroy(GtkWidget *widget)
+{
+  if (GTK_IS_WINDOW(widget)) {
+    gtk_window_destroy(GTK_WINDOW(widget));
+  } else {
+    gtk_widget_unparent(widget);
+  }
+}
+
+void gtk_widget_show_all(GtkWidget *widget)
+{
+  /* Child widgets are visible by default in GTK4 */
+  if (GTK_IS_WINDOW(widget)) {
+    gtk_window_present(GTK_WINDOW(widget));
+  } else {
+    gtk_widget_set_visible(widget, TRUE);
+  }
+}
+
+void gtk_widget_grab_default(GtkWidget *widget)
+{
+  GtkRoot *root = gtk_widget_get_root(widget);
+
+  if (GTK_IS_WINDOW(root)) {
+    gtk_window_set_default_widget(GTK_WINDOW(root), widget);
+  }
+}
+
+/* Add "border" pixels of space around "widget" */
+static void add_widget_margins(GtkWidget *widget, guint border)
+{
+  gtk_widget_set_margin_start(widget,
+                              gtk_widget_get_margin_start(widget) + border);
+  gtk_widget_set_margin_end(widget,
+                            gtk_widget_get_margin_end(widget) + border);
+  gtk_widget_set_margin_top(widget,
+                            gtk_widget_get_margin_top(widget) + border);
+  gtk_widget_set_margin_bottom(widget,
+                               gtk_widget_get_margin_bottom(widget) + border);
+}
+
+void gtk_container_add(GtkContainer *container, GtkWidget *widget)
+{
+  if (GTK_IS_WINDOW(container)) {
+    /* Windows can't have margins, so apply any border to the child */
+    add_widget_margins(widget, GPOINTER_TO_UINT(
+                g_object_get_data(G_OBJECT(container), "border_width")));
+    gtk_window_set_child(GTK_WINDOW(container), widget);
+  } else if (GTK_IS_FRAME(container)) {
+    gtk_frame_set_child(GTK_FRAME(container), widget);
+  } else if (GTK_IS_SCROLLED_WINDOW(container)) {
+    gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(container), widget);
+  } else if (GTK_IS_BUTTON(container)) {
+    gtk_button_set_child(GTK_BUTTON(container), widget);
+  } else if (GTK_IS_BOX(container)) {
+    gtk_box_append(GTK_BOX(container), widget);
+  } else {
+    g_warning("gtk_container_add: cannot add to a %s",
+              G_OBJECT_TYPE_NAME(container));
+  }
+}
+
+void gtk_container_set_border_width(GtkContainer *container,
+                                    guint border_width)
+{
+  if (GTK_IS_WINDOW(container)) {
+    /* Applied to the child when it is added */
+    g_object_set_data(G_OBJECT(container), "border_width",
+                      GUINT_TO_POINTER(border_width));
+  } else {
+    gtk_widget_set_margin_start(container, border_width);
+    gtk_widget_set_margin_end(container, border_width);
+    gtk_widget_set_margin_top(container, border_width);
+    gtk_widget_set_margin_bottom(container, border_width);
+  }
+}
+
+void gtk_box_pack_start(GtkBox *box, GtkWidget *child, gboolean expand,
+                        gboolean fill, guint padding)
+{
+  if (gtk_orientable_get_orientation(GTK_ORIENTABLE(box))
+      == GTK_ORIENTATION_HORIZONTAL) {
+    gtk_widget_set_hexpand(child, expand);
+    if (expand && !fill) {
+      gtk_widget_set_halign(child, GTK_ALIGN_CENTER);
+    }
+    /* Add to, rather than replace, any border the child already has */
+    gtk_widget_set_margin_start(child,
+                                gtk_widget_get_margin_start(child) + padding);
+    gtk_widget_set_margin_end(child,
+                              gtk_widget_get_margin_end(child) + padding);
+  } else {
+    gtk_widget_set_vexpand(child, expand);
+    if (expand && !fill) {
+      gtk_widget_set_valign(child, GTK_ALIGN_CENTER);
+    }
+    gtk_widget_set_margin_top(child,
+                              gtk_widget_get_margin_top(child) + padding);
+    gtk_widget_set_margin_bottom(child,
+                                 gtk_widget_get_margin_bottom(child) + padding);
+  }
+  gtk_box_append(box, child);
+}
+
+void gtk_paned_pack1(GtkPaned *paned, GtkWidget *child, gboolean resize,
+                     gboolean shrink)
+{
+  gtk_paned_set_start_child(paned, child);
+  gtk_paned_set_resize_start_child(paned, resize);
+  gtk_paned_set_shrink_start_child(paned, shrink);
+}
+
+void gtk_paned_pack2(GtkPaned *paned, GtkWidget *child, gboolean resize,
+                     gboolean shrink)
+{
+  gtk_paned_set_end_child(paned, child);
+  gtk_paned_set_resize_end_child(paned, resize);
+  gtk_paned_set_shrink_end_child(paned, shrink);
+}
+
+GtkWidget *gtk_radio_button_new_with_label(GSList *group,
+                                           const gchar *label)
+{
+  GtkWidget *radio = gtk_check_button_new_with_label(label);
+
+  if (group) {
+    gtk_check_button_set_group(GTK_CHECK_BUTTON(radio),
+                               GTK_CHECK_BUTTON(group->data));
+  } else {
+    /* The first button in a new group is active, as in GTK+3 */
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(radio), TRUE);
+  }
+  return radio;
+}
+
+GtkWidget *gtk_radio_button_new_with_label_from_widget(GtkRadioButton *group,
+                                                       const gchar *label)
+{
+  GSList list = { group, NULL };
+
+  return gtk_radio_button_new_with_label(group ? &list : NULL, label);
+}
+
+GtkAccelGroup *gtk_accel_group_new(void)
+{
+  GtkEventController *controller = gtk_shortcut_controller_new();
+
+  /* As in GTK+3, accelerators take priority over the focus widget */
+  gtk_event_controller_set_propagation_phase(controller, GTK_PHASE_CAPTURE);
+  return GTK_SHORTCUT_CONTROLLER(controller);
+}
+
+void gtk_window_add_accel_group(GtkWindow *window,
+                                GtkAccelGroup *accel_group)
+{
+  /* The window takes ownership of the controller */
+  gtk_widget_add_controller(GTK_WIDGET(window),
+                            GTK_EVENT_CONTROLLER(accel_group));
+}
+
+/* The widget and signal to emit when an accelerator is activated */
+struct AccelData {
+  GtkWidget *widget;
+  gchar *signal;
+};
+
+static void FreeAccelData(gpointer data)
+{
+  struct AccelData *accel = data;
+
+  if (accel->widget) {
+    g_object_remove_weak_pointer(G_OBJECT(accel->widget),
+                                 (gpointer *)&accel->widget);
+  }
+  g_free(accel->signal);
+  g_free(accel);
+}
+
+static gboolean ActivateAccel(GtkWidget *window, GVariant *args,
+                              gpointer data)
+{
+  struct AccelData *accel = data;
+
+  if (accel->widget && gtk_widget_is_sensitive(accel->widget)
+      && gtk_widget_get_mapped(accel->widget)) {
+    g_signal_emit_by_name(accel->widget, accel->signal);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+void gtk_widget_add_accelerator(GtkWidget *widget,
+                                const gchar *accel_signal,
+                                GtkAccelGroup *accel_group,
+                                guint accel_key, GdkModifierType accel_mods,
+                                GtkAccelFlags accel_flags)
+{
+  GtkShortcut *shortcut;
+  struct AccelData *accel = g_new(struct AccelData, 1);
+
+  accel->widget = widget;
+  accel->signal = g_strdup(accel_signal);
+  g_object_add_weak_pointer(G_OBJECT(widget), (gpointer *)&accel->widget);
+
+  shortcut = gtk_shortcut_new(gtk_keyval_trigger_new(accel_key, accel_mods),
+                              gtk_callback_action_new(ActivateAccel, accel,
+                                                      FreeAccelData));
+  g_object_set_data(G_OBJECT(shortcut), "accel_widget", widget);
+  gtk_shortcut_controller_add_shortcut(accel_group, shortcut);
+}
+
+void gtk_widget_remove_accelerator(GtkWidget *widget,
+                                   GtkAccelGroup *accel_group,
+                                   guint accel_key,
+                                   GdkModifierType accel_mods)
+{
+  GListModel *shortcuts = G_LIST_MODEL(accel_group);
+  guint i;
+
+  for (i = 0; i < g_list_model_get_n_items(shortcuts); i++) {
+    GtkShortcut *shortcut = g_list_model_get_item(shortcuts, i);
+    GtkShortcutTrigger *trigger = gtk_shortcut_get_trigger(shortcut);
+    gboolean match =
+        g_object_get_data(G_OBJECT(shortcut), "accel_widget") == widget
+        && GTK_IS_KEYVAL_TRIGGER(trigger)
+        && gtk_keyval_trigger_get_keyval(GTK_KEYVAL_TRIGGER(trigger))
+           == gdk_keyval_to_lower(accel_key)
+        && gtk_keyval_trigger_get_modifiers(GTK_KEYVAL_TRIGGER(trigger))
+           == accel_mods;
+
+    if (match) {
+      gtk_shortcut_controller_remove_shortcut(accel_group, shortcut);
+    }
+    g_object_unref(shortcut);
+    if (match) {
+      break;
+    }
+  }
+}
+
+/* Replacement for gtk_dialog_run(), which was removed in GTK4 */
+struct DialogRunData {
+  GMainLoop *loop;
+  gint response;
+};
+
+static void DialogRunResponse(GtkDialog *dialog, gint response,
+                              gpointer data)
+{
+  struct DialogRunData *run = data;
+
+  run->response = response;
+  g_main_loop_quit(run->loop);
+}
+
+static void DialogRunDestroy(GtkWidget *widget, gpointer data)
+{
+  struct DialogRunData *run = data;
+
+  g_main_loop_quit(run->loop);
+}
+
+static gint gtk_dialog_run(GtkDialog *dialog)
+{
+  struct DialogRunData run;
+
+  run.loop = g_main_loop_new(NULL, FALSE);
+  run.response = GTK_RESPONSE_NONE;
+
+  g_object_ref(dialog);
+  g_signal_connect(G_OBJECT(dialog), "response",
+                   G_CALLBACK(DialogRunResponse), &run);
+  g_signal_connect(G_OBJECT(dialog), "destroy",
+                   G_CALLBACK(DialogRunDestroy), &run);
+  gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+  gtk_window_present(GTK_WINDOW(dialog));
+
+  g_main_loop_run(run.loop);
+
+  g_signal_handlers_disconnect_by_data(dialog, &run);
+  g_object_unref(dialog);
+  g_main_loop_unref(run.loop);
+  return run.response;
+}
+#endif
+
 guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                      GtkWidget *sendto, gchar *signal,
                      GtkAccelGroup *accel_group, gboolean needalt)
@@ -5273,6 +5585,16 @@ guint SetAccelerator(GtkWidget *labelparent, gchar *Text,
                                GTK_ACCEL_VISIBLE);
   }
   return AccelKey;
+#elif GTK_MAJOR_VERSION >= 4
+  /* Buttons activate their own mnemonics in GTK4 */
+  if (GTK_IS_CHECK_BUTTON(labelparent)) {
+    gtk_check_button_set_use_underline(GTK_CHECK_BUTTON(labelparent), TRUE);
+    gtk_check_button_set_label(GTK_CHECK_BUTTON(labelparent), Text);
+  } else {
+    gtk_button_set_use_underline(GTK_BUTTON(labelparent), TRUE);
+    gtk_button_set_label(GTK_BUTTON(labelparent), Text);
+  }
+  return 0;
 #else
   gtk_label_set_text_with_mnemonic(
                    GTK_LABEL(gtk_bin_get_child(GTK_BIN(labelparent))), Text);
@@ -5293,7 +5615,11 @@ GtkWidget *gtk_scrolled_text_view_new(GtkWidget **pack_widg)
   frame = gtk_frame_new(NULL);
   gtk_frame_set_shadow_type(GTK_FRAME(frame), GTK_SHADOW_IN);
 
+#if GTK_MAJOR_VERSION >= 4
+  scrollwin = gtk_scrolled_window_new();
+#else
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
+#endif
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_container_add(GTK_CONTAINER(scrollwin), textview);
@@ -5385,7 +5711,8 @@ gint OldGtkMessageBox(GtkWidget *parent, const gchar *Text,
 
   retval = MB_CANCEL;
 
-  hbbox = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
+  hbbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 7);
+  gtk_box_set_homogeneous(GTK_BOX(hbbox), TRUE);
   for (i = 0; i < MB_MAX; i++) {
     if (Options & (1 << i)) {
       button = gtk_button_new_with_mnemonic(_(ButtonData[i]));
@@ -5484,11 +5811,27 @@ gchar *GtkGetFile(const GtkWidget *parent, const gchar *oldname,
                  _("_Cancel"), GTK_RESPONSE_CANCEL,
                  _("_Select"), GTK_RESPONSE_ACCEPT, NULL);
   chooser = GTK_FILE_CHOOSER(dialog);
+#if GTK_MAJOR_VERSION >= 4
+  if (oldname && oldname[0]) {
+    GFile *file = g_file_new_for_path(oldname);
+    gtk_file_chooser_set_file(chooser, file, NULL);
+    g_object_unref(file);
+  }
+#else
   gtk_file_chooser_set_filename(chooser, oldname);
+#endif
   res = gtk_dialog_run(GTK_DIALOG(dialog));
   ret = NULL;
   if (res == GTK_RESPONSE_ACCEPT) {
+#if GTK_MAJOR_VERSION >= 4
+    GFile *file = gtk_file_chooser_get_file(chooser);
+    if (file) {
+      ret = g_file_get_path(file);
+      g_object_unref(file);
+    }
+#else
     ret = gtk_file_chooser_get_filename(chooser);
+#endif
   }
   gtk_widget_destroy(dialog);
   return ret;
