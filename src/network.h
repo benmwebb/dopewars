@@ -166,7 +166,6 @@ void SetNetworkBufferCallBack(NetworkBuffer *NetBuf, NBCallBack CallBack,
 void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
                                     NBUserPasswd userpasswd,
                                     gpointer data);
-gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf);
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd);
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
                                    const gchar *bindaddr,
@@ -184,7 +183,6 @@ gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
 gboolean ReadDataFromWire(NetworkBuffer *NetBuf);
 gboolean WriteDataToWire(NetworkBuffer *NetBuf);
 void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data);
-gint CountWaitingMessages(NetworkBuffer *NetBuf);
 gchar *GetWaitingMessage(NetworkBuffer *NetBuf);
 void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
                           gchar *password);
@@ -229,8 +227,6 @@ void SetBlocking(SOCKET sock, gboolean blocking);
 void SetReuse(int sock);
 void SetBlocking(int sock, gboolean blocking);
 #endif
-
-void AddB64Enc(GString *str, gchar *unenc);
 
 #endif /* NETWORKING */
 

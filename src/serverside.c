@@ -652,30 +652,6 @@ void BreakHandle(int sig)
 }
 
 /* 
- * Prints the server help screen to the given file pointer.
- */
-void PrintHelpTo(FILE *fp)
-{
-  int i;
-  GString *VarName;
-
-  VarName = g_string_new("");
-  fprintf(fp, _(HelpText), VERSION);
-  for (i = 0; i < NUMGLOB; i++) {
-    if (Globals[i].NameStruct[0]) {
-      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
-                       Globals[i].StructListPt ? "[x]" : "",
-                       Globals[i].Name);
-    } else {
-      g_string_assign(VarName, Globals[i].Name);
-    }
-    fprintf(fp, "%-26s %s\n", VarName->str, _(Globals[i].Help));
-  }
-  fputs("\n\n", fp);
-  g_string_free(VarName, TRUE);
-}
-
-/* 
  * Displays a simple help screen listing the server commands and options.
  */
 void ServerHelp(void)

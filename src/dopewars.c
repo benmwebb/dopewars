@@ -1169,19 +1169,6 @@ gchar *InitialCaps(gchar *string)
 }
 
 /* 
- * Returns TRUE if "string" starts with a vowel.
- */
-char StartsWithVowel(char *string)
-{
-  int c;
-
-  if (!string || strlen(string) < 1)
-    return FALSE;
-  c = toupper(string[0]);
-  return (c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U');
-}
-
-/* 
  * Reads a NULL-terminated string into the buffer "buf" from file "fp".
  * buf is sized to hold the string; this is a dynamic string and must be
  * freed by the calling routine. Returns 0 on success, EOF on failure.
@@ -2046,13 +2033,6 @@ gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex)
   g_assert(Globals[GlobalIndex].BoolVal);
 
   return (gboolean *)GetGlobalPointer(GlobalIndex, StructIndex);
-}
-
-gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex)
-{
-  g_assert(Globals[GlobalIndex].StringList);
-
-  return (gchar ***)GetGlobalPointer(GlobalIndex, StructIndex);
 }
 
 gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,

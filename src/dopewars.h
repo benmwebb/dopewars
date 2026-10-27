@@ -422,7 +422,6 @@ void CopyDrug(struct DRUG *dest, struct DRUG *src);
 void CopyDrugs(struct DRUGS *dest, struct DRUGS *src);
 int GetNextDrugIndex(int OldIndex, Player *Play);
 gchar *InitialCaps(gchar *string);
-char StartsWithVowel(char *string);
 char *GetPlayerName(Player *Play);
 void SetPlayerName(Player *Play, char *Name);
 struct CMDLINE *ParseCmdLine(int argc, char *argv[]);
@@ -438,7 +437,6 @@ gchar **GetGlobalString(int GlobalIndex, int StructIndex);
 gint *GetGlobalInt(int GlobalIndex, int StructIndex);
 price_t *GetGlobalPrice(int GlobalIndex, int StructIndex);
 gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex);
-gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex);
 void PrintConfigValue(int GlobalIndex, int StructIndex,
                       gboolean IndexGiven, GScanner *scanner);
 gboolean IsCop(Player *Play);

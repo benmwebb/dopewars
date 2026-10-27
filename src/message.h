@@ -89,9 +89,7 @@ GQuark dope_meta_error_quark(void);
 gboolean PlayerHandleNetwork(Player *Play, gboolean ReadReady,
                              gboolean WriteReady, gboolean ErrorReady,
                              gboolean *DoneOK);
-gboolean ReadPlayerDataFromWire(Player *Play);
 void QueuePlayerMessageForSend(Player *Play, gchar *data);
-gboolean WritePlayerDataToWire(Player *Play);
 gchar *GetWaitingPlayerMessage(Player *Play);
 
 gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err);
@@ -106,12 +104,8 @@ extern void (*ClientMessageHandlerPt) (char *, Player *);
 
 void InitNetwork(void);
 void AddURLEnc(GString *str, gchar *unenc);
-void chomp(char *str);
 void BroadcastToClients(AICode AI, MsgCode Code, char *Data, Player *From,
                         Player *Except);
-void SendInventory(Player *From, AICode AI, MsgCode Code, Player *To,
-                   Inventory *Guns, Inventory *Drugs);
-void ReceiveInventory(char *Data, Inventory *Guns, Inventory *Drugs);
 void SendPlayerData(Player *To);
 void SendSpyReport(Player *To, Player *SpiedOn);
 void ReceivePlayerData(Player *Play, char *text, Player *From);
@@ -120,7 +114,6 @@ void ReceiveInitialData(Player *Play, char *data);
 void SendMiscData(Player *To);
 void ReceiveMiscData(char *Data);
 gchar *GetNextWord(gchar **Data, gchar *Default);
-void AssignNextWord(gchar **Data, gchar **Dest);
 int GetNextInt(gchar **Data, int Default);
 price_t GetNextPrice(gchar **Data, price_t Default);
 void ShutdownNetwork(Player *Play);

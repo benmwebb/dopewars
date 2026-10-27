@@ -385,11 +385,6 @@ gchar *GetWaitingPlayerMessage(Player *Play)
   }
 }
 
-gboolean ReadPlayerDataFromWire(Player *Play)
-{
-  return ReadDataFromWire(&Play->NetBuf);
-}
-
 void QueuePlayerMessageForSend(Player *Play, gchar *data)
 {
   if (Conv_Needed(netconv)) {
@@ -399,11 +394,6 @@ void QueuePlayerMessageForSend(Player *Play, gchar *data)
   } else {
     QueueMessageForSend(&Play->NetBuf, data);
   }
-}
-
-gboolean WritePlayerDataToWire(Player *Play)
-{
-  return WriteDataToWire(&Play->NetBuf);
 }
 
 gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err)
@@ -494,17 +484,6 @@ void ClearServerList(GSList **listpt)
 #endif /* NETWORKING */
 
 /* 
- * Removes a terminating newline from "str", if one is present.
- */
-void chomp(char *str)
-{
-  int len = strlen(str);
-
-  if (str[len - 1] == '\n')
-    str[len - 1] = 0;
-}
-
-/* 
  * Adds the plain text string "unenc" to the end of the GString "str",
  * replacing "special" characters in the same way as the
  * application/x-www-form-urlencoded media type, suitable for sending
@@ -546,49 +525,6 @@ void BroadcastToClients(AICode AI, MsgCode Code, char *Data,
     if (IsConnectedPlayer(tmp) && tmp != Except) {
       SendServerMessage(From, AI, Code, tmp, Data);
     }
-  }
-}
-
-/* 
- * Encodes an Inventory structure into a string, and sends it as the data
- * with a server message constructed from the other arguments.
- */
-void SendInventory(Player *From, AICode AI, MsgCode Code,
-                   Player *To, Inventory *Guns, Inventory *Drugs)
-{
-  int i;
-  GString *text;
-
-  text = g_string_new(NULL);
-  for (i = 0; i < NumGun; i++) {
-    g_string_append_printf(text, "%d:", Guns ? Guns[i].Carried : 0);
-  }
-  for (i = 0; i < NumDrug; i++) {
-    g_string_append_printf(text, "%d:", Drugs ? Drugs[i].Carried : 0);
-  }
-  SendServerMessage(From, AI, Code, To, text->str);
-  g_string_free(text, TRUE);
-}
-
-/* 
- * Decodes a string representation (in "Data") to its original Inventory
- * contents, and stores it in "Guns" and "Drugs" if non-NULL.
- */
-void ReceiveInventory(char *Data, Inventory *Guns, Inventory *Drugs)
-{
-  int i, val;
-  char *pt;
-
-  pt = Data;
-  for (i = 0; i < NumGun; i++) {
-    val = GetNextInt(&pt, 0);
-    if (Guns)
-      Guns[i].Carried = val;
-  }
-  for (i = 0; i < NumDrug; i++) {
-    val = GetNextInt(&pt, 0);
-    if (Drugs)
-      Drugs[i].Carried = val;
   }
 }
 
@@ -903,14 +839,6 @@ gchar *GetNextWord(gchar **Data, gchar *Default)
     (*Data)++;
   }
   return Word;
-}
-
-void AssignNextWord(gchar **Data, gchar **Dest)
-{
-  if (!Dest)
-    return;
-  g_free(*Dest);
-  *Dest = g_strdup(GetNextWord(Data, ""));
 }
 
 int GetNextInt(gchar **Data, int Default)

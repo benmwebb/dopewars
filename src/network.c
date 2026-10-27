@@ -244,15 +244,6 @@ void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
   NetBuf->status = NBS_CONNECTED;       /* Assume the socket is connected */
 }
 
-/* 
- * Returns TRUE if the pointer is to a valid network buffer, and it's
- * connected to an active socket.
- */
-gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf)
-{
-  return (NetBuf && NetBuf->fd >= 0);
-}
-
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
                                    const gchar *bindaddr,
                                    gchar *RemoteHost, unsigned RemotePort)
@@ -698,29 +689,6 @@ gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
 
   *DoneOK = (WriteOK && ErrorOK && ReadOK);
   return DataWaiting;
-}
-
-/* 
- * Returns the number of complete (terminated) messages waiting in the
- * given network buffer. This is the number of times that
- * GetWaitingMessage() can be safely called without it returning NULL.
- */
-gint CountWaitingMessages(NetworkBuffer *NetBuf)
-{
-  ConnBuf *conn;
-  gint i, msgs = 0;
-
-  if (NetBuf->status != NBS_CONNECTED)
-    return 0;
-
-  conn = &NetBuf->ReadBuf;
-
-  if (conn->Data)
-    for (i = 0; i < conn->DataPresent; i++) {
-      if (conn->Data[i] == NetBuf->Terminator)
-        msgs++;
-    }
-  return msgs;
 }
 
 gchar *PeekWaitingData(NetworkBuffer *NetBuf, int numbytes)
@@ -1512,56 +1480,6 @@ gboolean FinishConnect(int fd, LastError **error)
     return FALSE;
   }
 #endif /* CYGWIN */
-}
-
-static void AddB64char(GString *str, int c)
-{
-  if (c < 0)
-    return;
-  else if (c < 26)
-    g_string_append_c(str, c + 'A');
-  else if (c < 52)
-    g_string_append_c(str, c - 26 + 'a');
-  else if (c < 62)
-    g_string_append_c(str, c - 52 + '0');
-  else if (c == 62)
-    g_string_append_c(str, '+');
-  else
-    g_string_append_c(str, '/');
-}
-
-/* 
- * Adds the plain text string "unenc" to the end of the GString "str",
- * using the Base64 encoding scheme.
- */
-void AddB64Enc(GString *str, gchar *unenc)
-{
-  guint i;
-  long value = 0;
-
-  if (!unenc || !str)
-    return;
-  for (i = 0; i < strlen(unenc); i++) {
-    value <<= 8;
-    value |= (unsigned char)unenc[i];
-    if (i % 3 == 2) {
-      AddB64char(str, (value >> 18) & 0x3F);
-      AddB64char(str, (value >> 12) & 0x3F);
-      AddB64char(str, (value >> 6) & 0x3F);
-      AddB64char(str, value & 0x3F);
-      value = 0;
-    }
-  }
-  if (i % 3 == 1) {
-    AddB64char(str, (value >> 2) & 0x3F);
-    AddB64char(str, (value << 4) & 0x3F);
-    g_string_append(str, "==");
-  } else if (i % 3 == 2) {
-    AddB64char(str, (value >> 10) & 0x3F);
-    AddB64char(str, (value >> 4) & 0x3F);
-    AddB64char(str, (value << 2) & 0x3F);
-    g_string_append_c(str, '=');
-  }
 }
 
 #endif /* NETWORKING */
