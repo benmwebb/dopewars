@@ -182,6 +182,9 @@ static gboolean gtk_item_factory_parse_accel(DPGtkItemFactory *ifactory,
 #ifdef CYGWIN
     accel->fVirt |= FCONTROL;
     g_string_append(menu_title, "Ctrl+");
+#elif defined(APPLE) && GTK_MAJOR_VERSION >= 4
+    /* Use the Command key on the Mac */
+    accel->mods |= GDK_META_MASK;
 #else
     accel->mods |= GDK_CONTROL_MASK;
 #endif
@@ -201,6 +204,10 @@ static gboolean gtk_item_factory_parse_accel(DPGtkItemFactory *ifactory,
     accel->key = VK_F1;
 #else
     accel->key = GDK_KEY_F1;
+#endif
+#ifndef CYGWIN
+  } else if (strcmp(apt, "BackSpace") == 0) {
+    accel->key = GDK_KEY_BackSpace;
 #endif
   }
   return (accel->key != 0);
@@ -288,6 +295,8 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
     item = g_menu_item_new_submenu(menu_title->str,
                                    G_MENU_MODEL(new_child->submenu));
   } else {
+    GActionMap *action_map = ifactory->app ? G_ACTION_MAP(ifactory->app)
+                             : G_ACTION_MAP(ifactory->action_group);
     gchar *name = g_strdup_printf("item%u",
                                   g_slist_length(ifactory->children));
 
@@ -297,20 +306,26 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
     } else {
       new_child->action = g_simple_action_new(name, NULL);
     }
-    new_child->detailed_action = g_strdup_printf("menu.%s", name);
+    new_child->detailed_action = g_strdup_printf("%s.%s",
+                                     ifactory->app ? "app" : "menu", name);
     g_free(name);
 
     new_child->callback = entry->callback;
     new_child->callback_data = callback_data;
     g_signal_connect(G_OBJECT(new_child->action), "activate",
                      G_CALLBACK(MenuItemActivate), new_child);
-    g_action_map_add_action(G_ACTION_MAP(ifactory->action_group),
-                            G_ACTION(new_child->action));
+    g_action_map_add_action(action_map, G_ACTION(new_child->action));
 
     if (haveaccel) {
       accel.key = gdk_keyval_to_lower(accel.key);
       new_child->accel = gtk_accelerator_name(accel.key, accel.mods);
-      if (ifactory->accel_group) {
+      if (ifactory->app) {
+        const gchar *accels[] = { new_child->accel, NULL };
+
+        gtk_application_set_accels_for_action(ifactory->app,
+                                              new_child->detailed_action,
+                                              accels);
+      } else if (ifactory->accel_group) {
         GtkShortcut *shortcut = gtk_shortcut_new(
                 gtk_keyval_trigger_new(accel.key, accel.mods),
                 gtk_callback_action_new(MenuAccelActivate,
@@ -522,12 +537,86 @@ void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
   GMenuItem *item;
 
   /* GMenu items cannot be changed, so replace the item with a new one */
-  if (child && child->action) {
+  if (child && child->action && child->parent_menu) {
     item = new_menu_item(child, label);
     g_menu_remove(child->parent_menu, child->position);
     g_menu_insert_item(child->parent_menu, child->position, item);
     g_object_unref(item);
   }
+}
+
+void dp_gtk_item_factory_set_application(DPGtkItemFactory *ifactory,
+                                         GtkApplication *app)
+{
+  ifactory->app = app;
+}
+
+GMenuModel *dp_gtk_item_factory_get_model(DPGtkItemFactory *ifactory)
+{
+  return G_MENU_MODEL(ifactory->top_menu);
+}
+
+/* Remove the given item from its menu, together with its parent branch
+   if that is left empty */
+static void RemoveFromMenu(DPGtkItemFactory *ifactory,
+                           DPGtkItemFactoryChild *child)
+{
+  GSList *list;
+
+  g_menu_remove(child->parent_menu, child->position);
+  for (list = ifactory->children; list; list = g_slist_next(list)) {
+    DPGtkItemFactoryChild *sibling = (DPGtkItemFactoryChild *)list->data;
+
+    if (sibling->parent_menu == child->parent_menu
+        && sibling->position > child->position) {
+      sibling->position--;
+    }
+  }
+  if (child->parent && child->parent->parent_menu
+      && g_menu_model_get_n_items(G_MENU_MODEL(child->parent_menu)) == 0) {
+    RemoveFromMenu(ifactory, child->parent);
+  }
+  child->parent_menu = NULL;
+}
+
+void dp_gtk_item_factory_move_to_app_menu(DPGtkItemFactory *ifactory,
+                                          const gchar *path,
+                                          const gchar *name,
+                                          const gchar *accel)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+  const gchar *no_accels[] = { NULL };
+  const gchar *accels[] = { accel, NULL };
+  GSimpleAction *action;
+
+  /* Only plain (not check) items with a parent menu can be moved */
+  if (!ifactory->app || !child || !child->action || !child->parent_menu
+      || g_action_get_state_type(G_ACTION(child->action))) {
+    return;
+  }
+  RemoveFromMenu(ifactory, child);
+
+  /* Actions cannot be renamed, so replace with a new one */
+  gtk_application_set_accels_for_action(ifactory->app,
+                                        child->detailed_action, no_accels);
+  g_action_map_remove_action(G_ACTION_MAP(ifactory->app),
+                             g_action_get_name(G_ACTION(child->action)));
+  action = g_simple_action_new(name, NULL);
+  g_simple_action_set_enabled(action,
+                              g_action_get_enabled(G_ACTION(child->action)));
+  g_signal_connect(G_OBJECT(action), "activate",
+                   G_CALLBACK(MenuItemActivate), child);
+  g_object_unref(child->action);
+  child->action = action;
+  g_action_map_add_action(G_ACTION_MAP(ifactory->app), G_ACTION(action));
+
+  g_free(child->detailed_action);
+  child->detailed_action = g_strdup_printf("app.%s", name);
+  g_free(child->accel);
+  child->accel = g_strdup(accel);
+  gtk_application_set_accels_for_action(ifactory->app,
+                                        child->detailed_action,
+                                        accel ? accels : no_accels);
 }
 
 #else

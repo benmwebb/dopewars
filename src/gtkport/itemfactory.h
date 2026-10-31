@@ -83,6 +83,7 @@ struct _DPGtkItemFactory {
   /* GTK4 menus are built from a model, with actions for each item */
   GMenu *top_menu;
   GSimpleActionGroup *action_group;
+  GtkApplication *app;    /* If set, actions are added to the application */
 #endif
 };
 
@@ -103,6 +104,24 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             gpointer data,
                                             GDestroyNotify notify);
 #endif /* GTK+2 */
+
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+/* Add menu actions (and their accelerators) to the given application rather
+   than to the menu bar widget, so that the menu model can be used as the
+   application's menu bar. Must be called before any items are created. */
+void dp_gtk_item_factory_set_application(DPGtkItemFactory *ifactory,
+                                         GtkApplication *app);
+GMenuModel *dp_gtk_item_factory_get_model(DPGtkItemFactory *ifactory);
+
+/* Remove the item with the given path from its menu, and instead make it
+   available as the application action "app.<name>" (e.g. one of the
+   standard macOS application menu actions "about", "preferences" or
+   "quit"), with the given accelerator (or none if NULL) */
+void dp_gtk_item_factory_move_to_app_menu(DPGtkItemFactory *ifactory,
+                                          const gchar *path,
+                                          const gchar *name,
+                                          const gchar *accel);
+#endif
 
 /* Manipulate the menu item with the given path. GTK4 menu items are not
    widgets, so use these rather than dp_gtk_item_factory_get_widget() */

@@ -161,11 +161,23 @@ static void CreateInventory(GtkWidget *hbox, gchar *Objects,
 static void GetSpyReports(GtkWidget *widget, gpointer data);
 static void DisplaySpyReports(Player *Play);
 
+/* On the Mac with GTK4, put the menus in the global menu bar */
+#if defined(APPLE) && GTK_MAJOR_VERSION >= 4
+#define MAC_MENUBAR
+#endif
+
 static DPGtkItemFactoryEntry menu_items[] = {
   /* The names of the menus and their items in the GTK+ client */
   {N_("/_Game"), NULL, NULL, 0, "<Branch>"},
   {N_("/Game/_New..."), "<control>N", G_CALLBACK(NewGame), 0, NULL},
-  {N_("/Game/_Abandon..."), "<control>A", G_CALLBACK(AbandonGame), 0, NULL},
+  {N_("/Game/_Abandon..."),
+#ifdef MAC_MENUBAR
+  /* Cmd+A means "Select All" on the Mac, so use Cmd+Delete instead */
+   "<control>BackSpace",
+#else
+   "<control>A",
+#endif
+   G_CALLBACK(AbandonGame), 0, NULL},
   {N_("/Game/_Options..."), "<control>O", G_CALLBACK(OptDialog), 0, NULL},
   {N_("/Game/Enable _sound"), NULL, G_CALLBACK(ToggleSound), 0, "<CheckItem>"},
   {N_("/Game/_Quit..."), "<control>Q", G_CALLBACK(QuitGame), 0, NULL},
@@ -2202,13 +2214,18 @@ gboolean GtkLoop(int *argc, char **argv[],
                  struct CMDLINE *cmdline, gboolean ReturnOnFail)
 #endif
 {
-  GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *menubar, *text,
+  GtkWidget *window, *vbox, *vbox2, *hbox, *frame, *grid, *text,
       *vpaned, *button, *tv;
   GtkAccelGroup *accel_group;
   GtkTreeSortable *sortable;
   int i;
   DPGtkItemFactory *item_factory;
   gint nmenu_items = sizeof(menu_items) / sizeof(menu_items[0]);
+#ifdef MAC_MENUBAR
+  GtkApplication *app;
+#else
+  GtkWidget *menubar;
+#endif
 
 #ifdef CYGWIN
   win32_init(hInstance, hPrevInstance, "mainicon");
@@ -2228,6 +2245,14 @@ gboolean GtkLoop(int *argc, char **argv[],
    * strings to be UTF-8, so we force gettext to return all translations
    * in this encoding here. */
   bind_textdomain_codeset(PACKAGE, "UTF-8");
+
+#ifdef MAC_MENUBAR
+  /* We run our own main loop, so just register the application (needed
+     for the global menu bar) rather than running it */
+  app = gtk_application_new("io.sourceforge.dopewars",
+                            G_APPLICATION_NON_UNIQUE);
+  g_application_register(G_APPLICATION(app), NULL, NULL);
+#endif
 
   Conv_SetInternalCodeset("UTF-8");
   WantUTF8Errors(TRUE);
@@ -2272,15 +2297,32 @@ gboolean GtkLoop(int *argc, char **argv[],
                                                            accel_group);
   dp_gtk_item_factory_set_translate_func(item_factory, MenuTranslate, NULL,
                                          NULL);
+#ifdef MAC_MENUBAR
+  gtk_window_set_application(GTK_WINDOW(window), app);
+  dp_gtk_item_factory_set_application(item_factory, app);
+#endif
 
   dp_gtk_item_factory_create_items(item_factory, nmenu_items, menu_items,
                                    NULL);
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
-  menubar = dp_gtk_item_factory_get_widget(item_factory, "<main>");
 
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+#ifdef MAC_MENUBAR
+  /* These go in the standard macOS application menu */
+  dp_gtk_item_factory_move_to_app_menu(item_factory, "<main>/Help/About...",
+                                       "about", NULL);
+  dp_gtk_item_factory_move_to_app_menu(item_factory,
+                                       "<main>/Game/Options...",
+                                       "preferences", "<Meta>comma");
+  dp_gtk_item_factory_move_to_app_menu(item_factory, "<main>/Game/Quit...",
+                                       "quit", "<Meta>q");
+  gtk_application_set_menubar(app,
+                              dp_gtk_item_factory_get_model(item_factory));
+#else
+  menubar = dp_gtk_item_factory_get_widget(item_factory, "<main>");
   gtk_box_pack_start(GTK_BOX(vbox2), menubar, FALSE, FALSE, 0);
   gtk_widget_show_all(menubar);
+#endif
   UpdateMenus();
   SoundEnable(UseSounds);
   dp_gtk_item_factory_set_active(ClientData.Menu, "<main>/Game/Enable sound",
@@ -2364,6 +2406,10 @@ gboolean GtkLoop(int *argc, char **argv[],
 
   /* Free the main player */
   FirstClient = RemovePlayer(ClientData.Play, FirstClient);
+
+#ifdef MAC_MENUBAR
+  g_object_unref(app);
+#endif
 
   return TRUE;
 }
