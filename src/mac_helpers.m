@@ -33,3 +33,8 @@ void mac_open_url(const char *url)
   NSString *urlstr = [[NSString alloc] initWithUTF8String:url];
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlstr]];
 }
+
+void mac_activate_app(void)
+{
+  [NSApp activateIgnoringOtherApps:YES];
+}

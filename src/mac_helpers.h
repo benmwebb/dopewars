@@ -30,4 +30,7 @@
 /* Open the given URL using the system-configured web browser */
 void mac_open_url(const char *url);
 
+/* Bring the application to the front, giving it keyboard focus */
+void mac_activate_app(void);
+
 #endif /* __DP_MAC_HELPERS_H__ */
