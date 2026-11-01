@@ -2232,13 +2232,6 @@ static void SetupMacStyle(void)
   UpdateMacColorScheme();
   mac_on_appearance_changed(UpdateMacColorScheme);
 }
-
-/* Bring the application to the front once the main window is first drawn */
-static void ActivateAfterPaint(GdkFrameClock *clock, gpointer data)
-{
-  g_signal_handlers_disconnect_by_func(clock, ActivateAfterPaint, data);
-  mac_activate_app();
-}
 #endif
 
 #ifdef CYGWIN
@@ -2425,19 +2418,13 @@ gboolean GtkLoop(int *argc, char **argv[],
 #endif
   gtk_widget_show(vbox2);
   gtk_widget_show(window);
+#if GTK_MAJOR_VERSION >= 4
+  gtk_window_present(window);
+#endif
 
   gtk_widget_realize(window);
 
   SetIcon(window, dopewars_pill_xpm);
-
-#if defined(APPLE) && GTK_MAJOR_VERSION >= 4
-  /* When started from a terminal, we are not otherwise brought to the
-     front. Activation is ignored until the window is actually on screen,
-     so wait for it to be drawn. */
-  g_signal_connect(gdk_surface_get_frame_clock(
-                       gtk_native_get_surface(GTK_NATIVE(window))),
-                   "after-paint", G_CALLBACK(ActivateAfterPaint), NULL);
-#endif
 
 #ifdef NETWORKING
   CurlInit(&MetaConn);

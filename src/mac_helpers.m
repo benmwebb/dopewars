@@ -34,11 +34,6 @@ void mac_open_url(const char *url)
   [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:urlstr]];
 }
 
-void mac_activate_app(void)
-{
-  [NSApp activateIgnoringOtherApps:YES];
-}
-
 int mac_dark_mode(void)
 {
   NSAppearanceName name = [[NSApp effectiveAppearance]

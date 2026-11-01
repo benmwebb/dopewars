@@ -30,9 +30,6 @@
 /* Open the given URL using the system-configured web browser */
 void mac_open_url(const char *url);
 
-/* Bring the application to the front, giving it keyboard focus */
-void mac_activate_app(void);
-
 /* Return non-zero if the application is using a dark appearance */
 int mac_dark_mode(void);
 
