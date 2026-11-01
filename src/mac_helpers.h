@@ -33,4 +33,11 @@ void mac_open_url(const char *url);
 /* Bring the application to the front, giving it keyboard focus */
 void mac_activate_app(void);
 
+/* Return non-zero if the application is using a dark appearance */
+int mac_dark_mode(void);
+
+/* Call the given function whenever the system appearance (light or dark)
+   changes */
+void mac_on_appearance_changed(void (*func)(void));
+
 #endif /* __DP_MAC_HELPERS_H__ */

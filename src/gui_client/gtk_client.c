@@ -2211,6 +2211,28 @@ static void make_tags(GtkTextView *textview)
 }
 
 #if defined(APPLE) && GTK_MAJOR_VERSION >= 4
+/* Use a light or dark theme to match the system appearance */
+static void UpdateMacColorScheme(void)
+{
+  GtkSettings *settings = gtk_settings_get_default();
+  gboolean dark = mac_dark_mode();
+
+#if GTK_CHECK_VERSION(4, 20, 0)
+  g_object_set(settings, "gtk-interface-color-scheme",
+               dark ? GTK_INTERFACE_COLOR_SCHEME_DARK
+                    : GTK_INTERFACE_COLOR_SCHEME_LIGHT, NULL);
+#else
+  g_object_set(settings, "gtk-application-prefer-dark-theme", dark, NULL);
+#endif
+}
+
+/* Make the GTK client look more at home on the Mac */
+static void SetupMacStyle(void)
+{
+  UpdateMacColorScheme();
+  mac_on_appearance_changed(UpdateMacColorScheme);
+}
+
 /* Bring the application to the front once the main window is first drawn */
 static void ActivateAfterPaint(GdkFrameClock *clock, gpointer data)
 {
@@ -2265,6 +2287,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   app = gtk_application_new("io.sourceforge.dopewars",
                             G_APPLICATION_NON_UNIQUE);
   g_application_register(G_APPLICATION(app), NULL, NULL);
+  SetupMacStyle();
 #endif
 
   Conv_SetInternalCodeset("UTF-8");

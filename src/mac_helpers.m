@@ -38,3 +38,43 @@ void mac_activate_app(void)
 {
   [NSApp activateIgnoringOtherApps:YES];
 }
+
+int mac_dark_mode(void)
+{
+  NSAppearanceName name = [[NSApp effectiveAppearance]
+      bestMatchFromAppearancesWithNames:@[NSAppearanceNameAqua,
+                                          NSAppearanceNameDarkAqua]];
+  return [name isEqualToString:NSAppearanceNameDarkAqua];
+}
+
+/* Calls a C function when the application's appearance changes */
+@interface DPAppearanceObserver : NSObject {
+  void (*func)(void);
+}
+- (id)initWithFunc:(void (*)(void))f;
+@end
+
+@implementation DPAppearanceObserver
+- (id)initWithFunc:(void (*)(void))f
+{
+  if ((self = [super init])) {
+    func = f;
+  }
+  return self;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object
+                        change:(NSDictionary *)change context:(void *)context
+{
+  func();
+}
+@end
+
+void mac_on_appearance_changed(void (*func)(void))
+{
+  /* The observer lives for as long as the application */
+  DPAppearanceObserver *observer = [[DPAppearanceObserver alloc]
+                                       initWithFunc:func];
+  [NSApp addObserver:observer forKeyPath:@"effectiveAppearance"
+             options:0 context:NULL];
+}
