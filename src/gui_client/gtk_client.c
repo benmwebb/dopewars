@@ -75,6 +75,7 @@ struct ClientDataStruct {
   struct StatusWidgets Status;
   struct InventoryWidgets Drug, Gun, InvenDrug, InvenGun;
   GtkWidget *JetButton, *vbox, *PlayerList, *TalkList;
+  GtkWidget *NewGameBox;
   guint JetAccel;
   struct CMDLINE *cmdline;
 };
@@ -2018,6 +2019,7 @@ void GuiStartGame(void)
   SendNullClientMessage(Play, C_NONE, C_NAME, NULL, GetPlayerName(Play));
   InGame = TRUE;
   UpdateMenus();
+  gtk_widget_hide(ClientData.NewGameBox);
   gtk_widget_show_all(ClientData.vbox);
   UpdatePlayerLists();
   SoundPlay(Sounds.StartGame);
@@ -2027,6 +2029,7 @@ void EndGame(void)
 {
   DisplayFightMessage(NULL);
   gtk_widget_hide(ClientData.vbox);
+  gtk_widget_show_all(ClientData.NewGameBox);
   TextViewClear(GTK_TEXT_VIEW(ClientData.messages));
   ShutdownNetwork(ClientData.Play);
   UpdatePlayerLists();
@@ -2409,6 +2412,16 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_box_pack_start(GTK_BOX(vbox), vpaned, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox2), vbox, TRUE, TRUE, 0);
+
+  /* Shown in place of the main game widgets when no game is in progress */
+  hbox = ClientData.NewGameBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  /* Caption of button in main window to start a new game */
+  button = gtk_button_new_with_mnemonic(_("_New Game..."));
+  g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(NewGame), NULL);
+  gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox2), hbox, TRUE, FALSE, 0);
+  gtk_widget_show_all(hbox);
+
   gtk_container_add(GTK_CONTAINER(window), vbox2);
 
   /* Just show the window, not the vbox - we'll do that when the game
