@@ -2419,7 +2419,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_widget_show(vbox2);
   gtk_widget_show(window);
 #if GTK_MAJOR_VERSION >= 4
-  gtk_window_present(window);
+  gtk_window_present(GTK_WINDOW(window));
 #endif
 
   gtk_widget_realize(window);
