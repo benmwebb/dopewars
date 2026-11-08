@@ -66,6 +66,8 @@ struct _DPGtkItemFactoryChild {
   gboolean sensitive;
   DPGtkItemFactoryCallback callback;
   gpointer callback_data;
+#elif defined(CYGWIN)
+  gchar *accel_text;      /* Accelerator text shown after the item label */
 #endif
 };
 
@@ -178,18 +180,40 @@ static gboolean gtk_item_factory_parse_accel(DPGtkItemFactory *ifactory,
   accel->flags = GTK_ACCEL_VISIBLE;
 #endif
 
-  if (strncmp(apt, "<control>", 9) == 0) {
+  /* Modifiers can be given in any order, e.g. "<shift><control>L" */
+  while (*apt == '<') {
+    if (g_ascii_strncasecmp(apt, "<control>", 9) == 0) {
 #ifdef CYGWIN
-    accel->fVirt |= FCONTROL;
-    g_string_append(menu_title, "Ctrl+");
+      accel->fVirt |= FCONTROL;
 #elif defined(APPLE) && GTK_MAJOR_VERSION >= 4
-    /* Use the Command key on the Mac */
-    accel->mods |= GDK_META_MASK;
+      /* Use the Command key on the Mac */
+      accel->mods |= GDK_META_MASK;
 #else
-    accel->mods |= GDK_CONTROL_MASK;
+      accel->mods |= GDK_CONTROL_MASK;
 #endif
-    apt += 9;
+      apt += 9;
+    } else if (g_ascii_strncasecmp(apt, "<shift>", 7) == 0) {
+#ifdef CYGWIN
+      accel->fVirt |= FSHIFT;
+#else
+      accel->mods |= GDK_SHIFT_MASK;
+#endif
+      apt += 7;
+    } else {
+      g_warning("Unknown modifier in accelerator %s", accelerator);
+      return FALSE;
+    }
   }
+
+#ifdef CYGWIN
+  /* Show modifiers in the conventional Windows order */
+  if (accel->fVirt & FCONTROL) {
+    g_string_append(menu_title, "Ctrl+");
+  }
+  if (accel->fVirt & FSHIFT) {
+    g_string_append(menu_title, "Shift+");
+  }
+#endif
 
   if (strlen(apt) == 1) {
     accel->key = *apt;
@@ -359,6 +383,9 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
   GtkWidget *menu_item, *menu;
   OurAccel accel;
   gboolean haveaccel;
+#ifdef CYGWIN
+  gsize label_len;
+#endif
 
   new_child = g_new0(DPGtkItemFactoryChild, 1);
 
@@ -368,9 +395,17 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
 
   gtk_item_factory_parse_path(ifactory, new_child->path, &parent,
                               menu_title);
+#ifdef CYGWIN
+  label_len = menu_title->len;
+#endif
   haveaccel =
       gtk_item_factory_parse_accel(ifactory, entry->accelerator,
                                    menu_title, &accel);
+#ifdef CYGWIN
+  if (haveaccel) {
+    new_child->accel_text = g_strdup(menu_title->str + label_len);
+  }
+#endif
 
   if (entry->item_type && strcmp(entry->item_type, "<CheckItem>") == 0) {
     menu_item = gtk_check_menu_item_new_with_mnemonic(menu_title->str);
@@ -401,7 +436,8 @@ void dp_gtk_item_factory_create_item(DPGtkItemFactory *ifactory,
         gtk_accel_group_add(ifactory->accel_group, &accel);
 #else
     gtk_widget_add_accelerator(menu_item, "activate", ifactory->accel_group,
-		               accel.key, accel.mods, accel.flags);
+		               gdk_keyval_to_lower(accel.key), accel.mods,
+		               accel.flags);
 #endif
   }
 
@@ -656,6 +692,18 @@ void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
   GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
 
   if (widget) {
+#ifdef CYGWIN
+    DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+
+    /* Keep the accelerator text after the new label */
+    if (child && child->accel_text) {
+      gchar *text = g_strconcat(label, child->accel_text, NULL);
+
+      SetAccelerator(widget, text, NULL, NULL, NULL, FALSE);
+      g_free(text);
+      return;
+    }
+#endif
     SetAccelerator(widget, label, NULL, NULL, NULL, FALSE);
   }
 }
