@@ -665,6 +665,8 @@ void PrepareHighScoreDialog(void)
 
   /* Title of the GTK+ high score dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("High Scores"));
+  /* Make sure the title is readable even if there are no scores */
+  gtk_window_set_default_size(GTK_WINDOW(dialog), 250, 100);
   my_set_dialog_position(GTK_WINDOW(dialog));
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
