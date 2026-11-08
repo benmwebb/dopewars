@@ -215,7 +215,7 @@ struct METASERVER MetaServer = {
 };
 
 struct METASERVER DefaultMetaServer = {
-  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "",
+  TRUE, "https://metaserver.dopewars.workers.dev/", "",
   "", "dopewars server"
 };
 
