@@ -1049,15 +1049,23 @@ static int SetupLocalSocket(void)
 
   sockname = GetLocalSocket();
   sockdir = GetLocalSockDir();
-  if (mkdir(sockdir, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+  if (mkdir(sockdir, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
+    close(sock);
+    g_free(sockname);
+    g_free(sockdir);
     return -1;
+  }
 
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, sockname, sizeof(addr.sun_path));
   addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1)
+  if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
+    close(sock);
+    g_free(sockname);
+    g_free(sockdir);
     return -1;
+  }
 
   chmod(sockname, S_IRUSR | S_IWUSR);
   g_free(sockname);

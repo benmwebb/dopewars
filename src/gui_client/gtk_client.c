@@ -735,6 +735,7 @@ void AddScoreToDialog(char *Data)
   spl2 = g_strsplit(spl1[1], " ", 2);
   if (!spl2 || !spl2[0] || !spl2[1]) {
     g_warning(_("Corrupt high score!"));
+    g_strfreev(spl1);
     g_strfreev(spl2);
     return;
   }
@@ -1941,6 +1942,7 @@ void QuestionDialog(char *Data, Player *From)
   split = g_strsplit(Data, "^", 2);
   if (!split[0] || !split[1]) {
     g_warning("Bad QUESTION message %s", Data);
+    g_strfreev(split);
     return;
   }
 

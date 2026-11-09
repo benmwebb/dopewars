@@ -962,6 +962,7 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf, gchar *RemoteHost,
       username = g_malloc(bufsize);
       if (WNetGetUser(NULL, username, &bufsize) != NO_ERROR) {
         SetError(&NetBuf->error, ET_WIN32, GetLastError(), NULL);
+        g_free(username);
         return FALSE;
       }
     }
@@ -985,8 +986,10 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf, gchar *RemoteHost,
   g_assert(sizeof(netport) == 2);
 
   addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
-  if (!addpt)
+  if (!addpt) {
+    g_free(username);
     return FALSE;
+  }
 
   addpt[0] = 4;                 /* SOCKS version */
   addpt[1] = 1;                 /* CONNECT */
