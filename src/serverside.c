@@ -529,7 +529,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_SPYON:
-    if (Play->Cash >= Prices.Spy) {
+    if (Play->Cash >= Prices.Spy && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s now spying on %s"), GetPlayerName(Play),
               GetPlayerName(To));
       Play->Cash -= Prices.Spy;
@@ -544,7 +544,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_TIPOFF:
-    if (Play->Cash >= Prices.Tipoff) {
+    if (Play->Cash >= Prices.Tipoff && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s tipped off the cops to %s"),
               GetPlayerName(Play), GetPlayerName(To));
       Play->Cash -= Prices.Tipoff;
@@ -3598,12 +3598,16 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
       for (i = 0; i < NumGun; i++) {
         if (Play->Guns[i].Carried > 0) {
           losedrug = 1;
+          drugslost = 1;
           Play->Guns[i].Carried--;
           Play->CoatSize += Gun[i].Space;
           if (Play->CoatSize >= 0)
             break;
         }
       }
+    /* Nothing left to drop, so we can't free up any more space */
+    if (!drugslost)
+      break;
   }
   Play->Bitches.Carried--;
   g_free(GunIndex);
