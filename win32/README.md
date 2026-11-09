@@ -23,3 +23,16 @@ the same directory as `dopewars.exe`.
 The top-level `configure` script will also generate `install.nsi` in this
 directory. This can be used as input to
 [NSIS](https://nsis.sourceforge.io/) to build a Windows installer.
+
+## Docker
+
+The Docker image is built and deployed to Docker Hub (it is also used for CI)
+with
+
+```
+podman login docker.io
+podman build -t docker.io/benmwebb/mingw:latest mingw
+podman tag docker.io/benmwebb/mingw:latest docker.io/benmwebb/mingw:<DATE>
+podman push docker.io/benmwebb/mingw:latest
+podman push docker.io/benmwebb/mingw:<DATE>
+```
