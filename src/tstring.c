@@ -110,7 +110,7 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
   while (str[i]) {
     if (str[i] == '%') {
       *StartPos = *EndPos = i++;
-      while (strchr("#0- +'", str[i]))
+      while (str[i] && strchr("#0- +'", str[i]))
         i++;                    /* Skip flag characters */
       while (str[i] >= '0' && str[i] <= '9')
         wid = wid * 10 + str[i++] - '0';
@@ -119,7 +119,7 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
         i++;
         anum = wid;
         wid = 0;
-        while (strchr("#0- +'", str[i]))
+        while (str[i] && strchr("#0- +'", str[i]))
           i++;                  /* Skip flag characters */
         while (str[i] >= '0' && str[i] <= '9')
           wid = wid * 10 + str[i++] - '0';
