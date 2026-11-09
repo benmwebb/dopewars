@@ -65,14 +65,16 @@ static void gtk_tree_view_set_column_width_full(GtkTreeView *tv, gint column,
 static void gtk_tree_view_click_column(GtkWidget *widget, gint column);
 
 static GtkSignalType GtkTreeViewSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_tree_view_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_tree_view_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_tree_view_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_tree_view_destroy},
-  {"click-column", gtk_marshal_VOID__GINT, gtk_tree_view_click_column},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_tree_view_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_tree_view_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_destroy)},
+  {"click-column", gtk_marshal_VOID__GINT,
+   G_CALLBACK(gtk_tree_view_click_column)},
   {"changed", gtk_marshal_VOID__VOID, NULL},
-  {"show", gtk_marshal_VOID__VOID, gtk_tree_view_show},
-  {"hide", gtk_marshal_VOID__VOID, gtk_tree_view_hide},
+  {"show", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_show)},
+  {"hide", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_hide)},
   {"", NULL, NULL}
 };
 

@@ -257,7 +257,7 @@ static GtkClass GtkAdjustmentClass = {
 };
 
 static GtkSignalType GtkWidgetSignals[] = {
-  {"create", gtk_marshal_VOID__VOID, gtk_widget_create},
+  {"create", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_widget_create)},
   {"size_request", gtk_marshal_VOID__GPOIN, NULL},
   {"set_size", gtk_marshal_VOID__GPOIN, NULL},
   {"realize", gtk_marshal_VOID__VOID, NULL},
@@ -276,14 +276,16 @@ static GtkClass GtkWidgetClass = {
 };
 
 static GtkSignalType GtkSeparatorSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_separator_size_request},
-  {"realize", gtk_marshal_VOID__VOID, gtk_separator_realize},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_separator_size_request)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_separator_realize)},
   {"", NULL, NULL}
 };
 
 static GtkSignalType GtkProgressBarSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_progress_bar_size_request},
-  {"realize", gtk_marshal_VOID__VOID, gtk_progress_bar_realize},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_progress_bar_size_request)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_progress_bar_realize)},
   {"", NULL, NULL}
 };
 
@@ -309,7 +311,7 @@ static GtkClass GtkMenuShellClass = {
 };
 
 static GtkSignalType GtkMenuBarSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_menu_bar_realize},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_menu_bar_realize)},
   {"", NULL, NULL}
 };
 
@@ -318,11 +320,11 @@ static GtkClass GtkMenuBarClass = {
 };
 
 static GtkSignalType GtkMenuItemSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_menu_item_realize},
-  {"set_text", gtk_marshal_VOID__GPOIN, gtk_menu_item_set_text},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_menu_item_realize)},
+  {"set_text", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_menu_item_set_text)},
   {"activate", gtk_marshal_VOID__VOID, NULL},
-  {"enable", gtk_marshal_VOID__VOID, gtk_menu_item_enable},
-  {"disable", gtk_marshal_VOID__VOID, gtk_menu_item_disable},
+  {"enable", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_menu_item_enable)},
+  {"disable", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_menu_item_disable)},
   {"", NULL, NULL}
 };
 
@@ -331,7 +333,7 @@ static GtkClass GtkMenuItemClass = {
 };
 
 static GtkSignalType GtkMenuSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_menu_realize},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_menu_realize)},
   {"", NULL, NULL}
 };
 
@@ -340,7 +342,7 @@ static GtkClass GtkMenuClass = {
 };
 
 static GtkSignalType GtkEditableSignals[] = {
-  {"create", gtk_marshal_VOID__VOID, gtk_editable_create},
+  {"create", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_editable_create)},
   {"activate", gtk_marshal_VOID__VOID, NULL},
   {"", NULL, NULL}
 };
@@ -350,9 +352,9 @@ static GtkClass GtkEditableClass = {
 };
 
 static GtkSignalType GtkEntrySignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_entry_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_entry_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_entry_realize},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_entry_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_entry_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_entry_realize)},
   {"", NULL, NULL}
 };
 
@@ -361,12 +363,13 @@ static GtkClass GtkEntryClass = {
 };
 
 static GtkSignalType GtkSpinButtonSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_spin_button_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_spin_button_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_spin_button_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_spin_button_destroy},
-  {"hide", gtk_marshal_VOID__VOID, gtk_spin_button_hide},
-  {"show", gtk_marshal_VOID__VOID, gtk_spin_button_show},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_spin_button_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_spin_button_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_spin_button_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_spin_button_destroy)},
+  {"hide", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_spin_button_hide)},
+  {"show", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_spin_button_show)},
   {"", NULL, NULL}
 };
 
@@ -376,9 +379,9 @@ static GtkClass GtkSpinButtonClass = {
 };
 
 static GtkSignalType GtkTextSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_text_size_request},
-  {"realize", gtk_marshal_VOID__VOID, gtk_text_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_text_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_text_size_request)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_text_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_text_destroy)},
   {"", NULL, NULL}
 };
 
@@ -387,11 +390,11 @@ static GtkClass GtkTextClass = {
 };
 
 static GtkSignalType GtkLabelSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_label_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_label_set_size},
-  {"set_text", gtk_marshal_VOID__GPOIN, gtk_label_set_text},
-  {"realize", gtk_marshal_VOID__VOID, gtk_label_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_label_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_label_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_label_set_size)},
+  {"set_text", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_label_set_text)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_label_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_label_destroy)},
   {"", NULL, NULL}
 };
 
@@ -400,10 +403,10 @@ static GtkClass GtkLabelClass = {
 };
 
 static GtkSignalType GtkUrlSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_url_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_label_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_url_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_url_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_url_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_label_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_url_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_url_destroy)},
   {"", NULL, NULL}
 };
 
@@ -412,10 +415,11 @@ static GtkClass GtkUrlClass = {
 };
 
 static GtkSignalType GtkButtonSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_button_size_request},
-  {"set_text", gtk_marshal_VOID__GPOIN, gtk_button_set_text},
-  {"realize", gtk_marshal_VOID__VOID, gtk_button_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_button_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_button_size_request)},
+  {"set_text", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_button_set_text)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_button_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_button_destroy)},
   {"clicked", gtk_marshal_VOID__VOID, NULL},
   {"", NULL, NULL}
 };
@@ -425,10 +429,11 @@ static GtkClass GtkButtonClass = {
 };
 
 static GtkSignalType GtkComboBoxSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_combo_box_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_combo_box_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_combo_box_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_combo_box_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_combo_box_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_combo_box_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_combo_box_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_combo_box_destroy)},
   {"changed", gtk_marshal_VOID__VOID, NULL},
   {"", NULL, NULL}
 };
@@ -449,8 +454,9 @@ static GtkClass GtkToggleButtonClass = {
 };
 
 static GtkSignalType GtkCheckButtonSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_check_button_size_request},
-  {"realize", gtk_marshal_VOID__VOID, gtk_check_button_realize},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_check_button_size_request)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_check_button_realize)},
   {"", NULL, NULL}
 };
 
@@ -460,8 +466,8 @@ static GtkClass GtkCheckButtonClass = {
 };
 
 static GtkSignalType GtkRadioButtonSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_radio_button_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_radio_button_destroy},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_radio_button_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_radio_button_destroy)},
   {"", NULL, NULL}
 };
 
@@ -471,12 +477,13 @@ static GtkClass GtkRadioButtonClass = {
 };
 
 static GtkSignalType GtkContainerSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_container_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_container_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_container_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_container_destroy},
-  {"show_all", gtk_marshal_VOID__BOOL, gtk_container_show_all},
-  {"hide_all", gtk_marshal_VOID__BOOL, gtk_container_hide_all},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_container_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_container_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_container_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_container_destroy)},
+  {"show_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_container_show_all)},
+  {"hide_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_container_hide_all)},
   {"", NULL, NULL}
 };
 
@@ -485,8 +492,8 @@ GtkClass GtkContainerClass = {
 };
 
 static GtkSignalType GtkPanedSignals[] = {
-  {"show_all", gtk_marshal_VOID__BOOL, gtk_paned_show_all},
-  {"hide_all", gtk_marshal_VOID__BOOL, gtk_paned_hide_all},
+  {"show_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_paned_show_all)},
+  {"hide_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_paned_hide_all)},
   {"", NULL, NULL}
 };
 
@@ -495,9 +502,10 @@ static GtkClass GtkPanedClass = {
 };
 
 static GtkSignalType GtkVPanedSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_vpaned_realize},
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_vpaned_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_vpaned_set_size},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_vpaned_realize)},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_vpaned_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_vpaned_set_size)},
   {"", NULL, NULL}
 };
 
@@ -506,9 +514,10 @@ static GtkClass GtkVPanedClass = {
 };
 
 static GtkSignalType GtkHPanedSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_hpaned_realize},
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_hpaned_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_hpaned_set_size},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_hpaned_realize)},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_hpaned_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_hpaned_set_size)},
   {"", NULL, NULL}
 };
 
@@ -517,10 +526,10 @@ static GtkClass GtkHPanedClass = {
 };
 
 static GtkSignalType GtkBoxSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_box_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_box_destroy},
-  {"show_all", gtk_marshal_VOID__BOOL, gtk_box_show_all},
-  {"hide_all", gtk_marshal_VOID__BOOL, gtk_box_hide_all},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_box_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_box_destroy)},
+  {"show_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_box_show_all)},
+  {"hide_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_box_hide_all)},
   {"", NULL, NULL}
 };
 
@@ -529,12 +538,13 @@ static GtkClass GtkBoxClass = {
 };
 
 static GtkSignalType GtkNotebookSignals[] = {
-  {"realize", gtk_marshal_VOID__VOID, gtk_notebook_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_notebook_destroy},
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_notebook_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_notebook_set_size},
-  {"show_all", gtk_marshal_VOID__BOOL, gtk_notebook_show_all},
-  {"hide_all", gtk_marshal_VOID__BOOL, gtk_notebook_hide_all},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_notebook_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_notebook_destroy)},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_notebook_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_notebook_set_size)},
+  {"show_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_notebook_show_all)},
+  {"hide_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_notebook_hide_all)},
   {"", NULL, NULL}
 };
 
@@ -543,12 +553,12 @@ static GtkClass GtkNotebookClass = {
 };
 
 static GtkSignalType GtkTableSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_table_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_table_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_table_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_table_destroy},
-  {"show_all", gtk_marshal_VOID__BOOL, gtk_table_show_all},
-  {"hide_all", gtk_marshal_VOID__BOOL, gtk_table_hide_all},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_table_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_table_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_table_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_table_destroy)},
+  {"show_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_table_show_all)},
+  {"hide_all", gtk_marshal_VOID__BOOL, G_CALLBACK(gtk_table_hide_all)},
   {"", NULL, NULL}
 };
 
@@ -557,8 +567,8 @@ static GtkClass GtkTableClass = {
 };
 
 static GtkSignalType GtkHBoxSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_hbox_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_hbox_set_size},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_hbox_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_hbox_set_size)},
   {"", NULL, NULL}
 };
 
@@ -567,8 +577,8 @@ static GtkClass GtkHBoxClass = {
 };
 
 static GtkSignalType GtkVBoxSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_vbox_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_vbox_set_size},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_vbox_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_vbox_set_size)},
   {"", NULL, NULL}
 };
 
@@ -581,10 +591,10 @@ static GtkClass GtkBinClass = {
 };
 
 static GtkSignalType GtkFrameSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_frame_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_frame_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_frame_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_frame_destroy},
+  {"size_request", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_frame_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_frame_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_frame_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_frame_destroy)},
   {"", NULL, NULL}
 };
 
@@ -593,12 +603,13 @@ static GtkClass GtkFrameClass = {
 };
 
 static GtkSignalType GtkWindowSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_window_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_window_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_window_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_window_destroy},
-  {"show", gtk_marshal_VOID__VOID, gtk_window_show},
-  {"hide", gtk_marshal_VOID__VOID, gtk_window_hide},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_window_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_window_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_window_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_window_destroy)},
+  {"show", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_window_show)},
+  {"hide", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_window_hide)},
   {"delete_event", gtk_marshal_BOOL__GPOIN,
    G_CALLBACK(gtk_window_delete_event)},
   {"", NULL, NULL}
@@ -2602,9 +2613,9 @@ void gtk_check_button_realize(GtkWidget *widget)
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   g_signal_connect(G_OBJECT(widget), "clicked",
-                   gtk_toggle_button_toggled, NULL);
+                   G_CALLBACK(gtk_toggle_button_toggled), NULL);
   g_signal_connect(G_OBJECT(widget), "toggled",
-                   gtk_check_button_toggled, NULL);
+                   G_CALLBACK(gtk_check_button_toggled), NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -2626,9 +2637,9 @@ void gtk_radio_button_realize(GtkWidget *widget)
                                 hInst, NULL);
   gtk_set_default_font(widget->hWnd);
   g_signal_connect(G_OBJECT(widget), "clicked",
-                   gtk_radio_button_clicked, NULL);
+                   G_CALLBACK(gtk_radio_button_clicked), NULL);
   g_signal_connect(G_OBJECT(widget), "toggled",
-                   gtk_radio_button_toggled, NULL);
+                   G_CALLBACK(gtk_radio_button_toggled), NULL);
   toggled = GTK_TOGGLE_BUTTON(widget)->toggled;
   GTK_TOGGLE_BUTTON(widget)->toggled = !toggled;
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), toggled);
@@ -3359,7 +3370,8 @@ struct _GtkSignal {
   gpointer func_data;
 };
 
-typedef gint (*GtkGIntSignalFunc) ();
+typedef gboolean (*GtkBool__IntFunc) (GObject*, gint);
+typedef gboolean (*GtkBool__IntFuncData) (GObject*, gint, void*);
 
 void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
                             GCallback default_action, va_list args)
@@ -3367,7 +3379,7 @@ void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
   gboolean *retval;
   gint arg1;
   GtkSignal *signal;
-  GtkGIntSignalFunc sigfunc;
+  GtkBool__IntFunc sigfunc;
 
   arg1 = va_arg(args, gint);
   retval = va_arg(args, gboolean *);
@@ -3379,19 +3391,24 @@ void gtk_marshal_BOOL__GINT(GObject *object, GSList *actions,
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
-    sigfunc = (GtkGIntSignalFunc)signal->func;
+    sigfunc = (GtkBool__IntFunc)signal->func;
     if (signal->slot_object) {
       *retval = (*sigfunc) (signal->slot_object, arg1);
-    } else
-      *retval = (*sigfunc) (object, arg1, signal->func_data);
+    } else {
+      GtkBool__IntFuncData sigfunc_d = (GtkBool__IntFuncData)signal->func;
+      *retval = (*sigfunc_d) (object, arg1, signal->func_data);
+    }
     if (*retval)
       return;
     actions = g_slist_next(actions);
   }
-  sigfunc = (GtkGIntSignalFunc)default_action;
+  sigfunc = (GtkBool__IntFunc)default_action;
   if (sigfunc)
     *retval = (*sigfunc) (object, arg1);
 }
+
+typedef gboolean (*GtkBool__PtFunc) (GObject*, gpointer);
+typedef gboolean (*GtkBool__PtFuncData) (GObject*, gpointer, void*);
 
 void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
                              GCallback default_action, va_list args)
@@ -3399,7 +3416,7 @@ void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
   gboolean *retval;
   gpointer arg1;
   GtkSignal *signal;
-  GtkGIntSignalFunc sigfunc;
+  GtkBool__PtFunc sigfunc;
 
   arg1 = va_arg(args, gpointer);
   retval = va_arg(args, gboolean *);
@@ -3411,96 +3428,133 @@ void gtk_marshal_BOOL__GPOIN(GObject *object, GSList *actions,
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
-    sigfunc = (GtkGIntSignalFunc)signal->func;
+    sigfunc = (GtkBool__PtFunc)signal->func;
     if (signal->slot_object) {
       *retval = (*sigfunc) (signal->slot_object, arg1);
-    } else
-      *retval = (*sigfunc) (object, arg1, signal->func_data);
+    } else {
+      GtkBool__PtFuncData sigfunc_d = (GtkBool__PtFuncData)signal->func;
+      *retval = (*sigfunc_d) (object, arg1, signal->func_data);
+    }
     if (*retval)
       return;
     actions = g_slist_next(actions);
   }
-  sigfunc = (GtkGIntSignalFunc)default_action;
+  sigfunc = (GtkBool__PtFunc)default_action;
   if (sigfunc)
     *retval = (*sigfunc) (object, arg1);
 }
+
+typedef void (*GtkVoid__Func) (GObject*);
+typedef void (*GtkVoid__FuncData) (GObject*, void*);
 
 void gtk_marshal_VOID__VOID(GObject *object, GSList *actions,
                             GCallback default_action, va_list args)
 {
   GtkSignal *signal;
+  GtkVoid__Func sigfunc;
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
+    sigfunc = (GtkVoid__Func)signal->func;
     if (signal->slot_object) {
-      (*signal->func) (signal->slot_object);
-    } else
-      (*signal->func) (object, signal->func_data);
+      (*sigfunc) (signal->slot_object);
+    } else {
+      GtkVoid__FuncData sigfunc_d = (GtkVoid__FuncData)signal->func;
+      (*sigfunc_d) (object, signal->func_data);
+    }
     actions = g_slist_next(actions);
   }
-  if (default_action)
-    (*default_action) (object);
+  sigfunc = (GtkVoid__Func)default_action;
+  if (sigfunc)
+    (*sigfunc) (object);
 }
+
+typedef void (*GtkVoid__IntFunc) (GObject*, gint);
+typedef void (*GtkVoid__IntFuncData) (GObject*, gint, void*);
 
 void gtk_marshal_VOID__GINT(GObject *object, GSList *actions,
                             GCallback default_action, va_list args)
 {
   gint arg1;
   GtkSignal *signal;
+  GtkVoid__IntFunc sigfunc;
 
   arg1 = va_arg(args, gint);
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
+    sigfunc = (GtkVoid__IntFunc)signal->func;
     if (signal->slot_object) {
-      (*signal->func) (signal->slot_object, arg1);
-    } else
-      (*signal->func) (object, arg1, signal->func_data);
+      (*sigfunc) (signal->slot_object, arg1);
+    } else {
+      GtkVoid__IntFuncData sigfunc_d = (GtkVoid__IntFuncData)signal->func;
+      (*sigfunc_d) (object, arg1, signal->func_data);
+    }
     actions = g_slist_next(actions);
   }
-  if (default_action)
-    (*default_action) (object, arg1);
+  sigfunc = (GtkVoid__IntFunc)default_action;
+  if (sigfunc)
+    (*sigfunc) (object, arg1);
 }
+
+typedef void (*GtkVoid__PtFunc) (GObject*, gpointer);
+typedef void (*GtkVoid__PtFuncData) (GObject*, gpointer, void*);
 
 void gtk_marshal_VOID__GPOIN(GObject *object, GSList *actions,
                              GCallback default_action, va_list args)
 {
   gpointer arg1;
   GtkSignal *signal;
+  GtkVoid__PtFunc sigfunc;
 
   arg1 = va_arg(args, gpointer);
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
+    sigfunc = (GtkVoid__PtFunc)signal->func;
     if (signal->slot_object) {
-      (*signal->func) (signal->slot_object, arg1);
-    } else
-      (*signal->func) (object, arg1, signal->func_data);
+      (*sigfunc) (signal->slot_object, arg1);
+    } else {
+      GtkVoid__PtFuncData sigfunc_d = (GtkVoid__PtFuncData)signal->func;
+      (*sigfunc_d) (object, arg1, signal->func_data);
+    }
     actions = g_slist_next(actions);
   }
-  if (default_action)
-    (*default_action) (object, arg1);
+  sigfunc = (GtkVoid__PtFunc)default_action;
+  if (sigfunc)
+    (*sigfunc) (object, arg1);
 }
+
+typedef void (*GtkVoid__BoolFunc) (GObject*, gboolean);
+typedef void (*GtkVoid__BoolFuncData) (GObject*, gboolean, void*);
 
 void gtk_marshal_VOID__BOOL(GObject *object, GSList *actions,
                             GCallback default_action, va_list args)
 {
   gboolean arg1;
   GtkSignal *signal;
+  GtkVoid__BoolFunc sigfunc;
 
   arg1 = va_arg(args, gboolean);
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
+    sigfunc = (GtkVoid__BoolFunc)signal->func;
     if (signal->slot_object) {
-      (*signal->func) (signal->slot_object, arg1);
-    } else
-      (*signal->func) (object, arg1, signal->func_data);
+      (*sigfunc) (signal->slot_object, arg1);
+    } else {
+      GtkVoid__BoolFuncData sigfunc_d = (GtkVoid__BoolFuncData)signal->func;
+      (*sigfunc_d) (object, arg1, signal->func_data);
+    }
     actions = g_slist_next(actions);
   }
-  if (default_action)
-    (*default_action) (object, arg1);
+  sigfunc = (GtkVoid__BoolFunc)default_action;
+  if (sigfunc)
+    (*sigfunc) (object, arg1);
 }
+
+typedef void (*GtkVoid__IIEFunc) (GObject*, gint, gint, GdkEvent*);
+typedef void (*GtkVoid__IIEFuncData) (GObject*, gint, gint, GdkEvent*, void*);
 
 void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
                                        GCallback default_action,
@@ -3509,6 +3563,7 @@ void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
   gint arg1, arg2;
   GdkEvent *arg3;
   GtkSignal *signal;
+  GtkVoid__IIEFunc sigfunc;
 
   arg1 = va_arg(args, gint);
   arg2 = va_arg(args, gint);
@@ -3516,14 +3571,18 @@ void gtk_marshal_VOID__GINT_GINT_EVENT(GObject *object, GSList *actions,
 
   while (actions) {
     signal = (GtkSignal *)actions->data;
+    sigfunc = (GtkVoid__IIEFunc)signal->func;
     if (signal->slot_object) {
-      (*signal->func) (signal->slot_object, arg1, arg2, arg3);
-    } else
-      (*signal->func) (object, arg1, arg2, arg3, signal->func_data);
+      (*sigfunc) (signal->slot_object, arg1, arg2, arg3);
+    } else {
+      GtkVoid__IIEFuncData sigfunc_d = (GtkVoid__IIEFuncData)signal->func;
+      (*sigfunc_d) (object, arg1, arg2, arg3, signal->func_data);
+    }
     actions = g_slist_next(actions);
   }
-  if (default_action)
-    (*default_action) (object, arg1, arg2, arg3);
+  sigfunc = (GtkVoid__IIEFunc)default_action;
+  if (sigfunc)
+    (*sigfunc) (object, arg1, arg2, arg3);
 }
 
 static GtkSignalType *gtk_get_signal_type(GObject *object,
