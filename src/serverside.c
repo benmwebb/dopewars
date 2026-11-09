@@ -33,6 +33,7 @@
 #include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
 #include <process.h>            /* For getpid */
+#include <ws2tcpip.h>           /* For socklen_t */
 #else
 #include <sys/socket.h>         /* For struct sockaddr etc. */
 #include <netinet/in.h>         /* For struct sockaddr_in etc. */
