@@ -612,7 +612,10 @@ static gboolean DoConnect(Player *Play, GString *errstr)
 {
   NetworkBuffer *netbuf;
   fd_set readfds, writefds, errorfds;
-  int maxsock, c;
+  int maxsock;
+#ifndef CYGWIN
+  int c;
+#endif
   gboolean doneOK = TRUE;
   NBStatus oldstatus;
   NBSocksStatus oldsocks;
