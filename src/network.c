@@ -1237,7 +1237,7 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
                           curl_multi_strerror(mres));
       return FALSE;
     }
-    conn->data = g_malloc(1);
+    conn->data = g_malloc0(1);  /* Empty string until data arrives */
     conn->data_size = 0;
     conn->headers = g_ptr_array_new_with_free_func(g_free);
     conn->running = TRUE;
