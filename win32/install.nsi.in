@@ -143,6 +143,9 @@ Section ""
   SetOutPath "$INSTDIR\locale\pt_BR\LC_MESSAGES"
   File /oname=dopewars.mo "..\po\pt_BR.gmo"
 
+  SetOutPath "$INSTDIR\locale\sv\LC_MESSAGES"
+  File /oname=dopewars.mo "..\po\sv.gmo"
+
   SetOutPath "$INSTDIR\sounds\19.5degs"
   File "..\sounds\19.5degs\*.wav"
 
