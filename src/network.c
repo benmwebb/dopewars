@@ -420,7 +420,7 @@ void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
                           gchar *password)
 {
   gchar *addpt;
-  guint addlen;
+  guint addlen, userlen, passlen;
   ConnBuf *conn;
 
   if (!user || !password || !user[0] || !password[0]) {
@@ -429,18 +429,24 @@ void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
     return;
   }
   conn = &NetBuf->negbuf;
-  addlen = 3 + strlen(user) + strlen(password);
-  addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
-  if (!addpt || strlen(user) > 255 || strlen(password) > 255) {
+  userlen = strlen(user);
+  passlen = strlen(password);
+  addlen = 3 + userlen + passlen;
+  addpt = NULL;
+  if (userlen <= 255 && passlen <= 255) {
+    addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
+  }
+  if (!addpt) {
     SetError(&NetBuf->error, ET_CUSTOM, E_FULLBUF, NULL);
     NetBufCallBack(NetBuf, TRUE);
     return;
   }
+  /* Not null-terminated; use memcpy so we don't write past addlen */
   addpt[0] = 1;                 /* Subnegotiation version code */
-  addpt[1] = strlen(user);
-  strcpy(&addpt[2], user);
-  addpt[2 + strlen(user)] = strlen(password);
-  strcpy(&addpt[3 + strlen(user)], password);
+  addpt[1] = userlen;
+  memcpy(&addpt[2], user, userlen);
+  addpt[2 + userlen] = passlen;
+  memcpy(&addpt[3 + userlen], password, passlen);
 
   CommitWriteBuffer(NetBuf, conn, addpt, addlen);
 }
