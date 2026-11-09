@@ -3485,7 +3485,7 @@ void BuyObject(Player *From, char *data)
     }
   } else if (strcmp(type, "gun") == 0) {
     if (index >= 0 && index < NumGun
-        && TotalGunsCarried(From) + amount >= 0
+        && From->Guns[index].Carried + amount >= 0
         && TotalGunsCarried(From) + amount <= From->Bitches.Carried + 2
         && From->Guns[index].Price != 0
         && From->CoatSize - amount * Gun[index].Space >= 0
