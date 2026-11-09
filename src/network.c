@@ -744,9 +744,12 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf)
     return NULL;
   *SepPt = '\0';
   MessageLen = SepPt - conn->Data + 1;
-  SepPt--;
-  if (NetBuf->StripChar && *SepPt == NetBuf->StripChar)
-    *SepPt = '\0';
+  /* Don't step before the start of the buffer for an empty message */
+  if (SepPt > conn->Data) {
+    SepPt--;
+    if (NetBuf->StripChar && *SepPt == NetBuf->StripChar)
+      *SepPt = '\0';
+  }
   NewMessage = g_new(gchar, MessageLen);
 
   memcpy(NewMessage, conn->Data, MessageLen);
