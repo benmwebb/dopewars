@@ -504,7 +504,7 @@ void AddURLEnc(GString *str, gchar *unenc)
     } else if (unenc[i] == ' ') {
       g_string_append_c(str, '+');
     } else {
-      g_string_append_printf(str, "%%%02X", unenc[i]);
+      g_string_append_printf(str, "%%%02X", (guchar)unenc[i]);
     }
   }
 }
