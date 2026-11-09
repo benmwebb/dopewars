@@ -1074,7 +1074,6 @@ price_t strtoprice(char *buf)
 gchar *pricetostr(price_t price)
 {
   GString *PriceStr;
-  gchar *NewBuffer;
   price_t absprice;
 
   if (price < 0)
@@ -1090,10 +1089,8 @@ gchar *pricetostr(price_t price)
         g_string_prepend_c(PriceStr, '-');
     }
   }
-  NewBuffer = PriceStr->str;
   /* Free the string structure, but not the actual char array */
-  g_string_free(PriceStr, FALSE);
-  return NewBuffer;
+  return g_string_free(PriceStr, FALSE);
 }
 
 /* 
@@ -1105,7 +1102,6 @@ gchar *pricetostr(price_t price)
 gchar *FormatPrice(price_t price)
 {
   GString *PriceStr;
-  gchar *NewBuffer;
   char thou[10];
   gboolean First = TRUE;
   price_t absprice;
@@ -1132,10 +1128,8 @@ gchar *FormatPrice(price_t price)
   else
     g_string_append(PriceStr, Currency.Symbol);
 
-  NewBuffer = PriceStr->str;
   /* Free the string structure only, not the char data */
-  g_string_free(PriceStr, FALSE);
-  return NewBuffer;
+  return g_string_free(PriceStr, FALSE);
 }
 
 /* 
