@@ -3547,7 +3547,8 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
         TotalGunsCarried(Play) * 100 / (Play->Bitches.Carried + 2)) {
       for (i = 0; i < NumGun; i++)
         GunIndex[i] = i;
-      for (i = 0; i < NumGun * 5; i++) {
+      /* Shuffle by swapping adjacent pairs; needs at least two guns */
+      for (i = 0; NumGun > 1 && i < NumGun * 5; i++) {
         num = brandom(0, NumGun - 1);
         tmp = GunIndex[num + 1];
         GunIndex[num + 1] = GunIndex[num];
