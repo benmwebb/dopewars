@@ -31,6 +31,10 @@
 #include <ctype.h>              /* For isprint */
 #include <glib.h>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>             /* For ftruncate */
+#endif
+
 #include "configfile.h"
 #include "convert.h"            /* For Converter */
 #include "dopewars.h"           /* For struct GLOBALS etc. */
