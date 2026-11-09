@@ -1179,10 +1179,8 @@ int read_string(FILE *fp, char **buf)
       g_string_append_c(text, (char)c);
   } while (c != EOF && c != 0);
 
-  *buf = text->str;
-
   /* Free the GString, but not the actual data text->str */
-  g_string_free(text, FALSE);
+  *buf = g_string_free(text, FALSE);
   if (c == EOF)
     return EOF;
   else

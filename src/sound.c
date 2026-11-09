@@ -56,7 +56,6 @@ gchar *GetPluginList(void)
 {
   GSList *listpt;
   GString *plugins;
-  gchar *retstr;
 
   plugins = g_string_new("\""NOPLUGIN"\"");
   for (listpt = driverlist; listpt; listpt = g_slist_next(listpt)) {
@@ -66,9 +65,7 @@ gchar *GetPluginList(void)
       g_string_append_printf(plugins, ", \"%s\"", drivpt->name);
     }
   }
-  retstr = plugins->str;
-  g_string_free(plugins, FALSE);
-  return retstr;
+  return g_string_free(plugins, FALSE);
 }
 
 static void AddPlugin(InitFunc ifunc, void *module)
