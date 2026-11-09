@@ -540,8 +540,8 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf)
             replylen += 4;      /* IPv4 address */
           else if (addrtype == 4)
             replylen += 16;     /* IPv6 address */
-          else
-            replylen += data[4];        /* FQDN */
+          else                  /* FQDN: length byte, then the name */
+            replylen += 1 + (guchar)data[4];
           data = GetWaitingData(NetBuf, replylen);
           if (data) {
             NetBuf->status = NBS_CONNECTED;
