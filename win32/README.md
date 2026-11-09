@@ -14,7 +14,7 @@ For 32-bit Windows, use
     ./configure --host=i686-w64-mingw32 --enable-nativewin32 && make
 
 In order for curl connections to the metaserver to work, copy
-`/etc/pki/tls/certs/ca-bundle.crt` from the Docker/Podman environment to
+`/etc/ssl/certs/ca-bundle.crt` from the Docker/Podman environment to
 the same directory as `dopewars.exe`.
 
 
