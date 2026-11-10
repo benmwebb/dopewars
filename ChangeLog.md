@@ -1,3 +1,25 @@
+# Unreleased
+- The graphical client and server GUI can now be built with GTK4, which
+  is used by default if available (GTK+3 is still supported). On macOS
+  the GTK4 client uses the global menu bar, and follows the system light
+  or dark appearance.
+- The graphical client has a "new game" button in the main window, and
+  keyboard shortcuts for all menu items.
+- Swedish translation added (thanks to Daniel Nylander).
+- The metaserver has moved (SourceForge no longer supports PHP scripts).
+  Older dopewars versions can use the new metaserver (just set Metaserver.URL
+  in the config file).
+- On Unix, the local configuration file is now
+  `$XDG_STATE_HOME/dopewars` (by default `~/.local/state/dopewars`)
+  rather than `~/.dopewars`, per the XDG Base Directory Standard (thanks
+  to Hildigerr Vergaray).
+- The long form of the `-g` option is now `--config-file`, as documented,
+  rather than `--configfile` (#75).
+- The text-mode client no longer overwrites the "drop" prompt with drug
+  names (#69).
+- Improved detection of curses libraries at build time (thanks to
+  Vladimir Vrzić).
+
 # 1.6.2 - 2022-06-26
 - The text-mode client should now support Unicode input when in UTF-8
   locales, e.g. allowing player names containing accented characters
@@ -113,7 +135,7 @@
   shortcuts; now fixed.
 - configure should now work properly if GLib 2.0 is installed but
   GTK2.0 is not
-- Norwegian Nynorsk translation added by �smund
+- Norwegian Nynorsk translation added by Åsmund
 - If dopewars is run setuid/setgid, it will now only use this privilege
   to open the default (hard-coded) high score file; it will not open
   a user-specified high score file with privilege
