@@ -153,9 +153,11 @@ static void NetBufCallBack(NetworkBuffer *NetBuf, gboolean CallNow)
   if (NetBuf && NetBuf->CallBack) {
     (*NetBuf->CallBack) (NetBuf, NetBuf->status != NBS_PRECONNECT,
                          (NetBuf->status == NBS_CONNECTED
-                          && NetBuf->WriteBuf.DataPresent)
+                          && (NetBuf->WriteBuf.DataPresent
+                              || NetBuf->WriteBuf.Overflow))
                          || (NetBuf->status == NBS_SOCKSCONNECT
-                             && NetBuf->negbuf.DataPresent)
+                             && (NetBuf->negbuf.DataPresent
+                                 || NetBuf->negbuf.Overflow))
                          || NetBuf->WaitConnect, TRUE, CallNow);
   }
 }
@@ -172,6 +174,7 @@ static void InitConnBuf(ConnBuf *buf)
   buf->Data = NULL;
   buf->Length = 0;
   buf->DataPresent = 0;
+  buf->Overflow = FALSE;
 }
 
 static void FreeConnBuf(ConnBuf *buf)
@@ -337,8 +340,10 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf, fd_set *readfds,
     FD_SET(NetBuf->fd, errorfds);
   if (NetBuf->fd >= *MaxSock)
     *MaxSock = NetBuf->fd + 1;
-  if ((NetBuf->status == NBS_CONNECTED && NetBuf->WriteBuf.DataPresent)
-      || (NetBuf->status == NBS_SOCKSCONNECT && NetBuf->negbuf.DataPresent)
+  if ((NetBuf->status == NBS_CONNECTED
+       && (NetBuf->WriteBuf.DataPresent || NetBuf->WriteBuf.Overflow))
+      || (NetBuf->status == NBS_SOCKSCONNECT
+          && (NetBuf->negbuf.DataPresent || NetBuf->negbuf.Overflow))
       || NetBuf->WaitConnect) {
     FD_SET(NetBuf->fd, writefds);
   }
@@ -827,18 +832,22 @@ gchar *ExpandWriteBuffer(ConnBuf *conn, int numbytes, LastError **error)
 {
   int newlen;
 
+  if (numbytes <= 0 || conn->Overflow)
+    return NULL;
+  if (numbytes > MAXWRITEBUF - conn->DataPresent) {
+    conn->Overflow = TRUE;
+    if (error)
+      SetError(error, ET_CUSTOM, E_FULLBUF, NULL);
+    return NULL;
+  }
+
   newlen = conn->DataPresent + numbytes;
   if (newlen > conn->Length) {
-    conn->Length *= 2;
-    conn->Length = MAX(conn->Length, newlen);
-    if (conn->Length > MAXWRITEBUF)
-      conn->Length = MAXWRITEBUF;
-    if (newlen > conn->Length) {
-      if (error)
-        SetError(error, ET_CUSTOM, E_FULLBUF, NULL);
-      return NULL;
-    }
-    conn->Data = g_realloc(conn->Data, conn->Length);
+    int alloc_len = MAX(conn->Length * 2, newlen);
+    if (alloc_len > MAXWRITEBUF)
+      alloc_len = MAXWRITEBUF;
+    conn->Data = g_realloc(conn->Data, alloc_len);
+    conn->Length = alloc_len;
   }
 
   return (&conn->Data[conn->DataPresent]);
@@ -874,8 +883,11 @@ void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data)
     return;
   addlen = strlen(data) + 1;
   addpt = ExpandWriteBuffer(conn, addlen, NULL);
-  if (!addpt)
+  if (!addpt) {
+    if (conn->Overflow)
+      NetBufCallBack(NetBuf, FALSE);
     return;
+  }
 
   memcpy(addpt, data, addlen);
   addpt[addlen - 1] = NetBuf->Terminator;
@@ -1008,12 +1020,12 @@ static gboolean WriteBufToWire(NetworkBuffer *NetBuf, ConnBuf *conn)
 {
   int CurrentPosition, BytesSent;
 
-  if (!conn->Data || !conn->DataPresent)
-    return TRUE;
-  if (conn->Length == MAXWRITEBUF) {
+  if (conn->Overflow) {
     SetError(&NetBuf->error, ET_CUSTOM, E_FULLBUF, NULL);
     return FALSE;
   }
+  if (!conn->Data || !conn->DataPresent)
+    return TRUE;
   CurrentPosition = 0;
   while (CurrentPosition < conn->DataPresent) {
     BytesSent = send(NetBuf->fd, &conn->Data[CurrentPosition],

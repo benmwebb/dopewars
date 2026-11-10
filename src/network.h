@@ -91,6 +91,7 @@ typedef struct _ConnBuf {
   gchar *Data;                  /* bytes waiting to be read/written */
   gint Length;                  /* allocated length of the "Data" buffer */
   gint DataPresent;             /* number of bytes currently in "Data" */
+  gboolean Overflow;            /* TRUE if MAXWRITEBUF was exceeded */
 } ConnBuf;
 
 typedef struct _NetworkBuffer NetworkBuffer;
