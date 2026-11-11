@@ -237,7 +237,7 @@ void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
 {
   NetBuf->fd = fd;
-#ifdef CYGIN
+#ifdef CYGWIN
   NetBuf->ioch = g_io_channel_win32_new_socket(fd);
 #else
   NetBuf->ioch = g_io_channel_unix_new(fd);
@@ -267,7 +267,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
 
   if (StartConnect(&NetBuf->fd, bindaddr, realhost, realport, &doneOK,
                    &NetBuf->error)) {
-#ifdef CYGIN
+#ifdef CYGWIN
     NetBuf->ioch = g_io_channel_win32_new_socket(NetBuf->fd);
 #else
     NetBuf->ioch = g_io_channel_unix_new(NetBuf->fd);
@@ -1348,7 +1348,7 @@ static void addsock(curl_socket_t s, CURL *easy, int action, CurlConnection *g)
 {
   SockData *fdp = g_malloc0(sizeof(SockData));
 
-#ifdef CYGIN
+#ifdef CYGWIN
   fdp->ch = g_io_channel_win32_new_socket(s);
 #else
   fdp->ch = g_io_channel_unix_new(s);
