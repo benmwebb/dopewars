@@ -641,12 +641,16 @@ void ReceiveInitialData(Player *Play, char *Data)
 {
   char *pt, *curr;
   GSList *list;
+  int new_loc, new_gun, new_drug;
 
   pt = Data;
   GetNextWord(&pt, "(unknown)"); /* server version */
-  ResizeLocations(GetNextInt(&pt, NumLocation));
-  ResizeGuns(GetNextInt(&pt, NumGun));
-  ResizeDrugs(GetNextInt(&pt, NumDrug));
+  new_loc = GetNextInt(&pt, NumLocation);
+  new_gun = GetNextInt(&pt, NumGun);
+  new_drug = GetNextInt(&pt, NumDrug);
+  ResizeLocations(CLAMP(new_loc, 1, MAX_NET_ITEMS));
+  ResizeGuns(CLAMP(new_gun, 0, MAX_NET_ITEMS));
+  ResizeDrugs(CLAMP(new_drug, 1, MAX_NET_ITEMS));
   for (list = FirstClient; list; list = g_slist_next(list)) {
     UpdatePlayer((Player *)list->data);
   }
@@ -804,12 +808,18 @@ void ReceivePlayerData(Player *Play, char *text, Player *From)
   From->Health = GetNextInt(&cp, 100);
   From->CoatSize = GetNextInt(&cp, 0);
   From->IsAt = GetNextInt(&cp, 0);
+  if (NumLocation <= 0 || From->IsAt < 0 || From->IsAt >= NumLocation) {
+    From->IsAt = 0;
+  }
   From->Turn = GetNextInt(&cp, 0);
   From->Flags = GetNextInt(&cp, 0);
   if (HaveAbility(Play, A_DATE)) {
-    g_date_set_day(From->date, GetNextInt(&cp, 1));
-    g_date_set_month(From->date, GetNextInt(&cp, 1));
-    g_date_set_year(From->date, GetNextInt(&cp, 1980));
+    int day = GetNextInt(&cp, 1);
+    int month = GetNextInt(&cp, 1);
+    int year = GetNextInt(&cp, 1980);
+    if (From->date && g_date_valid_dmy(day, month, year)) {
+      g_date_set_dmy(From->date, day, month, year);
+    }
   }
   for (i = 0; i < NumGun; i++) {
     From->Guns[i].Carried = GetNextInt(&cp, 0);
@@ -1302,7 +1312,7 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
     if (Attacker->Health > 0) {
       if (AttackName[0]) {
         if (!IsCop(Attacker) && brandom(0, 100) < 70
-            && Attacker->IsAt >= 0) {
+            && Attacker->IsAt >= 0 && Attacker->IsAt < NumLocation) {
           dpg_string_append_printf(text, _("%s has got away to %tde!"), AttackName,
                               Location[Attacker->IsAt].Name);
         } else {

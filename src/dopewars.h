@@ -204,6 +204,7 @@ extern int NumTurns;
 extern int PlayerArmor, BitchArmor;
 
 #define MAXLOG        6
+#define MAX_NET_ITEMS 4096
 
 #define DS_ATOZ       1
 #define DS_ZTOA       2
@@ -298,6 +299,7 @@ struct PLAYER_T {
   PlayerFlags Flags;
   gchar *Name;
   Inventory *Guns, *Drugs, Bitches;
+  int NumGunsAllocated, NumDrugsAllocated;
   EventCode EventNum, ResyncNum;
   time_t FightTimeout, IdleTimeout, ConnectTimeout;
   guint tiebreak;

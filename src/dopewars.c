@@ -868,11 +868,17 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
       NewPlayer->IdleTimeout = 0;
   NewPlayer->Guns = (Inventory *)g_malloc0(NumGun * sizeof(Inventory));
   NewPlayer->Drugs = (Inventory *)g_malloc0(NumDrug * sizeof(Inventory));
+  NewPlayer->NumGunsAllocated = NumGun;
+  NewPlayer->NumDrugsAllocated = NumDrug;
   InitList(&(NewPlayer->SpyList));
   InitList(&(NewPlayer->TipList));
   NewPlayer->Turn = 1;
-  NewPlayer->date = g_date_new_dmy(StartDate.day, StartDate.month,
-                                   StartDate.year);
+  if (g_date_valid_dmy(StartDate.day, StartDate.month, StartDate.year)) {
+    NewPlayer->date = g_date_new_dmy(StartDate.day, StartDate.month,
+                                     StartDate.year);
+  } else {
+    NewPlayer->date = g_date_new_dmy(1, 12, 1984);
+  }
   NewPlayer->Cash = StartCash;
   NewPlayer->Debt = StartDebt;
   NewPlayer->Bank = 0;
@@ -909,8 +915,19 @@ void UpdatePlayer(Player *Play)
 {
   Play->Guns =
       (Inventory *)g_realloc(Play->Guns, NumGun * sizeof(Inventory));
+  if (NumGun > Play->NumGunsAllocated) {
+    memset(&Play->Guns[Play->NumGunsAllocated], 0,
+           (NumGun - Play->NumGunsAllocated) * sizeof(Inventory));
+  }
+  Play->NumGunsAllocated = NumGun;
+
   Play->Drugs =
       (Inventory *)g_realloc(Play->Drugs, NumDrug * sizeof(Inventory));
+  if (NumDrug > Play->NumDrugsAllocated) {
+    memset(&Play->Drugs[Play->NumDrugsAllocated], 0,
+           (NumDrug - Play->NumDrugsAllocated) * sizeof(Inventory));
+  }
+  Play->NumDrugsAllocated = NumDrug;
 }
 
 /* 
@@ -1491,6 +1508,8 @@ void ResizeLocations(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumLocation)
     for (i = NewNum; i < NumLocation; i++) {
       g_free(Location[i].Name);
@@ -1510,6 +1529,8 @@ void ResizeCops(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumCop)
     for (i = NewNum; i < NumCop; i++) {
       g_free(Cop[i].Name);
@@ -1532,6 +1553,8 @@ void ResizeGuns(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumGun)
     for (i = NewNum; i < NumGun; i++) {
       g_free(Gun[i].Name);
@@ -1550,6 +1573,8 @@ void ResizeDrugs(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumDrug)
     for (i = NewNum; i < NumDrug; i++) {
       g_free(Drug[i].Name);
@@ -1570,6 +1595,8 @@ void ResizeSubway(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumSubway)
     for (i = NewNum; i < NumSubway; i++) {
       g_free(SubwaySaying[i]);
@@ -1586,6 +1613,8 @@ void ResizePlaying(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumPlaying)
     for (i = NewNum; i < NumPlaying; i++) {
       g_free(Playing[i]);
@@ -1602,6 +1631,8 @@ void ResizeStoppedTo(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumStoppedTo)
     for (i = NewNum; i < NumStoppedTo; i++) {
       g_free(StoppedTo[i]);
@@ -1757,6 +1788,7 @@ void BackupConfig(void)
 void RestoreConfig(void)
 {
   gint i;
+  GSList *list;
 
   Prices.Spy = BackupPrices.Spy;
   Prices.Tipoff = BackupPrices.Tipoff;
@@ -1773,6 +1805,9 @@ void RestoreConfig(void)
   ResizeLocations(NumBackupLocation);
   for (i = 0; i < NumLocation; i++)
     CopyLocation(&Location[i], &BackupLocation[i]);
+  for (list = FirstClient; list; list = g_slist_next(list)) {
+    UpdatePlayer((Player *)list->data);
+  }
 }
 
 void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
@@ -2505,6 +2540,7 @@ void GetDateString(GString *str, Player *Play)
 {
   gchar buf[200], *turn, *pt;
 
+  buf[0] = '\0';
   turn = g_strdup_printf("%d", Play->Turn);
   g_string_assign(str, Names.Date);
   while ((pt = strstr(str->str, "%T")) != NULL) {
@@ -2514,7 +2550,10 @@ void GetDateString(GString *str, Player *Play)
     g_string_insert(str, ind, turn);
   }
 
-  g_date_strftime(buf, sizeof(buf), str->str, Play->date);
+  if (!Play->date || !g_date_valid(Play->date)
+      || g_date_strftime(buf, sizeof(buf), str->str, Play->date) == 0) {
+    g_snprintf(buf, sizeof(buf), "Turn %d", Play->Turn);
+  }
   g_string_assign(str, buf);
   g_free(turn);
 }

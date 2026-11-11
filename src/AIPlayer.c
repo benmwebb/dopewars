@@ -544,23 +544,28 @@ void AIJet(Player *AIPlay)
   int NewLocation;
   char text[40];
 
-  if (!AIPlay)
+  if (!AIPlay || NumLocation <= 0)
     return;
-  NewLocation = AIPlay->IsAt;
-  if (RealLoanShark >= 0
-      && AIPlay->Cash > (price_t)((float)AIPlay->Debt * 1.2)) {
-    NewLocation = RealLoanShark;
-  } else if (RealPub >= 0 && brandom(0, 100) < 30
-             && AIPlay->Cash > MINSAFECASH * 10) {
-    NewLocation = RealPub;
-  } else if (RealGunShop >= 0 && brandom(0, 100) < 70 &&
-             TotalGunsCarried(AIPlay) < AIPlay->Bitches.Carried + 2 &&
-             AIPlay->Cash > MINSAFECASH * 5) {
-    NewLocation = RealGunShop;
+  if (NumLocation == 1) {
+    NewLocation = 0;
+  } else {
+    NewLocation = AIPlay->IsAt;
+    if (RealLoanShark >= 0 && RealLoanShark < NumLocation
+        && AIPlay->Cash > (price_t)((float)AIPlay->Debt * 1.2)) {
+      NewLocation = RealLoanShark;
+    } else if (RealPub >= 0 && RealPub < NumLocation && brandom(0, 100) < 30
+               && AIPlay->Cash > MINSAFECASH * 10) {
+      NewLocation = RealPub;
+    } else if (RealGunShop >= 0 && RealGunShop < NumLocation
+               && brandom(0, 100) < 70 &&
+               TotalGunsCarried(AIPlay) < AIPlay->Bitches.Carried + 2 &&
+               AIPlay->Cash > MINSAFECASH * 5) {
+      NewLocation = RealGunShop;
+    }
+    while (NewLocation == AIPlay->IsAt)
+      NewLocation = brandom(0, NumLocation);
   }
-  while (NewLocation == AIPlay->IsAt)
-    NewLocation = brandom(0, NumLocation);
-  sprintf(text, "%d", NewLocation);
+  g_snprintf(text, sizeof(text), "%d", NewLocation);
   SendClientMessage(AIPlay, C_NONE, C_REQUESTJET, NULL, text);
 }
 
