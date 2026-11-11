@@ -111,23 +111,13 @@ class PlayerData(object):
         self.bitches = nxt()
 
 
-class Client(object):
-    """A connection to a dopewars server, acting as a player"""
+class LineConnection(object):
+    """A socket carrying newline-terminated messages, in either direction"""
 
-    def __init__(self, port, host='127.0.0.1', timeout=10):
-        self.sock = socket.create_connection((host, port), timeout=timeout)
+    def __init__(self, sock, timeout=10):
+        self.sock = sock
         self.timeout = timeout
         self.buf = b''
-        self.use_ids = False
-        self.id = None
-        self.num_guns = self.num_drugs = self.num_locations = 0
-        self.player = None
-        self.prices = []
-        self.location_names = {}
-        self.drug_names = {}
-        self.guns = {}          # index -> (name, price, space, damage)
-        self.received = []      # every message received, for debugging
-        self.answers = {}       # AI code -> answer to send automatically
 
     def close(self):
         if self.sock:
@@ -140,13 +130,49 @@ class Client(object):
     def __exit__(self, *args):
         self.close()
 
-    # Sending
-
     def send_raw(self, line):
-        """Send a line (without terminator) exactly as given"""
+        """Send a line (without terminator) exactly as given. Lone
+        surrogates in a str (e.g. '\\udcff') are sent as the raw bytes
+        they stand for, so tests can send invalid UTF-8."""
         if isinstance(line, str):
-            line = line.encode('utf-8')
+            line = line.encode('utf-8', errors='surrogateescape')
         self.sock.sendall(line + b'\n')
+
+    def _read_line(self, deadline):
+        while b'\n' not in self.buf:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None
+            ready, _, _ = select.select([self.sock], [], [], remaining)
+            if not ready:
+                return None
+            chunk = self.sock.recv(65536)
+            if not chunk:
+                raise EOFError("connection closed by the other end")
+            self.buf += chunk
+        line, self.buf = self.buf.split(b'\n', 1)
+        return line.rstrip(b'\r').decode('utf-8', errors='replace')
+
+
+class Client(LineConnection):
+    """A connection to a dopewars server, acting as a player"""
+
+    def __init__(self, port, host='127.0.0.1', timeout=10):
+        LineConnection.__init__(
+            self, socket.create_connection((host, port), timeout=timeout),
+            timeout)
+        self.use_ids = False
+        self.id = None
+        self.num_guns = self.num_drugs = self.num_locations = 0
+        self.player = None
+        self.prices = []
+        self.location_names = {}
+        self.drug_names = {}
+        self.guns = {}          # index -> (name, price, space, damage)
+        self.received = []      # every message received, for debugging
+        self.answers = {}       # AI code -> answer to send automatically
+
+    # Sending
 
     def send(self, code, data='', ai=None, to=''):
         """Send a message to the server (or to player `to`, which is an ID
@@ -160,21 +186,6 @@ class Client(object):
         self.send_raw(header + ai + code + data)
 
     # Receiving
-
-    def _read_line(self, deadline):
-        while b'\n' not in self.buf:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return None
-            ready, _, _ = select.select([self.sock], [], [], remaining)
-            if not ready:
-                return None
-            chunk = self.sock.recv(65536)
-            if not chunk:
-                raise EOFError("server closed the connection")
-            self.buf += chunk
-        line, self.buf = self.buf.split(b'\n', 1)
-        return line.rstrip(b'\r').decode('utf-8', errors='replace')
 
     def _parse(self, line):
         if self.use_ids:

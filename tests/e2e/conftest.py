@@ -19,6 +19,7 @@ import time
 import pytest
 
 import dopeproto
+from fakeserver import FakeServer
 
 TOPDIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                       os.pardir, os.pardir))
@@ -63,6 +64,16 @@ def free_port():
         return s.getsockname()[1]
 
 
+def dopewars_env(workdir):
+    """Environment for running dopewars in directory `workdir`"""
+    env = os.environ.copy()
+    # Make the game repeatable, and keep the tester's config out of it
+    env['DOPEWARS_SEED'] = '1'
+    env['HOME'] = str(workdir)
+    env['XDG_STATE_HOME'] = str(workdir)
+    return env
+
+
 def _close_windows(pid):
     """Ask every visible window of process `pid` to close (Windows only)"""
     import ctypes
@@ -101,12 +112,7 @@ class Server(object):
 
     @property
     def env(self):
-        env = os.environ.copy()
-        # Make the game repeatable, and keep the tester's config out of it
-        env['DOPEWARS_SEED'] = '1'
-        env['HOME'] = self.workdir
-        env['XDG_STATE_HOME'] = self.workdir
-        return env
+        return dopewars_env(self.workdir)
 
     def args(self, *extra):
         """Command line for running dopewars against this server"""
@@ -225,3 +231,12 @@ def make_server(tmp_path):
 def server(make_server):
     """A server with the default game settings"""
     return make_server()
+
+
+@pytest.fixture
+def fake_server():
+    """A fake server (see fakeserver.py) for testing a client"""
+    s = FakeServer()
+    yield s
+    s.close()
+
