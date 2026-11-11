@@ -102,7 +102,7 @@ def test_oversized_line(fake_server, ai_client):
     the connection, rather than being read"""
     fake_server.join()
     fake_server.wait_for(C_REQUESTJET)
-    fake_server.send(C_PRINTMESSAGE, 'x' * 100000)
+    fake_server.send_oversized_line()
     output = ai_client.wait_exit()
     if not IS_WINDOWS:
         assert 'Connection to server lost' in output

@@ -102,7 +102,7 @@ def test_connection_lost(fake_server, client):
 
 def test_oversized_line(fake_server, client):
     """A line longer than the client's read buffer drops the connection"""
-    fake_server.print_message('x' * 100000)
+    fake_server.send_oversized_line()
     client.wait_for('Connection to server lost!')
     client.to_street()
     client.quit()

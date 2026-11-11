@@ -103,6 +103,15 @@ class FakeServer(object):
     def send_raw(self, line):
         self.conn.send_raw(line)
 
+    def send_oversized_line(self, length=100000):
+        """Send a line longer than the client's read buffer (MAXREADBUF
+        in network.c). The client drops the connection once its buffer is
+        full, which may be before the whole line has been sent."""
+        try:
+            self.print_message('x' * length)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+
     def print_message(self, text):
         self.send(C_PRINTMESSAGE, text)
 
