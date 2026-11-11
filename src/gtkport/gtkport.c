@@ -2001,13 +2001,28 @@ void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
 
   gtk_editable_sync_text(editable);
 
-  /* Convert Unix-style lone '\n' to Windows-style '\r\n' */
+  /* The text may have changed since the caller got the position */
+  if (*position < 0 || (gsize)*position > editable->text->len) {
+    *position = editable->text->len;
+  }
+
+  /* Convert Unix-style lone '\n' to Windows-style '\r\n', and replace
+   * invalid UTF-8 (which the control can't display) with '?' so that our
+   * copy of the text stays the same as the control's */
   newstr = g_string_new("");
   for (i = 0; i < new_text_length && new_text[i]; i++) {
+    gunichar c = g_utf8_get_char_validated(new_text + i,
+                                           new_text_length - i);
+
+    if (c == (gunichar)-1 || c == (gunichar)-2) {
+      g_string_append_c(newstr, '?');
+      continue;
+    }
     if (new_text[i] == '\n' && (i == 0 || new_text[i - 1] != '\r')) {
       g_string_append_c(newstr, '\r');
     }
-    g_string_append_c(newstr, new_text[i]);
+    g_string_append_unichar(newstr, c);
+    i += g_utf8_skip[(guchar)new_text[i]] - 1;
   }
   g_string_insert(editable->text, *position, newstr->str);
 
