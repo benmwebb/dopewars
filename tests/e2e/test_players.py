@@ -132,4 +132,4 @@ def test_commands_ignored_before_join(server):
     c.send(C_BUYOBJECT, 'drug^0^1')
     alice = server.player('Alice')
     assert not [m for m in alice.drain() if m.code == C_MSG]
-    assert 'Ignoring pre-join command' in server.read_log()
+    server.assert_logged('Ignoring pre-join command')

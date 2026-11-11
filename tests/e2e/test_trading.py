@@ -74,7 +74,7 @@ def test_bad_jet_denied(server, location):
     alice.send(C_REQUESTJET, location)
     msgs = alice.drain()
     assert not [m for m in msgs if m.code == C_SUBWAYFLASH]
-    assert 'DENIED jet' in server.read_log()
+    server.assert_logged('DENIED jet')
 
 
 def test_loan_shark(server):

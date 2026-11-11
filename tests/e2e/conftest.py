@@ -9,6 +9,7 @@ doesn't shut down cleanly fails the test.
 """
 
 import os
+import re
 import signal
 import socket
 import subprocess
@@ -34,9 +35,19 @@ Log.Level = 4
 """
 
 
+def _native_path(path):
+    """Convert an MSYS2-style path (/c/foo) to a Windows one (c:/foo)"""
+    m = re.match(r'^/([a-zA-Z])(/.*)?$', path)
+    if IS_WINDOWS and m:
+        return m.group(1) + ':' + (m.group(2) or '/')
+    return path
+
+
 def dopewars_binary():
     binary = os.environ.get('DOPEWARS_BINARY')
-    if not binary:
+    if binary:
+        binary = _native_path(binary)
+    else:
         binary = os.path.join(TOPDIR, 'src', 'dopewars')
         if IS_WINDOWS:
             binary += '.exe'
@@ -147,6 +158,13 @@ class Server(object):
             return ''
         with open(self.log_file) as fh:
             return fh.read()
+
+    def assert_logged(self, text):
+        """Check that the server logged a message containing `text`. The
+        Windows (GUI) server shows its log in its window rather than
+        writing it to the log file, so this check is skipped there."""
+        if not IS_WINDOWS:
+            assert text in self.read_log()
 
     def stop(self):
         """Shut down the server cleanly, after disconnecting all clients

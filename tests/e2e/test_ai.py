@@ -2,6 +2,7 @@
 ("dopewars -c")"""
 
 import subprocess
+import sys
 
 import pytest
 
@@ -24,8 +25,10 @@ def test_ai_plays_full_game(make_server, sanitized):
     watcher = server.player('Watcher')
     status, output = run_ai(server)
     assert status == 0, output
-    assert 'Game time is up' in output or 'AI Player killed' in output, \
-        output
+    # On Windows, the AI player writes to its own console window instead
+    if sys.platform != 'win32':
+        assert ('Game time is up' in output
+                or 'AI Player killed' in output), output
 
     # The watcher saw the AI arrive and leave
     join = watcher.wait_for(C_JOIN)
