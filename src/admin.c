@@ -84,6 +84,11 @@ void AdminServer(struct CMDLINE *cmdline)
 
   InitConfiguration(cmdline);
 
+  /* We select() on stdin, so must not let stdio buffer it: otherwise,
+   * if several lines arrive at once (e.g. pasted, or from a script),
+   * all but the first would sit in the buffer, unseen by select() */
+  setvbuf(stdin, NULL, _IONBF, 0);
+
   sock = OpenSocket();
   netbuf = g_new(NetworkBuffer, 1);
 
