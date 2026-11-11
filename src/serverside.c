@@ -39,6 +39,7 @@
 #include <netinet/in.h>         /* For struct sockaddr_in etc. */
 #include <sys/un.h>             /* For struct sockaddr_un */
 #include <arpa/inet.h>          /* For socklen_t */
+#include <fcntl.h>              /* For fcntl() */
 #endif /* CYGWIN */
 
 #ifdef HAVE_UNISTD_H
@@ -89,6 +90,13 @@ static char *attackquestiontr = N_("AE");
 #define METAMINTIME (60)
 
 int TerminateRequest, ReregisterRequest, RelogRequest;
+
+#ifndef CYGWIN
+/* The signal handlers write to this pipe, which the text-mode server
+ * includes in its select() call, so that a signal which arrives while
+ * the server is busy (rather than waiting in select) still wakes it up */
+static int SignalPipe[2] = { -1, -1 };
+#endif
 
 int MetaUpdateTimeout;
 long MetaMinTimeout;
@@ -661,9 +669,29 @@ void CleanUpServer()
  * Responds to a SIGUSR1 signal, and requests the main event loop to
  * reregister the server with the dopewars metaserver.
  */
+/*
+ * Wakes up the text-mode server's main loop, if it is waiting in
+ * select(), so that it handles a signal. Safe to call from a signal
+ * handler.
+ */
+static void WakeServerLoop(void)
+{
+#ifndef CYGWIN
+  int saved_errno = errno;
+
+  if (SignalPipe[1] >= 0) {
+    /* If the pipe is full, the loop has a wakeup pending anyway */
+    if (write(SignalPipe[1], "", 1) < 0) {
+    }
+  }
+  errno = saved_errno;
+#endif
+}
+
 void ReregisterHandle(int sig)
 {
   ReregisterRequest = 1;
+  WakeServerLoop();
 }
 
 /* 
@@ -673,6 +701,7 @@ void ReregisterHandle(int sig)
 void RelogHandle(int sig)
 {
   RelogRequest = 1;
+  WakeServerLoop();
 }
 
 /* 
@@ -692,6 +721,7 @@ void BreakHandle(int sig)
   sigemptyset(&sact.sa_mask);
   sigaction(SIGTERM, &sact, NULL);
   sigaction(SIGINT, &sact, NULL);
+  WakeServerLoop();
 }
 
 /* 
@@ -1229,7 +1259,7 @@ void ServerLoop(struct CMDLINE *cmdline)
   fd_set readfs, writefs, errorfs;
   int topsock;
   struct timeval timeout;
-  int MinTimeout;
+  int MinTimeout, selret;
   GString *LineBuf;
 
   gboolean DoneOK;
@@ -1269,6 +1299,15 @@ void ServerLoop(struct CMDLINE *cmdline)
   }
 #endif
 
+#ifndef CYGWIN
+  if (pipe(SignalPipe) == 0) {
+    fcntl(SignalPipe[0], F_SETFL, O_NONBLOCK);
+    fcntl(SignalPipe[1], F_SETFL, O_NONBLOCK);
+  } else {
+    SignalPipe[0] = SignalPipe[1] = -1;
+  }
+#endif
+
   LineBuf = g_string_new("");
   while (1) {
     FD_ZERO(&readfs);
@@ -1304,35 +1343,52 @@ void ServerLoop(struct CMDLINE *cmdline)
                                   &errorfs, &topsock);
       }
     }
+#ifndef CYGWIN
+    if (SignalPipe[0] >= 0 && SignalPipe[0] < FD_SETSIZE) {
+      FD_SET(SignalPipe[0], &readfs);
+      topsock = MAX(topsock, SignalPipe[0] + 1);
+    }
+#endif
     MinTimeout = GetMinimumTimeout(FirstServer);
     if (MinTimeout != -1) {
       timeout.tv_sec = MinTimeout;
       timeout.tv_usec = 0;
     }
-    if (select(topsock, &readfs, &writefs, &errorfs,
-               MinTimeout == -1 ? NULL : &timeout) == -1) {
-      if (errno == EINTR) {
-        if (ReregisterRequest) {
-          ReregisterRequest = 0;
-          RegisterWithMetaServer(TRUE, TRUE, FALSE);
-          continue;
-        } else if (TerminateRequest) {
-          TerminateRequest = 0;
-          RequestServerShutdown();
-          if (IsServerShutdown())
-            break;
-          else
-            continue;
-        } else if (RelogRequest) {      /* Re-open log file */
-          RelogRequest = 0;
-          CloseLog();
-          OpenLog();
-          continue;
-        } else
-          continue;
-      }
+    selret = select(topsock, &readfs, &writefs, &errorfs,
+                    MinTimeout == -1 ? NULL : &timeout);
+    if (selret == -1 && errno != EINTR) {
       perror("select");
       break;
+    }
+#ifndef CYGWIN
+    if (selret > 0 && SignalPipe[0] >= 0 && SignalPipe[0] < FD_SETSIZE
+        && FD_ISSET(SignalPipe[0], &readfs)) {
+      char drain[64];
+
+      while (read(SignalPipe[0], drain, sizeof(drain)) > 0) {
+      }
+    }
+#endif
+    /* Handle any signals, whether they interrupted select() or arrived
+     * while we were busy (in which case the pipe woke us up) */
+    if (ReregisterRequest) {
+      ReregisterRequest = 0;
+      RegisterWithMetaServer(TRUE, TRUE, FALSE);
+    }
+    if (RelogRequest) {         /* Re-open log file */
+      RelogRequest = 0;
+      CloseLog();
+      OpenLog();
+    }
+    if (TerminateRequest) {
+      TerminateRequest = 0;
+      RequestServerShutdown();
+      if (IsServerShutdown())
+        break;
+    }
+    if (selret == -1) {
+      /* Interrupted by a signal, so the fd sets are not valid */
+      continue;
     }
     FirstServer = HandleTimeouts(FirstServer);
     if (ListenSock >= 0
@@ -1434,6 +1490,11 @@ void ServerLoop(struct CMDLINE *cmdline)
   }
 #ifndef CYGWIN
   CloseLocalSocket(localsock);
+  if (SignalPipe[0] >= 0) {
+    close(SignalPipe[0]);
+    close(SignalPipe[1]);
+    SignalPipe[0] = SignalPipe[1] = -1;
+  }
 #endif
   StopServer();
   g_string_free(LineBuf, TRUE);
