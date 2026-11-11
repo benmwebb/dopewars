@@ -2373,7 +2373,7 @@ void SendEvent(Player *To)
                                   "^The spy %s!"), Names.Bitches,
                                 GetPlayerName(To->SpyList.Data[i].Play),
                                 _(Discover[j]));
-          if (j != DEFECT)
+          if (j != DEFECT && To->Bitches.Carried > 0)
             LoseBitch(To, NULL, NULL);
           SendPlayerData(To);
           SendPrintMessage(NULL, C_NONE, To, text);
@@ -3547,28 +3547,36 @@ void HandleAnswer(Player *From, Player *To, char *answer)
 void BuyObject(Player *From, char *data)
 {
   char *cp, *type;
-  int index, i, amount;
+  int index, amount;
+  gint64 new_carried, new_coat, total_guns;
 
   cp = data;
   type = GetNextWord(&cp, "");
   index = GetNextInt(&cp, 0);
   amount = GetNextInt(&cp, 0);
+  if (amount == 0)
+    return;
   if (strcmp(type, "drug") == 0) {
-    if (index >= 0 && index < NumDrug
-        && From->Drugs[index].Carried + amount >= 0
-        && From->CoatSize - amount >= 0 && (From->Drugs[index].Price != 0
-                                            || amount < 0)
-        && From->Cash >= amount * From->Drugs[index].Price) {
+    if (index < 0 || index >= NumDrug || From->Drugs[index].Price < 0)
+      return;
+    new_carried = (gint64)From->Drugs[index].Carried + (gint64)amount;
+    new_coat = (gint64)From->CoatSize - (gint64)amount;
+    if (new_carried >= 0 && new_carried <= G_MAXINT
+        && new_coat >= 0 && new_coat <= G_MAXINT
+        && (From->Drugs[index].Price > 0 || amount < 0)
+        && (amount < 0 || From->Drugs[index].Price == 0
+            || (From->Cash > 0
+                && (price_t)amount <= From->Cash / From->Drugs[index].Price))) {
+      price_t total_cost = (price_t)amount * From->Drugs[index].Price;
       if (amount > 0) {
-        From->Drugs[index].TotalValue += amount * From->Drugs[index].Price;
+        From->Drugs[index].TotalValue += total_cost;
       } else if (From->Drugs[index].Carried != 0) {
         From->Drugs[index].TotalValue = From->Drugs[index].TotalValue *
-            (From->Drugs[index].Carried +
-             amount) / From->Drugs[index].Carried;
+            (price_t)new_carried / From->Drugs[index].Carried;
       }
-      From->Drugs[index].Carried += amount;
-      From->CoatSize -= amount;
-      From->Cash -= amount * From->Drugs[index].Price;
+      From->Drugs[index].Carried = (int)new_carried;
+      From->CoatSize = (int)new_coat;
+      From->Cash -= total_cost;
       SendPlayerData(From);
 
       if (!Sanitized && NumCop > 0 && NumGun > 0
@@ -3584,25 +3592,32 @@ void BuyObject(Player *From, char *data)
       }
     }
   } else if (strcmp(type, "gun") == 0) {
-    if (index >= 0 && index < NumGun
-        && From->Guns[index].Carried + amount >= 0
-        && TotalGunsCarried(From) + amount <= From->Bitches.Carried + 2
-        && From->Guns[index].Price != 0
-        && From->CoatSize - amount * Gun[index].Space >= 0
-        && From->Cash >= amount * From->Guns[index].Price) {
-      From->Guns[index].Carried += amount;
-      From->CoatSize -= amount * Gun[index].Space;
-      From->Cash -= amount * From->Guns[index].Price;
+    if (index < 0 || index >= NumGun || From->Guns[index].Price <= 0)
+      return;
+    new_carried = (gint64)From->Guns[index].Carried + (gint64)amount;
+    total_guns = (gint64)TotalGunsCarried(From) + (gint64)amount;
+    new_coat = (gint64)From->CoatSize -
+               (gint64)amount * (gint64)Gun[index].Space;
+    if (new_carried >= 0 && new_carried <= G_MAXINT
+        && total_guns <= (gint64)From->Bitches.Carried + 2
+        && new_coat >= 0 && new_coat <= G_MAXINT
+        && (amount < 0
+            || (From->Cash > 0
+                && (price_t)amount <= From->Cash / From->Guns[index].Price))) {
+      From->Guns[index].Carried = (int)new_carried;
+      From->CoatSize = (int)new_coat;
+      From->Cash -= (price_t)amount * From->Guns[index].Price;
       SendPlayerData(From);
     }
   } else if (strcmp(type, "bitch") == 0) {
-    if (From->Bitches.Carried + amount >= 0
-        && From->Bitches.Price != 0
-        && amount * From->Bitches.Price <= From->Cash) {
-      for (i = 0; i < amount; i++)
-        GainBitch(From);
-      if (amount > 0)
-        From->Cash -= amount * From->Bitches.Price;
+    if (amount == 1 && From->Bitches.Carried >= 0
+        && From->Bitches.Carried < G_MAXINT - 1
+        && From->CoatSize <= G_MAXINT - 10
+        && From->Bitches.Price > 0
+        && From->Bitches.Price <= From->Cash) {
+      GainBitch(From);
+      From->Cash -= From->Bitches.Price;
+      From->Bitches.Price = 0;
       SendPlayerData(From);
     }
   }
@@ -3638,9 +3653,11 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
 {
   int losedrug = 0, i, num, drugslost;
   int *GunIndex, tmp;
-  GunIndex = g_new(int, NumGun);
 
   ClearInventory(Guns, Drugs);
+  if (!Play || Play->Bitches.Carried <= 0)
+    return 0;
+  GunIndex = g_new(int, NumGun);
   Play->CoatSize -= 10;
   if (TotalGunsCarried(Play) > 0) {
     if (brandom(0, 100) <

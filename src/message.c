@@ -1175,7 +1175,7 @@ void SendFightMessage(Player *Attacker, Player *Defender,
     Damage += Gun[i].Damage * Attacker->Guns[i].Carried;
   }
   MaxDamage *= (Attacker->Bitches.Carried + 2);
-  ArmPercent = Damage * 100 / MaxDamage;
+  ArmPercent = (MaxDamage > 0) ? (Damage * 100 / MaxDamage) : 0;
 
   text = g_string_new("");
 
