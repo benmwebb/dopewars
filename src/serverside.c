@@ -527,8 +527,9 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_DEPOSIT:
     money = strtoprice(Data);
-    if (Play->EventNum == E_BANK && Play->Bank + money >= 0
-        && Play->Cash - money >= 0) {
+    /* i.e. Bank + money >= 0 and Cash - money >= 0, without overflow */
+    if (Play->EventNum == E_BANK && money >= -Play->Bank
+        && money <= Play->Cash) {
       Play->Bank += money;
       Play->Cash -= money;
       SendPlayerData(Play);
@@ -537,7 +538,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
   case C_PAYLOAN:
     money = strtoprice(Data);
     if (Play->EventNum == E_LOANSHARK && money > 0
-        && Play->Debt - money >= 0 && Play->Cash - money >= 0) {
+        && money <= Play->Debt && money <= Play->Cash) {
       Play->Debt -= money;
       Play->Cash -= money;
       SendPlayerData(Play);

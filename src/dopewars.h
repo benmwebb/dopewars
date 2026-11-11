@@ -28,6 +28,7 @@
 #endif
 
 #include <stdio.h>
+#include <limits.h>
 
 /* Be careful not to include both sys/time.h and time.h on those systems
  * which don't like it */
@@ -51,8 +52,10 @@
 /* Make price_t be a long long if the type is supported by the compiler */
 #if SIZEOF_LONG_LONG == 0
 typedef long price_t;
+#define PRICE_MAX LONG_MAX
 #else
 typedef long long price_t;
+#define PRICE_MAX LLONG_MAX
 #endif
 
 /* "Abilities" are protocol extensions, which are negotiated between the

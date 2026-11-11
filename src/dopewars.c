@@ -1061,14 +1061,20 @@ price_t strtoprice(char *buf)
     } else if (digit >= '0' && digit <= '9') {
       if (InFrac)
         FracNum--;
-      val *= 10;
-      val += (digit - '0');
+      /* Saturate rather than overflow (prices can come from the network) */
+      if (val > (PRICE_MAX - 9) / 10) {
+        val = PRICE_MAX;
+      } else {
+        val *= 10;
+        val += (digit - '0');
+      }
     } else if (digit == '-')
       minus = TRUE;
   }
 
-  for (i = 0; i < FracNum; i++)
-    val *= 10;
+  for (i = 0; i < FracNum; i++) {
+    val = (val > PRICE_MAX / 10) ? PRICE_MAX : val * 10;
+  }
   if (minus)
     val = -val;
   return val;

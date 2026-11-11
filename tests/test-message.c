@@ -63,6 +63,26 @@ static void test_get_next_price(void)
   g_assert_cmpint(GetNextPrice(&pt, 1), ==, 1);
 }
 
+static void test_strtoprice(void)
+{
+  gchar plain[] = "1234", millions[] = "1.5M", thousands[] = "2k";
+  gchar negative[] = "-75";
+  gchar huge[] = "99999999999999999999999";
+  gchar hugeneg[] = "-99999999999999999999999";
+  gchar hugesuffix[] = "999999999999999M";
+
+  g_assert_cmpint(strtoprice(plain), ==, 1234);
+  g_assert_cmpint(strtoprice(millions), ==, 1500000);
+  g_assert_cmpint(strtoprice(thousands), ==, 2000);
+  g_assert_cmpint(strtoprice(negative), ==, -75);
+  g_assert_cmpint(strtoprice(NULL), ==, 0);
+
+  /* Values too big to represent saturate rather than overflow */
+  g_assert_cmpint(strtoprice(huge), ==, PRICE_MAX);
+  g_assert_cmpint(strtoprice(hugeneg), ==, -PRICE_MAX);
+  g_assert_cmpint(strtoprice(hugesuffix), ==, PRICE_MAX);
+}
+
 static void test_process_message(void)
 {
   Player *play, *other;
@@ -280,6 +300,7 @@ int main(int argc, char *argv[])
   g_test_add_func("/message/get-next-word", test_get_next_word);
   g_test_add_func("/message/get-next-int", test_get_next_int);
   g_test_add_func("/message/get-next-price", test_get_next_price);
+  g_test_add_func("/message/strtoprice", test_strtoprice);
   g_test_add_func("/message/process-message", test_process_message);
   g_test_add_func("/message/initial-data/bounds", test_initial_data_bounds);
   g_test_add_func("/message/initial-data/names", test_initial_data_names);
