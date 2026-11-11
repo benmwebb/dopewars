@@ -255,7 +255,11 @@ static void mvaddrightstr(int row, int col, const gchar *str)
 /* Append len spaces to the end of text */
 static void g_string_pad(GString *text, int len)
 {
-  int curlen = text->len;
+  int curlen;
+
+  if (len <= 0)
+    return;
+  curlen = text->len;
   g_string_set_size(text, curlen + len);
   memset(text->str + curlen, ' ', len);
 }
@@ -2071,7 +2075,8 @@ void print_status(Player *Play, gboolean DispDrug)
   p = FormatPrice(Play->Debt);
   /* Put in one big string otherwise the DebtAttr won't be applied to the
      space between "Debt" and the price */
-  g_string_pad(text, 22 - strcharlen(text->str) - strcharlen(p));
+  g_string_pad(text,
+               MAX(1, 22 - (int)strcharlen(text->str) - (int)strcharlen(p)));
   g_string_append(text, p);
   g_free(p);
   mvaddstr(Network ? 7 : 11, 9, text->str);
