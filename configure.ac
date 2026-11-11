@@ -417,6 +417,20 @@ if test -n "$GCC"; then
    fi
 fi
 
+dnl Optionally build with code coverage instrumentation (gcc or clang)
+AC_ARG_ENABLE(coverage,
+[  --enable-coverage       build with code coverage instrumentation, for use
+                          with gcov/gcovr (also disables optimization)],
+[ coverage="$enableval" ],[ coverage="no" ])
+if test "$coverage" = "yes" ; then
+   if test -z "$GCC"; then
+      AC_MSG_ERROR([--enable-coverage requires gcc or clang])
+   fi
+   CFLAGS="$CFLAGS --coverage -O0 -g"
+   OBJCFLAGS="$OBJCFLAGS --coverage -O0 -g"
+   LDFLAGS="$LDFLAGS --coverage"
+fi
+
 dnl Tell dopewars where the high scores, docs and locale files are
 DP_EXPAND_DIR(DPSCOREDIR, '${localstatedir}')
 AC_DEFINE_UNQUOTED(DPSCOREDIR, "$DPSCOREDIR",
@@ -519,6 +533,11 @@ if test "$network" = "yes" ; then
    fi
 else
    echo "Networking support DISABLED; single-player mode only"
+fi
+
+if test "$coverage" = "yes" ; then
+   echo
+   echo "Code coverage instrumentation ENABLED"
 fi
 
 echo
