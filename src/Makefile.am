@@ -20,19 +20,25 @@ CURSESPORTSUBDIR = cursesport
 endif
 
 SUBDIRS = $(GUISUBDIR) $(CURSESSUBDIR) $(GTKPORTSUBDIR) $(CURSESPORTSUBDIR) plugins
-dopewars_LDADD = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @LTLIBINTL@ @WNDRES@ @PLUGOBJS@ @PLUGLIBS@ @GLIB_LIBS@ @LIBCURL@
-dopewars_DEPENDENCIES = @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @WNDRES@ @PLUGOBJS@
+# Everything except the program entry points is also built as a library,
+# so that the test programs in tests/ can link against the game code.
+# The program itself links the objects directly, so that link order
+# between the core code and the client libraries doesn't matter.
+noinst_LIBRARIES = libdopewars.a
+dopewars_LDADD = ${libdopewars_a_OBJECTS} @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @GTK_LIBS@ @LTLIBINTL@ @WNDRES@ @PLUGOBJS@ @PLUGLIBS@ @GLIB_LIBS@ @LIBCURL@
+dopewars_DEPENDENCIES = ${libdopewars_a_OBJECTS} @GUILIB@ @CURSESLIB@ @GTKPORTLIB@ @CURSESPORTLIB@ @WNDRES@ @PLUGOBJS@
 
 bin_PROGRAMS = dopewars
-dopewars_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
+dopewars_SOURCES = main.c winmain.c
+libdopewars_a_SOURCES = admin.c admin.h AIPlayer.c AIPlayer.h util.c util.h \
                    configfile.c configfile.h convert.c convert.h \
                    dopewars.c dopewars.h error.c error.h log.c log.h \
                    message.c message.h network.c network.h nls.h \
                    serverside.c serverside.h sound.c sound.h \
-                   tstring.c tstring.h winmain.c winmain.h mac_helpers.h
+                   tstring.c tstring.h mac_helpers.h
 AM_CPPFLAGS= -I${srcdir} @GLIB_CFLAGS@ @GTK_CFLAGS@ @LIBCURL_CPPFLAGS@
 if APPLE
-dopewars_SOURCES += mac_helpers.m
+libdopewars_a_SOURCES += mac_helpers.m
 MACLDFLAGS = -framework AppKit
 else
 MACLDFLAGS =

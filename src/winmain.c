@@ -42,7 +42,6 @@
 #include "message.h"
 #include "serverside.h"
 #include "sound.h"
-#include "winmain.h"
 
 #ifdef CURSES_CLIENT
 #include "curses_client/curses_client.h"
@@ -133,36 +132,6 @@ static void LogFileEnd(void)
 {
   if (LogFile)
     fclose(LogFile);
-}
-
-gchar *GetBinaryDir(void)
-{
-  gchar *filename = NULL, *lastslash;
-  gint filelen = 80;
-  DWORD retval;
-
-  while (1) {
-    filename = g_realloc(filename, filelen);
-    filename[filelen - 1] = '\0';
-    retval = GetModuleFileName(NULL, filename, filelen);
-
-    if (retval == 0) {
-      g_free(filename);
-      filename = NULL;
-      break;
-    } else if (filename[filelen - 1]) {
-      filelen *= 2;
-    } else
-      break;
-  }
-
-  if (filename) {
-    lastslash = strrchr(filename, '\\');
-    if (lastslash)
-      *lastslash = '\0';
-  }
-
-  return filename;
 }
 
 #ifdef ENABLE_NLS
