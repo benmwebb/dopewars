@@ -61,6 +61,9 @@ static int Width, Depth;
 /* Maximum number of messages to store (for scrollback etc.) */
 const static int MaxMessages = 1000;
 
+/* Maximum number of keys that GetKey() accepts */
+#define MAX_GET_KEY 30
+
 #ifdef NETWORKING
 /* Data waiting to be sent to/read from the metaserver */
 static CurlConnection MetaConn;
@@ -1125,7 +1128,8 @@ void HandleClientMessage(char *Message, Player *Play)
   Player *From, *tmp;
   GSList *list;
   gchar *text;
-  int i;
+  char keys[MAX_GET_KEY + 1];
+  int i, j;
   gboolean Handled;
 
   /* Ignore To: field - all messages will be for Player "Play" */
@@ -1246,9 +1250,17 @@ void HandleClientMessage(char *Message, Player *Play)
   case C_QUESTION:
     pt = Data;
     wrd = GetNextWord(&pt, "");
+    /* The keys that answer the question come from the server; keep only
+     * as many plain ASCII characters as GetKey() can handle */
+    for (i = j = 0; wrd[i] && j < MAX_GET_KEY; i++) {
+      if (g_ascii_isgraph(wrd[i])) {
+        keys[j++] = wrd[i];
+      }
+    }
+    keys[j] = '\0';
     PrintMessage(pt);
     addch(' ');
-    i = GetKey(wrd, FALSE, TRUE, TRUE);
+    i = GetKey(keys, FALSE, TRUE, TRUE);
     wrd = g_strdup_printf("%c", i);
     SendClientMessage(Play, C_NONE, C_ANSWER,
                       From == &Noone ? NULL : From, wrd);
@@ -1609,8 +1621,6 @@ static void addunich(gunichar ch, int attr)
     addch((guchar)ch | attr);
   }
 }
-
-#define MAX_GET_KEY 30
 
 /* 
  * Waits for keyboard input; will only accept a key listed in the
