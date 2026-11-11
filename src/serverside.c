@@ -125,6 +125,11 @@ static FILE *ScoreFP = NULL;
 /* Pointer to the filename of a pid file (if non-NULL) */
 char *PidFile = NULL;
 
+/* Maximum length (in bytes) of a client-supplied player name */
+#define MAX_PLAYER_NAME_LEN 256
+
+static void ScrubPlayerReferences(Player *Play);
+
 static char HelpText[] = {
   /* Help on various general server commands */
   N_("dopewars server version %s commands and settings\n\n"
@@ -335,8 +340,19 @@ void HandleServerMessage(gchar *buf, Player *Play)
     g_warning("Bad message");
     return;
   }
+  if (Play->EventNum == E_FINISH) {
+    return;
+  }
+  if (Network && !IsConnectedPlayer(Play)
+      && Code != C_ABILITIES && Code != C_NAME) {
+    dopelog(2, LF_SERVER, _("Ignoring pre-join command '%c'"), Code);
+    return;
+  }
   switch (Code) {
   case C_MSGTO:
+    if (To == &Noone || !IsConnectedPlayer(To) || IsCop(To)) {
+      break;
+    }
     if (Network) {
       dopelog(3, LF_SERVER, "%s->%s: %s", GetPlayerName(Play),
               GetPlayerName(To), Data);
@@ -348,9 +364,21 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_NAME:
     StripTerminators(Data);
+    if (strlen(Data) > MAX_PLAYER_NAME_LEN) {
+      Data[MAX_PLAYER_NAME_LEN] = '\0';
+    }
+    for (i = 0; Data[i] != '\0'; i++) {
+      if ((guchar)Data[i] < 32 || Data[i] == 127) {
+        Data[i] = '?';
+      }
+    }
+    if (!Data[0]) {
+      SendServerMessage(NULL, C_NONE, C_NEWNAME, Play, NULL);
+      break;
+    }
     pt = GetPlayerByName(Data, FirstServer);
     if (pt && pt != Play) {
-      if (ConnectTimeout) {
+      if (!IsConnectedPlayer(Play) && ConnectTimeout) {
         Play->ConnectTimeout = time(NULL) + (time_t) ConnectTimeout;
       }
       SendServerMessage(NULL, C_NONE, C_NEWNAME, Play, NULL);
@@ -529,7 +557,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_SPYON:
-    if (Play->Cash >= Prices.Spy && Play->Bitches.Carried > 0) {
+    if (To != &Noone && To != Play && IsConnectedPlayer(To) && !IsCop(To)
+        && Play->Cash >= Prices.Spy && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s now spying on %s"), GetPlayerName(Play),
               GetPlayerName(To));
       Play->Cash -= Prices.Spy;
@@ -544,7 +573,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_TIPOFF:
-    if (Play->Cash >= Prices.Tipoff && Play->Bitches.Carried > 0) {
+    if (To != &Noone && To != Play && IsConnectedPlayer(To) && !IsCop(To)
+        && Play->Cash >= Prices.Tipoff && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s tipped off the cops to %s"),
               GetPlayerName(Play), GetPlayerName(To));
       Play->Cash -= Prices.Tipoff;
@@ -576,28 +606,40 @@ void HandleServerMessage(gchar *buf, Player *Play)
   }
 }
 
-/* 
+static void ScrubPlayerReferences(Player *Play)
+{
+  Player *tmp;
+  GSList *list;
+
+  if (!Play)
+    return;
+
+  if (Play->FightArray) {
+    WithdrawFromCombat(Play);
+  }
+  for (list = FirstServer; list; list = g_slist_next(list)) {
+    tmp = (Player *)list->data;
+    if (tmp && tmp != Play) {
+      RemoveAllEntries(&(tmp->TipList), Play);
+      RemoveAllEntries(&(tmp->SpyList), Play);
+      if (tmp->OnBehalfOf == Play)
+        tmp->OnBehalfOf = NULL;
+      if (tmp->Attacking == Play)
+        tmp->Attacking = NULL;
+    }
+  }
+}
+
+/*
  * Notifies all clients that player "Play" has left the game and
  * cleans up after them if necessary.
  */
 void ClientLeftServer(Player *Play)
 {
-  Player *tmp;
-  GSList *list;
-
+  ScrubPlayerReferences(Play);
   if (!IsConnectedPlayer(Play))
     return;
 
-  if (Play->EventNum == E_FIGHT || Play->EventNum == E_FIGHTASK) {
-    WithdrawFromCombat(Play);
-  }
-  for (list = FirstServer; list; list = g_slist_next(list)) {
-    tmp = (Player *)list->data;
-    if (tmp != Play) {
-      RemoveAllEntries(&(tmp->TipList), Play);
-      RemoveAllEntries(&(tmp->SpyList), Play);
-    }
-  }
   BroadcastToClients(C_NONE, C_LEAVE, GetPlayerName(Play), Play, Play);
 }
 
@@ -936,19 +978,22 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
         g_print(_("No users currently logged on!\n"));
     } else if (g_ascii_strncasecmp(string, "push ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
-      if (tmp) {
+      if (tmp && tmp != &Noone && !IsCop(tmp)) {
         g_print(_("Pushing %s\n"), GetPlayerName(tmp));
         SendServerMessage(NULL, C_NONE, C_PUSH, tmp, NULL);
       } else
         g_print(_("No such user!\n"));
     } else if (g_ascii_strncasecmp(string, "kill ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
-      if (tmp) {
+      if (tmp && tmp != &Noone && !IsCop(tmp)) {
         /* The named user has been removed from the server following
            a "kill" command */
         g_print(_("%s killed\n"), GetPlayerName(tmp));
-        BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp,
-                           (Player *)FirstServer->data);
+        ScrubPlayerReferences(tmp);
+        BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp, tmp);
+        BroadcastToClients(C_NONE, C_LEAVE, GetPlayerName(tmp), tmp, tmp);
+        SetPlayerName(tmp, NULL);
+        RegisterWithMetaServer(TRUE, TRUE, TRUE);
         FirstServer = RemovePlayer(tmp, FirstServer);
       } else
         g_print(_("No such user!\n"));
@@ -993,6 +1038,7 @@ void StopServer()
 
 void RemovePlayerFromServer(Player *Play)
 {
+  ScrubPlayerReferences(Play);
   if (!WantQuit && strlen(GetPlayerName(Play)) > 0) {
     dopelog(2, LF_SERVER, _("%s leaves the server!"), GetPlayerName(Play));
     ClientLeftServer(Play);
@@ -2506,15 +2552,11 @@ void AttackPlayer(Player *Play, Player *Attacked)
   g_assert(Play && Attacked);
 
   if (Play->FightArray && Attacked->FightArray) {
-    if (Play->FightArray == Attacked->FightArray) {
-      g_error(_("Players are already in a fight!"));
-    } else {
-      g_error(_("Players are already in separate fights!"));
-    }
+    g_warning(_("Players are already in a fight!"));
     return;
   }
   if (NumGun == 0) {
-    g_error(_("Cannot start fight - no guns to use!"));
+    g_warning(_("Cannot start fight - no guns to use!"));
     return;
   }
 
@@ -3391,10 +3433,16 @@ void HandleAnswer(Player *From, Player *To, char *answer)
         g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
       Defender = From->OnBehalfOf;
       From->OnBehalfOf = NULL;  /* So we don't think it was a tipoff */
-      if (Defender->IsAt == From->IsAt) {
+      if (Defender->IsAt == From->IsAt && !From->FightArray
+          && (!Defender->FightArray || Defender->EventNum == E_NONE)) {
         if (answer[0] == 'A') {
-          From->EventNum = Defender->EventNum = E_NONE;
+          From->EventNum = E_NONE;
+          if (!Defender->FightArray)
+            Defender->EventNum = E_NONE;
           AttackPlayer(From, Defender);
+        } else {
+          From->EventNum++;
+          SendEvent(From);
         }
       } else {
         text = g_strdup_printf(_("Too late - %s has just left!"),
@@ -3753,6 +3801,7 @@ GSList *HandleTimeouts(GSList *First)
                && Play->ConnectTimeout <= timenow) {
       Play->ConnectTimeout = 0;
       dopelog(1, LF_SERVER, _("Player removed due to connect timeout"));
+      ScrubPlayerReferences(Play);
       First = RemovePlayer(Play, First);
     } else if (IsConnectedPlayer(Play) &&
                Play->FightTimeout != 0 && Play->FightTimeout <= timenow) {
