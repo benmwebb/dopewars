@@ -240,3 +240,29 @@ def fake_server():
     yield s
     s.close()
 
+
+@pytest.fixture
+def curses_client(tmp_path):
+    """Factory for curses clients (see cursesclient.py), running in a
+    pseudo-terminal. Call with the server's port (or None), and any
+    CursesClient keyword arguments. Each test must quit its clients
+    itself; a client still running at the end fails the test."""
+    if IS_WINDOWS:
+        pytest.skip("curses tests need Unix pseudo-terminals")
+    pytest.importorskip('pexpect')
+    pytest.importorskip('pyte')
+    from cursesclient import CursesClient
+    clients = []
+
+    def _make(port=None, **kwargs):
+        workdir = tmp_path / ('client%d' % len(clients))
+        workdir.mkdir()
+        c = CursesClient(workdir, port, **kwargs)
+        clients.append(c)
+        return c
+
+    yield _make
+    running = [c for c in clients if c.kill()]
+    if running:
+        pytest.fail("curses client still running at the end of the test; "
+                    "screen:\n%s" % running[0])
