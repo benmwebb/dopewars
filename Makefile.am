@@ -21,3 +21,8 @@ install-data-local:
 
 uninstall-local:
 	/bin/rm -f ${SCORE} ${DESKTOPDIR}/${DESKTOP}
+
+check-e2e: all
+	cd tests && ${MAKE} check-e2e
+
+.PHONY: check-e2e

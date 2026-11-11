@@ -41,3 +41,5 @@ tests/*.trs
 *.gcov
 coverage*.xml
 coverage*/
+__pycache__/
+.pytest_cache/

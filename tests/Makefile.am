@@ -21,3 +21,19 @@ LINK = ${CCLD} ${AM_CFLAGS} ${CFLAGS} ${AM_LDFLAGS} ${LDFLAGS} -o $@
 if APPLE
 AM_LDFLAGS = -framework AppKit
 endif
+
+# End-to-end tests of the server, in e2e/. These need Python 3 and pytest,
+# so aren't run by "make check"; run "make check-e2e" instead. Extra
+# pytest arguments can be given in PYTEST_ARGS.
+PYTEST = python3 -m pytest
+E2E_FILES = e2e/conftest.py e2e/dopeproto.py e2e/pytest.ini \
+            e2e/test_admin.py e2e/test_ai.py e2e/test_hostile.py \
+            e2e/test_players.py e2e/test_trading.py
+EXTRA_DIST = ${E2E_FILES}
+
+check-e2e:
+	cd ${srcdir}/e2e && \
+	  DOPEWARS_BINARY=${abs_top_builddir}/src/dopewars${EXEEXT} \
+	  ${PYTEST} ${PYTEST_ARGS}
+
+.PHONY: check-e2e
