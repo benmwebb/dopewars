@@ -3131,7 +3131,7 @@ int RandomOffer(Player *To)
   if (!Sanitized && (r < 10)) {
     g_string_assign(text, _("You were mugged in the subway!"));
     To->Cash = To->Cash * (price_t)brandom(80, 95) / 100l;
-  } else if (r < 30) {
+  } else if (r < 30 && NumDrug > 0) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind == -1 && amount > To->CoatSize) {
@@ -3161,7 +3161,7 @@ int RandomOffer(Player *To)
     /* Debugging message: we would normally have a random drug-related
        event here, but "Sanitized" mode is turned on */
     dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
-  } else if (r < 50) {
+  } else if (r < 50 && NumDrug > 0) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind != -1) {
@@ -3189,7 +3189,7 @@ int RandomOffer(Player *To)
       SendPlayerData(To);
       SendPrintMessage(NULL, C_NONE, To, text->str);
     }
-  } else if (r < 60
+  } else if (r < 60 && WEED < NumDrug && HASHISH < NumDrug
              && To->Drugs[WEED].Carried + To->Drugs[HASHISH].Carried > 0) {
     ind = (To->Drugs[WEED].Carried >
            To->Drugs[HASHISH].Carried) ? WEED : HASHISH;
