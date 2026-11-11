@@ -25,7 +25,7 @@ jobs:
           name: linux-nonet
           coverage: true
           # No server without networking, so no end-to-end tests
-          e2e: false
+          no_e2e: true
           flags: "--disable-networking --enable-coverage"
         - os: macos-latest
           name: macos
@@ -83,11 +83,11 @@ jobs:
         # Start the end-to-end tests from zero
         find . -name '*.gcda' -delete
     - name: End-to-end tests
-      if: matrix.container == null && matrix.e2e != false
+      if: matrix.container == null && !matrix.no_e2e
       run: |
         make check-e2e PYTEST=pytest PYTEST_ARGS=-v
     - name: End-to-end test coverage
-      if: matrix.coverage && matrix.e2e != false
+      if: matrix.coverage && !matrix.no_e2e
       run: |
         mkdir -p coverage-e2e
         eval "$GCOVR" --cobertura coverage-e2e.xml --html-details coverage-e2e/index.html
@@ -101,7 +101,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
     - name: Upload end-to-end test coverage to Codecov
-      if: matrix.coverage && matrix.e2e != false
+      if: matrix.coverage && !matrix.no_e2e
       uses: codecov/codecov-action@v7
       with:
         files: coverage-e2e.xml
@@ -131,23 +131,23 @@ jobs:
     - uses: actions/checkout@v7
     - uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW64
+        msystem: UCRT64
         update: true
         install: >-
           make
-          mingw-w64-x86_64-autotools
-          mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-pkgconf
-          mingw-w64-x86_64-gettext-tools
-          mingw-w64-x86_64-glib2
-          mingw-w64-x86_64-curl
-          mingw-w64-x86_64-python
-          mingw-w64-x86_64-python-pytest
-          mingw-w64-x86_64-python-pip
-          mingw-w64-x86_64-python-lxml
-          mingw-w64-x86_64-python-jinja
-          mingw-w64-x86_64-python-pygments
-          mingw-w64-x86_64-python-colorlog
+          mingw-w64-ucrt-x86_64-autotools
+          mingw-w64-ucrt-x86_64-gcc
+          mingw-w64-ucrt-x86_64-pkgconf
+          mingw-w64-ucrt-x86_64-gettext-tools
+          mingw-w64-ucrt-x86_64-glib2
+          mingw-w64-ucrt-x86_64-curl
+          mingw-w64-ucrt-x86_64-python
+          mingw-w64-ucrt-x86_64-python-pytest
+          mingw-w64-ucrt-x86_64-python-pip
+          mingw-w64-ucrt-x86_64-python-lxml
+          mingw-w64-ucrt-x86_64-python-jinja
+          mingw-w64-ucrt-x86_64-python-pygments
+          mingw-w64-ucrt-x86_64-python-colorlog
     - name: Install gcovr
       # gcovr isn't packaged for MSYS2; its dependencies are installed above
       run: |
