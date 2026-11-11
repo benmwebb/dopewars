@@ -31,6 +31,8 @@
 
 #ifdef CYGWIN                   /* Code for native Win32 build under Cygwin */
 
+#define NUMATTR 10
+
 int COLS, LINES;
 
 static int Width, Depth;
@@ -38,7 +40,7 @@ static CHAR_INFO RealScreen[25][80], VirtualScreen[25][80];
 static HANDLE hOut, hIn;
 static int CurAttr = 0;
 static int CurX, CurY;
-static WORD Attr[10];
+static WORD Attr[NUMATTR];
 
 void refresh(void)
 {
@@ -86,7 +88,7 @@ SCREEN *newterm(void *a, void *b, void *c)
   CurAttr = 1 << 16;
   CurX = 0;
   CurY = 0;
-  for (i = 0; i < 10; i++)
+  for (i = 0; i < NUMATTR; i++)
     Attr[i] = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN;
   hOut = GetConHandle("CONOUT$");
   hIn = GetConHandle("CONIN$");
@@ -101,7 +103,7 @@ void start_color(void)
 
 void init_pair(int index, WORD fg, WORD bg)
 {
-  if (index >= 0 && index < 10) {
+  if (index >= 0 && index < NUMATTR) {
     Attr[index] = 0;
     switch (fg) {
     case COLOR_MAGENTA:
@@ -170,10 +172,10 @@ void move(int y, int x)
 {
   COORD coord;
 
-  if (x >= Width) {
+  if (x < 0 || x >= Width) {
     x = 0;
   }
-  if (y >= Depth) {
+  if (y < 0 || y >= Depth) {
     y = 0;
   }
   CurX = x;
@@ -209,6 +211,7 @@ void addch(unsigned ch_and_attr)
 
   if (ch > 0xFF || ch <= 0x7F) {
     /* Already Unicode (e.g. box-drawing character), or ASCII */
+    utf8_pos = utf8_width = 0;
     VirtualScreen[CurY][CurX].Char.UnicodeChar = ch;
   } else if (ch & 64) {
     /* UTF-8 encoded; first byte (get the width) */
@@ -218,18 +221,25 @@ void addch(unsigned ch_and_attr)
     return;
   } else {
     /* UTF-8 encoded; intermediate or last byte */
+    if (utf8_width < 2 || utf8_width > 4 || utf8_pos <= 0
+        || utf8_pos >= utf8_width) {
+      utf8_pos = utf8_width = 0;
+      return;
+    }
     utf8_str[utf8_pos++] = ch;
     if (utf8_pos < utf8_width) return;
-    gch = g_utf8_get_char(utf8_str);
+    gch = g_utf8_get_char_validated(utf8_str, utf8_width);
+    utf8_pos = utf8_width = 0;
     /* Windows console can only handle 2-byte Unicode */
-    VirtualScreen[CurY][CurX].Char.UnicodeChar = gch > 0xFFFF ? '?' : gch;
+    VirtualScreen[CurY][CurX].Char.UnicodeChar =
+        (gch == (gunichar)-1 || gch == (gunichar)-2 || gch > 0xFFFF) ? '?' : gch;
   }
 
   attr = ch_and_attr >> 16;
-  if (attr > 0)
-    VirtualScreen[CurY][CurX].Attributes = Attr[attr];
-  else
-    VirtualScreen[CurY][CurX].Attributes = Attr[CurAttr >> 16];
+  if (attr <= 0)
+    attr = CurAttr >> 16;
+  VirtualScreen[CurY][CurX].Attributes =
+      (attr >= 0 && attr < NUMATTR) ? Attr[attr] : Attr[0];
   if (++CurX >= Width) {
     CurX = 0;
     if (++CurY >= Depth)
@@ -254,11 +264,12 @@ void mvaddch(int y, int x, int ch)
  */
 gunichar bgetch(void)
 {
-  DWORD NumRead;
-  WCHAR Buffer[10];
+  DWORD NumRead = 0;
+  WCHAR Buffer[10] = { 0 };
 
   refresh();
-  ReadConsoleW(hIn, Buffer, 1, &NumRead, NULL);
+  if (!ReadConsoleW(hIn, Buffer, 1, &NumRead, NULL) || NumRead == 0)
+    return 0;
   return (int)(Buffer[0]);
 }
 
@@ -288,7 +299,7 @@ gunichar bgetch()
   }
   /* Ignore special keys (e.g arrow keys) so we don't confuse them with
    * Unicode characters */
-  if (c > 255) {
+  if (c < 0 || c > 255) {
     return 0;
   }
   /* In UTF-8 locales we may need to read multiple bytes to assemble a
@@ -296,11 +307,16 @@ gunichar bgetch()
   if (LocaleIsUTF8 && (c & 192) == 192) {   /* First UTF-8 byte */
     char utf8_str[10];
     int i, utf8_width = c & 16 ? 4 : c & 32 ? 3 : 2;
+    gunichar uch;
     utf8_str[0] = (guchar)c;
     for (i = 1; i < utf8_width; ++i) {
-      utf8_str[i] = (guchar)getch();
+      int nextc = getch();
+      if (nextc < 0 || nextc > 255)
+        return 0;
+      utf8_str[i] = (guchar)nextc;
     }
-    return g_utf8_get_char(utf8_str);
+    uch = g_utf8_get_char_validated(utf8_str, utf8_width);
+    return (uch == (gunichar)-1 || uch == (gunichar)-2) ? 0 : uch;
   }
   return c;
 }

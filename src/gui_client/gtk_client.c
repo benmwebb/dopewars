@@ -675,7 +675,7 @@ void PrepareHighScoreDialog(void)
                                GTK_WINDOW(ClientData.window));
 
   HiScoreDialog.vbox = vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
-  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE, 4, FALSE);
+  HiScoreDialog.grid = grid = dp_gtk_grid_new(NUMHISCORE + 1, 4, FALSE);
   gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
   gtk_grid_set_column_spacing(GTK_GRID(grid), 30);
 
@@ -704,7 +704,7 @@ void AddScoreToDialog(char *Data)
 
   cp = Data;
   index = GetNextInt(&cp, 0);
-  if (!cp || strlen(cp) < 3)
+  if (index < 0 || index > NUMHISCORE || !cp || strlen(cp) < 3)
     return;
 
   bold = (*cp == 'B');          /* Is this score "our" score? (Currently

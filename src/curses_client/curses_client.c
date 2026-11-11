@@ -1322,7 +1322,7 @@ void PrintHighScore(char *Data)
 
   cp = Data;
   index = GetNextInt(&cp, 0);
-  if (!cp || strlen(cp) < 2)
+  if (index < 0 || index > NUMHISCORE || !cp || strlen(cp) < 2)
     return;
   move(index + 2, 0);
   attrset(TextAttr);

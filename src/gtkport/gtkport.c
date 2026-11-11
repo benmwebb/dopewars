@@ -2952,6 +2952,16 @@ void gtk_table_attach(GtkTable *table, GtkWidget *widget,
 {
   GtkTableChild *newChild;
 
+  if (!table || !widget || left_attach >= right_attach
+      || top_attach >= bottom_attach || right_attach > 1024
+      || bottom_attach > 1024) {
+    return;
+  }
+  if (bottom_attach > table->nrows || right_attach > table->ncols) {
+    gtk_table_resize(table, MAX(table->nrows, bottom_attach),
+                     MAX(table->ncols, right_attach));
+  }
+
   newChild = g_new0(GtkTableChild, 1);
 
   newChild->widget = widget;
