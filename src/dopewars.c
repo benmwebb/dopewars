@@ -2789,6 +2789,23 @@ void FreeCmdLine(struct CMDLINE *cmdline)
 
 static gchar *priv_hiscore = NULL;
 
+/*
+ * Seeds the random number generator. If the DOPEWARS_SEED environment
+ * variable is set to a number, that is used as the seed, so that a game
+ * can be replayed exactly (e.g. by the test suite); otherwise the current
+ * time is used.
+ */
+void SeedRandom(void)
+{
+  const gchar *seed = g_getenv("DOPEWARS_SEED");
+
+  if (seed && seed[0]) {
+    srand((unsigned)strtoul(seed, NULL, 10));
+  } else {
+    srand((unsigned)time(NULL));
+  }
+}
+
 /* 
  * Does general startup stuff (command line, dropping privileges,
  * and high score init; config files are handled later)
@@ -2811,7 +2828,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
-  srand((unsigned)time(NULL));
+  SeedRandom();
   Noone.Name = g_strdup("Noone");
   Server = Client = Network = FALSE;
 

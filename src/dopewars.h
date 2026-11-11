@@ -430,6 +430,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[]);
 void FreeCmdLine(struct CMDLINE *cmdline);
 void InitConfiguration(struct CMDLINE *cmdline);
 void HandleHelpTexts(gboolean fullhelp);
+void SeedRandom(void);
 struct CMDLINE *GeneralStartup(int argc, char *argv[]);
 void StripTerminators(gchar *str);
 gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
