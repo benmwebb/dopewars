@@ -335,6 +335,10 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf, fd_set *readfds,
 {
   if (!NetBuf || NetBuf->fd <= 0)
     return;
+#ifndef CYGWIN
+  if (NetBuf->fd >= FD_SETSIZE)
+    return;
+#endif
   FD_SET(NetBuf->fd, readfds);
   if (errorfds)
     FD_SET(NetBuf->fd, errorfds);
@@ -675,6 +679,12 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
   *DoneOK = TRUE;
   if (!NetBuf || NetBuf->fd <= 0)
     return DataWaiting;
+#ifndef CYGWIN
+  if (NetBuf->fd >= FD_SETSIZE) {
+    *DoneOK = FALSE;
+    return FALSE;
+  }
+#endif
   DataWaiting = DoNetworkBufferStuff(NetBuf, FD_ISSET(NetBuf->fd, readfds),
                                      FD_ISSET(NetBuf->fd, writefds),
                                      errorfds ? FD_ISSET(NetBuf->fd,

@@ -1011,11 +1011,37 @@ Player *HandleNewConnection(void)
   int ClientSock;
   struct sockaddr_in ClientAddr;
   Player *tmp;
-  cadsize = sizeof(struct sockaddr);
+  GSList *list;
+  int conn_count = 0, max_conns;
+
+  cadsize = sizeof(ClientAddr);
   if ((ClientSock = accept(ListenSock, (struct sockaddr *)&ClientAddr,
                             &cadsize)) == -1) {
-    perror("accept socket");
-    exit(EXIT_FAILURE);
+    if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
+      dopelog(1, LF_SERVER, _("accept() failed: %s"), g_strerror(errno));
+    }
+    return NULL;
+  }
+#ifndef CYGWIN
+  if (ClientSock >= FD_SETSIZE) {
+    dopelog(1, LF_SERVER,
+            _("Dropping connection from %s: descriptor %d >= FD_SETSIZE"),
+            inet_ntoa(ClientAddr.sin_addr), ClientSock);
+    CloseSocket(ClientSock);
+    return NULL;
+  }
+#endif
+  for (list = FirstServer; list; list = g_slist_next(list)) {
+    if (!IsCop((Player *)list->data))
+      conn_count++;
+  }
+  max_conns = MAX(MaxClients * 2 + 16, 64);
+  if (conn_count >= max_conns) {
+    dopelog(1, LF_SERVER,
+            _("Dropping connection from %s: too many open connections (%d)"),
+            inet_ntoa(ClientAddr.sin_addr), conn_count);
+    CloseSocket(ClientSock);
+    return NULL;
   }
   dopelog(2, LF_SERVER, _("got connection from %s"),
           inet_ntoa(ClientAddr.sin_addr));
@@ -1024,6 +1050,8 @@ Player *HandleNewConnection(void)
   FirstServer = AddPlayer(ClientSock, tmp, FirstServer);
   if (ConnectTimeout) {
     tmp->ConnectTimeout = time(NULL) + (time_t) ConnectTimeout;
+  } else {
+    tmp->ConnectTimeout = time(NULL) + 60;
   }
   return tmp;
 }
@@ -1247,11 +1275,17 @@ void ServerLoop(struct CMDLINE *cmdline)
     FD_ZERO(&writefs);
     FD_ZERO(&errorfs);
     curl_multi_fdset(MetaConn.multi, &readfs, &writefs, &errorfs, &topsock);
-    FD_SET(ListenSock, &readfs);
-    FD_SET(ListenSock, &errorfs);
-    topsock = MAX(topsock + 1, ListenSock + 1);
+    if (ListenSock >= 0
 #ifndef CYGWIN
-    if (localsock >= 0) {
+        && ListenSock < FD_SETSIZE
+#endif
+    ) {
+      FD_SET(ListenSock, &readfs);
+      FD_SET(ListenSock, &errorfs);
+      topsock = MAX(topsock + 1, ListenSock + 1);
+    }
+#ifndef CYGWIN
+    if (localsock >= 0 && localsock < FD_SETSIZE) {
       FD_SET(localsock, &readfs);
       topsock = MAX(topsock, localsock + 1);
     }
@@ -1301,25 +1335,34 @@ void ServerLoop(struct CMDLINE *cmdline)
       break;
     }
     FirstServer = HandleTimeouts(FirstServer);
-    if (FD_ISSET(ListenSock, &readfs)) {
+    if (ListenSock >= 0
+#ifndef CYGWIN
+        && ListenSock < FD_SETSIZE
+#endif
+        && FD_ISSET(ListenSock, &readfs)) {
       HandleNewConnection();
     }
 #ifndef CYGWIN
-    if (localsock >= 0 && FD_ISSET(localsock, &readfs)) {
+    if (localsock >= 0 && localsock < FD_SETSIZE
+        && FD_ISSET(localsock, &readfs)) {
       int newlocal;
       NetworkBuffer *netbuf;
 
       newlocal = accept(localsock, NULL, NULL);
-      netbuf = g_new(NetworkBuffer, 1);
+      if (newlocal >= 0 && newlocal < FD_SETSIZE) {
+        netbuf = g_new(NetworkBuffer, 1);
 
-      InitNetworkBuffer(netbuf, '\n', '\r', NULL);
-      BindNetworkBufferToSocket(netbuf, newlocal);
-      localconn = g_slist_append(localconn, netbuf);
-      oldprint = StartServerReply(netbuf);
-      g_print(_("dopewars server version %s ready for admin commands; "
-                "try \"help\" for help"), VERSION);
-      FinishServerReply(oldprint);
-      dopelog(1, LF_SERVER, _("New admin connection"));
+        InitNetworkBuffer(netbuf, '\n', '\r', NULL);
+        BindNetworkBufferToSocket(netbuf, newlocal);
+        localconn = g_slist_append(localconn, netbuf);
+        oldprint = StartServerReply(netbuf);
+        g_print(_("dopewars server version %s ready for admin commands; "
+                  "try \"help\" for help"), VERSION);
+        FinishServerReply(oldprint);
+        dopelog(1, LF_SERVER, _("New admin connection"));
+      } else if (newlocal >= 0) {
+        close(newlocal);
+      }
     }
     list = localconn;
     while (list) {
@@ -1536,7 +1579,8 @@ static gboolean GuiNewConnect(GIOChannel *source, GIOCondition condition,
 
   if (condition & G_IO_IN) {
     Play = HandleNewConnection();
-    SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
+    if (Play)
+      SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
   }
   return TRUE;
 }
