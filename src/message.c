@@ -417,18 +417,27 @@ gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
                                      GError **err)
 {
   char *msg;
+  Converter *metaconv;
 
   g_assert(conn && listpt);
 
+  metaconv = Conv_New();
+  Conv_SetCodeset(metaconv, "UTF-8");
   msg = conn->data;
   /* This should be the first line of the body, the "MetaServer:" line */
   if (msg && strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
+    gchar *clean = Conv_ToInternal(metaconv, &msg[13], -1);
     g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_INTERNAL,
-                _("Internal metaserver error \"%s\""), &msg[13]);
+                _("Internal metaserver error \"%s\""), clean);
+    g_free(clean);
+    Conv_Free(metaconv);
     return FALSE;
   } else if (msg && strncmp(msg, "MetaServer:", 11) != 0) {
+    gchar *clean = Conv_ToInternal(metaconv, msg, -1);
     g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_BAD_REPLY,
-                _("Bad metaserver reply \"%s\""), msg);
+                _("Bad metaserver reply \"%s\""), clean);
+    g_free(clean);
+    Conv_Free(metaconv);
     return FALSE;
   }
 
@@ -447,17 +456,18 @@ gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
     msg = CurlNextLine(conn, upsince);
     if (msg) {
       ServerData *NewServer = g_new0(ServerData, 1);
-      NewServer->Name = g_strdup(name);
+      NewServer->Name = Conv_ToInternal(metaconv, name, -1);
       NewServer->Port = atoi(port);
-      NewServer->Version = g_strdup(version);
+      NewServer->Version = Conv_ToInternal(metaconv, version, -1);
       NewServer->CurPlayers = curplayers[0] ? atoi(curplayers) : -1;
       NewServer->MaxPlayers = atoi(maxplayers);
-      NewServer->Update = g_strdup(update);
-      NewServer->Comment = g_strdup(comment);
-      NewServer->UpSince = g_strdup(upsince);
+      NewServer->Update = Conv_ToInternal(metaconv, update, -1);
+      NewServer->Comment = Conv_ToInternal(metaconv, comment, -1);
+      NewServer->UpSince = Conv_ToInternal(metaconv, upsince, -1);
       *listpt = g_slist_append(*listpt, NewServer);
     }
   }
+  Conv_Free(metaconv);
   if (!*listpt) {
     g_set_error_literal(err, DOPE_META_ERROR, DOPE_META_ERROR_EMPTY,
                         _("No servers listed on metaserver"));
