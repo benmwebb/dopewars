@@ -196,8 +196,10 @@ static void test_random_offer_few_drugs(void)
   play->Drugs[0].Carried = 10;
   play->CoatSize = 100;
 
+  /* Seed once rather than on every call, since with some C libraries
+   * the first random number after seeding barely depends on the seed */
+  srand(12345);
   for (i = 0; i < 500; i++) {
-    srand(i);
     RandomOffer(play);
     g_assert_cmpint(play->Drugs[0].Carried, >=, 0);
   }
