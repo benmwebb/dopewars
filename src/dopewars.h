@@ -183,6 +183,7 @@ extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
 	     *BindAddress, *PlayerName;
 #ifdef CYGWIN
 extern gboolean MinToSysTray;
+extern gchar *appdata_path;
 #else
 extern gboolean Daemonize;
 #endif

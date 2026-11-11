@@ -2356,7 +2356,8 @@ gchar *GetDocIndex(void)
 }
 
 #ifdef CYGWIN
-extern gchar *appdata_path;
+/* Per-user data directory, set by WinMain */
+gchar *appdata_path = NULL;
 #endif
 
 /*

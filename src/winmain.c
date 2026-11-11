@@ -104,8 +104,6 @@ static void WindowPrintEnd()
 
 static FILE *LogFile = NULL;
 
-gchar *appdata_path = NULL;
-
 static void GetAppDataPath()
 {
   appdata_path = g_strdup_printf("%s/dopewars", g_get_user_config_dir());
