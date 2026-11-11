@@ -143,7 +143,7 @@ if test "$CYGWIN" = "yes" ; then
 
    dnl Add support for the Windows multimedia system
    SOUND_LIBS="$SOUND_LIBS -lwinmm"
-   PLUGOBJS="$PLUGOBJS plugins/sound_winmm.o"
+   PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_winmm.o"
    AC_DEFINE(HAVE_WINMM, 1, [Do we have the Windows multimedia system?])
 
    dnl Use graphical server by default
@@ -214,7 +214,7 @@ else
      if test "$ESD" = "yes"; then
        SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
        SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
-       PLUGOBJS="$PLUGOBJS plugins/sound_esd.o"
+       PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_esd.o"
        AC_SUBST(ESD_LIBS)
        AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
      elif test "$USE_ESD" = "yes"; then
@@ -255,7 +255,7 @@ else
              SDL_LIBS="$SDL_LIBS -lSDL_mixer"
            fi
            SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
-           PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
+           PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_sdl.o"
            AC_SUBST(SDL_LIBS)
            AC_DEFINE(HAVE_SDL_MIXER, 1,
                      [Do we have the SDL_mixer sound library?])
@@ -275,7 +275,7 @@ else
    if test "$USE_COCOA" != "no"; then
      AC_PROG_OBJC
      COCOA="yes"
-     PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
+     PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_cocoa.o"
      AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
    else
      dnl Otherwise we get the error
@@ -441,26 +441,26 @@ AC_DEFINE_UNQUOTED(LOCALEDIR, "$LOCALEDIR",
 dnl Add in the required clients
 AM_CONDITIONAL(GUI_CLIENT, test "$GUI_CLIENT" = "yes")
 if test "$GUI_CLIENT" = "yes" ; then
-  GUILIB="gui_client/libguiclient.a"
+  GUILIB="\${top_builddir}/src/gui_client/libguiclient.a"
   AC_SUBST(GUILIB)
 fi
 AM_CONDITIONAL(CURSES_CLIENT, test "$CURSES_CLIENT" = "yes")
 if test "$CURSES_CLIENT" = "yes" ; then
-  CURSESLIB="curses_client/libcursesclient.a"
+  CURSESLIB="\${top_builddir}/src/curses_client/libcursesclient.a"
   AC_SUBST(CURSESLIB)
 fi
 
 dnl Compile in the gtkport stuff for any kind of GUI
 AM_CONDITIONAL(GTKPORT, test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes")
 if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-  GTKPORTLIB="gtkport/libgtkport.a"
+  GTKPORTLIB="\${top_builddir}/src/gtkport/libgtkport.a"
   AC_SUBST(GTKPORTLIB)
 fi
 
 dnl Compile in the cursesport stuff for the curses client only
 AM_CONDITIONAL(CURSESPORT, test "$CURSES_CLIENT" = "yes")
 if test "$CURSES_CLIENT" = "yes" ; then
-  CURSESPORTLIB="cursesport/libcursesport.a"
+  CURSESPORTLIB="\${top_builddir}/src/cursesport/libcursesport.a"
   AC_SUBST(CURSESPORTLIB)
 fi
 
@@ -475,6 +475,7 @@ src/curses_client/Makefile
 src/gtkport/Makefile
 src/cursesport/Makefile
 src/plugins/Makefile
+tests/Makefile
 sounds/Makefile
 sounds/19.5degs/Makefile
 doc/Makefile

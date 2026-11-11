@@ -1,4 +1,4 @@
-SUBDIRS        = src doc po sounds
+SUBDIRS        = src doc po sounds tests
 DESKTOPDIR     = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP        = dopewars.desktop
 SCOREDIR       = ${DESTDIR}${localstatedir}

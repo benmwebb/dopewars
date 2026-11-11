@@ -32,3 +32,12 @@ autom4te.cache
 compile
 doc/dopewars.6
 po/POTFILES
+tests/test-message
+tests/test-serverside
+tests/*.log
+tests/*.trs
+*.gcda
+*.gcno
+*.gcov
+coverage*.xml
+coverage*/
