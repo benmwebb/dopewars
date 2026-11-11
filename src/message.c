@@ -1011,7 +1011,7 @@ gboolean HandleGenericClientMessage(Player *From, AICode AI, MsgCode Code,
     CombineAbilities(To);
     break;
   case C_LEAVE:
-    if (From != &Noone)
+    if (From != &Noone && From != To)
       FirstClient = RemovePlayer(From, FirstClient);
     break;
   case C_TRADE:

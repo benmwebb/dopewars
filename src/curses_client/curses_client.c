@@ -1198,7 +1198,7 @@ void HandleClientMessage(char *Message, Player *Play)
     SoundPlay(Sounds.JoinGame);
     break;
   case C_LEAVE:
-    if (From != &Noone) {
+    if (From != &Noone && From != Play) {
       text = g_strdup_printf(_("%s has left the game."), Data);
       display_message(text);
       g_free(text);
@@ -1207,12 +1207,14 @@ void HandleClientMessage(char *Message, Player *Play)
     break;
   case C_RENAME:
     /* Displayed when a player changes his/her name */
-    text = g_strdup_printf(_("%s will now be known as %s."),
-                           GetPlayerName(From), Data);
-    SetPlayerName(From, Data);
-    mvaddstr(get_prompt_line(), 0, text);
-    g_free(text);
-    nice_wait();
+    if (From != &Noone) {
+      text = g_strdup_printf(_("%s will now be known as %s."),
+                             GetPlayerName(From), Data);
+      SetPlayerName(From, Data);
+      mvaddstr(get_prompt_line(), 0, text);
+      g_free(text);
+      nice_wait();
+    }
     break;
   case C_PRINTMESSAGE:
     PrintMessage(Data);

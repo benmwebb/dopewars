@@ -74,7 +74,7 @@ struct ClientDataStruct {
   DPGtkItemFactory *Menu;
   struct StatusWidgets Status;
   struct InventoryWidgets Drug, Gun, InvenDrug, InvenGun;
-  GtkWidget *JetButton, *vbox, *PlayerList, *TalkList;
+  GtkWidget *JetButton, *vbox, *PlayerList, *TalkList, *ErrandList;
   GtkWidget *NewGameBox;
   guint JetAccel;
   struct CMDLINE *cmdline;
@@ -94,6 +94,7 @@ static gboolean InGame = FALSE;
 
 static GtkWidget *FightDialog = NULL, *SpyReportsDialog;
 static gboolean IsShowingPlayerList = FALSE, IsShowingTalkList = FALSE;
+static gboolean IsShowingErrandList = FALSE;
 static gboolean IsShowingInventory = FALSE, IsShowingGunShop = FALSE;
 static gboolean IsShowingDealDrugs = FALSE;
 
@@ -566,7 +567,7 @@ void HandleClientMessage(char *pt, Player *Play)
     UpdateMenus();
     break;
   case C_LEAVE:
-    if (From != &Noone) {
+    if (From != &Noone && From != Play) {
       text = g_strdup_printf(_("%s has left the game."), Data);
       PrintMessage(text, "leave");
       g_free(text);
@@ -648,6 +649,15 @@ struct HiScoreDiaStruct {
 };
 static struct HiScoreDiaStruct HiScoreDialog = { NULL, NULL, NULL, NULL };
 
+static void DestroyHighScoreDialog(GtkWidget *widget, gpointer data)
+{
+  if (HiScoreDialog.dialog == widget) {
+    HiScoreDialog.dialog = NULL;
+    HiScoreDialog.vbox = NULL;
+    HiScoreDialog.grid = NULL;
+  }
+}
+
 /* 
  * Creates an empty dialog to display high scores.
  */
@@ -660,6 +670,8 @@ void PrepareHighScoreDialog(void)
     return;
 
   HiScoreDialog.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  g_signal_connect(G_OBJECT(dialog), "destroy",
+                   G_CALLBACK(DestroyHighScoreDialog), NULL);
   HiScoreDialog.accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), HiScoreDialog.accel_group);
 
@@ -1920,7 +1932,9 @@ static void QuestionCallback(GtkWidget *widget, gpointer data)
 
   text[0] = (gchar)Answer;
   text[1] = '\0';
-  SendClientMessage(ClientData.Play, C_NONE, C_ANSWER, To, text);
+  if (!To || g_slist_find(FirstClient, (gpointer)To)) {
+    SendClientMessage(ClientData.Play, C_NONE, C_ANSWER, To, text);
+  }
 
   gtk_widget_destroy(dialog);
 }
@@ -2840,7 +2854,7 @@ static void TalkSendSelected(GtkTreeModel *model, GtkTreePath *path,
   Player *Play;
   gchar *text = data;
   gtk_tree_model_get(model, iter, PLAYER_COL_PT, &Play, -1);
-  if (Play) {
+  if (Play && g_slist_find(FirstClient, (gpointer)Play)) {
     gchar *msg = g_strdup_printf(
                      "%s->%s: %s", GetPlayerName(ClientData.Play),
                      GetPlayerName(Play), text);
@@ -3025,10 +3039,12 @@ static void ErrandOK(GtkWidget *widget, GtkWidget *clist)
   if (gtk_tree_selection_get_selected(treesel, &model, &iter)) {
     Player *Play;
     gtk_tree_model_get(model, &iter, PLAYER_COL_PT, &Play, -1);
-    if (ErrandType == ET_SPY) {
-      SendClientMessage(ClientData.Play, C_NONE, C_SPYON, Play, NULL);
-    } else {
-      SendClientMessage(ClientData.Play, C_NONE, C_TIPOFF, Play, NULL);
+    if (Play && g_slist_find(FirstClient, (gpointer)Play)) {
+      if (ErrandType == ET_SPY) {
+        SendClientMessage(ClientData.Play, C_NONE, C_SPYON, Play, NULL);
+      } else {
+        SendClientMessage(ClientData.Play, C_NONE, C_TIPOFF, Play, NULL);
+      }
     }
     gtk_widget_destroy(dialog);
   }
@@ -3050,9 +3066,12 @@ void ErrandDialog(gint ErrandType)
   GtkAccelGroup *accel_group;
   gchar *text;
 
+  if (IsShowingErrandList)
+    return;
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
+  SetShowing(dialog, &IsShowingErrandList);
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog), 7);
 
@@ -3103,7 +3122,7 @@ void ErrandDialog(gint ErrandType)
 
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
-  clist = ClientData.PlayerList = CreatePlayerList();
+  clist = ClientData.ErrandList = CreatePlayerList();
   UpdatePlayerList(clist, FALSE);
   gtk_box_pack_start(GTK_BOX(vbox), clist, TRUE, TRUE, 0);
 
@@ -3418,6 +3437,9 @@ void UpdatePlayerLists(void)
   }
   if (IsShowingTalkList) {
     UpdatePlayerList(ClientData.TalkList, FALSE);
+  }
+  if (IsShowingErrandList) {
+    UpdatePlayerList(ClientData.ErrandList, FALSE);
   }
 }
 
