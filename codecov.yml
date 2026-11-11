@@ -1,0 +1,24 @@
+# Codecov settings; see https://docs.codecov.com/docs/codecovyml-reference
+codecov:
+  notify:
+    # Wait for coverage from every CI job (see .github/workflows/build.yml)
+    # before reporting, so that early partial results aren't misleading
+    after_n_builds: 5
+
+coverage:
+  status:
+    project:
+      default:
+        # Report overall coverage, but don't fail on it (yet)
+        informational: true
+    patch:
+      default:
+        # Most new or changed lines should be covered by tests
+        target: 80%
+
+comment:
+  layout: "diff, flags, files"
+
+ignore:
+  - "src/plugins"
+  - "tests"

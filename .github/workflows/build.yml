@@ -8,17 +8,37 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        flags: ["--enable-networking --disable-gtk3 --disable-gtk4",
-                "--enable-networking --enable-gtk3 --disable-gtk4",
-                "--enable-networking --enable-gtk4",
-                "--disable-networking"]
         include:
-        - os: macos-latest
-          flags: "--enable-networking"
         - os: ubuntu-latest
+          name: linux-gtk2
+          coverage: true
+          flags: "--enable-networking --disable-gtk3 --disable-gtk4 --enable-coverage"
+        - os: ubuntu-latest
+          name: linux-gtk3
+          coverage: true
+          flags: "--enable-networking --enable-gtk3 --disable-gtk4 --enable-coverage"
+        - os: ubuntu-latest
+          name: linux-gtk4
+          coverage: true
+          flags: "--enable-networking --enable-gtk4 --enable-coverage"
+        - os: ubuntu-latest
+          name: linux-nonet
+          coverage: true
+          flags: "--disable-networking --enable-coverage"
+        - os: macos-latest
+          name: macos
+          coverage: true
+          flags: "--enable-networking --enable-coverage"
+          gcov: "xcrun llvm-cov gcov"
+        - os: ubuntu-latest
+          name: linux-sanitizers
+          flags: "--enable-networking --enable-gtk4"
+          cflags: "-g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined"
+        - os: ubuntu-latest
+          name: windows-cross
           container: benmwebb/mingw
           flags: "--host=x86_64-w64-mingw32 --enable-nativewin32"
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
 
@@ -28,15 +48,48 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.container == null
       run: |
         sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev libgtk-4-dev
+        pipx install gcovr
     - name: Install dependencies (Mac)
       if: matrix.os == 'macos-latest'
       run: |
         brew install automake
+        pipx install gcovr
     - name: Build
+      env:
+        CFLAGS: ${{ matrix.cflags || '-g -O2' }}
+        LDFLAGS: ${{ matrix.cflags && '-fsanitize=address,undefined' || '' }}
       run: |
         ./autogen.sh ${{ matrix.flags }} && make -j2
     - name: Test
       if: matrix.container == null
+      env:
+        # The tests don't free everything, so ignore leaks
+        ASAN_OPTIONS: detect_leaks=0
+        UBSAN_OPTIONS: print_stacktrace=1
       run: |
         src/dopewars -v
         src/dopewars -h
+        make check || (cat tests/test-suite.log; exit 1)
+    - name: Unit test coverage
+      if: matrix.coverage
+      run: |
+        mkdir -p coverage-unit
+        gcovr --root . ${{ matrix.gcov && format('--gcov-executable "{0}"', matrix.gcov) || '' }} \
+              --exclude tests/ --exclude src/plugins/ \
+              --cobertura coverage-unit.xml \
+              --html-details coverage-unit/index.html --print-summary
+    - name: Upload coverage to Codecov
+      if: matrix.coverage
+      uses: codecov/codecov-action@v7
+      with:
+        files: coverage-unit.xml
+        disable_search: true
+        flags: ${{ matrix.name }},unit
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+    - name: Save coverage report
+      if: matrix.coverage
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-${{ matrix.name }}
+        path: coverage-unit/
