@@ -24,6 +24,8 @@ jobs:
         - os: ubuntu-latest
           name: linux-nonet
           coverage: true
+          # No server without networking, so no end-to-end tests
+          e2e: false
           flags: "--disable-networking --enable-coverage"
         - os: macos-latest
           name: macos
@@ -41,6 +43,11 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
+    env:
+      GCOVR: gcovr --root . ${{ matrix.gcov && format('--gcov-executable "{0}"', matrix.gcov) || '' }} --exclude tests/ --exclude src/plugins/ --print-summary
+      # The tests don't free everything, so ignore leaks
+      ASAN_OPTIONS: detect_leaks=0
+      UBSAN_OPTIONS: print_stacktrace=1
 
     steps:
     - uses: actions/checkout@v7
@@ -49,23 +56,21 @@ jobs:
       run: |
         sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev libgtk-4-dev
         pipx install gcovr
+        pipx install pytest
     - name: Install dependencies (Mac)
       if: matrix.os == 'macos-latest'
       run: |
         brew install automake
         pipx install gcovr
+        pipx install pytest
     - name: Build
       env:
         CFLAGS: ${{ matrix.cflags || '-g -O2' }}
         LDFLAGS: ${{ matrix.cflags && '-fsanitize=address,undefined' || '' }}
       run: |
         ./autogen.sh ${{ matrix.flags }} && make -j2
-    - name: Test
+    - name: Unit tests
       if: matrix.container == null
-      env:
-        # The tests don't free everything, so ignore leaks
-        ASAN_OPTIONS: detect_leaks=0
-        UBSAN_OPTIONS: print_stacktrace=1
       run: |
         src/dopewars -v
         src/dopewars -h
@@ -74,11 +79,19 @@ jobs:
       if: matrix.coverage
       run: |
         mkdir -p coverage-unit
-        gcovr --root . ${{ matrix.gcov && format('--gcov-executable "{0}"', matrix.gcov) || '' }} \
-              --exclude tests/ --exclude src/plugins/ \
-              --cobertura coverage-unit.xml \
-              --html-details coverage-unit/index.html --print-summary
-    - name: Upload coverage to Codecov
+        eval "$GCOVR" --cobertura coverage-unit.xml --html-details coverage-unit/index.html
+        # Start the end-to-end tests from zero
+        find . -name '*.gcda' -delete
+    - name: End-to-end tests
+      if: matrix.container == null && matrix.e2e != false
+      run: |
+        make check-e2e PYTEST=pytest PYTEST_ARGS=-v
+    - name: End-to-end test coverage
+      if: matrix.coverage && matrix.e2e != false
+      run: |
+        mkdir -p coverage-e2e
+        eval "$GCOVR" --cobertura coverage-e2e.xml --html-details coverage-e2e/index.html
+    - name: Upload unit test coverage to Codecov
       if: matrix.coverage
       uses: codecov/codecov-action@v7
       with:
@@ -87,9 +100,94 @@ jobs:
         flags: ${{ matrix.name }},unit
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: false
-    - name: Save coverage report
+    - name: Upload end-to-end test coverage to Codecov
+      if: matrix.coverage && matrix.e2e != false
+      uses: codecov/codecov-action@v7
+      with:
+        files: coverage-e2e.xml
+        disable_search: true
+        flags: ${{ matrix.name }},e2e
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+    - name: Save coverage reports
       if: matrix.coverage
       uses: actions/upload-artifact@v7
       with:
         name: coverage-${{ matrix.name }}
-        path: coverage-unit/
+        path: coverage-*/
+
+  # A native Windows build (unlike the cross-compiled one above), so that
+  # the tests can run
+  windows:
+    name: windows
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      GCOVR: gcovr --root . --exclude tests/ --exclude src/plugins/ --print-summary
+
+    steps:
+    - uses: actions/checkout@v7
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        update: true
+        install: >-
+          make
+          mingw-w64-x86_64-autotools
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-pkgconf
+          mingw-w64-x86_64-gettext-tools
+          mingw-w64-x86_64-glib2
+          mingw-w64-x86_64-curl
+          mingw-w64-x86_64-python
+          mingw-w64-x86_64-python-pytest
+          mingw-w64-x86_64-python-pip
+          mingw-w64-x86_64-python-lxml
+          mingw-w64-x86_64-python-jinja
+          mingw-w64-x86_64-python-pygments
+          mingw-w64-x86_64-python-colorlog
+    - name: Install gcovr
+      # gcovr isn't packaged for MSYS2; its dependencies are installed above
+      run: |
+        python -m pip install --no-deps --break-system-packages gcovr
+    - name: Build
+      run: |
+        ./autogen.sh --enable-nativewin32 --enable-coverage && make -j2
+    - name: Unit tests
+      run: |
+        make check || (cat tests/test-suite.log; exit 1)
+    - name: Unit test coverage
+      run: |
+        mkdir -p coverage-unit
+        eval "$GCOVR" --cobertura coverage-unit.xml --html-details coverage-unit/index.html
+        find . -name '*.gcda' -delete
+    - name: End-to-end tests
+      run: |
+        make check-e2e PYTEST="python -m pytest" PYTEST_ARGS=-v
+    - name: End-to-end test coverage
+      run: |
+        mkdir -p coverage-e2e
+        eval "$GCOVR" --cobertura coverage-e2e.xml --html-details coverage-e2e/index.html
+    - name: Upload unit test coverage to Codecov
+      uses: codecov/codecov-action@v7
+      with:
+        files: coverage-unit.xml
+        disable_search: true
+        flags: windows,unit
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+    - name: Upload end-to-end test coverage to Codecov
+      uses: codecov/codecov-action@v7
+      with:
+        files: coverage-e2e.xml
+        disable_search: true
+        flags: windows,e2e
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+    - name: Save coverage reports
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-windows
+        path: coverage-*/

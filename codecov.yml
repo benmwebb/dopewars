@@ -2,8 +2,9 @@
 codecov:
   notify:
     # Wait for coverage from every CI job (see .github/workflows/build.yml)
-    # before reporting, so that early partial results aren't misleading
-    after_n_builds: 5
+    # before reporting, so that early partial results aren't misleading:
+    # unit test coverage from 6 jobs, and end-to-end from 5
+    after_n_builds: 11
 
 coverage:
   status:
