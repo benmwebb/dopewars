@@ -12,15 +12,15 @@ jobs:
         - os: ubuntu-latest
           name: linux-gtk2
           coverage: true
-          flags: "--enable-networking --disable-gtk3 --disable-gtk4 --enable-coverage"
+          flags: "--enable-networking --disable-gtk3 --disable-gtk4 --enable-coverage --enable-test-hooks"
         - os: ubuntu-latest
           name: linux-gtk3
           coverage: true
-          flags: "--enable-networking --enable-gtk3 --disable-gtk4 --enable-coverage"
+          flags: "--enable-networking --enable-gtk3 --disable-gtk4 --enable-coverage --enable-test-hooks"
         - os: ubuntu-latest
           name: linux-gtk4
           coverage: true
-          flags: "--enable-networking --enable-gtk4 --enable-coverage"
+          flags: "--enable-networking --enable-gtk4 --enable-coverage --enable-test-hooks"
         - os: ubuntu-latest
           name: linux-nonet
           coverage: true
@@ -30,16 +30,16 @@ jobs:
         - os: macos-latest
           name: macos
           coverage: true
-          flags: "--enable-networking --enable-coverage"
+          flags: "--enable-networking --enable-coverage --enable-test-hooks"
           gcov: "xcrun llvm-cov gcov"
         - os: ubuntu-latest
           name: linux-sanitizers
-          flags: "--enable-networking --enable-gtk4"
+          flags: "--enable-networking --enable-gtk4 --enable-test-hooks"
           cflags: "-g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=undefined"
         - os: ubuntu-latest
           name: windows-cross
           container: benmwebb/mingw
-          flags: "--host=x86_64-w64-mingw32 --enable-nativewin32"
+          flags: "--host=x86_64-w64-mingw32 --enable-nativewin32 --enable-test-hooks"
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
@@ -54,14 +54,14 @@ jobs:
     - name: Install dependencies (Linux)
       if: matrix.os == 'ubuntu-latest' && matrix.container == null
       run: |
-        sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev libgtk-4-dev
+        sudo apt-get update -qq && sudo apt-get install -qq automake autoconf gcc libglib2.0-dev libcurl4-openssl-dev libgtk2.0-dev libgtk-3-dev libgtk-4-dev xvfb
         pipx install gcovr
         pipx install pytest
         pipx inject pytest pexpect pyte
     - name: Install dependencies (Mac)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install automake
+        brew install automake gtk4
         pipx install gcovr
         pipx install pytest
         pipx inject pytest pexpect pyte
@@ -87,7 +87,8 @@ jobs:
     - name: End-to-end tests
       if: matrix.container == null && !matrix.no_e2e
       run: |
-        make check-e2e PYTEST=pytest PYTEST_ARGS=-v
+        # The GUI tests need a display; Linux has none, so use Xvfb
+        ${{ matrix.os == 'ubuntu-latest' && 'xvfb-run -a' || '' }} make check-e2e PYTEST=pytest PYTEST_ARGS=-v
     - name: End-to-end test coverage
       if: matrix.coverage && !matrix.no_e2e
       run: |
@@ -156,7 +157,7 @@ jobs:
         python -m pip install --no-deps --break-system-packages gcovr
     - name: Build
       run: |
-        ./autogen.sh --enable-nativewin32 --enable-coverage && make -j2
+        ./autogen.sh --enable-nativewin32 --enable-coverage --enable-test-hooks && make -j2
     - name: Unit tests
       run: |
         make check || (cat tests/test-suite.log; exit 1)

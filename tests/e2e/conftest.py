@@ -266,3 +266,35 @@ def curses_client(tmp_path):
     if running:
         pytest.fail("curses client still running at the end of the test; "
                     "screen:\n%s" % running[0])
+
+
+@pytest.fixture
+def gui_client(tmp_path):
+    """Factory for GUI clients (see guiclient.py), driven through their
+    test hook. Call with the server's port (or None), and any GUIClient
+    keyword arguments. Each test must quit its clients itself; a client
+    still running at the end fails the test."""
+    from guiclient import GUIClient, has_test_hooks
+    if not has_test_hooks():
+        pytest.skip("GUI tests need a build with --enable-test-hooks")
+    if (sys.platform.startswith('linux') and not os.environ.get('DISPLAY')
+            and not os.environ.get('WAYLAND_DISPLAY')):
+        pytest.skip("GUI tests need a display (try xvfb-run)")
+    clients = []
+
+    def _make(port=None, **kwargs):
+        workdir = tmp_path / ('gui%d' % len(clients))
+        workdir.mkdir()
+        c = GUIClient(workdir, port, **kwargs)
+        clients.append(c)
+        return c
+
+    yield _make
+    running = [c for c in clients if c.kill()]
+    if running:
+        pytest.fail("GUI client still running at the end of the test:\n"
+                    + running[0].output)
+    # GTK+ criticals are usually bugs, such as using a destroyed widget
+    for c in clients:
+        if '-CRITICAL **' in c.output:
+            pytest.fail("GUI client logged a critical error:\n" + c.output)
