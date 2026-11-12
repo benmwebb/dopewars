@@ -1,34 +1,123 @@
 """Run a program in a pseudo-terminal and look at its screen, for testing
 the curses client.
 
-The program runs under pexpect, and everything it writes is fed through
-pyte, a terminal emulator, so tests can check the rendered screen rather
-than the raw escape sequences. The terminal is 80x25 with TERM=xterm, in
-the C.UTF-8 locale.
+The program runs in a pseudo-terminal, and everything it writes is fed
+through pyte, a terminal emulator, so tests can check the rendered screen
+rather than the raw escape sequences. The terminal is 80x25.
 
-This needs Unix pseudo-terminals, so isn't available on Windows.
+On Unix, the program runs under pexpect, with TERM=xterm in the C.UTF-8
+locale. On Windows, it runs in a Windows pseudo-console (ConPTY) under
+pywinpty, which turns what it draws on the console into escape sequences.
 """
 
+import queue
+import sys
+import threading
 import time
 
-import pexpect
 import pyte
 
 ROWS, COLS = 25, 80
+IS_WINDOWS = sys.platform == 'win32'
+
+
+class _UnixProcess(object):
+    """A program in a Unix pseudo-terminal"""
+
+    def __init__(self, argv, env, cwd):
+        import pexpect
+        self._timeout = pexpect.TIMEOUT
+        self._eof = pexpect.EOF
+        # A UTF-8 locale, as most users have, so the client's UTF-8 code
+        # paths are tested
+        env = dict(env, TERM='xterm', LINES=str(ROWS), COLUMNS=str(COLS),
+                   LC_ALL='C.UTF-8')
+        self.child = pexpect.spawn(argv[0], argv[1:], env=env, cwd=cwd,
+                                   dimensions=(ROWS, COLS))
+
+    def read(self, timeout):
+        """Output within `timeout` (bytes, maybe empty); EOFError at exit"""
+        try:
+            return self.child.read_nonblocking(65536, timeout)
+        except self._timeout:
+            return b''
+        except self._eof:
+            raise EOFError
+
+    def send(self, keys):
+        self.child.send(keys)
+
+    def exit_status(self):
+        """Wait for the exit status; a program killed by a signal fails"""
+        self.child.close()
+        if self.child.signalstatus is not None:
+            raise AssertionError("program killed by signal %d"
+                                 % self.child.signalstatus)
+        return self.child.exitstatus
+
+    def isalive(self):
+        return self.child.isalive()
+
+    def kill(self):
+        self.child.terminate(force=True)
+
+
+class _WindowsProcess(object):
+    """A program in a Windows pseudo-console"""
+
+    def __init__(self, argv, env, cwd):
+        from winpty import PtyProcess
+        self.proc = PtyProcess.spawn(argv, cwd=cwd, env=env,
+                                     dimensions=(ROWS, COLS))
+        # pywinpty only has blocking reads, so read in another thread
+        self.output = queue.Queue()
+        threading.Thread(target=self._reader, daemon=True).start()
+
+    def _reader(self):
+        while True:
+            try:
+                data = self.proc.read(65536)
+            except EOFError:
+                self.output.put(None)
+                return
+            if data:
+                self.output.put(data)
+
+    def read(self, timeout):
+        try:
+            data = self.output.get(timeout=timeout)
+        except queue.Empty:
+            return ''
+        if data is None:
+            self.output.put(None)    # so later reads see EOF too
+            raise EOFError
+        return data
+
+    def send(self, keys):
+        self.proc.write(keys)
+
+    def exit_status(self):
+        return self.proc.wait()
+
+    def isalive(self):
+        return self.proc.isalive()
+
+    def kill(self):
+        self.proc.terminate(force=True)
 
 
 class Terminal(object):
 
     def __init__(self, argv, env, cwd, timeout=10):
-        # A UTF-8 locale, as most users have, so the client's UTF-8 code
-        # paths are tested
-        env = dict(env, TERM='xterm', LINES=str(ROWS), COLUMNS=str(COLS),
-                   LC_ALL='C.UTF-8')
         self.timeout = timeout
         self.screen = pyte.Screen(COLS, ROWS)
-        self.stream = pyte.ByteStream(self.screen)
-        self.child = pexpect.spawn(argv[0], argv[1:], env=env, cwd=cwd,
-                                   dimensions=(ROWS, COLS))
+        if IS_WINDOWS:
+            # pywinpty gives us text, not bytes
+            self.stream = pyte.Stream(self.screen)
+            self.child = _WindowsProcess(argv, env, cwd)
+        else:
+            self.stream = pyte.ByteStream(self.screen)
+            self.child = _UnixProcess(argv, env, cwd)
         self.exited = False
 
     # Output
@@ -39,10 +128,8 @@ class Terminal(object):
         if self.exited:
             return False
         try:
-            self.stream.feed(self.child.read_nonblocking(65536, timeout))
-        except pexpect.TIMEOUT:
-            pass
-        except pexpect.EOF:
+            self.stream.feed(self.child.read(timeout))
+        except EOFError:
             self.exited = True
             return False
         return True
@@ -110,16 +197,15 @@ class Terminal(object):
             if time.monotonic() > deadline:
                 raise TimeoutError("program did not exit; screen:\n%s"
                                    % self)
-        self.child.close()
-        if self.child.signalstatus is not None:
-            raise AssertionError("program killed by signal %d; screen:\n%s"
-                                 % (self.child.signalstatus, self))
-        return self.child.exitstatus
+        try:
+            return self.child.exit_status()
+        except AssertionError as err:
+            raise AssertionError("%s; screen:\n%s" % (err, self))
 
     def kill(self):
         """Kill the program if it is still running; returns True if it
         was"""
         if self.child.isalive():
-            self.child.terminate(force=True)
+            self.child.kill()
             return True
         return False

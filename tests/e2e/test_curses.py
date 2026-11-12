@@ -42,6 +42,7 @@ def test_connection_refused(curses_client):
     assert c.wait_exit() == 1
 
 
+@pytest.mark.windows
 def test_single_player(curses_client):
     c = curses_client(None, args=['-n'])
     c.start()
@@ -53,6 +54,7 @@ def test_single_player(curses_client):
     c.quit()
 
 
+@pytest.mark.windows
 def test_join(server, curses_client):
     watcher = server.player('Watcher')
     c = curses_client(server.port)

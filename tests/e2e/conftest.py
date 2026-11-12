@@ -242,14 +242,20 @@ def fake_server():
 
 
 @pytest.fixture
-def curses_client(tmp_path):
+def curses_client(request, tmp_path):
     """Factory for curses clients (see cursesclient.py), running in a
     pseudo-terminal. Call with the server's port (or None), and any
     CursesClient keyword arguments. Each test must quit its clients
-    itself; a client still running at the end fails the test."""
+    itself; a client still running at the end fails the test.
+
+    On Windows, only tests marked "windows" run: a smoke test of the
+    native console code, since the game logic is the same as on Unix."""
     if IS_WINDOWS:
-        pytest.skip("curses tests need Unix pseudo-terminals")
-    pytest.importorskip('pexpect')
+        if not request.node.get_closest_marker('windows'):
+            pytest.skip("only the curses smoke tests run on Windows")
+        pytest.importorskip('winpty')
+    else:
+        pytest.importorskip('pexpect')
     pytest.importorskip('pyte')
     from cursesclient import CursesClient
     clients = []
