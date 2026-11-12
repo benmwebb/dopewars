@@ -253,7 +253,6 @@ def curses_client(request, tmp_path):
     if IS_WINDOWS:
         if not request.node.get_closest_marker('windows'):
             pytest.skip("only the curses smoke tests run on Windows")
-        pytest.importorskip('winpty')
     else:
         pytest.importorskip('pexpect')
     pytest.importorskip('pyte')

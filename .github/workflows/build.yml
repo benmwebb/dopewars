@@ -151,12 +151,11 @@ jobs:
           mingw-w64-ucrt-x86_64-python-jinja
           mingw-w64-ucrt-x86_64-python-pygments
           mingw-w64-ucrt-x86_64-python-colorlog
-    - name: Install gcovr, pyte and pywinpty
-      # gcovr and pyte aren't packaged for MSYS2; gcovr's dependencies are
-      # installed above. Without pywinpty, the curses tests are skipped.
+    - name: Install gcovr and pyte
+      # These aren't packaged for MSYS2; gcovr's dependencies are installed
+      # above
       run: |
         python -m pip install --no-deps --break-system-packages gcovr pyte wcwidth
-        pacman -S --noconfirm --needed mingw-w64-ucrt-x86_64-python-pywinpty || echo "::warning::pywinpty not installed, so the curses tests will be skipped"
     - name: Build
       run: |
         ./autogen.sh --enable-nativewin32 --enable-coverage --enable-test-hooks && make -j2

@@ -23,9 +23,9 @@ AM_LDFLAGS = -framework AppKit
 endif
 
 # End-to-end tests of the server and clients, in e2e/. These need Python 3
-# and pytest (plus pexpect - or pywinpty on Windows - and pyte for the
-# curses client tests, which are skipped without them), so aren't run by
-# "make check"; run "make check-e2e" instead. The GUI client tests need a
+# and pytest (plus pyte, and on Unix pexpect, for the curses client tests,
+# which are skipped without them), so aren't run by "make check"; run
+# "make check-e2e" instead. The GUI client tests need a
 # build with --enable-test-hooks, and a display. Extra pytest arguments
 # can be given in PYTEST_ARGS.
 PYTEST = python3 -m pytest
