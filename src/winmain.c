@@ -84,6 +84,21 @@ static void LogMessage(const gchar *log_domain, GLogLevelFlags log_level,
 
 static GString *TextOutput = NULL;
 
+/* Get a console for the text-mode client. We're a GUI program, so don't
+   have one to start with. */
+static void GetConsole(void)
+{
+#ifdef TEST_HOOKS
+  /* Tests run us from a console program in a pseudo-console that they
+     can read, so use that rather than opening a window of our own */
+  if (getenv("DOPEWARS_TEST_CONSOLE")
+      && AttachConsole(ATTACH_PARENT_PROCESS)) {
+    return;
+  }
+#endif
+  AllocConsole();
+}
+
 static void WindowPrintStart()
 {
   TextOutput = g_string_new("");
@@ -344,7 +359,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       switch (cmdline->client) {
       case CLIENT_AUTO:
         if (!GtkLoop(hInstance, hPrevInstance, cmdline, TRUE)) {
-          AllocConsole();
+          GetConsole();
           SetConsoleTitle(_("dopewars"));
           CursesLoop(cmdline);
         }
@@ -353,7 +368,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
         GtkLoop(hInstance, hPrevInstance, cmdline, FALSE);
         break;
       case CLIENT_CURSES:
-        AllocConsole();
+        GetConsole();
         SetConsoleTitle(_("dopewars"));
         CursesLoop(cmdline);
         break;

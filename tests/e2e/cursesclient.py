@@ -10,7 +10,7 @@ leaves it just after whatever is currently waiting for input.
 import os
 import time
 
-from conftest import dopewars_binary, dopewars_env
+from conftest import IS_WINDOWS, dopewars_binary, dopewars_env
 from terminal import Terminal
 
 PRESS_ANY_KEY = 'Press any key...'
@@ -32,8 +32,18 @@ class CursesClient(Terminal):
             argv += ['-o', '127.0.0.1', '-p', str(port)]
         if name:
             argv += ['-P', name]
-        Terminal.__init__(self, argv + list(args), dopewars_env(workdir),
-                          workdir, timeout)
+        argv += list(args)
+        env = dopewars_env(workdir)
+        if IS_WINDOWS:
+            # dopewars is a GUI program, so has no console of its own.
+            # Run it from cmd.exe, and have it use cmd's console (the
+            # pseudo-console) rather than opening a new one. "start /wait"
+            # waits for it, and passes on its exit status.
+            # (Backslashes, so that cmd doesn't take the path for options)
+            argv = (['cmd.exe', '/c', 'start', '/wait', '',
+                     os.path.normpath(argv[0])] + argv[1:])
+            env['DOPEWARS_TEST_CONSOLE'] = '1'
+        Terminal.__init__(self, argv, env, workdir, timeout)
 
     # What is waiting for input
 

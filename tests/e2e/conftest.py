@@ -251,8 +251,12 @@ def curses_client(request, tmp_path):
     On Windows, only tests marked "windows" run: a smoke test of the
     native console code, since the game logic is the same as on Unix."""
     if IS_WINDOWS:
+        from guiclient import has_test_hooks
         if not request.node.get_closest_marker('windows'):
             pytest.skip("only the curses smoke tests run on Windows")
+        if not has_test_hooks():
+            pytest.skip("curses tests on Windows need a build with "
+                        "--enable-test-hooks")
     else:
         pytest.importorskip('pexpect')
     pytest.importorskip('pyte')

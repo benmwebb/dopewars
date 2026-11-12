@@ -34,7 +34,8 @@ E2E_FILES = e2e/conftest.py e2e/cursesclient.py e2e/dopeproto.py \
             e2e/terminal.py e2e/test_admin.py e2e/test_ai.py \
             e2e/test_ai_client.py e2e/test_curses.py \
             e2e/test_curses_fake.py e2e/test_gui.py e2e/test_gui_fake.py \
-            e2e/test_hostile.py e2e/test_players.py e2e/test_trading.py
+            e2e/test_hostile.py e2e/test_players.py e2e/test_terminal.py \
+            e2e/test_trading.py
 EXTRA_DIST = ${E2E_FILES}
 
 check-e2e:
