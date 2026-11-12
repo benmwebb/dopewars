@@ -164,11 +164,36 @@ static void ConnectError(void)
   g_string_free(neterr, TRUE);
 }
 
+/* Remember which tab we chose for the next time we use this dialog. (This
+   can't be done when the dialog is destroyed, since GTK4 destroys the
+   notebook first.) */
+static void RememberNewGameType(void)
+{
+  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
+}
+
+static void DestroyNewGameDia(void)
+{
+  RememberNewGameType();
+  gtk_widget_destroy(stgam.dialog);
+}
+
+#if GTK_MAJOR_VERSION >= 4
+static gboolean DeleteNewGameDia(GtkWidget *widget, gpointer data)
+#else
+static gint DeleteNewGameDia(GtkWidget *widget, GdkEvent *event,
+                             gpointer data)
+#endif
+{
+  RememberNewGameType();
+  return FALSE;
+}
+
 void FinishServerConnect(gboolean ConnectOK)
 {
   if (ConnectOK) {
     Client = Network = TRUE;
-    gtk_widget_destroy(stgam.dialog);
+    DestroyNewGameDia();
     GuiStartGame();
   } else {
     ConnectError();
@@ -381,7 +406,7 @@ static void StartSinglePlayer(GtkWidget *widget, gpointer data)
   if (!GetStartGamePlayerName(&stgam.play->Name))
     return;
   GuiStartGame();
-  gtk_widget_destroy(stgam.dialog);
+  DestroyNewGameDia();
 }
 
 static void CloseNewGameDia(GtkWidget *widget, gpointer data)
@@ -397,9 +422,6 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   }
   ClearServerList(&stgam.NewMetaList);
 #endif
-
-  /* Remember which tab we chose for the next time we use this dialog */
-  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
 #ifdef NETWORKING
@@ -504,6 +526,8 @@ void NewGameDialog(Player *play)
   stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(CloseNewGameDia), NULL);
+  g_signal_connect(G_OBJECT(dialog), DP_DELETE_EVENT,
+                   G_CALLBACK(DeleteNewGameDia), NULL);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(MainWindow));
