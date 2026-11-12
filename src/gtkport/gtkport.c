@@ -2001,13 +2001,28 @@ void gtk_editable_insert_text(GtkEditable *editable, const gchar *new_text,
 
   gtk_editable_sync_text(editable);
 
-  /* Convert Unix-style lone '\n' to Windows-style '\r\n' */
+  /* The text may have changed since the caller got the position */
+  if (*position < 0 || (gsize)*position > editable->text->len) {
+    *position = editable->text->len;
+  }
+
+  /* Convert Unix-style lone '\n' to Windows-style '\r\n', and replace
+   * invalid UTF-8 (which the control can't display) with '?' so that our
+   * copy of the text stays the same as the control's */
   newstr = g_string_new("");
   for (i = 0; i < new_text_length && new_text[i]; i++) {
+    gunichar c = g_utf8_get_char_validated(new_text + i,
+                                           new_text_length - i);
+
+    if (c == (gunichar)-1 || c == (gunichar)-2) {
+      g_string_append_c(newstr, '?');
+      continue;
+    }
     if (new_text[i] == '\n' && (i == 0 || new_text[i - 1] != '\r')) {
       g_string_append_c(newstr, '\r');
     }
-    g_string_append_c(newstr, new_text[i]);
+    g_string_append_unichar(newstr, c);
+    i += g_utf8_skip[(guchar)new_text[i]] - 1;
   }
   g_string_insert(editable->text, *position, newstr->str);
 
@@ -4340,6 +4355,24 @@ gpointer g_object_get_data(GObject *object, const gchar *key)
 {
   return g_datalist_get_data(&object->object_data, key);
 }
+
+void gtk_widget_set_name(GtkWidget *widget, const gchar *name)
+{
+  g_datalist_set_data_full(&G_OBJECT(widget)->object_data, "widget_name",
+                           g_strdup(name), g_free);
+}
+
+const gchar *gtk_widget_get_name(GtkWidget *widget)
+{
+  return g_object_get_data(G_OBJECT(widget), "widget_name");
+}
+
+#ifdef TEST_HOOKS
+GSList *dp_gtk_window_list(void)
+{
+  return WindowList;
+}
+#endif
 
 GtkAccelGroup *gtk_accel_group_new()
 {

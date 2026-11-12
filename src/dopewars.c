@@ -53,15 +53,6 @@
 #include "tstring.h"
 #include "AIPlayer.h"
 #include "util.h"
-#include "winmain.h"
-
-#ifdef CURSES_CLIENT
-#include "curses_client/curses_client.h"
-#endif
-
-#ifdef GUI_CLIENT
-#include "gui_client/gtk_client.h"
-#endif
 
 #ifdef GUI_SERVER
 #include "gtkport/gtkport.h"
@@ -1070,14 +1061,20 @@ price_t strtoprice(char *buf)
     } else if (digit >= '0' && digit <= '9') {
       if (InFrac)
         FracNum--;
-      val *= 10;
-      val += (digit - '0');
+      /* Saturate rather than overflow (prices can come from the network) */
+      if (val > (PRICE_MAX - 9) / 10) {
+        val = PRICE_MAX;
+      } else {
+        val *= 10;
+        val += (digit - '0');
+      }
     } else if (digit == '-')
       minus = TRUE;
   }
 
-  for (i = 0; i < FracNum; i++)
-    val *= 10;
+  for (i = 0; i < FracNum; i++) {
+    val = (val > PRICE_MAX / 10) ? PRICE_MAX : val * 10;
+  }
   if (minus)
     val = -val;
   return val;
@@ -2359,7 +2356,8 @@ gchar *GetDocIndex(void)
 }
 
 #ifdef CYGWIN
-extern gchar *appdata_path;
+/* Per-user data directory, set by WinMain */
+gchar *appdata_path = NULL;
 #endif
 
 /*
@@ -2798,6 +2796,23 @@ void FreeCmdLine(struct CMDLINE *cmdline)
 
 static gchar *priv_hiscore = NULL;
 
+/*
+ * Seeds the random number generator. If the DOPEWARS_SEED environment
+ * variable is set to a number, that is used as the seed, so that a game
+ * can be replayed exactly (e.g. by the test suite); otherwise the current
+ * time is used.
+ */
+void SeedRandom(void)
+{
+  const gchar *seed = g_getenv("DOPEWARS_SEED");
+
+  if (seed && seed[0]) {
+    srand((unsigned)strtoul(seed, NULL, 10));
+  } else {
+    srand((unsigned)time(NULL));
+  }
+}
+
 /* 
  * Does general startup stuff (command line, dropping privileges,
  * and high score init; config files are handled later)
@@ -2820,7 +2835,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
-  srand((unsigned)time(NULL));
+  SeedRandom();
   Noone.Name = g_strdup("Noone");
   Server = Client = Network = FALSE;
 
@@ -2892,157 +2907,3 @@ void StripTerminators(gchar *str)
     }
   }
 }
-
-#ifndef CYGWIN
-
-#if defined(NETWORKING) && !defined(GUI_SERVER)
-static void ServerLogMessage(const gchar *log_domain,
-                             GLogLevelFlags log_level,
-                             const gchar *message, gpointer user_data)
-{
-  GString *text;
-
-  text = GetLogString(log_level, message);
-  if (text) {
-    fprintf(Log.fp ? Log.fp : stdout, "%s\n", text->str);
-    g_string_free(text, TRUE);
-  }
-}
-#endif
-
-#ifndef CURSES_CLIENT
-/*
- * Stub function to report an error if the Curses client is requested and
- * it isn't compiled in.
- */
-void CursesLoop(struct CMDLINE *cmdline)
-{
-  g_print(_("No curses client available - rebuild the binary passing the\n"
-            "--enable-curses-client option to configure, or use a windowed\n"
-            "client (if available) instead!\n"));
-}
-#endif
-
-#ifndef GUI_CLIENT
-/*
- * Stub function to report an error if the GTK+ client is requested and
- * it isn't compiled in.
- */
-#ifdef CYGWIN
-gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 struct CMDLINE *cmdline, gboolean ReturnOnFail)
-#else
-gboolean GtkLoop(int *argc, char **argv[], struct CMDLINE *cmdline,
-                 gboolean ReturnOnFail)
-#endif
-{
-  if (!ReturnOnFail) {
-    g_print(_("No graphical client available - rebuild the binary\n"
-              "passing the --enable-gui-client option to configure, or\n"
-              "use the curses client (if available) instead!\n"));
-  }
-  return FALSE;
-}
-#endif
-
-static void DefaultLogMessage(const gchar *log_domain,
-                              GLogLevelFlags log_level,
-                              const gchar *message, gpointer user_data)
-{
-  GString *text;
-
-  text = GetLogString(log_level, message);
-  if (text) {
-    g_print("%s\n", text->str);
-    g_string_free(text, TRUE);
-  }
-}
-
-/* 
- * Standard program entry - Win32 uses WinMain() instead, in winmain.c
- */
-int main(int argc, char *argv[])
-{
-  struct CMDLINE *cmdline;
-#ifdef ENABLE_NLS
-  const char *charset;
-  setlocale(LC_ALL, "");
-  bindtextdomain(PACKAGE, LOCALEDIR);
-  textdomain(PACKAGE);
-  LocaleIsUTF8 = g_get_charset(&charset);
-#endif
-  WantUTF8Errors(FALSE);
-  g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);
-  cmdline = GeneralStartup(argc, argv);
-  if (cmdline->logfile) {
-    AssignName(&Log.File, cmdline->logfile);
-  }
-  OpenLog();
-  SoundInit();
-  if (cmdline->version || cmdline->help) {
-    HandleHelpTexts(cmdline->help);
-  } else if (cmdline->admin) {
-#ifdef NETWORKING
-    AdminServer(cmdline);
-#else
-    g_print(_("This binary has been compiled without networking "
-              "support, and thus cannot run\nin admin mode. "
-              "Recompile passing --enable-networking to the "
-              "configure script.\n"));
-#endif
-  } else if (cmdline->convert) {
-    ConvertHighScoreFile(cmdline->convertfile);
-  } else {
-    InitNetwork();
-    if (cmdline->server) {
-#ifdef NETWORKING
-#ifdef GUI_SERVER
-      Server = TRUE;
-#if GTK_MAJOR_VERSION >= 4
-      gtk_init();
-#else
-#if GTK_MAJOR_VERSION == 2
-      gtk_set_locale();
-#endif
-      gtk_init(&argc, &argv);
-#endif
-      GuiServerLoop(cmdline, FALSE);
-#else
-      g_log_set_handler(NULL, LogMask(), ServerLogMessage, NULL);
-      ServerLoop(cmdline);
-#endif /* GUI_SERVER */
-#else
-      g_print(_("This binary has been compiled without networking "
-                "support, and thus cannot run\nin server mode. "
-                "Recompile passing --enable-networking to the "
-                "configure script.\n"));
-#endif /* NETWORKING */
-    } else if (cmdline->ai) {
-      AIPlayerLoop(cmdline);
-    } else
-      switch (cmdline->client) {
-      case CLIENT_AUTO:
-        if (!GtkLoop(&argc, &argv, cmdline, TRUE))
-          CursesLoop(cmdline);
-        break;
-      case CLIENT_WINDOW:
-        GtkLoop(&argc, &argv, cmdline, FALSE);
-        break;
-      case CLIENT_CURSES:
-        CursesLoop(cmdline);
-        break;
-      }
-#ifdef NETWORKING
-    StopNetworking();
-#endif
-  }
-  FreeCmdLine(cmdline);
-  CloseLog();
-  CloseHighScoreFile();
-  g_free(PidFile);
-  g_free(Log.File);
-  SoundClose();
-  return 0;
-}
-
-#endif /* CYGWIN */

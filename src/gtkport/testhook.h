@@ -1,6 +1,6 @@
 /************************************************************************
- * winmain.h      Startup code and support for the Win32 platform       *
- * Copyright (C)  1998-2022  Ben Webb                                   *
+ * testhook.h     Let tests drive the GTK+ client                       *
+ * Copyright (C)  1998-2026  Ben Webb                                   *
  *                Email: benwebb@users.sf.net                           *
  *                WWW: https://dopewars.sourceforge.io/                 *
  *                                                                      *
@@ -20,15 +20,20 @@
  *                   MA  02111-1307, USA.                               *
  ************************************************************************/
 
-#ifndef __DP_WINMAIN_H__
-#define __DP_WINMAIN_H__
+#ifndef __TESTHOOK_H__
+#define __TESTHOOK_H__
 
-#ifdef CYGWIN
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#include <glib.h>
+#ifdef TEST_HOOKS
+#include "gtkport.h"
 
-gchar *GetBinaryDir(void);
+/* If the DOPEWARS_TEST_CTL environment variable names a port, connect to
+   it on 127.0.0.1 and take commands from the test listening there. `menu`
+   is the main menu, for the "menu" command. */
+void dp_test_hook_start(DPGtkItemFactory *menu);
+#endif
 
-#endif /* CYGWIN */
-
-#endif /* __DP_WINMAIN_H__ */
+#endif /* __TESTHOOK_H__ */

@@ -29,7 +29,7 @@
 #ifdef CYGWIN
 #include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include "winmain.h"
+#include "util.h"               /* For GetBinaryDir() */
 #else
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/socket.h>         /* For struct sockaddr etc. */

@@ -39,6 +39,7 @@
 #include "tstring.h"
 #include "util.h"
 #include "gtkport/gtkport.h"
+#include "gtkport/testhook.h"
 #include "dopewars-pill.xpm"
 #include "optdialog.h"
 #include "newgamedia.h"
@@ -1812,6 +1813,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   spin_adj = (GtkAdjustment *)gtk_adjustment_new(1.0, 0.0, 2.0,
                                                  1.0, 10.0, 0.0);
   spinner = DealDialog.amount = gtk_spin_button_new(spin_adj, 1.0, 0);
+  gtk_widget_set_name(spinner, "amount");
 #if GTK_MAJOR_VERSION >= 4
   /* GTK4 spin buttons wrap a GtkText, which emits "activate" */
   g_signal_connect(G_OBJECT(gtk_editable_get_delegate(GTK_EDITABLE(spinner))),
@@ -2390,6 +2392,16 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_container_set_border_width(GTK_CONTAINER(frame), 3);
 
   grid = CreateStatusWidgets(&ClientData.Status);
+  /* Widget names are used by tests (see gtkport/testhook.c) */
+  gtk_widget_set_name(ClientData.Status.Location, "location");
+  gtk_widget_set_name(ClientData.Status.Date, "date");
+  gtk_widget_set_name(ClientData.Status.SpaceValue, "space");
+  gtk_widget_set_name(ClientData.Status.CashValue, "cash");
+  gtk_widget_set_name(ClientData.Status.DebtValue, "debt");
+  gtk_widget_set_name(ClientData.Status.BankValue, "bank");
+  gtk_widget_set_name(ClientData.Status.GunsValue, "guns");
+  gtk_widget_set_name(ClientData.Status.BitchesValue, "bitches");
+  gtk_widget_set_name(ClientData.Status.HealthValue, "health");
 
   gtk_container_add(GTK_CONTAINER(frame), grid);
 
@@ -2398,6 +2410,7 @@ gboolean GtkLoop(int *argc, char **argv[],
   vpaned = gtk_paned_new(GTK_ORIENTATION_VERTICAL);
 
   text = ClientData.messages = gtk_scrolled_text_view_new(&hbox);
+  gtk_widget_set_name(text, "messages");
   make_tags(GTK_TEXT_VIEW(text));
   gtk_widget_set_size_request(text, 100, 80);
   gtk_text_view_set_editable(GTK_TEXT_VIEW(text), FALSE);
@@ -2463,6 +2476,10 @@ gboolean GtkLoop(int *argc, char **argv[],
   gtk_widget_realize(window);
 
   SetIcon(window, dopewars_pill_xpm);
+
+#ifdef TEST_HOOKS
+  dp_test_hook_start(ClientData.Menu);
+#endif
 
 #ifdef NETWORKING
   CurlInit(&MetaConn);
@@ -2748,6 +2765,7 @@ void TransferDialog(gboolean Debt)
   }
   label = gtk_label_new(Currency.Symbol);
   entry = gtk_entry_new();
+  gtk_widget_set_name(entry, "amount");
   gtk_editable_set_text(GTK_EDITABLE(entry), "0");
   g_object_set_data(G_OBJECT(dialog), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
@@ -2949,6 +2967,7 @@ void TalkDialog(gboolean TalkToAll)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   entry = TalkData.entry = gtk_entry_new();
+  gtk_widget_set_name(entry, "message");
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(TalkSend), (gpointer)&TalkData);
   gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
@@ -3251,10 +3270,13 @@ void CreateInventory(GtkWidget *hbox, gchar *Objects,
     gtk_box_pack_start(GTK_BOX(hbox2), scrollwin, TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(hbox2), 3);
     gtk_container_add(GTK_CONTAINER(frame[i]), hbox2);
+    /* Widget names are used by tests (see gtkport/testhook.c) */
     if (i == 0) {
       widgets->HereList = tv;
+      gtk_widget_set_name(tv, "here");
     } else {
       widgets->CarriedList = tv;
+      gtk_widget_set_name(tv, "carried");
     }
   }
   if (CreateHere) {
@@ -3348,6 +3370,7 @@ void NewNameDialog(void)
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
 
   entry = gtk_entry_new();
+  gtk_widget_set_name(entry, "name");
   g_object_set_data(G_OBJECT(window), "entry", entry);
   g_signal_connect(G_OBJECT(entry), "activate",
                    G_CALLBACK(NewNameOK), window);

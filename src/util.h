@@ -33,6 +33,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <string.h>
+#include <glib.h>
 
 #define SIGWINCH      0
 #define SIGPIPE       0
@@ -51,6 +52,7 @@ int sigaction(int sig, struct sigaction *sact, char *pt);
 void sigprocmask(int flag, int *mask, char *pt);
 int bselect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfs,
             struct timeval *tm);
+gchar *GetBinaryDir(void);
 #else /* Definitions for Unix build */
 #define bselect select
 #endif /* CYGWIN */

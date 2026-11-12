@@ -475,6 +475,12 @@ GtkWidget *gtk_separator_new(GtkOrientation orientation);
 void g_object_set_data(GObject *object, const gchar *key,
                        gpointer data);
 gpointer g_object_get_data(GObject *object, const gchar *key);
+void gtk_widget_set_name(GtkWidget *widget, const gchar *name);
+const gchar *gtk_widget_get_name(GtkWidget *widget);
+#ifdef TEST_HOOKS
+/* All of our top-level windows, for the test hook */
+GSList *dp_gtk_window_list(void);
+#endif
 GtkAccelGroup *gtk_accel_group_new();
 void gtk_accel_group_destroy(GtkAccelGroup *accel_group);
 gint gtk_accel_group_add(GtkAccelGroup *accel_group,

@@ -189,6 +189,40 @@ void ReleaseLock(FILE * fp)
 {
 }
 
+/*
+ * Returns the directory containing the running executable, or NULL.
+ * The returned string should be g_free'd by the caller.
+ */
+gchar *GetBinaryDir(void)
+{
+  gchar *filename = NULL, *lastslash;
+  gint filelen = 80;
+  DWORD retval;
+
+  while (1) {
+    filename = g_realloc(filename, filelen);
+    filename[filelen - 1] = '\0';
+    retval = GetModuleFileName(NULL, filename, filelen);
+
+    if (retval == 0) {
+      g_free(filename);
+      filename = NULL;
+      break;
+    } else if (filename[filelen - 1]) {
+      filelen *= 2;
+    } else
+      break;
+  }
+
+  if (filename) {
+    lastslash = strrchr(filename, '\\');
+    if (lastslash)
+      *lastslash = '\0';
+  }
+
+  return filename;
+}
+
 #else /* Code for Unix build */
 
 #include <errno.h>

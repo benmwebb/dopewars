@@ -581,6 +581,27 @@ void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
   }
 }
 
+gboolean dp_gtk_item_factory_get_enabled(DPGtkItemFactory *ifactory,
+                                         const gchar *path)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+
+  return child && child->action
+         && g_action_get_enabled(G_ACTION(child->action));
+}
+
+gboolean dp_gtk_item_factory_activate(DPGtkItemFactory *ifactory,
+                                      const gchar *path)
+{
+  DPGtkItemFactoryChild *child = FindChild(ifactory, path);
+
+  if (dp_gtk_item_factory_get_enabled(ifactory, path)) {
+    g_action_activate(G_ACTION(child->action), NULL);
+    return TRUE;
+  }
+  return FALSE;
+}
+
 void dp_gtk_item_factory_set_application(DPGtkItemFactory *ifactory,
                                          GtkApplication *app)
 {
@@ -684,6 +705,41 @@ void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
   if (widget) {
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget), active);
   }
+}
+
+gboolean dp_gtk_item_factory_get_enabled(DPGtkItemFactory *ifactory,
+                                         const gchar *path)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+#ifdef CYGWIN
+  return widget && GTK_WIDGET_SENSITIVE(widget);
+#else
+  return widget && gtk_widget_is_sensitive(widget);
+#endif
+}
+
+gboolean dp_gtk_item_factory_activate(DPGtkItemFactory *ifactory,
+                                      const gchar *path)
+{
+  GtkWidget *widget = dp_gtk_item_factory_get_widget(ifactory, path);
+
+  if (!dp_gtk_item_factory_get_enabled(ifactory, path)) {
+    return FALSE;
+  }
+#ifdef CYGWIN
+  {
+    /* As for a WM_COMMAND from the menu */
+    if (GTK_MENU_ITEM(widget)->check) {
+      gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(widget),
+                                     !GTK_CHECK_MENU_ITEM(widget)->active);
+    }
+    gtk_signal_emit(G_OBJECT(widget), "activate");
+  }
+#else
+  gtk_menu_item_activate(GTK_MENU_ITEM(widget));
+#endif
+  return TRUE;
 }
 
 void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
