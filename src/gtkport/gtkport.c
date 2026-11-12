@@ -4356,6 +4356,24 @@ gpointer g_object_get_data(GObject *object, const gchar *key)
   return g_datalist_get_data(&object->object_data, key);
 }
 
+void gtk_widget_set_name(GtkWidget *widget, const gchar *name)
+{
+  g_datalist_set_data_full(&G_OBJECT(widget)->object_data, "widget_name",
+                           g_strdup(name), g_free);
+}
+
+const gchar *gtk_widget_get_name(GtkWidget *widget)
+{
+  return g_object_get_data(G_OBJECT(widget), "widget_name");
+}
+
+#ifdef TEST_HOOKS
+GSList *dp_gtk_window_list(void)
+{
+  return WindowList;
+}
+#endif
+
 GtkAccelGroup *gtk_accel_group_new()
 {
   GtkAccelGroup *new_accel;

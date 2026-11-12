@@ -431,6 +431,16 @@ if test "$coverage" = "yes" ; then
    LDFLAGS="$LDFLAGS --coverage"
 fi
 
+dnl Optionally let tests drive the GTK+ client (see src/gtkport/testhook.c)
+AC_ARG_ENABLE(test-hooks,
+[  --enable-test-hooks     let tests drive the graphical client, through a
+                          socket named by DOPEWARS_TEST_CTL (do not use
+                          in release builds)],
+[ test_hooks="$enableval" ],[ test_hooks="no" ])
+if test "$test_hooks" = "yes" ; then
+   AC_DEFINE(TEST_HOOKS, 1, [Let tests drive the graphical client?])
+fi
+
 dnl Tell dopewars where the high scores, docs and locale files are
 DP_EXPAND_DIR(DPSCOREDIR, '${localstatedir}')
 AC_DEFINE_UNQUOTED(DPSCOREDIR, "$DPSCOREDIR",
@@ -538,6 +548,11 @@ fi
 if test "$coverage" = "yes" ; then
    echo
    echo "Code coverage instrumentation ENABLED"
+fi
+
+if test "$test_hooks" = "yes" ; then
+   echo
+   echo "Test hooks ENABLED (for testing only; not for release builds)"
 fi
 
 echo

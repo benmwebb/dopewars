@@ -135,4 +135,13 @@ void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
 void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
                                    const gchar *path, gchar *label);
 
+/* TRUE if there is a menu item with the given path, and it is sensitive */
+gboolean dp_gtk_item_factory_get_enabled(DPGtkItemFactory *ifactory,
+                                         const gchar *path);
+/* Activate the menu item with the given path, as if the user had picked
+   it; returns FALSE (and does nothing) if there is no such item, or it
+   is insensitive */
+gboolean dp_gtk_item_factory_activate(DPGtkItemFactory *ifactory,
+                                      const gchar *path);
+
 #endif /* __ITEM_FACTORY_H__ */
