@@ -81,6 +81,31 @@ static void SetStartGameStatus(gchar *msg)
                      msg ? msg : _("Status: Waiting for user input"));
 }
 
+/* Remember which tab we chose for the next time we use this dialog. (This
+   can't be done when the dialog is destroyed, since GTK4 destroys the
+   notebook first.) */
+static void RememberNewGameType(void)
+{
+  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
+}
+
+static void DestroyNewGameDia(void)
+{
+  RememberNewGameType();
+  gtk_widget_destroy(stgam.dialog);
+}
+
+#if GTK_MAJOR_VERSION >= 4
+static gboolean DeleteNewGameDia(GtkWidget *widget, gpointer data)
+#else
+static gint DeleteNewGameDia(GtkWidget *widget, GdkEvent *event,
+                             gpointer data)
+#endif
+{
+  RememberNewGameType();
+  return FALSE;
+}
+
 #ifdef NETWORKING
 
 
@@ -162,31 +187,6 @@ static void ConnectError(void)
   SetStartGameStatus(text);
   g_free(text);
   g_string_free(neterr, TRUE);
-}
-
-/* Remember which tab we chose for the next time we use this dialog. (This
-   can't be done when the dialog is destroyed, since GTK4 destroys the
-   notebook first.) */
-static void RememberNewGameType(void)
-{
-  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
-}
-
-static void DestroyNewGameDia(void)
-{
-  RememberNewGameType();
-  gtk_widget_destroy(stgam.dialog);
-}
-
-#if GTK_MAJOR_VERSION >= 4
-static gboolean DeleteNewGameDia(GtkWidget *widget, gpointer data)
-#else
-static gint DeleteNewGameDia(GtkWidget *widget, GdkEvent *event,
-                             gpointer data)
-#endif
-{
-  RememberNewGameType();
-  return FALSE;
 }
 
 void FinishServerConnect(gboolean ConnectOK)
