@@ -683,12 +683,26 @@ static void dump_widget(GtkWidget *widget, gpointer data)
 #ifdef CYGWIN
 /* Native message boxes, which aren't GTK+ widgets */
 
+/* TRUE if hWnd is one of our own (GTK+ emulation) windows */
+static gboolean is_gtk_window(HWND hWnd)
+{
+  GSList *list;
+
+  for (list = dp_gtk_window_list(); list; list = g_slist_next(list)) {
+    if (GTK_WIDGET(list->data)->hWnd == hWnd) {
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
 static BOOL CALLBACK add_message_box(HWND hWnd, LPARAM lParam)
 {
   GSList **boxes = (GSList **)lParam;
   WCHAR class_name[16];
 
-  if (IsWindowVisible(hWnd)
+  /* Our dialogs use the same window class as message boxes */
+  if (IsWindowVisible(hWnd) && !is_gtk_window(hWnd)
       && GetClassNameW(hWnd, class_name, G_N_ELEMENTS(class_name))
       && wcscmp(class_name, L"#32770") == 0) {
     *boxes = g_slist_append(*boxes, hWnd);

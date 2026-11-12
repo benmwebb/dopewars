@@ -2,6 +2,8 @@
 guiclient.py), playing single-player and against a real server. Needs a
 build with --enable-test-hooks, and a display."""
 
+import threading
+
 from conftest import free_port
 from dopeproto import *
 
@@ -64,7 +66,9 @@ def test_start_and_quit(gui_client):
 def test_connection_refused(gui_client):
     c = gui_client(free_port())    # nothing is listening
     connect(c)
-    c.wait_for('Status: Could not connect (Connection refused)')
+    # (The reason varies: "Connection refused" on macOS, but Linux only
+    # sees that the connection was closed)
+    c.wait_for('Status: Could not connect (')
     c.close('New Game')
     c.wait_for(lambda s: s.titles == ['dopewars'])
     c.quit()
@@ -169,7 +173,22 @@ def test_server_terminates(make_server, gui_client):
     c = gui_client(server.port)
     connect(c)
     c.wait_for(in_game)
-    server.stop()
+    # The server waits for the client to leave, which it only does once
+    # the user has seen the news (in a modal message box on Windows), so
+    # stop the server in the background
+    errors = []
+
+    def stop():
+        try:
+            server.stop()
+        except Exception as err:
+            errors.append(err)
+    stopping = threading.Thread(target=stop)
+    stopping.start()
     # The game carries on in single-player mode
     c.dismiss_until('The server has terminated')
+    c.dismiss_until(lambda s: s.titles == ['dopewars'])
+    stopping.join()
+    if errors:
+        raise errors[0]
     c.quit()
