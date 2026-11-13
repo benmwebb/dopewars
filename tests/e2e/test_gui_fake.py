@@ -68,6 +68,23 @@ def test_question(fake_server, client):
     end_game(fake_server, client)
 
 
+def test_killed_in_fight(fake_server, client):
+    """Dying in a fight shows the high scores over the Fight dialog;
+    closing them must leave the main window usable (issue #68: the
+    Win32 client left it disabled)"""
+    fight = 'Officer Hardass^^100^5^deputy^0^0^%s^%s'
+    fake_server.send(C_FIGHTPRINT, fight % ('A001', 'Hardass arrives'))
+    client.wait_for_window('Fight')
+    fake_server.send(C_FIGHTPRINT, fight % ('H001', "You've been killed"))
+    fake_server.end_game()
+    client.wait_for_window('High Scores')
+    client.click('High Scores|Close')
+    screen = client.wait_for(lambda s: s.titles == ['dopewars']
+                             and s.contains('New Game...'))
+    assert not screen.window('dopewars').get('insensitive')
+    client.quit()
+
+
 def test_messages(fake_server, client):
     fake_server.send(C_JOIN, 'Bob^2')
     client.wait_for('Bob joins the game!')

@@ -2228,9 +2228,13 @@ static void EnableParent(GtkWindow *window)
 
     ourhWnd = GTK_WIDGET(window)->hWnd;
     parenthWnd = parent->hWnd;
+    /* Windows that are being destroyed have no hWnd, but stay in WindowList
+       until their "destroy" handlers have run; those handlers may close
+       other modal windows (e.g. the high score dialog ends the game, and
+       closes the fight dialog), so ignore them here */
     for (list = WindowList; list; list = g_slist_next(list)) {
       listwin = GTK_WINDOW(list->data);
-      if (listwin != window && listwin->modal
+      if (listwin != window && listwin->modal && GTK_WIDGET(listwin)->hWnd
           && gtk_widget_get_visible(GTK_WIDGET(listwin))
           && GTK_WIDGET(listwin)->parent == parent)
         return;
