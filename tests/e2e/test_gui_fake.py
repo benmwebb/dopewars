@@ -94,14 +94,68 @@ def test_dialog_only_once(fake_server, client, code, title, close):
     end_game(fake_server, client)
 
 
+FIGHT = 'Officer Hardass^^100^5^deputy^0^0^%s^%s'
+
+
+def open_jet_in_fight(fake_server, client):
+    """Open the Jet dialog that Run gives where you can't run"""
+    fake_server.send(C_FIGHTPRINT, FIGHT % ('A001', 'Hardass arrives'))
+    client.wait_for_window('Fight')
+    client.click('Fight|Run')
+    return 'Jet to location'
+
+
+def open_question(fake_server, client):
+    fake_server.send(C_QUESTION, 'YN^Do you like tests?')
+    return 'Question'
+
+
+def open_buy(fake_server, client):
+    client.select('here', 'Fakeium')
+    client.click('Buy ->')
+    return 'Buy'
+
+
+def open_bank(fake_server, client):
+    fake_server.send(C_BANK)
+    return 'The Fake Bank'
+
+
+def open_gun_shop(fake_server, client):
+    fake_server.send(C_GUNSHOP)
+    return 'Fake Guns'
+
+
+def open_inventory(fake_server, client):
+    client.menu('List/Inventory...')
+    return 'Inventory'
+
+
+@pytest.mark.parametrize('opener', [
+    open_jet_in_fight, open_question, open_buy, open_bank, open_gun_shop,
+    open_inventory], ids=lambda f: f.__name__[5:])
+def test_end_game_closes_dialogs(fake_server, client, opener):
+    """Dialogs from a game are closed when it ends, without telling the
+    server anything"""
+    title = opener(fake_server, client)
+    client.wait_for_window(title)
+    fake_server.end_game()
+    client.wait_for_window('High Scores')
+    client.click('High Scores|Close')
+    client.wait_for(lambda s: s.titles == ['dopewars']
+                    and s.contains('New Game...'))
+    fake_server.expect_closed()
+    assert C_DONE not in [m.code for m in fake_server.received]
+    client.quit()
+
+
 def test_killed_in_fight(fake_server, client):
     """Dying in a fight shows the high scores over the Fight dialog;
     closing them must leave the main window usable (issue #68: the
     Win32 client left it disabled)"""
-    fight = 'Officer Hardass^^100^5^deputy^0^0^%s^%s'
-    fake_server.send(C_FIGHTPRINT, fight % ('A001', 'Hardass arrives'))
+    fake_server.send(C_FIGHTPRINT, FIGHT % ('A001', 'Hardass arrives'))
     client.wait_for_window('Fight')
-    fake_server.send(C_FIGHTPRINT, fight % ('H001', "You've been killed"))
+    fake_server.send(C_FIGHTPRINT, FIGHT % ('H001', "You've been killed"))
     fake_server.end_game()
     client.wait_for_window('High Scores')
     client.click('High Scores|Close')

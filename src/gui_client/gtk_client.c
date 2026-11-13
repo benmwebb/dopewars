@@ -152,6 +152,7 @@ static void ErrandDialog(gint ErrandType);
 static void SackBitch(GtkWidget *widget, gpointer data);
 static void DestroyShowing(GtkWidget *widget, gpointer data);
 static void SetShowing(GtkWidget *window, gboolean *showing);
+static void AddGameDialog(GtkWidget *dialog);
 #if GTK_MAJOR_VERSION >= 4
 static gboolean DisallowDelete(GtkWidget *widget, gpointer data);
 #else
@@ -369,6 +370,7 @@ void ListInventory(GtkWidget *widget, gpointer data)
   if (IsShowingInventory)
     return;
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(window);
   gtk_window_set_default_size(GTK_WINDOW(window), 550, 120);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
@@ -1513,6 +1515,7 @@ void Jet(GtkWidget *parent)
   accel_group = gtk_accel_group_new();
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   /* Title of 'Jet' dialog */
   gtk_window_set_title(GTK_WINDOW(dialog), _("Jet to location"));
   my_set_dialog_position(GTK_WINDOW(dialog));
@@ -1750,6 +1753,7 @@ void DealDrugs(GtkWidget *widget, gpointer data)
   accel_group = gtk_accel_group_new();
 
   dialog = DealDialog.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   gtk_window_set_title(GTK_WINDOW(dialog), Action);
   my_set_dialog_position(GTK_WINDOW(dialog));
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
@@ -1977,6 +1981,7 @@ void QuestionDialog(char *Data, Player *From)
   LabelText = split[1];
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   accel_group = gtk_accel_group_new();
   g_signal_connect(G_OBJECT(dialog), DP_DELETE_EVENT,
                    G_CALLBACK(DisallowDelete), NULL);
@@ -2061,8 +2066,44 @@ void GuiStartGame(void)
   SoundPlay(Sounds.StartGame);
 }
 
+/* Dialogs that belong to the current game (see AddGameDialog) */
+static GSList *GameDialogs = NULL;
+
+static void ForgetGameDialog(GtkWidget *widget, gpointer data)
+{
+  GameDialogs = g_slist_remove(GameDialogs, widget);
+}
+
+/* 
+ * Notes that "dialog" belongs to the current game, so that EndGame()
+ * closes it if it is still open when the game ends.
+ */
+void AddGameDialog(GtkWidget *dialog)
+{
+  GameDialogs = g_slist_prepend(GameDialogs, dialog);
+  g_signal_connect(G_OBJECT(dialog), "destroy",
+                   G_CALLBACK(ForgetGameDialog), NULL);
+}
+
+static void CloseGameDialogs(void)
+{
+  GtkWidget *dialog;
+
+  /* Newest first, so that e.g. a Jet dialog goes before the Fight dialog
+     it belongs to */
+  while (GameDialogs) {
+    dialog = GTK_WIDGET(GameDialogs->data);
+    GameDialogs = g_slist_remove(GameDialogs, dialog);
+    gtk_widget_destroy(dialog);
+  }
+}
+
 void EndGame(void)
 {
+  /* Set this first, so that closing dialogs doesn't send anything to the
+     server */
+  InGame = FALSE;
+  CloseGameDialogs();
   DisplayFightMessage(NULL);
   gtk_widget_hide(ClientData.vbox);
   gtk_widget_show_all(ClientData.NewGameBox);
@@ -2071,7 +2112,6 @@ void EndGame(void)
   UpdatePlayerLists();
   CleanUpServer();
   RestoreConfig();
-  InGame = FALSE;
   UpdateMenus();
   SoundPlay(Sounds.EndGame);
 }
@@ -2642,7 +2682,9 @@ void display_intro(GtkWidget *widget, gpointer data)
 
 static void SendDoneMessage(GtkWidget *widget, gpointer data)
 {
-  SendClientMessage(ClientData.Play, C_NONE, C_DONE, NULL, NULL);
+  if (InGame) {
+    SendClientMessage(ClientData.Play, C_NONE, C_DONE, NULL, NULL);
+  }
 }
 
 static void TransferPayAll(GtkWidget *widget, GtkWidget *dialog)
@@ -2715,6 +2757,7 @@ void TransferDialog(gboolean Debt)
   text = g_string_new("");
 
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
@@ -2832,6 +2875,7 @@ void ListPlayers(GtkWidget *widget, gpointer data)
   if (IsShowingPlayerList)
     return;
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
@@ -2943,6 +2987,7 @@ void TalkDialog(gboolean TalkToAll)
   if (IsShowingTalkList)
     return;
   dialog = TalkData.dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
@@ -3101,6 +3146,7 @@ void ErrandDialog(gint ErrandType)
   if (IsShowingErrandList)
     return;
   dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(dialog);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
   SetShowing(dialog, &IsShowingErrandList);
@@ -3361,6 +3407,7 @@ void NewNameDialog(void)
   GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(window);
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
 
@@ -3422,6 +3469,7 @@ void GunShopDialog(void)
   gchar *text;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(window);
   gtk_window_set_default_size(GTK_WINDOW(window), 600, 190);
   /* Clear IsShowingGunShop before telling the server we're done (see
      TransferDialog) */
@@ -3497,6 +3545,7 @@ static void CreateSpyReports(void)
   GtkAccelGroup *accel_group;
 
   SpyReportsDialog = window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  AddGameDialog(window);
   accel_group = gtk_accel_group_new();
   g_object_set_data(G_OBJECT(window), "accel_group", accel_group);
   gtk_window_add_accel_group(GTK_WINDOW(window), accel_group);
