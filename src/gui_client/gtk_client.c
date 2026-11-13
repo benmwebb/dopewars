@@ -98,6 +98,7 @@ static gboolean IsShowingPlayerList = FALSE, IsShowingTalkList = FALSE;
 static gboolean IsShowingErrandList = FALSE;
 static gboolean IsShowingInventory = FALSE, IsShowingGunShop = FALSE;
 static gboolean IsShowingDealDrugs = FALSE, IsShowingBank = FALSE;
+static gboolean IsShowingLoanShark = FALSE;
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -538,16 +539,21 @@ void HandleClientMessage(char *pt, Player *Play)
     NewNameDialog();
     break;
   case C_BANK:
-    /* Don't let the server open a second bank dialog over the first */
+    /* Don't let the server open a second bank, loan shark or gun shop
+       dialog over the first */
     if (!IsShowingBank) {
       TransferDialog(FALSE);
     }
     break;
   case C_LOANSHARK:
-    TransferDialog(TRUE);
+    if (!IsShowingLoanShark) {
+      TransferDialog(TRUE);
+    }
     break;
   case C_GUNSHOP:
-    GunShopDialog();
+    if (!IsShowingGunShop) {
+      GunShopDialog();
+    }
     break;
   case C_MSG:
     text = g_strdup_printf("%s: %s", GetPlayerName(From), Data);
@@ -2712,12 +2718,10 @@ void TransferDialog(gboolean Debt)
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
-  /* Clear IsShowingBank before telling the server we're done, in case it
-     replies (in single-player mode, straight away) with another bank
-     message */
-  if (!Debt) {
-    SetShowing(dialog, &IsShowingBank);
-  }
+  /* Clear IsShowingBank/IsShowingLoanShark before telling the server
+     we're done, in case it replies (in single-player mode, straight away)
+     with another bank or loan shark message */
+  SetShowing(dialog, Debt ? &IsShowingLoanShark : &IsShowingBank);
   g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(SendDoneMessage), NULL);
   if (Debt) {
@@ -3419,6 +3423,9 @@ void GunShopDialog(void)
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(window), 600, 190);
+  /* Clear IsShowingGunShop before telling the server we're done (see
+     TransferDialog) */
+  SetShowing(window, &IsShowingGunShop);
   g_signal_connect(G_OBJECT(window), "destroy",
                    G_CALLBACK(SendDoneMessage), NULL);
   accel_group = gtk_accel_group_new();
@@ -3435,7 +3442,6 @@ void GunShopDialog(void)
   gtk_window_set_transient_for(GTK_WINDOW(window),
                                GTK_WINDOW(ClientData.window));
   gtk_container_set_border_width(GTK_CONTAINER(window), 7);
-  SetShowing(window, &IsShowingGunShop);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
 

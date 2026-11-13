@@ -68,22 +68,28 @@ def test_question(fake_server, client):
     end_game(fake_server, client)
 
 
-def test_bank_only_once(fake_server, client):
-    """A second bank message is ignored while the bank dialog is open"""
-    fake_server.send(C_BANK)
-    client.wait_for_window('The Fake Bank')
-    fake_server.send(C_BANK)
+@pytest.mark.parametrize('code,title,close', [
+    (C_BANK, 'The Fake Bank', 'Cancel'),
+    (C_LOANSHARK, 'The Fake Shark', 'Cancel'),
+    (C_GUNSHOP, 'Fake Guns', 'Close'),
+])
+def test_dialog_only_once(fake_server, client, code, title, close):
+    """A second bank, loan shark or gun shop message is ignored while
+    that dialog is open"""
+    fake_server.send(code)
+    client.wait_for_window(title)
+    fake_server.send(code)
     # Messages are handled in order, so once this is shown the second
-    # bank message has been too
-    fake_server.print_message('After the bank')
-    screen = client.wait_for('After the bank')
-    assert screen.titles.count('The Fake Bank') == 1
-    client.click('The Fake Bank|Cancel')
+    # message has been too
+    fake_server.print_message('After the second message')
+    screen = client.wait_for('After the second message')
+    assert screen.titles.count(title) == 1
+    client.click(title + '|' + close)
     fake_server.wait_for(C_DONE)
-    # The bank can be visited again once the dialog is closed
-    fake_server.send(C_BANK)
-    client.wait_for_window('The Fake Bank')
-    client.click('The Fake Bank|Cancel')
+    # The dialog can be opened again once it is closed
+    fake_server.send(code)
+    client.wait_for_window(title)
+    client.click(title + '|' + close)
     fake_server.wait_for(C_DONE)
     end_game(fake_server, client)
 
