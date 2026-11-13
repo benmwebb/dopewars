@@ -68,6 +68,26 @@ def test_question(fake_server, client):
     end_game(fake_server, client)
 
 
+def test_bank_only_once(fake_server, client):
+    """A second bank message is ignored while the bank dialog is open"""
+    fake_server.send(C_BANK)
+    client.wait_for_window('The Fake Bank')
+    fake_server.send(C_BANK)
+    # Messages are handled in order, so once this is shown the second
+    # bank message has been too
+    fake_server.print_message('After the bank')
+    screen = client.wait_for('After the bank')
+    assert screen.titles.count('The Fake Bank') == 1
+    client.click('The Fake Bank|Cancel')
+    fake_server.wait_for(C_DONE)
+    # The bank can be visited again once the dialog is closed
+    fake_server.send(C_BANK)
+    client.wait_for_window('The Fake Bank')
+    client.click('The Fake Bank|Cancel')
+    fake_server.wait_for(C_DONE)
+    end_game(fake_server, client)
+
+
 def test_killed_in_fight(fake_server, client):
     """Dying in a fight shows the high scores over the Fight dialog;
     closing them must leave the main window usable (issue #68: the

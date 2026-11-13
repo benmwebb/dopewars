@@ -97,7 +97,7 @@ static GtkWidget *FightDialog = NULL, *SpyReportsDialog;
 static gboolean IsShowingPlayerList = FALSE, IsShowingTalkList = FALSE;
 static gboolean IsShowingErrandList = FALSE;
 static gboolean IsShowingInventory = FALSE, IsShowingGunShop = FALSE;
-static gboolean IsShowingDealDrugs = FALSE;
+static gboolean IsShowingDealDrugs = FALSE, IsShowingBank = FALSE;
 
 static void display_intro(GtkWidget *widget, gpointer data);
 static void QuitGame(GtkWidget *widget, gpointer data);
@@ -538,7 +538,10 @@ void HandleClientMessage(char *pt, Player *Play)
     NewNameDialog();
     break;
   case C_BANK:
-    TransferDialog(FALSE);
+    /* Don't let the server open a second bank dialog over the first */
+    if (!IsShowingBank) {
+      TransferDialog(FALSE);
+    }
     break;
   case C_LOANSHARK:
     TransferDialog(TRUE);
@@ -2709,6 +2712,12 @@ void TransferDialog(gboolean Debt)
   accel_group = gtk_accel_group_new();
   gtk_window_add_accel_group(GTK_WINDOW(dialog), accel_group);
 
+  /* Clear IsShowingBank before telling the server we're done, in case it
+     replies (in single-player mode, straight away) with another bank
+     message */
+  if (!Debt) {
+    SetShowing(dialog, &IsShowingBank);
+  }
   g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(SendDoneMessage), NULL);
   if (Debt) {
