@@ -75,7 +75,7 @@ Section ""
   File "..\LICENCE"
 
   File "..\src\dopewars.exe"
-  File "/etc/ssl/certs/ca-bundle.crt"
+  File "ca-bundle.crt"
 
 !ifdef DOPEWARS_64BIT
   File "/usr/x86_64-w64-mingw32/sys-root/mingw/bin/iconv.dll"

@@ -24,6 +24,9 @@ The top-level `configure` script will also generate `install.nsi` in this
 directory. This can be used as input to
 [NSIS](https://nsis.sourceforge.io/) to build a Windows installer.
 
+To build the installer, copy `/etc/ssl/certs/ca-bundle.crt` into this
+directory and then run `makensis install.nsi`.
+
 ## Docker
 
 The Docker image is built and deployed to Docker Hub (it is also used for CI)
