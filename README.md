@@ -2,16 +2,16 @@
 [![codecov](https://codecov.io/gh/benmwebb/dopewars/branch/develop/graph/badge.svg?token=aJLEmwDam5)](https://codecov.io/gh/benmwebb/dopewars)
 [![Download dopewars drug dealing game](https://img.shields.io/sourceforge/dt/dopewars.svg)](https://dopewars.sourceforge.io/download.html)
 
-This is dopewars 1.6.2, a game simulating the life of a drug dealer in
+This is dopewars 1.7.0, a game simulating the life of a drug dealer in
 New York. The aim of the game is to make lots and lots of money...
 unfortunately, you start the game with a hefty debt, accumulating interest,
 and the cops take a rather dim view of drug dealing...
 
 These are brief instructions; see the HTML documentation for full information.
 
-dopewars 1.6.2 servers should handle clients as old as version 1.4.3 with
+dopewars 1.7.0 servers should handle clients as old as version 1.4.3 with
 hardly any visible problems (the reverse is also true). However, it is
-recommended that both clients and servers are upgraded to 1.6.2!
+recommended that both clients and servers are upgraded to 1.7.0!
 
 ## Installation
 
@@ -21,10 +21,10 @@ Either...
    
 Or...
 
-1. Get the tarball `dopewars-1.6.2.tar.gz` from the same URL
-2. Extract it via `tar -xvzf dopewars-1.6.2.tar.gz`
+1. Get the tarball `dopewars-1.7.0.tar.gz` from the same URL
+2. Extract it via `tar -xvzf dopewars-1.7.0.tar.gz`
 3. Follow the instructions in the `INSTALL` file in the newly-created
-   `dopewars-1.6.2` directory
+   `dopewars-1.7.0` directory
 
 Once you're done, you can safely delete the RPM, tarball and dopewars
 directory. The dopewars binary is all you need!
