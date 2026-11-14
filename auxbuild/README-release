@@ -3,6 +3,7 @@ New version checklist:
 - cd po; rm dopewars.pot; make dopewars.pot; make update-po; ./check-cformat.sh
 - Add version number, date to ChangeLog.md
 - Change stable version number in NEWS README.md doc/installation.html doc/index.html doc/windows.html
+- Check spelling with `codespell . -S "*autom4te*,configure*,libtool,*.po,*~,*.pot,*.m4,Makefile*,*.guess,depcomp,*.sh,*.rpath,/tests/*"`
 - git checkout -b release/x.y.z
 - Change SVN to x.y.z in configure.ac and commit and push
 - Merge into main, tag, and push:
