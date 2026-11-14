@@ -1,4 +1,4 @@
-# Unreleased
+# 1.7.0 - 2026-11-14
 - The graphical client and server GUI can now be built with GTK4, which
   is used by default if available (GTK+3 is still supported). On macOS
   the GTK4 client uses the global menu bar, and follows the system light
