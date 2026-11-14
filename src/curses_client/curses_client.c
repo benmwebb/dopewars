@@ -61,6 +61,9 @@ static int Width, Depth;
 /* Maximum number of messages to store (for scrollback etc.) */
 const static int MaxMessages = 1000;
 
+/* Maximum number of keys that GetKey() accepts */
+#define MAX_GET_KEY 30
+
 #ifdef NETWORKING
 /* Data waiting to be sent to/read from the metaserver */
 static CurlConnection MetaConn;
@@ -255,7 +258,11 @@ static void mvaddrightstr(int row, int col, const gchar *str)
 /* Append len spaces to the end of text */
 static void g_string_pad(GString *text, int len)
 {
-  int curlen = text->len;
+  int curlen;
+
+  if (len <= 0)
+    return;
+  curlen = text->len;
   g_string_set_size(text, curlen + len);
   memset(text->str + curlen, ' ', len);
 }
@@ -348,7 +355,7 @@ void display_intro(void)
                     "possible (and stay alive)!"));
   mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
-  g_string_printf(text, _("Version %-8s Copyright (C) 1998-2022  Ben Webb "
+  g_string_printf(text, _("Version %-8s Copyright (C) 1998-2026  Ben Webb "
                            "benwebb@users.sf.net"), VERSION);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
@@ -886,7 +893,7 @@ static void DropDrugs(Player *Play)
     if (Play->Drugs[i].Carried > 0 && Play->Drugs[i].Price == 0) {
       g_string_printf(text, "%c. %-10s %-8d", NumDrugs + 'A',
                        Drug[i].Name, Play->Drugs[i].Carried);
-      mvaddstr(top + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
+      mvaddstr(top + 1 + NumDrugs / 3, (NumDrugs % 3) * 25 + 4, text->str);
       NumDrugs++;
     }
   }
@@ -1121,7 +1128,8 @@ void HandleClientMessage(char *Message, Player *Play)
   Player *From, *tmp;
   GSList *list;
   gchar *text;
-  int i;
+  char keys[MAX_GET_KEY + 1];
+  int i, j;
   gboolean Handled;
 
   /* Ignore To: field - all messages will be for Player "Play" */
@@ -1194,7 +1202,7 @@ void HandleClientMessage(char *Message, Player *Play)
     SoundPlay(Sounds.JoinGame);
     break;
   case C_LEAVE:
-    if (From != &Noone) {
+    if (From != &Noone && From != Play) {
       text = g_strdup_printf(_("%s has left the game."), Data);
       display_message(text);
       g_free(text);
@@ -1203,12 +1211,14 @@ void HandleClientMessage(char *Message, Player *Play)
     break;
   case C_RENAME:
     /* Displayed when a player changes his/her name */
-    text = g_strdup_printf(_("%s will now be known as %s."),
-                           GetPlayerName(From), Data);
-    SetPlayerName(From, Data);
-    mvaddstr(get_prompt_line(), 0, text);
-    g_free(text);
-    nice_wait();
+    if (From != &Noone) {
+      text = g_strdup_printf(_("%s will now be known as %s."),
+                             GetPlayerName(From), Data);
+      SetPlayerName(From, Data);
+      mvaddstr(get_prompt_line(), 0, text);
+      g_free(text);
+      nice_wait();
+    }
     break;
   case C_PRINTMESSAGE:
     PrintMessage(Data);
@@ -1240,9 +1250,17 @@ void HandleClientMessage(char *Message, Player *Play)
   case C_QUESTION:
     pt = Data;
     wrd = GetNextWord(&pt, "");
+    /* The keys that answer the question come from the server; keep only
+     * as many plain ASCII characters as GetKey() can handle */
+    for (i = j = 0; wrd[i] && j < MAX_GET_KEY; i++) {
+      if (g_ascii_isgraph(wrd[i])) {
+        keys[j++] = wrd[i];
+      }
+    }
+    keys[j] = '\0';
     PrintMessage(pt);
     addch(' ');
-    i = GetKey(wrd, FALSE, TRUE, TRUE);
+    i = GetKey(keys, FALSE, TRUE, TRUE);
     wrd = g_strdup_printf("%c", i);
     SendClientMessage(Play, C_NONE, C_ANSWER,
                       From == &Noone ? NULL : From, wrd);
@@ -1318,7 +1336,7 @@ void PrintHighScore(char *Data)
 
   cp = Data;
   index = GetNextInt(&cp, 0);
-  if (!cp || strlen(cp) < 2)
+  if (index < 0 || index > NUMHISCORE || !cp || strlen(cp) < 2)
     return;
   move(index + 2, 0);
   attrset(TextAttr);
@@ -1604,8 +1622,6 @@ static void addunich(gunichar ch, int attr)
   }
 }
 
-#define MAX_GET_KEY 30
-
 /* 
  * Waits for keyboard input; will only accept a key listed in the
  * translated form of the "orig_allowed" string.
@@ -1637,7 +1653,7 @@ int GetKey(const char *orig_allowed, gboolean AllowOther,
   /* Translate allowed keys
    * Note that allowed is in the locale encoding, usually UTF-8, while
    * orig_allowed is plain ASCII */
-  char *allowed_str = _(orig_allowed);
+  const char *allowed_str = _(orig_allowed);
 
   num_allowed = strlen(orig_allowed);
   assert(num_allowed <= MAX_GET_KEY);
@@ -1783,7 +1799,6 @@ void nice_wait()
 void DisplayFightMessage(Player *Play, char *text)
 {
   static GList *msgs = NULL;
-  static int num_msgs = 0;
   gchar *textpt;
   gchar *AttackName, *DefendName, *BitchName;
   gint y, DefendHealth, DefendBitches, BitchesKilled, ArmPercent;
@@ -1797,7 +1812,6 @@ void DisplayFightMessage(Player *Play, char *text)
     }
     g_list_free(msgs);
     msgs = NULL;
-    num_msgs = 0;
   } else {
     GList *pt;
     if (text[0]) {
@@ -1816,7 +1830,6 @@ void DisplayFightMessage(Player *Play, char *text)
         RunHere = FALSE;
       }
       msgs = g_list_append(msgs, g_strdup(textpt));
-      num_msgs++;
     }
     attrset(TextAttr);
     clear_bottom();
@@ -2074,7 +2087,8 @@ void print_status(Player *Play, gboolean DispDrug)
   p = FormatPrice(Play->Debt);
   /* Put in one big string otherwise the DebtAttr won't be applied to the
      space between "Debt" and the price */
-  g_string_pad(text, 22 - strcharlen(text->str) - strcharlen(p));
+  g_string_pad(text,
+               MAX(1, 22 - (int)strcharlen(text->str) - (int)strcharlen(p)));
   g_string_append(text, p);
   g_free(p);
   mvaddstr(Network ? 7 : 11, 9, text->str);
@@ -2276,7 +2290,6 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   gunichar c;
   gboolean DecimalPoint, Suffix;
   GString *text;
-  gchar *ReturnString;
 
   DecimalPoint = Suffix = FALSE;
 
@@ -2363,9 +2376,7 @@ char *nice_input(char *prompt, int sy, int sx, gboolean digitsonly,
   } while (c != '\n' && c != KEY_ENTER);
   curs_set(0);
   move(sy, x);
-  ReturnString = text->str;
-  g_string_free(text, FALSE);   /* Leave the buffer to return */
-  return ReturnString;
+  return g_string_free(text, FALSE);
 }
 
 static void DisplayDrugsHere(Player *Play)

@@ -1,4 +1,4 @@
-SUBDIRS        = src doc po sounds
+SUBDIRS        = src doc po sounds tests
 DESKTOPDIR     = ${DESTDIR}${datadir}/gnome/apps/Games
 DESKTOP        = dopewars.desktop
 SCOREDIR       = ${DESTDIR}${localstatedir}
@@ -21,3 +21,8 @@ install-data-local:
 
 uninstall-local:
 	/bin/rm -f ${SCORE} ${DESKTOPDIR}/${DESKTOP}
+
+check-e2e: all
+	cd tests && ${MAKE} check-e2e
+
+.PHONY: check-e2e

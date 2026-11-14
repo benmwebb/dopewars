@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dopewars], [1.6.2])
+AC_INIT([dopewars], [1.7.0])
 AC_CONFIG_SRCDIR([src/dopewars.c])
 AC_CONFIG_AUX_DIR(auxbuild)
 
@@ -53,11 +53,12 @@ AC_ARG_ENABLE(gui-server,
 [ GUI_SERVER="$enableval" ],[ GUI_SERVER="probe" ])
 
 AC_ARG_ENABLE(gtk4,
-[  --enable-gtk4           use GTK 4 if available (experimental)],
-[ USE_GTK4="$enableval" ],[ USE_GTK4="no" ])
+[  --disable-gtk4          use GTK+ 3.x (or 2.x), even if GTK 4 is found],
+[ USE_GTK4="$enableval" ],[ USE_GTK4="yes" ])
 
 AC_ARG_ENABLE(gtk3,
-[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found],
+[  --disable-gtk3          use GTK+ 2.x, even if 3.x is found (requires
+                          --disable-gtk4 if GTK 4 is installed)],
 [ USE_GTK3="$enableval" ],[ USE_GTK3="yes" ])
 
 AC_ARG_WITH(esd,
@@ -142,7 +143,7 @@ if test "$CYGWIN" = "yes" ; then
 
    dnl Add support for the Windows multimedia system
    SOUND_LIBS="$SOUND_LIBS -lwinmm"
-   PLUGOBJS="$PLUGOBJS plugins/sound_winmm.o"
+   PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_winmm.o"
    AC_DEFINE(HAVE_WINMM, 1, [Do we have the Windows multimedia system?])
 
    dnl Use graphical server by default
@@ -157,20 +158,13 @@ else
    AC_MSG_RESULT([Configuring for Unix binary])
 
    dnl On true Unix systems, test for valid curses-like libraries
-   if test "$CURSES_CLIENT" != "no" ; then
-      AC_CHECK_LIB(ncurses,newterm)
-      if test "$ac_cv_lib_ncurses_newterm" = "no" ; then
-         AC_CHECK_LIB(curses,newterm)
-         if test "$ac_cv_lib_curses_newterm" = "no" ; then
-            AC_CHECK_LIB(cur_colr,newterm)
-            if test "$ac_cv_lib_cur_colr_newterm" = "no" ; then
-               if test "$CURSES_CLIENT" = "yes" ; then
-                 AC_MSG_ERROR(Cannot find any curses-type library)
-               else
-                 AC_MSG_WARN(Cannot find any curses-type library)
-                 CURSES_CLIENT="no"
-               fi
-            fi
+   if test "$CURSES_CLIENT" != "no"; then
+      AX_WITH_CURSES
+      if test "$ax_cv_curses" != "yes"; then
+         AC_CHECK_LIB(cur_colr,newterm)
+         if test "$ac_cv_lib_cur_colr_newterm" != "yes"; then
+            AC_MSG_WARN(Cannot find any curses-type library)
+            CURSES_CLIENT="no"
          fi
       fi
    fi
@@ -181,6 +175,11 @@ else
       gtk4_found="no"
       if test "$USE_GTK4" = "yes" ; then
         PKG_CHECK_MODULES([GTK], [gtk4], gtk4_found="yes", gtk4_found="no")
+        if test "$gtk4_found" = "yes" ; then
+          dnl GtkTreeView, GtkComboBox and GtkDialog, which we use, are
+          dnl deprecated in GTK 4.10 but are still supported in GTK 4
+          GTK_CFLAGS="$GTK_CFLAGS -DGDK_DISABLE_DEPRECATION_WARNINGS"
+        fi
       fi
       if test "$gtk4_found" = "no" ; then
         gtk3_found="no"
@@ -215,7 +214,7 @@ else
      if test "$ESD" = "yes"; then
        SOUND_CFLAGS="$SOUND_CFLAGS $ESD_CFLAGS"
        SOUND_LIBS="$SOUND_LIBS $ESD_LIBS"
-       PLUGOBJS="$PLUGOBJS plugins/sound_esd.o"
+       PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_esd.o"
        AC_SUBST(ESD_LIBS)
        AC_DEFINE(HAVE_ESD, 1, [Do we have the ESD sound library?])
      elif test "$USE_ESD" = "yes"; then
@@ -256,7 +255,7 @@ else
              SDL_LIBS="$SDL_LIBS -lSDL_mixer"
            fi
            SOUND_LIBS="$SOUND_LIBS $SDL_LIBS"
-           PLUGOBJS="$PLUGOBJS plugins/sound_sdl.o"
+           PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_sdl.o"
            AC_SUBST(SDL_LIBS)
            AC_DEFINE(HAVE_SDL_MIXER, 1,
                      [Do we have the SDL_mixer sound library?])
@@ -276,7 +275,7 @@ else
    if test "$USE_COCOA" != "no"; then
      AC_PROG_OBJC
      COCOA="yes"
-     PLUGOBJS="$PLUGOBJS plugins/sound_cocoa.o"
+     PLUGOBJS="$PLUGOBJS \${top_builddir}/src/plugins/sound_cocoa.o"
      AC_DEFINE(HAVE_COCOA, 1, [Do we have the Cocoa sound library?])
    else
      dnl Otherwise we get the error
@@ -311,10 +310,12 @@ if test "$GUI_CLIENT" = "probe"; then
 fi
 if test "$CURSES_CLIENT" = "probe"; then
   CURSES_CLIENT="yes"
+  LIBS="$LIBS $CURSES_LIBS"
+  CFLAGS="$CFLAGS $CURSES_CFLAGS"
 fi
 
 dnl Do i18n stuff
-ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB"
+ALL_LINGUAS="de pl pt_BR fr fr_CA nn es es_ES en_GB sv"
 AM_GNU_GETTEXT([external])
 if test "$gt_cv_func_gettext_libintl" = "yes"; then
     LIBS="-lintl $LIBS"
@@ -416,6 +417,30 @@ if test -n "$GCC"; then
    fi
 fi
 
+dnl Optionally build with code coverage instrumentation (gcc or clang)
+AC_ARG_ENABLE(coverage,
+[  --enable-coverage       build with code coverage instrumentation, for use
+                          with gcov/gcovr (also disables optimization)],
+[ coverage="$enableval" ],[ coverage="no" ])
+if test "$coverage" = "yes" ; then
+   if test -z "$GCC"; then
+      AC_MSG_ERROR([--enable-coverage requires gcc or clang])
+   fi
+   CFLAGS="$CFLAGS --coverage -O0 -g"
+   OBJCFLAGS="$OBJCFLAGS --coverage -O0 -g"
+   LDFLAGS="$LDFLAGS --coverage"
+fi
+
+dnl Optionally let tests drive the GTK+ client (see src/gtkport/testhook.c)
+AC_ARG_ENABLE(test-hooks,
+[  --enable-test-hooks     let tests drive the graphical client, through a
+                          socket named by DOPEWARS_TEST_CTL (do not use
+                          in release builds)],
+[ test_hooks="$enableval" ],[ test_hooks="no" ])
+if test "$test_hooks" = "yes" ; then
+   AC_DEFINE(TEST_HOOKS, 1, [Let tests drive the graphical client?])
+fi
+
 dnl Tell dopewars where the high scores, docs and locale files are
 DP_EXPAND_DIR(DPSCOREDIR, '${localstatedir}')
 AC_DEFINE_UNQUOTED(DPSCOREDIR, "$DPSCOREDIR",
@@ -440,26 +465,26 @@ AC_DEFINE_UNQUOTED(LOCALEDIR, "$LOCALEDIR",
 dnl Add in the required clients
 AM_CONDITIONAL(GUI_CLIENT, test "$GUI_CLIENT" = "yes")
 if test "$GUI_CLIENT" = "yes" ; then
-  GUILIB="gui_client/libguiclient.a"
+  GUILIB="\${top_builddir}/src/gui_client/libguiclient.a"
   AC_SUBST(GUILIB)
 fi
 AM_CONDITIONAL(CURSES_CLIENT, test "$CURSES_CLIENT" = "yes")
 if test "$CURSES_CLIENT" = "yes" ; then
-  CURSESLIB="curses_client/libcursesclient.a"
+  CURSESLIB="\${top_builddir}/src/curses_client/libcursesclient.a"
   AC_SUBST(CURSESLIB)
 fi
 
 dnl Compile in the gtkport stuff for any kind of GUI
 AM_CONDITIONAL(GTKPORT, test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes")
 if test "$GUI_CLIENT" = "yes" -o "$GUI_SERVER" = "yes" ; then
-  GTKPORTLIB="gtkport/libgtkport.a"
+  GTKPORTLIB="\${top_builddir}/src/gtkport/libgtkport.a"
   AC_SUBST(GTKPORTLIB)
 fi
 
 dnl Compile in the cursesport stuff for the curses client only
 AM_CONDITIONAL(CURSESPORT, test "$CURSES_CLIENT" = "yes")
 if test "$CURSES_CLIENT" = "yes" ; then
-  CURSESPORTLIB="cursesport/libcursesport.a"
+  CURSESPORTLIB="\${top_builddir}/src/cursesport/libcursesport.a"
   AC_SUBST(CURSESPORTLIB)
 fi
 
@@ -474,6 +499,7 @@ src/curses_client/Makefile
 src/gtkport/Makefile
 src/cursesport/Makefile
 src/plugins/Makefile
+tests/Makefile
 sounds/Makefile
 sounds/19.5degs/Makefile
 doc/Makefile
@@ -517,6 +543,16 @@ if test "$network" = "yes" ; then
    fi
 else
    echo "Networking support DISABLED; single-player mode only"
+fi
+
+if test "$coverage" = "yes" ; then
+   echo
+   echo "Code coverage instrumentation ENABLED"
+fi
+
+if test "$test_hooks" = "yes" ; then
+   echo
+   echo "Test hooks ENABLED (for testing only; not for release builds)"
 fi
 
 echo

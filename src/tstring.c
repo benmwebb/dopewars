@@ -110,7 +110,7 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
   while (str[i]) {
     if (str[i] == '%') {
       *StartPos = *EndPos = i++;
-      while (strchr("#0- +'", str[i]))
+      while (str[i] && strchr("#0- +'", str[i]))
         i++;                    /* Skip flag characters */
       while (str[i] >= '0' && str[i] <= '9')
         wid = wid * 10 + str[i++] - '0';
@@ -119,7 +119,7 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
         i++;
         anum = wid;
         wid = 0;
-        while (strchr("#0- +'", str[i]))
+        while (str[i] && strchr("#0- +'", str[i]))
           i++;                  /* Skip flag characters */
         while (str[i] >= '0' && str[i] <= '9')
           wid = wid * 10 + str[i++] - '0';
@@ -161,7 +161,7 @@ gchar *HandleTFmt(gchar *format, va_list va)
   int StrInd, StartPos, EndPos, FmtPos, Wid, Prec, ArgNum, DefaultArgNum;
   guint i;
   char Code[3], Type;
-  gchar *retstr, *fstr;
+  gchar *fstr;
   GString *string, *tmpfmt;
   GArray *arr;
   FmtData *fdat;
@@ -262,11 +262,9 @@ gchar *HandleTFmt(gchar *format, va_list va)
       break;
     }
   }
-  retstr = string->str;
   g_array_free(arr, TRUE);
-  g_string_free(string, FALSE);
   g_string_free(tmpfmt, TRUE);
-  return retstr;
+  return g_string_free(string, FALSE);
 }
 
 void dpg_print(gchar *format, ...)

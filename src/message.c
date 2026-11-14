@@ -385,11 +385,6 @@ gchar *GetWaitingPlayerMessage(Player *Play)
   }
 }
 
-gboolean ReadPlayerDataFromWire(Player *Play)
-{
-  return ReadDataFromWire(&Play->NetBuf);
-}
-
 void QueuePlayerMessageForSend(Player *Play, gchar *data)
 {
   if (Conv_Needed(netconv)) {
@@ -399,11 +394,6 @@ void QueuePlayerMessageForSend(Player *Play, gchar *data)
   } else {
     QueueMessageForSend(&Play->NetBuf, data);
   }
-}
-
-gboolean WritePlayerDataToWire(Player *Play)
-{
-  return WriteDataToWire(&Play->NetBuf);
 }
 
 gboolean OpenMetaHttpConnection(CurlConnection *conn, GError **err)
@@ -427,18 +417,27 @@ gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
                                      GError **err)
 {
   char *msg;
+  Converter *metaconv;
 
   g_assert(conn && listpt);
 
+  metaconv = Conv_New();
+  Conv_SetCodeset(metaconv, "UTF-8");
   msg = conn->data;
   /* This should be the first line of the body, the "MetaServer:" line */
   if (msg && strlen(msg) >= 14 && strncmp(msg, "FATAL ERROR:", 12) == 0) {
+    gchar *clean = Conv_ToInternal(metaconv, &msg[13], -1);
     g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_INTERNAL,
-                _("Internal metaserver error \"%s\""), &msg[13]);
+                _("Internal metaserver error \"%s\""), clean);
+    g_free(clean);
+    Conv_Free(metaconv);
     return FALSE;
   } else if (msg && strncmp(msg, "MetaServer:", 11) != 0) {
+    gchar *clean = Conv_ToInternal(metaconv, msg, -1);
     g_set_error(err, DOPE_META_ERROR, DOPE_META_ERROR_BAD_REPLY,
-                _("Bad metaserver reply \"%s\""), msg);
+                _("Bad metaserver reply \"%s\""), clean);
+    g_free(clean);
+    Conv_Free(metaconv);
     return FALSE;
   }
 
@@ -457,17 +456,18 @@ gboolean HandleWaitingMetaServerData(CurlConnection *conn, GSList **listpt,
     msg = CurlNextLine(conn, upsince);
     if (msg) {
       ServerData *NewServer = g_new0(ServerData, 1);
-      NewServer->Name = g_strdup(name);
+      NewServer->Name = Conv_ToInternal(metaconv, name, -1);
       NewServer->Port = atoi(port);
-      NewServer->Version = g_strdup(version);
+      NewServer->Version = Conv_ToInternal(metaconv, version, -1);
       NewServer->CurPlayers = curplayers[0] ? atoi(curplayers) : -1;
       NewServer->MaxPlayers = atoi(maxplayers);
-      NewServer->Update = g_strdup(update);
-      NewServer->Comment = g_strdup(comment);
-      NewServer->UpSince = g_strdup(upsince);
+      NewServer->Update = Conv_ToInternal(metaconv, update, -1);
+      NewServer->Comment = Conv_ToInternal(metaconv, comment, -1);
+      NewServer->UpSince = Conv_ToInternal(metaconv, upsince, -1);
       *listpt = g_slist_append(*listpt, NewServer);
     }
   }
+  Conv_Free(metaconv);
   if (!*listpt) {
     g_set_error_literal(err, DOPE_META_ERROR, DOPE_META_ERROR_EMPTY,
                         _("No servers listed on metaserver"));
@@ -482,27 +482,16 @@ void ClearServerList(GSList **listpt)
 
   while (*listpt) {
     ThisServer = (ServerData *)((*listpt)->data);
+    *listpt = g_slist_remove(*listpt, ThisServer);
     g_free(ThisServer->Name);
     g_free(ThisServer->Comment);
     g_free(ThisServer->Version);
     g_free(ThisServer->Update);
     g_free(ThisServer->UpSince);
     g_free(ThisServer);
-    *listpt = g_slist_remove(*listpt, ThisServer);
   }
 }
 #endif /* NETWORKING */
-
-/* 
- * Removes a terminating newline from "str", if one is present.
- */
-void chomp(char *str)
-{
-  int len = strlen(str);
-
-  if (str[len - 1] == '\n')
-    str[len - 1] = 0;
-}
 
 /* 
  * Adds the plain text string "unenc" to the end of the GString "str",
@@ -525,7 +514,7 @@ void AddURLEnc(GString *str, gchar *unenc)
     } else if (unenc[i] == ' ') {
       g_string_append_c(str, '+');
     } else {
-      g_string_append_printf(str, "%%%02X", unenc[i]);
+      g_string_append_printf(str, "%%%02X", (guchar)unenc[i]);
     }
   }
 }
@@ -546,49 +535,6 @@ void BroadcastToClients(AICode AI, MsgCode Code, char *Data,
     if (IsConnectedPlayer(tmp) && tmp != Except) {
       SendServerMessage(From, AI, Code, tmp, Data);
     }
-  }
-}
-
-/* 
- * Encodes an Inventory structure into a string, and sends it as the data
- * with a server message constructed from the other arguments.
- */
-void SendInventory(Player *From, AICode AI, MsgCode Code,
-                   Player *To, Inventory *Guns, Inventory *Drugs)
-{
-  int i;
-  GString *text;
-
-  text = g_string_new(NULL);
-  for (i = 0; i < NumGun; i++) {
-    g_string_append_printf(text, "%d:", Guns ? Guns[i].Carried : 0);
-  }
-  for (i = 0; i < NumDrug; i++) {
-    g_string_append_printf(text, "%d:", Drugs ? Drugs[i].Carried : 0);
-  }
-  SendServerMessage(From, AI, Code, To, text->str);
-  g_string_free(text, TRUE);
-}
-
-/* 
- * Decodes a string representation (in "Data") to its original Inventory
- * contents, and stores it in "Guns" and "Drugs" if non-NULL.
- */
-void ReceiveInventory(char *Data, Inventory *Guns, Inventory *Drugs)
-{
-  int i, val;
-  char *pt;
-
-  pt = Data;
-  for (i = 0; i < NumGun; i++) {
-    val = GetNextInt(&pt, 0);
-    if (Guns)
-      Guns[i].Carried = val;
-  }
-  for (i = 0; i < NumDrug; i++) {
-    val = GetNextInt(&pt, 0);
-    if (Drugs)
-      Drugs[i].Carried = val;
   }
 }
 
@@ -705,12 +651,16 @@ void ReceiveInitialData(Player *Play, char *Data)
 {
   char *pt, *curr;
   GSList *list;
+  int new_loc, new_gun, new_drug;
 
   pt = Data;
   GetNextWord(&pt, "(unknown)"); /* server version */
-  ResizeLocations(GetNextInt(&pt, NumLocation));
-  ResizeGuns(GetNextInt(&pt, NumGun));
-  ResizeDrugs(GetNextInt(&pt, NumDrug));
+  new_loc = GetNextInt(&pt, NumLocation);
+  new_gun = GetNextInt(&pt, NumGun);
+  new_drug = GetNextInt(&pt, NumDrug);
+  ResizeLocations(CLAMP(new_loc, 1, MAX_NET_ITEMS));
+  ResizeGuns(CLAMP(new_gun, 0, MAX_NET_ITEMS));
+  ResizeDrugs(CLAMP(new_drug, 1, MAX_NET_ITEMS));
   for (list = FirstClient; list; list = g_slist_next(list)) {
     UpdatePlayer((Player *)list->data);
   }
@@ -868,12 +818,18 @@ void ReceivePlayerData(Player *Play, char *text, Player *From)
   From->Health = GetNextInt(&cp, 100);
   From->CoatSize = GetNextInt(&cp, 0);
   From->IsAt = GetNextInt(&cp, 0);
+  if (NumLocation <= 0 || From->IsAt < 0 || From->IsAt >= NumLocation) {
+    From->IsAt = 0;
+  }
   From->Turn = GetNextInt(&cp, 0);
   From->Flags = GetNextInt(&cp, 0);
   if (HaveAbility(Play, A_DATE)) {
-    g_date_set_day(From->date, GetNextInt(&cp, 1));
-    g_date_set_month(From->date, GetNextInt(&cp, 1));
-    g_date_set_year(From->date, GetNextInt(&cp, 1980));
+    int day = GetNextInt(&cp, 1);
+    int month = GetNextInt(&cp, 1);
+    int year = GetNextInt(&cp, 1980);
+    if (From->date && g_date_valid_dmy(day, month, year)) {
+      g_date_set_dmy(From->date, day, month, year);
+    }
   }
   for (i = 0; i < NumGun; i++) {
     From->Guns[i].Carried = GetNextInt(&cp, 0);
@@ -903,14 +859,6 @@ gchar *GetNextWord(gchar **Data, gchar *Default)
     (*Data)++;
   }
   return Word;
-}
-
-void AssignNextWord(gchar **Data, gchar **Dest)
-{
-  if (!Dest)
-    return;
-  g_free(*Dest);
-  *Dest = g_strdup(GetNextWord(Data, ""));
 }
 
 int GetNextInt(gchar **Data, int Default)
@@ -1083,7 +1031,7 @@ gboolean HandleGenericClientMessage(Player *From, AICode AI, MsgCode Code,
     CombineAbilities(To);
     break;
   case C_LEAVE:
-    if (From != &Noone)
+    if (From != &Noone && From != To)
       FirstClient = RemovePlayer(From, FirstClient);
     break;
   case C_TRADE:
@@ -1247,7 +1195,7 @@ void SendFightMessage(Player *Attacker, Player *Defender,
     Damage += Gun[i].Damage * Attacker->Guns[i].Carried;
   }
   MaxDamage *= (Attacker->Bitches.Carried + 2);
-  ArmPercent = Damage * 100 / MaxDamage;
+  ArmPercent = (MaxDamage > 0) ? (Damage * 100 / MaxDamage) : 0;
 
   text = g_string_new("");
 
@@ -1374,7 +1322,7 @@ void FormatFightMessage(Player *To, GString *text, Player *Attacker,
     if (Attacker->Health > 0) {
       if (AttackName[0]) {
         if (!IsCop(Attacker) && brandom(0, 100) < 70
-            && Attacker->IsAt >= 0) {
+            && Attacker->IsAt >= 0 && Attacker->IsAt < NumLocation) {
           dpg_string_append_printf(text, _("%s has got away to %tde!"), AttackName,
                               Location[Attacker->IsAt].Name);
         } else {

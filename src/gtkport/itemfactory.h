@@ -59,7 +59,7 @@ GtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
 
 typedef gchar *(*DPGtkTranslateFunc) (const gchar *path, gpointer func_data);
 
-typedef void (*DPGtkItemFactoryCallback) ();
+typedef void (*DPGtkItemFactoryCallback) (void);
 
 typedef struct _DPGtkItemFactoryEntry DPGtkItemFactoryEntry;
 typedef struct _DPGtkItemFactory DPGtkItemFactory;
@@ -79,6 +79,12 @@ struct _DPGtkItemFactory {
   GtkWidget *top_widget;
   DPGtkTranslateFunc translate_func;
   gpointer translate_data;
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+  /* GTK4 menus are built from a model, with actions for each item */
+  GMenu *top_menu;
+  GSimpleActionGroup *action_group;
+  GtkApplication *app;    /* If set, actions are added to the application */
+#endif
 };
 
 DPGtkItemFactory *dp_gtk_item_factory_new(const gchar *path,
@@ -98,5 +104,44 @@ void dp_gtk_item_factory_set_translate_func(DPGtkItemFactory *ifactory,
                                             gpointer data,
                                             GDestroyNotify notify);
 #endif /* GTK+2 */
+
+#if !defined(CYGWIN) && GTK_MAJOR_VERSION >= 4
+/* Add menu actions (and their accelerators) to the given application rather
+   than to the menu bar widget, so that the menu model can be used as the
+   application's menu bar. Must be called before any items are created. */
+void dp_gtk_item_factory_set_application(DPGtkItemFactory *ifactory,
+                                         GtkApplication *app);
+GMenuModel *dp_gtk_item_factory_get_model(DPGtkItemFactory *ifactory);
+
+/* Remove the item with the given path from its menu, and instead make it
+   available as the application action "app.<name>" (e.g. one of the
+   standard macOS application menu actions "about", "preferences" or
+   "quit"), with the given accelerator (or none if NULL) */
+void dp_gtk_item_factory_move_to_app_menu(DPGtkItemFactory *ifactory,
+                                          const gchar *path,
+                                          const gchar *name,
+                                          const gchar *accel);
+#endif
+
+/* Manipulate the menu item with the given path. GTK4 menu items are not
+   widgets, so use these rather than dp_gtk_item_factory_get_widget() */
+void dp_gtk_item_factory_set_sensitive(DPGtkItemFactory *ifactory,
+                                       const gchar *path,
+                                       gboolean sensitive);
+gboolean dp_gtk_item_factory_get_active(DPGtkItemFactory *ifactory,
+                                        const gchar *path);
+void dp_gtk_item_factory_set_active(DPGtkItemFactory *ifactory,
+                                    const gchar *path, gboolean active);
+void dp_gtk_item_factory_set_label(DPGtkItemFactory *ifactory,
+                                   const gchar *path, gchar *label);
+
+/* TRUE if there is a menu item with the given path, and it is sensitive */
+gboolean dp_gtk_item_factory_get_enabled(DPGtkItemFactory *ifactory,
+                                         const gchar *path);
+/* Activate the menu item with the given path, as if the user had picked
+   it; returns FALSE (and does nothing) if there is no such item, or it
+   is insensitive */
+gboolean dp_gtk_item_factory_activate(DPGtkItemFactory *ifactory,
+                                      const gchar *path);
 
 #endif /* __ITEM_FACTORY_H__ */

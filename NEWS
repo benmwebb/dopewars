@@ -1,3 +1,8 @@
+14th November 2026
+     dopewars-1.7.0 released. This adds support for GTK4, adds a Swedish
+translation, moves the config file to a new location, and moves the metaserver
+away from SourceForge.
+
 26th June 2022
      dopewars-1.6.2 released. This improves Unicode support in the text-mode
 client, and adds support for networking on the Haiku operating system.
@@ -15,7 +20,7 @@ operating systems, and newer software libraries such as GTK+3 and SDL 2.
 30th December 2005
      dopewars-1.5.11 released. This is largely a security bugfix release,
 fixing a potential exploit against the Windows server when running as an
-NT serivce.
+NT service.
 
 24th October 2004
      dopewars-1.5.10 released. This is largely a bugfix release, fixing a

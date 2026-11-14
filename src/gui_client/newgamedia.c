@@ -81,6 +81,31 @@ static void SetStartGameStatus(gchar *msg)
                      msg ? msg : _("Status: Waiting for user input"));
 }
 
+/* Remember which tab we chose for the next time we use this dialog. (This
+   can't be done when the dialog is destroyed, since GTK4 destroys the
+   notebook first.) */
+static void RememberNewGameType(void)
+{
+  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
+}
+
+static void DestroyNewGameDia(void)
+{
+  RememberNewGameType();
+  gtk_widget_destroy(stgam.dialog);
+}
+
+#if GTK_MAJOR_VERSION >= 4
+static gboolean DeleteNewGameDia(GtkWidget *widget, gpointer data)
+#else
+static gint DeleteNewGameDia(GtkWidget *widget, GdkEvent *event,
+                             gpointer data)
+#endif
+{
+  RememberNewGameType();
+  return FALSE;
+}
+
 #ifdef NETWORKING
 
 
@@ -168,7 +193,7 @@ void FinishServerConnect(gboolean ConnectOK)
 {
   if (ConnectOK) {
     Client = Network = TRUE;
-    gtk_widget_destroy(stgam.dialog);
+    DestroyNewGameDia();
     GuiStartGame();
   } else {
     ConnectError();
@@ -377,11 +402,11 @@ static void MetaServerConnect(GtkWidget *widget, gpointer data)
 static void StartSinglePlayer(GtkWidget *widget, gpointer data)
 {
   WantAntique =
-      gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(stgam.antique));
+      gtk_check_button_get_active(GTK_CHECK_BUTTON(stgam.antique));
   if (!GetStartGamePlayerName(&stgam.play->Name))
     return;
   GuiStartGame();
-  gtk_widget_destroy(stgam.dialog);
+  DestroyNewGameDia();
 }
 
 static void CloseNewGameDia(GtkWidget *widget, gpointer data)
@@ -397,9 +422,6 @@ static void CloseNewGameDia(GtkWidget *widget, gpointer data)
   }
   ClearServerList(&stgam.NewMetaList);
 #endif
-
-  /* Remember which tab we chose for the next time we use this dialog */
-  NewGameType = gtk_notebook_get_current_page(GTK_NOTEBOOK(stgam.notebook));
 }
 
 #ifdef NETWORKING
@@ -454,11 +476,11 @@ static GtkWidget *create_metaserver_view(GtkWidget **pack_widg)
 }
 #endif
 
-static void set_initial_player_name(GtkEntry *entry, Player *play)
+static void set_initial_player_name(GtkEditable *entry, Player *play)
 {
   char *name = GetPlayerName(play);
   if (*name) {
-    gtk_entry_set_text(entry, name);
+    gtk_editable_set_text(entry, name);
   } else {
     /* If name is blank, use the first word from the user's full login name */
     char *firstspace;
@@ -469,7 +491,7 @@ static void set_initial_player_name(GtkEntry *entry, Player *play)
       *firstspace = '\0';
     }
     /* "Unknown" is returned from g_get_real_name() on error */
-    gtk_entry_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
+    gtk_editable_set_text(entry, strcmp(name, "Unknown") == 0 ? "" : name);
     g_free(name);
   }
 }
@@ -488,7 +510,7 @@ void NewGameDialog(Player *play)
 #endif
 
 #ifdef NETWORKING
-  GtkWidget *clist, *scrollwin, *grid, *hbbox, *defbutton;
+  GtkWidget *clist, *scrollwin, *grid, *hbbox, *outer, *defbutton;
   GtkTreeSelection *treesel;
   gchar *ServerEntry, *text;
   gboolean UpdateMeta = FALSE;
@@ -504,6 +526,8 @@ void NewGameDialog(Player *play)
   stgam.dialog = dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   g_signal_connect(G_OBJECT(dialog), "destroy",
                    G_CALLBACK(CloseNewGameDia), NULL);
+  g_signal_connect(G_OBJECT(dialog), DP_DELETE_EVENT,
+                   G_CALLBACK(DeleteNewGameDia), NULL);
 
   gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(MainWindow));
@@ -533,19 +557,22 @@ void NewGameDialog(Player *play)
                                    _("Hey dude, what's your _name?"));
   gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
+  /* Widget names are used by tests (see gtkport/testhook.c) */
   entry = stgam.name = gtk_entry_new();
+  gtk_widget_set_name(entry, "name");
 #if GTK_MAJOR_VERSION == 2
   gtk_widget_add_accelerator(entry, "grab-focus", accel_group, AccelKey,
                              GDK_MOD1_MASK, GTK_ACCEL_VISIBLE);
 #else
   gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry);
 #endif
-  set_initial_player_name(GTK_ENTRY(entry), stgam.play);
+  set_initial_player_name(GTK_EDITABLE(entry), stgam.play);
   gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, TRUE, 0);
 
   gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
   notebook = stgam.notebook = gtk_notebook_new();
+  gtk_widget_set_name(notebook, "game-type");
 
 #ifdef NETWORKING
   vbox2 = gtk_box_new(GTK_ORIENTATION_VERTICAL, 7);
@@ -559,6 +586,7 @@ void NewGameDialog(Player *play)
 
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 0, 1, 1, FALSE);
   entry = stgam.hostname = gtk_entry_new();
+  gtk_widget_set_name(entry, "hostname");
 
   ServerEntry = "localhost";
   if (g_ascii_strncasecmp(ServerName, SN_META, strlen(SN_META)) == 0) {
@@ -571,13 +599,14 @@ void NewGameDialog(Player *play)
   else
     ServerEntry = ServerName;
 
-  gtk_entry_set_text(GTK_ENTRY(entry), ServerEntry);
+  gtk_editable_set_text(GTK_EDITABLE(entry), ServerEntry);
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 0, 1, 1, TRUE);
   label = gtk_label_new(_("Port"));
   dp_gtk_grid_attach(GTK_GRID(grid), label, 0, 1, 1, 1, FALSE);
   entry = stgam.port = gtk_entry_new();
+  gtk_widget_set_name(entry, "port");
   text = g_strdup_printf("%d", Port);
-  gtk_entry_set_text(GTK_ENTRY(entry), text);
+  gtk_editable_set_text(GTK_EDITABLE(entry), text);
   g_free(text);
   dp_gtk_grid_attach(GTK_GRID(grid), entry, 1, 1, 1, 1, TRUE);
 
@@ -586,6 +615,7 @@ void NewGameDialog(Player *play)
   button = gtk_button_new_with_label("");
   /* Button to connect to a named dopewars server */
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
+  gtk_widget_set_name(button, "connect");
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(ConnectToServer), NULL);
   gtk_box_pack_start(GTK_BOX(vbox2), button, FALSE, FALSE, 0);
@@ -603,8 +633,7 @@ void NewGameDialog(Player *play)
   /* Checkbox to activate 'antique mode' in single-player games */
   SetAccelerator(stgam.antique, _("_Antique mode"), stgam.antique,
                  "clicked", accel_group, TRUE);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(stgam.antique),
-                               WantAntique);
+  gtk_check_button_set_active(GTK_CHECK_BUTTON(stgam.antique), WantAntique);
   gtk_box_pack_start(GTK_BOX(vbox2), stgam.antique, FALSE, FALSE, 0);
   button = gtk_button_new_with_label("");
 
@@ -630,7 +659,7 @@ void NewGameDialog(Player *play)
 
   gtk_box_pack_start(GTK_BOX(vbox2), scrollwin, TRUE, TRUE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   /* Button to update metaserver information */
   button = gtk_button_new_with_mnemonic(_("_Refresh"));
@@ -640,6 +669,7 @@ void NewGameDialog(Player *play)
 
   button = gtk_button_new_with_label("");
   SetAccelerator(button, _("_Connect"), button, "clicked", accel_group, TRUE);
+  gtk_widget_set_name(button, "metaserver-connect");
   g_signal_connect(G_OBJECT(button), "clicked",
                    G_CALLBACK(MetaServerConnect), NULL);
   gtk_widget_set_sensitive(button, FALSE);
@@ -648,7 +678,7 @@ void NewGameDialog(Player *play)
                    button);
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox2), hbbox, FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox2), outer, FALSE, FALSE, 0);
 
   /* Title of Metaserver notebook tab in New Game dialog */
   label = gtk_label_new(_("Metaserver"));
@@ -717,7 +747,8 @@ static void DestroySocksAuth(GtkWidget *window, gpointer data)
 
 static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
 {
-  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *grid, *hbbox;
+  GtkWidget *window, *button, *hsep, *vbox, *label, *entry, *grid, *hbbox,
+            *outer;
   GtkAccelGroup *accel_group;
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -769,7 +800,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
 
-  hbbox = my_hbbox_new();
+  hbbox = my_hbbox_new(&outer);
 
   button = gtk_button_new_with_mnemonic(_("_OK"));
   g_signal_connect(G_OBJECT(button), "clicked",
@@ -782,7 +813,7 @@ static void SocksAuthDialog(NetworkBuffer *netbuf, gpointer data)
                            G_OBJECT(window));
   my_gtk_box_pack_start_defaults(GTK_BOX(hbbox), button);
 
-  gtk_box_pack_start(GTK_BOX(vbox), hbbox, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), outer, TRUE, TRUE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
   gtk_widget_show_all(window);

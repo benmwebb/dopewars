@@ -29,7 +29,7 @@
 #ifdef CYGWIN
 #include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
-#include "winmain.h"
+#include "util.h"               /* For GetBinaryDir() */
 #else
 #include <sys/types.h>          /* For size_t etc. */
 #include <sys/socket.h>         /* For struct sockaddr etc. */
@@ -153,9 +153,11 @@ static void NetBufCallBack(NetworkBuffer *NetBuf, gboolean CallNow)
   if (NetBuf && NetBuf->CallBack) {
     (*NetBuf->CallBack) (NetBuf, NetBuf->status != NBS_PRECONNECT,
                          (NetBuf->status == NBS_CONNECTED
-                          && NetBuf->WriteBuf.DataPresent)
+                          && (NetBuf->WriteBuf.DataPresent
+                              || NetBuf->WriteBuf.Overflow))
                          || (NetBuf->status == NBS_SOCKSCONNECT
-                             && NetBuf->negbuf.DataPresent)
+                             && (NetBuf->negbuf.DataPresent
+                                 || NetBuf->negbuf.Overflow))
                          || NetBuf->WaitConnect, TRUE, CallNow);
   }
 }
@@ -172,6 +174,7 @@ static void InitConnBuf(ConnBuf *buf)
   buf->Data = NULL;
   buf->Length = 0;
   buf->DataPresent = 0;
+  buf->Overflow = FALSE;
 }
 
 static void FreeConnBuf(ConnBuf *buf)
@@ -234,7 +237,7 @@ void SetNetworkBufferUserPasswdFunc(NetworkBuffer *NetBuf,
 void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
 {
   NetBuf->fd = fd;
-#ifdef CYGIN
+#ifdef CYGWIN
   NetBuf->ioch = g_io_channel_win32_new_socket(fd);
 #else
   NetBuf->ioch = g_io_channel_unix_new(fd);
@@ -242,15 +245,6 @@ void BindNetworkBufferToSocket(NetworkBuffer *NetBuf, int fd)
 
   SetBlocking(fd, FALSE);       /* We only deal with non-blocking sockets */
   NetBuf->status = NBS_CONNECTED;       /* Assume the socket is connected */
-}
-
-/* 
- * Returns TRUE if the pointer is to a valid network buffer, and it's
- * connected to an active socket.
- */
-gboolean IsNetworkBufferActive(NetworkBuffer *NetBuf)
-{
-  return (NetBuf && NetBuf->fd >= 0);
 }
 
 gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
@@ -273,7 +267,7 @@ gboolean StartNetworkBufferConnect(NetworkBuffer *NetBuf,
 
   if (StartConnect(&NetBuf->fd, bindaddr, realhost, realport, &doneOK,
                    &NetBuf->error)) {
-#ifdef CYGIN
+#ifdef CYGWIN
     NetBuf->ioch = g_io_channel_win32_new_socket(NetBuf->fd);
 #else
     NetBuf->ioch = g_io_channel_unix_new(NetBuf->fd);
@@ -341,13 +335,19 @@ void SetSelectForNetworkBuffer(NetworkBuffer *NetBuf, fd_set *readfds,
 {
   if (!NetBuf || NetBuf->fd <= 0)
     return;
+#ifndef CYGWIN
+  if (NetBuf->fd >= FD_SETSIZE)
+    return;
+#endif
   FD_SET(NetBuf->fd, readfds);
   if (errorfds)
     FD_SET(NetBuf->fd, errorfds);
   if (NetBuf->fd >= *MaxSock)
     *MaxSock = NetBuf->fd + 1;
-  if ((NetBuf->status == NBS_CONNECTED && NetBuf->WriteBuf.DataPresent)
-      || (NetBuf->status == NBS_SOCKSCONNECT && NetBuf->negbuf.DataPresent)
+  if ((NetBuf->status == NBS_CONNECTED
+       && (NetBuf->WriteBuf.DataPresent || NetBuf->WriteBuf.Overflow))
+      || (NetBuf->status == NBS_SOCKSCONNECT
+          && (NetBuf->negbuf.DataPresent || NetBuf->negbuf.Overflow))
       || NetBuf->WaitConnect) {
     FD_SET(NetBuf->fd, writefds);
   }
@@ -429,7 +429,7 @@ void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
                           gchar *password)
 {
   gchar *addpt;
-  guint addlen;
+  guint addlen, userlen, passlen;
   ConnBuf *conn;
 
   if (!user || !password || !user[0] || !password[0]) {
@@ -438,18 +438,24 @@ void SendSocks5UserPasswd(NetworkBuffer *NetBuf, gchar *user,
     return;
   }
   conn = &NetBuf->negbuf;
-  addlen = 3 + strlen(user) + strlen(password);
-  addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
-  if (!addpt || strlen(user) > 255 || strlen(password) > 255) {
+  userlen = strlen(user);
+  passlen = strlen(password);
+  addlen = 3 + userlen + passlen;
+  addpt = NULL;
+  if (userlen <= 255 && passlen <= 255) {
+    addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
+  }
+  if (!addpt) {
     SetError(&NetBuf->error, ET_CUSTOM, E_FULLBUF, NULL);
     NetBufCallBack(NetBuf, TRUE);
     return;
   }
+  /* Not null-terminated; use memcpy so we don't write past addlen */
   addpt[0] = 1;                 /* Subnegotiation version code */
-  addpt[1] = strlen(user);
-  strcpy(&addpt[2], user);
-  addpt[2 + strlen(user)] = strlen(password);
-  strcpy(&addpt[3 + strlen(user)], password);
+  addpt[1] = userlen;
+  memcpy(&addpt[2], user, userlen);
+  addpt[2 + userlen] = passlen;
+  memcpy(&addpt[3 + userlen], password, passlen);
 
   CommitWriteBuffer(NetBuf, conn, addpt, addlen);
 }
@@ -543,8 +549,8 @@ static gboolean HandleSocksReply(NetworkBuffer *NetBuf)
             replylen += 4;      /* IPv4 address */
           else if (addrtype == 4)
             replylen += 16;     /* IPv6 address */
-          else
-            replylen += data[4];        /* FQDN */
+          else                  /* FQDN: length byte, then the name */
+            replylen += 1 + (guchar)data[4];
           data = GetWaitingData(NetBuf, replylen);
           if (data) {
             NetBuf->status = NBS_CONNECTED;
@@ -673,6 +679,12 @@ gboolean RespondToSelect(NetworkBuffer *NetBuf, fd_set *readfds,
   *DoneOK = TRUE;
   if (!NetBuf || NetBuf->fd <= 0)
     return DataWaiting;
+#ifndef CYGWIN
+  if (NetBuf->fd >= FD_SETSIZE) {
+    *DoneOK = FALSE;
+    return FALSE;
+  }
+#endif
   DataWaiting = DoNetworkBufferStuff(NetBuf, FD_ISSET(NetBuf->fd, readfds),
                                      FD_ISSET(NetBuf->fd, writefds),
                                      errorfds ? FD_ISSET(NetBuf->fd,
@@ -698,29 +710,6 @@ gboolean NetBufHandleNetwork(NetworkBuffer *NetBuf, gboolean ReadReady,
 
   *DoneOK = (WriteOK && ErrorOK && ReadOK);
   return DataWaiting;
-}
-
-/* 
- * Returns the number of complete (terminated) messages waiting in the
- * given network buffer. This is the number of times that
- * GetWaitingMessage() can be safely called without it returning NULL.
- */
-gint CountWaitingMessages(NetworkBuffer *NetBuf)
-{
-  ConnBuf *conn;
-  gint i, msgs = 0;
-
-  if (NetBuf->status != NBS_CONNECTED)
-    return 0;
-
-  conn = &NetBuf->ReadBuf;
-
-  if (conn->Data)
-    for (i = 0; i < conn->DataPresent; i++) {
-      if (conn->Data[i] == NetBuf->Terminator)
-        msgs++;
-    }
-  return msgs;
 }
 
 gchar *PeekWaitingData(NetworkBuffer *NetBuf, int numbytes)
@@ -776,9 +765,12 @@ gchar *GetWaitingMessage(NetworkBuffer *NetBuf)
     return NULL;
   *SepPt = '\0';
   MessageLen = SepPt - conn->Data + 1;
-  SepPt--;
-  if (NetBuf->StripChar && *SepPt == NetBuf->StripChar)
-    *SepPt = '\0';
+  /* Don't step before the start of the buffer for an empty message */
+  if (SepPt > conn->Data) {
+    SepPt--;
+    if (NetBuf->StripChar && *SepPt == NetBuf->StripChar)
+      *SepPt = '\0';
+  }
   NewMessage = g_new(gchar, MessageLen);
 
   memcpy(NewMessage, conn->Data, MessageLen);
@@ -850,18 +842,22 @@ gchar *ExpandWriteBuffer(ConnBuf *conn, int numbytes, LastError **error)
 {
   int newlen;
 
+  if (numbytes <= 0 || conn->Overflow)
+    return NULL;
+  if (numbytes > MAXWRITEBUF - conn->DataPresent) {
+    conn->Overflow = TRUE;
+    if (error)
+      SetError(error, ET_CUSTOM, E_FULLBUF, NULL);
+    return NULL;
+  }
+
   newlen = conn->DataPresent + numbytes;
   if (newlen > conn->Length) {
-    conn->Length *= 2;
-    conn->Length = MAX(conn->Length, newlen);
-    if (conn->Length > MAXWRITEBUF)
-      conn->Length = MAXWRITEBUF;
-    if (newlen > conn->Length) {
-      if (error)
-        SetError(error, ET_CUSTOM, E_FULLBUF, NULL);
-      return NULL;
-    }
-    conn->Data = g_realloc(conn->Data, conn->Length);
+    int alloc_len = MAX(conn->Length * 2, newlen);
+    if (alloc_len > MAXWRITEBUF)
+      alloc_len = MAXWRITEBUF;
+    conn->Data = g_realloc(conn->Data, alloc_len);
+    conn->Length = alloc_len;
   }
 
   return (&conn->Data[conn->DataPresent]);
@@ -897,8 +893,11 @@ void QueueMessageForSend(NetworkBuffer *NetBuf, gchar *data)
     return;
   addlen = strlen(data) + 1;
   addpt = ExpandWriteBuffer(conn, addlen, NULL);
-  if (!addpt)
+  if (!addpt) {
+    if (conn->Overflow)
+      NetBufCallBack(NetBuf, FALSE);
     return;
+  }
 
   memcpy(addpt, data, addlen);
   addpt[addlen - 1] = NetBuf->Terminator;
@@ -985,6 +984,7 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf, gchar *RemoteHost,
       username = g_malloc(bufsize);
       if (WNetGetUser(NULL, username, &bufsize) != NO_ERROR) {
         SetError(&NetBuf->error, ET_WIN32, GetLastError(), NULL);
+        g_free(username);
         return FALSE;
       }
     }
@@ -1008,8 +1008,10 @@ gboolean StartSocksNegotiation(NetworkBuffer *NetBuf, gchar *RemoteHost,
   g_assert(sizeof(netport) == 2);
 
   addpt = ExpandWriteBuffer(conn, addlen, &NetBuf->error);
-  if (!addpt)
+  if (!addpt) {
+    g_free(username);
     return FALSE;
+  }
 
   addpt[0] = 4;                 /* SOCKS version */
   addpt[1] = 1;                 /* CONNECT */
@@ -1028,12 +1030,12 @@ static gboolean WriteBufToWire(NetworkBuffer *NetBuf, ConnBuf *conn)
 {
   int CurrentPosition, BytesSent;
 
-  if (!conn->Data || !conn->DataPresent)
-    return TRUE;
-  if (conn->Length == MAXWRITEBUF) {
+  if (conn->Overflow) {
     SetError(&NetBuf->error, ET_CUSTOM, E_FULLBUF, NULL);
     return FALSE;
   }
+  if (!conn->Data || !conn->DataPresent)
+    return TRUE;
   CurrentPosition = 0;
   while (CurrentPosition < conn->DataPresent) {
     BytesSent = send(NetBuf->fd, &conn->Data[CurrentPosition],
@@ -1260,7 +1262,7 @@ gboolean OpenCurlConnection(CurlConnection *conn, char *URL, char *body,
                           curl_multi_strerror(mres));
       return FALSE;
     }
-    conn->data = g_malloc(1);
+    conn->data = g_malloc0(1);  /* Empty string until data arrives */
     conn->data_size = 0;
     conn->headers = g_ptr_array_new_with_free_func(g_free);
     conn->running = TRUE;
@@ -1346,7 +1348,7 @@ static void addsock(curl_socket_t s, CURL *easy, int action, CurlConnection *g)
 {
   SockData *fdp = g_malloc0(sizeof(SockData));
 
-#ifdef CYGIN
+#ifdef CYGWIN
   fdp->ch = g_io_channel_win32_new_socket(s);
 #else
   fdp->ch = g_io_channel_unix_new(s);
@@ -1512,56 +1514,6 @@ gboolean FinishConnect(int fd, LastError **error)
     return FALSE;
   }
 #endif /* CYGWIN */
-}
-
-static void AddB64char(GString *str, int c)
-{
-  if (c < 0)
-    return;
-  else if (c < 26)
-    g_string_append_c(str, c + 'A');
-  else if (c < 52)
-    g_string_append_c(str, c - 26 + 'a');
-  else if (c < 62)
-    g_string_append_c(str, c - 52 + '0');
-  else if (c == 62)
-    g_string_append_c(str, '+');
-  else
-    g_string_append_c(str, '/');
-}
-
-/* 
- * Adds the plain text string "unenc" to the end of the GString "str",
- * using the Base64 encoding scheme.
- */
-void AddB64Enc(GString *str, gchar *unenc)
-{
-  guint i;
-  long value = 0;
-
-  if (!unenc || !str)
-    return;
-  for (i = 0; i < strlen(unenc); i++) {
-    value <<= 8;
-    value |= (unsigned char)unenc[i];
-    if (i % 3 == 2) {
-      AddB64char(str, (value >> 18) & 0x3F);
-      AddB64char(str, (value >> 12) & 0x3F);
-      AddB64char(str, (value >> 6) & 0x3F);
-      AddB64char(str, value & 0x3F);
-      value = 0;
-    }
-  }
-  if (i % 3 == 1) {
-    AddB64char(str, (value >> 2) & 0x3F);
-    AddB64char(str, (value << 4) & 0x3F);
-    g_string_append(str, "==");
-  } else if (i % 3 == 2) {
-    AddB64char(str, (value >> 10) & 0x3F);
-    AddB64char(str, (value >> 4) & 0x3F);
-    AddB64char(str, (value << 2) & 0x3F);
-    g_string_append_c(str, '=');
-  }
 }
 
 #endif /* NETWORKING */

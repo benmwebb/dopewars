@@ -65,14 +65,16 @@ static void gtk_tree_view_set_column_width_full(GtkTreeView *tv, gint column,
 static void gtk_tree_view_click_column(GtkWidget *widget, gint column);
 
 static GtkSignalType GtkTreeViewSignals[] = {
-  {"size_request", gtk_marshal_VOID__GPOIN, gtk_tree_view_size_request},
-  {"set_size", gtk_marshal_VOID__GPOIN, gtk_tree_view_set_size},
-  {"realize", gtk_marshal_VOID__VOID, gtk_tree_view_realize},
-  {"destroy", gtk_marshal_VOID__VOID, gtk_tree_view_destroy},
-  {"click-column", gtk_marshal_VOID__GINT, gtk_tree_view_click_column},
+  {"size_request", gtk_marshal_VOID__GPOIN,
+   G_CALLBACK(gtk_tree_view_size_request)},
+  {"set_size", gtk_marshal_VOID__GPOIN, G_CALLBACK(gtk_tree_view_set_size)},
+  {"realize", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_realize)},
+  {"destroy", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_destroy)},
+  {"click-column", gtk_marshal_VOID__GINT,
+   G_CALLBACK(gtk_tree_view_click_column)},
   {"changed", gtk_marshal_VOID__VOID, NULL},
-  {"show", gtk_marshal_VOID__VOID, gtk_tree_view_show},
-  {"hide", gtk_marshal_VOID__VOID, gtk_tree_view_hide},
+  {"show", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_show)},
+  {"hide", gtk_marshal_VOID__VOID, G_CALLBACK(gtk_tree_view_hide)},
   {"", NULL, NULL}
 };
 
@@ -1223,7 +1225,14 @@ GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg)
   GtkWidget *scrollwin, *clist;
 
   clist = gtk_tree_view_new();
+#if GTK_MAJOR_VERSION >= 4
+  /* GTK4's type-to-search popover misplaces its CSS node, giving a
+     Gtk-CRITICAL; our lists are short enough not to need it anyway */
+  gtk_tree_view_set_enable_search(GTK_TREE_VIEW(clist), FALSE);
+  scrollwin = gtk_scrolled_window_new();
+#else
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
+#endif
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrollwin),
                                  GTK_POLICY_AUTOMATIC,
                                  GTK_POLICY_AUTOMATIC);

@@ -2,14 +2,16 @@ PREREQUISITES
 =============
 
 dopewars _requires_ the GLib library for compilation, even when not using
-the GTK+ client. Other libraries may be required for additional features:-
+the GTK client. Other libraries may be required for additional features:-
 
 Unix/Linux:
    - Get GLib from http://www.gtk.org/
-   - For the GTK+ client, GTK+ libraries are needed, also from
-     http://www.gtk.org/ (GTK+2 and GTK+3 are supported). To actually
+   - For the GTK client, GTK libraries are needed, also from
+     http://www.gtk.org/ (GTK+2, GTK+3 and GTK4 are supported). To actually
      compile dopewars, you'll probably need your distribution's
      "gtk-devel" package.
+   - For networking support, the curl library is required ("libcurl-devel"
+     or similar for compiling dopewars).
    - For the curses client, curses, ncurses or libcurses_color libraries
      and headers are required.
 
@@ -60,16 +62,16 @@ Other options to ./configure include:-
 --enable-networking:
 	Compile dopewars with support for running as a server, and/or to
 connect to existing servers over a TCP/IP network. (Without networking,
-dopewars will only be useable in single-player mode.) If this option is not
+dopewars will only be usable in single-player mode.) If this option is not
 specified, the configure script will enable networking only if it believes
 your system has the necessary support functions (select and socket). You can
 also explicitly disable networking with --enable-networking=no or
 --disable-networking
 
 --enable-gui-client:
-	Compile a graphical dopewars client, using GTK+ on Unix systems and
-the standard libaries under Windows. If unspecified, this is enabled only
-if your system has the necessary libraries (e.g. GTK+) installed.
+	Compile a graphical dopewars client, using GTK on Unix systems and
+the standard libraries under Windows. If unspecified, this is enabled only
+if your system has the necessary libraries (e.g. GTK) installed.
 
 --enable-curses-client:
 	Compile a text-mode client, using ncurses or similar on Unix systems

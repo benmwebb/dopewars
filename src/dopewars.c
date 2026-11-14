@@ -53,15 +53,6 @@
 #include "tstring.h"
 #include "AIPlayer.h"
 #include "util.h"
-#include "winmain.h"
-
-#ifdef CURSES_CLIENT
-#include "curses_client/curses_client.h"
-#endif
-
-#ifdef GUI_CLIENT
-#include "gui_client/gtk_client.h"
-#endif
 
 #ifdef GUI_SERVER
 #include "gtkport/gtkport.h"
@@ -215,7 +206,7 @@ struct METASERVER MetaServer = {
 };
 
 struct METASERVER DefaultMetaServer = {
-  TRUE, "https://dopewars.sourceforge.io/metaserver.php", "",
+  TRUE, "https://metaserver.dopewars.workers.dev/", "",
   "", "dopewars server"
 };
 
@@ -729,7 +720,7 @@ struct DRUG DefaultDrug[] = {
   {N_("Shrooms"), 630, 1300, FALSE, FALSE, ""},
   {N_("Speed"), 90, 250, FALSE, TRUE, ""},
   {N_("Weed"), 315, 890, TRUE, FALSE,
-   N_("Columbian freighter dusted the Coast Guard! "
+   N_("Colombian freighter dusted the Coast Guard! "
       "Weed prices have bottomed out!")}
 };
 
@@ -868,11 +859,17 @@ GSList *AddPlayer(int fd, Player *NewPlayer, GSList *First)
       NewPlayer->IdleTimeout = 0;
   NewPlayer->Guns = (Inventory *)g_malloc0(NumGun * sizeof(Inventory));
   NewPlayer->Drugs = (Inventory *)g_malloc0(NumDrug * sizeof(Inventory));
+  NewPlayer->NumGunsAllocated = NumGun;
+  NewPlayer->NumDrugsAllocated = NumDrug;
   InitList(&(NewPlayer->SpyList));
   InitList(&(NewPlayer->TipList));
   NewPlayer->Turn = 1;
-  NewPlayer->date = g_date_new_dmy(StartDate.day, StartDate.month,
-                                   StartDate.year);
+  if (g_date_valid_dmy(StartDate.day, StartDate.month, StartDate.year)) {
+    NewPlayer->date = g_date_new_dmy(StartDate.day, StartDate.month,
+                                     StartDate.year);
+  } else {
+    NewPlayer->date = g_date_new_dmy(1, 12, 1984);
+  }
   NewPlayer->Cash = StartCash;
   NewPlayer->Debt = StartDebt;
   NewPlayer->Bank = 0;
@@ -909,8 +906,19 @@ void UpdatePlayer(Player *Play)
 {
   Play->Guns =
       (Inventory *)g_realloc(Play->Guns, NumGun * sizeof(Inventory));
+  if (NumGun > Play->NumGunsAllocated) {
+    memset(&Play->Guns[Play->NumGunsAllocated], 0,
+           (NumGun - Play->NumGunsAllocated) * sizeof(Inventory));
+  }
+  Play->NumGunsAllocated = NumGun;
+
   Play->Drugs =
       (Inventory *)g_realloc(Play->Drugs, NumDrug * sizeof(Inventory));
+  if (NumDrug > Play->NumDrugsAllocated) {
+    memset(&Play->Drugs[Play->NumDrugsAllocated], 0,
+           (NumDrug - Play->NumDrugsAllocated) * sizeof(Inventory));
+  }
+  Play->NumDrugsAllocated = NumDrug;
 }
 
 /* 
@@ -1053,14 +1061,20 @@ price_t strtoprice(char *buf)
     } else if (digit >= '0' && digit <= '9') {
       if (InFrac)
         FracNum--;
-      val *= 10;
-      val += (digit - '0');
+      /* Saturate rather than overflow (prices can come from the network) */
+      if (val > (PRICE_MAX - 9) / 10) {
+        val = PRICE_MAX;
+      } else {
+        val *= 10;
+        val += (digit - '0');
+      }
     } else if (digit == '-')
       minus = TRUE;
   }
 
-  for (i = 0; i < FracNum; i++)
-    val *= 10;
+  for (i = 0; i < FracNum; i++) {
+    val = (val > PRICE_MAX / 10) ? PRICE_MAX : val * 10;
+  }
   if (minus)
     val = -val;
   return val;
@@ -1074,7 +1088,6 @@ price_t strtoprice(char *buf)
 gchar *pricetostr(price_t price)
 {
   GString *PriceStr;
-  gchar *NewBuffer;
   price_t absprice;
 
   if (price < 0)
@@ -1090,10 +1103,8 @@ gchar *pricetostr(price_t price)
         g_string_prepend_c(PriceStr, '-');
     }
   }
-  NewBuffer = PriceStr->str;
   /* Free the string structure, but not the actual char array */
-  g_string_free(PriceStr, FALSE);
-  return NewBuffer;
+  return g_string_free(PriceStr, FALSE);
 }
 
 /* 
@@ -1105,7 +1116,6 @@ gchar *pricetostr(price_t price)
 gchar *FormatPrice(price_t price)
 {
   GString *PriceStr;
-  gchar *NewBuffer;
   char thou[10];
   gboolean First = TRUE;
   price_t absprice;
@@ -1132,10 +1142,8 @@ gchar *FormatPrice(price_t price)
   else
     g_string_append(PriceStr, Currency.Symbol);
 
-  NewBuffer = PriceStr->str;
   /* Free the string structure only, not the char data */
-  g_string_free(PriceStr, FALSE);
-  return NewBuffer;
+  return g_string_free(PriceStr, FALSE);
 }
 
 /* 
@@ -1169,19 +1177,6 @@ gchar *InitialCaps(gchar *string)
 }
 
 /* 
- * Returns TRUE if "string" starts with a vowel.
- */
-char StartsWithVowel(char *string)
-{
-  int c;
-
-  if (!string || strlen(string) < 1)
-    return FALSE;
-  c = toupper(string[0]);
-  return (c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U');
-}
-
-/* 
  * Reads a NULL-terminated string into the buffer "buf" from file "fp".
  * buf is sized to hold the string; this is a dynamic string and must be
  * freed by the calling routine. Returns 0 on success, EOF on failure.
@@ -1198,10 +1193,8 @@ int read_string(FILE *fp, char **buf)
       g_string_append_c(text, (char)c);
   } while (c != EOF && c != 0);
 
-  *buf = text->str;
-
   /* Free the GString, but not the actual data text->str */
-  g_string_free(text, FALSE);
+  *buf = g_string_free(text, FALSE);
   if (c == EOF)
     return EOF;
   else
@@ -1512,6 +1505,8 @@ void ResizeLocations(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumLocation)
     for (i = NewNum; i < NumLocation; i++) {
       g_free(Location[i].Name);
@@ -1531,6 +1526,8 @@ void ResizeCops(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumCop)
     for (i = NewNum; i < NumCop; i++) {
       g_free(Cop[i].Name);
@@ -1553,6 +1550,8 @@ void ResizeGuns(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumGun)
     for (i = NewNum; i < NumGun; i++) {
       g_free(Gun[i].Name);
@@ -1571,6 +1570,8 @@ void ResizeDrugs(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumDrug)
     for (i = NewNum; i < NumDrug; i++) {
       g_free(Drug[i].Name);
@@ -1591,6 +1592,8 @@ void ResizeSubway(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumSubway)
     for (i = NewNum; i < NumSubway; i++) {
       g_free(SubwaySaying[i]);
@@ -1607,6 +1610,8 @@ void ResizePlaying(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumPlaying)
     for (i = NewNum; i < NumPlaying; i++) {
       g_free(Playing[i]);
@@ -1623,6 +1628,8 @@ void ResizeStoppedTo(int NewNum)
 {
   int i;
 
+  if (NewNum < 0)
+    return;
   if (NewNum < NumStoppedTo)
     for (i = NewNum; i < NumStoppedTo; i++) {
       g_free(StoppedTo[i]);
@@ -1778,6 +1785,7 @@ void BackupConfig(void)
 void RestoreConfig(void)
 {
   gint i;
+  GSList *list;
 
   Prices.Spy = BackupPrices.Spy;
   Prices.Tipoff = BackupPrices.Tipoff;
@@ -1794,6 +1802,9 @@ void RestoreConfig(void)
   ResizeLocations(NumBackupLocation);
   for (i = 0; i < NumLocation; i++)
     CopyLocation(&Location[i], &BackupLocation[i]);
+  for (list = FirstClient; list; list = g_slist_next(list)) {
+    UpdatePlayer((Player *)list->data);
+  }
 }
 
 void ScannerErrorHandler(GScanner *scanner, gchar *msg, gint error)
@@ -2046,13 +2057,6 @@ gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex)
   g_assert(Globals[GlobalIndex].BoolVal);
 
   return (gboolean *)GetGlobalPointer(GlobalIndex, StructIndex);
-}
-
-gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex)
-{
-  g_assert(Globals[GlobalIndex].StringList);
-
-  return (gchar ***)GetGlobalPointer(GlobalIndex, StructIndex);
 }
 
 gboolean CheckMaxIndex(GScanner *scanner, int GlobalIndex, int StructIndex,
@@ -2352,7 +2356,8 @@ gchar *GetDocIndex(void)
 }
 
 #ifdef CYGWIN
-extern gchar *appdata_path;
+/* Per-user data directory, set by WinMain */
+gchar *appdata_path = NULL;
 #endif
 
 /*
@@ -2390,10 +2395,15 @@ gchar *GetLocalConfigFile(void)
 #else
   gchar *home, *conf = NULL;
 
-  /* Local config is in the user's home directory */
-  home = getenv("HOME");
+  /* Local config changes are in the user's state directory */
+  home = getenv("XDG_STATE_HOME");
   if (home) {
-    conf = g_strdup_printf("%s/.dopewars", home);
+    conf = g_strdup_printf("%s/dopewars", home);
+  } else {
+    home = getenv("HOME");
+    if (home) {
+      conf = g_strdup_printf("%s/.local/state/dopewars", home);
+    }
   }
   return conf;
 #endif
@@ -2528,6 +2538,7 @@ void GetDateString(GString *str, Player *Play)
 {
   gchar buf[200], *turn, *pt;
 
+  buf[0] = '\0';
   turn = g_strdup_printf("%d", Play->Turn);
   g_string_assign(str, Names.Date);
   while ((pt = strstr(str->str, "%T")) != NULL) {
@@ -2537,7 +2548,10 @@ void GetDateString(GString *str, Player *Play)
     g_string_insert(str, ind, turn);
   }
 
-  g_date_strftime(buf, sizeof(buf), str->str, Play->date);
+  if (!Play->date || !g_date_valid(Play->date)
+      || g_date_strftime(buf, sizeof(buf), str->str, Play->date) == 0) {
+    g_snprintf(buf, sizeof(buf), "Turn %d", Play->Turn);
+  }
   g_string_assign(str, buf);
   g_free(turn);
 }
@@ -2600,7 +2614,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
   g_print(_("  -h, --help              display this help information\n\
   -v, --version           output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2022, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU GPL\n\
 Report bugs to the author at benwebb@users.sf.net\n"));
 #else
            /* Usage information, printed when the user runs "dopewars -h"
@@ -2636,7 +2650,7 @@ Drug dealing game based on \"Drug Wars\" by John E. Dell\n\
   PluginHelp();
 g_print(_("  -h       display this help information\n\
   -v       output version information and exit\n\n\
-dopewars is Copyright (C) Ben Webb 1998-2022, and released under the GNU GPL\n\
+dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU GPL\n\
 Report bugs to the author at benwebb@users.sf.net\n"));
 #endif
 }
@@ -2658,7 +2672,7 @@ struct CMDLINE *ParseCmdLine(int argc, char *argv[])
     {"public-server", no_argument, NULL, 's'},
     {"private-server", no_argument, NULL, 'S'},
     {"port", required_argument, NULL, 'p'},
-    {"configfile", required_argument, NULL, 'g'},
+    {"config-file", required_argument, NULL, 'g'},
     {"pidfile", required_argument, NULL, 'r'},
     {"ai-player", no_argument, NULL, 'c'},
     {"windowed-client", no_argument, NULL, 'w'},
@@ -2782,6 +2796,23 @@ void FreeCmdLine(struct CMDLINE *cmdline)
 
 static gchar *priv_hiscore = NULL;
 
+/*
+ * Seeds the random number generator. If the DOPEWARS_SEED environment
+ * variable is set to a number, that is used as the seed, so that a game
+ * can be replayed exactly (e.g. by the test suite); otherwise the current
+ * time is used.
+ */
+void SeedRandom(void)
+{
+  const gchar *seed = g_getenv("DOPEWARS_SEED");
+
+  if (seed && seed[0]) {
+    srand((unsigned)strtoul(seed, NULL, 10));
+  } else {
+    srand((unsigned)time(NULL));
+  }
+}
+
 /* 
  * Does general startup stuff (command line, dropping privileges,
  * and high score init; config files are handled later)
@@ -2804,7 +2835,7 @@ struct CMDLINE *GeneralStartup(int argc, char *argv[])
   Log.File = g_strdup("");
   Log.Level = 2;
   Log.Timestamp = g_strdup("[%H:%M:%S] ");
-  srand((unsigned)time(NULL));
+  SeedRandom();
   Noone.Name = g_strdup("Noone");
   Server = Client = Network = FALSE;
 
@@ -2876,151 +2907,3 @@ void StripTerminators(gchar *str)
     }
   }
 }
-
-#ifndef CYGWIN
-
-#if defined(NETWORKING) && !defined(GUI_SERVER)
-static void ServerLogMessage(const gchar *log_domain,
-                             GLogLevelFlags log_level,
-                             const gchar *message, gpointer user_data)
-{
-  GString *text;
-
-  text = GetLogString(log_level, message);
-  if (text) {
-    fprintf(Log.fp ? Log.fp : stdout, "%s\n", text->str);
-    g_string_free(text, TRUE);
-  }
-}
-#endif
-
-#ifndef CURSES_CLIENT
-/*
- * Stub function to report an error if the Curses client is requested and
- * it isn't compiled in.
- */
-void CursesLoop(struct CMDLINE *cmdline)
-{
-  g_print(_("No curses client available - rebuild the binary passing the\n"
-            "--enable-curses-client option to configure, or use a windowed\n"
-            "client (if available) instead!\n"));
-}
-#endif
-
-#ifndef GUI_CLIENT
-/*
- * Stub function to report an error if the GTK+ client is requested and
- * it isn't compiled in.
- */
-#ifdef CYGWIN
-gboolean GtkLoop(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                 struct CMDLINE *cmdline, gboolean ReturnOnFail)
-#else
-gboolean GtkLoop(int *argc, char **argv[], struct CMDLINE *cmdline,
-                 gboolean ReturnOnFail)
-#endif
-{
-  if (!ReturnOnFail) {
-    g_print(_("No graphical client available - rebuild the binary\n"
-              "passing the --enable-gui-client option to configure, or\n"
-              "use the curses client (if available) instead!\n"));
-  }
-  return FALSE;
-}
-#endif
-
-static void DefaultLogMessage(const gchar *log_domain,
-                              GLogLevelFlags log_level,
-                              const gchar *message, gpointer user_data)
-{
-  GString *text;
-
-  text = GetLogString(log_level, message);
-  if (text) {
-    g_print("%s\n", text->str);
-    g_string_free(text, TRUE);
-  }
-}
-
-/* 
- * Standard program entry - Win32 uses WinMain() instead, in winmain.c
- */
-int main(int argc, char *argv[])
-{
-  struct CMDLINE *cmdline;
-#ifdef ENABLE_NLS
-  const char *charset;
-  setlocale(LC_ALL, "");
-  bindtextdomain(PACKAGE, LOCALEDIR);
-  textdomain(PACKAGE);
-  LocaleIsUTF8 = g_get_charset(&charset);
-#endif
-  WantUTF8Errors(FALSE);
-  g_log_set_handler(NULL, LogMask(), DefaultLogMessage, NULL);
-  cmdline = GeneralStartup(argc, argv);
-  if (cmdline->logfile) {
-    AssignName(&Log.File, cmdline->logfile);
-  }
-  OpenLog();
-  SoundInit();
-  if (cmdline->version || cmdline->help) {
-    HandleHelpTexts(cmdline->help);
-  } else if (cmdline->admin) {
-#ifdef NETWORKING
-    AdminServer(cmdline);
-#else
-    g_print(_("This binary has been compiled without networking "
-              "support, and thus cannot run\nin admin mode. "
-              "Recompile passing --enable-networking to the "
-              "configure script.\n"));
-#endif
-  } else if (cmdline->convert) {
-    ConvertHighScoreFile(cmdline->convertfile);
-  } else {
-    InitNetwork();
-    if (cmdline->server) {
-#ifdef NETWORKING
-#ifdef GUI_SERVER
-      Server = TRUE;
-      gtk_set_locale();
-      gtk_init(&argc, &argv);
-      GuiServerLoop(cmdline, FALSE);
-#else
-      g_log_set_handler(NULL, LogMask(), ServerLogMessage, NULL);
-      ServerLoop(cmdline);
-#endif /* GUI_SERVER */
-#else
-      g_print(_("This binary has been compiled without networking "
-                "support, and thus cannot run\nin server mode. "
-                "Recompile passing --enable-networking to the "
-                "configure script.\n"));
-#endif /* NETWORKING */
-    } else if (cmdline->ai) {
-      AIPlayerLoop(cmdline);
-    } else
-      switch (cmdline->client) {
-      case CLIENT_AUTO:
-        if (!GtkLoop(&argc, &argv, cmdline, TRUE))
-          CursesLoop(cmdline);
-        break;
-      case CLIENT_WINDOW:
-        GtkLoop(&argc, &argv, cmdline, FALSE);
-        break;
-      case CLIENT_CURSES:
-        CursesLoop(cmdline);
-        break;
-      }
-#ifdef NETWORKING
-    StopNetworking();
-#endif
-  }
-  FreeCmdLine(cmdline);
-  CloseLog();
-  CloseHighScoreFile();
-  g_free(PidFile);
-  g_free(Log.File);
-  SoundClose();
-  return 0;
-}
-
-#endif /* CYGWIN */

@@ -30,4 +30,11 @@
 /* Open the given URL using the system-configured web browser */
 void mac_open_url(const char *url);
 
+/* Return non-zero if the application is using a dark appearance */
+int mac_dark_mode(void);
+
+/* Call the given function whenever the system appearance (light or dark)
+   changes */
+void mac_on_appearance_changed(void (*func)(void));
+
 #endif /* __DP_MAC_HELPERS_H__ */

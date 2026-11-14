@@ -33,11 +33,13 @@
 #include <winsock2.h>           /* For network functions */
 #include <windows.h>            /* For datatypes such as BOOL */
 #include <process.h>            /* For getpid */
+#include <ws2tcpip.h>           /* For socklen_t */
 #else
 #include <sys/socket.h>         /* For struct sockaddr etc. */
 #include <netinet/in.h>         /* For struct sockaddr_in etc. */
 #include <sys/un.h>             /* For struct sockaddr_un */
 #include <arpa/inet.h>          /* For socklen_t */
+#include <fcntl.h>              /* For fcntl() */
 #endif /* CYGWIN */
 
 #ifdef HAVE_UNISTD_H
@@ -89,6 +91,13 @@ static char *attackquestiontr = N_("AE");
 
 int TerminateRequest, ReregisterRequest, RelogRequest;
 
+#ifndef CYGWIN
+/* The signal handlers write to this pipe, which the text-mode server
+ * includes in its select() call, so that a signal which arrives while
+ * the server is busy (rather than waiting in select) still wakes it up */
+static int SignalPipe[2] = { -1, -1 };
+#endif
+
 int MetaUpdateTimeout;
 long MetaMinTimeout;
 gboolean WantQuit = FALSE;
@@ -123,6 +132,11 @@ static FILE *ScoreFP = NULL;
 
 /* Pointer to the filename of a pid file (if non-NULL) */
 char *PidFile = NULL;
+
+/* Maximum length (in bytes) of a client-supplied player name */
+#define MAX_PLAYER_NAME_LEN 256
+
+static void ScrubPlayerReferences(Player *Play);
 
 static char HelpText[] = {
   /* Help on various general server commands */
@@ -334,8 +348,19 @@ void HandleServerMessage(gchar *buf, Player *Play)
     g_warning("Bad message");
     return;
   }
+  if (Play->EventNum == E_FINISH) {
+    return;
+  }
+  if (Network && !IsConnectedPlayer(Play)
+      && Code != C_ABILITIES && Code != C_NAME) {
+    dopelog(2, LF_SERVER, _("Ignoring pre-join command '%c'"), Code);
+    return;
+  }
   switch (Code) {
   case C_MSGTO:
+    if (To == &Noone || !IsConnectedPlayer(To) || IsCop(To)) {
+      break;
+    }
     if (Network) {
       dopelog(3, LF_SERVER, "%s->%s: %s", GetPlayerName(Play),
               GetPlayerName(To), Data);
@@ -347,9 +372,21 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_NAME:
     StripTerminators(Data);
+    if (strlen(Data) > MAX_PLAYER_NAME_LEN) {
+      Data[MAX_PLAYER_NAME_LEN] = '\0';
+    }
+    for (i = 0; Data[i] != '\0'; i++) {
+      if ((guchar)Data[i] < 32 || Data[i] == 127) {
+        Data[i] = '?';
+      }
+    }
+    if (!Data[0]) {
+      SendServerMessage(NULL, C_NONE, C_NEWNAME, Play, NULL);
+      break;
+    }
     pt = GetPlayerByName(Data, FirstServer);
     if (pt && pt != Play) {
-      if (ConnectTimeout) {
+      if (!IsConnectedPlayer(Play) && ConnectTimeout) {
         Play->ConnectTimeout = time(NULL) + (time_t) ConnectTimeout;
       }
       SendServerMessage(NULL, C_NONE, C_NEWNAME, Play, NULL);
@@ -490,8 +527,9 @@ void HandleServerMessage(gchar *buf, Player *Play)
     break;
   case C_DEPOSIT:
     money = strtoprice(Data);
-    if (Play->EventNum == E_BANK && Play->Bank + money >= 0
-        && Play->Cash - money >= 0) {
+    /* i.e. Bank + money >= 0 and Cash - money >= 0, without overflow */
+    if (Play->EventNum == E_BANK && money >= -Play->Bank
+        && money <= Play->Cash) {
       Play->Bank += money;
       Play->Cash -= money;
       SendPlayerData(Play);
@@ -500,7 +538,7 @@ void HandleServerMessage(gchar *buf, Player *Play)
   case C_PAYLOAN:
     money = strtoprice(Data);
     if (Play->EventNum == E_LOANSHARK && money > 0
-        && Play->Debt - money >= 0 && Play->Cash - money >= 0) {
+        && money <= Play->Debt && money <= Play->Cash) {
       Play->Debt -= money;
       Play->Cash -= money;
       SendPlayerData(Play);
@@ -528,7 +566,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_SPYON:
-    if (Play->Cash >= Prices.Spy) {
+    if (To != &Noone && To != Play && IsConnectedPlayer(To) && !IsCop(To)
+        && Play->Cash >= Prices.Spy && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s now spying on %s"), GetPlayerName(Play),
               GetPlayerName(To));
       Play->Cash -= Prices.Spy;
@@ -543,7 +582,8 @@ void HandleServerMessage(gchar *buf, Player *Play)
     }
     break;
   case C_TIPOFF:
-    if (Play->Cash >= Prices.Tipoff) {
+    if (To != &Noone && To != Play && IsConnectedPlayer(To) && !IsCop(To)
+        && Play->Cash >= Prices.Tipoff && Play->Bitches.Carried > 0) {
       dopelog(3, LF_SERVER, _("%s tipped off the cops to %s"),
               GetPlayerName(Play), GetPlayerName(To));
       Play->Cash -= Prices.Tipoff;
@@ -575,28 +615,40 @@ void HandleServerMessage(gchar *buf, Player *Play)
   }
 }
 
-/* 
+static void ScrubPlayerReferences(Player *Play)
+{
+  Player *tmp;
+  GSList *list;
+
+  if (!Play)
+    return;
+
+  if (Play->FightArray) {
+    WithdrawFromCombat(Play);
+  }
+  for (list = FirstServer; list; list = g_slist_next(list)) {
+    tmp = (Player *)list->data;
+    if (tmp && tmp != Play) {
+      RemoveAllEntries(&(tmp->TipList), Play);
+      RemoveAllEntries(&(tmp->SpyList), Play);
+      if (tmp->OnBehalfOf == Play)
+        tmp->OnBehalfOf = NULL;
+      if (tmp->Attacking == Play)
+        tmp->Attacking = NULL;
+    }
+  }
+}
+
+/*
  * Notifies all clients that player "Play" has left the game and
  * cleans up after them if necessary.
  */
 void ClientLeftServer(Player *Play)
 {
-  Player *tmp;
-  GSList *list;
-
+  ScrubPlayerReferences(Play);
   if (!IsConnectedPlayer(Play))
     return;
 
-  if (Play->EventNum == E_FIGHT || Play->EventNum == E_FIGHTASK) {
-    WithdrawFromCombat(Play);
-  }
-  for (list = FirstServer; list; list = g_slist_next(list)) {
-    tmp = (Player *)list->data;
-    if (tmp != Play) {
-      RemoveAllEntries(&(tmp->TipList), Play);
-      RemoveAllEntries(&(tmp->SpyList), Play);
-    }
-  }
   BroadcastToClients(C_NONE, C_LEAVE, GetPlayerName(Play), Play, Play);
 }
 
@@ -618,9 +670,29 @@ void CleanUpServer()
  * Responds to a SIGUSR1 signal, and requests the main event loop to
  * reregister the server with the dopewars metaserver.
  */
+/*
+ * Wakes up the text-mode server's main loop, if it is waiting in
+ * select(), so that it handles a signal. Safe to call from a signal
+ * handler.
+ */
+static void WakeServerLoop(void)
+{
+#ifndef CYGWIN
+  int saved_errno = errno;
+
+  if (SignalPipe[1] >= 0) {
+    /* If the pipe is full, the loop has a wakeup pending anyway */
+    if (write(SignalPipe[1], "", 1) < 0) {
+    }
+  }
+  errno = saved_errno;
+#endif
+}
+
 void ReregisterHandle(int sig)
 {
   ReregisterRequest = 1;
+  WakeServerLoop();
 }
 
 /* 
@@ -630,6 +702,7 @@ void ReregisterHandle(int sig)
 void RelogHandle(int sig)
 {
   RelogRequest = 1;
+  WakeServerLoop();
 }
 
 /* 
@@ -649,30 +722,7 @@ void BreakHandle(int sig)
   sigemptyset(&sact.sa_mask);
   sigaction(SIGTERM, &sact, NULL);
   sigaction(SIGINT, &sact, NULL);
-}
-
-/* 
- * Prints the server help screen to the given file pointer.
- */
-void PrintHelpTo(FILE *fp)
-{
-  int i;
-  GString *VarName;
-
-  VarName = g_string_new("");
-  fprintf(fp, _(HelpText), VERSION);
-  for (i = 0; i < NUMGLOB; i++) {
-    if (Globals[i].NameStruct[0]) {
-      g_string_printf(VarName, "%s%s.%s", Globals[i].NameStruct,
-                       Globals[i].StructListPt ? "[x]" : "",
-                       Globals[i].Name);
-    } else {
-      g_string_assign(VarName, Globals[i].Name);
-    }
-    fprintf(fp, "%-26s %s\n", VarName->str, _(Globals[i].Help));
-  }
-  fputs("\n\n", fp);
-  g_string_free(VarName, TRUE);
+  WakeServerLoop();
 }
 
 /* 
@@ -959,19 +1009,22 @@ static void HandleServerCommand(char *string, NetworkBuffer *netbuf,
         g_print(_("No users currently logged on!\n"));
     } else if (g_ascii_strncasecmp(string, "push ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
-      if (tmp) {
+      if (tmp && tmp != &Noone && !IsCop(tmp)) {
         g_print(_("Pushing %s\n"), GetPlayerName(tmp));
         SendServerMessage(NULL, C_NONE, C_PUSH, tmp, NULL);
       } else
         g_print(_("No such user!\n"));
     } else if (g_ascii_strncasecmp(string, "kill ", 5) == 0) {
       tmp = GetPlayerByName(string + 5, FirstServer);
-      if (tmp) {
+      if (tmp && tmp != &Noone && !IsCop(tmp)) {
         /* The named user has been removed from the server following
            a "kill" command */
         g_print(_("%s killed\n"), GetPlayerName(tmp));
-        BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp,
-                           (Player *)FirstServer->data);
+        ScrubPlayerReferences(tmp);
+        BroadcastToClients(C_NONE, C_KILL, GetPlayerName(tmp), tmp, tmp);
+        BroadcastToClients(C_NONE, C_LEAVE, GetPlayerName(tmp), tmp, tmp);
+        SetPlayerName(tmp, NULL);
+        RegisterWithMetaServer(TRUE, TRUE, TRUE);
         FirstServer = RemovePlayer(tmp, FirstServer);
       } else
         g_print(_("No such user!\n"));
@@ -989,11 +1042,37 @@ Player *HandleNewConnection(void)
   int ClientSock;
   struct sockaddr_in ClientAddr;
   Player *tmp;
-  cadsize = sizeof(struct sockaddr);
+  GSList *list;
+  int conn_count = 0, max_conns;
+
+  cadsize = sizeof(ClientAddr);
   if ((ClientSock = accept(ListenSock, (struct sockaddr *)&ClientAddr,
                             &cadsize)) == -1) {
-    perror("accept socket");
-    exit(EXIT_FAILURE);
+    if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
+      dopelog(1, LF_SERVER, _("accept() failed: %s"), g_strerror(errno));
+    }
+    return NULL;
+  }
+#ifndef CYGWIN
+  if (ClientSock >= FD_SETSIZE) {
+    dopelog(1, LF_SERVER,
+            _("Dropping connection from %s: descriptor %d >= FD_SETSIZE"),
+            inet_ntoa(ClientAddr.sin_addr), ClientSock);
+    CloseSocket(ClientSock);
+    return NULL;
+  }
+#endif
+  for (list = FirstServer; list; list = g_slist_next(list)) {
+    if (!IsCop((Player *)list->data))
+      conn_count++;
+  }
+  max_conns = MAX(MaxClients * 2 + 16, 64);
+  if (conn_count >= max_conns) {
+    dopelog(1, LF_SERVER,
+            _("Dropping connection from %s: too many open connections (%d)"),
+            inet_ntoa(ClientAddr.sin_addr), conn_count);
+    CloseSocket(ClientSock);
+    return NULL;
   }
   dopelog(2, LF_SERVER, _("got connection from %s"),
           inet_ntoa(ClientAddr.sin_addr));
@@ -1002,6 +1081,8 @@ Player *HandleNewConnection(void)
   FirstServer = AddPlayer(ClientSock, tmp, FirstServer);
   if (ConnectTimeout) {
     tmp->ConnectTimeout = time(NULL) + (time_t) ConnectTimeout;
+  } else {
+    tmp->ConnectTimeout = time(NULL) + 60;
   }
   return tmp;
 }
@@ -1016,6 +1097,7 @@ void StopServer()
 
 void RemovePlayerFromServer(Player *Play)
 {
+  ScrubPlayerReferences(Play);
   if (!WantQuit && strlen(GetPlayerName(Play)) > 0) {
     dopelog(2, LF_SERVER, _("%s leaves the server!"), GetPlayerName(Play));
     ClientLeftServer(Play);
@@ -1072,15 +1154,23 @@ static int SetupLocalSocket(void)
 
   sockname = GetLocalSocket();
   sockdir = GetLocalSockDir();
-  if (mkdir(sockdir, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
+  if (mkdir(sockdir, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
+    close(sock);
+    g_free(sockname);
+    g_free(sockdir);
     return -1;
+  }
 
   addr.sun_family = AF_UNIX;
   strncpy(addr.sun_path, sockname, sizeof(addr.sun_path));
   addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 
-  if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1)
+  if (bind(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_un)) == -1) {
+    close(sock);
+    g_free(sockname);
+    g_free(sockdir);
     return -1;
+  }
 
   chmod(sockname, S_IRUSR | S_IWUSR);
   g_free(sockname);
@@ -1170,7 +1260,7 @@ void ServerLoop(struct CMDLINE *cmdline)
   fd_set readfs, writefs, errorfs;
   int topsock;
   struct timeval timeout;
-  int MinTimeout;
+  int MinTimeout, selret;
   GString *LineBuf;
 
   gboolean DoneOK;
@@ -1189,6 +1279,10 @@ void ServerLoop(struct CMDLINE *cmdline)
     return;
 
 #ifdef HAVE_FORK
+  if (ScoreFP) {
+    /* Put FILE* in a consistent state before fork */
+    fflush(ScoreFP);
+  }
   /* Daemonize; continue if the fork was successful and we are the child,
    * or if the fork failed */
   if (Daemonize && fork() > 0)
@@ -1206,17 +1300,32 @@ void ServerLoop(struct CMDLINE *cmdline)
   }
 #endif
 
+#ifndef CYGWIN
+  if (pipe(SignalPipe) == 0) {
+    fcntl(SignalPipe[0], F_SETFL, O_NONBLOCK);
+    fcntl(SignalPipe[1], F_SETFL, O_NONBLOCK);
+  } else {
+    SignalPipe[0] = SignalPipe[1] = -1;
+  }
+#endif
+
   LineBuf = g_string_new("");
   while (1) {
     FD_ZERO(&readfs);
     FD_ZERO(&writefs);
     FD_ZERO(&errorfs);
     curl_multi_fdset(MetaConn.multi, &readfs, &writefs, &errorfs, &topsock);
-    FD_SET(ListenSock, &readfs);
-    FD_SET(ListenSock, &errorfs);
-    topsock = MAX(topsock + 1, ListenSock + 1);
+    if (ListenSock >= 0
 #ifndef CYGWIN
-    if (localsock >= 0) {
+        && ListenSock < FD_SETSIZE
+#endif
+    ) {
+      FD_SET(ListenSock, &readfs);
+      FD_SET(ListenSock, &errorfs);
+      topsock = MAX(topsock + 1, ListenSock + 1);
+    }
+#ifndef CYGWIN
+    if (localsock >= 0 && localsock < FD_SETSIZE) {
       FD_SET(localsock, &readfs);
       topsock = MAX(topsock, localsock + 1);
     }
@@ -1235,56 +1344,82 @@ void ServerLoop(struct CMDLINE *cmdline)
                                   &errorfs, &topsock);
       }
     }
+#ifndef CYGWIN
+    if (SignalPipe[0] >= 0 && SignalPipe[0] < FD_SETSIZE) {
+      FD_SET(SignalPipe[0], &readfs);
+      topsock = MAX(topsock, SignalPipe[0] + 1);
+    }
+#endif
     MinTimeout = GetMinimumTimeout(FirstServer);
     if (MinTimeout != -1) {
       timeout.tv_sec = MinTimeout;
       timeout.tv_usec = 0;
     }
-    if (select(topsock, &readfs, &writefs, &errorfs,
-               MinTimeout == -1 ? NULL : &timeout) == -1) {
-      if (errno == EINTR) {
-        if (ReregisterRequest) {
-          ReregisterRequest = 0;
-          RegisterWithMetaServer(TRUE, TRUE, FALSE);
-          continue;
-        } else if (TerminateRequest) {
-          TerminateRequest = 0;
-          RequestServerShutdown();
-          if (IsServerShutdown())
-            break;
-          else
-            continue;
-        } else if (RelogRequest) {      /* Re-open log file */
-          RelogRequest = 0;
-          CloseLog();
-          OpenLog();
-          continue;
-        } else
-          continue;
-      }
+    selret = select(topsock, &readfs, &writefs, &errorfs,
+                    MinTimeout == -1 ? NULL : &timeout);
+    if (selret == -1 && errno != EINTR) {
       perror("select");
       break;
     }
+#ifndef CYGWIN
+    if (selret > 0 && SignalPipe[0] >= 0 && SignalPipe[0] < FD_SETSIZE
+        && FD_ISSET(SignalPipe[0], &readfs)) {
+      char drain[64];
+
+      while (read(SignalPipe[0], drain, sizeof(drain)) > 0) {
+      }
+    }
+#endif
+    /* Handle any signals, whether they interrupted select() or arrived
+     * while we were busy (in which case the pipe woke us up) */
+    if (ReregisterRequest) {
+      ReregisterRequest = 0;
+      RegisterWithMetaServer(TRUE, TRUE, FALSE);
+    }
+    if (RelogRequest) {         /* Re-open log file */
+      RelogRequest = 0;
+      CloseLog();
+      OpenLog();
+    }
+    if (TerminateRequest) {
+      TerminateRequest = 0;
+      RequestServerShutdown();
+      if (IsServerShutdown())
+        break;
+    }
+    if (selret == -1) {
+      /* Interrupted by a signal, so the fd sets are not valid */
+      continue;
+    }
     FirstServer = HandleTimeouts(FirstServer);
-    if (FD_ISSET(ListenSock, &readfs)) {
+    if (ListenSock >= 0
+#ifndef CYGWIN
+        && ListenSock < FD_SETSIZE
+#endif
+        && FD_ISSET(ListenSock, &readfs)) {
       HandleNewConnection();
     }
 #ifndef CYGWIN
-    if (localsock >= 0 && FD_ISSET(localsock, &readfs)) {
+    if (localsock >= 0 && localsock < FD_SETSIZE
+        && FD_ISSET(localsock, &readfs)) {
       int newlocal;
       NetworkBuffer *netbuf;
 
       newlocal = accept(localsock, NULL, NULL);
-      netbuf = g_new(NetworkBuffer, 1);
+      if (newlocal >= 0 && newlocal < FD_SETSIZE) {
+        netbuf = g_new(NetworkBuffer, 1);
 
-      InitNetworkBuffer(netbuf, '\n', '\r', NULL);
-      BindNetworkBufferToSocket(netbuf, newlocal);
-      localconn = g_slist_append(localconn, netbuf);
-      oldprint = StartServerReply(netbuf);
-      g_print(_("dopewars server version %s ready for admin commands; "
-                "try \"help\" for help"), VERSION);
-      FinishServerReply(oldprint);
-      dopelog(1, LF_SERVER, _("New admin connection"));
+        InitNetworkBuffer(netbuf, '\n', '\r', NULL);
+        BindNetworkBufferToSocket(netbuf, newlocal);
+        localconn = g_slist_append(localconn, netbuf);
+        oldprint = StartServerReply(netbuf);
+        g_print(_("dopewars server version %s ready for admin commands; "
+                  "try \"help\" for help"), VERSION);
+        FinishServerReply(oldprint);
+        dopelog(1, LF_SERVER, _("New admin connection"));
+      } else if (newlocal >= 0) {
+        close(newlocal);
+      }
     }
     list = localconn;
     while (list) {
@@ -1356,6 +1491,11 @@ void ServerLoop(struct CMDLINE *cmdline)
   }
 #ifndef CYGWIN
   CloseLocalSocket(localsock);
+  if (SignalPipe[0] >= 0) {
+    close(SignalPipe[0]);
+    close(SignalPipe[1]);
+    SignalPipe[0] = SignalPipe[1] = -1;
+  }
 #endif
   StopServer();
   g_string_free(LineBuf, TRUE);
@@ -1501,15 +1641,20 @@ static gboolean GuiNewConnect(GIOChannel *source, GIOCondition condition,
 
   if (condition & G_IO_IN) {
     Play = HandleNewConnection();
-    SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
+    if (Play)
+      SetNetworkBufferCallBack(&Play->NetBuf, SocketStatus, (gpointer)Play);
   }
   return TRUE;
 }
 
 static gboolean TriedPoliteShutdown = FALSE;
 
+#if !CYGWIN && GTK_MAJOR_VERSION >= 4
+static gboolean GuiRequestDelete(GtkWidget *widget, gpointer data)
+#else
 static gint GuiRequestDelete(GtkWidget *widget, GdkEvent * event,
                              gpointer data)
+#endif
 {
   if (TriedPoliteShutdown) {
     GuiQuitServer();
@@ -1662,7 +1807,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
   }
 
   window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  g_signal_connect(G_OBJECT(window), "delete_event",
+  g_signal_connect(G_OBJECT(window), DP_DELETE_EVENT,
                    G_CALLBACK(GuiRequestDelete), NULL);
   gtk_window_set_default_size(GTK_WINDOW(window), 500, 250);
 
@@ -1703,7 +1848,7 @@ void GuiServerLoop(struct CMDLINE *cmdline, gboolean is_service)
     return;
   InitMetaServer();
 
-#ifdef CYGIN
+#ifdef CYGWIN
   listench = g_io_channel_win32_new_socket(ListenSock);
 #else
   listench = g_io_channel_unix_new(ListenSock);
@@ -2290,7 +2435,7 @@ void SendEvent(Player *To)
                                   "^The spy %s!"), Names.Bitches,
                                 GetPlayerName(To->SpyList.Data[i].Play),
                                 _(Discover[j]));
-          if (j != DEFECT)
+          if (j != DEFECT && To->Bitches.Carried > 0)
             LoseBitch(To, NULL, NULL);
           SendPlayerData(To);
           SendPrintMessage(NULL, C_NONE, To, text);
@@ -2513,15 +2658,11 @@ void AttackPlayer(Player *Play, Player *Attacked)
   g_assert(Play && Attacked);
 
   if (Play->FightArray && Attacked->FightArray) {
-    if (Play->FightArray == Attacked->FightArray) {
-      g_error(_("Players are already in a fight!"));
-    } else {
-      g_error(_("Players are already in separate fights!"));
-    }
+    g_warning(_("Players are already in a fight!"));
     return;
   }
   if (NumGun == 0) {
-    g_error(_("Cannot start fight - no guns to use!"));
+    g_warning(_("Cannot start fight - no guns to use!"));
     return;
   }
 
@@ -3052,7 +3193,7 @@ int RandomOffer(Player *To)
   if (!Sanitized && (r < 10)) {
     g_string_assign(text, _("You were mugged in the subway!"));
     To->Cash = To->Cash * (price_t)brandom(80, 95) / 100l;
-  } else if (r < 30) {
+  } else if (r < 30 && NumDrug > 0) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind == -1 && amount > To->CoatSize) {
@@ -3082,7 +3223,7 @@ int RandomOffer(Player *To)
     /* Debugging message: we would normally have a random drug-related
        event here, but "Sanitized" mode is turned on */
     dopelog(3, LF_SERVER, _("Sanitized away a RandomOffer"));
-  } else if (r < 50) {
+  } else if (r < 50 && NumDrug > 0) {
     amount = brandom(3, 7);
     ind = IsCarryingRandom(To, amount);
     if (ind != -1) {
@@ -3110,7 +3251,7 @@ int RandomOffer(Player *To)
       SendPlayerData(To);
       SendPrintMessage(NULL, C_NONE, To, text->str);
     }
-  } else if (r < 60
+  } else if (r < 60 && WEED < NumDrug && HASHISH < NumDrug
              && To->Drugs[WEED].Carried + To->Drugs[HASHISH].Carried > 0) {
     ind = (To->Drugs[WEED].Carried >
            To->Drugs[HASHISH].Carried) ? WEED : HASHISH;
@@ -3398,10 +3539,16 @@ void HandleAnswer(Player *From, Player *To, char *answer)
         g_slist_find(FirstServer, (gpointer)From->OnBehalfOf)) {
       Defender = From->OnBehalfOf;
       From->OnBehalfOf = NULL;  /* So we don't think it was a tipoff */
-      if (Defender->IsAt == From->IsAt) {
+      if (Defender->IsAt == From->IsAt && !From->FightArray
+          && (!Defender->FightArray || Defender->EventNum == E_NONE)) {
         if (answer[0] == 'A') {
-          From->EventNum = Defender->EventNum = E_NONE;
+          From->EventNum = E_NONE;
+          if (!Defender->FightArray)
+            Defender->EventNum = E_NONE;
           AttackPlayer(From, Defender);
+        } else {
+          From->EventNum++;
+          SendEvent(From);
         }
       } else {
         text = g_strdup_printf(_("Too late - %s has just left!"),
@@ -3462,28 +3609,36 @@ void HandleAnswer(Player *From, Player *To, char *answer)
 void BuyObject(Player *From, char *data)
 {
   char *cp, *type;
-  int index, i, amount;
+  int index, amount;
+  gint64 new_carried, new_coat, total_guns;
 
   cp = data;
   type = GetNextWord(&cp, "");
   index = GetNextInt(&cp, 0);
   amount = GetNextInt(&cp, 0);
+  if (amount == 0)
+    return;
   if (strcmp(type, "drug") == 0) {
-    if (index >= 0 && index < NumDrug
-        && From->Drugs[index].Carried + amount >= 0
-        && From->CoatSize - amount >= 0 && (From->Drugs[index].Price != 0
-                                            || amount < 0)
-        && From->Cash >= amount * From->Drugs[index].Price) {
+    if (index < 0 || index >= NumDrug || From->Drugs[index].Price < 0)
+      return;
+    new_carried = (gint64)From->Drugs[index].Carried + (gint64)amount;
+    new_coat = (gint64)From->CoatSize - (gint64)amount;
+    if (new_carried >= 0 && new_carried <= G_MAXINT
+        && new_coat >= 0 && new_coat <= G_MAXINT
+        && (From->Drugs[index].Price > 0 || amount < 0)
+        && (amount < 0 || From->Drugs[index].Price == 0
+            || (From->Cash > 0
+                && (price_t)amount <= From->Cash / From->Drugs[index].Price))) {
+      price_t total_cost = (price_t)amount * From->Drugs[index].Price;
       if (amount > 0) {
-        From->Drugs[index].TotalValue += amount * From->Drugs[index].Price;
+        From->Drugs[index].TotalValue += total_cost;
       } else if (From->Drugs[index].Carried != 0) {
         From->Drugs[index].TotalValue = From->Drugs[index].TotalValue *
-            (From->Drugs[index].Carried +
-             amount) / From->Drugs[index].Carried;
+            (price_t)new_carried / From->Drugs[index].Carried;
       }
-      From->Drugs[index].Carried += amount;
-      From->CoatSize -= amount;
-      From->Cash -= amount * From->Drugs[index].Price;
+      From->Drugs[index].Carried = (int)new_carried;
+      From->CoatSize = (int)new_coat;
+      From->Cash -= total_cost;
       SendPlayerData(From);
 
       if (!Sanitized && NumCop > 0 && NumGun > 0
@@ -3499,25 +3654,32 @@ void BuyObject(Player *From, char *data)
       }
     }
   } else if (strcmp(type, "gun") == 0) {
-    if (index >= 0 && index < NumGun
-        && TotalGunsCarried(From) + amount >= 0
-        && TotalGunsCarried(From) + amount <= From->Bitches.Carried + 2
-        && From->Guns[index].Price != 0
-        && From->CoatSize - amount * Gun[index].Space >= 0
-        && From->Cash >= amount * From->Guns[index].Price) {
-      From->Guns[index].Carried += amount;
-      From->CoatSize -= amount * Gun[index].Space;
-      From->Cash -= amount * From->Guns[index].Price;
+    if (index < 0 || index >= NumGun || From->Guns[index].Price <= 0)
+      return;
+    new_carried = (gint64)From->Guns[index].Carried + (gint64)amount;
+    total_guns = (gint64)TotalGunsCarried(From) + (gint64)amount;
+    new_coat = (gint64)From->CoatSize -
+               (gint64)amount * (gint64)Gun[index].Space;
+    if (new_carried >= 0 && new_carried <= G_MAXINT
+        && total_guns <= (gint64)From->Bitches.Carried + 2
+        && new_coat >= 0 && new_coat <= G_MAXINT
+        && (amount < 0
+            || (From->Cash > 0
+                && (price_t)amount <= From->Cash / From->Guns[index].Price))) {
+      From->Guns[index].Carried = (int)new_carried;
+      From->CoatSize = (int)new_coat;
+      From->Cash -= (price_t)amount * From->Guns[index].Price;
       SendPlayerData(From);
     }
   } else if (strcmp(type, "bitch") == 0) {
-    if (From->Bitches.Carried + amount >= 0
-        && From->Bitches.Price != 0
-        && amount * From->Bitches.Price <= From->Cash) {
-      for (i = 0; i < amount; i++)
-        GainBitch(From);
-      if (amount > 0)
-        From->Cash -= amount * From->Bitches.Price;
+    if (amount == 1 && From->Bitches.Carried >= 0
+        && From->Bitches.Carried < G_MAXINT - 1
+        && From->CoatSize <= G_MAXINT - 10
+        && From->Bitches.Price > 0
+        && From->Bitches.Price <= From->Cash) {
+      GainBitch(From);
+      From->Cash -= From->Bitches.Price;
+      From->Bitches.Price = 0;
       SendPlayerData(From);
     }
   }
@@ -3553,16 +3715,19 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
 {
   int losedrug = 0, i, num, drugslost;
   int *GunIndex, tmp;
-  GunIndex = g_new(int, NumGun);
 
   ClearInventory(Guns, Drugs);
+  if (!Play || Play->Bitches.Carried <= 0)
+    return 0;
+  GunIndex = g_new(int, NumGun);
   Play->CoatSize -= 10;
   if (TotalGunsCarried(Play) > 0) {
     if (brandom(0, 100) <
         TotalGunsCarried(Play) * 100 / (Play->Bitches.Carried + 2)) {
       for (i = 0; i < NumGun; i++)
         GunIndex[i] = i;
-      for (i = 0; i < NumGun * 5; i++) {
+      /* Shuffle by swapping adjacent pairs; needs at least two guns */
+      for (i = 0; NumGun > 1 && i < NumGun * 5; i++) {
         num = brandom(0, NumGun - 1);
         tmp = GunIndex[num + 1];
         GunIndex[num + 1] = GunIndex[num];
@@ -3613,12 +3778,16 @@ int LoseBitch(Player *Play, Inventory *Guns, Inventory *Drugs)
       for (i = 0; i < NumGun; i++) {
         if (Play->Guns[i].Carried > 0) {
           losedrug = 1;
+          drugslost = 1;
           Play->Guns[i].Carried--;
           Play->CoatSize += Gun[i].Space;
           if (Play->CoatSize >= 0)
             break;
         }
       }
+    /* Nothing left to drop, so we can't free up any more space */
+    if (!drugslost)
+      break;
   }
   Play->Bitches.Carried--;
   g_free(GunIndex);
@@ -3755,6 +3924,7 @@ GSList *HandleTimeouts(GSList *First)
                && Play->ConnectTimeout <= timenow) {
       Play->ConnectTimeout = 0;
       dopelog(1, LF_SERVER, _("Player removed due to connect timeout"));
+      ScrubPlayerReferences(Play);
       First = RemovePlayer(Play, First);
     } else if (IsConnectedPlayer(Play) &&
                Play->FightTimeout != 0 && Play->FightTimeout <= timenow) {

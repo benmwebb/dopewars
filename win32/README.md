@@ -14,7 +14,7 @@ For 32-bit Windows, use
     ./configure --host=i686-w64-mingw32 --enable-nativewin32 && make
 
 In order for curl connections to the metaserver to work, copy
-`/etc/pki/tls/certs/ca-bundle.crt` from the Docker/Podman environment to
+`/etc/ssl/certs/ca-bundle.crt` from the Docker/Podman environment to
 the same directory as `dopewars.exe`.
 
 
@@ -23,3 +23,19 @@ the same directory as `dopewars.exe`.
 The top-level `configure` script will also generate `install.nsi` in this
 directory. This can be used as input to
 [NSIS](https://nsis.sourceforge.io/) to build a Windows installer.
+
+To build the installer, copy `/etc/ssl/certs/ca-bundle.crt` into this
+directory and then run `makensis install.nsi`.
+
+## Docker
+
+The Docker image is built and deployed to Docker Hub (it is also used for CI)
+with
+
+```
+podman login docker.io
+podman build -t docker.io/benmwebb/mingw:latest mingw
+podman tag docker.io/benmwebb/mingw:latest docker.io/benmwebb/mingw:<DATE>
+podman push docker.io/benmwebb/mingw:latest
+podman push docker.io/benmwebb/mingw:<DATE>
+```

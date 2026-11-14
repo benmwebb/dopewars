@@ -28,6 +28,7 @@
 #endif
 
 #include <stdio.h>
+#include <limits.h>
 
 /* Be careful not to include both sys/time.h and time.h on those systems
  * which don't like it */
@@ -51,8 +52,10 @@
 /* Make price_t be a long long if the type is supported by the compiler */
 #if SIZEOF_LONG_LONG == 0
 typedef long price_t;
+#define PRICE_MAX LONG_MAX
 #else
 typedef long long price_t;
+#define PRICE_MAX LLONG_MAX
 #endif
 
 /* "Abilities" are protocol extensions, which are negotiated between the
@@ -78,7 +81,7 @@ typedef struct ABILITIES {
   gboolean Local[A_NUM];        /* Abilities that we have */
   gboolean Remote[A_NUM];       /* Those that the other end of the
                                  * connection has */
-  gboolean Shared[A_NUM];       /* Abilites shared by us and the
+  gboolean Shared[A_NUM];       /* Abilities shared by us and the
                                  * remote host */
   gint RemoteNum;               /* The remote host's idea of what A_NUM is */
 } Abilities;
@@ -180,6 +183,7 @@ extern gchar *HiScoreFile, *ServerName, *ConvertFile, *ServerMOTD,
 	     *BindAddress, *PlayerName;
 #ifdef CYGWIN
 extern gboolean MinToSysTray;
+extern gchar *appdata_path;
 #else
 extern gboolean Daemonize;
 #endif
@@ -204,6 +208,7 @@ extern int NumTurns;
 extern int PlayerArmor, BitchArmor;
 
 #define MAXLOG        6
+#define MAX_NET_ITEMS 4096
 
 #define DS_ATOZ       1
 #define DS_ZTOA       2
@@ -298,6 +303,7 @@ struct PLAYER_T {
   PlayerFlags Flags;
   gchar *Name;
   Inventory *Guns, *Drugs, Bitches;
+  int NumGunsAllocated, NumDrugsAllocated;
   EventCode EventNum, ResyncNum;
   time_t FightTimeout, IdleTimeout, ConnectTimeout;
   guint tiebreak;
@@ -422,13 +428,13 @@ void CopyDrug(struct DRUG *dest, struct DRUG *src);
 void CopyDrugs(struct DRUGS *dest, struct DRUGS *src);
 int GetNextDrugIndex(int OldIndex, Player *Play);
 gchar *InitialCaps(gchar *string);
-char StartsWithVowel(char *string);
 char *GetPlayerName(Player *Play);
 void SetPlayerName(Player *Play, char *Name);
 struct CMDLINE *ParseCmdLine(int argc, char *argv[]);
 void FreeCmdLine(struct CMDLINE *cmdline);
 void InitConfiguration(struct CMDLINE *cmdline);
 void HandleHelpTexts(gboolean fullhelp);
+void SeedRandom(void);
 struct CMDLINE *GeneralStartup(int argc, char *argv[]);
 void StripTerminators(gchar *str);
 gboolean ParseNextConfig(GScanner *scanner, Converter *conv,
@@ -438,7 +444,6 @@ gchar **GetGlobalString(int GlobalIndex, int StructIndex);
 gint *GetGlobalInt(int GlobalIndex, int StructIndex);
 price_t *GetGlobalPrice(int GlobalIndex, int StructIndex);
 gboolean *GetGlobalBoolean(int GlobalIndex, int StructIndex);
-gchar ***GetGlobalStringList(int GlobalIndex, int StructIndex);
 void PrintConfigValue(int GlobalIndex, int StructIndex,
                       gboolean IndexGiven, GScanner *scanner);
 gboolean IsCop(Player *Play);
