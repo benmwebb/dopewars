@@ -62,7 +62,7 @@ Other options to ./configure include:-
 --enable-networking:
 	Compile dopewars with support for running as a server, and/or to
 connect to existing servers over a TCP/IP network. (Without networking,
-dopewars will only be useable in single-player mode.) If this option is not
+dopewars will only be usable in single-player mode.) If this option is not
 specified, the configure script will enable networking only if it believes
 your system has the necessary support functions (select and socket). You can
 also explicitly disable networking with --enable-networking=no or
@@ -70,7 +70,7 @@ also explicitly disable networking with --enable-networking=no or
 
 --enable-gui-client:
 	Compile a graphical dopewars client, using GTK on Unix systems and
-the standard libaries under Windows. If unspecified, this is enabled only
+the standard libraries under Windows. If unspecified, this is enabled only
 if your system has the necessary libraries (e.g. GTK) installed.
 
 --enable-curses-client:

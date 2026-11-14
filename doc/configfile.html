@@ -39,7 +39,7 @@ user's application data directory (e.g.
 
 <p>Settings in a configuration file can set numbers, booleans, strings or
 "string lists". A numerical value is set with a command such as
-<b>Port=7902</b> (which sets the TCP port for mulitplayer connections to
+<b>Port=7902</b> (which sets the TCP port for multiplayer connections to
 7902). Booleans are "on/off" or "true/false" variables, set with commands
 such as <b>Sanitized=TRUE</b> (which removes drug references from random
 events in the game).</p>
@@ -326,7 +326,7 @@ normal price distribution (between Drug[x].MinPrice and Drug[x].MaxPrice) by
 
 <dt><b>Drug[<i>4</i>].Expensive=<i>TRUE</i></b></dt>
 <dd>Tells dopewars that drug <i>4</i> (normally Heroin) can occasionally be
-particuarly expensive (FALSE cancels this).</dd>
+particularly expensive (FALSE cancels this).</dd>
 
 <dt><b>Drugs.ExpensiveStr1=<i>"Cops made a big %tde bust! Prices are
 outrageous!"</i></b></dt>
@@ -443,11 +443,11 @@ numbers can also be used here, to have the debt shrink every day.</dd>
 <dd>Adds interest at a rate of <i>5%</i> per turn to your bank balance.
 </dd>
 
-<dt><b>Currrency.Symbol=<i>$</i></b></dt>
+<dt><b>Currency.Symbol=<i>$</i></b></dt>
 <dd>Uses the dollar (<i>$</i>) symbol to display all prices of drugs, guns,
 etc.</dd>
 
-<dt><b>Currrency.Prefix=<i>TRUE</i></b></dt>
+<dt><b>Currency.Prefix=<i>TRUE</i></b></dt>
 <dd>Prints Currency.Symbol in front of any price - e.g. "$1,000"; if
 FALSE, prints it after the price - e.g. "1,000 $".</dd>
 
@@ -635,7 +635,7 @@ can be configured in the same way are: <b>FightMiss</b>, <b>FightReload</b>,
 <dd>Specifies that any text following this directive (in this configuration
 file only) is in <i>"UTF-8"</i> encoding. This directive is only supported
 if dopewars is built on a Unix system and linked against GLib version 2.
-If unspecifed, then it will be assumed that your configuration files are
+If unspecified, then it will be assumed that your configuration files are
 in the locale's default encoding - e.g. ISO-8859-1 for C or POSIX locales,
 ISO-8859-2 for pl_PL, ISO-8859-15 for es_ES@euro, or UTF-8 for en_GB.UTF-8.</dd>
 

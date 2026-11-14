@@ -297,7 +297,7 @@
 
 # 1.4.7 - 2000-01-14
 - Minor fixes to Win32 code
-- dopewars now uses autoconf to (hopefully) build properly on odd sytems
+- dopewars now uses autoconf to (hopefully) build properly on odd systems
   such as HP-UX, and also to build "out of the box" under Cygwin (win32)
 - long long datatype used for all prices on platforms that support it
 - fixes to strtoprice and pricetostr code; replacement of code which
@@ -494,7 +494,7 @@
 - Message structure changed; separator changed from : to ^ and extra
   field added to identify messages to AI players
 - Shorthand routines added for "printmessage" and "question" messages;
-  SendPrintMessage and SendQuestion repectively
+  SendPrintMessage and SendQuestion respectively
 - Display of status of fight with Officer Hardass cleaned up
 - All servers are now interactive; to run in background simply attach
   standard input and output to /dev/null

@@ -81,7 +81,7 @@ typedef struct ABILITIES {
   gboolean Local[A_NUM];        /* Abilities that we have */
   gboolean Remote[A_NUM];       /* Those that the other end of the
                                  * connection has */
-  gboolean Shared[A_NUM];       /* Abilites shared by us and the
+  gboolean Shared[A_NUM];       /* Abilities shared by us and the
                                  * remote host */
   gint RemoteNum;               /* The remote host's idea of what A_NUM is */
 } Abilities;

@@ -20,7 +20,7 @@ operating systems, and newer software libraries such as GTK+3 and SDL 2.
 30th December 2005
      dopewars-1.5.11 released. This is largely a security bugfix release,
 fixing a potential exploit against the Windows server when running as an
-NT serivce.
+NT service.
 
 24th October 2004
      dopewars-1.5.10 released. This is largely a bugfix release, fixing a
