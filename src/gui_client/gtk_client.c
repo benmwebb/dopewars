@@ -3063,6 +3063,10 @@ GtkWidget *CreatePlayerList(void)
   store = gtk_list_store_new(PLAYER_NUM_COLS, G_TYPE_STRING, G_TYPE_POINTER);
 
   view = gtk_tree_view_new();
+#if GTK_MAJOR_VERSION >= 4
+  /* See gtk_scrolled_tree_view_new() */
+  gtk_tree_view_set_enable_search(GTK_TREE_VIEW(view), FALSE);
+#endif
   renderer = gtk_cell_renderer_text_new();
   gtk_tree_view_insert_column_with_attributes(
                GTK_TREE_VIEW(view), -1, "Name", renderer, "text",

@@ -1226,6 +1226,9 @@ GtkWidget *gtk_scrolled_tree_view_new(GtkWidget **pack_widg)
 
   clist = gtk_tree_view_new();
 #if GTK_MAJOR_VERSION >= 4
+  /* GTK4's type-to-search popover misplaces its CSS node, giving a
+     Gtk-CRITICAL; our lists are short enough not to need it anyway */
+  gtk_tree_view_set_enable_search(GTK_TREE_VIEW(clist), FALSE);
   scrollwin = gtk_scrolled_window_new();
 #else
   scrollwin = gtk_scrolled_window_new(NULL, NULL);
