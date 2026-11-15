@@ -356,7 +356,7 @@ void display_intro(void)
   mvaddcentstr(8, _("You have one month of game time to make your fortune."));
 
   g_string_printf(text, _("Version %-8s Copyright (C) 1998-2026  Ben Webb "
-                           "benwebb@users.sf.net"), VERSION);
+                           "%s"), VERSION, DOPEWARS_EMAIL);
   mvaddcentstr(10, text->str);
   g_string_assign(text, _("dopewars is released under the GNU "
                           "General Public License"));

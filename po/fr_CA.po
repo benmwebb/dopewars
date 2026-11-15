@@ -1188,14 +1188,14 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at benwebb@users.sf.net\n"
+"Report bugs to the author at %s\n"
 msgstr ""
 "  -h, --help             affiche cet écran d'aide\n"
 "  -v, --version          affiche la version et quitte\n"
 "\n"
 "dopewars est un Copyright (C) Ben Webb 1998-2026, et est distribué sous la "
 "GNU GPL\n"
-"Envoyer les bugs à l'auteur : benwebb@users.sf.net\n"
+"Envoyer les bugs à l'auteur : %s\n"
 
 #. Usage information, printed when the user runs "dopewars -h"
 #. (short options only version)
@@ -1268,13 +1268,13 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at benwebb@users.sf.net\n"
+"Report bugs to the author at %s\n"
 msgstr ""
 "  -h       affiche cet écran d'aide\n"
 "  -v       affiche la version et quitte\n"
 "\n"
 "dopewars est un Copyright (C) Ben Webb 1998-2026, et distribué sous GNU GPL\n"
-"Envoyer les bugs à l'auteur : benwebb@users.sf.net\n"
+"Envoyer les bugs à l'auteur : %s\n"
 
 #: src/curses_client/curses_client.c:333
 msgid "English Translation           Ben Webb"
@@ -1316,8 +1316,8 @@ msgstr "Vous avez un mois pour faire fortune."
 
 #: src/curses_client/curses_client.c:358
 #, c-format
-msgid "Version %-8s Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net"
-msgstr "Version·%-8s Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2026  Ben Webb %s"
+msgstr "Version·%-8s Copyright (C) 1998-2026  Ben Webb %s"
 
 #: src/curses_client/curses_client.c:361
 msgid "dopewars is released under the GNU General Public License"
@@ -2462,10 +2462,10 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2622
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2026  Ben Webb %s\n"
 "dopewars is released under the GNU General Public License\n"
 msgstr ""
-"Version %s     Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2026  Ben Webb %s\n"
 "dopewars est distribué sous la licence GNU GPL\n"
 
 #. Label at the bottom of GTK+ 'about' dialog
@@ -3147,22 +3147,22 @@ msgstr "En attente de la connexion au méta-serveur à %s..."
 msgid ""
 "You appear to be using an extremely old (version 1.4.x) client.^While this "
 "will probably work, many of the newer features^will be unsupported. Get the "
-"latest version from the^dopewars website, https://dopewars.sourceforge.io/."
+"latest version from the^dopewars website, %s."
 msgstr ""
 "Vous semblez utiliser une très vieille version (1.4.x) du jeu.  Cette "
 "versionrisque de fonctionner, mais plusieurs des nouvelles fonctionalités ne "
 "serontpas supportées.  Obtenez la dernière version sur le site web de "
-"Dopewars: https://dopewars.sourceforge.io/"
+"Dopewars: %s"
 
 #: src/serverside.c:321
 msgid ""
 "Warning: your client is too old to support all of this^server's features. "
 "For the full \"experience\", get^the latest version of dopewars from "
-"the^website, https://dopewars.sourceforge.io/."
+"the^website, %s."
 msgstr ""
 "Votre version de Dopewars est trop vieille pour supporter les "
 "fonctionalitésde ce serveur.  Pour une meilleure expérience, obtenez la "
-"dernière versionsur le site web de Dopewars: https://dopewars.sourceforge.io/"
+"dernière versionsur le site web de Dopewars: %s"
 
 #: src/serverside.c:356
 #, c-format

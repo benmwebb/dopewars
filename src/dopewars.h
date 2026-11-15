@@ -225,6 +225,10 @@ extern int PlayerArmor, BitchArmor;
 
 #define METAVERSION   2
 
+/* Kept out of translatable strings, per gettext recommendations */
+#define DOPEWARS_EMAIL "benwebb@users.sf.net"
+#define DOPEWARS_URL   "https://dopewars.sourceforge.io/"
+
 struct COP {
   gchar *Name, *DeputyName, *DeputiesName;
   gint Armor, DeputyArmor;

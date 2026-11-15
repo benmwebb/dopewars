@@ -1125,7 +1125,7 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at benwebb@users.sf.net\n"
+"Report bugs to the author at %s\n"
 msgstr ""
 
 #. Usage information, printed when the user runs "dopewars -h"
@@ -1170,7 +1170,7 @@ msgid ""
 "\n"
 "dopewars is Copyright (C) Ben Webb 1998-2026, and released under the GNU "
 "GPL\n"
-"Report bugs to the author at benwebb@users.sf.net\n"
+"Report bugs to the author at %s\n"
 msgstr ""
 
 #: src/curses_client/curses_client.c:333
@@ -1210,7 +1210,7 @@ msgstr ""
 
 #: src/curses_client/curses_client.c:358
 #, c-format
-msgid "Version %-8s Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net"
+msgid "Version %-8s Copyright (C) 1998-2026  Ben Webb %s"
 msgstr ""
 
 #: src/curses_client/curses_client.c:361
@@ -2345,7 +2345,7 @@ msgstr ""
 #: src/gui_client/gtk_client.c:2622
 #, c-format
 msgid ""
-"Version %s     Copyright (C) 1998-2026  Ben Webb benwebb@users.sf.net\n"
+"Version %s     Copyright (C) 1998-2026  Ben Webb %s\n"
 "dopewars is released under the GNU General Public License\n"
 msgstr ""
 
@@ -2987,14 +2987,14 @@ msgstr ""
 msgid ""
 "You appear to be using an extremely old (version 1.4.x) client.^While this "
 "will probably work, many of the newer features^will be unsupported. Get the "
-"latest version from the^dopewars website, https://dopewars.sourceforge.io/."
+"latest version from the^dopewars website, %s."
 msgstr ""
 
 #: src/serverside.c:321
 msgid ""
 "Warning: your client is too old to support all of this^server's features. "
 "For the full \"experience\", get^the latest version of dopewars from "
-"the^website, https://dopewars.sourceforge.io/."
+"the^website, %s."
 msgstr ""
 
 #: src/serverside.c:356

@@ -305,23 +305,29 @@ void SendPlayerDetails(Player *Play, Player *To, MsgCode Code)
  */
 void RemoteVersionCheck(Player *Play)
 {
+  gchar *text;
+
   /* Client didn't send a C_ABILITIES message at all, so is either broken
    * or is version 1.4.8 or earlier. */
   if (Play->Abil.RemoteNum == 0) {
-    SendPrintMessage(NULL, C_VERSIONCHECK, Play,
+    text = g_strdup_printf(
         _("You appear to be using an extremely old (version 1.4.x) client.^"
           "While this will probably work, many of the newer features^"
           "will be unsupported. Get the latest version from the^"
-          "dopewars website, https://dopewars.sourceforge.io/."));
+          "dopewars website, %s."), DOPEWARS_URL);
+    SendPrintMessage(NULL, C_VERSIONCHECK, Play, text);
+    g_free(text);
 
   /* The client has a smaller value of A_NUM; this means that not only does
    * it not support some features, it doesn't even know they might exist. */
   } else if (Play->Abil.RemoteNum < A_NUM) {
-    SendPrintMessage(NULL, C_VERSIONCHECK, Play,
+    text = g_strdup_printf(
         _("Warning: your client is too old to support all of this^"
           "server's features. For the full \"experience\", get^"
           "the latest version of dopewars from the^"
-          "website, https://dopewars.sourceforge.io/."));
+          "website, %s."), DOPEWARS_URL);
+    SendPrintMessage(NULL, C_VERSIONCHECK, Play, text);
+    g_free(text);
   }
 
   /* Otherwise, the client is either the same version as the server, or

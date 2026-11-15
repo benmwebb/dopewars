@@ -2621,9 +2621,10 @@ void display_intro(GtkWidget *widget, gpointer data)
   /* Version and copyright notice in GTK+ 'about' dialog */
   VersionStr = g_strdup_printf(_("Version %s     "
                                  "Copyright (C) 1998-2026  "
-                                 "Ben Webb benwebb@users.sf.net\n"
+                                 "Ben Webb %s\n"
                                  "dopewars is released under the "
-                                 "GNU General Public License\n"), VERSION);
+                                 "GNU General Public License\n"), VERSION,
+                                 DOPEWARS_EMAIL);
   label = gtk_label_new(VersionStr);
   gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 0);
   g_free(VersionStr);
@@ -2658,8 +2659,7 @@ void display_intro(GtkWidget *widget, gpointer data)
   PackCentredURL(vbox, _("Local HTML documentation"), docindex, OurWebBrowser);
   g_free(docindex);
 
-  PackCentredURL(vbox, "https://dopewars.sourceforge.io/",
-                 "https://dopewars.sourceforge.io/", OurWebBrowser);
+  PackCentredURL(vbox, DOPEWARS_URL, DOPEWARS_URL, OurWebBrowser);
 
   hsep = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
   gtk_box_pack_start(GTK_BOX(vbox), hsep, FALSE, FALSE, 0);
