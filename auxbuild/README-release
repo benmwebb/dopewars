@@ -9,6 +9,10 @@ New version checklist:
 - make dist, then test installers on Windows, Mac and Linux
 - Merge into main, tag, and push:
   git checkout main; git merge --no-ff -m 'Merge for x.y.z release' origin/release/x.y.z; git diff origin/develop; git push origin main; git tag -s -u E6414C85 vx.y.z; git push origin vx.y.z
+- Sign all RPMS with `rpm --resign *.rpm`
+- Sign all files with `sha256sum *.tar.gz *.rpm *.exe > SHA256-x.y.z.txt && gpg --clearsign SHA256-x.y.z.txt`
 - Delete temporary branch:
   git branch -d release/x.y.z; git push origin :release/x.y.z
-- upload tar.gz plus RPMs and .exes to GitHub and SourceForge
+- Create GitHub release; add RPMs, .exes and SHA256-x.y.z.txt.asc to it
+- upload tar.gz plus RPMs and .exes to SourceForge
+- Update website
