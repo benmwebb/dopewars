@@ -1149,6 +1149,19 @@ void SetCustomWndProc(WNDPROC wndproc)
   customWndProc = wndproc;
 }
 
+#ifndef LOAD_LIBRARY_SEARCH_SYSTEM32
+#define LOAD_LIBRARY_SEARCH_SYSTEM32 0x00000800
+#endif
+
+/*
+ * Loads the named DLL from the System32 directory only, so that a copy
+ * planted in the current directory or next to the binary isn't used
+ */
+static HMODULE LoadSystemLibrary(LPCWSTR name)
+{
+  return LoadLibraryExW(name, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+}
+
 /*
  * Returns TRUE if we are using version 6 of the Common Controls library
  * (as shipped with Windows XP) and thus need to worry about visual themes
@@ -1158,7 +1171,7 @@ static gboolean CheckForXPControls(void)
   HINSTANCE hDll;
   BOOL retval = FALSE;
 
-  hDll = LoadLibrary("COMCTL32.DLL");
+  hDll = LoadSystemLibrary(L"COMCTL32.DLL");
   if (hDll) {
     DLLGETVERSIONPROC getverproc;
     getverproc = (DLLGETVERSIONPROC)GetProcAddress(hDll, "DllGetVersion");
@@ -1198,7 +1211,7 @@ void win32_init(HINSTANCE hInstance, HINSTANCE hPrevInstance,
   }
 
   InitCommonControls();
-  LoadLibrary("RICHED20.DLL");
+  LoadSystemLibrary(L"RICHED20.DLL");
   HaveRichEdit = GetClassInfo(hInstance, RichEditClass, &wc);
 
   HaveXPControls = CheckForXPControls();
