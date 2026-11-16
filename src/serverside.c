@@ -1950,16 +1950,29 @@ void CloseHighScoreFile()
   ScoreFP = NULL;
 }
 
-/* 
+static gboolean StartedPrivileged = FALSE;
+
+/*
+ * Returns TRUE if we were started setuid/setgid (this is still TRUE after
+ * the privileges have been dropped).
+ */
+gboolean WasStartedPrivileged(void)
+{
+  return StartedPrivileged;
+}
+
+/*
  * If we're running setuid/setgid, drop down to the privilege level of the
  * user that started the dopewars process.
  */
 void DropPrivileges()
 {
 #ifndef CYGWIN
+  StartedPrivileged = (getgid() != getegid() || getuid() != geteuid());
 
 #ifdef HAVE_ISSETUGID
   if (issetugid() == 0) return;
+  StartedPrivileged = TRUE;
 #endif
 
   /* Ignore the return from setregid; we'll check it ourselves to be sure

@@ -43,6 +43,7 @@ SoundDriver *sound_cocoa_init(void);
 #include "dopewars.h"
 #include "log.h"
 #include "nls.h"
+#include "serverside.h"
 #include "sound.h"
 
 #define NOPLUGIN "none"
@@ -143,8 +144,12 @@ void SoundInit(void)
 {
 #ifdef PLUGINS
   ScanPluginDir(PLUGINDIR);
-  ScanPluginDir("src/plugins/.libs");
-  ScanPluginDir("plugins/.libs");
+  /* Plugins in the build tree are relative to the current directory, so
+   * don't load them if we were started setuid/setgid */
+  if (!WasStartedPrivileged()) {
+    ScanPluginDir("src/plugins/.libs");
+    ScanPluginDir("plugins/.libs");
+  }
 #else
 #ifdef HAVE_ESD
   AddPlugin(sound_esd_init, NULL);
