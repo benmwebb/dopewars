@@ -2558,17 +2558,11 @@ void GetDateString(GString *str, Player *Play)
 
 static void PluginHelp(void)
 {
-  gchar *plugins;
 #ifdef HAVE_GETOPT_LONG
-  g_print(_("  -u, --plugin=FILE       use sound plugin \"FILE\"\n"
-            "                            "));
+  g_print(_("  -u, --plugin=FILE       use sound plugin \"FILE\"\n"));
 #else
-  g_print(_("  -u file  use sound plugin \"file\"\n"
-            "	          "));
+  g_print(_("  -u file  use sound plugin \"file\"\n"));
 #endif
-  plugins = GetPluginList();
-  g_print(_("(%s available)\n"), plugins);
-  g_free(plugins);
 }
 
 void HandleHelpTexts(gboolean fullhelp)

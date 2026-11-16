@@ -297,7 +297,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     AssignName(&Log.File, cmdline->logfile);
   }
   OpenLog();
-  SoundInit();
   if (cmdline->version || cmdline->help) {
     WindowPrintStart();
     g_set_print_handler(WindowPrintFunc);
@@ -356,6 +355,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
       g_set_print_handler(ServerPrintFunc);
       AIPlayerLoop(cmdline);
     } else {
+      /* Only the clients play sounds, so don't load plugins otherwise */
+      SoundInit();
       switch (cmdline->client) {
       case CLIENT_AUTO:
         if (!GtkLoop(hInstance, hPrevInstance, cmdline, TRUE)) {

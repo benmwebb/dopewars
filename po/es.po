@@ -1082,23 +1082,14 @@ msgstr "Currency.Prefix=FALSE"
 #: src/dopewars.c:2563
 msgid ""
 "  -u, --plugin=FILE       use sound plugin \"FILE\"\n"
-"                            "
 msgstr ""
 "  -u, --plugin=FICHERO    usar módulo de sonido \"FICHERO\"\n"
-"                            "
 
 #: src/dopewars.c:2566
 msgid ""
 "  -u file  use sound plugin \"file\"\n"
-"\t          "
 msgstr ""
 "  -u fichero   usar módulo de sonido \"fichero\"\n"
-"\t          "
-
-#: src/dopewars.c:2570
-#, c-format
-msgid "(%s available)\n"
-msgstr "(%s disponible)\n"
 
 #: src/dopewars.c:2576
 #, c-format

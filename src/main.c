@@ -135,7 +135,6 @@ int main(int argc, char *argv[])
     AssignName(&Log.File, cmdline->logfile);
   }
   OpenLog();
-  SoundInit();
   if (cmdline->version || cmdline->help) {
     HandleHelpTexts(cmdline->help);
   } else if (cmdline->admin) {
@@ -176,7 +175,9 @@ int main(int argc, char *argv[])
 #endif /* NETWORKING */
     } else if (cmdline->ai) {
       AIPlayerLoop(cmdline);
-    } else
+    } else {
+      /* Only the clients play sounds, so don't load plugins otherwise */
+      SoundInit();
       switch (cmdline->client) {
       case CLIENT_AUTO:
         if (!GtkLoop(&argc, &argv, cmdline, TRUE))
@@ -189,6 +190,7 @@ int main(int argc, char *argv[])
         CursesLoop(cmdline);
         break;
       }
+    }
 #ifdef NETWORKING
     StopNetworking();
 #endif

@@ -1056,18 +1056,11 @@ msgstr ""
 #: src/dopewars.c:2563
 msgid ""
 "  -u, --plugin=FILE       use sound plugin \"FILE\"\n"
-"                            "
 msgstr ""
 
 #: src/dopewars.c:2566
 msgid ""
 "  -u file  use sound plugin \"file\"\n"
-"\t          "
-msgstr ""
-
-#: src/dopewars.c:2570
-#, c-format
-msgid "(%s available)\n"
 msgstr ""
 
 #: src/dopewars.c:2576
