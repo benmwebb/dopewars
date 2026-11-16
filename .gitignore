@@ -34,6 +34,7 @@ doc/dopewars.6
 po/POTFILES
 tests/test-message
 tests/test-serverside
+tests/test-tstring
 tests/*.log
 tests/*.trs
 *.gcda

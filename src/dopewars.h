@@ -273,7 +273,7 @@ struct DRUGS {
   gchar *ExpensiveStr1, *ExpensiveStr2;
   int CheapDivide, ExpensiveMultiply;
 };
-extern struct DRUGS Drugs;
+extern struct DRUGS Drugs, DefaultDrugs;
 
 struct INVENTORY {
   price_t Price, TotalValue;

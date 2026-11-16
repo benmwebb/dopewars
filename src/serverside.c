@@ -3416,7 +3416,7 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
 {
   int i;
   enum DealType *Deal = NULL;
-  gchar *prstr;
+  gchar *prstr, *fmt;
   GString *text;
   gboolean First;
 
@@ -3434,9 +3434,14 @@ void SendDrugsHere(Player *To, gboolean DisplayBusts)
         if (Deal[i] == DT_CHEAP) {
           g_string_append(text, Drug[i].CheapStr);
         } else {
-          dpg_string_append_printf(text, brandom(0, 100) < 50
-                              ? Drugs.ExpensiveStr1 : Drugs.ExpensiveStr2,
-                              Drug[i].Name);
+          fmt = brandom(0, 100) < 50 ? Drugs.ExpensiveStr1
+                                     : Drugs.ExpensiveStr2;
+          /* The format comes from the config, so check it can only use
+           * the drug name; otherwise, use the default message */
+          if (!IsValidTFmt(fmt, "s")) {
+            fmt = _(DefaultDrugs.ExpensiveStr2);
+          }
+          dpg_string_append_printf(text, fmt, Drug[i].Name);
         }
         First = FALSE;
       }

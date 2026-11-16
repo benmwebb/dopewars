@@ -235,6 +235,63 @@ static void test_fight_message_no_damage(void)
   dptest_reset_config();
 }
 
+/*
+ * Returns the message about specially expensive drugs that a player is
+ * sent on arriving somewhere, trying until there is one
+ */
+static gchar *GetExpensiveMessage(Player *play)
+{
+  int i;
+  const gchar *msg;
+
+  /* Make every special event an expensive one */
+  for (i = 0; i < NumDrug; i++) {
+    Drug[i].Expensive = TRUE;
+    Drug[i].Cheap = FALSE;
+  }
+  for (i = 0; i < 100; i++) {
+    dptest_clear_messages();
+    SendDrugsHere(play, TRUE);
+    msg = dptest_find_message(C_PRINTMESSAGE);
+    if (msg) {
+      return g_strdup(msg);
+    }
+  }
+  g_assert_not_reached();
+  return NULL;
+}
+
+/*
+ * The expensive drug messages come from the config file, so must only be
+ * used as a format string if they take just the drug name.
+ */
+static void test_expensive_str(void)
+{
+  Player *play;
+  gchar *msg;
+
+  srand(12345);
+  play = dptest_new_server_player();
+
+  AssignName(&Drugs.ExpensiveStr1, "Big %tde demand! 100%%");
+  AssignName(&Drugs.ExpensiveStr2, "Big %tde demand! 100%%");
+  msg = GetExpensiveMessage(play);
+  g_assert_true(g_str_has_prefix(msg, "Big "));
+  g_assert_true(g_str_has_suffix(msg, " demand! 100%"));
+  g_free(msg);
+
+  /* Extra arguments, or arguments of the wrong type, would read whatever
+   * else is on the stack; the default message is used instead */
+  AssignName(&Drugs.ExpensiveStr1, "%s %p %x %x %s %n");
+  AssignName(&Drugs.ExpensiveStr2, "%d");
+  msg = GetExpensiveMessage(play);
+  g_assert_true(g_str_has_prefix(msg, "Addicts are buying "));
+  g_free(msg);
+
+  dptest_remove_players();
+  dptest_reset_config();
+}
+
 int main(int argc, char *argv[])
 {
   dptest_init(&argc, &argv);
@@ -248,6 +305,8 @@ int main(int argc, char *argv[])
                   test_random_offer_few_drugs);
   g_test_add_func("/serverside/fight-message/no-damage",
                   test_fight_message_no_damage);
+  g_test_add_func("/serverside/drugs-here/expensive-str",
+                  test_expensive_str);
 
   return g_test_run();
 }

@@ -43,6 +43,9 @@ typedef struct _FmtData {
   char Type;
 } FmtData;
 
+/* Largest argument number, width or precision allowed in a format string */
+#define MAXFMTNUM 1000
+
 gchar *GetDefaultTString(gchar *tstring)
 {
   gchar *dstr, *pt;
@@ -93,6 +96,15 @@ gchar *GetTranslatedString(gchar *str, gchar *code, gboolean Caps)
   return tstr;
 }
 
+/*
+ * Adds the decimal digit "digit" to "num", stopping just above MAXFMTNUM
+ * so that huge numbers can't overflow
+ */
+static int AddFmtDigit(int num, char digit)
+{
+  return MIN(num * 10 + digit - '0', MAXFMTNUM + 1);
+}
+
 void GetNextFormat(guint *Index, gchar *str, int *StartPos,
                    int *EndPos, int *FmtPos, gchar *Type, int *ArgNum,
                    int *Wid, int *Prec, char *Code)
@@ -113,7 +125,7 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
       while (str[i] && strchr("#0- +'", str[i]))
         i++;                    /* Skip flag characters */
       while (str[i] >= '0' && str[i] <= '9')
-        wid = wid * 10 + str[i++] - '0';
+        wid = AddFmtDigit(wid, str[i++]);
       if (str[i] == '$') {
         *EndPos = i;
         i++;
@@ -122,12 +134,12 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
         while (str[i] && strchr("#0- +'", str[i]))
           i++;                  /* Skip flag characters */
         while (str[i] >= '0' && str[i] <= '9')
-          wid = wid * 10 + str[i++] - '0';
+          wid = AddFmtDigit(wid, str[i++]);
       }
       if (str[i] == '.') {
         i++;
         while (str[i] >= '0' && str[i] <= '9')
-          prec = prec * 10 + str[i++] - '0';
+          prec = AddFmtDigit(prec, str[i++]);
       }
       *FmtPos = i;
       type = str[i];
@@ -156,6 +168,76 @@ void GetNextFormat(guint *Index, gchar *str, int *StartPos,
   *Index = i;
 }
 
+/*
+ * Fills "arr" with the type of each argument used by the format string
+ * "format". Returns FALSE if the format string is invalid: it has an
+ * unknown conversion, a number that is too large, an argument that is
+ * never used or is used with two different types.
+ */
+static gboolean GetFormatArgs(gchar *format, GArray *arr)
+{
+  int StartPos, EndPos, FmtPos, Wid, Prec, ArgNum, DefaultArgNum;
+  guint i;
+  char Code[3], Type;
+  FmtData *fdat;
+
+  i = DefaultArgNum = 0;
+  while (i < strlen(format)) {
+    GetNextFormat(&i, format, &StartPos, &EndPos, &FmtPos, &Type, &ArgNum,
+                  &Wid, &Prec, Code);
+    if (StartPos == -1)
+      break;
+    if (Wid > MAXFMTNUM || Prec > MAXFMTNUM || ArgNum > MAXFMTNUM)
+      return FALSE;
+    /* %% and %/.../ don't use an argument */
+    if (Type == '%' || Type == '/')
+      continue;
+    if (Type == '\0' || !strchr("dPcstT", Type))
+      return FALSE;
+    if (ArgNum == 0)
+      ArgNum = ++DefaultArgNum;
+    if (ArgNum > arr->len) {
+      g_array_set_size(arr, ArgNum);
+    }
+    fdat = &g_array_index(arr, FmtData, ArgNum - 1);
+    if (fdat->Type != '\0' && fdat->Type != Type)
+      return FALSE;
+    fdat->Type = Type;
+  }
+  for (i = 0; i < arr->len; i++) {
+    if (g_array_index(arr, FmtData, i).Type == '\0')
+      return FALSE;
+  }
+  return TRUE;
+}
+
+/*
+ * Returns TRUE if "format" is a valid format string for the dpg_*printf
+ * functions, using arguments of at most the types given in "argtypes",
+ * one character per argument: 'd' (int), 'c' (char), 'P' (price_t) or
+ * 's' (a string, used by %s, %t or %T). The format string need not use
+ * every argument. Use this to check format strings that come from
+ * config files or other untrusted sources.
+ */
+gboolean IsValidTFmt(gchar *format, const gchar *argtypes)
+{
+  GArray *arr;
+  gboolean valid;
+  guint i;
+  char Type;
+
+  arr = g_array_new(FALSE, TRUE, sizeof(FmtData));
+  valid = GetFormatArgs(format, arr) && arr->len <= strlen(argtypes);
+  for (i = 0; valid && i < arr->len; i++) {
+    Type = g_array_index(arr, FmtData, i).Type;
+    if (Type == 't' || Type == 'T')
+      Type = 's';
+    valid = (Type == argtypes[i]);
+  }
+  g_array_free(arr, TRUE);
+  return valid;
+}
+
 gchar *HandleTFmt(gchar *format, va_list va)
 {
   int StrInd, StartPos, EndPos, FmtPos, Wid, Prec, ArgNum, DefaultArgNum;
@@ -166,30 +248,21 @@ gchar *HandleTFmt(gchar *format, va_list va)
   GArray *arr;
   FmtData *fdat;
 
+  arr = g_array_new(FALSE, TRUE, sizeof(FmtData));
+  if (!GetFormatArgs(format, arr)) {
+    /* Show the format string as-is rather than guess at the arguments */
+    g_warning("Invalid format string: %s", format);
+    g_array_free(arr, TRUE);
+    return g_strdup(format);
+  }
+
   string = g_string_new("");
   tmpfmt = g_string_new("");
 
-  arr = g_array_new(FALSE, TRUE, sizeof(FmtData));
-  i = DefaultArgNum = 0;
-  while (i < strlen(format)) {
-    GetNextFormat(&i, format, &StartPos, &EndPos, &FmtPos, &Type, &ArgNum,
-                  &Wid, &Prec, Code);
-    if (StartPos == -1)
-      break;
-    if (ArgNum == 0)
-      ArgNum = ++DefaultArgNum;
-    if (ArgNum > arr->len) {
-      g_array_set_size(arr, ArgNum);
-    }
-    g_array_index(arr, FmtData, ArgNum - 1).Type = Type;
-  }
   for (i = 0; i < arr->len; i++) {
     fdat = &g_array_index(arr, FmtData, i);
 
     switch (fdat->Type) {
-    case '\0':
-      g_error("Incomplete format string!");
-      break;
     case 'd':
       fdat->data.IntVal = va_arg(va, int);
       break;
@@ -204,11 +277,6 @@ gchar *HandleTFmt(gchar *format, va_list va)
     case 'T':
       fdat->data.StrVal = va_arg(va, char *);
       break;
-    case '%':
-    case '/':
-      break;                    /* No special action for %% or %/.../ */
-    default:
-      g_error("Unknown format type %c!", fdat->Type);
     }
   }
   i = DefaultArgNum = 0;
@@ -222,6 +290,12 @@ gchar *HandleTFmt(gchar *format, va_list va)
     }
     while (StrInd < StartPos)
       g_string_append_c(string, format[StrInd++]);
+    if (Type == '%') {
+      g_string_append_c(string, '%');
+      continue;
+    } else if (Type == '/') {
+      continue;                 /* %/.../ is a comment for translators */
+    }
     if (ArgNum == 0)
       ArgNum = ++DefaultArgNum;
     g_string_assign(tmpfmt, "%");
@@ -234,8 +308,6 @@ gchar *HandleTFmt(gchar *format, va_list va)
       g_string_append_c(tmpfmt, Type);
     fdat = &g_array_index(arr, FmtData, ArgNum - 1);
 
-    if (Type != fdat->Type)
-      g_error("Unmatched types!");
     switch (Type) {
     case 'd':
       g_string_append_printf(string, tmpfmt->str, fdat->data.IntVal);
@@ -256,9 +328,6 @@ gchar *HandleTFmt(gchar *format, va_list va)
       break;
     case 's':
       g_string_append_printf(string, tmpfmt->str, fdat->data.StrVal);
-      break;
-    case '%':
-      g_string_append_c(string, '%');
       break;
     }
   }

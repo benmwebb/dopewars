@@ -35,5 +35,6 @@ void dpg_string_printf(GString *string, gchar *format, ...);
 void dpg_string_append_printf(GString *string, gchar *format, ...);
 
 gchar *GetDefaultTString(gchar *tstring);
+gboolean IsValidTFmt(gchar *format, const gchar *argtypes);
 
 #endif /* __DP_TSTRING_H__ */
