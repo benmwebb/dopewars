@@ -8,23 +8,24 @@
 <head>
 <style type="text/css">
 <!--
-col.linklist    { width: 35% }
-td.linklist     { vertical-align: top }
+div.columns     { display: flex; gap: 1em }
+div.linklist    { flex: 0 0 35% }
+div.maintext    { flex: 1 }
+@media (max-width: 600px) {
+  div.columns   { flex-direction: column-reverse }
+}
 -->
 </style>
 <title>dopewars 1.7.0: Main Index</title>
 <meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 </head>
 
 <body>
 <h1>dopewars 1.7.0: Main Index</h1>
 
-<table>
-<col class="linklist" />
-<col />
-
-<tr>
-<td class="linklist">
+<div class="columns">
+<div class="linklist">
 <a href="installation.html">Obtaining and installing dopewars</a><br />
 <a href="commandline.html">dopewars command line options</a><br />
 <a href="clientplay.html">Playing the game: the dopewars client</a><br />
@@ -37,9 +38,9 @@ td.linklist     { vertical-align: top }
 <a href="contribute.html">How to contribute</a><br />
 <a href="developer.html">Notes for developers</a><br />
 <a href="credits.html">Credits and acknowledgements</a><br />
-</td>
+</div>
 
-<td valign="top">
+<div class="maintext">
 <p>dopewars is a game simulating the life of a drug dealer in 1984 New York,
 based upon the MS-DOS game of the same name, in turn derived from "Drug
 Wars" by John E. Dell. The aim of the game is to make lots and lots of
@@ -58,10 +59,8 @@ freely available under the <a href="LICENCE">GNU General Public License</a>.</p>
 
 <p>For more information on the current state of dopewars, check out the
 <a href="https://dopewars.sourceforge.io/">webpage</a>.</p>
-</td>
-
-</tr>
-</table>
+</div>
+</div>
 
 <hr />
 <p>
